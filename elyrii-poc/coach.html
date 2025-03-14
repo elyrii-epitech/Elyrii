@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>SafeTalk - Coach & Défis (375x812)</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" 
+    rel="stylesheet"
+  />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #E9E7FF;  
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Poppins', sans-serif;
+    }
+    .mobile-container {
+      width: 375px;
+      height: 812px;
+      background: #F6F6FE;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .header {
+      width: 100%;
+      height: 180px; 
+      background: linear-gradient(135deg, #6E3EFF 0%, #8A54FF 100%);
+      color: #fff;
+      padding: 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .header p {
+      font-size: 1rem;
+      line-height: 1.4;
+      max-width: 320px;
+      opacity: 0.95;
+      margin-bottom: 10px;
+    }
+    .jauges {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 10px;
+      padding: 10px;
+    }
+    .jauge {
+      width: 80px;
+      text-align: center;
+    }
+    .jauge-bar {
+      width: 100%;
+      height: 8px;
+      background: #ddd;
+      position: relative;
+      overflow: hidden;
+    }
+    .jauge-fill {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      background: linear-gradient(135deg, #6E3EFF 0%, #8A54FF 100%);
+    }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #4A4A4A;
+      margin-bottom: 10px;
+    }
+    .challenge-item {
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .challenge-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .challenge-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #4A4A4A;
+    }
+    .challenge-progress {
+      height: 6px;
+      background: #ddd;
+      position: relative;
+      overflow: hidden;
+    }
+    .challenge-progress-fill {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      background: linear-gradient(135deg, #6E3EFF 0%, #8A54FF 100%);
+    }
+    .footer {
+      background: #F2F2FE;
+      border-top: 1px solid #eee;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #999;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    <div class="header">
+      <h1>Coach Perso</h1>
+      <p>Reçois des conseils quotidiens et relève tes défis pour progresser chaque jour.</p>
+    </div>
+
+    <div class="jauges">
+      <div class="jauge">
+        <p>🎯 Objectifs</p>
+        <div class="jauge-bar">
+          <div class="jauge-fill" style="width:70%;"></div>
+        </div>
+      </div>
+      <div class="jauge">
+        <p>⚡ Motivation</p>
+        <div class="jauge-bar">
+          <div class="jauge-fill" style="width:50%;"></div>
+        </div>
+      </div>
+      <div class="jauge">
+        <p>💡 Progrès</p>
+        <div class="jauge-bar">
+          <div class="jauge-fill" style="width:80%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="section-title">📌 Mes Défis en Cours</div>
+      
+      <div class="challenge-item">
+        <div class="challenge-header">
+          <span class="challenge-title">🧘‍♂️ Méditation</span>
+          <span>Jour 3/7</span>
+        </div>
+        <div class="challenge-progress">
+          <div class="challenge-progress-fill" style="width:40%;"></div>
+        </div>
+      </div>
+
+      <div class="challenge-item">
+        <div class="challenge-header">
+          <span class="challenge-title">✍️ Écriture libre</span>
+          <span>Jour 5/10</span>
+        </div>
+        <div class="challenge-progress">
+          <div class="challenge-progress-fill" style="width:50%;"></div>
+        </div>
+      </div>
+
+      <div class="challenge-item">
+        <div class="challenge-header">
+          <span class="challenge-title">🎤 Défi d'expression</span>
+          <span>Jour 2/5</span>
+        </div>
+        <div class="challenge-progress">
+          <div class="challenge-progress-fill" style="width:20%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2025 Elyrii - Tous droits réservés
+      <br>
+      <a href="elyrii-accueil.html" style="display:inline-block; margin-top:5px;">← Retour Accueil</a>
+      <br>
+      <a href="index.html" style="display:inline-block; margin-top:5px;">Retour POC</a>
+    </div>
+  </div>
+</body>
+</html>

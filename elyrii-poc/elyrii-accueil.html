@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Elyrii - Accueil (375x812)</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" 
+    rel="stylesheet"
+  />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #E9E7FF;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .mobile-container {
+      width: 375px;
+      height: 812px;
+      background: #F6F6FE;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .header {
+      position: relative;
+      width: 100%;
+      height: 230px;
+      background: linear-gradient(135deg, #6E3EFF 0%, #8A54FF 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px;
+      border-bottom-left-radius: 40px;
+      border-bottom-right-radius: 40px;
+      overflow: hidden;
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-left: 20px;
+      margin-bottom: 6px;
+    }
+    .header h2 {
+      font-size: 1rem;
+      max-width: 300px;
+      line-height: 1.4;
+      opacity: 0.95;
+      margin-left: 20px;
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+    .mascot-container {
+      position: absolute;
+      right: -30px;
+      bottom: -20px;
+      width: 190px;
+      height: 190px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      border-top-left-radius: 90px;
+      border-top-right-radius: 10px;
+      border-bottom-left-radius: 50px;
+      border-bottom-right-radius: 120px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      transition: 0.2s ease;
+    }
+    .mascot-container img {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+      transform: translate(0px, 5px);
+    }
+    .mascot-container:hover {
+      transform: scale(1.03);
+    }
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .subtitle {
+      margin-top: 30px;
+      font-size: 0.95rem;
+      color: #666;
+      text-align: center;
+      line-height: 1.4;
+      max-width: 320px;
+    }
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin: 25px 0;
+      width: 100%;
+      max-width: 340px;
+    }
+    .category-btn {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .category-btn:hover {
+      background: #f2f2fe;
+    }
+    .category-icon {
+      width: 44px;
+      height: 44px;
+      margin-bottom: 10px;
+      background: #6E3EFF;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 1.4rem;
+    }
+    .category-title {
+      font-size: 0.85rem;
+      color: #4A4A4A;
+      font-weight: 500;
+    }
+    .footer {
+      background: #F2F2FE;
+      border-top: 1px solid #eee;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #999;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="mobile-container">
+    <div class="header">
+      <h1>Elyrii</h1>
+      <h2>Ton histoire,
+        à ta façon</h2>
+      <div class="mascot-container">
+        <img src="mascotte.png" alt="Mascotte Elyrii" />
+      </div>
+    </div>
+
+    <div class="main-content">
+      <p class="subtitle">
+        Retrouve ton espace d’expression, tes défis personnalisés
+        et tout un univers pour grandir sereinement.
+      </p>
+
+      <div class="categories">
+        <div class="category-btn">
+          <div class="category-icon">📝</div>
+          <div class="category-title">Journal</div>
+        </div>
+        <a href="coach.html" class="category-btn" style="text-decoration: none;">
+          <div class="category-icon">🎯</div>
+          <div class="category-title">Défis</div>
+        </a>
+        <div class="category-btn">
+          <div class="category-icon">🤝</div>
+          <div class="category-title">Connect</div>
+        </div>
+        <a href="mascotte.html" class="category-btn" style="text-decoration: none;">
+          <div class="category-icon">💡</div>
+          <div class="category-title">Coach</div>
+        </a>
+        <div class="category-btn">
+          <div class="category-icon">🧘</div>
+          <div class="category-title">Zen</div>
+        </div>
+        <div class="category-btn">
+          <div class="category-icon">✨</div>
+          <div class="category-title">Inspire</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2025 SafeTalk - Tous droits réservés
+      <br>
+      <a href="index.html">Retour accueil POC</a>
+    </div>
+  </div>
+
+</body>
+
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Elyrii - Ma Mascotte (375x812)</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" 
+    rel="stylesheet"
+  />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #E9E7FF;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .mobile-container {
+      width: 375px;
+      height: 812px;
+      background: #F6F6FE;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .header {
+      position: relative;
+      width: 100%;
+      height: 180px;
+      background: linear-gradient(135deg, #6E3EFF 0%, #8A54FF 100%);
+      border-bottom-left-radius: 40px;
+      border-bottom-right-radius: 40px;
+      overflow: hidden;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 1.4;
+      max-width: 320px;
+    }
+
+    .mascot-big {
+      margin-top: 0;
+      width: 220px;
+      height: 220px;
+      position: relative;
+      z-index: 2; 
+    }
+    .mascot-big img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .stats {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .stat-item {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      padding: 14px;
+    }
+    .stat-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #4A4A4A;
+      margin-bottom: 8px;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #ddd;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(135deg, #6E3EFF 0%, #8A54FF 100%);
+      width: 60%;
+    }
+
+    .features {
+      margin-top: 25px;
+      width: 100%;
+      max-width: 340px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .feature-item {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 100px;
+    }
+    .feature-icon {
+      width: 42px;
+      height: 42px;
+      background: #6E3EFF;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .feature-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4A4A4A;
+    }
+
+    .footer {
+      background: #F2F2FE;
+      border-top: 1px solid #eee;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #999;
+      padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-container">
+    
+    <div class="header"></div>
+
+    <div class="main-content">
+      <div class="mascot-big">
+        <img src="mascotte.png" alt="Mascotte Elyrii" />
+      </div>
+
+      <p class="subtitle">
+        Plus tu interagis avec ta mascotte, plus elle s’exprime et grandit à tes côtés.
+        Découvre ses jauges et fonctionnalités pour la faire évoluer !
+      </p>
+
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-title">Humeur</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 80%;"></div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-title">Énergie</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 45%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features">
+        <div class="feature-item">
+          <div class="feature-icon">🎨</div>
+          <div class="feature-title">Personnalisation</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-title">Défis</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🤝</div>
+          <div class="feature-title">Interactions</div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">Évolution</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      © 2025 Elyrii - Tous droits réservés
+    </div>
+    <a href="index.html">← Retour POC</a>
+  </div>
+</body>
+</html>
