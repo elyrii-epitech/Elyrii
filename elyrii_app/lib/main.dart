@@ -49,11 +49,7 @@ class MyHomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20.0),
-                  Image.asset(
-                    'assets/mascotte.png',
-                    width: 200,
-                    height: 200,
-                  ),
+                  BlinkingMascot(),
                 ],
               ),
             ),
@@ -81,6 +77,61 @@ class MyHomePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class BlinkingMascot extends StatefulWidget {
+  const BlinkingMascot({super.key});
+
+  @override
+  State<BlinkingMascot> createState() => _BlinkingMascotState();
+}
+
+class _BlinkingMascotState extends State<BlinkingMascot> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  bool _isEyesClosed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    )..addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _isEyesClosed = !_isEyesClosed;
+        });
+        Future.delayed(
+          _isEyesClosed ? const Duration(milliseconds: 100) : const Duration(seconds: 3),
+          () {
+            if (mounted) {
+              _controller.forward(from: 0.0);
+            }
+          },
+        );
+      }
+    });
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: Image.asset(
+            _isEyesClosed ? 'assets/mascotte_eyes_closed.png' : 'assets/mascotte.png',
+        width: 200,
+        height: 200,
       ),
     );
   }
