@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'dart:async'; // Add this import for Timer
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,8 +67,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   late AnimationController _pulseAnimationController;
   late AnimationController _floatingAnimationController;
+  late AnimationController _blinkAnimationController; // Add this
   late Animation<double> _pulseAnimation;
   late Animation<double> _floatingAnimation;
+  Timer? _blinkTimer; // Add this for random blink timing
+  bool _isBlinking = false; // Add this to track blink state
   final List<String> _chatHistory = [];
   bool _isTyping = false;
   String _mascotteBubbleMessage = 'Bonjour ! Comment puis-je t\'aider aujourd\'hui ?';
@@ -89,6 +93,24 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
     
+    // Create blink animation controller
+    _blinkAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    
+    _blinkAnimationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _blinkAnimationController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        setState(() {
+          _isBlinking = false;
+        });
+        // Schedule next blink
+        _scheduleNextBlink();
+      }
+    });
+    
     // Create pulse animation
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _pulseAnimationController, curve: Curves.easeInOut),
@@ -98,13 +120,32 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     _floatingAnimation = Tween<double>(begin: -5.0, end: 5.0).animate(
       CurvedAnimation(parent: _floatingAnimationController, curve: Curves.easeInOut),
     );
+    
+    // Schedule first blink
+    _scheduleNextBlink();
+  }
+  
+  void _scheduleNextBlink() {
+    // Random time between 2 and 5 seconds
+    final randomSeconds = 2 + math.Random().nextInt(4);
+    _blinkTimer?.cancel();
+    _blinkTimer = Timer(Duration(seconds: randomSeconds), () {
+      if (mounted) {
+        setState(() {
+          _isBlinking = true;
+        });
+        _blinkAnimationController.forward();
+      }
+    });
   }
   
   @override
   void dispose() {
     _pulseAnimationController.dispose();
     _floatingAnimationController.dispose();
+    _blinkAnimationController.dispose();
     _messageController.dispose();
+    _blinkTimer?.cancel();
     super.dispose();
   }
 
@@ -566,8 +607,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                                 const SnackBar(content: Text("Bonjour ! Je suis Elyrii !"))
                               );
                             },
+                            // Use conditional image based on blink state
                             child: Image.asset(
-                              'assets/mascotte.png',
+                              _isBlinking 
+                                  ? 'assets/mascotte_eyes_closed.png' 
+                                  : 'assets/mascotte.png',
                               fit: BoxFit.contain,
                             ),
                           ),
