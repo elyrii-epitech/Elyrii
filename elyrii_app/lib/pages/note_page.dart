@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../api.dart';
 
 class Note {
   String id;
@@ -26,6 +27,32 @@ class NotePage extends StatefulWidget {
 class _NotePageState extends State<NotePage> {
   List<Note> notes = [];
   
+  @override
+  void initState() {
+    super.initState();
+    _loadJournalEntries();
+  }
+
+Future<void> _loadJournalEntries() async {
+    try {
+      final entries = await fetchJournalEntries();
+      print("Entrées du journal récupérées : $entries");
+      setState(() {
+        notes = entries.map((entry) => Note(
+          id: DateTime.now().toString(),
+          title: 'Journal Entry',
+          content: entry,
+          dateCreated: DateTime.now(),
+          dateModified: DateTime.now(),
+        )).toList();
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur : $e")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,26 +133,22 @@ class _NotePageState extends State<NotePage> {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  void _createNewNote(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => NoteEditorPage(
-          onSave: (title, content) {
-            setState(() {
-              notes.add(Note(
-                id: DateTime.now().toString(),
-                title: title,
-                content: content,
-                dateCreated: DateTime.now(),
-                dateModified: DateTime.now(),
-              ));
-            });
-          },
-        ),
+void _createNewNote(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => NoteEditorPage(
+        onSave: (title, content) async {
+          final success = await addJournalEntry("$title\n$content");
+          if (success) {
+            await _loadJournalEntries();
+          }
+          Navigator.pop(context);
+        },
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _editNote(BuildContext context, Note note) {
     Navigator.push(
