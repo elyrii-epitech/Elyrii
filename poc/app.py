@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, render_template
-
+from ai import AI
+from dotenv import load_dotenv
+import os
 app = Flask(__name__)
 
 @app.route('/')
@@ -8,14 +10,24 @@ def home():
 
 @app.route('/elyrii', methods=['POST'])
 def elyrii():
-    data = request.get_json()
-    if not data or 'message' not in data:
-        return jsonify({'error': 'Aucun message fourni'}), 400
+    try:
+        data = request.get_json()
+        message = data.get('message', '')
 
-    message = data['message']
-    response = f"Vous avez envoyé : {message}"
-    
-    return jsonify({'response': response}), 200
+        if not message:
+            return jsonify({'error': 'Message content is required'}), 400
+
+        reply = ai.send_message(message)
+
+        return jsonify({'reply': reply}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    load_dotenv()
+    ai = AI(os.getenv("API_KEY"))
+    ai.set_context()
+    app.run(host='0.0.0.0', port=5000)

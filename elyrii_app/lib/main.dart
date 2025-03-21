@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'dart:async'; // Add this import for Timer
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -150,10 +153,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  void _sendMessage() {
-    if (_messageController.text.isEmpty) return;
-    
+  void _sendMessage() async {
     final message = _messageController.text;
+    if (message.isEmpty) return;
+    
     setState(() {
       // Ajoute le message à l'historique si on est en mode chat
       if (!_showMascotView) {
@@ -163,22 +166,35 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       _isTyping = true;
     });
     
-    // Simulate AI response after a delay
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
+    try {
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:5000/elyrii'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'message': message}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final reply = responseData['reply'] ?? 'No response from server';
+
         setState(() {
-          final response = "Je comprends ta question : \"$message\". Comment puis-je t'aider davantage ?";
-          
-          // Met à jour la bulle si on est en mode mascotte, sinon ajoute au chat
-          if (_showMascotView) {
-            _mascotteBubbleMessage = response;
-          } else {
-            _chatHistory.add(response);
-          }
+          _chatHistory.add(reply); // Add the server's response to the chat history
+          _isTyping = false;
+        });
+        _mascotteBubbleMessage = reply;
+      } else {
+        setState(() {
+          _chatHistory.add('Failed to send message: ${response.statusCode}');
           _isTyping = false;
         });
       }
-    });
+    } catch (e) {
+      setState(() {
+        _chatHistory.add('Error: $e');
+        _isTyping = false;
+      });
+  }
+
   }
 
   @override
