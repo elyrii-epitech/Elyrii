@@ -1,0 +1,47 @@
+# GitHub Action: fail pushes / PRs when branch name doesn't match convention
+# Convention enforced:
+#   prefix: feature | bugfix | hotfix | docs | test | perf | refactor | chore
+#   username: letters/digits/dot/underscore/hyphen (case allowed)
+#   issue: either 123 or #123 or issue-123
+#   slug: lowercase words separated by hyphens
+#
+# Example allowed branch: feature/Mord0rak/#124/fix-login-bug
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  branch-name-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine branch name
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH="${{ github.head_ref }}"
+          else
+            # remove refs/heads/ prefix from ref
+            BRANCH="${{ github.ref#refs/heads/ }}"
+          fi
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ steps.vars.outputs.branch }}"
+          echo "Branch to validate: '$BRANCH'"
+
+          # Regex: prefix / username / ( #?digits | issue-digits ) / slug
+          REGEX='^(feature|bugfix|hotfix|docs|test|perf|refactor|chore)/[A-Za-z0-9._-]+/(#?[0-9]+|issue-[0-9]+)/[a-z0-9]+(-[a-z0-9]+)*$'
+
+          if [[ "$BRANCH" =~ $REGEX ]]; then
+            echo "Branch name matches the required pattern."
+          else
+            echo "ERROR: Branch name does NOT match required pattern."
+            echo "Expected pattern: (feature|bugfix|hotfix)/<username>/<#123|123|issue-123>/<slug-with-lowercase-hyphens>"
+            echo "Offending branch: '$BRANCH'"
+            exit 1
+          fi
