@@ -32,9 +32,9 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             BRANCH="${{ github.head_ref }}"
           else
-            BRANCH="${{ github.ref#refs/heads/ }}"
+            BRANCH="${GITHUB_REF#refs/heads/}"
           fi
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Validate branch name
         run: |
