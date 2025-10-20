@@ -34,9 +34,20 @@ jobs:
           else
             BRANCH="${GITHUB_REF#refs/heads/}"
           fi
+
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
+          case "$BRANCH" in
+            main|dev)
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac"
+
       - name: Validate branch name
+        if: ${{ steps.branch.outputs.skip != 'true' }}
         run: |
           BRANCH="${{ steps.branch.outputs.branch }}"
           echo "Branch to validate: '$BRANCH'"
