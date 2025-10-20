@@ -1,0 +1,111 @@
+# GitHub Action: validate branch name and Conventional Commits on push and PRs
+# Enforced rules:
+#  - Branch name: (feature|bugfix|hotfix|docs|test|perf|refactor|chore)/<username>/<#123|123|issue-123>/<slug-with-lowercase-hyphens>
+#  - Commits: Conventional Commits (type(scope?)!?: subject), e.g. "feat(auth): add login"
+#
+# Examples allowed:
+#   feature/Mord0rak/#124/fix-login-bug
+#   bugfix/jane/123/fix-404
+#   hotfix/alice/issue-42/urgent-patch
+#
+# Merge commits are ignored by the commit-lint step.
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine branch name
+        id: branch
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BRANCH="${{ github.head_ref }}"
+          else
+            BRANCH="${{ github.ref#refs/heads/ }}"
+          fi
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ steps.branch.outputs.branch }}"
+          echo "Branch to validate: '$BRANCH'"
+
+          # Branch regex: prefix / username / ( #?digits | issue-digits ) / slug (lowercase-hyphens)
+          BRANCH_REGEX='^(feature|bugfix|hotfix|docs|test|perf|refactor|chore)/[A-Za-z0-9._-]+/(#?[0-9]+|issue-[0-9]+)/[a-z0-9]+(-[a-z0-9]+)*$'
+
+          if [[ "$BRANCH" =~ $BRANCH_REGEX ]]; then
+            echo "Branch name matches required pattern."
+          else
+            echo "::error::Branch name does NOT match required pattern."
+            echo "Expected: (feature|bugfix|hotfix)/<username>/<#123|123|issue-123>/<slug-with-lowercase-hyphens>"
+            echo "Offending branch: '$BRANCH'"
+            exit 1
+          fi
+
+      - name: Validate commit messages (Conventional Commits)
+        run: |
+          set -euo pipefail
+          # Conventional commit types we accept
+          TYPES="build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test"
+
+          # Bash ERE for commit header: type(scope?)!?: subject
+          CONV_REGEX="^(${TYPES})(\\([A-Za-z0-9._\\-\\s\\$\\*]+\\))?(!)?:[[:space:]]+.+$"
+
+          # Determine commit range to check
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+            # make sure base is available locally
+            git fetch origin "$BASE_REF":"refs/remotes/origin/$BASE_REF" || true
+            RANGE="origin/$BASE_REF..HEAD"
+          else
+            # For push events, use the before..sha range
+            RANGE="${{ github.event.before }}..${{ github.sha }}"
+            # If before is all zeros (new repo or force push), check all commits reachable from sha
+            if [[ "${{ github.event.before }}" =~ ^0+$ ]]; then
+              RANGE="${{ github.sha }}"
+            fi
+          fi
+
+          echo "Commit range: $RANGE"
+          # Get commit SHAs in the range, newest-last
+          COMMITS=$(git rev-list --reverse $RANGE || true)
+
+          if [ -z "$COMMITS" ]; then
+            echo "No commits to validate in range ($RANGE)."
+            exit 0
+          fi
+
+          ERR=0
+          for c in $COMMITS; do
+            # get full commit message subject (first line)
+            MSG=$(git log -n1 --format=%B "$c" | sed -n '1p' | tr -d '\r')
+            # ignore merge commits and empty messages
+            if [[ -z "$MSG" || "$MSG" =~ ^Merge\ pull\ request\  || "$MSG" =~ ^Merge\ branch ]]; then
+              echo "Skipping merge/empty commit $c"
+              continue
+            fi
+
+            if [[ "$MSG" =~ $CONV_REGEX ]]; then
+              echo "OK: $c: $MSG"
+            else
+              echo "::error::Commit $c does not follow Conventional Commits: \"$MSG\""
+              echo "Expected header: <type>(<scope>)!? : <subject>"
+              ERR=1
+            fi
+          done
+
+          if [ $ERR -ne 0 ]; then
+            echo "One or more commits do not follow Conventional Commits."
+            exit 1
+          fi
