@@ -8,12 +8,11 @@ class AppTextStyles {
 
   // Police de base - Utilise la police système par défaut
   // Vous pouvez personnaliser avec Google Fonts en ajoutant le package plus tard
-  static const String _fontFamily =
-      'Poppins'; // À remplacer par la police de votre choix
-
+  static const String _fontFamily = 'Poppins'; // À remplacer par la police de votre choix
+  
   // ==================== DISPLAY STYLES ====================
   // Utilisés pour les titres très larges (splash, onboarding)
-
+  
   static TextStyle displayLarge({Color? color, FontWeight? fontWeight}) {
     return TextStyle(
       fontFamily: _fontFamily,
@@ -49,7 +48,7 @@ class AppTextStyles {
 
   // ==================== HEADLINE STYLES ====================
   // Utilisés pour les titres de sections importantes
-
+  
   static TextStyle headlineLarge({Color? color, FontWeight? fontWeight}) {
     return TextStyle(
       fontFamily: _fontFamily,
@@ -85,7 +84,7 @@ class AppTextStyles {
 
   // ==================== TITLE STYLES ====================
   // Utilisés pour les titres de cartes, dialogs, etc.
-
+  
   static TextStyle titleLarge({Color? color, FontWeight? fontWeight}) {
     return TextStyle(
       fontFamily: _fontFamily,
@@ -121,7 +120,7 @@ class AppTextStyles {
 
   // ==================== BODY STYLES ====================
   // Utilisés pour le texte principal
-
+  
   static TextStyle bodyLarge({Color? color, FontWeight? fontWeight}) {
     return TextStyle(
       fontFamily: _fontFamily,
@@ -157,7 +156,7 @@ class AppTextStyles {
 
   // ==================== LABEL STYLES ====================
   // Utilisés pour les boutons, chips, labels
-
+  
   static TextStyle labelLarge({Color? color, FontWeight? fontWeight}) {
     return TextStyle(
       fontFamily: _fontFamily,
@@ -192,7 +191,7 @@ class AppTextStyles {
   }
 
   // ==================== STYLES SPÉCIFIQUES ====================
-
+  
   /// Style pour les messages du chatbot
   static TextStyle chatbotMessage({bool isUser = false}) {
     return TextStyle(
@@ -350,7 +349,7 @@ class AppTextStyles {
   }
 
   // ==================== HELPERS ====================
-
+  
   /// Applique une couleur à un style existant
   static TextStyle withColor(TextStyle style, Color color) {
     return style.copyWith(color: color);
@@ -363,6 +362,6 @@ class AppTextStyles {
 
   /// Applique une opacité à un style existant
   static TextStyle withOpacity(TextStyle style, double opacity) {
-    return style.copyWith(color: style.color?.withValues(alpha: opacity));
+    return style.copyWith(color: style.color?.withOpacity(opacity));
   }
 }
