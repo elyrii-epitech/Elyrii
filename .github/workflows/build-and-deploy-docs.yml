@@ -1,0 +1,130 @@
+name: Build and Deploy Main Docs
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Assemble and Build MkDocs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Download sub-doc artifacts produced by their own workflows (optional but recommended).
+      # Remove or adjust these steps if your sub-docs write directly to repo folders.
+      - name: Download Mobile docs artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: dartdoc-html
+          path: _artifacts/mobile
+        continue-on-error: true
+
+      - name: Prepare docs/mobile from artifact
+        run: |
+          rm -rf docs/mobile
+          mkdir -p docs/mobile
+          if [ -d "_artifacts/mobile" ] && [ "$(ls -A _artifacts/mobile || true)" ]; then
+            cp -r _artifacts/mobile/* docs/mobile/
+          else
+            echo "# Mobile Docs" > docs/mobile/index.md
+            echo "" >> docs/mobile/index.md
+            echo "Mobile documentation will appear here once its workflow publishes artifacts." >> docs/mobile/index.md
+          fi
+
+      # Server docs: change artifact name/path to match your server-doc workflow.
+      - name: Download Server docs artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: server-docs-html
+          path: _artifacts/server
+        continue-on-error: true
+
+      - name: Prepare docs/server from artifact
+        run: |
+          rm -rf docs/server
+          mkdir -p docs/server
+          if [ -d "_artifacts/server" ] && [ "$(ls -A _artifacts/server || true)" ]; then
+            cp -r _artifacts/server/* docs/server/
+          else
+            # Fallback: if server pipeline commits docs into repo (e.g., elyrii-poc/docs), copy from there
+            if [ -d "elyrii-poc/docs" ]; then
+              cp -r elyrii-poc/docs/* docs/server/ || true
+            elif [ -d "poc/docs" ]; then
+              cp -r poc/docs/* docs/server/ || true
+            else
+              echo "# Server Docs" > docs/server/index.md
+              echo "" >> docs/server/index.md
+              echo "Server documentation will appear here once its workflow publishes artifacts." >> docs/server/index.md
+            fi
+          fi
+
+      # AI docs: change artifact name/path to match your AI-doc workflow.
+      - name: Download AI docs artifact
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-docs-html
+          path: _artifacts/ai
+        continue-on-error: true
+
+      - name: Prepare docs/ai from artifact
+        run: |
+          rm -rf docs/ai
+          mkdir -p docs/ai
+          if [ -d "_artifacts/ai" ] && [ "$(ls -A _artifacts/ai || true)" ]; then
+            cp -r _artifacts/ai/* docs/ai/
+          else
+            # Fallback: if AI pipeline commits docs into repo (e.g., elyrii_ai/docs), copy from there
+            if [ -d "elyrii_ai/docs" ]; then
+              cp -r elyrii_ai/docs/* docs/ai/ || true
+            else
+              echo "# AI Docs" > docs/ai/index.md
+              echo "" >> docs/ai/index.md
+              echo "AI documentation will appear here once its workflow publishes artifacts." >> docs/ai/index.md
+            fi
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install MkDocs and theme
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material
+
+      - name: Build MkDocs site
+        run: mkdocs build --strict
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        name: Deploy
+        uses: actions/deploy-pages@v4
