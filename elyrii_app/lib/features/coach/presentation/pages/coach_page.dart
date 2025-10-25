@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../../../routes/app_routes.dart';
+import 'package:elyrii_app/routes/app_routes.dart';
 
-class JournalPage extends StatelessWidget {
-  const JournalPage({super.key});
+class CoachPage extends StatelessWidget {
+  const CoachPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Journal'),
+        title: const Text('Coach'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -20,7 +20,7 @@ class JournalPage extends StatelessWidget {
       ),
       body: const Center(
         child: Text(
-          'Journal',
+          'Coach',
           style: TextStyle(fontSize: 24),
         ),
       ),

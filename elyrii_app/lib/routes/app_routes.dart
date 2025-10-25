@@ -1,17 +1,10 @@
-import 'package:flutter/material.dart';
-
-class TempPage extends StatelessWidget {
-  const TempPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'Page Temporaire',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
-    );
-  }
+class AppRoutes {
+  static const String home = '/';
+  static const String dashboard = '/dashboard';
+  static const String challenges = '/challenges';
+  static const String journal = '/journal';
+  static const String coach = '/coach';
+  static const String meditation = '/meditation';
+  static const String chatbot = '/chatbot';
+  static const String settings = '/settings';
 }

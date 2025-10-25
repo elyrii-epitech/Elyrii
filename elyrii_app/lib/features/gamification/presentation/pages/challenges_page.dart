@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import '../../../../routes/app_routes.dart';
 
-class TempPage extends StatelessWidget {
-  const TempPage({super.key});
+class ChallengesPage extends StatelessWidget {
+  const ChallengesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Challenges'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.settings);
+            },
+          ),
+        ],
+      ),
+      body: const Center(
         child: Text(
-          'Page Temporaire',
+          'Challenges',
           style: TextStyle(fontSize: 24),
         ),
       ),
