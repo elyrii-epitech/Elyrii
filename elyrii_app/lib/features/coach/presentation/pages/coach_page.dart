@@ -6,18 +6,10 @@ class CoachPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Coach'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.settings);
-            },
-          ),
-        ],
-      ),
+      backgroundColor: isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
       body: const Center(
         child: Text(
           'Coach',

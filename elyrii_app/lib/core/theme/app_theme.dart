@@ -20,18 +20,18 @@ class AppTheme {
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundLight,
       colorScheme: ColorScheme.light(
-        primary: AppColors.primary,
-        primaryContainer: AppColors.primaryLight,
-        secondary: AppColors.secondary,
+        primary: AppColors.primary, // #9D7FFE - Violet brillant glossy (from #8B6FF0)
+        primaryContainer: AppColors.primaryLight, // #EBE3FF - Lavande glossy très pâle
+        secondary: AppColors.secondary, // #FFB5A8 - Pêche doux
         secondaryContainer: AppColors.secondaryLight,
-        tertiary: AppColors.accent,
+        tertiary: AppColors.accent, // #A8D5BA - Menthe douce
         tertiaryContainer: AppColors.accentLight,
         error: AppColors.error,
         errorContainer: AppColors.errorLight,
         surface: AppColors.surfaceLight,
         onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onTertiary: Colors.white,
+        onSecondary: AppColors.textPrimaryLight,
+        onTertiary: AppColors.textPrimaryLight,
         onError: Colors.white,
         onSurface: AppColors.textPrimaryLight,
         onSurfaceVariant: AppColors.textSecondaryLight,
@@ -241,21 +241,21 @@ class AppTheme {
       brightness: Brightness.dark,
       
       // Couleurs principales
-      primaryColor: AppColors.primary,
-      scaffoldBackgroundColor: AppColors.backgroundDark,
+      primaryColor: AppColors.primaryDark, // #B99CFF - Violet glossy très lumineux pour dark mode
+      scaffoldBackgroundColor: AppColors.backgroundDark, // #1A1818 - Noir chocolat
       colorScheme: ColorScheme.dark(
-        primary: AppColors.primary,
-        primaryContainer: AppColors.primaryDark,
-        secondary: AppColors.secondary,
-        secondaryContainer: AppColors.secondaryDark,
-        tertiary: AppColors.accent,
-        tertiaryContainer: AppColors.accentDark,
+        primary: AppColors.primaryDark, // #B99CFF - Violet glossy très lumineux
+        primaryContainer: AppColors.primary, // #9D7FFE - Violet brillant glossy
+        secondary: AppColors.secondaryDark, // #FFCCBF - Pêche très pâle
+        secondaryContainer: AppColors.secondary,
+        tertiary: AppColors.accentDark, // #C2E3D2 - Menthe pâle
+        tertiaryContainer: AppColors.accent,
         error: AppColors.error,
         errorContainer: AppColors.errorDark,
-        surface: AppColors.surfaceDark,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onTertiary: Colors.white,
+        surface: AppColors.surfaceDark, // #2A2627 - Brun très foncé
+        onPrimary: AppColors.textPrimaryDark,
+        onSecondary: AppColors.textPrimaryDark,
+        onTertiary: AppColors.textPrimaryDark,
         onError: Colors.white,
         onSurface: AppColors.textPrimaryDark,
         onSurfaceVariant: AppColors.textSecondaryDark,

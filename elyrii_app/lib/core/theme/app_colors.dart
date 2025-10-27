@@ -7,106 +7,112 @@ class AppColors {
 
   // ==================== COULEURS PRINCIPALES ====================
   
-  /// Couleur principale de l'application (violet/lavande apaisant)
-  static const Color primary = Color(0xFF8B7FC7);
-  static const Color primaryLight = Color(0xFFB8AEE8);
-  static const Color primaryDark = Color(0xFF6B5FA3);
+  /// Couleur principale de l'application (violet brillant et glossy)
+  /// Base: #8B6FF0 → Light: #9D7FFE (plus brillant et saturé)
+  /// Dark: #B99CFF - Violet glossy très lumineux
+  static const Color primary = Color(0xFF9D7FFE);
+  static const Color primaryLight = Color(0xFFEBE3FF); // Lavande glossy très pâle
+  static const Color primaryDark = Color(0xFFB99CFF); // Violet glossy très lumineux (dark mode)
   
-  /// Couleur secondaire (vert menthe doux)
-  static const Color secondary = Color(0xFF7EC8A3);
-  static const Color secondaryLight = Color(0xFFA8E3C5);
-  static const Color secondaryDark = Color(0xFF5FA885);
+  /// Couleur secondaire (pêche rosé chaleureux)
+  /// Light: #FFB5A8 - Pêche doux
+  /// Dark: #FFCCBF - Pêche très pâle
+  static const Color secondary = Color(0xFFFFB5A8);
+  static const Color secondaryLight = Color(0xFFFFE4DD);
+  static const Color secondaryDark = Color(0xFFFFCCBF); // Pêche pâle (dark mode)
   
-  /// Couleur d'accent (rose poudré)
-  static const Color accent = Color(0xFFE8A5C4);
-  static const Color accentLight = Color(0xFFF5C9DC);
-  static const Color accentDark = Color(0xFFD17FA5);
+  /// Couleur d'accent (menthe douce)
+  static const Color accent = Color(0xFFA8D5BA);
+  static const Color accentLight = Color(0xFFD4EFE0);
+  static const Color accentDark = Color(0xFFC2E3D2);
 
   // ==================== COULEURS ÉMOTIONNELLES ====================
   
-  /// Couleurs pour représenter les émotions dans le journal
-  static const Color emotionJoy = Color(0xFFFFC857); // Jaune joyeux
-  static const Color emotionSad = Color(0xFF6B9BD1); // Bleu mélancolique
-  static const Color emotionAnxiety = Color(0xFFE8A87C); // Orange anxiété
-  static const Color emotionCalm = Color(0xFF7EC8A3); // Vert calme
-  static const Color emotionAngry = Color(0xFFE56B6F); // Rouge colère
-  static const Color emotionNeutral = Color(0xFFB0B8C1); // Gris neutre
-  static const Color emotionExcited = Color(0xFFFF8FA3); // Rose excitation
-  static const Color emotionTired = Color(0xFF9B8E9F); // Violet fatigue
+  /// Couleurs douces pour représenter les émotions dans le journal
+  static const Color emotionJoy = Color(0xFFFDD876); // Jaune miel doux
+  static const Color emotionSad = Color(0xFF93B8DA); // Bleu ciel apaisant
+  static const Color emotionAnxiety = Color(0xFFFFCFA8); // Orange crème
+  static const Color emotionCalm = Color(0xFFA8D5BA); // Vert menthe doux
+  static const Color emotionAngry = Color(0xFFEA9999); // Rouge rosé doux
+  static const Color emotionNeutral = Color(0xFFBFC5D1); // Gris perle
+  static const Color emotionExcited = Color(0xFFFFB5D8); // Rose poudré
+  static const Color emotionTired = Color(0xFFC5B8D5); // Lavande grisée
 
   // ==================== COULEURS SÉMANTIQUES ====================
   
-  /// Couleurs pour les états de succès, erreur, warning, info
-  static const Color success = Color(0xFF5FCF80);
-  static const Color successLight = Color(0xFFB8F2C7);
-  static const Color successDark = Color(0xFF3BA55C);
+  /// Couleurs douces pour les états de succès, erreur, warning, info
+  static const Color success = Color(0xFF7BC393);
+  static const Color successLight = Color(0xFFCBEDD8);
+  static const Color successDark = Color(0xFF5FA87A);
   
-  static const Color error = Color(0xFFE85D75);
-  static const Color errorLight = Color(0xFFF5A3B3);
-  static const Color errorDark = Color(0xFFD13A52);
+  static const Color error = Color(0xFFEA9999);
+  static const Color errorLight = Color(0xFFF5CCCC);
+  static const Color errorDark = Color(0xFFD77F7F);
   
-  static const Color warning = Color(0xFFFFB347);
-  static const Color warningLight = Color(0xFFFFD89B);
-  static const Color warningDark = Color(0xFFE89A2E);
+  static const Color warning = Color(0xFFFFCFA8);
+  static const Color warningLight = Color(0xFFFFE7D1);
+  static const Color warningDark = Color(0xFFFFB888);
   
-  static const Color info = Color(0xFF6EBAFF);
-  static const Color infoLight = Color(0xFFB3DCFF);
-  static const Color infoDark = Color(0xFF4A9FE8);
+  static const Color info = Color(0xFF93B8DA);
+  static const Color infoLight = Color(0xFFD1E4F3);
+  static const Color infoDark = Color(0xFF7AA3C7);
 
   // ==================== COULEURS NEUTRES - LIGHT MODE ====================
   
-  static const Color backgroundLight = Color(0xFFFAF9FC);
+  /// Light Theme: Tons chauds et apaisants
+  static const Color backgroundLight = Color(0xFFFAF8F5); // Beige très clair chaleureux
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color cardLight = Color(0xFFF5F3F7);
+  static const Color cardLight = Color(0xFFF5F2EF); // Crème doux
   
-  static const Color textPrimaryLight = Color(0xFF2D2633);
-  static const Color textSecondaryLight = Color(0xFF6B6475);
-  static const Color textTertiaryLight = Color(0xFF9E98A7);
+  static const Color textPrimaryLight = Color(0xFF3D3A38);
+  static const Color textSecondaryLight = Color(0xFF766F6A);
+  static const Color textTertiaryLight = Color(0xFFA39C96);
   
-  static const Color dividerLight = Color(0xFFE8E3ED);
-  static const Color borderLight = Color(0xFFD1CAD9);
-  static const Color shadowLight = Color(0x1A2D2633);
+  static const Color dividerLight = Color(0xFFE8E3DD);
+  static const Color borderLight = Color(0xFFD9D2CC);
+  static const Color shadowLight = Color(0x1A3D3A38);
 
   // ==================== COULEURS NEUTRES - DARK MODE ====================
   
-  static const Color backgroundDark = Color(0xFF1A1625);
-  static const Color surfaceDark = Color(0xFF252131);
-  static const Color cardDark = Color(0xFF2F2B3A);
+  /// Dark Theme: Tons sombres chauds et confortables
+  static const Color backgroundDark = Color(0xFF1A1818); // Noir chocolat
+  static const Color surfaceDark = Color(0xFF2A2627); // Brun très foncé
+  static const Color cardDark = Color(0xFF352F31); // Brun foncé
   
-  static const Color textPrimaryDark = Color(0xFFF5F3F7);
-  static const Color textSecondaryDark = Color(0xFFB8B3BE);
-  static const Color textTertiaryDark = Color(0xFF8A8591);
+  static const Color textPrimaryDark = Color(0xFFF5F3F0);
+  static const Color textSecondaryDark = Color(0xFFCCC5BF);
+  static const Color textTertiaryDark = Color(0xFFA39C96);
   
-  static const Color dividerDark = Color(0xFF3A3642);
-  static const Color borderDark = Color(0xFF4A4551);
+  static const Color dividerDark = Color(0xFF453F3C);
+  static const Color borderDark = Color(0xFF554E4A);
   static const Color shadowDark = Color(0x33000000);
 
   // ==================== COULEURS SPÉCIFIQUES ====================
   
   /// Couleurs pour la gamification
-  static const Color xpBar = Color(0xFFFFD93D);
-  static const Color levelBadge = Color(0xFF8B7FC7);
-  static const Color streak = Color(0xFFFF6B6B);
+  static const Color xpBar = Color(0xFFFDD876); // Jaune miel doux
+  static const Color levelBadge = Color(0xFF9D7FFE); // Violet brillant glossy
+  static const Color streak = Color(0xFFFFB5A8); // Pêche doux
   
   /// Couleurs pour les objectifs
-  static const Color objectiveCompleted = Color(0xFF5FCF80);
-  static const Color objectiveInProgress = Color(0xFF6EBAFF);
-  static const Color objectiveNotStarted = Color(0xFFB0B8C1);
+  static const Color objectiveCompleted = Color(0xFF7BC393);
+  static const Color objectiveInProgress = Color(0xFF9D7FFE); // Violet brillant glossy
+  static const Color objectiveNotStarted = Color(0xFFBFC5D1);
   
   /// Couleurs pour la méditation
-  static const Color meditationActive = Color(0xFF7EC8A3);
-  static const Color meditationBreathing = Color(0xFF8B7FC7);
+  static const Color meditationActive = Color(0xFF9D7FFE); // Violet brillant glossy
+  static const Color meditationBreathing = Color(0xFFB99CFF); // Violet glossy très lumineux
   
   /// Gradient pour le chatbot
   static const LinearGradient chatbotGradient = LinearGradient(
-    colors: [Color(0xFF8B7FC7), Color(0xFFB8AEE8)],
+    colors: [Color(0xFF9D7FFE), Color(0xFFB99CFF)], // Violet brillant glossy -> Violet très lumineux
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
   
   /// Gradient pour les cartes importantes
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFFFAF9FC), Color(0xFFF5F3F7)],
+    colors: [Color(0xFFFAF8F5), Color(0xFFEBE3FF)], // Beige clair -> Lavande glossy très pâle
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
