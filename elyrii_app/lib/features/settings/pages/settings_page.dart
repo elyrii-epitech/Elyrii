@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
-class TempPage extends StatelessWidget {
-  const TempPage({super.key});
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Settings'),
+      ),
+      body: const Center(
         child: Text(
-          'Page Temporaire',
+          'Settings',
           style: TextStyle(fontSize: 24),
         ),
       ),
