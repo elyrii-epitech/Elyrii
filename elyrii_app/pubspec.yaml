@@ -45,10 +45,10 @@ dependencies:
   shared_preferences: ^2.2.2
   
   # Date & Time
-  intl: ^0.19.0
+  intl: ^0.20.2
   
   # Audio (pour méditation)
-  audioplayers: ^5.2.1
+  audioplayers: ^6.5.1
   
   # Animations
   lottie: ^3.0.0
@@ -57,10 +57,20 @@ dependencies:
   flutter_tts: ^4.0.2
   
   # Charts & Analytics
-  fl_chart: ^0.68.0
+  fl_chart: ^1.1.1
   
   # Webview (pour intégration Godot/mascotte)
   webview_flutter: ^4.5.0
+  
+  # Blur & Glass Effects
+  glassmorphism: ^3.0.0
+  
+  # Icons
+  iconsax: ^0.0.8
+  
+  # Advanced Animations
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
