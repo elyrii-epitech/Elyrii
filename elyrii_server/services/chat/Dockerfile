@@ -1,9 +1,13 @@
-FROM oven/bun:1
+FROM oven/bun
 
 WORKDIR /app
-COPY package.json /app
+
+COPY package*.json .
+
 RUN bun install
-COPY . /app
+
+COPY . .
+
 EXPOSE 3001
 
-ENTRYPOINT ["bun", "run", "dev"]
+CMD ["bun", "run", "dev"]
