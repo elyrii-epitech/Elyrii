@@ -48,10 +48,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      
-      // Thèmes
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+
       themeMode: _themeMode,
       initialRoute: AppRoutes.home,
       onGenerateRoute: RouteGenerator.generateRoute,

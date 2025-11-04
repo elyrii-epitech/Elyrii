@@ -6,10 +6,18 @@ class ChatbotPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
+      appBar: AppBar(
+        title: const Text('Chatbot'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.settings);
+            },
+          ),
+        ],
+      ),
       body: const Center(
         child: Text(
           'Chatbot',
