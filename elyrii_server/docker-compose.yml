@@ -1,0 +1,15 @@
+services:
+
+  auth:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    
+  chat:
+    build:
+      context: ./services/chat
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"

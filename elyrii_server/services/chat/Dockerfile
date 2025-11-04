@@ -1,4 +1,4 @@
-FROM oven/bun
+FROM oven/bun:1
 
 WORKDIR /app
 
@@ -8,6 +8,6 @@ RUN bun install
 
 COPY . .
 
-EXPOSE 3001
+EXPOSE 3002
 
 CMD ["bun", "run", "dev"]
