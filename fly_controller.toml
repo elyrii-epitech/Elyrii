@@ -1,0 +1,50 @@
+# Controller VM - Always-on, handles routing and GPU lifecycle
+app = "elyrii-controller"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "lyrii_ai/ControllerDockerfile"
+
+[env]
+  GPU_APP_NAME = "elyrii-vllm-gpu"
+  GPU_INTERNAL_URL = "http://elyrii-vllm-gpu.internal:8000"
+  STARTUP_TIMEOUT = "180"
+  IDLE_TIMEOUT = "300"
+  AI_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false  # Always on
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 100
+    soft_limit = 80
+
+[[vm]]
+  # Minimal resources - just routing
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "10s"
+    timeout = "5s"
+    method = "get"
+    path = "/health"
