@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 3001
 
-ENTRYPOINT ["sh", "-c", "(bun run db:generate || true) && (bun run db:migrate || true) && bun run start"]
+CMD ["bun", "run", "dev"]

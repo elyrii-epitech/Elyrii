@@ -4,22 +4,15 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --hot index.ts",
-    "docs:build": "bun i ; typedoc --out ../../docs/api/chat"
+    "dev": "bun run --hot index.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "typedoc": "^0.26.10"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5"
   },
   "dependencies": {
-    "@hono/standard-validator": "^0.1.5",
-    "@hono/swagger-ui": "^0.5.2",
-    "drizzle-orm": "^0.44.7",
-    "hono": "^4.10.6",
-    "hono-openapi": "^1.1.1",
-    "kafkajs": "^2.2.4"
+    "hono": "^4.10.4"
   }
 }
