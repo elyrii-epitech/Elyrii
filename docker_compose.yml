@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # vLLM GPU service (local testing)
+  vllm-gpu:
+    build:
+      context: ./elyrii_ai
+      dockerfile: Dockerfile
+    container_name: elyrii-vllm-gpu-local
+    ports:
+      - "8000:8000"
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    environment:
+      - AI_MODEL=${AI_MODEL:-mistralai/Mistral-7B-Instruct-v0.2}
+      - DEPLOYMENT_MODE=local
+      - TENSOR_PARALLEL_SIZE=${TENSOR_PARALLEL_SIZE:-1}
+      - GPU_MEMORY_UTILIZATION=${GPU_MEMORY_UTILIZATION:-0.85}
+      - MAX_MODEL_LEN=${MAX_MODEL_LEN:-4096}
+      - HF_TOKEN=${HF_TOKEN}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  # Controller service (local testing)
+  controller:
+    build:
+      context: ./elyrii_ai
+      dockerfile: ControllerDockerfile
+    container_name: elyrii-controller-local
+    ports:
+      - "8080:8080"
+    depends_on:
+      vllm-gpu:
+        condition: service_healthy
+    environment:
+      # Local URLs (use container names)
+      - GPU_APP_NAME=elyrii-vllm-gpu-local
+      - GPU_INTERNAL_URL=http://vllm-gpu:8000
+      - STARTUP_TIMEOUT=180
+      - IDLE_TIMEOUT=300
+      - AI_MODEL=${AI_MODEL:-mistralai/Mistral-7B-Instruct-v0.2}
+      # For local testing, FLY_API_TOKEN not needed (GPU always running)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  huggingface_cache:
+    driver: local
