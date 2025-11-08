@@ -7,9 +7,9 @@
 - [Key Features](#key-features)
 - [Architecture Diagram](#architecture-diagram)
 - [Tech Stack](#tech-stack)
-  - [Mobile](/docs/mobile/index.md)
-  - [Backend](/docs/backend/index.md)
-  - [AI](/docs/ai/index.md)
+  - [Mobile](docs/mobile/index.md)
+  - [Backend](docs/backend/index.md)
+  - [AI](docs/ai/index.md)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Backend Setup](#backend-setup)
@@ -31,15 +31,15 @@ The backend is implemented as a set of lightweight Hono micro‑services (TypeSc
 
 ## Key Features
 
-| Category | Feature |
-|---|---|
-| Chatbot | • Real‑time conversational AI powered by a fine‑tuned Mistral‑7B model.• Context‑aware replies, sentiment detection, and safe‑guard filters. |
+| Category | Feature                                                                                                                                                                            |
+|---|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Chatbot | • Real‑time conversational AI powered by a fine‑tuned Mistral‑7B model.• Context‑aware replies, sentiment detection, and safe‑guard filters.                                       |
 | Gamification | • Daily objectives (e.g., “Talk about your mood”, “Share a hobby”).• Quest system with progressive milestones and reward badges.• Leaderboard (optional) for friendly competition. |
-| User Management | • Secure email/password login via JWT.• Optional social login (Google/Apple). |
-| Data Persistence | • PostgreSQL for user profiles, quest progress, and chat logs.• Prisma ORM for type‑safe DB interactions. |
-| Micro‑service Architecture | • Separate services for Auth, Chat, Quest, and Notification.• Each service runs independently behind an API gateway (Hono). |
-| Cross‑Platform UI | • Flutter UI with Material Design on Android & iOS.• Adaptive layout for tablets and phones.• Voice input (speech‑to‑text) integration. |
-| Privacy‑First | • End‑to‑end encryption for chat transcripts.• GDPR‑compliant data handling. |
+| User Management | • Secure email/password login via JWT.• Optional social login (Google/Apple).                                                                                                      |
+| Data Persistence | • PostgreSQL for user profiles, quest progress, and chat logs.• Drizzle ORM for type‑safe DB interactions.                                                                         |
+| Micro‑service Architecture | • Separate services for Auth, Chat, Quest, and Notification.• Each service runs independently behind an API gateway (Hono).                                                        |
+| Cross‑Platform UI | • Flutter UI with Material Design on Android & iOS.• Adaptive layout for tablets and phones.• Voice input (speech‑to‑text) integration.                                            |
+| Privacy‑First | • End‑to‑end encryption for chat transcripts.• GDPR‑compliant data handling.                                                                                                       |
 
 ## Architecture Diagram
 
