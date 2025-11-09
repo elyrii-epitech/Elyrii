@@ -2,8 +2,8 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
-const CHAT_SERVICE_URL = Bun.env.CHAT_SERVICE_URL || "http://chat-service";
-const AUTH_SERVICE_URL = Bun.env.AUTH_SERVICE_URL || "http://localhost:8082";
+const CHAT_SERVICE_URL = Bun.env.CHAT_SERVICE_URL || "http://chat-service:3002";
+const AUTH_SERVICE_URL = Bun.env.AUTH_SERVICE_URL || "http://auth-service:3001";
 
 app.all("/chat/*", async (ctx) => {
     try {
@@ -47,7 +47,7 @@ app.all("/auth/*", async (ctx) => {
             method: rawReq.method,
             body: rawReq.method !== 'GET' && rawReq.method !== 'HEAD' ? rawReq.body : null,
             headers: headers,
-            duplex: 'half', // Important for streaming
+            duplex: 'half',
         } as RequestInit);
 
         return response;
