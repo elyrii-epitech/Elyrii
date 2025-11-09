@@ -3,7 +3,7 @@ app = "elyrii-controller"
 primary_region = "sjc"
 
 [build]
-  dockerfile = "lyrii_ai/ControllerDockerfile"
+  dockerfile = "elyrii_ai/ControllerDockerfile"
 
 [env]
   GPU_APP_NAME = "elyrii-vllm-gpu"
