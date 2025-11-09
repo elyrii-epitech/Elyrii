@@ -9,9 +9,9 @@ Welcome to the Elyrii documentation hub.
   - AI
 
 ## Quick Links
-- Mobile docs: ./mobile/
-- Server docs: ./server/
-- AI docs: ./ai/
+- Mobile docs: [mobile/](mobile/index.md)
+- Server docs: [server/](server/index.md)
+- AI docs: [ai/](ai/index.md)
 
 ## Overview
 To-do.
