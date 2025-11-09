@@ -1,15 +1,47 @@
 services:
-
-  auth:
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - CHAT_SERVICE_URL=http://chat-service:3002
+    networks:
+      - elyrii
+    depends_on:
+      auth-service: 
+        condition: service_started
+      chat-service: 
+        condition: service_started
+    command: sh -c "sleep 2 && bun run index.ts"
+  auth-service:
     build:
       context: ./services/auth
       dockerfile: Dockerfile
+    container_name: auth-service
     ports:
       - "3001:3001"
-    
-  chat:
+    environment:
+      - GATEWAY_URL=http://gateway:3000
+      - CHAT_SERVICE_URL=http://chat-service:3002
+      - PORT=3001
+    networks:
+      - elyrii    
+  chat-service:
     build:
       context: ./services/chat
       dockerfile: Dockerfile
+    container_name: chat-service
     ports:
       - "3002:3002"
+    environment:
+      - GATEWAY_URL=http://gateway:3000
+    networks:
+      - elyrii
+
+networks:
+  elyrii:
+    driver: bridge
