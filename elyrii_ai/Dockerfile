@@ -57,7 +57,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
 EXPOSE 8000
 
 # Launch script that handles dynamic configuration
-COPY entrypoint.sh /app/entrypoint.sh
+COPY vllm_entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]
