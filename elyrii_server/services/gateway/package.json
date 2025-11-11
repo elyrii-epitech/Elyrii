@@ -4,12 +4,10 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run --hot index.ts",
-    "docs:build": "bun i ; typedoc --out ../../docs/api/gateway"
+    "dev": "bun run --hot index.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "typedoc": "^0.26.10"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
