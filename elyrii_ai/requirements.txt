@@ -10,3 +10,8 @@ uvicorn[standard]>=0.24.0
 httpx>=0.25.0
 pydantic>=2.0.0
 python-multipart>=0.0.6
+
+# Sphinx documentation dependencies
+sphinx>=7.0.0
+sphinx-rtd-theme>=2.0.0
+sphinx-autodoc-typehints>=1.25.0
