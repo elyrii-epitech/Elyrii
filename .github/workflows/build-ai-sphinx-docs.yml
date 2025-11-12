@@ -87,7 +87,7 @@ jobs:
           pip install -r elyrii_ai/docs/requirements.txt
 
       - name: Check documentation coverage
-        working-directory: elyrii_ai/docs
+        working-directory: elyrii_ai/docs/source
         run: |
           make coverage
           echo "### 📊 Documentation Coverage Report" >> $GITHUB_STEP_SUMMARY
