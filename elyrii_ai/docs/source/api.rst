@@ -1,81 +1,38 @@
+
 API Reference
 =============
 
 This section contains the detailed API documentation for all modules in the Elyrii AI package.
 
-AI Module
----------
+AI Module (ai.py)
+-----------------
+
+The main AI client for interacting with vLLM models.
 
 .. automodule:: ai
    :members:
    :undoc-members:
    :show-inheritance:
+   :member-order: bysource
 
-AI Class
-~~~~~~~~
+Configuration Module (config.py)
+---------------------------------
 
-.. autoclass:: ai.AI
-   :members:
-   :undoc-members:
-   :special-members: __init__
-   :show-inheritance:
+Configuration classes and deployment settings.
 
-   .. automethod:: __init__
-   .. automethod:: send_message
-   .. automethod:: generate_completion
-   .. automethod:: reset_conversation
-   .. automethod:: get_models
-   .. automethod:: check_health
-
-Configuration Module
---------------------
-
-.. automodule:: config
+.. automodule:: ai_config
    :members:
    :undoc-members:
    :show-inheritance:
+   :member-order: bysource
 
-AIConfig Class
-~~~~~~~~~~~~~~
+Controller Module (controller.py)
+----------------------------------
 
-.. autoclass:: config.AIConfig
-   :members:
-   :undoc-members:
-   :special-members: __init__
-   :show-inheritance:
-
-DeploymentMode Enum
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: config.DeploymentMode
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Controller Module
------------------
+FastAPI controller for GPU machine lifecycle management.
 
 .. automodule:: controller
    :members:
    :undoc-members:
    :show-inheritance:
-
-GPUManager Class
-~~~~~~~~~~~~~~~~
-
-.. autoclass:: controller.GPUManager
-   :members:
-   :undoc-members:
-   :special-members: __init__
-   :show-inheritance:
-
-Request/Response Models
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: controller.ChatRequest
-   :members:
-   :undoc-members:
-
-.. autoclass:: controller.ChatResponse
-   :members:
-   :undoc-members:
+   :member-order: bysource

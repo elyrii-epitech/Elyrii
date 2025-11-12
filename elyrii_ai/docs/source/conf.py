@@ -8,7 +8,14 @@ import os
 import sys
 
 # Add the parent directory to sys.path to enable autodoc to find the modules
-sys.path.insert(0, os.path.abspath('../../..'))
+sys.path.insert(0, os.path.abspath('../..'))
+
+autodoc_mock_imports = [
+    'fastapi',
+    'uvicorn',
+    'httpx',
+    'pydantic',
+]
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -54,6 +61,10 @@ autodoc_default_options = {
     'undoc-members': True,
     'exclude-members': '__weakref__'
 }
+
+# Don't show type hints in signature (they're in the description)
+autodoc_typehints = 'description'
+autodoc_typehints_description_target = 'documented'
 
 # Intersphinx mapping
 intersphinx_mapping = {
