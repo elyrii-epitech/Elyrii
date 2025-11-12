@@ -62,7 +62,7 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-   :caption: Documentation:
+   :caption: Documentation
 
    api
    configuration
@@ -74,4 +74,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-```
