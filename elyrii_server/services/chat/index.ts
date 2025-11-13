@@ -14,9 +14,11 @@ app.get("/ws", upgradeWebSocket(async (ctx) => {
         onClose: (event, ws) => {
             console.log("Client disconnected");
         },
-        onMessage: (event, ws) => {
+        onMessage: async (event, ws) => {
             console.log("Client message: ", event.data);
+            // add message handling with the ai directly here
             ws.send("Hello " + event.data);
+            // After sending back to the user store in the db or in a different process duplicate the message and save it in the db
         },
     }
 }))
