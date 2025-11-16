@@ -2,7 +2,9 @@ import { Hono } from "hono"
 import type { WSContext } from "hono/ws";
 import { upgradeWebSocket, websocket } from "hono/bun";
 import { initKafka } from "./src/service/kafka.service";
+import { kafkaService } from "./src/service/kafka.service";
 import { sendMessageToTopic } from "./src/service/producer.service";
+import { handleAiResponse } from "./src/service/consumer.service";
 
 export const clientSockets = new Map<string, WSContext>();
 
@@ -37,6 +39,25 @@ app.get("/ws", upgradeWebSocket(async (ctx) => {
 }))
 
 initKafka().catch((err) => console.error(err));
+handleAiResponse().catch((err) => console.error(err));
+
+process.on("SIGINT", async () => {
+    console.log("Chat service is shutting down");
+    await Promise.all([
+        kafkaService.producer.disconnect(),
+        kafkaService.consumer.disconnect()
+    ]);
+    process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+    console.log("Chat service is shutting down");
+    await Promise.all([
+        kafkaService.producer.disconnect(),
+        kafkaService.consumer.disconnect()
+    ]);
+    process.exit(0);
+});
 
 Bun.serve({
     port: 3002,
