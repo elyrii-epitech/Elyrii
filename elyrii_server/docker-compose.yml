@@ -45,7 +45,7 @@ services:
       - elyrii
     depends_on:
       redpanda:
-        condition: service_started
+        condition: service_healthy
 
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:latest
@@ -65,6 +65,12 @@ services:
         --advertise-kafka-addr PLAINTEXT://redpanda:9092
     volumes:
       - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     networks:
       - elyrii
 
