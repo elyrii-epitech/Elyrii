@@ -1,53 +1,42 @@
 import { Hono } from "hono"
-import { chatHistory } from "./src/chat.controller";
+import type { WSContext } from "hono/ws";
 import { upgradeWebSocket, websocket } from "hono/bun";
-import { kafkaService } from "./src/service/kafka.service";
-import run from "./src/utils/test";
+import { initKafka } from "./src/service/kafka.service";
+import { sendMessageToTopic } from "./src/service/producer.service";
+
+export const clientSockets = new Map<string, WSContext>();
 
 const app = new Hono().basePath("/chat");
 
-const wsClients = new Map<string, any>();
-
-app.get("/history", ...chatHistory);
 app.get("/health", (ctx) => {
     return ctx.json({message: "Chat service is healthy"});
 })
-app.get("/test", async (ctx) => {
-    await run();
-    return ctx.json({message: "Hello"});
-})
+
 app.get("/ws", upgradeWebSocket(async (ctx) => {
+    const url = new URL(ctx.req.url, `http://${ctx.req.header("host")}`);
+    const userId = url.searchParams.get("userId");
+
     return {
         onOpen: async (event, ws) => {
             console.log("Client connected");
-            //await kafkaService.producer.connect(); 
-            ws.send("Hello");
-              
-            await kafkaService.producer.send({
-                    topic: "elyrii.ai.requests",
-                    messages: [{
-                        key: "userId",
-                        value: JSON.stringify({
-                            userID: "userId",
-                            message: "Hello nigga",
-                            timestamp: new Date().toISOString(),
-                        }),
-                    },],
-            });
-            
+            if (!userId) return;
+            clientSockets.set(userId, ws);
         },
         onClose: (event, ws) => {
             console.log("Client disconnected");
+            if (!userId) return;
+            clientSockets.delete(userId);
         },
         onMessage: async (event, ws) => {
             const message = event.data.toString();
-            console.log("Client message: ", event.data);
-            // add message handling with the ai directly here
-            ws.send("Hello " + event.data.toString());
-            // After sending back to the user store in the db or in a different process duplicate the message and save it in the db
+            if (!userId) return;
+            await sendMessageToTopic(userId, message);
+            // Optional: somehow store the messages.
         },
     }
 }))
+
+initKafka().catch((err) => console.error(err));
 
 Bun.serve({
     port: 3002,
