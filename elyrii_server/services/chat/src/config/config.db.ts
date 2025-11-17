@@ -7,7 +7,9 @@ const getDatabaseConfig = () => {
         password: process.env.DB_PASS || 'postgres',
         database: process.env.DB_NAME || 'postgres',
         port: 5432,
-        ssl: { rejectUnauthorized: false },
+        ssl: Bun.env.NODE_ENV === 'production'
+            ? { rejectUnauthorized: true }
+            : { rejectUnauthorized: false },
     };
 
     if (process.env.NODE_ENV === 'production') {
