@@ -12,11 +12,12 @@ services:
     networks:
       - elyrii
     depends_on:
-      auth-service: 
+      auth-service:
         condition: service_started
-      chat-service: 
+      chat-service:
         condition: service_started
     command: sh -c "sleep 2 && bun run index.ts"
+
   auth-service:
     build:
       context: ./services/auth
@@ -29,7 +30,8 @@ services:
       - CHAT_SERVICE_URL=http://chat-service:3002
       - PORT=3001
     networks:
-      - elyrii    
+      - elyrii
+
   chat-service:
     build:
       context: ./services/chat
@@ -41,6 +43,52 @@ services:
       - GATEWAY_URL=http://gateway:3000
     networks:
       - elyrii
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda
+    ports:
+      - "9092:9092"       # Kafka API
+      - "9644:9644"       # Admin API
+    command: >
+      redpanda start
+        --overprovisioned
+        --smp 1
+        --memory 1G
+        --reserve-memory 0M
+        --check=false
+        --node-id=1
+        --kafka-addr PLAINTEXT://0.0.0.0:9092
+        --advertise-kafka-addr PLAINTEXT://redpanda:9092
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - elyrii
+
+  redpanda_console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda_console
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redpanda
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      REDPANDA_ADMIN_URL: http://redpanda:9644
+    networks:
+      - elyrii
+
+volumes:
+  redpanda_data:
 
 networks:
   elyrii:
