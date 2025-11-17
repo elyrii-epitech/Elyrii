@@ -1,9 +1,10 @@
 import { Hono } from "hono"
 import type { WSContext } from "hono/ws";
 import { upgradeWebSocket, websocket } from "hono/bun";
+import { swaggerUI } from "@hono/swagger-ui";
 import { initKafka } from "./src/service/kafka.service";
 import { kafkaService } from "./src/service/kafka.service";
-import { describeRoute, resolver, validator } from 'hono-openapi'
+import { describeRoute, openAPIRouteHandler } from "hono-openapi";
 import { handleAiResponse } from "./src/service/consumer.service";
 import { sendMessageToTopic } from "./src/service/producer.service";
 
@@ -59,6 +60,30 @@ app.get("/ws", describeRoute({
             // Optional: somehow store the messages.
         },
     }
+}))
+
+app.get("/openapi.json", openAPIRouteHandler(app, {
+    documentation: {
+        info: {
+            title: "Elyrii Chat Service",
+            version: "1.0.0",
+            description: "API contract for the Elyrii chat microservice."
+        },
+        servers: [
+            {
+                url: Bun.env.CHAT_SERVICE_PUBLIC_URL ?? "http://localhost:3002/",
+                description: "Current deployment base URL"
+            }
+        ],
+        tags: [
+            { name: "Chat", description: "Chat service endpoints" }
+        ]
+    }
+}))
+
+app.get("/swag", swaggerUI({
+    url: "/chat/openapi.json",
+    title: "Elyrii Chat Service API",
 }))
 
 initKafka().catch((err) => console.error("Failed to initialize Kafka: ", err));
