@@ -1,3 +1,8 @@
+/**
+ * @module ChatService
+ * Real-time chat service with WebSocket support and Kafka integration
+ */
+
 import { Hono } from "hono"
 import type { WSContext } from "hono/ws";
 import { upgradeWebSocket, websocket } from "hono/bun";
@@ -8,7 +13,10 @@ import { describeRoute, openAPIRouteHandler } from "hono-openapi";
 import { handleAiResponse } from "./src/service/consumer.service";
 import { sendMessageToTopic } from "./src/service/producer.service";
 
-
+/**
+ * Map to store active WebSocket connections indexed by user ID
+ * @type {Map<string, WSContext>}
+ */
 export const clientSockets = new Map<string, WSContext>();
 
 const app = new Hono().basePath("/chat");

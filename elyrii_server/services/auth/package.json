@@ -6,10 +6,12 @@
   "version": "1.0.0",
   "description": "Auth service",
   "scripts": {
-    "dev": "bun run --hot index.ts"
+    "dev": "bun run --hot index.ts",
+    "docs:build": "typedoc --out ../../docs/api/auth"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "typedoc": "^0.26.10"
   },
   "peerDependencies": {
     "typescript": "^5"
