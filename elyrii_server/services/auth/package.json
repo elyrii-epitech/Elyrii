@@ -11,12 +11,17 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.7",
     "typedoc": "^0.26.10"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "hono": "^4.10.4"
+    "drizzle-orm": "^0.44.7",
+    "hono": "^4.10.4",
+    "pg": "^8.16.3",
+    "quansync": "^0.2.11"
   }
 }
