@@ -2,12 +2,12 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "Elyrii Server Documentation",
   "entryPoints": [
-    "./services/auth/index.ts",
-    "./services/chat/index.ts",
-    "./services/gateway/index.ts"
+    "../services/auth/index.ts",
+    "../services/chat/index.ts",
+    "../services/gateway/index.ts"
   ],
   "entryPointStrategy": "expand",
-  "out": "./docs/api",
+  "out": "../docs/api",
   "exclude": [
     "**/node_modules/**",
     "**/tests/**",
@@ -17,7 +17,7 @@
   ],
   "plugin": ["typedoc-plugin-markdown"],
   "theme": "markdown",
-  "readme": "./README.md",
+  "readme": "../README.md",
   "excludePrivate": false,
   "excludeInternal": false,
   "excludeExternals": false,
