@@ -55,7 +55,7 @@ class GlassBubbleButton extends StatelessWidget {
     final effectiveShimmerColor =
         shimmerColor ?? AppColors.primary.withValues(alpha: 0.3);
 
-    Widget buttonContent = Container(
+    Widget buttonContent = SizedBox(
       width: size,
       height: size,
       child: Stack(
