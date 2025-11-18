@@ -20,7 +20,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.1'
+          flutter-version: '3.27.0'
+          channel: 'stable'
 
       - name: Install dependencies
         run: flutter pub get
@@ -54,7 +55,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.1'
+          flutter-version: '3.27.0'
+          channel: 'stable'
 
       - name: Install dependencies
         run: flutter pub get
