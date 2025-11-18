@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../routes/app_routes.dart';
 import '../../../../main.dart';
 
 class DashboardPage extends StatelessWidget {

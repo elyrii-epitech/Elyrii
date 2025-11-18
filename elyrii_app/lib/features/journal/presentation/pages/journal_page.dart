@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../routes/app_routes.dart';
 
 class JournalPage extends StatelessWidget {
   const JournalPage({super.key});

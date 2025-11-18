@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
@@ -29,6 +31,7 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _navBarScaleAnimation;
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
+  bool _isPressed = false;
   int _pressedIndex = -1;
 
   final List<Widget> _pages = const [

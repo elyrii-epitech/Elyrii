@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:elyrii_app/routes/app_routes.dart';
 
 class CoachPage extends StatelessWidget {
   const CoachPage({super.key});
