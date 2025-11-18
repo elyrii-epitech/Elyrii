@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: elyrii_server
+        working-directory: elyrii_server/scripts
 
     steps:
       - name: Checkout repository
@@ -34,13 +34,13 @@ jobs:
         run: bun install
 
       - name: Build server documentation
-        run: bun run docs
+        run: ./generate-docs.sh
 
       - name: Upload server docs artifact
         uses: actions/upload-artifact@v4
         with:
           name: server-docs-html
-          path: docs/
+          path: elyrii_server/docs/
           retention-days: 30
 
       - name: Build summary
