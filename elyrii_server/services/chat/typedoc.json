@@ -1,0 +1,27 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Chat Service",
+  "entryPoints": ["./index.ts"],
+  "out": "../../docs/api/chat",
+  "exclude": [
+    "**/node_modules/**",
+    "**/tests/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "tsconfig": "./tsconfig.json",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "markdown",
+  "includeVersion": true,
+  "readme": "none",
+  "excludePrivate": false,
+  "excludeInternal": false,
+  "categorizeByGroup": true,
+  "searchInComments": true,
+  "githubPages": true,
+  "hideGenerator": true,
+  "hideBreadcrumbs": false,
+  "hideInPageTOC": false,
+  "namedAnchors": true,
+  "allReflectionsHaveOwnDocument": true
+}
