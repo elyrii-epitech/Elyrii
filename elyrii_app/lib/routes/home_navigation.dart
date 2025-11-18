@@ -21,8 +21,6 @@ class _HomeNavigationState extends State<HomeNavigation>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
   late List<AnimationController> _iconControllers;
-  late List<Animation<double>> _iconScaleAnimations;
-  late List<Animation<double>> _iconBounceAnimations;
   late AnimationController _navBarController;
   late Animation<double> _navBarAnimation;
   late AnimationController _navBarPulseController;
@@ -63,24 +61,8 @@ class _HomeNavigationState extends State<HomeNavigation>
     );
 
     // Animations de scale (agrandissement)
-    _iconScaleAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 1.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-    }).toList();
 
     // Animations de bounce (rebond)
-    _iconBounceAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.elasticOut,
-        ),
-      );
-    }).toList();
 
     // Animation d'apparition de la navbar
     _navBarController = AnimationController(
@@ -248,7 +230,7 @@ class _HomeNavigationState extends State<HomeNavigation>
       },
       size: 54,
       showShimmer: isChatbotSelected, // Shimmer uniquement si sélectionné
-      shimmerColor: AppColors.primary.withOpacity(0.3),
+      shimmerColor: AppColors.primary.withValues(alpha: 0.3),
       isDark: isDark,
       scaleAnimation: _navBarScaleAnimation,
       flashAnimation: _flashAnimation,
