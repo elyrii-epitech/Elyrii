@@ -27,13 +27,13 @@ class DashboardProvider extends ChangeNotifier {
     try {
       // TODO: Appeler l'API pour récupérer les vraies données
       await Future.delayed(const Duration(seconds: 1));
-      
+
       // Simulation de données
       _pendingDeliveries = 12;
       _completedDeliveries = 48;
       _scheduledDeliveries = 8;
       _problemDeliveries = 2;
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {

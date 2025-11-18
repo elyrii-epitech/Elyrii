@@ -7,7 +7,7 @@ import 'routes/route_generator.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Configuration de la barre de statut
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -15,13 +15,13 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  
+
   // Verrouiller l'orientation en portrait
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  
+
   runApp(const MyApp());
 }
 
@@ -37,9 +37,8 @@ class _MyAppState extends State<MyApp> {
 
   void _toggleTheme() {
     setState(() {
-      _themeMode = _themeMode == ThemeMode.light 
-          ? ThemeMode.dark 
-          : ThemeMode.light;
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     });
   }
 
@@ -48,7 +47,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      
+
       // Thèmes
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
