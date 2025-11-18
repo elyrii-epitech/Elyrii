@@ -1,0 +1,60 @@
+# GPU Machine - Auto-stops after idle, stores model in persistent volume
+app = "elyrii-vllm-gpu"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "elyrii_ai/Dockerfile"
+
+[env]
+  AI_MODEL = "mistralai/Mistral-7B-Instruct-v0.2"
+  DEPLOYMENT_MODE = "flyio"
+  GPU_MEMORY_UTILIZATION = "0.90"
+  TENSOR_PARALLEL_SIZE = "1"
+  MAX_MODEL_LEN = "8192"
+
+[http_service]
+  internal_port = 8000
+  force_https = false  # Internal only
+  auto_stop_machines = true
+  auto_start_machines = false  # Controller starts it
+  min_machines_running = 0
+
+  # Auto-stop after 5 minutes idle
+  [http_service.auto_stop_machines]
+    enabled = true
+    idle_timeout = "5m"
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  # A100-40GB GPU
+  gpu_kind = "a100-40gb"
+  cpus = 8
+  memory_gb = 32
+
+[mounts]
+  # Persistent volume for model weights
+  source = "vllm_models"
+  destination = "/root/.cache/huggingface"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8000
+  auto_stop_machines = true
+  auto_start_machines = false
+
+  # Allow time for model loading
+  [[services.tcp_checks]]
+    interval = "30s"
+    timeout = "10s"
+    grace_period = "300s"
+
+  [[services.http_checks]]
+    interval = "30s"
+    timeout = "10s"
+    grace_period = "300s"
+    method = "get"
+    path = "/health"
