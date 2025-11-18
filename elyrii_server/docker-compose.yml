@@ -31,6 +31,9 @@ services:
       - PORT=3001
     networks:
       - elyrii
+    depends_on:
+      redpanda:
+        condition: service_healthy
 
   chat-service:
     build:
