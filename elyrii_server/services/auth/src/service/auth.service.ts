@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { logger } from "hono/logger";
+import AuthController from "../controller/auth.controller";
 
 class AuthService {
     private readonly app = new Hono().basePath("/auth");
+    private readonly controller = new AuthController();
 
     constructor() {
         this.useMiddlewares();
@@ -12,8 +13,11 @@ class AuthService {
     useMiddlewares() {}
 
     initRoutes() {
-        this.app.get("/", (c) => c.text("Hello World"));
-        this.app.get("/health", (c) => c.text("OK"));
+        this.app.get("/health", (c) => c.text("Auth Service Healthy"));
+
+        this.app.post("/login", ...this.controller.login);
+        this.app.post("/logout", ...this.controller.logout);
+        this.app.post("/register", ...this.controller.register);
     }
 
     get service() {
