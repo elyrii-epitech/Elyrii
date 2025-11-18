@@ -105,7 +105,8 @@ class GlassBubbleButton extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
                       blurRadius: 24,
                       spreadRadius: 0,
                       offset: const Offset(0, 10),

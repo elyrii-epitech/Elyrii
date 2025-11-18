@@ -82,7 +82,8 @@ class GlassNavigationBar extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
                       blurRadius: 24,
                       spreadRadius: 0,
                       offset: const Offset(0, 10),
@@ -259,12 +260,12 @@ class RadialFlashPainter extends CustomPainter {
     // Créer un gradient radial avec opacité qui diminue progressivement
     final gradient = RadialGradient(
       colors: [
-        Colors.white.withValues(alpha: (
-            (0.6 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0))),
-        Colors.white.withValues(alpha: (
-            (0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0))),
-        Colors.white.withValues(alpha: (
-            (0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(
+            alpha: ((0.6 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(
+            alpha: ((0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(
+            alpha: ((0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0))),
         Colors.white.withValues(alpha: 0),
       ],
       stops: const [0.0, 0.3, 0.6, 1.0],
