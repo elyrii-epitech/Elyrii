@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
 import { db } from "../config/db.config";
-import { userTable } from "../config/db/user.table";
+import { userTable, type NewUser } from "../config/db/user.table";
  
 type AuthUserCredentials = {
     readonly id: string;
-    readonly password: string;
+    readonly password?: string | undefined
 };
 
 /**
@@ -32,6 +32,28 @@ class AuthRepository {
         return (await db.select({
             id: userTable.id, password: userTable.password
         }).from(userTable).where(eq(userTable.email, email)))[0];
+    }
+
+    async createUser(userData: NewUser): Promise<AuthUserCredentials | undefined> {
+        let hashed;
+        try {
+            hashed = await Bun.password.hash(userData.password)
+            if (!hashed) {
+                throw new Error("Error while hashing password");
+            }
+            const user = await db.insert(userTable).values({
+                email: userData.email,
+                lastName: userData.lastName,
+                firstName: userData.firstName,
+                password: hashed,
+                age: userData.age,
+            }).returning({
+                id: userTable.id
+            })
+            return user[0];
+        } catch (error: any) {
+            throw new Error(error.message)
+        }
     }
 }
 
