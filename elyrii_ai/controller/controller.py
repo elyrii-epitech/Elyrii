@@ -3,16 +3,15 @@ Controller service for managing GPU machine lifecycle.
 Handles authentication, request routing, and GPU auto-start.
 """
 
+import logging
 import os
 import time
-import logging
-import requests
-import asyncio
 from typing import Optional, Dict, Any
-from fastapi import FastAPI, HTTPException, Request, Depends
+
+import httpx
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import httpx
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir \
     python-multipart
 
 # Copy controller code
-COPY controller.py /app/
-COPY requirements.txt /app/ 2>/dev/null || true
+COPY elyrii_ai/controller/controller.py /app/
+COPY elyrii_ai/requirements.txt /app/
 
 # Expose port
 EXPOSE 8080
