@@ -2,6 +2,7 @@ import { sValidator } from "@hono/standard-validator";
 import { createFactory } from "hono/factory";
 import { registerValidation } from "../utils/zod.valid";
 import AuthRepository from "../repository/auth.repository";
+import { generateToken } from "../utils/jwt.utils";
 /**
  * Controller that defines HTTP handlers for authentication routes.
  */
@@ -32,7 +33,13 @@ class AuthController {
                     age: age ?? 18,
                 });
                 //TODO: create the jwt logic here
-                return ctx.json({ message: "User registered successfully", user: { ...user, password: undefined } });
+
+                const tokenPayload = {
+                    userId: user!.id,
+                    email: user!.email
+                };
+                const token = await generateToken(tokenPayload);
+                return ctx.json({ message: "User registered successfully", token});
             } catch (error) {
                 console.error("Registration error:", error);
                 return ctx.json({ error: "Registration failed" }, 500);

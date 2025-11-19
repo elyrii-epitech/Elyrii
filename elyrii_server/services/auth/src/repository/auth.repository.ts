@@ -7,6 +7,11 @@ type AuthUserCredentials = {
     readonly password?: string | undefined
 };
 
+type AuthUser = {
+    readonly id: string;
+    readonly email: string;
+};
+
 /**
  * Repository responsible for retrieving user authentication data.
  */
@@ -34,8 +39,9 @@ class AuthRepository {
         }).from(userTable).where(eq(userTable.email, email)))[0];
     }
 
-    async createUser(userData: NewUser): Promise<AuthUserCredentials | undefined> {
+    async createUser(userData: NewUser): Promise<AuthUser | undefined> {
         let hashed;
+
         try {
             hashed = await Bun.password.hash(userData.password)
             if (!hashed) {
@@ -48,7 +54,8 @@ class AuthRepository {
                 password: hashed,
                 age: userData.age,
             }).returning({
-                id: userTable.id
+                id: userTable.id,
+                email: userTable.email
             })
             return user[0];
         } catch (error: any) {
