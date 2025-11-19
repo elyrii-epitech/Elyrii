@@ -1,5 +1,8 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-
+/**
+ * Builds the database configuration object from environment variables.
+ * Falls back to sensible defaults for local development.
+ */
 const getDatabaseConfig = () => {
     const config = {
         host: process.env.DB_HOST || 'localhost',
@@ -22,4 +25,7 @@ const getDatabaseConfig = () => {
 const config = getDatabaseConfig();
 const connectionString = `postgres://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}?sslmode=require`;
 
+/**
+ * Drizzle ORM database client used by the auth service.
+ */
 export const db = drizzle(connectionString);
