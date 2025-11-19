@@ -1,6 +1,6 @@
 # GPU Machine - Auto-stops after idle, stores model in persistent volume
 app = "elyrii-vllm-gpu"
-primary_region = "sjc"
+primary_region = "ord"
 
 [build]
   dockerfile = "elyrii_ai/Dockerfile"
@@ -19,11 +19,6 @@ primary_region = "sjc"
   auto_start_machines = false  # Controller starts it
   min_machines_running = 0
 
-  # Auto-stop after 5 minutes idle
-  [http_service.auto_stop_machines]
-    enabled = true
-    idle_timeout = "5m"
-
   [http_service.concurrency]
     type = "requests"
     hard_limit = 25
@@ -31,7 +26,7 @@ primary_region = "sjc"
 
 [[vm]]
   # A100-40GB GPU
-  gpu_kind = "a100-40gb"
+  gpu_kind = "a100-pcie-40gb"
   cpus = 8
   memory_gb = 32
 
@@ -50,11 +45,11 @@ primary_region = "sjc"
   [[services.tcp_checks]]
     interval = "30s"
     timeout = "10s"
-    grace_period = "300s"
+    grace_period = "60s"
 
   [[services.http_checks]]
     interval = "30s"
     timeout = "10s"
-    grace_period = "300s"
+    grace_period = "60s"
     method = "get"
     path = "/health"
