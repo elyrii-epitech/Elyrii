@@ -5,7 +5,7 @@ const getDatabaseConfig = () => {
         host: process.env.DB_HOST || 'localhost',
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASS || 'postgres',
-        database: process.env.DB_NAME || 'postgres',
+        database: process.env.DB_NAME || 'elyrii',
         port: 5432,
         ssl: { rejectUnauthorized: false },
     };
