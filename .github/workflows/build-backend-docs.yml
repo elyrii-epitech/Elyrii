@@ -38,8 +38,9 @@ jobs:
           cd ../../scripts && bun install
 
       - name: Build server documentation
-        run: ./generate-docs.sh
-
+        run: |
+          cd scripts && ./generate-docs.sh
+          
       - name: Upload server docs artifact
         uses: actions/upload-artifact@v4
         with:
