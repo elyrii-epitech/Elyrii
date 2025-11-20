@@ -2,7 +2,7 @@ import { sValidator } from "@hono/standard-validator";
 import { createFactory } from "hono/factory";
 import { registerValidation } from "../utils/zod.valid";
 import AuthRepository from "../repository/auth.repository";
-import { generateToken } from "../utils/jwt.utils";
+import { generateAccessToken } from "../utils/jwt.utils";
 /**
  * Controller that defines HTTP handlers for authentication routes.
  */
@@ -38,7 +38,7 @@ class AuthController {
                     userId: user!.id,
                     email: user!.email
                 };
-                const token = await generateToken(tokenPayload);
+                const token = await generateAccessToken(tokenPayload);
                 return ctx.json({ message: "User registered successfully", token});
             } catch (error) {
                 console.error("Registration error:", error);

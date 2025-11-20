@@ -7,7 +7,7 @@ export type tokenPayload = {
 
 export const ACCESS_TOKEN_EXP = 60 * 15;
 
-export const generateToken = async (payload: tokenPayload): Promise<string> => {
+export const generateAccessToken = async (payload: tokenPayload): Promise<string> => {
     try {
         const token = await sign({
             ...payload,
@@ -16,17 +16,17 @@ export const generateToken = async (payload: tokenPayload): Promise<string> => {
         }, Bun.env.SECRET_KEY as string, "HS256");
         return token;
     } catch (error) {
-        console.error("Error generating token:", error);
+        console.error("Error generating access token:", error);
         throw error;
     }
 };
 
-export const verifyToken = async (token: string): Promise<tokenPayload | null> => {
+export const verifyAccessToken = async (token: string): Promise<tokenPayload | null> => {
     try {
         const payload = await verify(token, Bun.env.SECRET_KEY as string, "HS256");
         return payload as tokenPayload;
     } catch (error) {
-        console.error("Error verifying token:", error);
+        console.error("Error verifying access token:", error);
         return null;
     }
 };
