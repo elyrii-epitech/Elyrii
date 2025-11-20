@@ -53,6 +53,23 @@ class AuthController {
     readonly logout = this.factory.createHandlers(async (ctx) => {
         return ctx.json({ message: "Logout" });
     });
+    
+
+    /**
+     * Handler for refreshing access tokens.
+     */
+    readonly refreshToken = this.factory.createHandlers(async (ctx) => {
+        // TODO: Implement refresh token logic
+        return ctx.json({ message: "Refresh token" });
+    });
+
+    /**
+     * Handler for verifying access tokens.
+     */
+    readonly verifyToken = this.factory.createHandlers(async (ctx) => {
+        // TODO: Implement token verification logic
+        return ctx.json({ message: "Token verified" });
+    });
 }
 
 export default AuthController;
