@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../routes/app_routes.dart';
 
 class ChallengesPage extends StatelessWidget {
   const ChallengesPage({super.key});

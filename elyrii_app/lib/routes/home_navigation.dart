@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
@@ -23,8 +21,6 @@ class _HomeNavigationState extends State<HomeNavigation>
     with TickerProviderStateMixin {
   int _currentIndex = 0;
   late List<AnimationController> _iconControllers;
-  late List<Animation<double>> _iconScaleAnimations;
-  late List<Animation<double>> _iconBounceAnimations;
   late AnimationController _navBarController;
   late Animation<double> _navBarAnimation;
   late AnimationController _navBarPulseController;
@@ -254,7 +250,7 @@ class _HomeNavigationState extends State<HomeNavigation>
       },
       size: 54,
       showShimmer: isChatbotSelected, // Shimmer uniquement si sélectionné
-      shimmerColor: AppColors.primary.withOpacity(0.3),
+      shimmerColor: AppColors.primary.withValues(alpha: 0.3),
       isDark: isDark,
       scaleAnimation: _navBarScaleAnimation,
       flashAnimation: _flashAnimation,

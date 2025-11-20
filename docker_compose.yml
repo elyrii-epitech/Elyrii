@@ -37,7 +37,7 @@ services:
   controller:
     build:
       context: ./elyrii_ai
-      dockerfile: ControllerDockerfile
+      dockerfile: elyrii_ai/controller/ControllerDockerfile
     container_name: elyrii-controller-local
     ports:
       - "8080:8080"

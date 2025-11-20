@@ -68,8 +68,8 @@ class GlassBubbleButton extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(size / 2),
-                    color: Colors.white.withOpacity(
-                      _calculateFlashOpacity(flashAnimation!.value),
+                    color: Colors.white.withValues(
+                      alpha: _calculateFlashOpacity(flashAnimation!.value),
                     ),
                   ),
                 ),
@@ -88,12 +88,12 @@ class GlassBubbleButton extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: isDark
                         ? [
-                            Colors.white.withOpacity(0.12),
-                            Colors.white.withOpacity(0.08),
+                            Colors.white.withValues(alpha: 0.12),
+                            Colors.white.withValues(alpha: 0.08),
                           ]
                         : [
-                            const Color(0xFFFFFFFF).withOpacity(0.85),
-                            const Color(0xFFF5F3FF).withOpacity(0.75),
+                            const Color(0xFFFFFFFF).withValues(alpha: 0.85),
+                            const Color(0xFFF5F3FF).withValues(alpha: 0.75),
                           ],
                   ),
                   borderRadius: BorderRadius.circular(size / 2),
@@ -105,7 +105,8 @@ class GlassBubbleButton extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
                       blurRadius: 24,
                       spreadRadius: 0,
                       offset: const Offset(0, 10),

@@ -39,7 +39,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 WORKDIR /app
 
 # Copy application code
-COPY . /app/
+COPY elyrii_ai/ /app/
+RUN rm -rf /app/docs /app/controller
+RUN rm -rf /app/vllm_entrypoint.sh
 
 # Create cache directory
 RUN mkdir -p /root/.cache/huggingface
@@ -57,7 +59,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
 EXPOSE 8000
 
 # Launch script that handles dynamic configuration
-COPY vllm_entrypoint.sh /app/entrypoint.sh
+COPY elyrii_ai/vllm_entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 ENTRYPOINT ["/app/entrypoint.sh"]

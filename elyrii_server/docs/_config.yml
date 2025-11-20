@@ -1,0 +1,38 @@
+# Jekyll configuration for GitHub Pages
+title: Elyrii Server API Documentation
+description: Auto-generated API documentation for Elyrii server microservices
+theme: jekyll-theme-minimal
+baseurl: /Elyrii/elyrii_server/docs
+url: https://elyrii-epitech.github.io
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Include the generated API documentation
+include:
+  - api
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: API Documentation
+    url: /api/
+  - title: Auth Service
+    url: /api/modules/auth.html
+  - title: Chat Service
+    url: /api/modules/chat.html
+  - title: Gateway Service
+    url: /api/modules/gateway.html
+
+# Plugins for GitHub Pages
+plugins:
+  - jekyll-relative-links
+  - jekyll-sitemap
+  - jekyll-feed
+
+# Relative links config
+relative_links:
+  enabled: true
+  collections: true

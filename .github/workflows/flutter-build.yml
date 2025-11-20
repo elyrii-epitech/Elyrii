@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: elyrii_app/build/app/outputs/flutter-apk/app-release.apk
 
   build-ios:
     runs-on: macos-latest
@@ -75,4 +75,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-ios-build
-          path: build/ios/iphoneos
+          path: elyrii_app/build/ios/iphoneos
