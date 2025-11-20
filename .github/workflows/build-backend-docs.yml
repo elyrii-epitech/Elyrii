@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: elyrii_server/scripts
+        working-directory: elyrii_server
 
     steps:
       - name: Checkout repository
@@ -32,10 +32,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd elyrii_server/services/auth && bun install
+          cd services/auth && bun install
           cd ../chat && bun install
           cd ../gateway && bun install
-          cd ../scripts && bun install
+          cd scripts && bun install
 
       - name: Build server documentation
         run: ./generate-docs.sh
@@ -44,7 +44,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: server-docs-html
-          path: elyrii_server/docs/
+          path: docs/
           retention-days: 30
 
       - name: Build summary
@@ -59,7 +59,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "For more information, see the documentation in the elyrii_server/README.md file." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "The documentation is generated in the elyrii_server/docs/ directory." >> $GITHUB_STEP_SUMMARY
+          echo "The documentation is generated in the docs/ directory." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The generated HTML files are organized by service and include API references." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
