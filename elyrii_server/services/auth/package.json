@@ -6,10 +6,20 @@
   "version": "1.0.0",
   "description": "Auth service",
   "scripts": {
-    "dev": "bun run --hot index.ts"
+    "dev": "bun run --hot index.ts",
+    "start": "bun run index.ts",
+    "docs:build": "typedoc --out ../../docs/api/auth",
+    "db:generate": "mkdir .drizzle ; drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "drizzle-kit seed",
+    "db:push": "drizzle-kit push"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/pg": "^8.15.6",
+    "drizzle-kit": "^0.31.7",
+    "tsx": "^4.20.6",
+    "typedoc": "^0.26.10"
   },
   "peerDependencies": {
     "typescript": "^5"
