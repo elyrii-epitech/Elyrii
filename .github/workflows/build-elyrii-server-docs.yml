@@ -40,11 +40,29 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: server-docs-html
-          path: elyrii_server/docs/
+          path: ../docs/
           retention-days: 30
 
       - name: Build summary
         run: |
           echo "### Elyrii Server Docs Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Artifact: \`server-docs-html\` (contents of elyrii_server/docs)" >> $GITHUB_STEP_SUMMARY
+          echo "Artifact: \`server-docs-html\` (contents of docs/)" >> $GITHUB_STEP_SUMMARY
+          echo "Generated documentation available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The HTML documentation is now available as a workflow artifact." >> $GITHUB_STEP_SUMMARY
+          echo "You can download it from the 'Actions' tab in the repository." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "For more information, see the documentation in the elyrii_server/README.md file." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation is generated in the elyrii_server/docs/ directory." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The generated HTML files are organized by service and include API references." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation includes both code comments and generated API reference documentation." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation is automatically updated on every push to dev or main branches." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation is generated using TypeDoc and includes comprehensive API references." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Each service has its own documentation section with specific API endpoints and data models." >> $GITHUB_STEP_SUMMARY
