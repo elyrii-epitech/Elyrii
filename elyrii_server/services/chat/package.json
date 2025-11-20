@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "bun run --hot index.ts",
-    "docs:build": "typedoc --out ../../docs/api/chat"
+    "docs:build": "bun i ; typedoc --out ../../docs/api/chat"
   },
   "devDependencies": {
     "@types/bun": "latest",

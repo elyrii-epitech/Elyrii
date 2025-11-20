@@ -1,0 +1,73 @@
+name: Build Elyrii Server Docs
+
+on:
+  push:
+    branches: [ dev, main ]
+    paths:
+      - 'elyrii_server/**'
+      - '.github/workflows/build-elyrii-server-docs.yml'
+  pull_request:
+    branches: [ dev, main ]
+    paths:
+      - 'elyrii_server/**'
+      - '.github/workflows/build-elyrii-server-docs.yml'
+  workflow_dispatch:
+
+jobs:
+  build-server-docs:
+    name: Build Elyrii Server TypeDoc
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: elyrii_server
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: '1.3.2'
+
+      - name: Install dependencies
+        run: |
+          cd services/auth && bun install
+          cd ../chat && bun install
+          cd ../gateway && bun install
+          cd ../../scripts && bun install
+
+      - name: Build server documentation
+        run: |
+          cd scripts && ./generate-docs.sh
+          
+      - name: Upload server docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-docs-html
+          path: docs/
+          retention-days: 30
+
+      - name: Build summary
+        run: |
+          echo "### Elyrii Server Docs Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Artifact: \`server-docs-html\` (contents of docs/)" >> $GITHUB_STEP_SUMMARY
+          echo "Generated documentation available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The HTML documentation is now available as a workflow artifact." >> $GITHUB_STEP_SUMMARY
+          echo "You can download it from the 'Actions' tab in the repository." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "For more information, see the documentation in the elyrii_server/README.md file." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation is generated in the docs/ directory." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The generated HTML files are organized by service and include API references." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation includes both code comments and generated API reference documentation." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation is automatically updated on every push to dev or main branches." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The documentation is generated using TypeDoc and includes comprehensive API references." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Each service has its own documentation section with specific API endpoints and data models." >> $GITHUB_STEP_SUMMARY
