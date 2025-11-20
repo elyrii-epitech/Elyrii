@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: server-docs-html
-          path: ../docs/
+          path: elyrii_server/docs/
           retention-days: 30
 
       - name: Build summary
