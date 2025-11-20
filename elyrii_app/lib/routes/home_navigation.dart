@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
@@ -19,19 +17,17 @@ class HomeNavigation extends StatefulWidget {
   State<HomeNavigation> createState() => _HomeNavigationState();
 }
 
-class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStateMixin {
+class _HomeNavigationState extends State<HomeNavigation>
+    with TickerProviderStateMixin {
   int _currentIndex = 0;
   late List<AnimationController> _iconControllers;
-  late List<Animation<double>> _iconScaleAnimations;
-  late List<Animation<double>> _iconBounceAnimations;
   late AnimationController _navBarController;
   late Animation<double> _navBarAnimation;
   late AnimationController _navBarPulseController;
   late Animation<double> _navBarScaleAnimation;
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
-  bool _isPressed = false;
-  int _pressedIndex = -1;
+  final int _pressedIndex = -1;
 
   final List<Widget> _pages = const [
     DashboardPage(),
@@ -44,7 +40,8 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
 
   final List<GlassNavItem> _navItems = const [
     GlassNavItem(icon: Icons.home_rounded, label: 'Home', index: 0),
-    GlassNavItem(icon: Icons.emoji_events_rounded, label: 'Challenges', index: 1),
+    GlassNavItem(
+        icon: Icons.emoji_events_rounded, label: 'Challenges', index: 1),
     GlassNavItem(icon: Icons.book_rounded, label: 'Journal', index: 2),
     GlassNavItem(icon: Icons.spa_rounded, label: 'Meditation', index: 3),
     GlassNavItem(icon: Icons.person_rounded, label: 'Coach', index: 4),
@@ -53,7 +50,7 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
   @override
   void initState() {
     super.initState();
-    
+
     // Créer des controllers d'animation pour chaque item (navbar + chatbot = 6)
     _iconControllers = List.generate(
       6,
@@ -62,44 +59,28 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
         vsync: this,
       ),
     );
-    
+
     // Animations de scale (agrandissement)
-    _iconScaleAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 1.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-    }).toList();
-    
+
     // Animations de bounce (rebond)
-    _iconBounceAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.elasticOut,
-        ),
-      );
-    }).toList();
-    
+
     // Animation d'apparition de la navbar
     _navBarController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _navBarAnimation = CurvedAnimation(
       parent: _navBarController,
       curve: Curves.easeOutBack,
     );
-    
+
     // Animation de pulse pour la navbar (zoom/dézoom)
     _navBarPulseController = AnimationController(
       duration: const Duration(milliseconds: 250),
       vsync: this,
     );
-    
+
     _navBarScaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.015,
@@ -109,13 +90,13 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
         curve: Curves.easeInOut,
       ),
     );
-    
+
     // Animation de flash blanc (durée augmentée pour être visible)
     _flashController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    
+
     _flashAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -125,10 +106,10 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
         curve: Curves.easeOut,
       ),
     );
-    
+
     // Animer l'item sélectionné au démarrage
     _iconControllers[0].forward();
-    
+
     // Navbar visible immédiatement (pas d'animation d'apparition)
     _navBarController.value = 1.0;
   }
@@ -148,22 +129,22 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
     if (_currentIndex != index) {
       // Haptic feedback
       HapticFeedback.lightImpact();
-      
+
       // Reset l'animation de l'ancien item
       _iconControllers[_currentIndex].reverse();
-      
+
       setState(() {
         _currentIndex = index;
       });
-      
+
       // Lancer l'animation du nouvel item
       _iconControllers[index].forward();
-      
+
       // Animer la navbar (pulse seulement, pas de flash ici car il se déclenche automatiquement)
       _navBarPulseController.forward().then((_) {
         _navBarPulseController.reverse();
       });
-      
+
       // Flash unique - disparition instantanée à la fin
       if (_flashController.isAnimating) {
         _flashController.stop();
@@ -198,12 +179,14 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
           child: Opacity(
             opacity: _navBarAnimation.value.clamp(0.0, 1.0),
             child: AnimatedBuilder(
-              animation: Listenable.merge([_navBarPulseController, _flashController]),
+              animation:
+                  Listenable.merge([_navBarPulseController, _flashController]),
               builder: (context, child) {
                 return Transform.scale(
                   scale: _navBarScaleAnimation.value,
                   child: Container(
-                    margin: const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+                    margin:
+                        const EdgeInsets.only(left: 16, right: 16, bottom: 20),
                     height: 60,
                     child: Row(
                       children: [
@@ -238,7 +221,7 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
 
   Widget _buildChatbotButton(bool isDark) {
     final isChatbotSelected = _currentIndex == 5; // Index 5 = Chatbot
-    
+
     return GlassBubbleButtonStateful(
       icon: Icons.chat_bubble_rounded,
       onTap: () {
@@ -247,7 +230,7 @@ class _HomeNavigationState extends State<HomeNavigation> with TickerProviderStat
       },
       size: 54,
       showShimmer: isChatbotSelected, // Shimmer uniquement si sélectionné
-      shimmerColor: AppColors.primary.withOpacity(0.3),
+      shimmerColor: AppColors.primary.withValues(alpha: 0.3),
       isDark: isDark,
       scaleAnimation: _navBarScaleAnimation,
       flashAnimation: _flashAnimation,

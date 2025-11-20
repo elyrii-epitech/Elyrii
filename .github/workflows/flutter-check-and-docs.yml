@@ -20,13 +20,13 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.1'
+          flutter-version: '3.27.0'
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Check formatting
-        run: flutter format --set-exit-if-changed .
+        run: dart format --set-exit-if-changed .
 
       - name: Static analysis
         run: flutter analyze

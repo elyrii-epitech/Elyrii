@@ -39,24 +39,23 @@ class GlassBubbleButton extends StatelessWidget {
   /// Calcule l'opacité du flash avec fade out progressif
   double _calculateFlashOpacity(double progress) {
     // Fade out progressif à partir de 70% de l'animation
-    final fadeOut = progress > 0.7 
-        ? (1.0 - ((progress - 0.7) / 0.3)).clamp(0.0, 1.0)
-        : 1.0;
-    
+    final fadeOut =
+        progress > 0.7 ? (1.0 - ((progress - 0.7) / 0.3)).clamp(0.0, 1.0) : 1.0;
+
     return (0.3 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0);
   }
 
   @override
   Widget build(BuildContext context) {
     // Couleur adaptée au thème : violet si sélectionné, #E6E5E2 en dark, #3A3A3D en light
-    final effectiveIconColor = iconColor ?? (isSelected 
-        ? AppColors.primary 
-        : (isDark 
-            ? const Color(0xFFE6E5E2)
-            : const Color(0xFF3A3A3D)));
-    final effectiveShimmerColor = shimmerColor ?? AppColors.primary.withOpacity(0.3);
-    
-    Widget buttonContent = Container(
+    final effectiveIconColor = iconColor ??
+        (isSelected
+            ? AppColors.primary
+            : (isDark ? const Color(0xFFE6E5E2) : const Color(0xFF3A3A3D)));
+    final effectiveShimmerColor =
+        shimmerColor ?? AppColors.primary.withValues(alpha: 0.3);
+
+    Widget buttonContent = SizedBox(
       width: size,
       height: size,
       child: Stack(
@@ -69,8 +68,8 @@ class GlassBubbleButton extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(size / 2),
-                    color: Colors.white.withOpacity(
-                      _calculateFlashOpacity(flashAnimation!.value),
+                    color: Colors.white.withValues(
+                      alpha: _calculateFlashOpacity(flashAnimation!.value),
                     ),
                   ),
                 ),
@@ -89,24 +88,25 @@ class GlassBubbleButton extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: isDark
                         ? [
-                            Colors.white.withOpacity(0.12),
-                            Colors.white.withOpacity(0.08),
+                            Colors.white.withValues(alpha: 0.12),
+                            Colors.white.withValues(alpha: 0.08),
                           ]
                         : [
-                            const Color(0xFFFFFFFF).withOpacity(0.85),
-                            const Color(0xFFF5F3FF).withOpacity(0.75),
+                            const Color(0xFFFFFFFF).withValues(alpha: 0.85),
+                            const Color(0xFFF5F3FF).withValues(alpha: 0.75),
                           ],
                   ),
                   borderRadius: BorderRadius.circular(size / 2),
                   border: Border.all(
-                    color: isDark 
-                        ? Colors.white.withOpacity(0.2)
-                        : const Color(0xFFE0D4FF).withOpacity(0.6),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
                       blurRadius: 24,
                       spreadRadius: 0,
                       offset: const Offset(0, 10),
@@ -117,9 +117,9 @@ class GlassBubbleButton extends StatelessWidget {
                   // Fond gris plus visible si sélectionné (comme la navbar)
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? (isDark 
-                            ? Colors.white.withOpacity(0.15)
-                            : Colors.black.withOpacity(0.12))
+                        ? (isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.12))
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(size / 2),
                   ),
@@ -130,7 +130,8 @@ class GlassBubbleButton extends StatelessWidget {
                             color: effectiveIconColor,
                             size: size * 0.4375, // 28/64 ratio
                           )
-                            .animate(onPlay: (controller) => controller.repeat())
+                            .animate(
+                                onPlay: (controller) => controller.repeat())
                             .shimmer(
                               duration: 2000.ms,
                               delay: 3000.ms,
@@ -210,7 +211,8 @@ class GlassBubbleButtonStateful extends StatefulWidget {
   });
 
   @override
-  State<GlassBubbleButtonStateful> createState() => _GlassBubbleButtonStatefulState();
+  State<GlassBubbleButtonStateful> createState() =>
+      _GlassBubbleButtonStatefulState();
 }
 
 class _GlassBubbleButtonStatefulState extends State<GlassBubbleButtonStateful> {

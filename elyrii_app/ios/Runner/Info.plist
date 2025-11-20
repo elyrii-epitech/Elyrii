@@ -31,23 +31,27 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<!-- Ajoutez des autorisations spécifiques si nécessaire -->
+	<!-- Permissions pour les fonctionnalités de l'app -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Elyrii utilise le microphone pour les fonctionnalités de méditation guidée et d'interaction vocale.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Elyrii utilise la reconnaissance vocale pour améliorer votre expérience interactive.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Cette application a besoin d'accéder à la caméra pour...</string>
-	<!-- ... autres autorisations ... -->
+	<string>Elyrii peut utiliser la caméra pour des fonctionnalités futures.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Elyrii peut accéder à votre galerie pour personnaliser votre expérience.</string>
+	<!-- Configuration pour empêcher le mode paysage (déjà configuré dans main.dart mais aussi dans Info.plist) -->
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
 </dict>
 </plist>
