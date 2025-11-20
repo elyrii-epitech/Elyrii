@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "bun run --hot index.ts",
     "start": "bun run index.ts",
-    "docs:build": "typedoc --out ../../docs/api/auth",
+    "docs:build": "bun i ; typedoc --out ../../docs/api/auth",
     "db:generate": "mkdir .drizzle ; drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "drizzle-kit seed",
