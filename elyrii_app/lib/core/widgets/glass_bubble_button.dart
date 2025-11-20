@@ -53,9 +53,9 @@ class GlassBubbleButton extends StatelessWidget {
             ? AppColors.primary
             : (isDark ? const Color(0xFFE6E5E2) : const Color(0xFF3A3A3D)));
     final effectiveShimmerColor =
-        shimmerColor ?? AppColors.primary.withValues(alpha: 0.3);
+        shimmerColor ?? AppColors.primary.withOpacity(0.3);
 
-    Widget buttonContent = SizedBox(
+    Widget buttonContent = Container(
       width: size,
       height: size,
       child: Stack(
@@ -99,8 +99,8 @@ class GlassBubbleButton extends StatelessWidget {
                   borderRadius: BorderRadius.circular(size / 2),
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
+                        ? Colors.white.withOpacity(0.2)
+                        : const Color(0xFFE0D4FF).withOpacity(0.6),
                     width: 1.5,
                   ),
                   boxShadow: [
@@ -118,8 +118,8 @@ class GlassBubbleButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? (isDark
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.black.withValues(alpha: 0.12))
+                            ? Colors.white.withOpacity(0.15)
+                            : Colors.black.withOpacity(0.12))
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(size / 2),
                   ),
