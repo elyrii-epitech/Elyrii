@@ -35,7 +35,7 @@ jobs:
           cd services/auth && bun install
           cd ../chat && bun install
           cd ../gateway && bun install
-          cd scripts && bun install
+          cd ../../scripts && bun install
 
       - name: Build server documentation
         run: ./generate-docs.sh
