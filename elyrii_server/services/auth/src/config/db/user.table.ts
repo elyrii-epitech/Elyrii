@@ -3,7 +3,7 @@ import { integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 /**
  * Drizzle ORM table definition for users authenticated by the auth service.
  */
-export const userTable = pgTable("user", {
+export const userTable = pgTable("users", {
     id: uuid("id").primaryKey().defaultRandom(),
     lastName: text("last_name").notNull(),
     firstName: text("first_name").notNull(),

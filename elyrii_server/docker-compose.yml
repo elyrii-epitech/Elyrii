@@ -10,7 +10,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:3001
       - CHAT_SERVICE_URL=http://chat-service:3002
     networks:
-      - elyrii
+      - elyrii_net
     depends_on:
       auth-service:
         condition: service_started
@@ -34,8 +34,9 @@ services:
       - DB_PASS=elyrii
       - DB_NAME=elyrii_users
       - DB_PORT=5432
+      - SECRET_KEY=elyrii
     networks:
-      - elyrii
+      - elyrii_net
     depends_on:
       redpanda:
         condition: service_healthy
@@ -59,7 +60,7 @@ services:
       - DB_NAME=elyrii_chat
       - DB_PORT=5432
     networks:
-      - elyrii
+      - elyrii_net
     depends_on:
       redpanda:
         condition: service_healthy
@@ -91,7 +92,7 @@ services:
       retries: 5
       start_period: 5s
     networks:
-      - elyrii
+      - elyrii_net
 
   redpanda_console:
     image: docker.redpanda.com/redpandadata/console:latest
@@ -104,7 +105,7 @@ services:
       KAFKA_BROKERS: redpanda:9092
       REDPANDA_ADMIN_URL: http://redpanda:9644
     networks:
-      - elyrii
+      - elyrii_net
 
   postgres:
     image: postgres:16-alpine
@@ -118,9 +119,9 @@ services:
       - pg_data:/var/lib/postgresql/data
       - ./init_dbs.sql:/docker-entrypoint-initdb.d/init_dbs.sql
     networks:
-      - elyrii
+      - elyrii_net
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "elyrii"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -135,5 +136,5 @@ volumes:
   pg_data:
 
 networks:
-  elyrii:
+  elyrii_net:
     driver: bridge

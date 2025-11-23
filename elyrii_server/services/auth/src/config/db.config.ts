@@ -23,7 +23,7 @@ const getDatabaseConfig = () => {
 };
 
 const config = getDatabaseConfig();
-const connectionString = `postgres://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}?sslmode=require`;
+const connectionString = `postgres://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}`;
 
 /**
  * Drizzle ORM database client used by the auth service.

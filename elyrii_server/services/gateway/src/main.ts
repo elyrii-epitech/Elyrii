@@ -2,8 +2,8 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
-const CHAT_SERVICE_URL = Bun.env.CHAT_SERVICE_URL || "http://chat-service:3002";
-const AUTH_SERVICE_URL = Bun.env.AUTH_SERVICE_URL || "http://auth-service:3001";
+const CHAT_SERVICE_URL = Bun.env.CHAT_SERVICE_URL || "http://localhost:3002";
+const AUTH_SERVICE_URL = Bun.env.AUTH_SERVICE_URL || "http://localhost:3001";
 
 app.all("/chat/*", async (ctx) => {
     try {
