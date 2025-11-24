@@ -27,9 +27,9 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _navBarScaleAnimation;
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
-  late Listenable _mergedListenable;
-  bool _isPressed = false;
-  int _pressedIndex = -1;
+  final int _pressedIndex = -1;
+
+
 
   final List<Widget> _pages = const [
     DashboardPage(),
@@ -63,24 +63,24 @@ class _HomeNavigationState extends State<HomeNavigation>
     );
 
     // Animations de scale (agrandissement)
-    _iconScaleAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 1.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-    }).toList();
+
+
+
+
+
+
+
+
 
     // Animations de bounce (rebond)
-    _iconBounceAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.elasticOut,
-        ),
-      );
-    }).toList();
+
+
+
+
+
+
+
+
 
     // Animation d'apparition de la navbar
     _navBarController = AnimationController(
@@ -125,8 +125,8 @@ class _HomeNavigationState extends State<HomeNavigation>
       ),
     );
 
-    // Create merged listenable once to avoid repeated allocations
-    _mergedListenable = Listenable.merge([_navBarPulseController, _flashController]);
+
+
 
     // Animer l'item sélectionné au démarrage
     _iconControllers[0].forward();
@@ -200,7 +200,8 @@ class _HomeNavigationState extends State<HomeNavigation>
           child: Opacity(
             opacity: _navBarAnimation.value.clamp(0.0, 1.0),
             child: AnimatedBuilder(
-              animation: _mergedListenable,
+              animation:
+                  Listenable.merge([_navBarPulseController, _flashController]),
               builder: (context, child) {
                 return Transform.scale(
                   scale: _navBarScaleAnimation.value,
