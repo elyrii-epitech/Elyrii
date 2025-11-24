@@ -29,8 +29,6 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _flashAnimation;
   final int _pressedIndex = -1;
 
-
-
   final List<Widget> _pages = const [
     DashboardPage(),
     ChallengesPage(),
@@ -64,23 +62,7 @@ class _HomeNavigationState extends State<HomeNavigation>
 
     // Animations de scale (agrandissement)
 
-
-
-
-
-
-
-
-
     // Animations de bounce (rebond)
-
-
-
-
-
-
-
-
 
     // Animation d'apparition de la navbar
     _navBarController = AnimationController(
@@ -124,9 +106,6 @@ class _HomeNavigationState extends State<HomeNavigation>
         curve: Curves.easeOut,
       ),
     );
-
-
-
 
     // Animer l'item sélectionné au démarrage
     _iconControllers[0].forward();
