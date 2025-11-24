@@ -11,7 +11,12 @@ import '../core/widgets/glass_navigation_bar.dart';
 import '../core/widgets/glass_bubble_button.dart';
 
 class HomeNavigation extends StatefulWidget {
-  const HomeNavigation({super.key});
+  final int initialIndex;
+
+  const HomeNavigation({
+    super.key,
+    this.initialIndex = 0,
+  });
 
   @override
   State<HomeNavigation> createState() => _HomeNavigationState();
@@ -19,7 +24,7 @@ class HomeNavigation extends StatefulWidget {
 
 class _HomeNavigationState extends State<HomeNavigation>
     with TickerProviderStateMixin {
-  int _currentIndex = 0;
+  late int _currentIndex;
   late List<AnimationController> _iconControllers;
   late AnimationController _navBarController;
   late Animation<double> _navBarAnimation;
@@ -50,6 +55,7 @@ class _HomeNavigationState extends State<HomeNavigation>
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex;
 
     // Créer des controllers d'animation pour chaque item (navbar + chatbot = 6)
     _iconControllers = List.generate(
@@ -108,7 +114,7 @@ class _HomeNavigationState extends State<HomeNavigation>
     );
 
     // Animer l'item sélectionné au démarrage
-    _iconControllers[0].forward();
+    _iconControllers[_currentIndex].forward();
 
     // Navbar visible immédiatement (pas d'animation d'apparition)
     _navBarController.value = 1.0;

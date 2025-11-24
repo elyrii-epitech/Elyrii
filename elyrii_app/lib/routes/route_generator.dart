@@ -8,13 +8,20 @@ import '../features/coach/presentation/pages/coach_page.dart';
 import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
 import '../features/settings/pages/settings_page.dart';
+import '../features/auth/presentation/pages/login_page.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-      case AppRoutes.home:
+      case AppRoutes.login:
         return MaterialPageRoute(
-          builder: (_) => const HomeNavigation(),
+          builder: (_) => const LoginPage(),
+        );
+
+      case AppRoutes.home:
+        final args = settings.arguments as int?;
+        return MaterialPageRoute(
+          builder: (_) => HomeNavigation(initialIndex: args ?? 0),
         );
 
       case AppRoutes.dashboard:
