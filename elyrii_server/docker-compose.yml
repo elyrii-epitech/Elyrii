@@ -34,7 +34,7 @@ services:
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_NAME=${AUTH_DB_NAME}
       - DB_PORT=${DB_PORT}
       - SECRET_KEY=${AUTH_SECRET_KEY}
     networks:
@@ -59,7 +59,7 @@ services:
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_NAME=${CHAT_DB_NAME}
       - DB_PORT=${DB_PORT}
     networks:
       - elyrii_net

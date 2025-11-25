@@ -14,7 +14,7 @@ export const userTable = pgTable("users", {
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [
-    uniqueIndex("idx_email").on(table.email).concurrently(),
+    uniqueIndex("idx_email").on(table.email),
 ])
 
 /**
