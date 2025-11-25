@@ -8,13 +8,26 @@ import os
 import sys
 
 # Add the parent directory to sys.path to enable autodoc to find the modules
+
+sys.path.insert(0, os.path.abspath('../../..'))
+
 sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../controller'))
+sys.path.insert(0, os.path.abspath('../../training'))
 
 autodoc_mock_imports = [
+    "torch",
+    "transformers",
+    "peft",
+    "datasets",
+    "pandas",
+    "tqdm",
+    "tabulate",
     'fastapi',
     'uvicorn',
     'httpx',
     'pydantic',
+    'requests'
 ]
 
 # -- Project information -----------------------------------------------------
