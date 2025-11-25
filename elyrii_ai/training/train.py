@@ -16,6 +16,7 @@ Attributes:
 """
 
 import os, torch, argparse
+import logging
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -31,6 +32,11 @@ from peft import (
 )
 from datasets import load_from_disk
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     """Parses command-line arguments for training configuration."""
@@ -81,9 +87,9 @@ def main():
 
     model_id = "mistralai/Mistral-7B-v0.2"
 
-    print(f"🚀 Initializing training for {model_id}")
-    print(f"📂 Data directory: {args.data_dir}")
-    print(f"💾 Output directory: {args.output_dir}")
+    logger.info(f"🚀 Initializing training for {model_id}")
+    logger.info(f"📂 Data directory: {args.data_dir}")
+    logger.info(f"💾 Output directory: {args.output_dir}")
 
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
@@ -117,8 +123,8 @@ def main():
         train_ds = load_from_disk(os.path.join(args.data_dir, "train"))
         val_ds = load_from_disk(os.path.join(args.data_dir, "val"))
     except FileNotFoundError as e:
-        print(f"❌ Error loading datasets: {e}")
-        print("   Make sure you ran 'prepare_data.py' first.")
+        logger.error(f"❌ Error loading datasets: {e}")
+        logger.error("   Make sure you ran 'prepare_data.py' first.")
         exit(1)
 
     collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
@@ -148,11 +154,11 @@ def main():
         data_collator=collator,
     )
 
-    print("🔥 Starting training...")
+    logger.info("🔥 Starting training...")
     trainer.train()
 
     final_path = os.path.join(args.output_dir, "final_lora")
-    print(f"✅ Training complete. Saving adapter to {final_path}")
+    logger.info(f"✅ Training complete. Saving adapter to {final_path}")
     trainer.save_model(final_path)
 
 if __name__ == "__main__":
