@@ -9,8 +9,10 @@ services:
     environment:
       - AUTH_SERVICE_URL=http://auth-service:3001
       - CHAT_SERVICE_URL=http://chat-service:3002
+      - GATEWAY_PORT=${GATEWAY_PORT}
+      - GATEWAY_SECRET_KEY=${GATEWAY_SECRET_KEY}
     networks:
-      - elyrii
+      - elyrii_net
     depends_on:
       auth-service:
         condition: service_started
@@ -28,11 +30,19 @@ services:
     environment:
       - GATEWAY_URL=http://gateway:3000
       - CHAT_SERVICE_URL=http://chat-service:3002
-      - PORT=3001
+      - PORT=${AUTH_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${AUTH_DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - SECRET_KEY=${AUTH_SECRET_KEY}
     networks:
-      - elyrii
+      - elyrii_net
     depends_on:
       redpanda:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   chat-service:
@@ -44,18 +54,27 @@ services:
       - "3002:3002"
     environment:
       - GATEWAY_URL=http://gateway:3000
+      - REDPANDA_URL=http://redpanda:9092
+      - PORT=${CHAT_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${CHAT_DB_NAME}
+      - DB_PORT=${DB_PORT}
     networks:
-      - elyrii
+      - elyrii_net
     depends_on:
       redpanda:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:latest
     container_name: redpanda
     ports:
-      - "9092:9092"       # Kafka API
-      - "9644:9644"       # Admin API
+      - "9092:9092"
+      - "9644:9644"
     command: >
       redpanda start
         --overprovisioned
@@ -75,7 +94,7 @@ services:
       retries: 5
       start_period: 5s
     networks:
-      - elyrii
+      - elyrii_net
 
   redpanda_console:
     image: docker.redpanda.com/redpandadata/console:latest
@@ -88,11 +107,35 @@ services:
       KAFKA_BROKERS: redpanda:9092
       REDPANDA_ADMIN_URL: http://redpanda:9644
     networks:
-      - elyrii
+      - elyrii_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_elyrii
+    ports:
+      - "5431:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init_dbs.sql:/docker-entrypoint-initdb.d/init_dbs.sql
+    networks:
+      - elyrii_net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      redpanda:
+        condition: service_healthy
 
 volumes:
   redpanda_data:
+  pg_data:
 
 networks:
-  elyrii:
+  elyrii_net:
     driver: bridge
