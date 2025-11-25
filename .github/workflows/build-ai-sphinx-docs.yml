@@ -6,6 +6,8 @@ on:
     paths:
       - 'elyrii_ai/**'
       - '.github/workflows/build-ai-sphinx-docs.yml'
+  pull_request:
+    branches: [ main, dev ]
   workflow_dispatch:
 
 jobs:
