@@ -1,73 +1,159 @@
+"""
+Elyrii Training Script
+======================
+
+This script fine-tunes the Mistral-7B-Instruct-v0.2 model using QLoRA (Quantized Low-Rank Adaptation)
+for the Elyrii emotional assistant.
+
+It expects a dataset prepared by `prepare_data.py` containing tokenized chat sessions.
+The training uses 8-bit quantization to fit within consumer/cloud GPU VRAM limits (approx 16-24GB).
+
+Usage:
+    python train.py --data_dir ./data --output_dir ./output --epochs 3
+
+Attributes:
+    model_id (str): The HuggingFace ID of the base model.
+"""
+
 import os, torch, argparse
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer, TrainingArguments, DataCollatorForLanguageModeling
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, TaskType
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    Trainer,
+    TrainingArguments,
+    DataCollatorForLanguageModeling
+)
+from peft import (
+    LoraConfig,
+    get_peft_model,
+    prepare_model_for_kbit_training,
+    TaskType
+)
 from datasets import load_from_disk
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--epochs", type=int, default=5)
-parser.add_argument("--lr", type=float, default=1e-4)
-parser.add_argument("--batch", type=int, default=4)
-parser.add_argument("--grad_acc", type=int, default=8)   # effective batch 32
-parser.add_argument("--data_dir", type=str, default="/data")
-parser.add_argument("--output_dir", type=str, default="/output")
-args = parser.parse_args()
 
-model_id = "mistralai/Mistral-7B-v0.1"
-tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+def parse_args() -> argparse.Namespace:
+    """Parses command-line arguments for training configuration."""
+    parser = argparse.ArgumentParser(description="Fine-tune Mistral-7B for Elyrii")
 
-# Mistral/Llama tokenizers often lack a pad token.
-# Setting it to eos_token as is standard workaround.
-if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token
+    parser.add_argument(
+        "--epochs",
+        type=int,
+        default=5,
+        help="Number of training epochs."
+    )
+    parser.add_argument(
+        "--lr",
+        type=float,
+        default=1e-4,
+        help="Learning rate."
+    )
+    parser.add_argument(
+        "--batch",
+        type=int,
+        default=4,
+        help="Per-device training batch size."
+    )
+    parser.add_argument(
+        "--grad_acc",
+        type=int,
+        default=8,
+        help="Gradient accumulation steps. (Effective batch = batch * grad_acc)"
+    )
+    parser.add_argument(
+        "--data_dir",
+        type=str,
+        default="/data",
+        help="Directory containing 'train' and 'val' dataset folders."
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="/output",
+        help="Directory to save checkpoints and the final model."
+    )
 
-model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    device_map="auto",
-    load_in_8bit=True,
-    torch_dtype=torch.float16,
-)
+    return parser.parse_args()
 
-model = prepare_model_for_kbit_training(model)
+def main():
+    """Main training execution flow."""
+    args = parse_args()
 
-# LoRA
-lora_cfg = LoraConfig(
-    r=32,
-    lora_alpha=64,
-    target_modules=["q_proj","v_proj"],
-    lora_dropout=0.05,
-    bias="none",
-    task_type=TaskType.CAUSAL_LM
-)
-model = get_peft_model(model, lora_cfg)
+    model_id = "mistralai/Mistral-7B-v0.2"
 
-train_ds = load_from_disk(os.path.join(args.data_dir, "train"))
-val_ds   = load_from_disk(os.path.join(args.data_dir, "val"))
+    print(f"🚀 Initializing training for {model_id}")
+    print(f"📂 Data directory: {args.data_dir}")
+    print(f"💾 Output directory: {args.output_dir}")
 
-collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
+    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
 
-training_args = TrainingArguments(
-    output_dir=args.output_dir,
-    per_device_train_batch_size=args.batch,
-    gradient_accumulation_steps=args.grad_acc,
-    learning_rate=args.lr,
-    num_train_epochs=args.epochs,
-    fp16=True,
-    eval_strategy="steps",
-    eval_steps=500,
-    save_steps=500,
-    logging_steps=100,
-    load_best_model_at_end=True,
-    metric_for_best_model="eval_loss",
-    report_to="none",
-)
+    # Mistral/Llama tokenizers often lack a pad token.
+    # Setting it to eos_token as is standard workaround.
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_ds,
-    eval_dataset=val_ds,
-    data_collator=collator,
-)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        device_map="auto",
+        load_in_8bit=True,
+        torch_dtype=torch.float16,
+    )
 
-trainer.train()
-trainer.save_model(os.path.join(args.output_dir, "final_lora"))
+    model = prepare_model_for_kbit_training(model)
+
+    # LoRA
+    lora_cfg = LoraConfig(
+        r=32,
+        lora_alpha=64,
+        target_modules=["q_proj","v_proj"],
+        lora_dropout=0.05,
+        bias="none",
+        task_type=TaskType.CAUSAL_LM
+    )
+    model = get_peft_model(model, lora_cfg)
+    model.print_trainable_parameters()
+
+    try:
+        train_ds = load_from_disk(os.path.join(args.data_dir, "train"))
+        val_ds = load_from_disk(os.path.join(args.data_dir, "val"))
+    except FileNotFoundError as e:
+        print(f"❌ Error loading datasets: {e}")
+        print("   Make sure you ran 'prepare_data.py' first.")
+        exit(1)
+
+    collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
+
+    training_args = TrainingArguments(
+        output_dir=args.output_dir,
+        per_device_train_batch_size=args.batch,
+        gradient_accumulation_steps=args.grad_acc,
+        learning_rate=args.lr,
+        num_train_epochs=args.epochs,
+        fp16=True,
+        eval_strategy="steps",
+        eval_steps=500,
+        save_steps=500,
+        logging_steps=100,
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        report_to="none",
+        save_total_limit=2,
+    )
+
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_ds,
+        eval_dataset=val_ds,
+        data_collator=collator,
+    )
+
+    print("🔥 Starting training...")
+    trainer.train()
+
+    final_path = os.path.join(args.output_dir, "final_lora")
+    print(f"✅ Training complete. Saving adapter to {final_path}")
+    trainer.save_model(final_path)
+
+if __name__ == "__main__":
+    main()
