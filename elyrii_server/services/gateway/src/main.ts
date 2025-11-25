@@ -2,8 +2,15 @@ import { Hono } from "hono";
 
 const app = new Hono();
 
-const CHAT_SERVICE_URL = Bun.env.CHAT_SERVICE_URL || "http://localhost:3002";
-const AUTH_SERVICE_URL = Bun.env.AUTH_SERVICE_URL || "http://localhost:3001";
+const CHAT_SERVICE_URL = Bun.env.CHAT_SERVICE_URL;
+const AUTH_SERVICE_URL = Bun.env.AUTH_SERVICE_URL;
+
+if (!CHAT_SERVICE_URL) {
+    throw new Error("CHAT_SERVICE_URL environment variable is required");
+}
+if (!AUTH_SERVICE_URL) {
+    throw new Error("AUTH_SERVICE_URL environment variable is required");
+}
 
 app.all("/chat/*", async (ctx) => {
     try {
