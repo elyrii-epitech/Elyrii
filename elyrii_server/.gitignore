@@ -16,5 +16,8 @@ build/
 .vscode/
 .idea/
 
+# Docker
+Dockerfile
+
 # Documentation
 docs/api/

@@ -8,7 +8,7 @@ const getDatabaseConfig = () => {
         host: process.env.DB_HOST || 'localhost',
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASS || 'postgres',
-        database: process.env.DB_NAME || 'elyrii',
+        database: process.env.DB_NAME || 'postgres',
         port: 5432,
         ssl: { rejectUnauthorized: false },
     };
@@ -23,7 +23,7 @@ const getDatabaseConfig = () => {
 };
 
 const config = getDatabaseConfig();
-const connectionString = `postgres://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}?sslmode=require`;
+const connectionString = `postgres://${config.user}:${config.password}@${config.host}:${config.port}/${config.database}`;
 
 /**
  * Drizzle ORM database client used by the auth service.

@@ -59,7 +59,8 @@ class AuthRepository {
             })
             return user[0];
         } catch (error: any) {
-            throw new Error(error.message)
+            console.error(error);
+            throw new Error(error)
         }
     }
 }
