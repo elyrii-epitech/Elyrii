@@ -1,0 +1,23 @@
+# Environment files
+.env
+.env.*
+
+# Node modules
+node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# Log files
+*.log
+
+# Editor files
+.vscode/
+.idea/
+
+# Docker
+Dockerfile
+
+# Documentation
+docs/api/
