@@ -6,6 +6,7 @@ export type tokenPayload = {
 };
 
 export const ACCESS_TOKEN_EXP = 60 * 15;
+export const REFRESH_TOKEN_EXP = 60 * 60 * 24 * 30;
 
 export const generateAccessToken = async (payload: tokenPayload): Promise<string> => {
     if (!Bun.env.SECRET_KEY) {
@@ -20,6 +21,23 @@ export const generateAccessToken = async (payload: tokenPayload): Promise<string
         return token;
     } catch (error) {
         console.error("Error generating access token:", error);
+        throw error;
+    }
+};
+
+export const generateRefreshToken = async (payload: tokenPayload): Promise<string> => {
+    if (!Bun.env.REFRESH_SECRET_KEY) {
+        throw new Error("REFRESH_SECRET_KEY environment variable is not defined");
+    }
+    try {
+        const token = await sign({
+            ...payload,
+            exp: Math.floor(Date.now() / 1000) + REFRESH_TOKEN_EXP,
+            iat: Math.floor(Date.now() / 1000)
+        }, Bun.env.REFRESH_SECRET_KEY, "HS256");
+        return token;
+    } catch (error) {
+        console.error("Error generating refresh token:", error);
         throw error;
     }
 };
