@@ -7,7 +7,7 @@ export type TokenPayload = {
 
 export class JwtUtils {
     private static readonly ACCESS_TOKEN_EXP = 60 * 15;
-    private static readonly REFRESH_TOKEN_EXP = 60 * 60 * 24 * 30;
+    public static readonly REFRESH_TOKEN_EXP = 60 * 60 * 24 * 30;
 
     static async generateAccessToken(payload: TokenPayload): Promise<string> {
         if (!Bun.env.SECRET_KEY) {

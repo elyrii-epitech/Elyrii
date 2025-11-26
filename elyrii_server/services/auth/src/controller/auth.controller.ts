@@ -4,6 +4,7 @@ import { loginValidation, registerValidation } from "../utils/zod.valid";
 import AuthRepository from "../repository/auth.repository";
 import {JwtUtils} from "../utils/jwt.utils";
 import TokenRepository from "../repository/token.repository";
+import { setCookie } from "hono/cookie";
 /**
  * Controller that defines HTTP handlers for authentication routes.
  */
@@ -38,6 +39,13 @@ class AuthController {
             ]);
 
             await this.tokenRepository.createToken(refreshToken, user.id, ctx.req.header("User-Agent") || "Unknown");
+            setCookie(ctx, "refresh_token", refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "lax",
+                path: "/auth/refresh",
+                maxAge: JwtUtils.REFRESH_TOKEN_EXP
+            });
             return ctx.json({ message: "Login successful", token });
         } catch (error) {
             console.error("Login error:", error);
