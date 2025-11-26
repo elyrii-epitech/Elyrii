@@ -1,7 +1,9 @@
 import { Hono } from "hono";
+import JournalController from "../controllers/journal.controller";
 
 class JournalService {
     private readonly router = new Hono().basePath("/journal");
+    private readonly journalController = new JournalController();
     
     constructor() {
         this.initRoutes();
@@ -10,12 +12,11 @@ class JournalService {
     private initRoutes() {
         this.router.get("/health", (c) => c.text("Journal Service Healthy"));
 
-
-        this.router.get("/", (c) => c.text("Journal Service Root"));
-        this.router.get("/:entryId", (c) => c.text("Get entry by ID"));
-        this.router.post("/", (c) => c.text("Create journal entry"));
-        this.router.put("/:entryId", (c) => c.text("Update entry by ID"));
-        this.router.delete("/:entryId", (c) => c.text("Delete entry by ID"));
+        this.router.get("/", ...this.journalController.getEntries);
+        this.router.get("/:entryId", ...this.journalController.getEntryById);
+        this.router.post("/", ...this.journalController.createEntry);
+        this.router.put("/:entryId", ...this.journalController.updateEntry);
+        this.router.delete("/:entryId", ...this.journalController.deleteEntry);
         
         this.router.post("/:entryId/media", (c) => c.text("Add media to entry"));
         this.router.delete("/:entryId/media/:mediaId", (c) => c.text("Delete media from entry"));
