@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start:dev": "bun run --hot index.ts",
-    "start:prod": "bun run index.ts"
+    "start:dev": "NODE_ENV=development bun run --hot index.ts",
+    "start:prod": "NODE_ENV=production bun run index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
