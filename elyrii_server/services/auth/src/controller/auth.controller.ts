@@ -1,19 +1,48 @@
 import { sValidator } from "@hono/standard-validator";
 import { createFactory } from "hono/factory";
-import { registerValidation } from "../utils/zod.valid";
+import { loginValidation, registerValidation } from "../utils/zod.valid";
 import AuthRepository from "../repository/auth.repository";
-import { generateAccessToken } from "../utils/jwt.utils";
+import {JwtUtils} from "../utils/jwt.utils";
+import TokenRepository from "../repository/token.repository";
 /**
  * Controller that defines HTTP handlers for authentication routes.
  */
 class AuthController {
     private readonly factory = createFactory();
     private readonly authRepository = new AuthRepository();
+    private readonly tokenRepository = new TokenRepository();
     /**
      * Handler for processing user login requests.
      */
-    readonly login = this.factory.createHandlers(async (ctx) => {
-        return ctx.json({ message: "Login" });
+    readonly login = this.factory.createHandlers(sValidator("json", loginValidation), async (ctx) => {
+        const { email, password } = ctx.req.valid("json");
+        if (!email || !password) {
+            return ctx.json({ error: "Invalid email or password" }, 400);
+        }
+        try {
+            const user = await this.authRepository.getUserByEmail(email);
+            if (!user || !user.password || !user.email) {
+                return ctx.json({ error: "User not found" }, 404);
+            }
+            const isPasswordValid = await Bun.password.verify(password, user.password);
+            if (!isPasswordValid) {
+                return ctx.json({ error: "Invalid password" }, 401);
+            }
+            const tokenPayload = {
+                userId: user.id,
+                email: user.email
+            };
+            const [token, refreshToken] = await Promise.all([
+                JwtUtils.generateAccessToken(tokenPayload),
+                JwtUtils.generateRefreshToken(tokenPayload)
+            ]);
+
+            await this.tokenRepository.createToken(refreshToken, user.id, ctx.req.header("User-Agent") || "Unknown");
+            return ctx.json({ message: "Login successful", token });
+        } catch (error) {
+            console.error("Login error:", error);
+            return ctx.json({ error: "Login failed" }, 500);
+        }
     });
 
     /**
@@ -38,8 +67,12 @@ class AuthController {
                     userId: user!.id,
                     email: user!.email
                 };
-                const token = await generateAccessToken(tokenPayload);
-                return ctx.json({ message: "User registered successfully", token});
+                const [token, refreshToken] = await Promise.all([
+                    JwtUtils.generateAccessToken(tokenPayload),
+                    JwtUtils.generateRefreshToken(tokenPayload)
+                ]);
+                await this.tokenRepository.createToken(refreshToken, user!.id, ctx.req.header("User-Agent") || "Unknown");
+                return ctx.json({ message: "User registered successfully", token });
             } catch (error) {
                 console.error("Registration error:", error);
                 return ctx.json({ error: "Registration failed" }, 500);
