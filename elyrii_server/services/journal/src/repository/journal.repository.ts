@@ -41,11 +41,11 @@ class JournalRepository {
     }
 
     async updateEntry(_id: string, data: Partial<JournalEntry>): Promise<JournalEntry> {
-        return db.transaction(async (tx) => {
+        return await db.transaction(async (tx) => {
             const [existing] = await tx.select().from(journalEntriesTable)
                 .where(eq(journalEntriesTable.id, _id))
                 .limit(1);
-            
+
             if (!existing) {
                 tx.rollback();
                 throw new Error('Journal entry not found');
@@ -67,12 +67,12 @@ class JournalRepository {
                 .set(updatePayload)
                 .where(eq(journalEntriesTable.id, _id))
                 .returning();
-            
+
             if (!updated) {
                 tx.rollback();
                 throw new Error('Failed to update journal entry');
             }
-            
+
             return updated as JournalEntry;
         });
     }
