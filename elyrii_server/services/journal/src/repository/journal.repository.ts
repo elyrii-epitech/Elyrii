@@ -4,12 +4,6 @@ import { eq } from "drizzle-orm";
 
 class JournalRepository {
     // TODO: Implement repository methods
-    // Example methods:
-    // async getEntries(userId: string): Promise<any[]> { }
-    // async getEntryById(id: string): Promise<any | null> { }
-    // async createEntry(data: any): Promise<any> { }
-    // async updateEntry(id: string, data: any): Promise<any> { }
-    // async deleteEntry(id: string): Promise<boolean> { }
     async getEntries(): Promise<JournalEntry[]> {
         const entries = await db.select().from(journalEntriesTable);
         return entries || [];
@@ -45,9 +39,11 @@ class JournalRepository {
         }
         return { ...entry, id: entry.id, createdAt: entry.createdAt ?? new Date() } as JournalEntry;
     }
+
     async updateEntry(_id: string, data: Partial<JournalEntry>): Promise<JournalEntry> {
         return { ...data, updatedAt: new Date() } as JournalEntry;
     }
+    
     async deleteEntry(_id: string): Promise<boolean> {
         return true;
     }

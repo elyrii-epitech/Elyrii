@@ -1,5 +1,10 @@
 import JournalService from "./src/service/journal.service";
 
+if (!Bun.env.JOURNAL_SERVICE_PORT) {
+    console.error("[ERROR] JOURNAL_SERVICE_PORT environment variable is not set");
+    process.exit(1);
+}
+
 const journalService = new JournalService();
 
 Bun.serve({
