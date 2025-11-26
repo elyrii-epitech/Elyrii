@@ -9,6 +9,7 @@ services:
     environment:
       - AUTH_SERVICE_URL=http://auth-service:3001
       - CHAT_SERVICE_URL=http://chat-service:3002
+      - JOURNAL_SERVICE_URL=http://journal-service:3003
       - GATEWAY_PORT=${GATEWAY_PORT}
       - GATEWAY_SECRET_KEY=${GATEWAY_SECRET_KEY}
     networks:
@@ -60,6 +61,30 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
       - DB_NAME=${CHAT_DB_NAME}
+      - DB_PORT=${DB_PORT}
+    networks:
+      - elyrii_net
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  journal-service:
+    build:
+      context: ./services/journal
+      dockerfile: Dockerfile
+    container_name: journal-service
+    ports:
+      - "3003:3003"
+    environment:
+      - GATEWAY_URL=http://gateway:3000
+      - REDPANDA_URL=http://redpanda:9092
+      - PORT=${JOURNAL_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${JOURNAL_DB_NAME}
       - DB_PORT=${DB_PORT}
     networks:
       - elyrii_net
