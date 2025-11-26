@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-/// Widget pour l'indicateur de saisie de l'IA
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({super.key});
 
@@ -17,8 +16,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(
-          milliseconds: 2000), // Plus lent pour être plus apaisant
+      duration: const Duration(milliseconds: 2000),
       vsync: this,
     )..repeat();
   }

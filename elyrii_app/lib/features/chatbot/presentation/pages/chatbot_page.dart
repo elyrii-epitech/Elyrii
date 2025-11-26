@@ -123,7 +123,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
                                 );
                               },
                             ),
-                          // Mascotte positionnée
                           AnimatedPositioned(
                             duration: const Duration(milliseconds: 500),
                             curve: Curves.easeInOutCubic,
@@ -137,7 +136,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
                                 MascotWidget(
                                   isMinimized: provider.isMascotMinimized,
                                 ),
-                                // Bouton effacer historique (uniquement en mode minimisé)
                                 if (provider.isMascotMinimized &&
                                     provider.messages.isNotEmpty)
                                   Padding(
@@ -264,22 +262,20 @@ class _ChatbotPageState extends State<ChatbotPage> {
             child: Container(
               decoration: BoxDecoration(
                 color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(32), // Plus arrondi
+                borderRadius: BorderRadius.circular(32),
                 border: Border.all(
                   color: _isTextFieldFocused
                       ? AppColors.primary.withValues(alpha: 0.5)
                       : (isDark
                           ? AppColors.borderDark.withValues(alpha: 0.3)
-                          : AppColors.borderLight
-                              .withValues(alpha: 0.4)), // Bordure plus subtile
+                          : AppColors.borderLight.withValues(alpha: 0.4)),
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: isDark
                         ? Colors.black.withValues(alpha: 0.1)
-                        : AppColors.primary.withValues(
-                            alpha: 0.05), // Ombre colorée très subtile
+                        : AppColors.primary.withValues(alpha: 0.05),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -295,7 +291,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   color: isDark
                       ? AppColors.textPrimaryDark
                       : AppColors.textPrimaryLight,
-                  fontSize: 16, // Texte légèrement plus grand
+                  fontSize: 16,
                   height: 1.4,
                   fontWeight: FontWeight.w400,
                   letterSpacing: 0.2,
@@ -326,8 +322,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               gradient: LinearGradient(
                 colors: [
                   AppColors.primary.withValues(alpha: 0.9),
-                  AppColors.primary
-                      .withValues(alpha: 0.7), // Gradient plus doux
+                  AppColors.primary.withValues(alpha: 0.7),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -351,8 +346,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   height: 56,
                   alignment: Alignment.center,
                   child: const Icon(
-                    Icons
-                        .arrow_upward_rounded, // Flèche vers le haut plus moderne
+                    Icons.arrow_upward_rounded,
                     color: Colors.white,
                     size: 24,
                   ),

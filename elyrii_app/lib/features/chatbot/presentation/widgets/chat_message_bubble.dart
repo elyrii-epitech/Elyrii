@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-/// Widget pour afficher un message dans le chat
 class ChatMessageBubble extends StatelessWidget {
   final String message;
   final bool isUser;
@@ -41,8 +40,7 @@ class ChatMessageBubble extends StatelessWidget {
                     gradient: isUser
                         ? LinearGradient(
                             colors: [
-                              AppColors.primary
-                                  .withValues(alpha: 0.8), // Plus doux
+                              AppColors.primary.withValues(alpha: 0.8),
                               AppColors.primary.withValues(alpha: 0.65),
                             ],
                             begin: Alignment.topLeft,
@@ -55,7 +53,7 @@ class ChatMessageBubble extends StatelessWidget {
                             ? AppColors.surfaceDark.withValues(alpha: 0.6)
                             : AppColors.surfaceLight,
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(28), // Plus arrondi
+                      topLeft: const Radius.circular(28),
                       topRight: const Radius.circular(28),
                       bottomLeft: Radius.circular(isUser ? 28 : 8),
                       bottomRight: Radius.circular(isUser ? 8 : 28),
@@ -71,8 +69,7 @@ class ChatMessageBubble extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(
                         color: isDark
-                            ? Colors.black
-                                .withValues(alpha: 0.15) // Ombre plus douce
+                            ? Colors.black.withValues(alpha: 0.15)
                             : Colors.black.withValues(alpha: 0.04),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
@@ -88,7 +85,7 @@ class ChatMessageBubble extends StatelessWidget {
                           : isDark
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
-                      fontSize: 16, // Texte légèrement plus grand
+                      fontSize: 16,
                       height: 1.5,
                       fontWeight: FontWeight.w400,
                       letterSpacing: 0.2,

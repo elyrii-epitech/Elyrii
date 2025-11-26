@@ -23,19 +23,17 @@ class _MascotWidgetState extends State<MascotWidget>
   void initState() {
     super.initState();
     _pulseController = AnimationController(
-      duration:
-          const Duration(milliseconds: 4000), // Rythme de respiration (4s)
+      duration: const Duration(milliseconds: 4000),
       vsync: this,
     )..repeat(reverse: true);
 
     _pulseAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.06, // Légère expansion pour simuler la respiration
+      end: 1.06,
     ).animate(
       CurvedAnimation(
         parent: _pulseController,
-        curve:
-            Curves.easeInOutSine, // Courbe plus naturelle pour la respiration
+        curve: Curves.easeInOutSine,
       ),
     );
   }
@@ -89,7 +87,6 @@ class _MascotWidgetState extends State<MascotWidget>
               ),
               child: Stack(
                 children: [
-                  // Cercles décoratifs
                   Positioned(
                     top: widget.isMinimized ? 10 : 30,
                     right: widget.isMinimized ? 10 : 30,
@@ -114,7 +111,6 @@ class _MascotWidgetState extends State<MascotWidget>
                       ),
                     ),
                   ),
-                  // Mascotte interactive
                   Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: widget.isMinimized ? 20 : 32,
