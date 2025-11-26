@@ -17,7 +17,8 @@ class _TypingIndicatorState extends State<TypingIndicator>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000), // Plus lent pour être plus apaisant
+      duration: const Duration(
+          milliseconds: 2000), // Plus lent pour être plus apaisant
       vsync: this,
     )..repeat();
   }
@@ -64,9 +65,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
                   builder: (context, child) {
                     final delay = index * 0.2;
                     final value = (_controller.value - delay) % 1.0;
-                    final opacity = (value < 0.5
-                            ? value * 2
-                            : 2 - value * 2)
+                    final opacity = (value < 0.5 ? value * 2 : 2 - value * 2)
                         .clamp(0.3, 1.0);
 
                     return Container(

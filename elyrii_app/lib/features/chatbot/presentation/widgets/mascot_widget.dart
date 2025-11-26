@@ -23,7 +23,8 @@ class _MascotWidgetState extends State<MascotWidget>
   void initState() {
     super.initState();
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 4000), // Rythme de respiration (4s)
+      duration:
+          const Duration(milliseconds: 4000), // Rythme de respiration (4s)
       vsync: this,
     )..repeat(reverse: true);
 
@@ -33,7 +34,8 @@ class _MascotWidgetState extends State<MascotWidget>
     ).animate(
       CurvedAnimation(
         parent: _pulseController,
-        curve: Curves.easeInOutSine, // Courbe plus naturelle pour la respiration
+        curve:
+            Curves.easeInOutSine, // Courbe plus naturelle pour la respiration
       ),
     );
   }
@@ -48,7 +50,7 @@ class _MascotWidgetState extends State<MascotWidget>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final maxHeight = (screenHeight * 0.5).clamp(250.0, 400.0);
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOutCubic,
@@ -69,7 +71,8 @@ class _MascotWidgetState extends State<MascotWidget>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(widget.isMinimized ? 22 : 32),
+                borderRadius:
+                    BorderRadius.circular(widget.isMinimized ? 22 : 32),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.3),
@@ -133,9 +136,8 @@ class _MascotWidgetState extends State<MascotWidget>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 _buildMascotAvatar(
-                                  (maxHeight * 0.35).clamp(80.0, 120.0), 
-                                  Icons.favorite_rounded
-                                ),
+                                    (maxHeight * 0.35).clamp(80.0, 120.0),
+                                    Icons.favorite_rounded),
                                 SizedBox(height: maxHeight * 0.06),
                                 _buildMascotText(false),
                               ],
@@ -176,9 +178,8 @@ class _MascotWidgetState extends State<MascotWidget>
 
   Widget _buildMascotText(bool isMinimized) {
     return Column(
-      crossAxisAlignment: isMinimized
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.center,
+      crossAxisAlignment:
+          isMinimized ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(

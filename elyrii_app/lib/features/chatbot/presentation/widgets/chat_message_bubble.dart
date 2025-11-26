@@ -41,7 +41,8 @@ class ChatMessageBubble extends StatelessWidget {
                     gradient: isUser
                         ? LinearGradient(
                             colors: [
-                              AppColors.primary.withValues(alpha: 0.8), // Plus doux
+                              AppColors.primary
+                                  .withValues(alpha: 0.8), // Plus doux
                               AppColors.primary.withValues(alpha: 0.65),
                             ],
                             begin: Alignment.topLeft,
@@ -56,21 +57,22 @@ class ChatMessageBubble extends StatelessWidget {
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(28), // Plus arrondi
                       topRight: const Radius.circular(28),
-                      bottomLeft:
-                          Radius.circular(isUser ? 28 : 8),
-                      bottomRight:
-                          Radius.circular(isUser ? 8 : 28),
+                      bottomLeft: Radius.circular(isUser ? 28 : 8),
+                      bottomRight: Radius.circular(isUser ? 8 : 28),
                     ),
-                    border: isUser ? null : Border.all(
-                      color: isDark
-                          ? AppColors.borderDark.withValues(alpha: 0.3)
-                          : AppColors.borderLight.withValues(alpha: 0.5),
-                      width: 1,
-                    ),
+                    border: isUser
+                        ? null
+                        : Border.all(
+                            color: isDark
+                                ? AppColors.borderDark.withValues(alpha: 0.3)
+                                : AppColors.borderLight.withValues(alpha: 0.5),
+                            width: 1,
+                          ),
                     boxShadow: [
                       BoxShadow(
                         color: isDark
-                            ? Colors.black.withValues(alpha: 0.15) // Ombre plus douce
+                            ? Colors.black
+                                .withValues(alpha: 0.15) // Ombre plus douce
                             : Colors.black.withValues(alpha: 0.04),
                         blurRadius: 12,
                         offset: const Offset(0, 3),
