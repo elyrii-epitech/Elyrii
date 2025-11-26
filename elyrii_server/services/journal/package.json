@@ -5,7 +5,12 @@
   "private": true,
   "scripts": {
     "start:dev": "NODE_ENV=development bun run --hot index.ts",
-    "start:prod": "NODE_ENV=production bun run index.ts"
+    "start:prod": "NODE_ENV=production bun run index.ts",
+    "docs:build": "bun i ; typedoc --out ../../docs/api/auth",
+    "db:generate": "mkdir .drizzle ; drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "drizzle-kit seed",
+    "db:push": "drizzle-kit push"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -17,8 +22,10 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@hono/standard-validator": "^0.2.0",
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.6",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "zod": "^4.1.13"
   }
 }
