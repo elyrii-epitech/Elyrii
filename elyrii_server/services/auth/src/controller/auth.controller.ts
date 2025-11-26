@@ -4,7 +4,7 @@ import { loginValidation, registerValidation } from "../utils/zod.valid";
 import AuthRepository from "../repository/auth.repository";
 import {JwtUtils} from "../utils/jwt.utils";
 import TokenRepository from "../repository/token.repository";
-import { setCookie } from "hono/cookie";
+import { getCookie, setCookie } from "hono/cookie";
 /**
  * Controller that defines HTTP handlers for authentication routes.
  */
@@ -101,7 +101,51 @@ class AuthController {
      */
     readonly refreshToken = this.factory.createHandlers(async (ctx) => {
         // TODO: Implement refresh token logic
-        return ctx.json({ message: "Refresh token" });
+        const oldRefreshToken = getCookie(ctx, "refresh_token");
+        if (!oldRefreshToken) {
+            return ctx.json({ error: "Refresh token not found" }, 401);
+        }
+        const session = await this.tokenRepository.getTokenByToken(oldRefreshToken);
+        if (!session) {
+            return ctx.json({ error: "Invalid refresh token" }, 401);
+        }
+
+        let payload;
+        try {
+            payload = await JwtUtils.verifyRefreshToken(oldRefreshToken);
+            if (!payload) {
+                return ctx.json({ error: "Invalid refresh token" }, 401);
+            }
+        } catch (error) {
+            return ctx.json({ error: "Invalid refresh token" }, 401);
+        }
+
+        const refreshToken = await JwtUtils.generateRefreshToken(payload);
+        const newSession = await this.tokenRepository.updateToken(
+            refreshToken,
+            payload.userId,
+            ctx.req.header("User-Agent") || "Unknown",
+            session.id
+        );
+        if (!newSession) {
+            return ctx.json({ error: "Invalid refresh token" }, 401);
+        }
+
+        setCookie(ctx, "refresh_token", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+            path: "/auth/refresh",
+            maxAge: JwtUtils.REFRESH_TOKEN_EXP
+        });
+
+        const tokenPayload = {
+            userId: payload.userId,
+            email: payload.email
+        };
+
+        const token = await JwtUtils.generateAccessToken(tokenPayload);
+        return ctx.json({ message: "Refresh token", token });
     });
 
     /**
