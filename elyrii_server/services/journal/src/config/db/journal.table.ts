@@ -7,7 +7,7 @@ export const journalEntriesTable = pgTable("journal_entries", {
     content: text("content"),
     mood: text("mood"),
     createdAt: timestamp("created_at").defaultNow(),
-    updatedAt: timestamp("updated_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
 }, (table) => [
   index("journal_entries_user_id_idx").on(table.userId),
 ]);
