@@ -1,4 +1,5 @@
 import unittest
+import os
 from unittest.mock import patch, mock_open
 from elyrii_ai.prompt import system_prompt
 
@@ -33,9 +34,12 @@ class TestSystemPrompt(unittest.TestCase):
     @patch("builtins.open", new_callable=mock_open)
     def test_get_system_prompt_success(self, mock_file, mock_json_load):
         """Test successful retrieval of system prompt."""
-        # Mock json.load to return a list with a string element for persona and policy
+        # Mock json.load to return a dictionary for persona and policy
         # First call is persona, second is policy
-        mock_json_load.side_effect = [["Persona Content"], ["Policy Content"]]
+        mock_json_load.side_effect = [
+            {"persona": "Persona Content"},
+            {"policy": "Policy Content"},
+        ]
 
         result = system_prompt.get_system_prompt(1)
 
@@ -44,8 +48,12 @@ class TestSystemPrompt(unittest.TestCase):
         # Verify files were opened with correct paths (paths depend on get_file_from_version logic)
         # Expected paths: persona/v1.json and policy/v1.json (since default name is empty)
         expected_calls = [
-            unittest.mock.call("persona/v1.json"),
-            unittest.mock.call("policy/v1.json"),
+            unittest.mock.call(
+                os.path.join(system_prompt.BASE_DIR, "persona", "v1.json")
+            ),
+            unittest.mock.call(
+                os.path.join(system_prompt.BASE_DIR, "policy", "v1.json")
+            ),
         ]
         mock_file.assert_has_calls(expected_calls, any_order=False)
 
