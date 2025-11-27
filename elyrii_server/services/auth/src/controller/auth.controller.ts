@@ -147,14 +147,6 @@ class AuthController {
         const token = await JwtUtils.generateAccessToken(tokenPayload);
         return ctx.json({ message: "Refresh token", token });
     });
-
-    /**
-     * Handler for verifying access tokens.
-     */
-    readonly verifyToken = this.factory.createHandlers(async (ctx) => {
-        // TODO: Implement token verification logic
-        return ctx.json({ message: "Token verified" });
-    });
 }
 
 export default AuthController;
