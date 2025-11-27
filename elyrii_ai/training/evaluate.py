@@ -27,14 +27,14 @@ from transformers import (
     PreTrainedModel,
     PreTrainedTokenizer,
     pipeline,
-    Pipeline
+    Pipeline,
 )
 from peft import PeftModel
+from elyrii_ai.prompt.system_prompt import get_system_prompt
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -48,17 +48,15 @@ TEST_PROMPTS = [
     "My boss yelled at me today for a mistake I didn't make. I'm so angry.",
     "I'm anxious about my upcoming presentation. I feel like I'm going to fail.",
     "I just went through a breakup and everything hurts.",
-    "I feel like I'm not good enough for anyone."
+    "I feel like I'm not good enough for anyone.",
 ]
 
-SYSTEM_PROMPT = (
-    "You are Elyrii, an empathetic and non-judgmental emotional assistant. "
-    "Your goal is to provide support, listen actively, and help users process "
-    "their emotions in a safe space. Always respond with kindness and patience."
-)
+SYSTEM_PROMPT = get_system_prompt()
 
 
-def load_model_and_tokenizer(adapter_path: str) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
+def load_model_and_tokenizer(
+    adapter_path: str,
+) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
     """
     Loads the base Mistral model and merges the provided LoRA adapter.
 
@@ -92,7 +90,9 @@ def load_model_and_tokenizer(adapter_path: str) -> Tuple[PreTrainedModel, PreTra
     return model, tokenizer
 
 
-def generate_response(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prompt: str) -> str:
+def generate_response(
+    model: PreTrainedModel, tokenizer: PreTrainedTokenizer, prompt: str
+) -> str:
     """
     Generates a response to a user prompt using the Elyrii persona.
 
@@ -106,14 +106,10 @@ def generate_response(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, pr
     """
 
     # Format with the Chat Template
-    messages = [
-        {"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{prompt}"}
-    ]
+    messages = [{"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{prompt}"}]
 
     inputs = tokenizer.apply_chat_template(
-        messages,
-        return_tensors="pt",
-        add_generation_prompt=True
+        messages, return_tensors="pt", add_generation_prompt=True
     ).to(model.device)
 
     with torch.no_grad():
@@ -123,7 +119,7 @@ def generate_response(model: PreTrainedModel, tokenizer: PreTrainedTokenizer, pr
             do_sample=True,
             temperature=0.7,
             top_p=0.9,
-            pad_token_id=tokenizer.pad_token_id
+            pad_token_id=tokenizer.pad_token_id,
         )
 
     # Decode and strip the prompt
@@ -156,15 +152,25 @@ def score_empathy(text: str, analyzer: Pipeline) -> int:
     result = analyzer(text[:512])[0]  # Truncate to 512 for BERT
 
     # Map label '1 star' -> 1, '5 stars' -> 5
-    stars = int(result['label'].split()[0])
+    stars = int(result["label"].split()[0])
     return stars
 
 
 def main():
     """Main execution flow for evaluation."""
     parser = argparse.ArgumentParser(description="Evaluate Elyrii Model")
-    parser.add_argument("--adapter_path", type=str, required=True, help="Path to the LoRA adapter folder")
-    parser.add_argument("--output_file", type=str, default="evaluation_results.csv", help="Output CSV file")
+    parser.add_argument(
+        "--adapter_path",
+        type=str,
+        required=True,
+        help="Path to the LoRA adapter folder",
+    )
+    parser.add_argument(
+        "--output_file",
+        type=str,
+        default="evaluation_results.csv",
+        help="Output CSV file",
+    )
     args = parser.parse_args()
 
     # 1. Load Generation Model
@@ -172,7 +178,9 @@ def main():
 
     # 2. Load Judge Model (Sentiment/Empathy)
     logger.info("⚖️  Loading sentiment analyzer (The Judge)...")
-    judge = pipeline("sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment")
+    judge = pipeline(
+        "sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment"
+    )
 
     results = []
 
@@ -184,11 +192,13 @@ def main():
         # Score
         score = score_empathy(response, judge)
 
-        results.append({
-            "User Prompt": prompt,
-            "Elyrii Response": response,
-            "Empathy Score (1-5)": score
-        })
+        results.append(
+            {
+                "User Prompt": prompt,
+                "Elyrii Response": response,
+                "Empathy Score (1-5)": score,
+            }
+        )
 
     # 3. Save Results
     df = pd.DataFrame(results)
