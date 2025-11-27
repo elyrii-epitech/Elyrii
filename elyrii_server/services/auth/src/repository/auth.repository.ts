@@ -5,6 +5,7 @@ import { userTable, type NewUser } from "../config/db/user.table";
 type AuthUserCredentials = {
     readonly id: string;
     readonly password?: string | undefined
+    readonly email?: string | undefined
 };
 
 type AuthUser = {
@@ -24,7 +25,8 @@ class AuthRepository {
     async getUserById(userId: string): Promise<AuthUserCredentials | undefined> {
         return (await db.select({
             id: userTable.id,
-            password: userTable.password
+            password: userTable.password,
+            email: userTable.email
         }).from(userTable).where(eq(userTable.id, userId)))[0];
     }
 
@@ -35,7 +37,9 @@ class AuthRepository {
      */
     async getUserByEmail(email: string): Promise<AuthUserCredentials | undefined> {
         return (await db.select({
-            id: userTable.id, password: userTable.password
+            id: userTable.id,
+            password: userTable.password,
+            email: userTable.email
         }).from(userTable).where(eq(userTable.email, email)))[0];
     }
 
