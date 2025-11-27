@@ -55,3 +55,14 @@ Training pipeline including data processing up to training evaluation.
    :undoc-members:
    :show-inheritance:
    :member-order: bysource
+
+Prompt
+------
+
+AI system prompt utility functions.
+
+.. automodule:: elyrii_ai.prompt.system_prompt
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :member-order: bysource

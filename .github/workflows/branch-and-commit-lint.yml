@@ -57,7 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           # Conventional commit types we accept
-          TYPES="build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test"
+          TYPES="merge|build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test"
 
           # Bash ERE for commit header: type(scope?)!?: subject
           CONV_REGEX="^(${TYPES})(\\([A-Za-z0-9._\\-\\s\\$\\*]+\\))?(!)?:[[:space:]]+.+$"

@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.abspath('../../..'))
 sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../controller'))
 sys.path.insert(0, os.path.abspath('../../training'))
+sys.path.insert(0, os.path.abspath('../../prompt'))
 
 autodoc_mock_imports = [
     "torch",
