@@ -38,6 +38,7 @@ services:
       - DB_NAME=${AUTH_DB_NAME}
       - DB_PORT=${DB_PORT}
       - SECRET_KEY=${AUTH_SECRET_KEY}
+      - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY}
     networks:
       - elyrii_net
     depends_on:
