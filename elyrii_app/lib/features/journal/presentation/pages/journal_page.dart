@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../providers/journal_provider.dart';
 import '../widgets/glass_journal_card.dart';
 import '../widgets/glass_icon_button.dart';
 import '../widgets/empty_journal_state.dart';
-import 'journal_editor_page.dart';
+import '../widgets/journal_editor_sheet.dart';
 
 class JournalPage extends StatefulWidget {
   const JournalPage({super.key});
@@ -31,35 +31,18 @@ class _JournalPageState extends State<JournalPage> {
     super.dispose();
   }
 
-  void _navigateToEditor({JournalEntry? entry}) {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => JournalEditorPage(
-          provider: _provider,
-          entry: entry,
-        ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = 0.0;
-          const end = 1.0;
-          const curve = Curves.easeInOutCubic;
-
-          var fadeTween = Tween(begin: begin, end: end).chain(
-            CurveTween(curve: curve),
-          );
-          var scaleTween = Tween(begin: 0.95, end: 1.0).chain(
-            CurveTween(curve: curve),
-          );
-
-          return FadeTransition(
-            opacity: animation.drive(fadeTween),
-            child: ScaleTransition(
-              scale: animation.drive(scaleTween),
-              child: child,
-            ),
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 400),
-        reverseTransitionDuration: const Duration(milliseconds: 350),
+  void _showEditorSheet({JournalEntry? entry}) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      enableDrag: true,
+      useSafeArea: true,
+      isDismissible: true,
+      builder: (context) => JournalEditorSheet(
+        provider: _provider,
+        entry: entry,
       ),
     );
   }
@@ -82,7 +65,7 @@ class _JournalPageState extends State<JournalPage> {
                     builder: (context, provider, child) {
                       if (provider.entries.isEmpty) {
                         return EmptyJournalState(
-                          onCreateFirst: () => _navigateToEditor(),
+                          onCreateFirst: () => _showEditorSheet(),
                           isDark: isDark,
                         );
                       }
@@ -131,7 +114,7 @@ class _JournalPageState extends State<JournalPage> {
           GlassIconButton(
             isDark: isDark,
             icon: Icons.add_rounded,
-            onPressed: () => _navigateToEditor(),
+            onPressed: () => _showEditorSheet(),
           ),
         ],
       ),
@@ -156,7 +139,7 @@ class _JournalPageState extends State<JournalPage> {
           child: GlassJournalCard(
             entry: entry,
             isDark: isDark,
-            onTap: () => _navigateToEditor(entry: entry),
+            onTap: () => _showEditorSheet(entry: entry),
           ).animate().fadeIn(
             duration: 350.ms,
             delay: (30 * index).ms,

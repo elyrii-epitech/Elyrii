@@ -1,13 +1,12 @@
 import 'package:flutter/foundation.dart';
 
-/// Modèle de données pour une entrée du journal intime
+/// Modèle de données pour une entrée du journal
 class JournalEntry {
   final String id;
   final String? title;
   final String content;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final List<String> tags;
 
   const JournalEntry({
     required this.id,
@@ -15,7 +14,6 @@ class JournalEntry {
     required this.content,
     required this.createdAt,
     required this.updatedAt,
-    this.tags = const [],
   });
 
   JournalEntry copyWith({
@@ -24,7 +22,6 @@ class JournalEntry {
     String? content,
     DateTime? createdAt,
     DateTime? updatedAt,
-    List<String>? tags,
   }) {
     return JournalEntry(
       id: id ?? this.id,
@@ -32,51 +29,42 @@ class JournalEntry {
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      tags: tags ?? this.tags,
     );
   }
 }
 
-
-
 /// Provider pour gérer l'état du journal
 class JournalProvider extends ChangeNotifier {
   List<JournalEntry> _entries = [];
-  String _searchQuery = '';
   bool _sortNewest = true;
 
-  List<JournalEntry> get entries => _getFilteredEntries();
-  String get searchQuery => _searchQuery;
+  List<JournalEntry> get entries => _getSortedEntries();
   bool get sortNewest => _sortNewest;
 
   JournalProvider() {
     _loadMockData();
   }
 
-  /// Charge des données de test
   void _loadMockData() {
     final now = DateTime.now();
     _entries = [
       JournalEntry(
         id: '1',
         title: 'Premier jour',
-        content:
-            'Aujourd\'hui a été une journée incroyable. J\'ai commencé à utiliser cette application et je me sens déjà plus serein.',
+        content: 'Aujourd\'hui a été une journée incroyable. J\'ai commencé à utiliser cette application et je me sens déjà plus serein.',
         createdAt: now.subtract(const Duration(days: 2)),
         updatedAt: now.subtract(const Duration(days: 2)),
       ),
       JournalEntry(
         id: '2',
         title: 'Réflexion du soir',
-        content:
-            'Je me sens un peu anxieux ce soir. Beaucoup de choses dans ma tête.',
+        content: 'Je me sens un peu anxieux ce soir. Beaucoup de choses dans ma tête.',
         createdAt: now.subtract(const Duration(days: 1)),
         updatedAt: now.subtract(const Duration(days: 1)),
       ),
       JournalEntry(
         id: '3',
-        content:
-            'Une journée calme et reposante. J\'ai pris le temps de méditer.',
+        content: 'Une journée calme et reposante. J\'ai pris le temps de méditer.',
         createdAt: now,
         updatedAt: now,
       ),
@@ -84,60 +72,31 @@ class JournalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Retourne les entrées filtrées et triées
-  List<JournalEntry> _getFilteredEntries() {
-    var filtered = List<JournalEntry>.from(_entries);
-
-    // Filtrer par recherche
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((e) {
-        final titleMatch =
-            e.title?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
-                false;
-        final contentMatch =
-            e.content.toLowerCase().contains(_searchQuery.toLowerCase());
-        return titleMatch || contentMatch;
-      }).toList();
-    }
-
-    // Trier par date
-    filtered.sort((a, b) {
-      if (_sortNewest) {
-        return b.createdAt.compareTo(a.createdAt);
-      } else {
-        return a.createdAt.compareTo(b.createdAt);
-      }
-    });
-
-    return filtered;
+  List<JournalEntry> _getSortedEntries() {
+    final sorted = List<JournalEntry>.from(_entries);
+    sorted.sort((a, b) => _sortNewest
+        ? b.createdAt.compareTo(a.createdAt)
+        : a.createdAt.compareTo(b.createdAt));
+    return sorted;
   }
 
-  /// Crée une nouvelle entrée
-  void createEntry({
-    String? title,
-    required String content,
-  }) {
+  void createEntry({String? title, required String content}) {
     final now = DateTime.now();
-    final entry = JournalEntry(
+    _entries.add(JournalEntry(
       id: now.millisecondsSinceEpoch.toString(),
-      title: title,
+      title: title?.isNotEmpty == true ? title : null,
       content: content,
       createdAt: now,
       updatedAt: now,
-    );
-    _entries.add(entry);
+    ));
     notifyListeners();
   }
 
-  /// Met à jour une entrée existante
-  void updateEntry(String id, {
-    String? title,
-    String? content,
-  }) {
+  void updateEntry(String id, {String? title, String? content}) {
     final index = _entries.indexWhere((e) => e.id == id);
     if (index != -1) {
       _entries[index] = _entries[index].copyWith(
-        title: title,
+        title: title?.isNotEmpty == true ? title : null,
         content: content,
         updatedAt: DateTime.now(),
       );
@@ -145,38 +104,13 @@ class JournalProvider extends ChangeNotifier {
     }
   }
 
-  /// Supprime une entrée
   void deleteEntry(String id) {
     _entries.removeWhere((e) => e.id == id);
     notifyListeners();
   }
 
-  /// Récupère une entrée par son ID
-  JournalEntry? getEntry(String id) {
-    try {
-      return _entries.firstWhere((e) => e.id == id);
-    } catch (e) {
-      return null;
-    }
-  }
-
-
-
-  /// Met à jour la recherche
-  void updateSearch(String query) {
-    _searchQuery = query;
-    notifyListeners();
-  }
-
-  /// Change l'ordre de tri
   void toggleSort() {
     _sortNewest = !_sortNewest;
-    notifyListeners();
-  }
-
-  /// Efface tous les filtres
-  void clearFilters() {
-    _searchQuery = '';
     notifyListeners();
   }
 }
