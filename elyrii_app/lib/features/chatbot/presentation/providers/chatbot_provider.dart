@@ -3,10 +3,15 @@ import '../../data/entities/chat_message.dart';
 
 class ChatbotProvider extends ChangeNotifier {
   final List<ChatMessage> _messages = [];
+  List<ChatMessage>? _cachedUnmodifiableMessages;
   bool _isMascotMinimized = false;
   bool _isTyping = false;
 
-  List<ChatMessage> get messages => List.unmodifiable(_messages);
+  List<ChatMessage> get messages {
+    _cachedUnmodifiableMessages ??= List.unmodifiable(_messages);
+    return _cachedUnmodifiableMessages!;
+  }
+
   bool get isMascotMinimized => _isMascotMinimized;
   bool get isTyping => _isTyping;
 
@@ -16,6 +21,7 @@ class ChatbotProvider extends ChangeNotifier {
 
     final userMessage = ChatMessage.user(content);
     _messages.add(userMessage);
+    _cachedUnmodifiableMessages = null;
     notifyListeners();
 
     _isTyping = true;
@@ -25,6 +31,7 @@ class ChatbotProvider extends ChangeNotifier {
 
     final aiResponse = _generateMockResponse(content);
     _messages.add(ChatMessage.ai(aiResponse));
+    _cachedUnmodifiableMessages = null;
     _isTyping = false;
     notifyListeners();
   }
@@ -41,7 +48,6 @@ class ChatbotProvider extends ChangeNotifier {
       "Tu traverses quelque chose de difficile, et c'est normal de le ressentir. Je reste à tes côtés.",
     ];
 
-    // Retourner une réponse aléatoire basée sur la longueur du message
     return responses[userMessage.length % responses.length];
   }
 
@@ -54,6 +60,7 @@ class ChatbotProvider extends ChangeNotifier {
   /// Efface l'historique des messages
   void clearHistory() {
     _messages.clear();
+    _cachedUnmodifiableMessages = null;
     _isMascotMinimized = false;
     notifyListeners();
   }

@@ -14,7 +14,6 @@ class ChatbotPage extends StatefulWidget {
 }
 
 class _ChatbotPageState extends State<ChatbotPage> {
-  late final ChatbotProvider _provider;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
@@ -23,13 +22,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
   @override
   void initState() {
     super.initState();
-    _provider = ChatbotProvider();
 
     _focusNode.addListener(() {
       setState(() {
         _isTextFieldFocused = _focusNode.hasFocus;
       });
-      _provider.toggleMascotSize(_focusNode.hasFocus);
+      context.read<ChatbotProvider>().toggleMascotSize(_focusNode.hasFocus);
     });
   }
 
@@ -38,14 +36,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
     _textController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
-    _provider.dispose();
     super.dispose();
   }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       Future.delayed(const Duration(milliseconds: 300), () {
-        if (_scrollController.hasClients) {
+        if (_scrollController.hasClients && mounted) {
           _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
             duration: const Duration(milliseconds: 300),
@@ -60,7 +57,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
 
-    _provider.sendMessage(text);
+    context.read<ChatbotProvider>().sendMessage(text);
     _textController.clear();
     _scrollToBottom();
   }
@@ -69,169 +66,162 @@ class _ChatbotPageState extends State<ChatbotPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return ChangeNotifierProvider.value(
-      value: _provider,
-      child: Scaffold(
-        backgroundColor:
-            isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-        extendBody: true,
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: isDark
-                  ? [
-                      AppColors.backgroundDark,
-                      AppColors.primaryDark.withValues(alpha: 0.05),
-                    ]
-                  : [
-                      AppColors.backgroundLight,
-                      AppColors.primary.withValues(alpha: 0.05),
-                    ],
-            ),
+    return Scaffold(
+      backgroundColor:
+          isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      extendBody: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: isDark
+                ? [
+                    AppColors.backgroundDark,
+                    AppColors.primaryDark.withValues(alpha: 0.05),
+                  ]
+                : [
+                    AppColors.backgroundLight,
+                    AppColors.primary.withValues(alpha: 0.05),
+                  ],
           ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                // Zone mascotte ou messages
-                Expanded(
-                  child: Consumer<ChatbotProvider>(
-                    builder: (context, provider, child) {
-                      return Stack(
-                        children: [
-                          // Liste des messages (visible uniquement si focus ou messages)
-                          if (provider.isMascotMinimized)
-                            ListView.builder(
-                              controller: _scrollController,
-                              padding: const EdgeInsets.only(
-                                top: 120,
-                                bottom: 20,
-                              ),
-                              itemCount: provider.messages.length +
-                                  (provider.isTyping ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index == provider.messages.length) {
-                                  return const TypingIndicator();
-                                }
-                                final message = provider.messages[index];
-                                return ChatMessageBubble(
-                                  message: message.content,
-                                  isUser: message.isUser,
-                                  timestamp: message.timestamp,
-                                );
-                              },
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Zone mascotte ou messages
+              Expanded(
+                child: Consumer<ChatbotProvider>(
+                  builder: (context, provider, child) {
+                    return Stack(
+                      children: [
+                        // Liste des messages (visible uniquement si focus ou messages)
+                        if (provider.isMascotMinimized)
+                          ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.only(
+                              top: 120,
+                              bottom: 20,
                             ),
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 500),
-                            curve: Curves.easeInOutCubic,
-                            top: provider.isMascotMinimized ? 0 : null,
-                            left: provider.isMascotMinimized ? 0 : 16,
-                            right: provider.isMascotMinimized ? 0 : 16,
-                            bottom: provider.isMascotMinimized ? null : 150,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                MascotWidget(
-                                  isMinimized: provider.isMascotMinimized,
-                                ),
-                                if (provider.isMascotMinimized &&
-                                    provider.messages.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 8,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    AlertDialog(
-                                                  title: const Text(
-                                                      'Effacer l\'historique'),
-                                                  content: const Text(
-                                                    'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context),
-                                                      child:
-                                                          const Text('Annuler'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        provider.clearHistory();
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child:
-                                                          const Text('Effacer'),
-                                                    ),
-                                                  ],
+                            itemCount: provider.messages.length +
+                                (provider.isTyping ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == provider.messages.length) {
+                                return const TypingIndicator();
+                              }
+                              final message = provider.messages[index];
+                              return ChatMessageBubble(
+                                message: message.content,
+                                isUser: message.isUser,
+                                timestamp: message.timestamp,
+                              );
+                            },
+                          ),
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOutCubic,
+                          top: provider.isMascotMinimized ? 0 : null,
+                          left: provider.isMascotMinimized ? 0 : 16,
+                          right: provider.isMascotMinimized ? 0 : 16,
+                          bottom: provider.isMascotMinimized ? null : 150,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              MascotWidget(
+                                isMinimized: provider.isMascotMinimized,
+                              ),
+                              if (provider.isMascotMinimized &&
+                                  provider.messages.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text(
+                                                    'Effacer l\'historique'),
+                                                content: const Text(
+                                                  'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
                                                 ),
-                                              );
-                                            },
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 6,
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(context),
+                                                    child:
+                                                        const Text('Annuler'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      provider.clearHistory();
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child:
+                                                        const Text('Effacer'),
+                                                  ),
+                                                ],
                                               ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    Icons
-                                                        .delete_outline_rounded,
-                                                    size: 16,
+                                            );
+                                          },
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.delete_outline_rounded,
+                                                  size: 16,
+                                                  color: isDark
+                                                      ? AppColors
+                                                          .textSecondaryDark
+                                                      : AppColors
+                                                          .textSecondaryLight,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  'Effacer',
+                                                  style: TextStyle(
                                                     color: isDark
                                                         ? AppColors
                                                             .textSecondaryDark
                                                         : AppColors
                                                             .textSecondaryLight,
+                                                    fontSize: 12,
                                                   ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    'Effacer',
-                                                    style: TextStyle(
-                                                      color: isDark
-                                                          ? AppColors
-                                                              .textSecondaryDark
-                                                          : AppColors
-                                                              .textSecondaryLight,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
-                        ],
-                      );
-                    },
-                  ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                // Zone de saisie
-                _buildInputArea(isDark),
-              ],
-            ),
+              ),
+              // Zone de saisie
+              _buildInputArea(isDark),
+            ],
           ),
         ),
       ),

@@ -1,3 +1,7 @@
+import 'package:uuid/uuid.dart';
+
+const _uuid = Uuid();
+
 class ChatMessage {
   final String id;
   final String content;
@@ -13,7 +17,7 @@ class ChatMessage {
 
   factory ChatMessage.user(String content) {
     return ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: _uuid.v4(),
       content: content,
       isUser: true,
       timestamp: DateTime.now(),
@@ -22,7 +26,7 @@ class ChatMessage {
 
   factory ChatMessage.ai(String content) {
     return ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: _uuid.v4(),
       content: content,
       isUser: false,
       timestamp: DateTime.now(),

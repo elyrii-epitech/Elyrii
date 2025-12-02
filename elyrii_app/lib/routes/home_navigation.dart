@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
 import '../features/coach/presentation/pages/coach_page.dart';
 import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
+import '../features/chatbot/presentation/providers/chatbot_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/glass_navigation_bar.dart';
 import '../core/widgets/glass_bubble_button.dart';
@@ -27,7 +29,6 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _navBarScaleAnimation;
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
-  final int _pressedIndex = -1;
 
   final List<Widget> _pages = const [
     DashboardPage(),
@@ -160,13 +161,16 @@ class _HomeNavigationState extends State<HomeNavigation>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      extendBody: true,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+    return ChangeNotifierProvider(
+      create: (_) => ChatbotProvider(),
+      child: Scaffold(
+        extendBody: true,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
+        bottomNavigationBar: _buildBottomBar(isDark),
       ),
-      bottomNavigationBar: _buildBottomBar(isDark),
     );
   }
 
@@ -200,7 +204,6 @@ class _HomeNavigationState extends State<HomeNavigation>
                             scaleAnimation: _navBarScaleAnimation,
                             flashAnimation: _flashAnimation,
                             isDark: isDark,
-                            pressedIndex: _pressedIndex,
                             margin: EdgeInsets.zero,
                           ),
                         ),

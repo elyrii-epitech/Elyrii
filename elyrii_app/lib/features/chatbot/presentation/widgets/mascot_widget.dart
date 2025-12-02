@@ -214,7 +214,7 @@ class _MascotWidgetState extends State<MascotWidget>
             ),
             child: Text(
               '✨ Prends ton temps',
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
