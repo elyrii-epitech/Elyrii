@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 
 
-/// Provider pour gérer l'état du chatbot
 class ChatbotProvider extends ChangeNotifier {
   // final List<ChatMessage> _messages = [];
   bool _isMascotMinimized = false;
@@ -20,11 +19,9 @@ class ChatbotProvider extends ChangeNotifier {
     // _messages.add(userMessage);
     notifyListeners();
 
-    // Simuler l'IA qui tape
     _isTyping = true;
     notifyListeners();
 
-    // Simuler un délai de réponse
     await Future.delayed(const Duration(seconds: 1));
 
     // Ajouter une réponse factice de l'IA
