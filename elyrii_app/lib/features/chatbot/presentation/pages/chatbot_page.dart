@@ -85,82 +85,65 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     AppColors.primary.withValues(alpha: 0.05),
                   ],
           ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                // Zone mascotte ou messages
-                Expanded(
-                  child: Consumer<ChatbotProvider>(
-                    builder: (context, provider, child) {
-                      return Stack(
-                        children: [
-                          // Liste des messages (visible uniquement si focus ou messages)
-                          if (provider.isMascotMinimized)
-                            Center(
-                              child: Text(
-                                "Chat indisponible pour le moment",
-                                style: TextStyle(
-                                  color: isDark
-                                      ? AppColors.textSecondaryDark
-                                      : AppColors.textSecondaryLight,
-                                ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Zone mascotte ou messages
+              Expanded(
+                child: Consumer<ChatbotProvider>(
+                  builder: (context, provider, child) {
+                    return Stack(
+                      children: [
+                        // Liste des messages (visible uniquement si focus ou messages)
+                        if (provider.isMascotMinimized)
+                          Center(
+                            child: Text(
+                              "Chat indisponible pour le moment",
+                              style: TextStyle(
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
                               ),
                             ),
-                          // Mascotte positionnée
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 500),
-                            curve: Curves.easeInOutCubic,
-                            top: provider.isMascotMinimized ? 0 : null,
-                            left: provider.isMascotMinimized ? 0 : 16,
-                            right: provider.isMascotMinimized ? 0 : 16,
-                            bottom: provider.isMascotMinimized ? null : 150,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                MascotWidget(
-                                  isMinimized: provider.isMascotMinimized,
-                                ),
-                                // Bouton effacer historique (uniquement en mode minimisé)
-                                if (provider.isMascotMinimized)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 8,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) =>
-                                                    AlertDialog(
-                                                  title: const Text(
-                                                      'Effacer l\'historique'),
-                                                  content: const Text(
-                                                    'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.pop(
-                                                              context),
-                                                      child:
-                                                          const Text('Annuler'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () {
-                                                        provider.clearHistory();
-                                                        Navigator.pop(context);
-                                                      },
-                                                      child:
-                                                          const Text('Effacer'),
-                                                    ),
-                                                  ],
+                          ),
+                        // Mascotte positionnée
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOutCubic,
+                          top: provider.isMascotMinimized ? 0 : null,
+                          left: provider.isMascotMinimized ? 0 : 16,
+                          right: provider.isMascotMinimized ? 0 : 16,
+                          bottom: provider.isMascotMinimized ? null : 150,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              MascotWidget(
+                                isMinimized: provider.isMascotMinimized,
+                              ),
+                              // Bouton effacer historique (uniquement en mode minimisé)
+                              if (provider.isMascotMinimized)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Material(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: InkWell(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: const Text(
+                                                    'Effacer l\'historique'),
+                                                content: const Text(
+                                                  'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
                                                 ),
                                                 actions: [
                                                   TextButton(
