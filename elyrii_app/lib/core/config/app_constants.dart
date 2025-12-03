@@ -84,31 +84,7 @@ class AppConstants {
   /// Nombre d'objectifs à charger par page
   static const int objectivesPageSize = 10;
 
-  // ==================== ÉMOTIONS ====================
 
-  /// Liste des émotions disponibles
-  static const List<String> emotions = [
-    'Joyeux',
-    'Triste',
-    'Anxieux',
-    'Calme',
-    'Énervé',
-    'Excité',
-    'Fatigué',
-    'Neutre',
-  ];
-
-  /// Emojis correspondant aux émotions
-  static const Map<String, String> emotionEmojis = {
-    'Joyeux': '😊',
-    'Triste': '😢',
-    'Anxieux': '😰',
-    'Calme': '😌',
-    'Énervé': '😠',
-    'Excité': '🤩',
-    'Fatigué': '😴',
-    'Neutre': '😐',
-  };
 
   // ==================== MÉDITATION ====================
 
