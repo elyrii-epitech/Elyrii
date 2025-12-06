@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/chatbot_provider.dart';
-// import '../widgets/chat_message_bubble.dart';
+import '../widgets/chat_message_bubble.dart';
 import '../widgets/typing_indicator.dart';
 import '../widgets/mascot_widget.dart';
 
@@ -32,6 +32,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   @override
+  void deactivate() {
+    context.read<ChatbotProvider>().resetMascot();
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
@@ -44,7 +50,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
       Future.delayed(const Duration(milliseconds: 300), () {
         if (_scrollController.hasClients && mounted) {
           _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
+            0.0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
@@ -60,6 +66,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
     context.read<ChatbotProvider>().sendMessage(text);
     _textController.clear();
     _scrollToBottom();
+
+    if (!_focusNode.hasFocus) {
+      _focusNode.requestFocus();
+    }
   }
 
   @override
@@ -98,14 +108,41 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       children: [
                         // Liste des messages (visible uniquement si focus ou messages)
                         if (provider.isMascotMinimized)
-                          Center(
-                            child: Text(
-                              "Chat indisponible pour le moment",
-                              style: TextStyle(
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                              ),
+                          Positioned.fill(
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: ListView.builder(
+                                    controller: _scrollController,
+                                    reverse: true,
+                                    padding: const EdgeInsets.only(
+                                      top: 20,
+                                      bottom: 20,
+                                    ),
+                                    itemCount: provider.messages.length +
+                                        (provider.isTyping ? 1 : 0),
+                                    itemBuilder: (context, index) {
+                                      if (index == 0 && provider.isTyping) {
+                                        return const Padding(
+                                          padding: EdgeInsets.only(left: 20),
+                                          child: TypingIndicator(),
+                                        );
+                                      }
+                                      final messageIndex =
+                                          provider.isTyping ? index - 1 : index;
+                                      final message = provider.messages[
+                                          provider.messages.length -
+                                              1 -
+                                              messageIndex];
+                                      return ChatMessageBubble(
+                                        message: message.content,
+                                        isUser: message.isUser,
+                                        timestamp: message.timestamp,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         // Mascotte positionnée

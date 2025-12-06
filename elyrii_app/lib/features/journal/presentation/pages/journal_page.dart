@@ -54,7 +54,8 @@ class _JournalPageState extends State<JournalPage> {
     return ChangeNotifierProvider.value(
       value: _provider,
       child: Scaffold(
-        backgroundColor: isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
+        backgroundColor:
+            isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
         body: Stack(
           children: [
             // Contenu principal (liste des notes)
@@ -140,19 +141,21 @@ class _JournalPageState extends State<JournalPage> {
             entry: entry,
             isDark: isDark,
             onTap: () => _showEditorSheet(entry: entry),
-          ).animate().fadeIn(
-            duration: 350.ms,
-            delay: (30 * index).ms,
-            curve: Curves.easeOutCubic,
-          ).slideY(
-            begin: 0.05,
-            duration: 350.ms,
-            delay: (30 * index).ms,
-            curve: Curves.easeOutCubic,
-          ),
+          )
+              .animate()
+              .fadeIn(
+                duration: 350.ms,
+                delay: (30 * index).ms,
+                curve: Curves.easeOutCubic,
+              )
+              .slideY(
+                begin: 0.05,
+                duration: 350.ms,
+                delay: (30 * index).ms,
+                curve: Curves.easeOutCubic,
+              ),
         );
       },
     );
   }
 }
-

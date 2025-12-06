@@ -29,8 +29,6 @@ class AppColors {
   static const Color accentLight = Color(0xFFD4EFE0);
   static const Color accentDark = Color(0xFFC2E3D2);
 
-
-
   // ==================== COULEURS SÉMANTIQUES ====================
 
   /// Couleurs douces pour les états de succès, erreur, warning, info

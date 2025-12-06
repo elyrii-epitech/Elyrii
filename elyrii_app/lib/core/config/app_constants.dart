@@ -84,8 +84,6 @@ class AppConstants {
   /// Nombre d'objectifs à charger par page
   static const int objectivesPageSize = 10;
 
-
-
   // ==================== MÉDITATION ====================
 
   /// Durées de méditation prédéfinies (en minutes)

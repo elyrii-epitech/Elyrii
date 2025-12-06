@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../data/mock_journal_entries.dart';
 
 /// Modèle de données pour une entrée du journal
 class JournalEntry {
@@ -18,19 +19,24 @@ class JournalEntry {
 
   JournalEntry copyWith({
     String? id,
-    String? title,
+    Object? title = const _Sentinel(),
     String? content,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
     return JournalEntry(
       id: id ?? this.id,
-      title: title ?? this.title,
+      title: title == const _Sentinel() ? this.title : title as String?,
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+}
+
+/// Classe sentinel pour différencier null explicite de l'absence de paramètre
+class _Sentinel {
+  const _Sentinel();
 }
 
 /// Provider pour gérer l'état du journal
@@ -46,29 +52,7 @@ class JournalProvider extends ChangeNotifier {
   }
 
   void _loadMockData() {
-    final now = DateTime.now();
-    _entries = [
-      JournalEntry(
-        id: '1',
-        title: 'Premier jour',
-        content: 'Aujourd\'hui a été une journée incroyable. J\'ai commencé à utiliser cette application et je me sens déjà plus serein.',
-        createdAt: now.subtract(const Duration(days: 2)),
-        updatedAt: now.subtract(const Duration(days: 2)),
-      ),
-      JournalEntry(
-        id: '2',
-        title: 'Réflexion du soir',
-        content: 'Je me sens un peu anxieux ce soir. Beaucoup de choses dans ma tête.',
-        createdAt: now.subtract(const Duration(days: 1)),
-        updatedAt: now.subtract(const Duration(days: 1)),
-      ),
-      JournalEntry(
-        id: '3',
-        content: 'Une journée calme et reposante. J\'ai pris le temps de méditer.',
-        createdAt: now,
-        updatedAt: now,
-      ),
-    ];
+    _entries = getMockJournalEntries();
     notifyListeners();
   }
 

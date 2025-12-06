@@ -68,15 +68,16 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     final content = _contentController.text.trim();
 
     if (widget.entry != null) {
-      widget.provider.updateEntry(widget.entry!.id, title: title, content: content);
+      widget.provider
+          .updateEntry(widget.entry!.id, title: title, content: content);
     } else if (_createdEntryId != null) {
-      widget.provider.updateEntry(_createdEntryId!, title: title, content: content);
+      widget.provider
+          .updateEntry(_createdEntryId!, title: title, content: content);
     } else {
+      final now = DateTime.now();
+      final newId = now.millisecondsSinceEpoch.toString();
       widget.provider.createEntry(title: title, content: content);
-      final entries = widget.provider.entries;
-      if (entries.isNotEmpty) {
-        _createdEntryId = entries.first.id;
-      }
+      _createdEntryId = newId;
     }
 
     setState(() {
@@ -101,20 +102,24 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AlertDialog(
-      backgroundColor: isDark ? const Color(0xFF2A2A2D) : const Color(0xFFFAFAFA),
+      backgroundColor:
+          isDark ? const Color(0xFF2A2A2D) : const Color(0xFFFAFAFA),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       ),
       title: Text(
         'Modifications non sauvegardées',
         style: TextStyle(
-          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+          color:
+              isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
         ),
       ),
       content: Text(
         'Voulez-vous sauvegarder vos modifications avant de fermer ?',
         style: TextStyle(
-          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+          color: isDark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
         ),
       ),
       actions: [
@@ -123,7 +128,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           child: Text(
             'Annuler',
             style: TextStyle(
-              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
             ),
           ),
         ),
@@ -216,11 +223,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                                 child: GestureDetector(
                                   onTap: () => Navigator.pop(context),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
                                     decoration: BoxDecoration(
                                       color: isDark
                                           ? Colors.white.withValues(alpha: 0.08)
-                                          : Colors.black.withValues(alpha: 0.05),
+                                          : Colors.black
+                                              .withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -241,7 +250,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () {
-                                    final idToDelete = widget.entry?.id ?? _createdEntryId;
+                                    final idToDelete =
+                                        widget.entry?.id ?? _createdEntryId;
                                     if (idToDelete != null) {
                                       widget.provider.deleteEntry(idToDelete);
                                     }
@@ -249,9 +259,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                                     Navigator.pop(context);
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
                                     decoration: BoxDecoration(
-                                      color: AppColors.error.withValues(alpha: 0.15),
+                                      color: AppColors.error
+                                          .withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(

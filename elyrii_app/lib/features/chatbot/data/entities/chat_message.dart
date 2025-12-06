@@ -8,7 +8,7 @@ class ChatMessage {
   final bool isUser;
   final DateTime timestamp;
 
-  const ChatMessage({
+  ChatMessage({
     required this.id,
     required this.content,
     required this.isUser,
