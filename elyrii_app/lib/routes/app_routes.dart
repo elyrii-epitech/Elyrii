@@ -7,4 +7,5 @@ class AppRoutes {
   static const String meditation = '/meditation';
   static const String chatbot = '/chatbot';
   static const String settings = '/settings';
+  static const String login = '/login';
 }

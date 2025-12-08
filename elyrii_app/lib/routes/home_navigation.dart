@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
 import '../features/coach/presentation/pages/coach_page.dart';
 import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
+import '../features/chatbot/presentation/providers/chatbot_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/widgets/glass_navigation_bar.dart';
 import '../core/widgets/glass_bubble_button.dart';
@@ -27,9 +29,6 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _navBarScaleAnimation;
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
-  late Listenable _mergedListenable;
-  bool _isPressed = false;
-  int _pressedIndex = -1;
 
   final List<Widget> _pages = const [
     DashboardPage(),
@@ -63,24 +62,8 @@ class _HomeNavigationState extends State<HomeNavigation>
     );
 
     // Animations de scale (agrandissement)
-    _iconScaleAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 1.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeOutCubic,
-        ),
-      );
-    }).toList();
 
     // Animations de bounce (rebond)
-    _iconBounceAnimations = _iconControllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.elasticOut,
-        ),
-      );
-    }).toList();
 
     // Animation d'apparition de la navbar
     _navBarController = AnimationController(
@@ -124,9 +107,6 @@ class _HomeNavigationState extends State<HomeNavigation>
         curve: Curves.easeOut,
       ),
     );
-
-    // Create merged listenable once to avoid repeated allocations
-    _mergedListenable = Listenable.merge([_navBarPulseController, _flashController]);
 
     // Animer l'item sélectionné au démarrage
     _iconControllers[0].forward();
@@ -181,13 +161,16 @@ class _HomeNavigationState extends State<HomeNavigation>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      extendBody: true,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
+    return ChangeNotifierProvider(
+      create: (_) => ChatbotProvider(),
+      child: Scaffold(
+        extendBody: true,
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _pages,
+        ),
+        bottomNavigationBar: _buildBottomBar(isDark),
       ),
-      bottomNavigationBar: _buildBottomBar(isDark),
     );
   }
 
@@ -200,7 +183,8 @@ class _HomeNavigationState extends State<HomeNavigation>
           child: Opacity(
             opacity: _navBarAnimation.value.clamp(0.0, 1.0),
             child: AnimatedBuilder(
-              animation: _mergedListenable,
+              animation:
+                  Listenable.merge([_navBarPulseController, _flashController]),
               builder: (context, child) {
                 return Transform.scale(
                   scale: _navBarScaleAnimation.value,
@@ -220,7 +204,6 @@ class _HomeNavigationState extends State<HomeNavigation>
                             scaleAnimation: _navBarScaleAnimation,
                             flashAnimation: _flashAnimation,
                             isDark: isDark,
-                            pressedIndex: _pressedIndex,
                             margin: EdgeInsets.zero,
                           ),
                         ),

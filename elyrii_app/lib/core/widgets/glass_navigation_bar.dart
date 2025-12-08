@@ -76,8 +76,8 @@ class GlassNavigationBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(borderRadius),
                   border: Border.all(
                     color: isDark
-                        ? Colors.white.withOpacity(0.2)
-                        : const Color(0xFFE0D4FF).withOpacity(0.6),
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
                     width: 1.5,
                   ),
                   boxShadow: [
@@ -168,8 +168,8 @@ class GlassNavigationBar extends StatelessWidget {
                   // Fond gris plus visible quand sélectionné
                   color: isSelected
                       ? (isDark
-                          ? Colors.white.withOpacity(0.15)
-                          : Colors.black.withOpacity(0.12))
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : Colors.black.withValues(alpha: 0.12))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(24),
                 ),
@@ -260,13 +260,13 @@ class RadialFlashPainter extends CustomPainter {
     // Créer un gradient radial avec opacité qui diminue progressivement
     final gradient = RadialGradient(
       colors: [
-        Colors.white.withOpacity(
-            (0.6 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0)),
-        Colors.white.withOpacity(
-            (0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0)),
-        Colors.white.withOpacity(
-            (0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0)),
-        Colors.white.withOpacity(0),
+        Colors.white.withValues(
+            alpha: ((0.6 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(
+            alpha: ((0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(
+            alpha: ((0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(alpha: 0),
       ],
       stops: const [0.0, 0.3, 0.6, 1.0],
     );

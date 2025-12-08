@@ -29,18 +29,6 @@ class AppColors {
   static const Color accentLight = Color(0xFFD4EFE0);
   static const Color accentDark = Color(0xFFC2E3D2);
 
-  // ==================== COULEURS ÉMOTIONNELLES ====================
-
-  /// Couleurs douces pour représenter les émotions dans le journal
-  static const Color emotionJoy = Color(0xFFFDD876); // Jaune miel doux
-  static const Color emotionSad = Color(0xFF93B8DA); // Bleu ciel apaisant
-  static const Color emotionAnxiety = Color(0xFFFFCFA8); // Orange crème
-  static const Color emotionCalm = Color(0xFFA8D5BA); // Vert menthe doux
-  static const Color emotionAngry = Color(0xFFEA9999); // Rouge rosé doux
-  static const Color emotionNeutral = Color(0xFFBFC5D1); // Gris perle
-  static const Color emotionExcited = Color(0xFFFFB5D8); // Rose poudré
-  static const Color emotionTired = Color(0xFFC5B8D5); // Lavande grisée
-
   // ==================== COULEURS SÉMANTIQUES ====================
 
   /// Couleurs douces pour les états de succès, erreur, warning, info
@@ -140,50 +128,4 @@ class AppColors {
 
   /// Overlay pour les modals/dialogs
   static const Color scrim = Color(0x80000000);
-
-  // ==================== HELPERS ====================
-
-  /// Retourne la couleur associée à une émotion
-  static Color getEmotionColor(String emotion) {
-    switch (emotion.toLowerCase()) {
-      case 'joy':
-      case 'joyeux':
-      case 'heureux':
-        return emotionJoy;
-      case 'sad':
-      case 'triste':
-        return emotionSad;
-      case 'anxiety':
-      case 'anxieux':
-      case 'anxiété':
-        return emotionAnxiety;
-      case 'calm':
-      case 'calme':
-        return emotionCalm;
-      case 'angry':
-      case 'colère':
-      case 'énervé':
-        return emotionAngry;
-      case 'excited':
-      case 'excité':
-        return emotionExcited;
-      case 'tired':
-      case 'fatigué':
-        return emotionTired;
-      default:
-        return emotionNeutral;
-    }
-  }
-
-  /// Retourne une liste de toutes les couleurs d'émotions
-  static List<Color> get allEmotionColors => [
-        emotionJoy,
-        emotionSad,
-        emotionAnxiety,
-        emotionCalm,
-        emotionAngry,
-        emotionNeutral,
-        emotionExcited,
-        emotionTired,
-      ];
 }

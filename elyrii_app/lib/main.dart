@@ -52,7 +52,7 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-      initialRoute: AppRoutes.home,
+      initialRoute: AppRoutes.login,
       onGenerateRoute: RouteGenerator.generateRoute,
       builder: (context, child) {
         // Passer la fonction de toggle via InheritedWidget

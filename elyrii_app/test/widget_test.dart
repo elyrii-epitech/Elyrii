@@ -14,7 +14,7 @@ void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 1));
 
     // Verify that the app builds without errors
     expect(find.byType(MaterialApp), findsOneWidget);
