@@ -54,50 +54,52 @@ class GlassNavigationBar extends StatelessWidget {
       child: Stack(
         children: [
           // Navbar glass (plus transparente)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(borderRadius),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.12),
-                            Colors.white.withValues(alpha: 0.08),
-                          ]
-                        : [
-                            const Color(0xFFFFFFFF).withValues(alpha: 0.85),
-                            const Color(0xFFF5F3FF).withValues(alpha: 0.75),
-                          ],
-                  ),
-                  borderRadius: BorderRadius.circular(borderRadius),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
-                      blurRadius: 24,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 10),
+          RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadius),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [
+                              Colors.white.withValues(alpha: 0.12),
+                              Colors.white.withValues(alpha: 0.08),
+                            ]
+                          : [
+                              const Color(0xFFFFFFFF).withValues(alpha: 0.85),
+                              const Color(0xFFF5F3FF).withValues(alpha: 0.75),
+                            ],
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: items.map((item) {
-                    return _buildNavItem(
-                      item: item,
-                      controller: iconControllers[item.index],
-                    );
-                  }).toList(),
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+                        blurRadius: 24,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: items.map((item) {
+                      return _buildNavItem(
+                        item: item,
+                        controller: iconControllers[item.index],
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ),

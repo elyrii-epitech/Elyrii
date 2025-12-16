@@ -118,6 +118,36 @@ class AppColors {
     end: Alignment.bottomRight,
   );
 
+  // ==================== COULEURS SCAFFOLD ====================
+
+  /// Fond de scaffold adapté au thème
+  static const Color scaffoldLight = Color(0xFFE8E8EB);
+  static const Color scaffoldDark = Color(0xFF171719);
+
+  // ==================== COULEURS GLASSMORPHISM ====================
+
+  /// Glass backgrounds - Light mode
+  static const Color glassBackgroundLight = Color(0xD9FFFFFF); // 85% opacity
+  static const Color glassBackgroundLightEnd = Color(0x99FFFFFF); // 60% opacity
+
+  /// Glass backgrounds - Dark mode
+  static const Color glassBackgroundDark = Color(0x1AFFFFFF); // 10% opacity
+  static const Color glassBackgroundDarkEnd = Color(0x0DFFFFFF); // 5% opacity
+
+  /// Glass borders
+  static const Color glassBorderLight = Color(0x99FFFFFF); // 60% opacity
+  static const Color glassBorderDark = Color(0x1FFFFFFF); // 12% opacity
+
+  /// Couleurs lavande pour effets spéciaux
+  static const Color glassLavender = Color(0xFFF5F3FF);
+  static const Color glassLavenderBorder = Color(0xFFE0D4FF);
+
+  // ==================== COULEURS ICÔNES NAVIGATION ====================
+
+  /// Icônes par défaut dans la navigation
+  static const Color iconDefaultLight = Color(0xFF3A3A3D);
+  static const Color iconDefaultDark = Color(0xFFE6E5E2);
+
   // ==================== COULEURS OVERLAY ====================
 
   /// Overlays pour les états interactifs

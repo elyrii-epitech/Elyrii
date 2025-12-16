@@ -76,72 +76,74 @@ class GlassBubbleButton extends StatelessWidget {
               ),
             ),
           // Bulle glass
-          ClipRRect(
-            borderRadius: BorderRadius.circular(size / 2),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  // Gradient de base plus contrasté en mode light
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.12),
-                            Colors.white.withValues(alpha: 0.08),
-                          ]
-                        : [
-                            const Color(0xFFFFFFFF).withValues(alpha: 0.85),
-                            const Color(0xFFF5F3FF).withValues(alpha: 0.75),
-                          ],
-                  ),
-                  borderRadius: BorderRadius.circular(size / 2),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
-                      blurRadius: 24,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
+          RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(size / 2),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                 child: Container(
-                  // Fond gris plus visible si sélectionné (comme la navbar)
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.black.withValues(alpha: 0.12))
-                        : Colors.transparent,
+                    // Gradient de base plus contrasté en mode light
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [
+                              Colors.white.withValues(alpha: 0.12),
+                              Colors.white.withValues(alpha: 0.08),
+                            ]
+                          : [
+                              const Color(0xFFFFFFFF).withValues(alpha: 0.85),
+                              const Color(0xFFF5F3FF).withValues(alpha: 0.75),
+                            ],
+                    ),
                     borderRadius: BorderRadius.circular(size / 2),
+                    border: Border.all(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.2)
+                          : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+                        blurRadius: 24,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
-                  child: Center(
-                    child: showShimmer
-                        ? Icon(
-                            icon,
-                            color: effectiveIconColor,
-                            size: size * 0.4375, // 28/64 ratio
-                          )
-                            .animate(
-                                onPlay: (controller) => controller.repeat())
-                            .shimmer(
-                              duration: 2000.ms,
-                              delay: 3000.ms,
-                              color: effectiveShimmerColor,
+                  child: Container(
+                    // Fond gris plus visible si sélectionné (comme la navbar)
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? (isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : Colors.black.withValues(alpha: 0.12))
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(size / 2),
+                    ),
+                    child: Center(
+                      child: showShimmer
+                          ? Icon(
+                              icon,
+                              color: effectiveIconColor,
+                              size: size * 0.4375, // 28/64 ratio
                             )
-                        : Icon(
-                            icon,
-                            color: effectiveIconColor,
-                            size: size * 0.4375,
-                          ),
+                              .animate(
+                                  onPlay: (controller) => controller.repeat())
+                              .shimmer(
+                                duration: 2000.ms,
+                                delay: 3000.ms,
+                                color: effectiveShimmerColor,
+                              )
+                          : Icon(
+                              icon,
+                              color: effectiveIconColor,
+                              size: size * 0.4375,
+                            ),
+                    ),
                   ),
                 ),
               ),
