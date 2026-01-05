@@ -1,7 +1,7 @@
 import { createFactory } from "hono/factory";
 import JournalRepository from "../repository/journal.repository";
 import { sValidator } from "@hono/standard-validator";
-import { createEntriySchema } from "../utils/journal.zod";
+import { createEntriySchema, updateEntrySchema } from "../utils/journal.zod";
 
 class JournalController {
     private readonly factory = createFactory();
@@ -38,8 +38,20 @@ class JournalController {
         }
     });
 
-    readonly updateEntry = this.factory.createHandlers(async (ctx) => { 
-        return ctx.json({ message: "Update entry" }); 
+    readonly updateEntry = this.factory.createHandlers(sValidator("json", updateEntrySchema), async (ctx) => {
+        const body = ctx.req.valid("json");
+        const entryId = ctx.req.param("entryId");
+
+        if (!body || !entryId) {
+            return ctx.json({ error: "Invalid request body" }, 400);
+        }
+
+        try {
+            const entry = await this.journalRepository.updateEntry(entryId, body);
+            return ctx.json({ message: "Entry updated successfully", body: entry }, 200);
+        } catch (error) {
+            return ctx.json({ error: "Failed to update entry" }, 500);
+        }
     });
 
     readonly deleteEntry = this.factory.createHandlers(async (ctx) => { 
