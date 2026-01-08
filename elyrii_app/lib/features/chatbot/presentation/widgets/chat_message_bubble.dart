@@ -93,7 +93,9 @@ class ChatMessageBubble extends StatelessWidget {
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: isUser ? AppColors.surfaceDark : AppColors.primary.withValues(alpha: 0.2),
+        color: isUser
+            ? AppColors.surfaceDark
+            : AppColors.primary.withValues(alpha: 0.2),
         shape: BoxShape.circle,
       ),
       child: Icon(

@@ -5,6 +5,8 @@ import '../providers/chatbot_provider.dart';
 import '../widgets/chat_message_bubble.dart';
 import '../widgets/typing_indicator.dart';
 import '../widgets/mascot_widget.dart';
+import '../widgets/conversation_suggestions.dart';
+import '../widgets/emergency_resources_button.dart';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -13,15 +15,42 @@ class ChatbotPage extends StatefulWidget {
   State<ChatbotPage> createState() => _ChatbotPageState();
 }
 
-class _ChatbotPageState extends State<ChatbotPage> {
+class _ChatbotPageState extends State<ChatbotPage>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   bool _isTextFieldFocused = false;
+  bool _hasStartedTyping = false;
+  late AnimationController _inputAnimationController;
+  late Animation<double> _inputGlowAnimation;
 
   @override
   void initState() {
     super.initState();
+
+    _inputAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+
+    _inputGlowAnimation = Tween<double>(begin: 0.3, end: 0.6).animate(
+      CurvedAnimation(
+        parent: _inputAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _textController.addListener(() {
+      if (_textController.text.isNotEmpty && !_hasStartedTyping) {
+        setState(() => _hasStartedTyping = true);
+        _inputAnimationController.repeat(reverse: true);
+      } else if (_textController.text.isEmpty && _hasStartedTyping) {
+        setState(() => _hasStartedTyping = false);
+        _inputAnimationController.stop();
+        _inputAnimationController.reset();
+      }
+    });
 
     _focusNode.addListener(() {
       setState(() {
@@ -42,6 +71,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
     _textController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
+    _inputAnimationController.dispose();
     super.dispose();
   }
 
@@ -113,46 +143,56 @@ class _ChatbotPageState extends State<ChatbotPage> {
                                   provider.resetMascot();
                                 },
                               ),
-                              const SizedBox(height: 8),
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
+                                  vertical: 8,
                                 ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    _buildClearButton(provider),
+                                    const EmergencyResourcesButton(),
+                                    if (provider.messages.isNotEmpty)
+                                      _buildClearButton(provider),
                                   ],
                                 ),
                               ),
-                              const SizedBox(height: 8),
                               Expanded(
-                                child: ListView.builder(
-                                  controller: _scrollController,
-                                  reverse: true,
-                                  padding: const EdgeInsets.only(
-                                    top: 8,
-                                    bottom: 8,
-                                  ),
-                                  itemCount: provider.messages.length +
-                                      (provider.isTyping ? 1 : 0),
-                                  itemBuilder: (context, index) {
-                                    if (index == 0 && provider.isTyping) {
-                                      return const TypingIndicator();
-                                    }
-                                    final messageIndex =
-                                        provider.isTyping ? index - 1 : index;
-                                    final message = provider.messages[
-                                        provider.messages.length -
-                                            1 -
-                                            messageIndex];
-                                    return ChatMessageBubble(
-                                      message: message.content,
-                                      isUser: message.isUser,
-                                      timestamp: message.timestamp,
-                                    );
-                                  },
-                                ),
+                                child: provider.messages.isEmpty
+                                    ? ConversationSuggestions(
+                                        onSuggestionTap: (text) {
+                                          _textController.text = text;
+                                          _sendMessage();
+                                        },
+                                      )
+                                    : ListView.builder(
+                                        controller: _scrollController,
+                                        reverse: true,
+                                        padding: const EdgeInsets.only(
+                                          top: 8,
+                                          bottom: 8,
+                                        ),
+                                        itemCount: provider.messages.length +
+                                            (provider.isTyping ? 1 : 0),
+                                        itemBuilder: (context, index) {
+                                          if (index == 0 && provider.isTyping) {
+                                            return const TypingIndicator();
+                                          }
+                                          final messageIndex = provider.isTyping
+                                              ? index - 1
+                                              : index;
+                                          final message = provider.messages[
+                                              provider.messages.length -
+                                                  1 -
+                                                  messageIndex];
+                                          return ChatMessageBubble(
+                                            message: message.content,
+                                            isUser: message.isUser,
+                                            timestamp: message.timestamp,
+                                          );
+                                        },
+                                      ),
                               ),
                             ],
                           )
@@ -253,79 +293,134 @@ class _ChatbotPageState extends State<ChatbotPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 80),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.cardDark,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: _isTextFieldFocused
-                      ? AppColors.primary.withValues(alpha: 0.5)
-                      : AppColors.borderDark.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: TextField(
-                controller: _textController,
-                focusNode: _focusNode,
-                maxLines: 4,
-                minLines: 1,
-                textCapitalization: TextCapitalization.sentences,
-                style: TextStyle(
-                  color: AppColors.textPrimaryDark,
-                  fontSize: 15,
-                  height: 1.4,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Partage ce que tu ressens...',
-                  hintStyle: TextStyle(
-                    color: AppColors.textTertiaryDark,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 15,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 14,
-                  ),
-                  isDense: true,
-                ),
-                onSubmitted: (_) => _sendMessage(),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [
-                  AppColors.primary,
-                  Color(0xFF7B5FE0),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: _sendMessage,
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.arrow_upward_rounded,
-                    color: Colors.white,
-                    size: 22,
+          if (_hasStartedTyping)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: AnimatedOpacity(
+                opacity: _hasStartedTyping ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  '💜 Continue, je t\'écoute...',
+                  style: TextStyle(
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
             ),
+          Row(
+            children: [
+              Expanded(
+                child: AnimatedBuilder(
+                  animation: _inputGlowAnimation,
+                  builder: (context, child) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardDark,
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(
+                          color: _hasStartedTyping
+                              ? AppColors.primary
+                                  .withValues(alpha: _inputGlowAnimation.value)
+                              : _isTextFieldFocused
+                                  ? AppColors.primary.withValues(alpha: 0.5)
+                                  : AppColors.borderDark.withValues(alpha: 0.3),
+                          width: _hasStartedTyping ? 1.5 : 1,
+                        ),
+                        boxShadow: _hasStartedTyping
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(
+                                      alpha: _inputGlowAnimation.value * 0.3),
+                                  blurRadius: 12,
+                                  spreadRadius: 0,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: child,
+                    );
+                  },
+                  child: TextField(
+                    controller: _textController,
+                    focusNode: _focusNode,
+                    maxLines: 4,
+                    minLines: 1,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: TextStyle(
+                      color: AppColors.textPrimaryDark,
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Partage ce que tu ressens...',
+                      hintStyle: TextStyle(
+                        color: AppColors.textTertiaryDark,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 15,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                      isDense: true,
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: _hasStartedTyping
+                        ? [
+                            AppColors.primary,
+                            const Color(0xFF7B5FE0),
+                          ]
+                        : [
+                            AppColors.primary.withValues(alpha: 0.6),
+                            const Color(0xFF7B5FE0).withValues(alpha: 0.6),
+                          ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: _hasStartedTyping
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            blurRadius: 12,
+                            spreadRadius: 0,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _sendMessage,
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.arrow_upward_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
