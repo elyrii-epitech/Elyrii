@@ -22,10 +22,10 @@ class EmergencyResourcesButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 // Glassmorphic red tint
-                color: Colors.red.withOpacity(isDark ? 0.15 : 0.1),
+                color: Colors.red.withValues(alpha: isDark ? 0.15 : 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.red.withOpacity(isDark ? 0.3 : 0.2),
+                  color: Colors.red.withValues(alpha: isDark ? 0.3 : 0.2),
                   width: 1,
                 ),
                 boxShadow: [

@@ -96,14 +96,14 @@ class _TypingIndicatorState extends State<TypingIndicator>
                           decoration: BoxDecoration(
                             // Glass-friendly dots
                             color: (isDark ? Colors.white : AppColors.primary)
-                                .withOpacity(opacity),
+                                .withValues(alpha: opacity),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
                                 color: (isDark
                                         ? Colors.white
                                         : AppColors.primary)
-                                    .withOpacity(opacity * 0.3),
+                                    .withValues(alpha: opacity * 0.3),
                                 blurRadius: 4,
                                 spreadRadius: 1,
                               ),

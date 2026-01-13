@@ -156,47 +156,4 @@ class _GlassSettingsButtonState extends State<GlassSettingsButton>
   }
 }
 
-/// Painter pour l'effet de flash radial
-class _RadialFlashPainter extends CustomPainter {
-  final double progress;
 
-  _RadialFlashPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (progress <= 0) return;
-
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxRadius = size.width;
-    final radius = maxRadius * 1.5 * progress;
-
-    // Fade out progressif
-    final fadeOut =
-        progress > 0.5 ? (1.0 - ((progress - 0.5) / 0.5)).clamp(0.0, 1.0) : 1.0;
-
-    final gradient = RadialGradient(
-      colors: [
-        Colors.white.withValues(
-            alpha: (0.7 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0)),
-        Colors.white.withValues(
-            alpha: (0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0)),
-        Colors.white.withValues(
-            alpha: (0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0)),
-        Colors.white.withValues(alpha: 0),
-      ],
-      stops: const [0.0, 0.3, 0.6, 1.0],
-    );
-
-    final paint = Paint()
-      ..shader = gradient.createShader(
-        Rect.fromCircle(center: center, radius: radius),
-      );
-
-    canvas.drawCircle(center, radius, paint);
-  }
-
-  @override
-  bool shouldRepaint(_RadialFlashPainter oldDelegate) {
-    return oldDelegate.progress != progress;
-  }
-}

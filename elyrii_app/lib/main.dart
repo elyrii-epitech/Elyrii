@@ -68,7 +68,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// @deprecated Use ThemeProvider instead via Provider.of<ThemeProvider>(context)
+/// @deprecated Use ThemeProvider instead via Provider.of[ThemeProvider](context)
 /// Kept for backward compatibility during migration
 class ThemeSwitcher extends InheritedWidget {
   final VoidCallback toggleTheme;

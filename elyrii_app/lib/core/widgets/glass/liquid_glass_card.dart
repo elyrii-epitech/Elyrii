@@ -12,6 +12,8 @@ class LiquidGlassCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
   final double borderRadius;
+  final Color? color;
+  final Color? borderColor;
 
   const LiquidGlassCard({
     super.key,
@@ -19,6 +21,8 @@ class LiquidGlassCard extends StatelessWidget {
     this.padding,
     this.onTap,
     this.borderRadius = 20,
+    this.color,
+    this.borderColor,
   });
 
   @override
@@ -35,14 +39,14 @@ class LiquidGlassCard extends StatelessWidget {
         child: Container(
           padding: padding ?? const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
+            color: color ?? (isDark
                 ? AppColors.liquidGlassBackgroundDark
-                : AppColors.liquidGlassBackgroundLight,
+                : AppColors.liquidGlassBackgroundLight),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: isDark
+              color: borderColor ?? (isDark
                   ? AppColors.liquidGlassBorderDark
-                  : AppColors.liquidGlassBorderLight,
+                  : AppColors.liquidGlassBorderLight),
               width: 0.5,
             ),
           ),

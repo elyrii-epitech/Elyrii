@@ -129,8 +129,9 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: AppDimensions.spacingLg),
 
                             // Password Field
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   'Mot de passe',
@@ -239,8 +240,9 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: AppDimensions.spacingXl),
 
                             // Register Link
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   'Nouveau sur Elyrii ? ',
