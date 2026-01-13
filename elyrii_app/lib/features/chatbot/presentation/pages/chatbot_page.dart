@@ -213,6 +213,7 @@ class _ChatbotPageState extends State<ChatbotPage>
   }
 
   Widget _buildClearButton(ChatbotProvider provider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(16),
@@ -248,22 +249,27 @@ class _ChatbotPageState extends State<ChatbotPage>
             vertical: 6,
           ),
           decoration: BoxDecoration(
-            color: AppColors.cardDark.withValues(alpha: 0.6),
+            color: (isDark ? AppColors.cardDark : AppColors.cardLight)
+                .withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.delete_outline_rounded,
                 size: 14,
-                color: AppColors.textTertiaryDark,
+                color: isDark
+                    ? AppColors.textTertiaryDark
+                    : AppColors.textTertiaryLight,
               ),
-              SizedBox(width: 4),
+              const SizedBox(width: 4),
               Text(
                 'Effacer',
                 style: TextStyle(
-                  color: AppColors.textTertiaryDark,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
                   fontSize: 12,
                 ),
               ),
@@ -305,7 +311,8 @@ class _ChatbotPageState extends State<ChatbotPage>
                   builder: (context, child) {
                     return Container(
                       decoration: BoxDecoration(
-                        color: AppColors.cardDark,
+                        color:
+                            isDark ? AppColors.cardDark : AppColors.cardLight,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: _hasStartedTyping
@@ -313,7 +320,10 @@ class _ChatbotPageState extends State<ChatbotPage>
                                   .withValues(alpha: _inputGlowAnimation.value)
                               : _isTextFieldFocused
                                   ? AppColors.primary.withValues(alpha: 0.5)
-                                  : AppColors.borderDark.withValues(alpha: 0.3),
+                                  : (isDark
+                                          ? AppColors.borderDark
+                                          : AppColors.borderLight)
+                                      .withValues(alpha: 0.3),
                           width: _hasStartedTyping ? 1.5 : 1,
                         ),
                         boxShadow: _hasStartedTyping
@@ -336,15 +346,19 @@ class _ChatbotPageState extends State<ChatbotPage>
                     maxLines: 4,
                     minLines: 1,
                     textCapitalization: TextCapitalization.sentences,
-                    style: const TextStyle(
-                      color: AppColors.textPrimaryDark,
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
                       fontSize: 15,
                       height: 1.4,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Partage ce que tu ressens...',
                       hintStyle: TextStyle(
-                        color: AppColors.textTertiaryDark,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
                         fontWeight: FontWeight.w400,
                         fontSize: 15,
                       ),

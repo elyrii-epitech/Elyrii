@@ -142,18 +142,19 @@ class _MascotWidgetState extends State<MascotWidget>
       child: AnimatedBuilder(
         animation: _pulseAnimation,
         builder: (context, child) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
           return Transform.scale(
             scale: widget.isMinimized ? 1.0 : _pulseAnimation.value,
             child: widget.isMinimized
-                ? _buildMinimizedMascot()
-                : _buildFullMascot(maxHeight),
+                ? _buildMinimizedMascot(isDark)
+                : _buildFullMascot(maxHeight, isDark),
           );
         },
       ),
     );
   }
 
-  Widget _buildMinimizedMascot() {
+  Widget _buildMinimizedMascot(bool isDark) {
     const double lottieSize = 140;
     const double visibleHeight = 80;
     const double topOffset = -10;
@@ -166,7 +167,8 @@ class _MascotWidgetState extends State<MascotWidget>
           gradient: LinearGradient(
             colors: [
               AppColors.primary.withValues(alpha: 0.15),
-              AppColors.cardDark.withValues(alpha: 0.95),
+              (isDark ? AppColors.cardDark : AppColors.cardLight)
+                  .withValues(alpha: 0.95),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -206,14 +208,17 @@ class _MascotWidgetState extends State<MascotWidget>
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildMascotText(true),
+              child: _buildMascotText(true, isDark),
             ),
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Icon(
                 Icons.lock_outline_rounded,
                 size: 16,
-                color: AppColors.textTertiaryDark.withValues(alpha: 0.6),
+                color: (isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight)
+                    .withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -222,13 +227,13 @@ class _MascotWidgetState extends State<MascotWidget>
     );
   }
 
-  Widget _buildFullMascot(double maxHeight) {
+  Widget _buildFullMascot(double maxHeight, bool isDark) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildMascotAvatar(widget.lottieHeight, Icons.favorite_rounded),
         SizedBox(height: maxHeight * 0.04),
-        _buildMascotText(false),
+        _buildMascotText(false, isDark),
       ],
     );
   }
@@ -253,7 +258,7 @@ class _MascotWidgetState extends State<MascotWidget>
     );
   }
 
-  Widget _buildMascotText(bool isMinimized) {
+  Widget _buildMascotText(bool isMinimized, bool isDark) {
     return Column(
       crossAxisAlignment:
           isMinimized ? CrossAxisAlignment.start : CrossAxisAlignment.center,
@@ -263,7 +268,8 @@ class _MascotWidgetState extends State<MascotWidget>
           isMinimized ? 'Elyrii' : 'Discuter avec Elyrii',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
-            color: AppColors.textPrimaryDark,
+            color:
+                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
             fontSize: isMinimized ? 15 : 26,
             fontWeight: isMinimized ? FontWeight.w600 : FontWeight.w600,
             letterSpacing: isMinimized ? 0.3 : 0.5,
@@ -276,7 +282,9 @@ class _MascotWidgetState extends State<MascotWidget>
               : 'Je suis là pour t\'écouter\nsans jugement',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
-            color: AppColors.textSecondaryDark,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
             fontSize: isMinimized ? 11 : 15,
             fontWeight: FontWeight.w400,
             height: 1.5,

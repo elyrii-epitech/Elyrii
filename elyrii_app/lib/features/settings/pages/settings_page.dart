@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'package:provider/provider.dart';
+import '../../../core/services/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/liquid_glass_kit.dart';
 import '../../../core/services/glass_performance_service.dart';
@@ -13,29 +15,18 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _reduceEffects = false;
   bool _notifications = true;
   bool _haptics = true;
-  bool _darkMode = false;
-  double _textSize = 1.0;
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    final performanceService = GlassPerformanceService();
-    await performanceService.init();
-    setState(() {
-      _reduceEffects = performanceService.reduceEffects;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -63,98 +54,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       leadingIcon: Icons.dark_mode_rounded,
                       showChevron: false,
                       trailing: LiquidGlassSwitch(
-                        value: _darkMode,
+                        value: isDark,
                         onChanged: (value) {
-                          setState(() => _darkMode = value);
-                          // TODO: Implement theme switching
-                        },
-                      ),
-                    ),
-                    _buildDivider(isDark),
-                    LiquidGlassListTile(
-                      title: 'Réduire les effets visuels',
-                      subtitle: 'Améliore les performances',
-                      leadingIcon: Icons.blur_off_rounded,
-                      showChevron: false,
-                      trailing: LiquidGlassSwitch(
-                        value: _reduceEffects,
-                        onChanged: (value) async {
-                          setState(() => _reduceEffects = value);
-                          final service = GlassPerformanceService();
-                          await service.setReduceEffects(value);
-                          if (!context.mounted) return;
-                          showLiquidGlassToast(
-                            // ignore: use_build_context_synchronously
-                            context: context,
-                            message: value
-                                ? 'Effets visuels réduits'
-                                : 'Effets visuels activés',
-                            icon: value ? Icons.blur_off : Icons.blur_on,
+                          themeProvider.setThemeMode(
+                            value ? ThemeMode.dark : ThemeMode.light,
                           );
                         },
-                      ),
-                    ),
-                    _buildDivider(isDark),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.12)
-                                      : Theme.of(context)
-                                          .primaryColor
-                                          .withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.text_fields_rounded,
-                                  size: 18,
-                                  color: isDark
-                                      ? Colors.white
-                                      : Theme.of(context).primaryColor,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Taille du texte',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                '${(_textSize * 100).round()}%',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.6)
-                                      : Colors.black.withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          LiquidGlassSlider(
-                            value: _textSize,
-                            min: 0.8,
-                            max: 1.4,
-                            onChanged: (value) {
-                              setState(() => _textSize = value);
-                            },
-                          ),
-                        ],
                       ),
                     ),
                   ],
@@ -452,10 +357,10 @@ class _LiquidGlassBackButtonState extends State<_LiquidGlassBackButton> {
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.arrow_back_ios_new_rounded,
                   size: 18,
-                  color: Colors.white,
+                  color: widget.isDark ? Colors.white : Colors.black,
                 ),
               ),
             ),

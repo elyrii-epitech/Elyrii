@@ -127,7 +127,11 @@ class ChatMessageBubble extends StatelessWidget {
         Text(
           message,
           style: TextStyle(
-            color: isUser ? Colors.white : AppColors.textPrimaryDark,
+            color: isUser
+                ? Colors.white
+                : (isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight),
             fontSize: 15,
             height: 1.4,
             fontWeight: FontWeight.w400,
@@ -139,7 +143,9 @@ class ChatMessageBubble extends StatelessWidget {
           style: TextStyle(
             color: isUser
                 ? Colors.white.withValues(alpha: 0.7)
-                : AppColors.textTertiaryDark,
+                : (isDark
+                    ? AppColors.textTertiaryDark
+                    : AppColors.textTertiaryLight),
             fontSize: 11,
           ),
         ),
@@ -162,7 +168,9 @@ class ChatMessageBubble extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-        color: isUser ? AppColors.surfaceDark : null,
+        color: isUser
+            ? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight)
+            : null,
         shape: BoxShape.circle,
         border: Border.all(
           color: isUser
@@ -173,7 +181,11 @@ class ChatMessageBubble extends StatelessWidget {
       ),
       child: Icon(
         isUser ? Icons.person_rounded : Icons.smart_toy_rounded,
-        color: isUser ? AppColors.textSecondaryDark : AppColors.primary,
+        color: isUser
+            ? (isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight)
+            : AppColors.primary,
         size: 18,
       ),
     );

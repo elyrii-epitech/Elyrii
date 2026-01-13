@@ -35,14 +35,17 @@ class ConversationSuggestions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const SizedBox(height: 24),
-        const Text(
+        Text(
           'Comment puis-je t\'aider ?',
           style: TextStyle(
-            color: AppColors.textSecondaryDark,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -57,6 +60,7 @@ class ConversationSuggestions extends StatelessWidget {
               text: suggestion['text'] as String,
               icon: suggestion['icon'] as IconData,
               color: suggestion['color'] as Color,
+              isDark: isDark,
               onTap: () => onSuggestionTap(suggestion['text'] as String),
             );
           }).toList(),
@@ -69,7 +73,8 @@ class ConversationSuggestions extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.cardDark.withValues(alpha: 0.3),
+                color: (isDark ? AppColors.cardDark : AppColors.cardLight)
+                    .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.1),
@@ -85,10 +90,12 @@ class ConversationSuggestions extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.8),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     'Tes échanges restent confidentiels',
                     style: TextStyle(
-                      color: AppColors.textTertiaryDark,
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
@@ -107,12 +114,14 @@ class _SuggestionChip extends StatefulWidget {
   final String text;
   final IconData icon;
   final Color color;
+  final bool isDark;
   final VoidCallback onTap;
 
   const _SuggestionChip({
     required this.text,
     required this.icon,
     required this.color,
+    required this.isDark,
     required this.onTap,
   });
 
@@ -194,8 +203,10 @@ class _SuggestionChipState extends State<_SuggestionChip>
                   const SizedBox(width: 8),
                   Text(
                     widget.text,
-                    style: const TextStyle(
-                      color: AppColors.textPrimaryDark,
+                    style: TextStyle(
+                      color: widget.isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                     ),

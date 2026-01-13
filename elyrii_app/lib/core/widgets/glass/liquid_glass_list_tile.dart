@@ -69,13 +69,13 @@ class _LiquidGlassListTileState extends State<LiquidGlassListTile> {
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.12)
-                      : Theme.of(context).primaryColor.withValues(alpha: 0.15),
+                      : Colors.black.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   widget.leadingIcon,
                   size: 18,
-                  color: isDark ? Colors.white : Theme.of(context).primaryColor,
+                  color: isDark ? Colors.white : Colors.black,
                 ),
               ),
               const SizedBox(width: 12),
