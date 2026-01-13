@@ -7,6 +7,7 @@ import '../widgets/typing_indicator.dart';
 import '../widgets/mascot_widget.dart';
 import '../widgets/conversation_suggestions.dart';
 import '../widgets/emergency_resources_button.dart';
+import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -104,7 +105,8 @@ class _ChatbotPageState extends State<ChatbotPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor:
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       extendBody: true,
       body: SafeArea(
         bottom: false,
@@ -216,42 +218,28 @@ class _ChatbotPageState extends State<ChatbotPage>
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: AppColors.cardDark,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: const Text(
-                'Effacer l\'historique',
-                style: TextStyle(color: AppColors.textPrimaryDark),
-              ),
-              content: const Text(
-                'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
-                style: TextStyle(color: AppColors.textSecondaryDark),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Annuler',
-                    style: TextStyle(color: AppColors.textSecondaryDark),
-                  ),
+              showLiquidGlassDialog(
+                context: context,
+                title: 'Effacer l\'historique',
+                child: const Text(
+                  'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
+                  textAlign: TextAlign.center,
                 ),
-                TextButton(
-                  onPressed: () {
-                    provider.clearHistory();
-                    Navigator.pop(context);
-                  },
-                  child: const Text(
-                    'Effacer',
-                    style: TextStyle(color: AppColors.primary),
+                actions: [
+                  LiquidGlassDialogAction(
+                    label: 'Annuler',
+                    onPressed: () => Navigator.pop(context),
                   ),
-                ),
-              ],
-            ),
-          );
+                  LiquidGlassDialogAction(
+                    label: 'Effacer',
+                    isDestructive: true,
+                    onPressed: () {
+                      provider.clearHistory();
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              );
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
