@@ -84,8 +84,9 @@ class _TypingIndicatorState extends State<TypingIndicator>
                       builder: (context, child) {
                         final delay = index * 0.2;
                         final value = (_controller.value - delay) % 1.0;
-                        final opacity = (value < 0.5 ? value * 2 : 2 - value * 2)
-                            .clamp(0.4, 1.0);
+                        final opacity =
+                            (value < 0.5 ? value * 2 : 2 - value * 2)
+                                .clamp(0.4, 1.0);
 
                         return Container(
                           margin: EdgeInsets.only(
@@ -100,10 +101,9 @@ class _TypingIndicatorState extends State<TypingIndicator>
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: (isDark
-                                        ? Colors.white
-                                        : AppColors.primary)
-                                    .withValues(alpha: opacity * 0.3),
+                                color:
+                                    (isDark ? Colors.white : AppColors.primary)
+                                        .withValues(alpha: opacity * 0.3),
                                 blurRadius: 4,
                                 spreadRadius: 1,
                               ),

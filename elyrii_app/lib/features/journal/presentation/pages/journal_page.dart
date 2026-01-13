@@ -125,7 +125,7 @@ class _JournalPageState extends State<JournalPage> {
   Widget _buildJournalGrid(JournalProvider provider, bool isDark) {
     // Limit staggered animations to first 8 items for performance
     const int maxAnimatedItems = 8;
-    
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(
         AppDimensions.pageHorizontalPadding,
@@ -147,7 +147,7 @@ class _JournalPageState extends State<JournalPage> {
             onTap: () => _showEditorSheet(entry: entry),
           ),
         );
-        
+
         // Only animate first 8 items to prevent jank
         if (index < maxAnimatedItems) {
           return card
@@ -164,7 +164,7 @@ class _JournalPageState extends State<JournalPage> {
                 curve: Curves.easeOutCubic,
               );
         }
-        
+
         return card;
       },
     );

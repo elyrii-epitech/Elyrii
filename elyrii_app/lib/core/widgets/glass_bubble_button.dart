@@ -57,7 +57,9 @@ class GlassBubbleButton extends StatelessWidget {
     final effectiveIconColor = iconColor ??
         (isSelected
             ? AppColors.primary
-            : (isDark ? AppColors.iconDefaultDark : AppColors.iconDefaultLight));
+            : (isDark
+                ? AppColors.iconDefaultDark
+                : AppColors.iconDefaultLight));
     final effectiveShimmerColor =
         shimmerColor ?? AppColors.primary.withValues(alpha: 0.3);
 
@@ -74,7 +76,8 @@ class GlassBubbleButton extends StatelessWidget {
                   height: size,
                   child: Stack(
                     children: [
-                      _buildButtonContent(effectiveIconColor, effectiveShimmerColor,
+                      _buildButtonContent(
+                          effectiveIconColor, effectiveShimmerColor,
                           performanceService: performanceService),
                       // Flash blanc avec fade out progressif iOS 26
                       if (flashAnimation != null && flashAnimation!.value > 0)
@@ -83,7 +86,8 @@ class GlassBubbleButton extends StatelessWidget {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(size / 2),
                               color: Colors.white.withValues(
-                                alpha: _calculateFlashOpacity(flashAnimation!.value),
+                                alpha: _calculateFlashOpacity(
+                                    flashAnimation!.value),
                               ),
                             ),
                           ),
@@ -97,7 +101,8 @@ class GlassBubbleButton extends StatelessWidget {
                 height: size,
                 child: Stack(
                   children: [
-                    _buildButtonContent(effectiveIconColor, effectiveShimmerColor,
+                    _buildButtonContent(
+                        effectiveIconColor, effectiveShimmerColor,
                         performanceService: performanceService),
                     // Flash blanc avec fade out progressif iOS 26
                     if (flashAnimation != null && flashAnimation!.value > 0)
@@ -106,7 +111,8 @@ class GlassBubbleButton extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(size / 2),
                             color: Colors.white.withValues(
-                              alpha: _calculateFlashOpacity(flashAnimation!.value),
+                              alpha:
+                                  _calculateFlashOpacity(flashAnimation!.value),
                             ),
                           ),
                         ),

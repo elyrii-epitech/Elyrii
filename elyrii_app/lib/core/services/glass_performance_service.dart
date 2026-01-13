@@ -26,7 +26,7 @@ class GlassPerformanceService extends ChangeNotifier {
   /// Initialise le service avec les préférences sauvegardées
   Future<void> init() async {
     if (_initialized) return;
-    
+
     _prefs = await SharedPreferences.getInstance();
     _reduceEffects = _prefs?.getBool(_reduceEffectsKey) ?? false;
     _adaptiveBlurOnScroll = _prefs?.getBool(_adaptiveBlurKey) ?? true;
@@ -49,23 +49,25 @@ class GlassPerformanceService extends ChangeNotifier {
         // Les appareils bas de gamme ont généralement 4 cores ou moins
         // et les appareils modernes performants ont 6-8+ cores
         final processorCount = Platform.numberOfProcessors;
-        
+
         // Considérer bas de gamme si moins de 4 cores
         // ou si l'appareil a exactement 4 cores (souvent entrée de gamme)
         _isLowEndDevice = processorCount <= 4;
-        
-        debugPrint('GlassPerformanceService: Detected $processorCount processors, '
+
+        debugPrint(
+            'GlassPerformanceService: Detected $processorCount processors, '
             'isLowEndDevice: $_isLowEndDevice');
       } else if (Platform.isIOS) {
         // iOS: les appareils Apple sont généralement performants
         // Mais on peut détecter les anciens modèles via le nombre de processeurs
         final processorCount = Platform.numberOfProcessors;
-        
+
         // Les anciens iPhones (6, 6s, SE 1ère gen) ont 2 cores
         // iPhone 7+ ont 4+ cores et sont performants
         _isLowEndDevice = processorCount < 4;
-        
-        debugPrint('GlassPerformanceService: iOS with $processorCount processors, '
+
+        debugPrint(
+            'GlassPerformanceService: iOS with $processorCount processors, '
             'isLowEndDevice: $_isLowEndDevice');
       } else {
         // Desktop platforms are generally powerful enough

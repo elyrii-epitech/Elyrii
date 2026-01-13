@@ -5,15 +5,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Replaces the previous ThemeSwitcher InheritedWidget for consistency with Provider pattern
 class ThemeProvider extends ChangeNotifier {
   static const String _themeModeKey = 'theme_mode';
-  
+
   ThemeMode _themeMode = ThemeMode.system;
   SharedPreferences? _prefs;
 
   ThemeMode get themeMode => _themeMode;
-  
+
   bool get isDarkMode {
     if (_themeMode == ThemeMode.system) {
-      return WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
+      return WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+          Brightness.dark;
     }
     return _themeMode == ThemeMode.dark;
   }
@@ -33,7 +34,8 @@ class ThemeProvider extends ChangeNotifier {
 
   /// Toggle between light and dark theme
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    _themeMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     _saveThemeMode();
     notifyListeners();
   }

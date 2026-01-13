@@ -228,8 +228,7 @@ class GlassContainer extends StatelessWidget {
   /// Construit l'overlay de teinte adaptative
   Widget? _buildAdaptiveTintOverlay() {
     final performanceService = GlassPerformanceService();
-    if (adaptiveTintColor == null ||
-        !performanceService.showAdaptiveGradient) {
+    if (adaptiveTintColor == null || !performanceService.showAdaptiveGradient) {
       return null;
     }
 
@@ -271,8 +270,8 @@ class GlassContainer extends StatelessWidget {
     final glassWidget = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter:
-            ImageFilter.blur(sigmaX: effectiveBlurSigma, sigmaY: effectiveBlurSigma),
+        filter: ImageFilter.blur(
+            sigmaX: effectiveBlurSigma, sigmaY: effectiveBlurSigma),
         child: Stack(
           children: [
             // Container principal
@@ -289,14 +288,16 @@ class GlassContainer extends StatelessWidget {
                   color: borderColor ?? _defaultBorderColor,
                   width: borderWidth,
                 ),
-                boxShadow: boxShadow ?? [
-                  // iOS 26: ombre douce par défaut
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+                boxShadow: boxShadow ??
+                    [
+                      // iOS 26: ombre douce par défaut
+                      BoxShadow(
+                        color:
+                            Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
               ),
               child: child,
             ),

@@ -139,7 +139,8 @@ class _GlassSettingsButtonState extends State<GlassSettingsButton>
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(22),
                             color: Colors.white.withValues(
-                              alpha: (0.3 * (1 - _flashAnimation.value)).clamp(0.0, 1.0),
+                              alpha: (0.3 * (1 - _flashAnimation.value))
+                                  .clamp(0.0, 1.0),
                             ),
                           ),
                         ),
@@ -155,5 +156,3 @@ class _GlassSettingsButtonState extends State<GlassSettingsButton>
     );
   }
 }
-
-

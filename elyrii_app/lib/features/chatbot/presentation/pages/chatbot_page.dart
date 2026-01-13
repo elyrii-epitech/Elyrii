@@ -219,28 +219,28 @@ class _ChatbotPageState extends State<ChatbotPage>
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: () {
-              showLiquidGlassDialog(
-                context: context,
-                title: 'Effacer l\'historique',
-                child: const Text(
-                  'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
-                  textAlign: TextAlign.center,
-                ),
-                actions: [
-                  LiquidGlassDialogAction(
-                    label: 'Annuler',
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  LiquidGlassDialogAction(
-                    label: 'Effacer',
-                    isDestructive: true,
-                    onPressed: () {
-                      provider.clearHistory();
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              );
+          showLiquidGlassDialog(
+            context: context,
+            title: 'Effacer l\'historique',
+            child: const Text(
+              'Voulez-vous vraiment effacer tout l\'historique de conversation ?',
+              textAlign: TextAlign.center,
+            ),
+            actions: [
+              LiquidGlassDialogAction(
+                label: 'Annuler',
+                onPressed: () => Navigator.pop(context),
+              ),
+              LiquidGlassDialogAction(
+                label: 'Effacer',
+                isDestructive: true,
+                onPressed: () {
+                  provider.clearHistory();
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
@@ -363,7 +363,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                         fontSize: 15,
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 14,
                       ),

@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../../core/services/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/liquid_glass_kit.dart';
-import '../../../core/services/glass_performance_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -351,7 +350,8 @@ class _LiquidGlassBackButtonState extends State<_LiquidGlassBackButton> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: widget.isDark ? 0.3 : 0.1),
+                      color: Colors.black
+                          .withValues(alpha: widget.isDark ? 0.3 : 0.1),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),

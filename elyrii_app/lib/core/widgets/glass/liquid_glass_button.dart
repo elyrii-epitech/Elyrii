@@ -76,8 +76,7 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
     return GestureDetector(
       onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
       onTapUp: isDisabled ? null : (_) => setState(() => _isPressed = false),
-      onTapCancel:
-          isDisabled ? null : () => setState(() => _isPressed = false),
+      onTapCancel: isDisabled ? null : () => setState(() => _isPressed = false),
       onTap: isDisabled || widget.isLoading
           ? null
           : () {
@@ -170,8 +169,7 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
     return GestureDetector(
       onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
       onTapUp: isDisabled ? null : (_) => setState(() => _isPressed = false),
-      onTapCancel:
-          isDisabled ? null : () => setState(() => _isPressed = false),
+      onTapCancel: isDisabled ? null : () => setState(() => _isPressed = false),
       onTap: isDisabled
           ? null
           : () {

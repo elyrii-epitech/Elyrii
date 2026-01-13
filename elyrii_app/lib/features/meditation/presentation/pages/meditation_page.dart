@@ -38,14 +38,16 @@ class MeditationPage extends StatelessWidget {
                       ),
                     ),
                   )
-                      .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                      .animate(
+                          onPlay: (controller) =>
+                              controller.repeat(reverse: true))
                       .scale(
                         begin: const Offset(0.8, 0.8),
                         end: const Offset(1.2, 1.2),
                         duration: 4.seconds,
                         curve: Curves.easeInOut,
                       ),
-                  
+
                   // Glass Circle
                   LiquidGlassCard(
                     padding: EdgeInsets.zero,
@@ -64,7 +66,9 @@ class MeditationPage extends StatelessWidget {
                       ),
                     ),
                   )
-                      .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                      .animate(
+                          onPlay: (controller) =>
+                              controller.repeat(reverse: true))
                       .scale(
                         begin: const Offset(0.95, 0.95),
                         end: const Offset(1.05, 1.05),
@@ -74,31 +78,35 @@ class MeditationPage extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 48),
-            
+
             Text(
               'Respire',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 letterSpacing: -0.5,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
               ),
             ).animate().fadeIn(duration: 1.seconds, delay: 500.ms),
-            
+
             const SizedBox(height: 8),
-            
+
             Text(
               'Prends un moment pour toi',
               style: TextStyle(
                 fontSize: 16,
-                color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
               ),
             ).animate().fadeIn(duration: 1.seconds, delay: 800.ms),
-            
+
             const SizedBox(height: 48),
-            
+
             // Start Button Placeholder
             LiquidGlassCard(
               onTap: () {},

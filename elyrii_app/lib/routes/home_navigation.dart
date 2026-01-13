@@ -226,7 +226,7 @@ class _HomeNavigationState extends State<HomeNavigation>
   Widget _buildPageContent(GlassPerformanceService performanceService) {
     // Get only the current page (lazy loaded)
     final currentPage = _getPage(_currentIndex);
-    
+
     if (!performanceService.showTransitionAnimations) {
       return KeyedSubtree(
         key: ValueKey(_currentIndex),

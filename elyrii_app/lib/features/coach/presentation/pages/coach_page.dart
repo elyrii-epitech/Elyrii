@@ -25,64 +25,71 @@ class CoachPage extends StatelessWidget {
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 letterSpacing: -0.5,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
               ),
             ).animate().fadeIn().slideX(begin: -0.1),
-            
+
             const SizedBox(height: 24),
-            
+
             // Featured Advice Card
             LiquidGlassCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Row(
-                     children: [
-                       Container(
-                         padding: const EdgeInsets.all(8),
-                         decoration: BoxDecoration(
-                           color: AppColors.primary.withValues(alpha: 0.2),
-                           shape: BoxShape.circle,
-                         ),
-                         child: const Icon(Icons.lightbulb_rounded, color: AppColors.primary, size: 20),
-                       ),
-                       const SizedBox(width: 12),
-                       const Text(
-                         'Conseil du jour',
-                         style: TextStyle(
-                           fontWeight: FontWeight.w600,
-                           color: AppColors.primary,
-                         ),
-                       ),
-                     ],
-                   ),
-                   const SizedBox(height: 16),
-                   Text(
-                     'La régularité est la clé du succès. Essaie de méditer 5 minutes aujourd\'hui.',
-                     style: TextStyle(
-                       fontSize: 16,
-                       height: 1.5,
-                       color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                     ),
-                   ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lightbulb_rounded,
+                            color: AppColors.primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Conseil du jour',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'La régularité est la clé du succès. Essaie de méditer 5 minutes aujourd\'hui.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                  ),
                 ],
               ),
             ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
-            
+
             const SizedBox(height: 32),
-            
+
             Text(
               'Activités suggérées',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
               ),
             ).animate().fadeIn(delay: 400.ms),
-            
+
             const SizedBox(height: 16),
-            
+
             // List of Placeholders
             ...List.generate(3, (index) {
               return Padding(
@@ -94,19 +101,25 @@ class CoachPage extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         Icons.play_circle_outline_rounded,
-                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
                       ),
                     ),
                     title: Container(
                       height: 12,
                       width: 100,
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.05),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : Colors.black.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -115,13 +128,18 @@ class CoachPage extends StatelessWidget {
                       height: 10,
                       width: 60,
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                   ),
                 ),
-              ).animate().fadeIn(delay: (400 + index * 100).ms).slideX(begin: 0.1);
+              )
+                  .animate()
+                  .fadeIn(delay: (400 + index * 100).ms)
+                  .slideX(begin: 0.1);
             }),
           ],
         ),

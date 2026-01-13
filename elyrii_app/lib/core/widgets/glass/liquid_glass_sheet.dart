@@ -148,9 +148,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
           ),
         );
       },
-    )
-        .animate()
-        .fadeIn(duration: 300.ms, curve: Curves.easeOutCubic)
-        .slideY(begin: 0.1, end: 0, duration: 350.ms, curve: Curves.easeOutCubic);
+    ).animate().fadeIn(duration: 300.ms, curve: Curves.easeOutCubic).slideY(
+        begin: 0.1, end: 0, duration: 350.ms, curve: Curves.easeOutCubic);
   }
 }

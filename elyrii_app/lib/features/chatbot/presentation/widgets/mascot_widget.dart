@@ -91,7 +91,8 @@ class _MascotWidgetState extends State<MascotWidget>
 
   void _startInactivityTimer() {
     _inactivityTimer?.cancel();
-    _inactivityTimer = Timer(const Duration(seconds: _inactivityDelaySeconds), () {
+    _inactivityTimer =
+        Timer(const Duration(seconds: _inactivityDelaySeconds), () {
       if (mounted) {
         _playInactivityAnimation();
       }

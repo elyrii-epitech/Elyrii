@@ -67,7 +67,8 @@ class _ScrollVelocityListenerState extends State<ScrollVelocityListener> {
       final velocityPxPerSec = velocityPxPerMs * 1000;
 
       // Normaliser la vélocité entre 0 et 1
-      final normalizedVelocity = (velocityPxPerSec / _maxVelocity).clamp(0.0, 1.0);
+      final normalizedVelocity =
+          (velocityPxPerSec / _maxVelocity).clamp(0.0, 1.0);
 
       if (normalizedVelocity != _currentVelocity) {
         _currentVelocity = normalizedVelocity;

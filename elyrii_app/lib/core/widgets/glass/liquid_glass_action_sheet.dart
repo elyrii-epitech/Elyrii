@@ -187,10 +187,8 @@ class LiquidGlassActionSheetContent extends StatelessWidget {
           ],
         ),
       ),
-    )
-        .animate()
-        .fadeIn(duration: 250.ms)
-        .slideY(begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
+    ).animate().fadeIn(duration: 250.ms).slideY(
+        begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
   }
 }
 

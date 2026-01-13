@@ -14,7 +14,7 @@ void main() async {
   // Initialize services
   final themeProvider = ThemeProvider();
   final performanceService = GlassPerformanceService();
-  
+
   await Future.wait([
     themeProvider.init(),
     performanceService.init(),

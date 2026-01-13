@@ -44,8 +44,9 @@ class _LiquidGlassListTileState extends State<LiquidGlassListTile> {
       onTapUp: widget.onTap != null
           ? (_) => setState(() => _isPressed = false)
           : null,
-      onTapCancel:
-          widget.onTap != null ? () => setState(() => _isPressed = false) : null,
+      onTapCancel: widget.onTap != null
+          ? () => setState(() => _isPressed = false)
+          : null,
       onTap: widget.onTap != null
           ? () {
               HapticFeedback.lightImpact();

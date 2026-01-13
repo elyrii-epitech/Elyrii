@@ -92,7 +92,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     final result = await showLiquidGlassDialog<String>(
       context: context,
       title: 'Modifications non sauvegardées',
-      child: const Text('Voulez-vous sauvegarder vos modifications avant de fermer ?'),
+      child: const Text(
+          'Voulez-vous sauvegarder vos modifications avant de fermer ?'),
       actions: [
         LiquidGlassDialogAction(
           label: 'Annuler',

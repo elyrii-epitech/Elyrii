@@ -78,7 +78,8 @@ class EmergencyResourcesButton extends StatelessWidget {
               color: isDark
                   ? AppColors.cardDark.withValues(alpha: 0.8)
                   : AppColors.cardLight.withValues(alpha: 0.8),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
               border: Border(
                 top: BorderSide(
                   color: Colors.white.withValues(alpha: 0.1),
