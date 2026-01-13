@@ -9,8 +9,10 @@ import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
 import '../features/chatbot/presentation/providers/chatbot_provider.dart';
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_dimensions.dart';
 import '../core/widgets/glass_navigation_bar.dart';
 import '../core/widgets/glass_bubble_button.dart';
+import '../core/services/glass_performance_service.dart';
 
 class HomeNavigation extends StatefulWidget {
   const HomeNavigation({super.key});
@@ -29,15 +31,27 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _navBarScaleAnimation;
   late AnimationController _flashController;
   late Animation<double> _flashAnimation;
+  late AnimationController _pageTransitionController;
+  late Animation<double> _pageScaleAnimation;
+  late Animation<double> _pageFadeAnimation;
 
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    ChallengesPage(),
-    JournalPage(),
-    MeditationPage(),
-    CoachPage(),
-    ChatbotPage(), // Page chatbot comme les autres
+  // Lazy loading: pages are built only when first accessed
+  final Map<int, Widget> _loadedPages = {};
+
+  // Page builders for lazy instantiation
+  static const List<Widget Function()> _pageBuilders = [
+    DashboardPage.new,
+    ChallengesPage.new,
+    JournalPage.new,
+    MeditationPage.new,
+    CoachPage.new,
+    ChatbotPage.new,
   ];
+
+  /// Get or create a page lazily
+  Widget _getPage(int index) {
+    return _loadedPages.putIfAbsent(index, () => _pageBuilders[index]());
+  }
 
   final List<GlassNavItem> _navItems = const [
     GlassNavItem(icon: Icons.home_rounded, label: 'Home', index: 0),
@@ -56,7 +70,8 @@ class _HomeNavigationState extends State<HomeNavigation>
     _iconControllers = List.generate(
       6,
       (index) => AnimationController(
-        duration: const Duration(milliseconds: 400),
+        duration: Duration(
+            milliseconds: AppDimensions.animationDurationLiquidGlass),
         vsync: this,
       ),
     );
@@ -76,25 +91,25 @@ class _HomeNavigationState extends State<HomeNavigation>
       curve: Curves.easeOutBack,
     );
 
-    // Animation de pulse pour la navbar (zoom/dézoom)
+    // Animation de pulse pour la navbar (zoom/dézoom) - iOS 26: légèrement plus prononcé
     _navBarPulseController = AnimationController(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 200), // Plus rapide
       vsync: this,
     );
 
     _navBarScaleAnimation = Tween<double>(
       begin: 1.0,
-      end: 1.015,
+      end: 1.02, // iOS 26: de 1.015 à 1.02
     ).animate(
       CurvedAnimation(
         parent: _navBarPulseController,
-        curve: Curves.easeInOut,
+        curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
       ),
     );
 
     // Animation de flash blanc (durée augmentée pour être visible)
     _flashController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 450), // Légèrement plus court
       vsync: this,
     );
 
@@ -108,8 +123,35 @@ class _HomeNavigationState extends State<HomeNavigation>
       ),
     );
 
+    // iOS 26: Animation de transition de page
+    _pageTransitionController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _pageScaleAnimation = Tween<double>(
+      begin: 0.98,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _pageTransitionController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    _pageFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+      CurvedAnimation(
+        parent: _pageTransitionController,
+        curve: Curves.easeOut,
+      ),
+    );
+
     // Animer l'item sélectionné au démarrage
     _iconControllers[0].forward();
+    _pageTransitionController.value = 1.0; // Page visible immédiatement
 
     // Navbar visible immédiatement (pas d'animation d'apparition)
     _navBarController.value = 1.0;
@@ -123,6 +165,7 @@ class _HomeNavigationState extends State<HomeNavigation>
     _navBarController.dispose();
     _navBarPulseController.dispose();
     _flashController.dispose();
+    _pageTransitionController.dispose();
     super.dispose();
   }
 
@@ -141,7 +184,7 @@ class _HomeNavigationState extends State<HomeNavigation>
       // Lancer l'animation du nouvel item
       _iconControllers[index].forward();
 
-      // Animer la navbar (pulse seulement, pas de flash ici car il se déclenche automatiquement)
+      // Animer la navbar (pulse seulement)
       _navBarPulseController.forward().then((_) {
         _navBarPulseController.reverse();
       });
@@ -154,23 +197,57 @@ class _HomeNavigationState extends State<HomeNavigation>
       _flashController.forward().then((_) {
         _flashController.reset(); // Reset instantané au lieu de reverse
       });
+
+      // iOS 26: Animation de transition de page
+      final performanceService = GlassPerformanceService();
+      if (performanceService.showTransitionAnimations) {
+        _pageTransitionController.reset();
+        _pageTransitionController.forward();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final performanceService = GlassPerformanceService();
 
     return ChangeNotifierProvider(
       create: (_) => ChatbotProvider(),
       child: Scaffold(
         extendBody: true,
-        body: IndexedStack(
-          index: _currentIndex,
-          children: _pages,
-        ),
+        body: _buildPageContent(performanceService),
         bottomNavigationBar: _buildBottomBar(isDark),
       ),
+    );
+  }
+
+  /// Construit le contenu de la page avec animation iOS 26
+  Widget _buildPageContent(GlassPerformanceService performanceService) {
+    // Get only the current page (lazy loaded)
+    final currentPage = _getPage(_currentIndex);
+    
+    if (!performanceService.showTransitionAnimations) {
+      return KeyedSubtree(
+        key: ValueKey(_currentIndex),
+        child: currentPage,
+      );
+    }
+
+    return AnimatedBuilder(
+      animation: _pageTransitionController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _pageScaleAnimation.value,
+          child: Opacity(
+            opacity: _pageFadeAnimation.value.clamp(0.0, 1.0),
+            child: KeyedSubtree(
+              key: ValueKey(_currentIndex),
+              child: currentPage,
+            ),
+          ),
+        );
+      },
     );
   }
 

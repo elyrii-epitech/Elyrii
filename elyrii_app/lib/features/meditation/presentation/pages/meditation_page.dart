@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class MeditationPage extends StatelessWidget {
   const MeditationPage({super.key});
@@ -9,7 +10,7 @@ class MeditationPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor:
-          isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       body: const Center(
         child: Text(
           'Meditation',

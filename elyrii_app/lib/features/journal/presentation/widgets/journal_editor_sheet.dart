@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../providers/journal_provider.dart';
 import 'glass_text_field.dart';
 
@@ -89,207 +89,55 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   Future<bool> _onWillPop() async {
     if (!_hasChanges || _contentController.text.trim().isEmpty) return true;
 
-    final result = await showDialog<String>(
+    final result = await showLiquidGlassDialog<String>(
       context: context,
-      builder: (context) => _buildConfirmationDialog(),
+      title: 'Modifications non sauvegardées',
+      child: const Text('Voulez-vous sauvegarder vos modifications avant de fermer ?'),
+      actions: [
+        LiquidGlassDialogAction(
+          label: 'Annuler',
+          onPressed: () => Navigator.pop(context, 'cancel'),
+        ),
+        LiquidGlassDialogAction(
+          label: 'Supprimer',
+          isDestructive: true,
+          onPressed: () => Navigator.pop(context, 'discard'),
+        ),
+        LiquidGlassDialogAction(
+          label: 'Sauvegarder',
+          isDefault: true,
+          onPressed: () => Navigator.pop(context, 'save'),
+        ),
+      ],
     );
 
     if (result == 'save') _autoSave();
     return result == 'save' || result == 'discard';
   }
 
-  Widget _buildConfirmationDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return AlertDialog(
-      backgroundColor:
-          isDark ? const Color(0xFF2A2A2D) : const Color(0xFFFAFAFA),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-      ),
-      title: Text(
-        'Modifications non sauvegardées',
-        style: TextStyle(
-          color:
-              isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-        ),
-      ),
-      content: Text(
-        'Voulez-vous sauvegarder vos modifications avant de fermer ?',
-        style: TextStyle(
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-        ),
-      ),
+  void _deleteEntry() {
+    showLiquidGlassDialog(
+      context: context,
+      title: 'Supprimer cette note ?',
+      child: const Text('Cette action est irréversible.'),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'cancel'),
-          child: Text(
-            'Annuler',
-            style: TextStyle(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-          ),
+        LiquidGlassDialogAction(
+          label: 'Annuler',
+          onPressed: () => Navigator.pop(context),
         ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'discard'),
-          style: TextButton.styleFrom(foregroundColor: AppColors.error),
-          child: const Text('Supprimer'),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'save'),
-          style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-          child: const Text('Sauvegarder'),
+        LiquidGlassDialogAction(
+          label: 'Supprimer',
+          isDestructive: true,
+          onPressed: () {
+            final idToDelete = widget.entry?.id ?? _createdEntryId;
+            if (idToDelete != null) {
+              widget.provider.deleteEntry(idToDelete);
+            }
+            Navigator.pop(context);
+            Navigator.pop(context);
+          },
         ),
       ],
-    );
-  }
-
-  void _deleteEntry() {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'Dismiss',
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      transitionDuration: const Duration(milliseconds: 250),
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(
-          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOut),
-            ),
-            child: child,
-          ),
-        );
-      },
-      pageBuilder: (context, animation, secondaryAnimation) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-
-        return Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 40),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : Colors.white.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : const Color(0xFFE0D4FF).withValues(alpha: 0.4),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Supprimer cette note ?',
-                            style: TextStyle(
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Cette action est irréversible.',
-                            style: TextStyle(
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => Navigator.pop(context),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.08)
-                                          : Colors.black
-                                              .withValues(alpha: 0.05),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'Annuler',
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? AppColors.textSecondaryDark
-                                            : AppColors.textSecondaryLight,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    final idToDelete =
-                                        widget.entry?.id ?? _createdEntryId;
-                                    if (idToDelete != null) {
-                                      widget.provider.deleteEntry(idToDelete);
-                                    }
-                                    Navigator.pop(context);
-                                    Navigator.pop(context);
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.error
-                                          .withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'Supprimer',
-                                      style: TextStyle(
-                                        color: AppColors.error,
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -307,138 +155,68 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           Navigator.of(context).pop();
         }
       },
-      child: DraggableScrollableSheet(
-        initialChildSize: 0.92,
-        minChildSize: 0.4,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) {
-          return ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // AppBar
+          _buildAppBar(isDark),
+          // Contenu
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              0,
+              8,
+              0,
+              bottomInset + 24,
             ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isDark
-                        ? [
-                            const Color(0xFF1E1E21),
-                            const Color(0xFF171719),
-                          ]
-                        : [
-                            const Color(0xFFF8F8FB),
-                            const Color(0xFFE8E8EB),
-                          ],
-                  ),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : const Color(0xFFE0D4FF).withValues(alpha: 0.4),
-                    width: 1.5,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // Drag handle
-                    _buildDragHandle(isDark),
-                    // AppBar
-                    _buildAppBar(isDark),
-                    // Contenu
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: scrollController,
-                        padding: EdgeInsets.fromLTRB(
-                          AppDimensions.pageHorizontalPadding,
-                          8,
-                          AppDimensions.pageHorizontalPadding,
-                          bottomInset + 24,
-                        ),
-                        child: Column(
-                          children: [
-                            // Champ titre
-                            GlassTextField(
-                              controller: _titleController,
-                              hint: 'Titre (optionnel)',
-                              isDark: isDark,
-                              maxLines: 1,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                            )
-                                .animate()
-                                .fadeIn(
-                                  duration: 300.ms,
-                                  delay: 100.ms,
-                                  curve: Curves.easeOutCubic,
-                                )
-                                .slideY(
-                                  begin: 0.1,
-                                  duration: 300.ms,
-                                  delay: 100.ms,
-                                  curve: Curves.easeOutCubic,
-                                ),
-                            const SizedBox(height: 16),
-                            // Champ contenu
-                            GlassTextField(
-                              controller: _contentController,
-                              hint: 'Exprime ce que tu ressens...',
-                              isDark: isDark,
-                              maxLines: null,
-                              minLines: 12,
-                              fontSize: 16,
-                            )
-                                .animate()
-                                .fadeIn(
-                                  duration: 300.ms,
-                                  delay: 200.ms,
-                                  curve: Curves.easeOutCubic,
-                                )
-                                .slideY(
-                                  begin: 0.1,
-                                  duration: 300.ms,
-                                  delay: 200.ms,
-                                  curve: Curves.easeOutCubic,
-                                ),
-                          ],
-                        ),
-                      ),
+            child: Column(
+              children: [
+                // Champ titre
+                GlassTextField(
+                  controller: _titleController,
+                  hint: 'Titre (optionnel)',
+                  isDark: isDark,
+                  maxLines: 1,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                )
+                    .animate()
+                    .fadeIn(
+                      duration: 300.ms,
+                      delay: 100.ms,
+                      curve: Curves.easeOutCubic,
+                    )
+                    .slideY(
+                      begin: 0.1,
+                      duration: 300.ms,
+                      delay: 100.ms,
+                      curve: Curves.easeOutCubic,
                     ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildDragHandle(bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.3)
-                  : Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
+                const SizedBox(height: 16),
+                // Champ contenu
+                GlassTextField(
+                  controller: _contentController,
+                  hint: 'Exprime ce que tu ressens...',
+                  isDark: isDark,
+                  maxLines: null,
+                  minLines: 12,
+                  fontSize: 16,
+                )
+                    .animate()
+                    .fadeIn(
+                      duration: 300.ms,
+                      delay: 200.ms,
+                      curve: Curves.easeOutCubic,
+                    )
+                    .slideY(
+                      begin: 0.1,
+                      duration: 300.ms,
+                      delay: 200.ms,
+                      curve: Curves.easeOutCubic,
+                    ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

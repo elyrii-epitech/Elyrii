@@ -22,23 +22,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
   @override
   void initState() {
     super.initState();
-
-    _focusNode.addListener(() {
-      setState(() {
-        _isTextFieldFocused = _focusNode.hasFocus;
-      });
-      context.read<ChatbotProvider>().toggleMascotSize(_focusNode.hasFocus);
-    });
+    _focusNode.addListener(_onFocusChange);
   }
 
-  @override
-  void deactivate() {
-    context.read<ChatbotProvider>().resetMascot();
-    super.deactivate();
+  void _onFocusChange() {
+    setState(() {
+      _isTextFieldFocused = _focusNode.hasFocus;
+    });
+    context.read<ChatbotProvider>().toggleMascotSize(_focusNode.hasFocus);
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChange);
     _textController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();

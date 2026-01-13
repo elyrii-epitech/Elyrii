@@ -142,6 +142,34 @@ class AppColors {
   static const Color glassLavender = Color(0xFFF5F3FF);
   static const Color glassLavenderBorder = Color(0xFFE0D4FF);
 
+  // ==================== iOS 26 LIQUID GLASS ====================
+
+  /// Liquid Glass backgrounds - Light mode (iOS 26)
+  /// Opacités réduites pour plus de transparence "liquide"
+  static const Color liquidGlassBackgroundLight = Color(0xB3FFFFFF); // 70% opacity
+  static const Color liquidGlassBackgroundLightEnd = Color(0x80FFFFFF); // 50% opacity
+
+  /// Liquid Glass backgrounds - Dark mode (iOS 26)
+  /// Opacités augmentées pour meilleure lisibilité
+  static const Color liquidGlassBackgroundDark = Color(0x2EFFFFFF); // 18% opacity
+  static const Color liquidGlassBackgroundDarkEnd = Color(0x1FFFFFFF); // 12% opacity
+
+  /// Liquid Glass borders (iOS 26)
+  static const Color liquidGlassBorderLight = Color(0x66FFFFFF); // 40% opacity
+  static const Color liquidGlassBorderDark = Color(0x40FFFFFF); // 25% opacity
+
+  /// Specular highlight pour liquid glass (reflet en haut)
+  static const Color liquidGlassSpecular = Color(0x14FFFFFF); // 8% opacity
+  static const Color liquidGlassSpecularLight = Color(0x14FFFFFF); // 8% opacity - Light mode
+  static const Color liquidGlassSpecularDark = Color(0x0AFFFFFF); // 4% opacity - Dark mode
+  static const Color liquidGlassSpecularStrong = Color(0x1FFFFFFF); // 12% opacity
+
+  /// Inner glow pour liquid glass
+  static const Color liquidGlassInnerGlow = Color(0x0AFFFFFF); // 4% opacity
+
+  /// Tint adaptatif (pour gradient adaptatif au background)
+  static const Color liquidGlassTint = Color(0x08000000); // 3% opacity - blend subtil
+
   // ==================== COULEURS ICÔNES NAVIGATION ====================
 
   /// Icônes par défaut dans la navigation

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/widgets/liquid_glass_kit.dart';
 
 /// État vide pour le journal
 class EmptyJournalState extends StatelessWidget {
@@ -67,20 +68,10 @@ class EmptyJournalState extends StatelessWidget {
             ),
             const SizedBox(height: AppDimensions.spacingXl),
             // Bouton
-            ElevatedButton.icon(
+            LiquidGlassButton(
+              label: 'Créer ma première note',
+              icon: Icons.add_rounded,
               onPressed: onCreateFirst,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Créer ma première note'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingLg,
-                  vertical: AppDimensions.paddingMd,
-                ),
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                elevation: 4,
-                shadowColor: AppColors.primary.withValues(alpha: 0.4),
-              ),
             ),
           ],
         ),

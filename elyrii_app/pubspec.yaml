@@ -47,23 +47,8 @@ dependencies:
   # Date & Time
   intl: ^0.20.2
   
-  # Audio (pour méditation)
-  audioplayers: ^6.5.1
-  
-  # Animations
-  lottie: ^3.0.0
-  
   # Accessibilité
   flutter_tts: ^4.0.2
-  
-  # Charts & Analytics
-  fl_chart: ^0.71.0
-  
-  # Webview (pour intégration Godot/mascotte)
-  webview_flutter: ^4.5.0
-  
-  # Blur & Glass Effects
-  glassmorphism: ^3.0.0
   
   # Icons
   iconsax: ^0.0.8
@@ -74,6 +59,7 @@ dependencies:
   
   # Grid Layout
   flutter_staggered_grid_view: ^0.7.0
+  
   # UUID
   uuid: ^4.5.1
   

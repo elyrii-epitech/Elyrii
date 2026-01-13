@@ -3,8 +3,8 @@ import 'package:email_validator/email_validator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
-import '../widgets/glass_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor:
-          isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       body: Stack(
         children: [
           SafeArea(
@@ -178,9 +178,10 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: AppDimensions.spacingXl),
 
                             // Login Button
-                            GlassButton(
-                              text: 'Se connecter',
+                            LiquidGlassButton(
+                              label: 'Se connecter',
                               isLoading: _isLoading,
+                              isExpanded: true,
                               onPressed: _handleLogin,
                             ),
 
