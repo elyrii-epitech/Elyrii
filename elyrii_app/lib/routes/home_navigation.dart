@@ -70,7 +70,7 @@ class _HomeNavigationState extends State<HomeNavigation>
     _iconControllers = List.generate(
       6,
       (index) => AnimationController(
-        duration: Duration(
+        duration: const Duration(
             milliseconds: AppDimensions.animationDurationLiquidGlass),
         vsync: this,
       ),

@@ -39,7 +39,7 @@ class ConversationSuggestions extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const SizedBox(height: 24),
-        Text(
+        const Text(
           'Comment puis-je t\'aider ?',
           style: TextStyle(
             color: AppColors.textSecondaryDark,
@@ -85,7 +85,7 @@ class ConversationSuggestions extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.8),
                   ),
                   const SizedBox(width: 8),
-                  Text(
+                  const Text(
                     'Tes échanges restent confidentiels',
                     style: TextStyle(
                       color: AppColors.textTertiaryDark,
@@ -194,7 +194,7 @@ class _SuggestionChipState extends State<_SuggestionChip>
                   const SizedBox(width: 8),
                   Text(
                     widget.text,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.textPrimaryDark,
                       fontSize: 13,
                       fontWeight: FontWeight.w500,

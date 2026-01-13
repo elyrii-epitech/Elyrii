@@ -48,32 +48,32 @@ class _ChallengesPageState extends State<ChallengesPage> {
 
   // Mock Badges
   final List<BadgeItem> _badges = [
-    BadgeItem(
+    const BadgeItem(
         id: '1',
         title: 'Premiers Pas',
         icon: Icons.directions_walk_rounded,
         isUnlocked: true),
-    BadgeItem(
+    const BadgeItem(
         id: '2',
         title: 'Explorateur',
         icon: Icons.explore_rounded,
         isUnlocked: true),
-    BadgeItem(
+    const BadgeItem(
         id: '3',
         title: 'Zen Master',
         icon: Icons.spa_rounded,
         isUnlocked: false),
-    BadgeItem(
+    const BadgeItem(
         id: '4',
         title: 'Bavard',
         icon: Icons.record_voice_over_rounded,
         isUnlocked: false),
-    BadgeItem(
+    const BadgeItem(
         id: '5',
         title: 'Night Owl',
         icon: Icons.nights_stay_rounded,
         isUnlocked: false),
-    BadgeItem(
+    const BadgeItem(
         id: '6',
         title: 'Early Bird',
         icon: Icons.wb_sunny_rounded,

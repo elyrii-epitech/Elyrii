@@ -101,7 +101,7 @@ class EmergencyResourcesButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Icon(
+                const Icon(
                   Icons.favorite_rounded,
                   size: 48,
                   color: AppColors.primary,

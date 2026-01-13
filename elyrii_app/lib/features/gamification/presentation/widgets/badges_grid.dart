@@ -72,7 +72,7 @@ class BadgesGrid extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: badge.isUnlocked
-                    ? LinearGradient(
+                    ? const LinearGradient(
                         colors: [
                           AppColors.primaryLight,
                           AppColors.primary,

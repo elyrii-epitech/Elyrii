@@ -87,7 +87,7 @@ class GlassNavigationBar extends StatelessWidget {
                     topRight: Radius.circular(borderRadius),
                   ),
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -184,7 +184,7 @@ class GlassNavigationBar extends StatelessWidget {
   }) {
     final isSelected = currentIndex == item.index;
     final isPressedItem = pressedIndex == item.index;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
 
     return Expanded(
       child: GestureDetector(
@@ -206,7 +206,7 @@ class GlassNavigationBar extends StatelessWidget {
               scale: isPressedItem ? 0.95 : 1.0, // iOS 26: 0.95 au lieu de 0.9
               duration: const Duration(milliseconds: 100),
               child: AnimatedContainer(
-                duration: Duration(
+                duration: const Duration(
                     milliseconds: AppDimensions.animationDurationLiquidGlass),
                 curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
                 margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),

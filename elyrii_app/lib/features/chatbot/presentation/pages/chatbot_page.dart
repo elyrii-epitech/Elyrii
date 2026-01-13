@@ -195,8 +195,8 @@ class _ChatbotPageState extends State<ChatbotPage>
                               ),
                             ],
                           )
-                        : Center(
-                            key: const ValueKey('full'),
+                        : const Center(
+                            key: ValueKey('full'),
                             child: MascotWidget(
                               isMinimized: false,
                             ),
@@ -251,7 +251,7 @@ class _ChatbotPageState extends State<ChatbotPage>
             color: AppColors.cardDark.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
@@ -259,7 +259,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                 size: 14,
                 color: AppColors.textTertiaryDark,
               ),
-              const SizedBox(width: 4),
+              SizedBox(width: 4),
               Text(
                 'Effacer',
                 style: TextStyle(
@@ -336,12 +336,12 @@ class _ChatbotPageState extends State<ChatbotPage>
                     maxLines: 4,
                     minLines: 1,
                     textCapitalization: TextCapitalization.sentences,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.textPrimaryDark,
                       fontSize: 15,
                       height: 1.4,
                     ),
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       hintText: 'Partage ce que tu ressens...',
                       hintStyle: TextStyle(
                         color: AppColors.textTertiaryDark,
@@ -349,7 +349,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                         fontSize: 15,
                       ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
+                      contentPadding: EdgeInsets.symmetric(
                         horizontal: 20,
                         vertical: 14,
                       ),

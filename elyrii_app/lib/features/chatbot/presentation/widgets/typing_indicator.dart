@@ -141,7 +141,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
           width: 1,
         ),
       ),
-      child: Icon(
+      child: const Icon(
         Icons.smart_toy_rounded,
         color: AppColors.primary,
         size: 18,

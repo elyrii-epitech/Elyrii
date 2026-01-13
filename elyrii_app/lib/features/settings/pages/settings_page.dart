@@ -241,7 +241,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: 'À propos',
                   isDark: isDark,
                   children: [
-                    LiquidGlassListTile(
+                    const LiquidGlassListTile(
                       title: 'Version',
                       subtitle: '1.0.0 (Build 1)',
                       leadingIcon: Icons.info_rounded,

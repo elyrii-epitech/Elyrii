@@ -19,7 +19,7 @@ class AppTheme {
       // Couleurs principales
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundLight,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: AppColors
             .primary, // #9D7FFE - Violet brillant glossy (from #8B6FF0)
         primaryContainer:
@@ -247,7 +247,7 @@ class AppTheme {
           .primaryDark, // #B99CFF - Violet glossy très lumineux pour dark mode
       scaffoldBackgroundColor:
           AppColors.backgroundDark, // #1A1818 - Noir chocolat
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryDark, // #B99CFF - Violet glossy très lumineux
         primaryContainer: AppColors.primary, // #9D7FFE - Violet brillant glossy
         secondary: AppColors.secondaryDark, // #FFCCBF - Pêche très pâle

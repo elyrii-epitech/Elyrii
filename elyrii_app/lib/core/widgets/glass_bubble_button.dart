@@ -228,7 +228,7 @@ class GlassBubbleButton extends StatelessWidget {
                   topLeft: Radius.circular(size / 2),
                   topRight: Radius.circular(size / 2),
                 ),
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [

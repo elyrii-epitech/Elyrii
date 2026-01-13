@@ -89,7 +89,10 @@ class _LoginPageState extends State<LoginPage> {
                           color: isDark
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
-                        ).copyWith(fontWeight: FontWeight.bold),
+                        ).copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
 
@@ -309,42 +312,37 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildSocialButtonFull(
       String text, String assetPath, IconData fallbackIcon, bool isDark) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF21262D) : Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(
-          color: isDark ? const Color(0xFF30363D) : const Color(0xFFD0D7DE),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                fallbackIcon,
+    return LiquidGlassCard(
+      onTap: () {},
+      padding: EdgeInsets.zero,
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.white.withValues(alpha: 0.4),
+      borderColor: isDark
+          ? Colors.white.withValues(alpha: 0.1)
+          : Colors.white.withValues(alpha: 0.6),
+      child: SizedBox(
+        height: 50,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              fallbackIcon,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+              size: 20,
+            ),
+            const SizedBox(width: AppDimensions.spacingMd),
+            Text(
+              text,
+              style: AppTextStyles.bodyMedium(
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
-                size: 20,
-              ),
-              const SizedBox(width: AppDimensions.spacingMd),
-              Text(
-                text,
-                style: AppTextStyles.bodyMedium(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ).copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
+              ).copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
       ),
     );

@@ -38,7 +38,7 @@ class EmptyJournalState extends StatelessWidget {
                 ),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.auto_stories_rounded,
                 size: 60,
                 color: AppColors.primary,

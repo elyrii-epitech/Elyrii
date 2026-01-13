@@ -100,7 +100,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
                     height: 80,
                     child: IgnorePointer(
                       child: Container(
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
@@ -109,7 +109,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
                               Colors.transparent,
                             ],
                           ),
-                          borderRadius: const BorderRadius.vertical(
+                          borderRadius: BorderRadius.vertical(
                             top: Radius.circular(
                                 AppDimensions.radiusLiquidGlassSheet),
                           ),

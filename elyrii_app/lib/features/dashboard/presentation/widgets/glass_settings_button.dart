@@ -121,7 +121,7 @@ class _GlassSettingsButtonState extends State<GlassSettingsButton>
                             curve: Curves.easeInOut,
                           ),
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Iconsax.setting_2,
                           size: 22,
                           color: Colors.white,

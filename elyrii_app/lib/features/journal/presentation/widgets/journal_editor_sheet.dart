@@ -299,7 +299,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                   color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.delete_outline_rounded,
                   color: AppColors.error,
                   size: 22,
@@ -315,7 +315,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     if (_isSaving) {
       return Row(
         children: [
-          SizedBox(
+          const SizedBox(
             width: 14,
             height: 14,
             child: CircularProgressIndicator(
@@ -340,7 +340,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.orange,
               shape: BoxShape.circle,
             ),
@@ -360,7 +360,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
     return Row(
       children: [
-        Icon(
+        const Icon(
           Icons.check_circle_rounded,
           color: AppColors.success,
           size: 16,
