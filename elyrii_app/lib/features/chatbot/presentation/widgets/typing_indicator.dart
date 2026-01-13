@@ -32,28 +32,23 @@ class _TypingIndicatorState extends State<TypingIndicator>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         children: [
           _buildAvatar(isDark),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 12,
             ),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.3)
-                      : Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: AppColors.cardDark,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: AppColors.borderDark.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -89,23 +84,16 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
   Widget _buildAvatar(bool isDark) {
     return Container(
-      width: 36,
-      height: 36,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
-        gradient: AppColors.chatbotGradient,
+        color: AppColors.primary.withValues(alpha: 0.2),
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
-      child: const Icon(
-        Icons.smart_toy,
-        color: Colors.white,
-        size: 20,
+      child: Icon(
+        Icons.smart_toy_rounded,
+        color: AppColors.primary,
+        size: 18,
       ),
     );
   }

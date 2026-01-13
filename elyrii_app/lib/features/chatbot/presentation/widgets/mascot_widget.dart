@@ -1,13 +1,21 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/theme/app_colors.dart';
 
-/// Widget mascotte placeholder animé
 class MascotWidget extends StatefulWidget {
   final bool isMinimized;
+  final double lottieHeight;
+  final VoidCallback? onTap;
+  final MascotAnimation? triggerAnimation;
 
   const MascotWidget({
     super.key,
     required this.isMinimized,
+    this.lottieHeight = 150,
+    this.onTap,
+    this.triggerAnimation,
   });
 
   @override
@@ -18,6 +26,11 @@ class _MascotWidgetState extends State<MascotWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  MascotAnimation _currentAnimation = MascotAnimations.idle;
+  bool _isPlayingSpecialAnimation = false;
+  bool _hasPlayedInitialAnimation = false;
+  Timer? _inactivityTimer;
+  static const int _inactivityDelaySeconds = 10;
 
   @override
   void initState() {
@@ -36,116 +49,187 @@ class _MascotWidgetState extends State<MascotWidget>
         curve: Curves.easeInOutSine,
       ),
     );
+
+    _playOpeningAnimation();
+  }
+
+  void _playOpeningAnimation() {
+    if (_hasPlayedInitialAnimation) return;
+
+    final openingAnimations = MascotAnimations.openingAnimations;
+    if (openingAnimations.isEmpty) {
+      _hasPlayedInitialAnimation = true;
+      _startInactivityTimer();
+      return;
+    }
+
+    final animation = MascotAnimations.selectWeightedRandom(openingAnimations);
+    if (animation != null) {
+      _playAnimation(animation, isInitial: true);
+    }
+  }
+
+  void _playAnimation(MascotAnimation animation, {bool isInitial = false}) {
+    if (_isPlayingSpecialAnimation && !isInitial) return;
+
+    setState(() {
+      _currentAnimation = animation;
+      _isPlayingSpecialAnimation = true;
+      if (isInitial) _hasPlayedInitialAnimation = true;
+    });
+
+    Future.delayed(Duration(seconds: animation.durationSeconds), () {
+      if (mounted) {
+        setState(() {
+          _currentAnimation = MascotAnimations.idle;
+          _isPlayingSpecialAnimation = false;
+        });
+        _startInactivityTimer();
+      }
+    });
+  }
+
+  void _startInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer(Duration(seconds: _inactivityDelaySeconds), () {
+      if (mounted) {
+        _playInactivityAnimation();
+      }
+    });
+  }
+
+  void _playInactivityAnimation() {
+    final inactivityAnimations = MascotAnimations.inactivityAnimations;
+    if (inactivityAnimations.isEmpty) return;
+
+    final animation =
+        MascotAnimations.selectWeightedRandom(inactivityAnimations);
+    if (animation != null) {
+      _playAnimation(animation);
+    }
+  }
+
+  @override
+  void didUpdateWidget(MascotWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isMinimized != oldWidget.isMinimized) {
+      _startInactivityTimer();
+    }
+
+    if (widget.triggerAnimation != null &&
+        widget.triggerAnimation != oldWidget.triggerAnimation) {
+      _playAnimation(widget.triggerAnimation!);
+    }
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _inactivityTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final maxHeight = (screenHeight * 0.5).clamp(250.0, 400.0);
+    final maxHeight = (screenHeight * 0.45).clamp(220.0, 350.0);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOutCubic,
-      height: widget.isMinimized ? 100 : maxHeight,
+      height: widget.isMinimized ? 80 : maxHeight,
       child: AnimatedBuilder(
         animation: _pulseAnimation,
         builder: (context, child) {
           return Transform.scale(
             scale: widget.isMinimized ? 1.0 : _pulseAnimation.value,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.9),
-                    AppColors.accent.withValues(alpha: 0.85),
-                    AppColors.secondary.withValues(alpha: 0.5),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius:
-                    BorderRadius.circular(widget.isMinimized ? 22 : 32),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: widget.isMinimized ? 16 : 32,
-                    offset: const Offset(0, 8),
-                    spreadRadius: widget.isMinimized ? 0 : 2,
-                  ),
-                  BoxShadow(
-                    color: AppColors.accent.withValues(alpha: 0.15),
-                    blurRadius: widget.isMinimized ? 24 : 48,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    top: widget.isMinimized ? 10 : 30,
-                    right: widget.isMinimized ? 10 : 30,
-                    child: Container(
-                      width: widget.isMinimized ? 20 : 60,
-                      height: widget.isMinimized ? 20 : 60,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: widget.isMinimized ? 15 : 50,
-                    left: widget.isMinimized ? 15 : 40,
-                    child: Container(
-                      width: widget.isMinimized ? 15 : 40,
-                      height: widget.isMinimized ? 15 : 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: widget.isMinimized ? 20 : 32,
-                      vertical: widget.isMinimized ? 12 : 20,
-                    ),
-                    child: widget.isMinimized
-                        ? Row(
-                            children: [
-                              _buildMascotAvatar(50, Icons.waving_hand_rounded),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: _buildMascotText(true),
-                              ),
-                            ],
-                          )
-                        : FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildMascotAvatar(
-                                    (maxHeight * 0.35).clamp(80.0, 120.0),
-                                    Icons.favorite_rounded),
-                                SizedBox(height: maxHeight * 0.06),
-                                _buildMascotText(false),
-                              ],
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-            ),
+            child: widget.isMinimized
+                ? _buildMinimizedMascot()
+                : _buildFullMascot(maxHeight),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildMinimizedMascot() {
+    const double lottieSize = 140;
+    const double visibleHeight = 80;
+    const double topOffset = -10;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AppColors.primary.withValues(alpha: 0.15),
+              AppColors.cardDark.withValues(alpha: 0.95),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: lottieSize,
+              height: visibleHeight,
+              child: ClipRect(
+                child: OverflowBox(
+                  maxHeight: lottieSize,
+                  maxWidth: lottieSize,
+                  alignment: Alignment.topCenter,
+                  child: Transform.translate(
+                    offset: const Offset(0, topOffset),
+                    child: Lottie.asset(
+                      _currentAnimation.assetPath,
+                      key: ValueKey('minimized_${_currentAnimation.id}'),
+                      width: lottieSize,
+                      height: lottieSize,
+                      fit: BoxFit.contain,
+                      repeat: _currentAnimation.loop,
+                      animate: true,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildMascotText(true),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Icon(
+                Icons.lock_outline_rounded,
+                size: 16,
+                color: AppColors.textTertiaryDark.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFullMascot(double maxHeight) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildMascotAvatar(widget.lottieHeight, Icons.favorite_rounded),
+        SizedBox(height: maxHeight * 0.04),
+        _buildMascotText(false),
+      ],
     );
   }
 
@@ -154,19 +238,16 @@ class _MascotWidgetState extends State<MascotWidget>
       duration: const Duration(milliseconds: 400),
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-          width: 2,
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          icon,
-          size: size * 0.5,
-          color: Colors.white,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: Lottie.asset(
+          _currentAnimation.assetPath,
+          key: ValueKey(_currentAnimation.id),
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          repeat: _currentAnimation.loop,
+          animate: true,
         ),
       ),
     );
@@ -179,49 +260,28 @@ class _MascotWidgetState extends State<MascotWidget>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          isMinimized ? 'Elyrii' : 'Bienvenue chez Elyrii',
+          isMinimized ? 'Elyrii' : 'Discuter avec Elyrii',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
-            color: Colors.white,
-            fontSize: isMinimized ? 15 : 32,
-            fontWeight: isMinimized ? FontWeight.w600 : FontWeight.w300,
-            letterSpacing: isMinimized ? 0.3 : 2.0,
+            color: AppColors.textPrimaryDark,
+            fontSize: isMinimized ? 15 : 26,
+            fontWeight: isMinimized ? FontWeight.w600 : FontWeight.w600,
+            letterSpacing: isMinimized ? 0.3 : 0.5,
           ),
         ),
-        SizedBox(height: isMinimized ? 2 : 16),
+        SizedBox(height: isMinimized ? 2 : 12),
         Text(
           isMinimized
               ? 'Je t\'écoute 💜'
               : 'Je suis là pour t\'écouter\nsans jugement',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.95),
+            color: AppColors.textSecondaryDark,
             fontSize: isMinimized ? 11 : 15,
             fontWeight: FontWeight.w400,
             height: 1.5,
           ),
         ),
-        if (!isMinimized) ...[
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '✨ Prends ton temps',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }
