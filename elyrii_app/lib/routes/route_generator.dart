@@ -9,6 +9,7 @@ import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/pages/register_page.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -80,6 +81,11 @@ class RouteGenerator {
       case AppRoutes.login:
         return MaterialPageRoute(
           builder: (_) => const LoginPage(),
+        );
+
+      case AppRoutes.register:
+        return MaterialPageRoute(
+          builder: (_) => const RegisterPage(),
         );
 
       default:

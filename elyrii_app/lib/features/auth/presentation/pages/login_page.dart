@@ -252,8 +252,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    // Navigate to register page
-                                    // Navigator.pushNamed(context, AppRoutes.register);
+                                    Navigator.pushNamed(
+                                        context, AppRoutes.register);
                                   },
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
