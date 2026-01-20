@@ -1,0 +1,22 @@
+{
+  "name": "elyrii-server-docs",
+  "version": "1.0.0",
+  "description": "Documentation generation for Elyrii Server microservices",
+  "private": true,
+  "scripts": {
+    "docs": "bun run docs:build",
+    "docs:build": "bun run docs:clean && bun run docs:generate",
+    "docs:clean": "rm -rf ../docs/api",
+    "docs:generate": "typedoc",
+    "docs:auth": "cd ../services/auth && typedoc",
+    "docs:chat": "cd ../services/chat && typedoc",
+    "docs:gateway": "cd ../services/gateway && typedoc",
+    "docs:all": "bun run docs:generate && bun run docs:auth && bun run docs:chat && bun run docs:gateway",
+    "docs:serve": "bunx serve ../docs -p 8080"
+  },
+  "devDependencies": {
+    "typedoc": "^0.25.13",
+    "typedoc-plugin-markdown": "^3.17.1",
+    "typescript": "^5.7.2"
+  }
+}

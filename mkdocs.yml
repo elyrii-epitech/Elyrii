@@ -24,6 +24,9 @@ nav:
       - Generated Docs: server/
   - AI:
       - Overview: ai/index.md
+      - Hosting: ai/hosting.md
+      - Scalability: ai/scalability.md
+      - Training: ai/training.md
       - Generated Docs: ai/
 plugins:
   - search

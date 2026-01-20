@@ -65,24 +65,25 @@ class GlassNavigationBar extends StatelessWidget {
                     end: Alignment.bottomRight,
                     colors: isDark
                         ? [
-                            Colors.white.withOpacity(0.12),
-                            Colors.white.withOpacity(0.08),
+                            Colors.white.withValues(alpha: 0.12),
+                            Colors.white.withValues(alpha: 0.08),
                           ]
                         : [
-                            const Color(0xFFFFFFFF).withOpacity(0.85),
-                            const Color(0xFFF5F3FF).withOpacity(0.75),
+                            const Color(0xFFFFFFFF).withValues(alpha: 0.85),
+                            const Color(0xFFF5F3FF).withValues(alpha: 0.75),
                           ],
                   ),
                   borderRadius: BorderRadius.circular(borderRadius),
                   border: Border.all(
-                    color: isDark 
-                        ? Colors.white.withOpacity(0.2)
-                        : const Color(0xFFE0D4FF).withOpacity(0.6),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.2)
+                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(isDark ? 0.4 : 0.15),
+                      color:
+                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
                       blurRadius: 24,
                       spreadRadius: 0,
                       offset: const Offset(0, 10),
@@ -113,7 +114,7 @@ class GlassNavigationBar extends StatelessWidget {
                       final itemWidth = constraints.maxWidth / items.length;
                       final selectedX = (currentIndex + 0.5) * itemWidth;
                       final centerY = constraints.maxHeight / 2;
-                      
+
                       return CustomPaint(
                         painter: RadialFlashPainter(
                           progress: flashAnimation!.value,
@@ -166,9 +167,9 @@ class GlassNavigationBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   // Fond gris plus visible quand sélectionné
                   color: isSelected
-                      ? (isDark 
-                          ? Colors.white.withOpacity(0.15)
-                          : Colors.black.withOpacity(0.12))
+                      ? (isDark
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : Colors.black.withValues(alpha: 0.12))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(24),
                 ),
@@ -183,9 +184,9 @@ class GlassNavigationBar extends StatelessWidget {
                         child: Icon(
                           item.icon,
                           // Icône en violet si sélectionné, sinon couleur adaptée au thème
-                          color: isSelected 
-                              ? primaryColor 
-                              : (isDark 
+                          color: isSelected
+                              ? primaryColor
+                              : (isDark
                                   ? const Color(0xFFE6E5E2)
                                   : const Color(0xFF3A3A3D)),
                           size: 20,
@@ -201,11 +202,12 @@ class GlassNavigationBar extends StatelessWidget {
                         duration: const Duration(milliseconds: 200),
                         style: TextStyle(
                           fontSize: isSelected ? 9.5 : 9,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
                           // Texte en violet si sélectionné, sinon couleur adaptée au thème
-                          color: isSelected 
-                              ? primaryColor 
-                              : (isDark 
+                          color: isSelected
+                              ? primaryColor
+                              : (isDark
                                   ? const Color(0xFFE6E5E2)
                                   : const Color(0xFF3A3A3D)),
                           letterSpacing: isSelected ? 0.3 : 0,
@@ -248,19 +250,23 @@ class RadialFlashPainter extends CustomPainter {
 
     final center = Offset(centerX, centerY);
     final radius = maxRadius * 1.5 * progress; // Rayon plus grand
-    
+
     // Fade out progressif à partir de 70% de l'animation
-    final fadeOut = progress > 0.7 
-        ? (1.0 - ((progress - 0.7) / 0.3)).clamp(0.0, 1.0) // De 1.0 à 0 entre 70% et 100%
+    final fadeOut = progress > 0.7
+        ? (1.0 - ((progress - 0.7) / 0.3))
+            .clamp(0.0, 1.0) // De 1.0 à 0 entre 70% et 100%
         : 1.0;
-    
+
     // Créer un gradient radial avec opacité qui diminue progressivement
     final gradient = RadialGradient(
       colors: [
-        Colors.white.withOpacity((0.6 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0)), 
-        Colors.white.withOpacity((0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0)), 
-        Colors.white.withOpacity((0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0)), 
-        Colors.white.withOpacity(0), 
+        Colors.white.withValues(
+            alpha: ((0.6 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(
+            alpha: ((0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(
+            alpha: ((0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0))),
+        Colors.white.withValues(alpha: 0),
       ],
       stops: const [0.0, 0.3, 0.6, 1.0],
     );

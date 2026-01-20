@@ -1,0 +1,167 @@
+services:
+  gateway:
+    build:
+      context: ./services/gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - CHAT_SERVICE_URL=http://chat-service:3002
+      - JOURNAL_SERVICE_URL=http://journal-service:3003
+      - GATEWAY_PORT=${GATEWAY_PORT}
+      - GATEWAY_SECRET_KEY=${GATEWAY_SECRET_KEY}
+    networks:
+      - elyrii_net
+    depends_on:
+      auth-service:
+        condition: service_started
+      chat-service:
+        condition: service_started
+    command: sh -c "sleep 2 && bun run index.ts"
+
+  auth-service:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    container_name: auth-service
+    ports:
+      - "3001:3001"
+    environment:
+      - GATEWAY_URL=http://gateway:3000
+      - CHAT_SERVICE_URL=http://chat-service:3002
+      - PORT=${AUTH_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${AUTH_DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - SECRET_KEY=${AUTH_SECRET_KEY}
+      - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY}
+    networks:
+      - elyrii_net
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  chat-service:
+    build:
+      context: ./services/chat
+      dockerfile: Dockerfile
+    container_name: chat-service
+    ports:
+      - "3002:3002"
+    environment:
+      - GATEWAY_URL=http://gateway:3000
+      - REDPANDA_URL=http://redpanda:9092
+      - PORT=${CHAT_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${CHAT_DB_NAME}
+      - DB_PORT=${DB_PORT}
+    networks:
+      - elyrii_net
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  journal-service:
+    build:
+      context: ./services/journal
+      dockerfile: Dockerfile
+    container_name: journal-service
+    ports:
+      - "3003:3003"
+    environment:
+      - GATEWAY_URL=http://gateway:3000
+      - REDPANDA_URL=http://redpanda:9092
+      - PORT=${JOURNAL_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${JOURNAL_DB_NAME}
+      - DB_PORT=${DB_PORT}
+    networks:
+      - elyrii_net
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    command: >
+      redpanda start
+        --overprovisioned
+        --smp 1
+        --memory 1G
+        --reserve-memory 0M
+        --check=false
+        --node-id=1
+        --kafka-addr PLAINTEXT://0.0.0.0:9092
+        --advertise-kafka-addr PLAINTEXT://redpanda:9092
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - elyrii_net
+
+  redpanda_console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda_console
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redpanda
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      REDPANDA_ADMIN_URL: http://redpanda:9644
+    networks:
+      - elyrii_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_elyrii
+    ports:
+      - "5431:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init_dbs.sql:/docker-entrypoint-initdb.d/init_dbs.sql
+    networks:
+      - elyrii_net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+volumes:
+  redpanda_data:
+  pg_data:
+
+networks:
+  elyrii_net:
+    driver: bridge

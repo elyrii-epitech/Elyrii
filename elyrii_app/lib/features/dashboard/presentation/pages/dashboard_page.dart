@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../routes/app_routes.dart';
 import '../../../../main.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -10,9 +9,10 @@ class DashboardPage extends StatelessWidget {
     final theme = Theme.of(context);
     final themeSwitcher = ThemeSwitcher.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
+      backgroundColor:
+          isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
       body: Stack(
         children: [
           Center(
@@ -86,7 +86,9 @@ class DashboardPage extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Icon(
-                      isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                      isDark
+                          ? Icons.light_mode_rounded
+                          : Icons.dark_mode_rounded,
                       color: Colors.white,
                       size: 24,
                     ),
@@ -95,6 +97,10 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        child: const Icon(Icons.add),
       ),
     );
   }
