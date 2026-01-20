@@ -44,7 +44,7 @@ jobs:
           # Branch regex: prefix / username / ( #?digits | issue-digits ) / slug (lowercase-hyphens)
           BRANCH_REGEX='^(feature|bugfix|hotfix|docs|test|perf|refactor|chore)/[A-Za-z0-9._-]+/(#?[0-9]+|issue-[0-9]+)/[a-z0-9]+(-[a-z0-9]+)*$'
 
-          if [[ "$BRANCH" =~ $BRANCH_REGEX ]] || [[ "$BRANCH" == "main" ]] || [[ "$BRANCH" == "dev" ]]; then
+          if [[ "$BRANCH" =~ $BRANCH_REGEX ]] || [[ "$BRANCH" == "main" ]] || [[ "$BRANCH" == "dev" ]] || [[ "$BRANCH" == "frontend" ]]; then
             echo "Branch name matches required pattern."
           else
             echo "::error::Branch name does NOT match required pattern."

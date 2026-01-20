@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/config/app_constants.dart';
+import 'core/services/theme_provider.dart';
+import 'core/services/glass_performance_service.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize services
+  final themeProvider = ThemeProvider();
+  final performanceService = GlassPerformanceService();
+
+  await Future.wait([
+    themeProvider.init(),
+    performanceService.init(),
+  ]);
 
   // Configuration de la barre de statut
   SystemChrome.setSystemUIOverlayStyle(
@@ -22,51 +34,42 @@ void main() {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: themeProvider),
+        ChangeNotifierProvider.value(value: performanceService),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system;
-
-  void _toggleTheme() {
-    setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConstants.appName,
-      debugShowCheckedModeBanner: false,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
 
-      // Thèmes
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: _themeMode,
-      initialRoute: AppRoutes.login,
-      onGenerateRoute: RouteGenerator.generateRoute,
-      builder: (context, child) {
-        // Passer la fonction de toggle via InheritedWidget
-        return ThemeSwitcher(
-          toggleTheme: _toggleTheme,
-          themeMode: _themeMode,
-          child: child ?? const SizedBox(),
+          // Thèmes
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeProvider.themeMode,
+          initialRoute: AppRoutes.login,
+          onGenerateRoute: RouteGenerator.generateRoute,
         );
       },
     );
   }
 }
 
-/// InheritedWidget pour partager la fonction de toggle du thème
+/// @deprecated Use ThemeProvider instead via Provider.of[ThemeProvider](context)
+/// Kept for backward compatibility during migration
 class ThemeSwitcher extends InheritedWidget {
   final VoidCallback toggleTheme;
   final ThemeMode themeMode;

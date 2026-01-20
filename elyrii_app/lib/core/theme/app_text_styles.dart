@@ -207,7 +207,7 @@ class AppTextStyles {
 
   /// Style pour le contenu du journal intime
   static TextStyle journalEntry() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 16,
       fontWeight: FontWeight.w400,
@@ -219,7 +219,7 @@ class AppTextStyles {
 
   /// Style pour les timestamps
   static TextStyle timestamp() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 12,
       fontWeight: FontWeight.w400,
@@ -231,7 +231,7 @@ class AppTextStyles {
 
   /// Style pour les étiquettes d'émotions
   static TextStyle emotionLabel() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 13,
       fontWeight: FontWeight.w500,
@@ -243,7 +243,7 @@ class AppTextStyles {
 
   /// Style pour les titres d'objectifs
   static TextStyle objectiveTitle() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 16,
       fontWeight: FontWeight.w600,
@@ -255,7 +255,7 @@ class AppTextStyles {
 
   /// Style pour les badges/achievements
   static TextStyle achievementBadge() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 11,
       fontWeight: FontWeight.w700,
@@ -267,7 +267,7 @@ class AppTextStyles {
 
   /// Style pour les statistiques numériques
   static TextStyle statNumber() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 32,
       fontWeight: FontWeight.w700,
@@ -279,7 +279,7 @@ class AppTextStyles {
 
   /// Style pour les labels de statistiques
   static TextStyle statLabel() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 13,
       fontWeight: FontWeight.w400,
@@ -291,7 +291,7 @@ class AppTextStyles {
 
   /// Style pour les boutons principaux
   static TextStyle button() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 15,
       fontWeight: FontWeight.w600,
@@ -302,7 +302,7 @@ class AppTextStyles {
 
   /// Style pour les hints dans les champs de texte
   static TextStyle inputHint() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 16,
       fontWeight: FontWeight.w400,
@@ -314,7 +314,7 @@ class AppTextStyles {
 
   /// Style pour le texte des inputs
   static TextStyle inputText() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 16,
       fontWeight: FontWeight.w400,
@@ -326,7 +326,7 @@ class AppTextStyles {
 
   /// Style pour les erreurs
   static TextStyle error() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 12,
       fontWeight: FontWeight.w400,
@@ -338,7 +338,7 @@ class AppTextStyles {
 
   /// Style pour les liens
   static TextStyle link() {
-    return TextStyle(
+    return const TextStyle(
       fontFamily: _fontFamily,
       fontSize: 14,
       fontWeight: FontWeight.w500,

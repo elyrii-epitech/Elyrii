@@ -9,6 +9,7 @@ import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/pages/register_page.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -49,13 +50,42 @@ class RouteGenerator {
         );
 
       case AppRoutes.settings:
-        return MaterialPageRoute(
-          builder: (_) => const SettingsPage(),
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const SettingsPage(),
+          transitionDuration: const Duration(milliseconds: 350),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeOutCubic;
+            final tween = Tween(begin: begin, end: end).chain(
+              CurveTween(curve: curve),
+            );
+            final offsetAnimation = animation.drive(tween);
+            final fadeAnimation = animation.drive(
+              Tween(begin: 0.0, end: 1.0).chain(
+                CurveTween(curve: const Interval(0.0, 0.5)),
+              ),
+            );
+            return SlideTransition(
+              position: offsetAnimation,
+              child: FadeTransition(
+                opacity: fadeAnimation,
+                child: child,
+              ),
+            );
+          },
         );
 
       case AppRoutes.login:
         return MaterialPageRoute(
           builder: (_) => const LoginPage(),
+        );
+
+      case AppRoutes.register:
+        return MaterialPageRoute(
+          builder: (_) => const RegisterPage(),
         );
 
       default:

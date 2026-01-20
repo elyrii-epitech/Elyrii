@@ -3,8 +3,8 @@ import 'package:email_validator/email_validator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
-import '../widgets/glass_button.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
 
     return Scaffold(
       backgroundColor:
-          isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       body: Stack(
         children: [
           SafeArea(
@@ -89,7 +89,10 @@ class _LoginPageState extends State<LoginPage> {
                           color: isDark
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
-                        ).copyWith(fontWeight: FontWeight.bold),
+                        ).copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
 
@@ -129,8 +132,9 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: AppDimensions.spacingLg),
 
                             // Password Field
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   'Mot de passe',
@@ -178,9 +182,10 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: AppDimensions.spacingXl),
 
                             // Login Button
-                            GlassButton(
-                              text: 'Se connecter',
+                            LiquidGlassButton(
+                              label: 'Se connecter',
                               isLoading: _isLoading,
+                              isExpanded: true,
                               onPressed: _handleLogin,
                             ),
 
@@ -238,8 +243,9 @@ class _LoginPageState extends State<LoginPage> {
                             const SizedBox(height: AppDimensions.spacingXl),
 
                             // Register Link
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
                                 Text(
                                   'Nouveau sur Elyrii ? ',
@@ -251,8 +257,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    // Navigate to register page
-                                    // Navigator.pushNamed(context, AppRoutes.register);
+                                    Navigator.pushNamed(
+                                        context, AppRoutes.register);
                                   },
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
@@ -306,42 +312,37 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildSocialButtonFull(
       String text, String assetPath, IconData fallbackIcon, bool isDark) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF21262D) : Colors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(
-          color: isDark ? const Color(0xFF30363D) : const Color(0xFFD0D7DE),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {},
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                fallbackIcon,
+    return LiquidGlassCard(
+      onTap: () {},
+      padding: EdgeInsets.zero,
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.white.withValues(alpha: 0.4),
+      borderColor: isDark
+          ? Colors.white.withValues(alpha: 0.1)
+          : Colors.white.withValues(alpha: 0.6),
+      child: SizedBox(
+        height: 50,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              fallbackIcon,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+              size: 20,
+            ),
+            const SizedBox(width: AppDimensions.spacingMd),
+            Text(
+              text,
+              style: AppTextStyles.bodyMedium(
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
-                size: 20,
-              ),
-              const SizedBox(width: AppDimensions.spacingMd),
-              Text(
-                text,
-                style: AppTextStyles.bodyMedium(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ).copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
+              ).copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
       ),
     );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
+import '../services/glass_performance_service.dart';
 
 /// Item de navigation pour la GlassNavigationBar
 class GlassNavItem {
@@ -16,7 +18,7 @@ class GlassNavItem {
   });
 }
 
-/// Barre de navigation avec effet liquid glass
+/// Barre de navigation avec effet iOS 26 Liquid Glass
 /// Widget réutilisable pour créer des navbars modernes
 class GlassNavigationBar extends StatelessWidget {
   final List<GlassNavItem> items;
@@ -43,65 +45,62 @@ class GlassNavigationBar extends StatelessWidget {
     this.pressedIndex = -1,
     this.margin = const EdgeInsets.only(left: 16, right: 16, bottom: 24),
     this.height = 72.0,
-    this.borderRadius = 36.0,
+    this.borderRadius = AppDimensions.radiusLiquidGlassNav, // iOS 26: 44.0
   });
 
   @override
   Widget build(BuildContext context) {
+    final performanceService = GlassPerformanceService();
+    final effectiveBlurSigma = performanceService
+        .getEffectiveBlurSigma(AppDimensions.blurSigmaLiquidGlass);
+
     return Container(
       margin: margin,
       height: height,
       child: Stack(
         children: [
-          // Navbar glass (plus transparente)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(borderRadius),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.12),
-                            Colors.white.withValues(alpha: 0.08),
-                          ]
-                        : [
-                            const Color(0xFFFFFFFF).withValues(alpha: 0.85),
-                            const Color(0xFFF5F3FF).withValues(alpha: 0.75),
-                          ],
+          // Navbar glass iOS 26 Liquid Glass
+          RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadius),
+              child: effectiveBlurSigma > 0
+                  ? BackdropFilter(
+                      filter: ImageFilter.blur(
+                          sigmaX: effectiveBlurSigma,
+                          sigmaY: effectiveBlurSigma),
+                      child: _buildNavBarContainer(),
+                    )
+                  : _buildNavBarContainer(),
+            ),
+          ),
+          // Highlight spéculaire iOS 26 (reflet en haut) - IgnorePointer pour ne pas bloquer les clics
+          if (performanceService.showSpecularHighlight)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: borderRadius * 0.8,
+              child: IgnorePointer(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(borderRadius),
+                    topRight: Radius.circular(borderRadius),
                   ),
-                  borderRadius: BorderRadius.circular(borderRadius),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
-                      blurRadius: 24,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 10),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.liquidGlassSpecularStrong,
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: items.map((item) {
-                    return _buildNavItem(
-                      item: item,
-                      controller: iconControllers[item.index],
-                    );
-                  }).toList(),
+                  ),
                 ),
               ),
             ),
-          ),
           // Flash radial par-dessus
           if (flashAnimation != null && flashAnimation!.value > 0)
             Positioned.fill(
@@ -133,13 +132,59 @@ class GlassNavigationBar extends StatelessWidget {
     );
   }
 
+  /// Construit le container principal de la navbar
+  Widget _buildNavBarContainer() {
+    return Container(
+      decoration: BoxDecoration(
+        // iOS 26: Gradient vertical pour plus de profondeur
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? [
+                  AppColors.liquidGlassBackgroundDark,
+                  AppColors.liquidGlassBackgroundDarkEnd,
+                ]
+              : [
+                  AppColors.liquidGlassBackgroundLight,
+                  AppColors.liquidGlassBackgroundLightEnd,
+                ],
+        ),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: isDark
+              ? AppColors.liquidGlassBorderDark
+              : AppColors.liquidGlassBorderLight,
+          width: 0.5, // iOS 26: bordure plus fine
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: items.map((item) {
+          return _buildNavItem(
+            item: item,
+            controller: iconControllers[item.index],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildNavItem({
     required GlassNavItem item,
     required AnimationController controller,
   }) {
     final isSelected = currentIndex == item.index;
     final isPressedItem = pressedIndex == item.index;
-    final primaryColor = AppColors.primary;
+    const primaryColor = AppColors.primary;
 
     return Expanded(
       child: GestureDetector(
@@ -153,25 +198,26 @@ class GlassNavigationBar extends StatelessWidget {
         child: AnimatedBuilder(
           animation: controller,
           builder: (context, child) {
-            // Animation de rebond pour l'icône
-            final bounce = Curves.elasticOut.transform(controller.value);
-            final scale = 1.0 + (bounce * 0.2);
+            // iOS 26: Animation spring avec damping 0.7
+            final springValue = Curves.elasticOut.transform(controller.value);
+            final scale = 1.0 + (springValue * 0.15); // Réduit de 0.2 à 0.15
 
             return AnimatedScale(
-              scale: isPressedItem ? 0.95 : 1.0,
+              scale: isPressedItem ? 0.95 : 1.0, // iOS 26: 0.95 au lieu de 0.9
               duration: const Duration(milliseconds: 100),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOutCubic,
+                duration: const Duration(
+                    milliseconds: AppDimensions.animationDurationLiquidGlass),
+                curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
                 margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                 decoration: BoxDecoration(
                   // Fond gris plus visible quand sélectionné
                   color: isSelected
                       ? (isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : Colors.black.withValues(alpha: 0.12))
+                          ? Colors.white.withValues(alpha: 0.12)
+                          : Colors.black.withValues(alpha: 0.08))
                       : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -187,14 +233,14 @@ class GlassNavigationBar extends StatelessWidget {
                           color: isSelected
                               ? primaryColor
                               : (isDark
-                                  ? const Color(0xFFE6E5E2)
-                                  : const Color(0xFF3A3A3D)),
+                                  ? AppColors.iconDefaultDark
+                                  : AppColors.iconDefaultLight),
                           size: 20,
                         ),
                       ),
                     ),
                     const SizedBox(height: 3),
-                    // Texte
+                    // Texte avec animation fade
                     AnimatedOpacity(
                       duration: const Duration(milliseconds: 200),
                       opacity: 1.0,
@@ -208,8 +254,8 @@ class GlassNavigationBar extends StatelessWidget {
                           color: isSelected
                               ? primaryColor
                               : (isDark
-                                  ? const Color(0xFFE6E5E2)
-                                  : const Color(0xFF3A3A3D)),
+                                  ? AppColors.iconDefaultDark
+                                  : AppColors.iconDefaultLight),
                           letterSpacing: isSelected ? 0.3 : 0,
                         ),
                         child: Text(
@@ -230,7 +276,7 @@ class GlassNavigationBar extends StatelessWidget {
   }
 }
 
-/// Painter pour créer un effet de flash radial
+/// Painter pour créer un effet de flash radial iOS 26
 class RadialFlashPainter extends CustomPainter {
   final double progress;
   final double centerX;
@@ -251,21 +297,21 @@ class RadialFlashPainter extends CustomPainter {
     final center = Offset(centerX, centerY);
     final radius = maxRadius * 1.5 * progress; // Rayon plus grand
 
-    // Fade out progressif à partir de 70% de l'animation
-    final fadeOut = progress > 0.7
-        ? (1.0 - ((progress - 0.7) / 0.3))
-            .clamp(0.0, 1.0) // De 1.0 à 0 entre 70% et 100%
+    // iOS 26: Fade out plus rapide à partir de 60% de l'animation
+    final fadeOut = progress > 0.6
+        ? (1.0 - ((progress - 0.6) / 0.4))
+            .clamp(0.0, 1.0) // De 1.0 à 0 entre 60% et 100%
         : 1.0;
 
     // Créer un gradient radial avec opacité qui diminue progressivement
     final gradient = RadialGradient(
       colors: [
         Colors.white.withValues(
-            alpha: ((0.6 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0))),
+            alpha: ((0.5 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0))),
         Colors.white.withValues(
-            alpha: ((0.4 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0))),
+            alpha: ((0.3 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0))),
         Colors.white.withValues(
-            alpha: ((0.2 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0))),
+            alpha: ((0.15 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0))),
         Colors.white.withValues(alpha: 0),
       ],
       stops: const [0.0, 0.3, 0.6, 1.0],
