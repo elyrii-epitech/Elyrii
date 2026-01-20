@@ -1,4 +1,6 @@
 name: Build Elyrii Server Docs
+permissions:
+  contents: read
 
 on:
   push:
