@@ -28,12 +28,12 @@ jobs:
             echo "Error: TARGET_PAT is not set"
             exit 1
           fi
-          
+
           # Use a more robust authentication method by setting the Authorization header for this specific host
           git config --local "http.https://github.com/.extraheader" "Authorization: Basic $(echo -n "x-access-token:${TARGET_PAT}" | base64)"
-          
+
           # Add target remote (without token in URL for security and to avoid duplication)
           git remote add target "https://github.com/${TARGET_REPO}.git"
-          
-          # Push all branches and tags
-          git push --mirror target
+
+          git push target --all --force
+          git push target --tags --force
