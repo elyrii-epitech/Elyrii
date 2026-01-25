@@ -18,6 +18,12 @@ nav:
   - Home: index.md
   - Mobile:
       - Overview: mobile/index.md
+      - Architecture: mobile/architecture.md
+      - Dependencies: mobile/dependencies.md
+      - Features: mobile/features.md
+      - Design System: mobile/design.md
+      - CI/CD: mobile/ci-cd.md
+      - Development: mobile/development.md
       - Generated Docs: mobile/
   - Server:
       - Overview: server/index.md
