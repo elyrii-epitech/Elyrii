@@ -12,6 +12,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Configure git author
         run: |
@@ -23,9 +24,16 @@ jobs:
           TARGET_REPO: EpitechPromo2027/G-EIP-600-PAR-6-1-eip-rafael.sapalo-esteves
           TARGET_PAT: ${{ secrets.TARGET_PAT }}
         run: |
-          # Add target remote using PAT
-          git remote add target https://x-access-token:${TARGET_PAT}@github.com/${TARGET_REPO}.git
-          git remote -v
-          git ls-remote target || true
-
+          if [ -z "$TARGET_PAT" ]; then
+            echo "Error: TARGET_PAT is not set"
+            exit 1
+          fi
+          
+          # Use a more robust authentication method by setting the Authorization header for this specific host
+          git config --local "http.https://github.com/.extraheader" "Authorization: Basic $(echo -n "x-access-token:${TARGET_PAT}" | base64)"
+          
+          # Add target remote (without token in URL for security and to avoid duplication)
+          git remote add target "https://github.com/${TARGET_REPO}.git"
+          
+          # Push all branches and tags
           git push --mirror target
