@@ -17,7 +17,7 @@
   ],
   "plugin": ["typedoc-plugin-markdown"],
   "theme": "markdown",
-  "readme": "../README.md",
+  "readme": "../docs/index.md",
   "excludePrivate": false,
   "excludeInternal": false,
   "excludeExternals": false,
