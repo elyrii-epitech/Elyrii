@@ -25,5 +25,7 @@ jobs:
         run: |
           # Add target remote using PAT
           git remote add target https://x-access-token:${TARGET_PAT}@github.com/${TARGET_REPO}.git
+          git remote -v
+          git ls-remote target || true
 
           git push --mirror target
