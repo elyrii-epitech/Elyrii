@@ -24,6 +24,7 @@
     "@hono/standard-validator": "^0.2.0",
     "drizzle-orm": "^0.44.7",
     "hono": "^4.10.6",
+    "kafkajs": "^2.2.4",
     "pg": "^8.16.3",
     "zod": "^4.1.13"
   }

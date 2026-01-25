@@ -1,4 +1,6 @@
 import QuestService from "./src/service/quest.service";
+import { initKafka } from "./src/service/kafka.service";
+import { initConsumers } from "./src/service/consumer.service";
 
 if (!Bun.env.QUEST_SERVICE_PORT) {
     console.error("[ERROR] QUEST_SERVICE_PORT environment variable is not set");
@@ -6,6 +8,14 @@ if (!Bun.env.QUEST_SERVICE_PORT) {
 }
 
 const questService = new QuestService();
+
+// Initialize Kafka
+initKafka().then(() => {
+    initConsumers().catch(console.error);
+}).catch((err) => {
+    console.error("Failed to initialize Kafka:", err);
+    // process.exit(1); // Optional: decide if service should fail if Kafka fails
+});
 
 Bun.serve({
     port: Number(Bun.env.QUEST_SERVICE_PORT),
