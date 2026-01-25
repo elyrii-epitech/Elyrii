@@ -15,22 +15,22 @@ Elyrii is a cross-platform mobile application developed with Flutter that offers
 
 ## Documentation Structure
 
-### [Architecture](../docs/mobile/architecture.md)
+### [Architecture](architecture.md)
 Application architecture, design patterns, and code organization.
 
-### [Dependencies](../docs/mobile/dependencies.md)
+### [Dependencies](dependencies.md)
 Detailed explanation of all `pubspec.yaml` dependencies.
 
-### [Features](../docs/mobile/features.md)
+### [Features](features.md)
 Description of all application features.
 
-### [Design System](../docs/mobile/design.md)
+### [Design System](design.md)
 Design system, themes, UI components, and visual guidelines.
 
-### [CI/CD](../docs/mobile/ci-cd.md)
+### [CI/CD](ci-cd.md)
 Configuration and usage of GitHub Actions workflows.
 
-### [Development](../docs/mobile/development.md)
+### [Development](development.md)
 Development guide, conventions, and best practices.
 
 ## Quick Start
@@ -56,4 +56,4 @@ flutter test
 
 ## Contributing
 
-See [Development Guide](../docs/mobile/development.md) for code conventions and Git workflow.
+See [Development Guide](development.md) for code conventions and Git workflow.
