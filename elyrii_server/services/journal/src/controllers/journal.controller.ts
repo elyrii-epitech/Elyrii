@@ -3,6 +3,7 @@ import JournalRepository from "../repository/journal.repository";
 import { sValidator } from "@hono/standard-validator";
 import { createEntriySchema, updateEntrySchema } from "../utils/journal.zod";
 import type { HonoEnv } from "../utils/hono.types";
+import { describeRoute } from "hono-openapi";
 
 /**
  * Controller that defines HTTP handlers for journal entry management.
@@ -30,7 +31,15 @@ class JournalController {
      * @param ctx.req.query.endDate - Optional end date filter (ISO string)
      * @returns JSON array of journal entries
      */
-    public readonly getEntries = this.factory.createHandlers(async (ctx) => {
+    public readonly getEntries = this.factory.createHandlers(describeRoute({
+        summary: "Get Journal Entries",
+        description: "Get entries with optional date filtering.",
+        tags: ["Journal"],
+        responses: {
+            200: { description: "List of journal entries" },
+            400: { description: "Invalid date format" }
+        }
+    }), async (ctx) => {
         const userID = ctx.get("user").userId;
         const startDateParam = ctx.req.query("startDate");
         const endDateParam = ctx.req.query("endDate");
@@ -62,7 +71,14 @@ class JournalController {
      * @param ctx - Hono Context
      * @returns JSON array of all journal entries for the user
      */
-    public readonly getUserEntries = this.factory.createHandlers(async (ctx) => {
+    public readonly getUserEntries = this.factory.createHandlers(describeRoute({
+        summary: "Get All User Entries",
+        description: "Get all journal entries for the authenticated user.",
+        tags: ["Journal"],
+        responses: {
+            200: { description: "List of all journal entries" }
+        }
+    }), async (ctx) => {
         const userID = ctx.get("user").userId;
         const entries = await this.journalRepository.getEntries(userID);
         return ctx.json(entries); 
@@ -75,7 +91,16 @@ class JournalController {
      * @param ctx.req.param.entryId - ID of the journal entry
      * @returns JSON object of the journal entry or 404 if not found
      */
-    public readonly getEntryById = this.factory.createHandlers(async (ctx) => { 
+    public readonly getEntryById = this.factory.createHandlers(describeRoute({
+        summary: "Get Entry by ID",
+        description: "Get a specific journal entry by its ID.",
+        tags: ["Journal"],
+        responses: {
+            200: { description: "Journal entry details" },
+            400: { description: "Entry ID is required" },
+            404: { description: "Entry not found" }
+        }
+    }), async (ctx) => { 
         const entryId = ctx.req.param("entryId");
         if (!entryId) {
             return ctx.json({ error: "Entry ID is required" }, 400);
@@ -95,7 +120,16 @@ class JournalController {
      * @param ctx.req.valid.json - Validated body: { title, content?, tags? }
      * @returns JSON object with the created entry
      */
-    public readonly createEntry = this.factory.createHandlers(sValidator("json", createEntriySchema), async (ctx) => {
+    public readonly createEntry = this.factory.createHandlers(describeRoute({
+        summary: "Create Journal Entry",
+        description: "Create a new journal entry.",
+        tags: ["Journal"],
+        responses: {
+            201: { description: "Entry created successfully" },
+            400: { description: "Invalid request body" },
+            500: { description: "Failed to create entry" }
+        }
+    }), sValidator("json", createEntriySchema), async (ctx) => {
         const body = ctx.req.valid("json");
         const userID = ctx.get("user").userId;
 
@@ -119,7 +153,16 @@ class JournalController {
      * @param ctx.req.valid.json - Validated partial body: { title?, content?, tags? }
      * @returns JSON object with the updated entry
      */
-    public readonly updateEntry = this.factory.createHandlers(sValidator("json", updateEntrySchema), async (ctx) => {
+    public readonly updateEntry = this.factory.createHandlers(describeRoute({
+        summary: "Update Journal Entry",
+        description: "Update an existing journal entry.",
+        tags: ["Journal"],
+        responses: {
+            200: { description: "Entry updated successfully" },
+            400: { description: "Invalid request body or ID" },
+            500: { description: "Failed to update entry" }
+        }
+    }), sValidator("json", updateEntrySchema), async (ctx) => {
         const body = ctx.req.valid("json");
         const entryId = ctx.req.param("entryId");
 
@@ -142,7 +185,16 @@ class JournalController {
      * @param ctx.req.param.entryId - ID of the journal entry to delete
      * @returns JSON success message
      */
-    public readonly deleteEntry = this.factory.createHandlers(async (ctx) => { 
+    public readonly deleteEntry = this.factory.createHandlers(describeRoute({
+        summary: "Delete Journal Entry",
+        description: "Soft-delete a journal entry.",
+        tags: ["Journal"],
+        responses: {
+            200: { description: "Entry soft-deleted successfully" },
+            400: { description: "Entry ID is required" },
+            500: { description: "Failed to soft-delete entry" }
+        }
+    }), async (ctx) => { 
         const entryId = ctx.req.param("entryId");
         if (!entryId) {
             return ctx.json({ error: "Entry ID is required" }, 400);

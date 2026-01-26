@@ -3,6 +3,7 @@ import QuestRepository from "../repository/quest.repository";
 import type { HonoEnv } from "../utils/hono.types";
 import { z } from "zod";
 import { sValidator } from "@hono/standard-validator";
+import { describeRoute } from "hono-openapi";
 
 /**
  * Controller that defines HTTP handlers for gamified challenges (quests).
@@ -23,11 +24,21 @@ class QuestController {
      * @param ctx - Hono Context
      * @returns JSON array of active challenges
      */
-    public readonly getActiveChallenges = this.factory.createHandlers(async (ctx) => {
-        const userId = ctx.get("user").userId;
-        const challenges = await this.questRepository.getUserChallenges(userId, 'ACTIVE');
-        return ctx.json(challenges);
-    });
+    public readonly getActiveChallenges = this.factory.createHandlers(
+        describeRoute({
+            summary: "Get Active Challenges",
+            description: "Retrieve all active challenges for the authenticated user.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "List of active challenges" }
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const challenges = await this.questRepository.getUserChallenges(userId, 'ACTIVE');
+            return ctx.json(challenges);
+        }
+    );
 
     /**
      * Handler for retrieving completed challenges for the user.
@@ -35,11 +46,21 @@ class QuestController {
      * @param ctx - Hono Context
      * @returns JSON array of completed challenges
      */
-    public readonly getCompletedChallenges = this.factory.createHandlers(async (ctx) => {
-        const userId = ctx.get("user").userId;
-        const challenges = await this.questRepository.getUserChallenges(userId, 'COMPLETED');
-        return ctx.json(challenges);
-    });
+    public readonly getCompletedChallenges = this.factory.createHandlers(
+        describeRoute({
+            summary: "Get Completed Challenges",
+            description: "Retrieve all completed challenges for the authenticated user.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "List of completed challenges" }
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const challenges = await this.questRepository.getUserChallenges(userId, 'COMPLETED');
+            return ctx.json(challenges);
+        }
+    );
 
     /**
      * Handler for retrieving pending challenge proposals for the user.
@@ -50,11 +71,21 @@ class QuestController {
      * @param ctx - Hono Context
      * @returns JSON array of pending challenges
      */
-    public readonly getPendingChallenges = this.factory.createHandlers(async (ctx) => {
-        const userId = ctx.get("user").userId;
-        const challenges = await this.questRepository.getUserChallenges(userId, 'PENDING');
-        return ctx.json(challenges);
-    });
+    public readonly getPendingChallenges = this.factory.createHandlers(
+        describeRoute({
+            summary: "Get Pending Proposals",
+            description: "Retrieve all pending challenge proposals for the authenticated user.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "List of pending challenge proposals" }
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const challenges = await this.questRepository.getUserChallenges(userId, 'PENDING');
+            return ctx.json(challenges);
+        }
+    );
 
     /**
      * Handler for accepting a challenge proposal.
@@ -66,19 +97,31 @@ class QuestController {
      * @param ctx.req.param.challengeId - ID of the challenge to accept
      * @returns JSON object of the updated challenge
      */
-    public readonly acceptChallenge = this.factory.createHandlers(async (ctx) => {
-        const challengeId = ctx.req.param("challengeId");
-        if (!challengeId) {
-            return ctx.json({ error: "Challenge ID is required" }, 400);
+    public readonly acceptChallenge = this.factory.createHandlers(
+        describeRoute({
+            summary: "Accept Challenge",
+            description: "Accept a pending challenge proposal, making it active.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "Challenge accepted successfully" },
+                400: { description: "Challenge ID is required" },
+                500: { description: "Failed to accept challenge" }
+            }
+        }),
+        async (ctx) => {
+            const challengeId = ctx.req.param("challengeId");
+            if (!challengeId) {
+                return ctx.json({ error: "Challenge ID is required" }, 400);
+            }
+            // Verify ownership/existence would be good here, assuming repo handles basic checks or we add logic
+            try {
+                const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'ACTIVE');
+                return ctx.json(updated);
+            } catch (e) {
+                return ctx.json({ error: "Failed to accept challenge" }, 500);
+            }
         }
-        // Verify ownership/existence would be good here, assuming repo handles basic checks or we add logic
-        try {
-            const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'ACTIVE');
-            return ctx.json(updated);
-        } catch (e) {
-            return ctx.json({ error: "Failed to accept challenge" }, 500);
-        }
-    });
+    );
 
     /**
      * Handler for rejecting a challenge proposal.
@@ -90,18 +133,30 @@ class QuestController {
      * @param ctx.req.param.challengeId - ID of the challenge to reject
      * @returns JSON object of the updated challenge
      */
-    public readonly rejectChallenge = this.factory.createHandlers(async (ctx) => {
-        const challengeId = ctx.req.param("challengeId");
-        if (!challengeId) {
-            return ctx.json({ error: "Challenge ID is required" }, 400);
+    public readonly rejectChallenge = this.factory.createHandlers(
+        describeRoute({
+            summary: "Reject Challenge",
+            description: "Reject a pending challenge proposal.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "Challenge rejected successfully" },
+                400: { description: "Challenge ID is required" },
+                500: { description: "Failed to reject challenge" }
+            }
+        }),
+        async (ctx) => {
+            const challengeId = ctx.req.param("challengeId");
+            if (!challengeId) {
+                return ctx.json({ error: "Challenge ID is required" }, 400);
+            }
+            try {
+                const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'REJECTED');
+                return ctx.json(updated);
+            } catch (e) {
+                return ctx.json({ error: "Failed to reject challenge" }, 500);
+            }
         }
-        try {
-            const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'REJECTED');
-            return ctx.json(updated);
-        } catch (e) {
-            return ctx.json({ error: "Failed to reject challenge" }, 500);
-        }
-    });
+    );
 
     // Internal endpoint for AI to propose challenges
     /**
@@ -116,6 +171,15 @@ class QuestController {
      * @returns JSON object containing the created template and user challenge assignment
      */
     public readonly createProposal = this.factory.createHandlers(
+        describeRoute({
+            summary: "Create Challenge Proposal",
+            description: "Create a new challenge proposal for a user (Internal/AI).",
+            tags: ["Quest"],
+            responses: {
+                201: { description: "Proposal created successfully" },
+                400: { description: "Invalid request body" }
+            }
+        }),
         sValidator("json", z.object({
             title: z.string(),
             description: z.string().optional(),

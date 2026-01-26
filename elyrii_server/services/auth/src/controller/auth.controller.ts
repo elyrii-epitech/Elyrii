@@ -1,4 +1,5 @@
 import { sValidator } from "@hono/standard-validator";
+import { describeRoute } from "hono-openapi";
 import { createFactory } from "hono/factory";
 import { loginValidation, registerValidation } from "../utils/zod.valid";
 import AuthRepository from "../repository/auth.repository";
@@ -30,7 +31,18 @@ class AuthController {
      * @param ctx - Hono Context containing the JSON body { email, password }
      * @returns JSON response with access token or error message
      */
-    readonly login = this.factory.createHandlers(sValidator("json", loginValidation), async (ctx) => {
+    readonly login = this.factory.createHandlers(describeRoute({
+        summary: "User Login",
+        description: "Authenticate a user and issue access/refresh tokens.",
+        tags: ["Auth"],
+        responses: {
+            200: { description: "Login successful, returns access token" },
+            400: { description: "Invalid email or password provided" },
+            401: { description: "Invalid credentials" },
+            404: { description: "User not found" },
+            500: { description: "Internal server error" },
+        }
+    }), sValidator("json", loginValidation), async (ctx) => {
         const { email, password } = ctx.req.valid("json");
         if (!email || !password) {
             return ctx.json({ error: "Invalid email or password" }, 400);
@@ -78,6 +90,15 @@ class AuthController {
      * @returns JSON response with success message and access token
      */
     readonly register = this.factory.createHandlers(
+        describeRoute({
+            summary: "User Registration",
+            description: "Register a new user and automatically log them in.",
+            tags: ["Auth"],
+            responses: {
+                200: { description: "User registered successfully" },
+                500: { description: "Registration failed" },
+            }
+        }),
         sValidator("json", registerValidation),
         async (ctx) => {
             const { email, password, lastName, firstName, age } = ctx.req.valid("json");
@@ -119,7 +140,14 @@ class AuthController {
      * @param ctx - Hono Context
      * @returns JSON response confirming logout
      */
-    readonly logout = this.factory.createHandlers(async (ctx) => {
+    readonly logout = this.factory.createHandlers(describeRoute({
+        summary: "User Logout",
+        description: "Log out the user (invalidate session).",
+        tags: ["Auth"],
+        responses: {
+            200: { description: "Logout successful" },
+        }
+    }), async (ctx) => {
         return ctx.json({ message: "Logout" });
     });
     
@@ -134,7 +162,15 @@ class AuthController {
      * @param ctx - Hono Context containing the refresh_token cookie
      * @returns JSON response with new access token or error
      */
-    readonly refreshToken = this.factory.createHandlers(async (ctx) => {
+    readonly refreshToken = this.factory.createHandlers(describeRoute({
+        summary: "Refresh Access Token",
+        description: "Issue a new access token using a valid refresh token cookie.",
+        tags: ["Auth"],
+        responses: {
+            200: { description: "Token refreshed successfully" },
+            401: { description: "Invalid or missing refresh token" },
+        }
+    }), async (ctx) => {
         // TODO: Implement refresh token logic
         const oldRefreshToken = getCookie(ctx, "refresh_token");
         if (!oldRefreshToken) {
