@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../providers/journal_provider.dart';
 import '../widgets/glass_journal_card.dart';
 import '../widgets/glass_icon_button.dart';
@@ -33,14 +35,12 @@ class _JournalPageState extends State<JournalPage> {
 
   void _showEditorSheet({JournalEntry? entry}) {
     HapticFeedback.lightImpact();
-    showModalBottomSheet(
+    showLiquidGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      enableDrag: true,
-      useSafeArea: true,
-      isDismissible: true,
-      builder: (context) => JournalEditorSheet(
+      initialChildSize: 0.92,
+      maxChildSize: 0.92,
+      minChildSize: 0.5,
+      child: JournalEditorSheet(
         provider: _provider,
         entry: entry,
       ),
@@ -55,7 +55,7 @@ class _JournalPageState extends State<JournalPage> {
       value: _provider,
       child: Scaffold(
         backgroundColor:
-            isDark ? const Color(0xFF171719) : const Color(0xFFE8E8EB),
+            isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
         body: Stack(
           children: [
             // Contenu principal (liste des notes)
@@ -123,6 +123,9 @@ class _JournalPageState extends State<JournalPage> {
   }
 
   Widget _buildJournalGrid(JournalProvider provider, bool isDark) {
+    // Limit staggered animations to first 8 items for performance
+    const int maxAnimatedItems = 8;
+
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(
         AppDimensions.pageHorizontalPadding,
@@ -130,10 +133,11 @@ class _JournalPageState extends State<JournalPage> {
         AppDimensions.pageHorizontalPadding,
         100, // Extra padding pour le bottom
       ),
+      cacheExtent: 200, // Pre-render items for smoother scrolling
       itemCount: provider.entries.length,
       itemBuilder: (context, index) {
         final entry = provider.entries[index];
-        return Padding(
+        final card = Padding(
           padding: const EdgeInsets.only(
             bottom: AppDimensions.spacingLg,
           ),
@@ -141,7 +145,12 @@ class _JournalPageState extends State<JournalPage> {
             entry: entry,
             isDark: isDark,
             onTap: () => _showEditorSheet(entry: entry),
-          )
+          ),
+        );
+
+        // Only animate first 8 items to prevent jank
+        if (index < maxAnimatedItems) {
+          return card
               .animate()
               .fadeIn(
                 duration: 350.ms,
@@ -153,8 +162,10 @@ class _JournalPageState extends State<JournalPage> {
                 duration: 350.ms,
                 delay: (30 * index).ms,
                 curve: Curves.easeOutCubic,
-              ),
-        );
+              );
+        }
+
+        return card;
       },
     );
   }

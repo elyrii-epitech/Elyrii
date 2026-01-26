@@ -18,16 +18,22 @@ nav:
   - Home: index.md
   - Mobile:
       - Overview: mobile/index.md
-      - Generated Docs: mobile/
+      - Architecture: mobile/architecture.md
+      - Dependencies: mobile/dependencies.md
+      - Features: mobile/features.md
+      - Design System: mobile/design.md
+      - CI/CD: mobile/ci-cd.md
+      - Development: mobile/development.md
+      - Generated Docs: mobile/api/index.md
   - Server:
       - Overview: server/index.md
-      - Generated Docs: server/
+      - Generated Docs: server/api/index.md
   - AI:
       - Overview: ai/index.md
       - Hosting: ai/hosting.md
       - Scalability: ai/scalability.md
       - Training: ai/training.md
-      - Generated Docs: ai/
+      - Generated Docs: ai/api/index.md
 plugins:
   - search
 markdown_extensions:

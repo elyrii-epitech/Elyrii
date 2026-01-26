@@ -289,4 +289,39 @@ class AppDimensions {
 
   /// Ratio 3:2
   static const double aspectRatioPhoto = 3.0 / 2.0;
+
+  // ==================== iOS 26 LIQUID GLASS ====================
+
+  /// Blur sigma pour liquid glass - léger (ultraThin)
+  static const double blurSigmaLiquidGlassUltraThin = 10.0;
+
+  /// Blur sigma pour liquid glass - fin (thin)
+  static const double blurSigmaLiquidGlassThin = 16.0;
+
+  /// Blur sigma pour liquid glass - régulier
+  static const double blurSigmaLiquidGlassRegular = 22.0;
+
+  /// Alias pour blur sigma régulier (compatibilité)
+  static const double blurSigmaRegular = 22.0;
+
+  /// Blur sigma pour liquid glass - épais (navbar, boutons)
+  static const double blurSigmaLiquidGlass = 28.0;
+
+  /// Border radius pour liquid glass navigation
+  static const double radiusLiquidGlassNav = 44.0;
+
+  /// Border radius pour liquid glass cards
+  static const double radiusLiquidGlassCard = 20.0;
+
+  /// Border radius pour liquid glass sheets/modals
+  static const double radiusLiquidGlassSheet = 28.0;
+
+  /// Border radius pour liquid glass buttons (capsule)
+  static const double radiusLiquidGlassButton = 100.0;
+
+  /// Animation duration pour liquid glass transitions
+  static const int animationDurationLiquidGlass = 350;
+
+  /// Spring damping pour animations iOS 26
+  static const double springDampingLiquidGlass = 0.7;
 }

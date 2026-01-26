@@ -10,6 +10,7 @@ services:
       - AUTH_SERVICE_URL=http://auth-service:3001
       - CHAT_SERVICE_URL=http://chat-service:3002
       - JOURNAL_SERVICE_URL=http://journal-service:3003
+      - QUEST_SERVICE_URL=http://quest-service:3004
       - GATEWAY_PORT=${GATEWAY_PORT}
       - GATEWAY_SECRET_KEY=${GATEWAY_SECRET_KEY}
     networks:
@@ -87,6 +88,33 @@ services:
       - DB_PASS=${DB_PASSWORD}
       - DB_NAME=${JOURNAL_DB_NAME}
       - DB_PORT=${DB_PORT}
+    networks:
+      - elyrii_net
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  quest-service:
+    build:
+      context: ./services/quest
+      dockerfile: Dockerfile
+    container_name: quest-service
+    ports:
+      - "3004:3004"
+    environment:
+      - GATEWAY_URL=http://gateway:3000
+      - REDPANDA_URL=http://redpanda:9092
+      - PORT=${QUEST_PORT}
+      - DB_HOST=${DB_HOST}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${QUEST_DB_NAME}
+      - DB_PORT=${DB_PORT}
+      - ACCESS_JWT_SIGN_KEY=${ACCESS_JWT_SIGN_KEY}
+      - SECRET_KEY=${AUTH_SECRET_KEY}
+      - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY}
     networks:
       - elyrii_net
     depends_on:

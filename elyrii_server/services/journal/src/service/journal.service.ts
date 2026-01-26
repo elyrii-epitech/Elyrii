@@ -1,11 +1,14 @@
 import { Hono } from "hono";
 import JournalController from "../controllers/journal.controller";
+import type { HonoEnv } from "../utils/hono.types";
+import { authMiddleware } from "../middleware/auth.middleware";
 
 class JournalService {
-    private readonly router = new Hono().basePath("/journal");
+    private readonly router = new Hono<HonoEnv>().basePath("/journal");
     private readonly journalController = new JournalController();
     
     constructor() {
+        this.router.use("*", authMiddleware);
         this.initRoutes();
     }
     

@@ -33,16 +33,16 @@ jobs:
           path: _artifacts/mobile
         continue-on-error: true
 
-      - name: Prepare docs/mobile from artifact
+      - name: Prepare docs/mobile API from artifact
         run: |
-          rm -rf docs/mobile
-          mkdir -p docs/mobile
+          rm -rf docs/mobile/api
+          mkdir -p docs/mobile/api
           if [ -d "_artifacts/mobile" ] && [ "$(ls -A _artifacts/mobile || true)" ]; then
-            cp -r _artifacts/mobile/* docs/mobile/
+            cp -r _artifacts/mobile/* docs/mobile/api/
           else
-            echo "# Mobile Docs" > docs/mobile/index.md
-            echo "" >> docs/mobile/index.md
-            echo "Mobile documentation will appear here once its workflow publishes artifacts." >> docs/mobile/index.md
+            echo "# Mobile API Documentation" > docs/mobile/api/index.md
+            echo "" >> docs/mobile/api/index.md
+            echo "Mobile API documentation will appear here once its workflow publishes artifacts." >> docs/mobile/api/index.md
           fi
 
       # Server docs: change artifact name/path to match your server-doc workflow.
@@ -54,22 +54,22 @@ jobs:
           path: _artifacts/server
         continue-on-error: true
 
-      - name: Prepare docs/server from artifact
+      - name: Prepare docs/server API from artifact
         run: |
-          rm -rf docs/server
-          mkdir -p docs/server
+          rm -rf docs/server/api
+          mkdir -p docs/server/api
           if [ -d "_artifacts/server" ] && [ "$(ls -A _artifacts/server || true)" ]; then
-            cp -r _artifacts/server/* docs/server/
+            cp -r _artifacts/server/* docs/server/api/
           else
             # Fallback: if server pipeline commits docs into repo (e.g., elyrii-poc/docs), copy from there
             if [ -d "elyrii-poc/docs" ]; then
-              cp -r elyrii-poc/docs/* docs/server/ || true
+              cp -r elyrii-poc/docs/* docs/server/api/ || true
             elif [ -d "poc/docs" ]; then
-              cp -r poc/docs/* docs/server/ || true
+              cp -r poc/docs/* docs/server/api/ || true
             else
-              echo "# Server Docs" > docs/server/index.md
-              echo "" >> docs/server/index.md
-              echo "Server documentation will appear here once its workflow publishes artifacts." >> docs/server/index.md
+              echo "# Server API Documentation" > docs/server/api/index.md
+              echo "" >> docs/server/api/index.md
+              echo "Server API documentation will appear here once its workflow publishes artifacts." >> docs/server/api/index.md
             fi
           fi
 
@@ -82,20 +82,20 @@ jobs:
           path: _artifacts/ai
         continue-on-error: true
 
-      - name: Prepare docs/ai from artifact
+      - name: Prepare docs/ai API from artifact
         run: |
-          rm -rf docs/ai
-          mkdir -p docs/ai
+          rm -rf docs/ai/api
+          mkdir -p docs/ai/api
           if [ -d "_artifacts/ai" ] && [ "$(ls -A _artifacts/ai || true)" ]; then
-            cp -r _artifacts/ai/* docs/ai/
+            cp -r _artifacts/ai/* docs/ai/api/
           else
             # Fallback: if AI pipeline commits docs into repo (e.g., elyrii_ai/docs), copy from there
             if [ -d "elyrii_ai/docs" ]; then
-              cp -r elyrii_ai/docs/* docs/ai/ || true
+              cp -r elyrii_ai/docs/* docs/ai/api/ || true
             else
-              echo "# AI Docs" > docs/ai/index.md
-              echo "" >> docs/ai/index.md
-              echo "AI documentation will appear here once its workflow publishes artifacts." >> docs/ai/index.md
+              echo "# AI API Documentation" > docs/ai/api/index.md
+              echo "" >> docs/ai/api/index.md
+              echo "AI API documentation will appear here once its workflow publishes artifacts." >> docs/ai/api/index.md
             fi
           fi
 

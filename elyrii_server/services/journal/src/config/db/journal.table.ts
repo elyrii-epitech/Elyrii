@@ -8,6 +8,7 @@ export const journalEntriesTable = pgTable("journal_entries", {
     mood: text("mood"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
+    deletedAt: timestamp("deleted_at"),
 }, (table) => [
   index("journal_entries_user_id_idx").on(table.userId),
 ]);
@@ -39,7 +40,7 @@ export const journalMediaTable = pgTable("journal_media", {
 ]);
 
 
-export type JournalEntry = typeof journalEntriesTable.$inferSelect;
+export type JournalEntry = typeof journalEntriesTable.$inferSelect & { deletedAt?: Date | null };
 export type NewJournalEntry = typeof journalEntriesTable.$inferInsert;
 export type JournalTag = typeof journalTagsTable.$inferSelect;
 export type NewJournalTag = typeof journalTagsTable.$inferInsert;

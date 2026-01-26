@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -18,136 +19,174 @@ class ChatMessageBubble extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
         mainAxisAlignment:
             isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) _buildAvatar(isDark),
-          if (!isUser) const SizedBox(width: 12),
+          if (!isUser) const SizedBox(width: 10),
           Flexible(
-            child: Column(
-              crossAxisAlignment:
-                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: isUser
-                        ? LinearGradient(
-                            colors: [
-                              AppColors.primary.withValues(alpha: 0.8),
-                              AppColors.primary.withValues(alpha: 0.65),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : null,
-                    color: isUser
-                        ? null
-                        : isDark
-                            ? AppColors.surfaceDark.withValues(alpha: 0.6)
-                            : AppColors.surfaceLight,
-                    borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(28),
-                      topRight: const Radius.circular(28),
-                      bottomLeft: Radius.circular(isUser ? 28 : 8),
-                      bottomRight: Radius.circular(isUser ? 8 : 28),
-                    ),
-                    border: isUser
-                        ? null
-                        : Border.all(
-                            color: isDark
-                                ? AppColors.borderDark.withValues(alpha: 0.3)
-                                : AppColors.borderLight.withValues(alpha: 0.5),
-                            width: 1,
-                          ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isDark
-                            ? Colors.black.withValues(alpha: 0.15)
-                            : Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                        spreadRadius: 0,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    message,
-                    style: TextStyle(
-                      color: isUser
-                          ? Colors.white
-                          : isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                      fontSize: 16,
-                      height: 1.5,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatTime(timestamp),
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
+            child: isUser
+                ? _buildUserBubble(context, isDark)
+                : _buildBotBubble(context, isDark),
           ),
-          if (isUser) const SizedBox(width: 12),
+          if (isUser) const SizedBox(width: 10),
           if (isUser) _buildAvatar(isDark),
         ],
       ),
     );
   }
 
+  /// Bot message with glassmorphic blur effect
+  Widget _buildBotBubble(BuildContext context, bool isDark) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [
+                      Colors.white.withValues(alpha: 0.08),
+                      Colors.white.withValues(alpha: 0.04),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.7),
+                      Colors.white.withValues(alpha: 0.5),
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.5),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: _buildMessageContent(isDark, isUser: false),
+        ),
+      ),
+    );
+  }
+
+  /// User message with gradient (no blur needed)
+  Widget _buildUserBubble(BuildContext context, bool isDark) {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width * 0.75,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            AppColors.primary,
+            Color(0xFF7B5FE0),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: _buildMessageContent(isDark, isUser: true),
+    );
+  }
+
+  Widget _buildMessageContent(bool isDark, {required bool isUser}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          message,
+          style: TextStyle(
+            color: isUser
+                ? Colors.white
+                : (isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight),
+            fontSize: 15,
+            height: 1.4,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _formatTime(timestamp),
+          style: TextStyle(
+            color: isUser
+                ? Colors.white.withValues(alpha: 0.7)
+                : (isDark
+                    ? AppColors.textTertiaryDark
+                    : AppColors.textTertiaryLight),
+            fontSize: 11,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildAvatar(bool isDark) {
     return Container(
-      width: 38,
-      height: 38,
+      width: 32,
+      height: 32,
       decoration: BoxDecoration(
         gradient: isUser
-            ? LinearGradient(
-                colors: [
-                  AppColors.secondary.withValues(alpha: 0.9),
-                  AppColors.secondary.withValues(alpha: 0.7),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              )
+            ? null
             : LinearGradient(
                 colors: [
-                  AppColors.primary.withValues(alpha: 0.85),
-                  AppColors.accent.withValues(alpha: 0.9),
+                  AppColors.primary.withValues(alpha: 0.3),
+                  AppColors.primary.withValues(alpha: 0.15),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
+        color: isUser
+            ? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight)
+            : null,
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: (isUser ? AppColors.secondary : AppColors.primary)
-                .withValues(alpha: 0.25),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(
+          color: isUser
+              ? Colors.transparent
+              : AppColors.primary.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Icon(
-        isUser ? Icons.person_rounded : Icons.favorite_rounded,
-        color: Colors.white,
-        size: 20,
+        isUser ? Icons.person_rounded : Icons.smart_toy_rounded,
+        color: isUser
+            ? (isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight)
+            : AppColors.primary,
+        size: 18,
       ),
     );
   }

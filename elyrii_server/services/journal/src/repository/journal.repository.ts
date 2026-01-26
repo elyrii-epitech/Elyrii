@@ -1,20 +1,35 @@
 import { db } from "../config/db.config";
 import { journalEntriesTable, type JournalEntry, type NewJournalEntry } from "../config/db/journal.table";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lte, isNull } from "drizzle-orm";
 
 class JournalRepository {
-    // TODO: Implement repository methods
-    async getEntries(): Promise<JournalEntry[]> {
-        const entries = await db.select().from(journalEntriesTable);
+    async getEntries(
+        userId?: string,
+        startDate?: Date,
+        endDate?: Date
+    ): Promise<JournalEntry[]> {
+        const conditions = [isNull(journalEntriesTable.deletedAt)];
+
+        if (userId) {
+            conditions.push(eq(journalEntriesTable.userId, userId));
+        }
+        if (startDate) {
+            conditions.push(gte(journalEntriesTable.createdAt, startDate));
+        }
+        if (endDate) {
+            conditions.push(lte(journalEntriesTable.createdAt, endDate));
+        }
+
+        const entries = await db.select().from(journalEntriesTable).where(and(...conditions));
         return entries || [];
     }
 
-    async getEntryById(_id: string): Promise<JournalEntry | null> {
+    public async getEntryById(_id: string): Promise<JournalEntry | null> {
         const [entry] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, _id)).limit(1);
         return entry || null;
     }
 
-    async createEntry(data: NewJournalEntry): Promise<JournalEntry> {
+    public async createEntry(data: NewJournalEntry): Promise<JournalEntry> {
         if (!data.userId || !data.title) {
             throw new Error('User ID and title are required');
         }
@@ -58,8 +73,10 @@ class JournalRepository {
                 updatePayload.content = data.content;
             if (data.mood !== undefined && data.mood !== existing.mood) 
                 updatePayload.mood = data.mood;
+            if (data.deletedAt !== undefined && data.deletedAt !== existing.deletedAt)
+                updatePayload.deletedAt = data.deletedAt;
 
-            if (Object.keys(updatePayload).length === 1) {
+            if (Object.keys(updatePayload).length === 1 && data.deletedAt === undefined) {
                 return existing as JournalEntry;
             }
 
@@ -77,8 +94,19 @@ class JournalRepository {
         });
     }
     
-    async deleteEntry(_id: string): Promise<boolean> {
-        return true;
+    async softDeleteEntry(_id: string): Promise<boolean> {
+        return await db.transaction(async (tx) => {
+            const [updated] = await tx.update(journalEntriesTable)
+                .set({ deletedAt: new Date() })
+                .where(eq(journalEntriesTable.id, _id))
+                .returning({ id: journalEntriesTable.id });
+            
+            if (!updated) {
+                tx.rollback();
+                throw new Error('Failed to soft delete journal entry');
+            }
+            return true;
+        });
     }
 }
 

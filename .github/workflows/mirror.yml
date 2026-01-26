@@ -1,0 +1,42 @@
+on:
+  push:
+    branches:
+      - 'main'
+      - 'dev'
+
+jobs:
+  mirror:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure git author
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Push mirror to target
+        env:
+          TARGET_REPO: EpitechPromo2027/G-EIP-600-PAR-6-1-eip-rafael.sapalo-esteves
+          TARGET_PAT: ${{ secrets.TARGET_PAT }}
+        run: |
+          if [ -z "$TARGET_PAT" ]; then
+            echo "Error: TARGET_PAT is not set"
+            exit 1
+          fi
+
+          # Use a more robust authentication method by setting the Authorization header for this specific host
+          git config --local "http.https://github.com/.extraheader" "Authorization: Basic $(echo -n "x-access-token:${TARGET_PAT}" | base64)"
+
+          # Add target remote (without token in URL for security and to avoid duplication)
+          git remote add target "https://github.com/${TARGET_REPO}.git"
+
+          git push target --all --force
+          git push target --tags --force

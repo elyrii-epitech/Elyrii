@@ -7,7 +7,7 @@ export const createEntriySchema = z.object({
     tags: z.array(z.string()).min(1).max(10).nullable(),
 });
 
-export const updateEntriySchema = createEntriySchema.partial();
+export const updateEntrySchema = createEntriySchema.partial();
 
 export type CreateEntriySchemaType = z.infer<typeof createEntriySchema>;
-export type UpdateEntriySchemaType = z.infer<typeof updateEntriySchema>;
+export type UpdateEntrySchemaType = z.infer<typeof updateEntrySchema>;

@@ -8,4 +8,5 @@ class AppRoutes {
   static const String chatbot = '/chatbot';
   static const String settings = '/settings';
   static const String login = '/login';
+  static const String register = '/register';
 }

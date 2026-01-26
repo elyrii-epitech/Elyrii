@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
+import '../services/glass_performance_service.dart';
 
-/// Bouton en forme de bulle avec effet liquid glass
+/// Bouton en forme de bulle avec effet iOS 26 Liquid Glass
 /// Peut être réutilisé pour chatbot, settings, notifications, etc.
 class GlassBubbleButton extends StatelessWidget {
   final IconData icon;
@@ -36,118 +38,88 @@ class GlassBubbleButton extends StatelessWidget {
     this.isSelected = false,
   });
 
-  /// Calcule l'opacité du flash avec fade out progressif
+  /// Calcule l'opacité du flash avec fade out progressif iOS 26
   double _calculateFlashOpacity(double progress) {
-    // Fade out progressif à partir de 70% de l'animation
+    // iOS 26: Fade out plus rapide à partir de 60% de l'animation
     final fadeOut =
-        progress > 0.7 ? (1.0 - ((progress - 0.7) / 0.3)).clamp(0.0, 1.0) : 1.0;
+        progress > 0.6 ? (1.0 - ((progress - 0.6) / 0.4)).clamp(0.0, 1.0) : 1.0;
 
-    return (0.3 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0);
+    return (0.25 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Couleur adaptée au thème : violet si sélectionné, #E6E5E2 en dark, #3A3A3D en light
+    final performanceService = GlassPerformanceService();
+    final effectiveBlurSigma = performanceService
+        .getEffectiveBlurSigma(AppDimensions.blurSigmaLiquidGlass);
+
+    // Couleur adaptée au thème : violet si sélectionné, sinon couleur par défaut
     final effectiveIconColor = iconColor ??
         (isSelected
             ? AppColors.primary
-            : (isDark ? const Color(0xFFE6E5E2) : const Color(0xFF3A3A3D)));
+            : (isDark
+                ? AppColors.iconDefaultDark
+                : AppColors.iconDefaultLight));
     final effectiveShimmerColor =
         shimmerColor ?? AppColors.primary.withValues(alpha: 0.3);
 
-    Widget buttonContent = SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        children: [
-          // Flash blanc avec fade out progressif (comme la navbar)
-          if (flashAnimation != null && flashAnimation!.value > 0)
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(size / 2),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(size / 2),
-                    color: Colors.white.withValues(
-                      alpha: _calculateFlashOpacity(flashAnimation!.value),
-                    ),
+    // Bulle glass iOS 26 - Avec BackdropFilter blur comme la navbar
+    Widget buttonContent = RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size / 2),
+        child: effectiveBlurSigma > 0
+            ? BackdropFilter(
+                filter: ImageFilter.blur(
+                    sigmaX: effectiveBlurSigma, sigmaY: effectiveBlurSigma),
+                child: SizedBox(
+                  width: size,
+                  height: size,
+                  child: Stack(
+                    children: [
+                      _buildButtonContent(
+                          effectiveIconColor, effectiveShimmerColor,
+                          performanceService: performanceService),
+                      // Flash blanc avec fade out progressif iOS 26
+                      if (flashAnimation != null && flashAnimation!.value > 0)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(size / 2),
+                              color: Colors.white.withValues(
+                                alpha: _calculateFlashOpacity(
+                                    flashAnimation!.value),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              ),
-            ),
-          // Bulle glass
-          ClipRRect(
-            borderRadius: BorderRadius.circular(size / 2),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                decoration: BoxDecoration(
-                  // Gradient de base plus contrasté en mode light
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.12),
-                            Colors.white.withValues(alpha: 0.08),
-                          ]
-                        : [
-                            const Color(0xFFFFFFFF).withValues(alpha: 0.85),
-                            const Color(0xFFF5F3FF).withValues(alpha: 0.75),
-                          ],
-                  ),
-                  borderRadius: BorderRadius.circular(size / 2),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : const Color(0xFFE0D4FF).withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color:
-                          Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
-                      blurRadius: 24,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 10),
-                    ),
+              )
+            : SizedBox(
+                width: size,
+                height: size,
+                child: Stack(
+                  children: [
+                    _buildButtonContent(
+                        effectiveIconColor, effectiveShimmerColor,
+                        performanceService: performanceService),
+                    // Flash blanc avec fade out progressif iOS 26
+                    if (flashAnimation != null && flashAnimation!.value > 0)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(size / 2),
+                            color: Colors.white.withValues(
+                              alpha:
+                                  _calculateFlashOpacity(flashAnimation!.value),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-                child: Container(
-                  // Fond gris plus visible si sélectionné (comme la navbar)
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.black.withValues(alpha: 0.12))
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(size / 2),
-                  ),
-                  child: Center(
-                    child: showShimmer
-                        ? Icon(
-                            icon,
-                            color: effectiveIconColor,
-                            size: size * 0.4375, // 28/64 ratio
-                          )
-                            .animate(
-                                onPlay: (controller) => controller.repeat())
-                            .shimmer(
-                              duration: 2000.ms,
-                              delay: 3000.ms,
-                              color: effectiveShimmerColor,
-                            )
-                        : Icon(
-                            icon,
-                            color: effectiveIconColor,
-                            size: size * 0.4375,
-                          ),
-                  ),
-                ),
               ),
-            ),
-          ),
-        ],
       ),
     );
 
@@ -159,9 +131,9 @@ class GlassBubbleButton extends StatelessWidget {
       );
     }
 
-    // Appliquer l'effet de pression
+    // iOS 26: scale 0.95 au lieu de 0.9
     buttonContent = AnimatedScale(
-      scale: isPressed ? 0.9 : 1.0,
+      scale: isPressed ? 0.95 : 1.0,
       duration: const Duration(milliseconds: 100),
       curve: Curves.easeInOut,
       child: buttonContent,
@@ -176,6 +148,105 @@ class GlassBubbleButton extends StatelessWidget {
     }
 
     return buttonContent;
+  }
+
+  Widget _buildButtonContent(
+    Color effectiveIconColor,
+    Color effectiveShimmerColor, {
+    required GlassPerformanceService performanceService,
+  }) {
+    return Stack(
+      children: [
+        // Container principal - avec BackdropFilter blur
+        Container(
+          decoration: BoxDecoration(
+            // iOS 26: Gradient vertical
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isDark
+                  ? [
+                      Colors.white.withValues(alpha: 0.15),
+                      Colors.white.withValues(alpha: 0.08),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.85),
+                      Colors.white.withValues(alpha: 0.75),
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(size / 2),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.08),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                blurRadius: 16,
+                spreadRadius: 0,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Container(
+            // Fond plus visible si sélectionné
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? (isDark
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : Colors.black.withValues(alpha: 0.08))
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(size / 2),
+            ),
+            child: Center(
+              child: showShimmer
+                  ? Icon(
+                      icon,
+                      color: effectiveIconColor,
+                      size: size * 0.4375, // 28/64 ratio
+                    )
+                      .animate(onPlay: (controller) => controller.repeat())
+                      .shimmer(
+                        duration: 2000.ms,
+                        delay: 3000.ms,
+                        color: effectiveShimmerColor,
+                      )
+                  : Icon(
+                      icon,
+                      color: effectiveIconColor,
+                      size: size * 0.4375,
+                    ),
+            ),
+          ),
+        ),
+        // Highlight spéculaire iOS 26
+        if (performanceService.showSpecularHighlight)
+          Positioned(
+            top: 0,
+            left: size * 0.15,
+            right: size * 0.15,
+            height: size * 0.3,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(size / 2),
+                  topRight: Radius.circular(size / 2),
+                ),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.liquidGlassSpecularStrong,
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 }
 
