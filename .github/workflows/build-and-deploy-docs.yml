@@ -3,6 +3,15 @@ name: Build and Deploy Main Docs
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - 'mkdocs.yml'
+  workflow_run:
+    workflows: ["Flutter Style, Test & Docs", "Build Elyrii Server Docs", "Build AI Sphinx Docs"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -17,20 +26,21 @@ concurrency:
 jobs:
   build:
     name: Assemble and Build MkDocs
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Download sub-doc artifacts produced by their own workflows (optional but recommended).
-      # Remove or adjust these steps if your sub-docs write directly to repo folders.
+      # Download sub-doc artifacts produced by their own workflows.
       - name: Download Mobile docs artifact
         if: always()
         uses: actions/download-artifact@v4
         with:
           name: dartdoc-html
           path: _artifacts/mobile
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow.name == 'Flutter Style, Test & Docs' && github.event.workflow_run.id || '' }}
         continue-on-error: true
 
       - name: Prepare docs/mobile API from artifact
@@ -45,13 +55,13 @@ jobs:
             echo "Mobile API documentation will appear here once its workflow publishes artifacts." >> docs/mobile/api/index.md
           fi
 
-      # Server docs: change artifact name/path to match your server-doc workflow.
       - name: Download Server docs artifact
         if: always()
         uses: actions/download-artifact@v4
         with:
           name: server-docs-html
           path: _artifacts/server
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow.name == 'Build Elyrii Server Docs' && github.event.workflow_run.id || '' }}
         continue-on-error: true
 
       - name: Prepare docs/server API from artifact
@@ -73,13 +83,13 @@ jobs:
             fi
           fi
 
-      # AI docs: change artifact name/path to match your AI-doc workflow.
       - name: Download AI docs artifact
         if: always()
         uses: actions/download-artifact@v4
         with:
           name: ai-docs-html
           path: _artifacts/ai
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow.name == 'Build AI Sphinx Docs' && github.event.workflow_run.id || '' }}
         continue-on-error: true
 
       - name: Prepare docs/ai API from artifact
