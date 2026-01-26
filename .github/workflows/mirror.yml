@@ -6,6 +6,9 @@ on:
 
 jobs:
   mirror:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout full repository
