@@ -1,6 +1,14 @@
 import { clientSockets } from "../../index";
 import { kafkaService } from "./kafka.service";
 
+/**
+ * Subscribes to AI responses from Kafka and forwards them to connected clients.
+ * 
+ * @remarks
+ * Listens to the `elyrii.ai.responses` topic.
+ * When a message is received, it parses the JSON content to find the `userId` and `response`.
+ * If the user is connected via WebSocket (found in `clientSockets`), the AI response is sent to them.
+ */
 export async function handleAiResponse() {
     await kafkaService.consumer.subscribe({ topic: "elyrii.ai.responses" });
 

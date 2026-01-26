@@ -7,13 +7,28 @@ import TokenRepository from "../repository/token.repository";
 import { getCookie, setCookie } from "hono/cookie";
 /**
  * Controller that defines HTTP handlers for authentication routes.
+ * 
+ * @remarks
+ * This controller handles:
+ * - User Registration
+ * - User Login (Issue Access & Refresh Tokens)
+ * - Token Refresh
+ * - Logout
  */
 class AuthController {
     private readonly factory = createFactory();
     private readonly authRepository = new AuthRepository();
     private readonly tokenRepository = new TokenRepository();
+
     /**
      * Handler for processing user login requests.
+     * 
+     * @remarks
+     * Validates user credentials, generates an access token and a refresh token.
+     * The refresh token is stored in an HTTP-only cookie and in the database.
+     * 
+     * @param ctx - Hono Context containing the JSON body { email, password }
+     * @returns JSON response with access token or error message
      */
     readonly login = this.factory.createHandlers(sValidator("json", loginValidation), async (ctx) => {
         const { email, password } = ctx.req.valid("json");
@@ -55,6 +70,12 @@ class AuthController {
 
     /**
      * Handler for processing new user registration requests.
+     * 
+     * @remarks
+     * Creates a new user in the database and automatically logs them in by issuing tokens.
+     * 
+     * @param ctx - Hono Context containing the JSON body { email, password, lastName, firstName, age }
+     * @returns JSON response with success message and access token
      */
     readonly register = this.factory.createHandlers(
         sValidator("json", registerValidation),
@@ -90,6 +111,13 @@ class AuthController {
 
     /**
      * Handler for processing user logout requests.
+     * 
+     * @remarks
+     * In a full implementation, this should invalidate the refresh token in the database.
+     * Currently returns a simple logout message.
+     * 
+     * @param ctx - Hono Context
+     * @returns JSON response confirming logout
      */
     readonly logout = this.factory.createHandlers(async (ctx) => {
         return ctx.json({ message: "Logout" });
@@ -98,6 +126,13 @@ class AuthController {
 
     /**
      * Handler for refreshing access tokens.
+     * 
+     * @remarks
+     * Uses the `refresh_token` HTTP-only cookie to issue a new access token.
+     * Rotates the refresh token (issues a new one and invalidates the old one).
+     * 
+     * @param ctx - Hono Context containing the refresh_token cookie
+     * @returns JSON response with new access token or error
      */
     readonly refreshToken = this.factory.createHandlers(async (ctx) => {
         // TODO: Implement refresh token logic

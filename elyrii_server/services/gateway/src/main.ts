@@ -1,3 +1,13 @@
+/**
+ * Gateway Service Main Application
+ * 
+ * @remarks
+ * This service acts as the single entry point for the Elyrii backend.
+ * It routes requests to the appropriate microservices:
+ * - `/auth/*` -> Auth Service
+ * - `/chat/*` -> Chat Service (including WebSocket upgrades)
+ * - `/journal/*` -> Journal Service
+ */
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { upgradeWebSocket } from "hono/bun";

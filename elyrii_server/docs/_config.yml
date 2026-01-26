@@ -25,6 +25,10 @@ navigation:
     url: /api/modules/chat.html
   - title: Gateway Service
     url: /api/modules/gateway.html
+  - title: Journal Service
+    url: /api/modules/journal.html
+  - title: Quest Service
+    url: /api/modules/quest.html
 
 # Plugins for GitHub Pages
 plugins:
