@@ -49,7 +49,10 @@ jobs:
           mkdir -p docs/mobile/api
           if [ -d "_artifacts/mobile" ] && [ "$(ls -A _artifacts/mobile || true)" ]; then
             cp -r _artifacts/mobile/* docs/mobile/api/
-          else
+          fi
+          
+          # Ensure index.md exists for MkDocs build
+          if [ ! -f "docs/mobile/api/index.md" ]; then
             echo "# Mobile API Documentation" > docs/mobile/api/index.md
             echo "" >> docs/mobile/api/index.md
             echo "Mobile API documentation will appear here once its workflow publishes artifacts." >> docs/mobile/api/index.md
@@ -70,17 +73,19 @@ jobs:
           mkdir -p docs/server/api
           if [ -d "_artifacts/server" ] && [ "$(ls -A _artifacts/server || true)" ]; then
             cp -r _artifacts/server/* docs/server/api/
-          else
-            # Fallback: if server pipeline commits docs into repo (e.g., elyrii-poc/docs), copy from there
-            if [ -d "elyrii-poc/docs" ]; then
-              cp -r elyrii-poc/docs/* docs/server/api/ || true
-            elif [ -d "poc/docs" ]; then
-              cp -r poc/docs/* docs/server/api/ || true
-            else
-              echo "# Server API Documentation" > docs/server/api/index.md
-              echo "" >> docs/server/api/index.md
-              echo "Server API documentation will appear here once its workflow publishes artifacts." >> docs/server/api/index.md
-            fi
+          elif [ -d "elyrii_server/docs" ]; then
+            cp -r elyrii_server/docs/* docs/server/api/ || true
+          elif [ -d "elyrii-poc/docs" ]; then
+            cp -r elyrii-poc/docs/* docs/server/api/ || true
+          elif [ -d "poc/docs" ]; then
+            cp -r poc/docs/* docs/server/api/ || true
+          fi
+          
+          # Ensure index.md exists for MkDocs build
+          if [ ! -f "docs/server/api/index.md" ]; then
+            echo "# Server API Documentation" > docs/server/api/index.md
+            echo "" >> docs/server/api/index.md
+            echo "Server API documentation will appear here once its workflow publishes artifacts." >> docs/server/api/index.md
           fi
 
       - name: Download AI docs artifact
@@ -98,15 +103,15 @@ jobs:
           mkdir -p docs/ai/api
           if [ -d "_artifacts/ai" ] && [ "$(ls -A _artifacts/ai || true)" ]; then
             cp -r _artifacts/ai/* docs/ai/api/
-          else
-            # Fallback: if AI pipeline commits docs into repo (e.g., elyrii_ai/docs), copy from there
-            if [ -d "elyrii_ai/docs" ]; then
-              cp -r elyrii_ai/docs/* docs/ai/api/ || true
-            else
-              echo "# AI API Documentation" > docs/ai/api/index.md
-              echo "" >> docs/ai/api/index.md
-              echo "AI API documentation will appear here once its workflow publishes artifacts." >> docs/ai/api/index.md
-            fi
+          elif [ -d "elyrii_ai/docs" ]; then
+            cp -r elyrii_ai/docs/* docs/ai/api/ || true
+          fi
+          
+          # Ensure index.md exists for MkDocs build
+          if [ ! -f "docs/ai/api/index.md" ]; then
+            echo "# AI API Documentation" > docs/ai/api/index.md
+            echo "" >> docs/ai/api/index.md
+            echo "AI API documentation will appear here once its workflow publishes artifacts." >> docs/ai/api/index.md
           fi
 
       - name: Set up Python
