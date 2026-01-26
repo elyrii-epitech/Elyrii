@@ -2,9 +2,11 @@
   "$schema": "https://typedoc.org/schema.json",
   "name": "Elyrii Server Documentation",
   "entryPoints": [
-    "../services/auth/index.ts",
-    "../services/chat/index.ts",
-    "../services/gateway/index.ts"
+    "../services/auth/src",
+    "../services/chat/src",
+    "../services/gateway/src",
+    "../services/journal/src",
+    "../services/quest/src"
   ],
   "entryPointStrategy": "expand",
   "out": "../docs/api",

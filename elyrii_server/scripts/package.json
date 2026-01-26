@@ -13,7 +13,7 @@
     "docs:gateway": "cd ../services/gateway && typedoc",
     "docs:journal": "cd ../services/journal && typedoc",
     "docs:quest": "cd ../services/quest && typedoc",
-    "docs:all": "bun run docs:generate && bun run docs:auth && bun run docs:chat && bun run docs:gateway && bun run docs:journal && bun run docs:quest",
+    "docs:all": "bun run docs:auth && bun run docs:chat && bun run docs:gateway && bun run docs:journal && bun run docs:quest",
     "docs:serve": "bunx serve ../docs -p 8080"
   },
   "devDependencies": {

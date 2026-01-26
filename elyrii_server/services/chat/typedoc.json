@@ -1,7 +1,8 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "Chat Service",
-  "entryPoints": ["./index.ts"],
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
   "out": "../../docs/api/chat",
   "exclude": [
     "**/node_modules/**",

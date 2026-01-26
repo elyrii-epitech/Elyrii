@@ -1,7 +1,8 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "name": "Auth Service",
-  "entryPoints": ["./index.ts"],
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
   "out": "../../docs/api/auth",
   "exclude": [
     "**/node_modules/**",
