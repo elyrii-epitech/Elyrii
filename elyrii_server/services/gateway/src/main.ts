@@ -2,15 +2,20 @@ import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { upgradeWebSocket } from "hono/bun";
 import { proxyRequest } from "./service/gateway.service";
+import { checkEnvVars } from "./utils/utils";
 
 const app = new Hono();
 
-const CHAT_SERVICE_URL = Bun.env.CHAT_SERVICE_URL;
-const AUTH_SERVICE_URL = Bun.env.AUTH_SERVICE_URL;
+const envVars = checkEnvVars();
 
-if (!CHAT_SERVICE_URL || !AUTH_SERVICE_URL) {
+if (!envVars) {
     throw new Error("Service URLs are required");
 }
+const {
+    CHAT_SERVICE_URL,
+    AUTH_SERVICE_URL,
+    JOURNAL_SERVICE_URL,
+} = envVars;
 
 app.use(logger());
 
@@ -48,5 +53,6 @@ app.get(
 
 app.all("/chat/*", (ctx) => proxyRequest(CHAT_SERVICE_URL, ctx));
 app.all("/auth/*", (ctx) => proxyRequest(AUTH_SERVICE_URL, ctx));
+app.all("/journal/*", (ctx) => proxyRequest(JOURNAL_SERVICE_URL, ctx));
 
 export default app;

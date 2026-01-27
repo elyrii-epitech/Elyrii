@@ -1,4 +1,6 @@
 name: Build AI Sphinx Docs
+permissions:
+  contents: read
 
 on:
   push:

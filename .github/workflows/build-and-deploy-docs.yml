@@ -3,6 +3,15 @@ name: Build and Deploy Main Docs
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - 'mkdocs.yml'
+  workflow_run:
+    workflows: ["Flutter Style, Test & Docs", "Build Elyrii Server Docs", "Build AI Sphinx Docs"]
+    types:
+      - completed
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -17,86 +26,88 @@ concurrency:
 jobs:
   build:
     name: Assemble and Build MkDocs
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Download sub-doc artifacts produced by their own workflows (optional but recommended).
-      # Remove or adjust these steps if your sub-docs write directly to repo folders.
+      # Download sub-doc artifacts produced by their own workflows.
       - name: Download Mobile docs artifact
         if: always()
         uses: actions/download-artifact@v4
         with:
           name: dartdoc-html
           path: _artifacts/mobile
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow.name == 'Flutter Style, Test & Docs' && github.event.workflow_run.id || '' }}
         continue-on-error: true
 
-      - name: Prepare docs/mobile from artifact
+      - name: Prepare docs/mobile API from artifact
         run: |
-          rm -rf docs/mobile
-          mkdir -p docs/mobile
+          rm -rf docs/mobile/api
+          mkdir -p docs/mobile/api
           if [ -d "_artifacts/mobile" ] && [ "$(ls -A _artifacts/mobile || true)" ]; then
-            cp -r _artifacts/mobile/* docs/mobile/
-          else
-            echo "# Mobile Docs" > docs/mobile/index.md
-            echo "" >> docs/mobile/index.md
-            echo "Mobile documentation will appear here once its workflow publishes artifacts." >> docs/mobile/index.md
+            cp -r _artifacts/mobile/* docs/mobile/api/
           fi
 
-      # Server docs: change artifact name/path to match your server-doc workflow.
+          # Ensure index.md exists for MkDocs build
+          if [ ! -f "docs/mobile/api/index.md" ]; then
+            echo "# Mobile API Documentation" > docs/mobile/api/index.md
+            echo "" >> docs/mobile/api/index.md
+            echo "Mobile API documentation will appear here once its workflow publishes artifacts." >> docs/mobile/api/index.md
+          fi
+
       - name: Download Server docs artifact
         if: always()
         uses: actions/download-artifact@v4
         with:
           name: server-docs-html
           path: _artifacts/server
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow.name == 'Build Elyrii Server Docs' && github.event.workflow_run.id || '' }}
         continue-on-error: true
 
-      - name: Prepare docs/server from artifact
+      - name: Prepare docs/server API from artifact
         run: |
-          rm -rf docs/server
-          mkdir -p docs/server
+          rm -rf docs/server/api
+          mkdir -p docs/server/api
           if [ -d "_artifacts/server" ] && [ "$(ls -A _artifacts/server || true)" ]; then
-            cp -r _artifacts/server/* docs/server/
-          else
-            # Fallback: if server pipeline commits docs into repo (e.g., elyrii-poc/docs), copy from there
-            if [ -d "elyrii-poc/docs" ]; then
-              cp -r elyrii-poc/docs/* docs/server/ || true
-            elif [ -d "poc/docs" ]; then
-              cp -r poc/docs/* docs/server/ || true
-            else
-              echo "# Server Docs" > docs/server/index.md
-              echo "" >> docs/server/index.md
-              echo "Server documentation will appear here once its workflow publishes artifacts." >> docs/server/index.md
-            fi
+            cp -r _artifacts/server/* docs/server/api/
+          elif [ -d "elyrii_server/docs" ]; then
+            cp -r elyrii_server/docs/index.md docs/server/api/ || true
+          fi
+          
+          # Ensure index.md exists and is valid. 
+          if [ ! -f "docs/server/api/index.md" ]; then
+            echo "# Server API Documentation" > docs/server/api/index.md
+            echo "" >> docs/server/api/index.md
+            echo "Server API documentation will appear here once its workflow publishes artifacts." >> docs/server/api/index.md
           fi
 
-      # AI docs: change artifact name/path to match your AI-doc workflow.
       - name: Download AI docs artifact
         if: always()
         uses: actions/download-artifact@v4
         with:
           name: ai-docs-html
           path: _artifacts/ai
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow.name == 'Build AI Sphinx Docs' && github.event.workflow_run.id || '' }}
         continue-on-error: true
 
-      - name: Prepare docs/ai from artifact
+      - name: Prepare docs/ai API from artifact
         run: |
-          rm -rf docs/ai
-          mkdir -p docs/ai
+          rm -rf docs/ai/api
+          mkdir -p docs/ai/api
           if [ -d "_artifacts/ai" ] && [ "$(ls -A _artifacts/ai || true)" ]; then
-            cp -r _artifacts/ai/* docs/ai/
-          else
-            # Fallback: if AI pipeline commits docs into repo (e.g., elyrii_ai/docs), copy from there
-            if [ -d "elyrii_ai/docs" ]; then
-              cp -r elyrii_ai/docs/* docs/ai/ || true
-            else
-              echo "# AI Docs" > docs/ai/index.md
-              echo "" >> docs/ai/index.md
-              echo "AI documentation will appear here once its workflow publishes artifacts." >> docs/ai/index.md
-            fi
+            cp -r _artifacts/ai/* docs/ai/api/
+          elif [ -d "elyrii_ai/docs" ]; then
+            cp -r elyrii_ai/docs/* docs/ai/api/ || true
+          fi
+          
+          # Ensure index.md exists for MkDocs build
+          if [ ! -f "docs/ai/api/index.md" ]; then
+            echo "# AI API Documentation" > docs/ai/api/index.md
+            echo "" >> docs/ai/api/index.md
+            echo "AI API documentation will appear here once its workflow publishes artifacts." >> docs/ai/api/index.md
           fi
 
       - name: Set up Python

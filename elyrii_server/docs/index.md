@@ -6,13 +6,13 @@ Welcome to the Elyrii Server API documentation. This documentation is auto-gener
 
 The Elyrii server consists of three microservices:
 
-### 📦 [Auth Service](./api/auth/README.md)
+### 📦 [Auth Service]()
 Handles user authentication, authorization, and session management. Provides secure endpoints for login, registration, and token validation.
 
-### 💬 [Chat Service](./api/chat/README.md)
+### 💬 [Chat Service]()
 Manages real-time messaging, chat rooms, and message history. Includes WebSocket support for live communications and Kafka integration for message processing.
 
-### 🌐 [Gateway Service](./api/gateway/README.md)
+### 🌐 [Gateway Service]()
 API gateway that routes requests to appropriate microservices. Handles request validation, rate limiting, and response aggregation.
 
 ## Quick Start
