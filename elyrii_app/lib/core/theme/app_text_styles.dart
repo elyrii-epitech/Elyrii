@@ -8,7 +8,7 @@ class AppTextStyles {
   AppTextStyles._(); // Constructeur privé
 
   // Utilise Google Fonts Poppins comme base
-  static TextStyle get _baseStyle => GoogleFonts.poppins();
+  static final TextStyle _baseStyle = GoogleFonts.poppins();
 
   // ==================== DISPLAY STYLES ====================
   // Utilisés pour les titres très larges (splash, onboarding)
