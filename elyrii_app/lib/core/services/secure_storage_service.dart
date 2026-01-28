@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// Service for securely storing sensitive data (tokens, credentials)
 /// Uses flutter_secure_storage which encrypts data using:
 /// - iOS: Keychain
-/// - Android: EncryptedSharedPreferences (AES encryption)
+/// - Android: Custom AES encryption (migrated from EncryptedSharedPreferences)
 class SecureStorageService {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
@@ -14,7 +14,8 @@ class SecureStorageService {
   SecureStorageService()
       : _storage = const FlutterSecureStorage(
           aOptions: AndroidOptions(
-            encryptedSharedPreferences: true,
+            // encryptedSharedPreferences is deprecated in v10 and removed.
+            // Data is automatically migrated to custom ciphers.
           ),
           iOptions: IOSOptions(
             accessibility: KeychainAccessibility.first_unlock_this_device,
