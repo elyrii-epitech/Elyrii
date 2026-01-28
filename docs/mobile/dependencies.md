@@ -31,6 +31,16 @@ Collection of modern and modular vector icons.
 
 **Justification:** Choice of coherent and modern icon design system for application visual identity. More suitable than Material Icons for a contemporary look.
 
+
+---
+
+#### google_fonts (^6.2.1)
+Flutter package to use fonts from fonts.google.com.
+
+**Technical explanation:** HTTP client that downloads font files at runtime and caches them locally. Also supports bundling fonts in assets for offline use. 
+
+**Justification:** Easy access to "Poppins" font family without manually managing font assets. Ensures consistent typography across platforms.
+
 ---
 
 #### flutter_launcher_icons (^0.14.3)
@@ -39,6 +49,16 @@ Automatic application icon generator for all platforms.
 **Technical explanation:** CLI tool that generates all required icon variants (Android: mipmap, iOS: Assets.xcassets, Web: favicon, etc.) à partir d'une image source unique. Executed via `flutter pub run` during build phase.
 
 **Justification:** Automates generation of dozens of different icon sizes, avoids manual errors and accelerates deployment workflow.
+
+
+---
+
+#### flutter_native_splash (^2.4.4)
+Native splash screen generator.
+
+**Technical explanation:** Automatically generates native launch screens (Android drawable/XML, iOS Storyboard) from a source image. Configured via `flutter_native_splash.yaml`. Supports dark mode and Android 12+ API.
+
+**Justification:** Provides a professional "first paint" experience consistent with the brand, hiding the Flutter engine initialization time.
 
 ---
 
