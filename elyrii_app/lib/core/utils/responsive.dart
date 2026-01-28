@@ -174,7 +174,8 @@ class ResponsiveConstrainedBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveMaxWidth = maxWidth ?? Responsive.getMaxContentWidth(context);
+    final effectiveMaxWidth =
+        maxWidth ?? Responsive.getMaxContentWidth(context);
 
     if (effectiveMaxWidth == null) {
       return child;

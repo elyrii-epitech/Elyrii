@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
@@ -95,7 +94,8 @@ class GlobalErrorBoundary extends StatelessWidget {
                                 style: const TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 10,
-                                  color: Color(0xFF424242), // Colors.grey.shade800
+                                  color:
+                                      Color(0xFF424242), // Colors.grey.shade800
                                 ),
                               ),
                             ),

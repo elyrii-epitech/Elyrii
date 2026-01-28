@@ -303,7 +303,6 @@ class _LiquidGlassBackButton extends StatefulWidget {
   State<_LiquidGlassBackButton> createState() => _LiquidGlassBackButtonState();
 }
 
-
 class _LiquidGlassBackButtonState extends State<_LiquidGlassBackButton> {
   bool _isPressed = false;
 
@@ -371,5 +370,3 @@ class _LiquidGlassBackButtonState extends State<_LiquidGlassBackButton> {
     );
   }
 }
-
-
