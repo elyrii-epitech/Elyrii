@@ -69,8 +69,6 @@ const brandTurquoise = Color(0xFF00CED1);
 **Font Family:** Poppins (via Google Fonts)
 
 **Headings:**
-
-**Headings:**
 - displayLarge: Main titles
 - displayMedium: Important subtitles
 - displaySmall: Section titles

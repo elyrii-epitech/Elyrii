@@ -34,7 +34,7 @@ Collection of modern and modular vector icons.
 
 ---
 
-#### google_fonts (^6.2.1)
+#### google_fonts (^8.0.0)
 Flutter package to use fonts from fonts.google.com.
 
 **Technical explanation:** HTTP client that downloads font files at runtime and caches them locally. Also supports bundling fonts in assets for offline use. 
@@ -53,7 +53,7 @@ Automatic application icon generator for all platforms.
 
 ---
 
-#### flutter_native_splash (^2.4.4)
+#### flutter_native_splash (^2.4.7)
 Native splash screen generator.
 
 **Technical explanation:** Automatically generates native launch screens (Android drawable/XML, iOS Storyboard) from a source image. Configured via `flutter_native_splash.yaml`. Supports dark mode and Android 12+ API.
@@ -130,6 +130,24 @@ Storage persistant clé-valeur cross-platform.
 **Technical explanation:** Platform-specific abstraction (SharedPreferences Android, UserDefaults iOS, localStorage Web). Storage asynchrone en fichier sur disque. Limited to primitive types (String, int, double, bool, List<String>). Used for tokens, preferences, and simple cache.
 
 **Justification:** Standard solution for preferences and simple data. No need for SQLite for current use cases (tokens, settings). Simple and reliable cross-platform API.
+
+---
+
+#### flutter_secure_storage (^10.0.0)
+Secure storage for sensitive data (Keychain / AES).
+
+**Technical explanation:** Uses iOS Keychain and Android EncryptedSharedPreferences (migrated to custom AES in v10) to store data securely. 
+
+**Justification:** Essential for storing JWT access and refresh tokens. Compliance with security standards by not storing sensitive data in plain text.
+
+---
+
+#### flutter_secure_storage (^10.0.0)
+Secure storage for sensitive data (Keychain / AES).
+
+**Technical explanation:** Uses iOS Keychain and Android EncryptedSharedPreferences (migrated to custom AES in v10) to store data securely. 
+
+**Justification:** Essential for storing JWT access and refresh tokens. Compliance with security standards by not storing sensitive data in plain text.
 
 ---
 
