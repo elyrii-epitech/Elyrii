@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Styles de texte de l'application Elyrii
@@ -6,17 +7,14 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._(); // Constructeur privé
 
-  // Police de base - Utilise la police système par défaut
-  // Vous pouvez personnaliser avec Google Fonts en ajoutant le package plus tard
-  static const String _fontFamily =
-      'Poppins'; // À remplacer par la police de votre choix
+  // Utilise Google Fonts Poppins comme base
+  static TextStyle get _baseStyle => GoogleFonts.poppins();
 
   // ==================== DISPLAY STYLES ====================
   // Utilisés pour les titres très larges (splash, onboarding)
 
   static TextStyle displayLarge({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 57,
       fontWeight: fontWeight ?? FontWeight.w700,
       color: color,
@@ -26,8 +24,7 @@ class AppTextStyles {
   }
 
   static TextStyle displayMedium({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 45,
       fontWeight: fontWeight ?? FontWeight.w700,
       color: color,
@@ -37,8 +34,7 @@ class AppTextStyles {
   }
 
   static TextStyle displaySmall({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 36,
       fontWeight: fontWeight ?? FontWeight.w600,
       color: color,
@@ -51,8 +47,7 @@ class AppTextStyles {
   // Utilisés pour les titres de sections importantes
 
   static TextStyle headlineLarge({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 32,
       fontWeight: fontWeight ?? FontWeight.w600,
       color: color,
@@ -62,8 +57,7 @@ class AppTextStyles {
   }
 
   static TextStyle headlineMedium({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 28,
       fontWeight: fontWeight ?? FontWeight.w600,
       color: color,
@@ -73,8 +67,7 @@ class AppTextStyles {
   }
 
   static TextStyle headlineSmall({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 24,
       fontWeight: fontWeight ?? FontWeight.w600,
       color: color,
@@ -87,8 +80,7 @@ class AppTextStyles {
   // Utilisés pour les titres de cartes, dialogs, etc.
 
   static TextStyle titleLarge({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 22,
       fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
@@ -98,8 +90,7 @@ class AppTextStyles {
   }
 
   static TextStyle titleMedium({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 16,
       fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
@@ -109,8 +100,7 @@ class AppTextStyles {
   }
 
   static TextStyle titleSmall({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 14,
       fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
@@ -123,8 +113,7 @@ class AppTextStyles {
   // Utilisés pour le texte principal
 
   static TextStyle bodyLarge({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 16,
       fontWeight: fontWeight ?? FontWeight.w400,
       color: color,
@@ -134,8 +123,7 @@ class AppTextStyles {
   }
 
   static TextStyle bodyMedium({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 14,
       fontWeight: fontWeight ?? FontWeight.w400,
       color: color,
@@ -145,8 +133,7 @@ class AppTextStyles {
   }
 
   static TextStyle bodySmall({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 12,
       fontWeight: fontWeight ?? FontWeight.w400,
       color: color,
@@ -159,8 +146,7 @@ class AppTextStyles {
   // Utilisés pour les boutons, chips, labels
 
   static TextStyle labelLarge({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 14,
       fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
@@ -170,8 +156,7 @@ class AppTextStyles {
   }
 
   static TextStyle labelMedium({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 12,
       fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
@@ -181,8 +166,7 @@ class AppTextStyles {
   }
 
   static TextStyle labelSmall({Color? color, FontWeight? fontWeight}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 11,
       fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
@@ -195,8 +179,7 @@ class AppTextStyles {
 
   /// Style pour les messages du chatbot
   static TextStyle chatbotMessage({bool isUser = false}) {
-    return TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 15,
       fontWeight: FontWeight.w400,
       color: isUser ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
@@ -207,8 +190,7 @@ class AppTextStyles {
 
   /// Style pour le contenu du journal intime
   static TextStyle journalEntry() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 16,
       fontWeight: FontWeight.w400,
       color: AppColors.textPrimaryLight,
@@ -219,8 +201,7 @@ class AppTextStyles {
 
   /// Style pour les timestamps
   static TextStyle timestamp() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 12,
       fontWeight: FontWeight.w400,
       color: AppColors.textTertiaryLight,
@@ -231,8 +212,7 @@ class AppTextStyles {
 
   /// Style pour les étiquettes d'émotions
   static TextStyle emotionLabel() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 13,
       fontWeight: FontWeight.w500,
       color: AppColors.textSecondaryLight,
@@ -243,8 +223,7 @@ class AppTextStyles {
 
   /// Style pour les titres d'objectifs
   static TextStyle objectiveTitle() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 16,
       fontWeight: FontWeight.w600,
       color: AppColors.textPrimaryLight,
@@ -255,8 +234,7 @@ class AppTextStyles {
 
   /// Style pour les badges/achievements
   static TextStyle achievementBadge() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 11,
       fontWeight: FontWeight.w700,
       color: Colors.white,
@@ -267,8 +245,7 @@ class AppTextStyles {
 
   /// Style pour les statistiques numériques
   static TextStyle statNumber() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 32,
       fontWeight: FontWeight.w700,
       color: AppColors.primary,
@@ -279,8 +256,7 @@ class AppTextStyles {
 
   /// Style pour les labels de statistiques
   static TextStyle statLabel() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 13,
       fontWeight: FontWeight.w400,
       color: AppColors.textSecondaryLight,
@@ -291,8 +267,7 @@ class AppTextStyles {
 
   /// Style pour les boutons principaux
   static TextStyle button() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 15,
       fontWeight: FontWeight.w600,
       height: 1.33,
@@ -302,8 +277,7 @@ class AppTextStyles {
 
   /// Style pour les hints dans les champs de texte
   static TextStyle inputHint() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 16,
       fontWeight: FontWeight.w400,
       color: AppColors.textTertiaryLight,
@@ -314,8 +288,7 @@ class AppTextStyles {
 
   /// Style pour le texte des inputs
   static TextStyle inputText() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 16,
       fontWeight: FontWeight.w400,
       color: AppColors.textPrimaryLight,
@@ -326,8 +299,7 @@ class AppTextStyles {
 
   /// Style pour les erreurs
   static TextStyle error() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 12,
       fontWeight: FontWeight.w400,
       color: AppColors.error,
@@ -338,8 +310,7 @@ class AppTextStyles {
 
   /// Style pour les liens
   static TextStyle link() {
-    return const TextStyle(
-      fontFamily: _fontFamily,
+    return _baseStyle.copyWith(
       fontSize: 14,
       fontWeight: FontWeight.w500,
       color: AppColors.primary,
