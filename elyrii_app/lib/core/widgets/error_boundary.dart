@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../../routes/app_routes.dart';
 
 import 'package:flutter/foundation.dart';
 
@@ -72,7 +73,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                     // Simple reload attempt by navigating to root
                     if (context.mounted) {
                       Navigator.of(context).pushNamedAndRemoveUntil(
-                        '/',
+                        AppRoutes.login,
                         (route) => false,
                       );
                     }

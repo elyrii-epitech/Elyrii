@@ -131,16 +131,7 @@ Storage persistant clé-valeur cross-platform.
 
 **Justification:** Standard solution for preferences and simple data. No need for SQLite for current use cases (tokens, settings). Simple and reliable cross-platform API.
 
----
 
-#### flutter_secure_storage (^10.0.0)
-Secure storage for sensitive data (Keychain / AES).
-
-**Technical explanation:** Uses iOS Keychain and Android EncryptedSharedPreferences (migrated to custom AES in v10) to store data securely. 
-
-**Justification:** Essential for storing JWT access and refresh tokens. Compliance with security standards by not storing sensitive data in plain text.
-
----
 
 #### flutter_secure_storage (^10.0.0)
 Secure storage for sensitive data (Keychain / AES).

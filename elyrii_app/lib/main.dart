@@ -43,9 +43,7 @@ void main() async {
         ChangeNotifierProvider.value(value: themeProvider),
         ChangeNotifierProvider.value(value: performanceService),
       ],
-      child: const GlobalErrorBoundary(
-        child: MyApp(),
-      ),
+      child: const MyApp(),
     ),
   );
 }
@@ -65,6 +63,10 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
+
+          builder: (context, child) {
+            return GlobalErrorBoundary(child: child!);
+          },
 
           initialRoute: AppRoutes.login,
           onGenerateRoute: RouteGenerator.generateRoute,

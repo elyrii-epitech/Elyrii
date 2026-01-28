@@ -319,7 +319,7 @@ Present in:
 - **Crash Catching:** Intercepts unhandled UI exceptions during build phase.
 - **User Friendly:** Replaces the detailed "Red Screen of Death" with a friendly error page.
 - **Recovery:** "Retour à l'accueil" button to attempt app recovery.
-- **Recovery:** "Retour à l'accueil" button to attempt app recovery.
+
 - **Developer Mode:** Expandable "Détails techniques" section for debugging (Debug builds only).
 
 ### Secure Storage
