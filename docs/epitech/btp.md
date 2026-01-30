@@ -2,7 +2,7 @@
 
 ## 1. Project Context
 
-Elyrii is a cross-platform mobile application (iOS & Android) designed to provide emotional support and foster positive habits for young people experiencing social isolation. Built with Flutter, the application combines an AI-powered personal assistant (powered by a fine-tuned Mistral-7B conversational model) with a gamified system of daily objectives, quests, and wellness features.
+Elyrii is a cross-platform mobile application (IOS & Android) designed to provide emotional support and foster positive habits for young people experiencing social isolation. Built with Flutter, the application combines an AI-powered personal assistant (powered by a fine-tuned Mistral-7B conversational model) with a gamified system of daily objectives, quests, and wellness features.
 
 ### Core Objectives
 
