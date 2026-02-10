@@ -20,6 +20,7 @@
   "categorizeByGroup": true,
   "searchInComments": true,
   "githubPages": true,
+  "skipErrorChecking": true,
   "hideGenerator": true,
   "hideBreadcrumbs": false,
   "hideInPageTOC": false,
