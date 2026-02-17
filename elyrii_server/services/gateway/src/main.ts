@@ -15,6 +15,7 @@ const {
     CHAT_SERVICE_URL,
     AUTH_SERVICE_URL,
     JOURNAL_SERVICE_URL,
+    QUEST_SERVICE_URL,
 } = envVars;
 
 app.use(logger());
@@ -54,5 +55,6 @@ app.get(
 app.all("/chat/*", (ctx) => proxyRequest(CHAT_SERVICE_URL, ctx));
 app.all("/auth/*", (ctx) => proxyRequest(AUTH_SERVICE_URL, ctx));
 app.all("/journal/*", (ctx) => proxyRequest(JOURNAL_SERVICE_URL, ctx));
+app.all("/challenge/*", (ctx) => proxyRequest(QUEST_SERVICE_URL, ctx));
 
 export default app;
