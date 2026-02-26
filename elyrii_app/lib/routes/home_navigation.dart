@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
 import '../features/coach/presentation/pages/coach_page.dart';
 import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
-import '../features/chatbot/presentation/providers/chatbot_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_dimensions.dart';
 import '../core/widgets/glass_navigation_bar.dart';
@@ -212,13 +210,10 @@ class _HomeNavigationState extends State<HomeNavigation>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final performanceService = GlassPerformanceService();
 
-    return ChangeNotifierProvider(
-      create: (_) => ChatbotProvider(),
-      child: Scaffold(
-        extendBody: true,
-        body: _buildPageContent(performanceService),
-        bottomNavigationBar: _buildBottomBar(isDark),
-      ),
+    return Scaffold(
+      extendBody: true,
+      body: _buildPageContent(performanceService),
+      bottomNavigationBar: _buildBottomBar(isDark),
     );
   }
 

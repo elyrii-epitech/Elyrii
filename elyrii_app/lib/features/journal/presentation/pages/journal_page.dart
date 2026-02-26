@@ -19,18 +19,16 @@ class JournalPage extends StatefulWidget {
 }
 
 class _JournalPageState extends State<JournalPage> {
-  late JournalProvider _provider;
+  JournalProvider get _provider => context.read<JournalProvider>();
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    _provider = JournalProvider();
-  }
-
-  @override
-  void dispose() {
-    _provider.dispose();
-    super.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _provider.loadEntries();
+    }
   }
 
   void _showEditorSheet({JournalEntry? entry}) {
@@ -51,44 +49,41 @@ class _JournalPageState extends State<JournalPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return ChangeNotifierProvider.value(
-      value: _provider,
-      child: Scaffold(
-        backgroundColor:
-            isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
-        body: Stack(
-          children: [
-            // Contenu principal (liste des notes)
-            Column(
-              children: [
-                Expanded(
-                  child: Consumer<JournalProvider>(
-                    builder: (context, provider, child) {
-                      if (provider.entries.isEmpty) {
-                        return EmptyJournalState(
-                          onCreateFirst: () => _showEditorSheet(),
-                          isDark: isDark,
-                        );
-                      }
+    return Scaffold(
+      backgroundColor:
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      body: Stack(
+        children: [
+          // Contenu principal (liste des notes)
+          Column(
+            children: [
+              Expanded(
+                child: Consumer<JournalProvider>(
+                  builder: (context, provider, child) {
+                    if (provider.entries.isEmpty) {
+                      return EmptyJournalState(
+                        onCreateFirst: () => _showEditorSheet(),
+                        isDark: isDark,
+                      );
+                    }
 
-                      return _buildJournalGrid(provider, isDark);
-                    },
-                  ),
+                    return _buildJournalGrid(provider, isDark);
+                  },
                 ),
-              ],
-            ),
-            // AppBar flottant au-dessus avec SafeArea
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                bottom: false,
-                child: _buildAppBar(isDark),
               ),
+            ],
+          ),
+          // AppBar flottant au-dessus avec SafeArea
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: _buildAppBar(isDark),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
