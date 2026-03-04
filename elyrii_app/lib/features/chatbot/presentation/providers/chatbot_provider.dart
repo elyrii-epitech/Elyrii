@@ -1,6 +1,6 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../data/entities/chat_message.dart';
@@ -14,8 +14,7 @@ class ChatbotProvider extends ChangeNotifier {
   bool _isTyping = false;
   bool _isConnected = false;
 
-  WebSocketChannel? _channel;
-  StreamSubscription<dynamic>? _subscription;
+  WebSocket? _socket;
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isMascotMinimized => _isMascotMinimized;
@@ -34,17 +33,17 @@ class ChatbotProvider extends ChangeNotifier {
     }
     try {
       final wsUrl = ApiConfig.chatWsUrl(userId);
-      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+      _socket = await WebSocket.connect(wsUrl);
       _isConnected = true;
       notifyListeners();
-      _subscription = _channel!.stream.listen(
+      _socket!.listen(
         (data) {
           final aiResponse = data.toString();
           _messages.add(ChatMessage.ai(aiResponse));
           _isTyping = false;
           notifyListeners();
         },
-        onError: (error) {
+        onError: (Object error) {
           debugPrint('[ChatbotProvider] WebSocket error: $error');
           _isConnected = false;
           _isTyping = false;
@@ -70,13 +69,12 @@ class ChatbotProvider extends ChangeNotifier {
     _messages.add(userMessage);
     _isTyping = true;
     notifyListeners();
-    if (_channel != null && _isConnected) {
-      _channel!.sink.add(content);
+    if (_socket != null && _isConnected) {
+      _socket!.add(content);
     } else {
-      // Attempt reconnect and retry
       await connect();
-      if (_channel != null && _isConnected) {
-        _channel!.sink.add(content);
+      if (_socket != null && _isConnected) {
+        _socket!.add(content);
       } else {
         _messages.add(ChatMessage.ai(
           'Impossible de se connecter au service. Veuillez réessayer.',
@@ -89,10 +87,8 @@ class ChatbotProvider extends ChangeNotifier {
 
   /// Disconnect from the WebSocket
   Future<void> disconnect() async {
-    await _subscription?.cancel();
-    _subscription = null;
-    await _channel?.sink.close();
-    _channel = null;
+    await _socket?.close();
+    _socket = null;
     _isConnected = false;
     notifyListeners();
   }
