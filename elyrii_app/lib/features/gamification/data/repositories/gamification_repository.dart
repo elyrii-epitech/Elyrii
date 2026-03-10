@@ -10,8 +10,9 @@ class GamificationRepository {
 
   /// Parse a list response into UserChallenge objects
   List<UserChallenge> _parseList(dynamic response) {
-    final List<dynamic> data =
-        response is List ? response : (response['data'] ?? []);
+    final List<dynamic> data = response is List
+        ? response
+        : (response['data'] ?? []);
     return data
         .map((e) => UserChallenge.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -37,17 +38,17 @@ class GamificationRepository {
 
   /// Accept a proposed challenge
   Future<UserChallenge> acceptChallenge(String challengeId) async {
-    final response = await _client.post(
-      ApiConfig.acceptChallengeUrl(challengeId),
-    ) as Map<String, dynamic>;
+    final response =
+        await _client.post(ApiConfig.acceptChallengeUrl(challengeId))
+            as Map<String, dynamic>;
     return UserChallenge.fromJson(response);
   }
 
   /// Reject a proposed challenge
   Future<UserChallenge> rejectChallenge(String challengeId) async {
-    final response = await _client.post(
-      ApiConfig.rejectChallengeUrl(challengeId),
-    ) as Map<String, dynamic>;
+    final response =
+        await _client.post(ApiConfig.rejectChallengeUrl(challengeId))
+            as Map<String, dynamic>;
     return UserChallenge.fromJson(response);
   }
 }

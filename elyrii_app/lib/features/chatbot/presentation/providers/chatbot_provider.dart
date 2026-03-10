@@ -76,9 +76,11 @@ class ChatbotProvider extends ChangeNotifier {
       if (_socket != null && _isConnected) {
         _socket!.add(content);
       } else {
-        _messages.add(ChatMessage.ai(
-          'Impossible de se connecter au service. Veuillez réessayer.',
-        ));
+        _messages.add(
+          ChatMessage.ai(
+            'Impossible de se connecter au service. Veuillez réessayer.',
+          ),
+        );
         _isTyping = false;
         notifyListeners();
       }

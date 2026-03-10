@@ -24,8 +24,9 @@ class JournalRepository {
       ApiConfig.journalUrl,
       queryParams: queryParams.isNotEmpty ? queryParams : null,
     );
-    final List<dynamic> data =
-        response is List ? response : (response['data'] ?? []);
+    final List<dynamic> data = response is List
+        ? response
+        : (response['data'] ?? []);
     return data
         .map((e) => JournalEntryModel.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -49,8 +50,9 @@ class JournalRepository {
       'content': content,
       'tags': tags,
     };
-    final response = await _client.post(ApiConfig.journalUrl, body: body)
-        as Map<String, dynamic>;
+    final response =
+        await _client.post(ApiConfig.journalUrl, body: body)
+            as Map<String, dynamic>;
     final entryData = response['body'] ?? response;
     return JournalEntryModel.fromJson(entryData as Map<String, dynamic>);
   }
@@ -64,10 +66,9 @@ class JournalRepository {
     final body = <String, dynamic>{};
     if (title != null) body['title'] = title;
     if (content != null) body['content'] = content;
-    final response = await _client.put(
-      ApiConfig.journalEntryUrl(id),
-      body: body,
-    ) as Map<String, dynamic>;
+    final response =
+        await _client.put(ApiConfig.journalEntryUrl(id), body: body)
+            as Map<String, dynamic>;
     final entryData = response['body'] ?? response;
     return JournalEntryModel.fromJson(entryData as Map<String, dynamic>);
   }

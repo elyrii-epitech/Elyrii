@@ -74,8 +74,9 @@ class _GlassJournalCardState extends State<GlassJournalCard> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withValues(alpha: widget.isDark ? 0.4 : 0.15),
+                    color: Colors.black.withValues(
+                      alpha: widget.isDark ? 0.4 : 0.15,
+                    ),
                     blurRadius: 24,
                     spreadRadius: 0,
                     offset: const Offset(0, 10),

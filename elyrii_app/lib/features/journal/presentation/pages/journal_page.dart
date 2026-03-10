@@ -38,10 +38,7 @@ class _JournalPageState extends State<JournalPage> {
       initialChildSize: 0.92,
       maxChildSize: 0.92,
       minChildSize: 0.5,
-      child: JournalEditorSheet(
-        provider: _provider,
-        entry: entry,
-      ),
+      child: JournalEditorSheet(provider: _provider, entry: entry),
     );
   }
 
@@ -50,8 +47,9 @@ class _JournalPageState extends State<JournalPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: Stack(
         children: [
           // Contenu principal (liste des notes)
@@ -78,10 +76,7 @@ class _JournalPageState extends State<JournalPage> {
             top: 0,
             left: 0,
             right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: _buildAppBar(isDark),
-            ),
+            child: SafeArea(bottom: false, child: _buildAppBar(isDark)),
           ),
         ],
       ),
@@ -133,9 +128,7 @@ class _JournalPageState extends State<JournalPage> {
       itemBuilder: (context, index) {
         final entry = provider.entries[index];
         final card = Padding(
-          padding: const EdgeInsets.only(
-            bottom: AppDimensions.spacingLg,
-          ),
+          padding: const EdgeInsets.only(bottom: AppDimensions.spacingLg),
           child: GlassJournalCard(
             entry: entry,
             isDark: isDark,

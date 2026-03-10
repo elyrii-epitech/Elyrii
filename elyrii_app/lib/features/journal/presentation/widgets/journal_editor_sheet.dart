@@ -14,11 +14,7 @@ class JournalEditorSheet extends StatefulWidget {
   final JournalProvider provider;
   final JournalEntry? entry;
 
-  const JournalEditorSheet({
-    super.key,
-    required this.provider,
-    this.entry,
-  });
+  const JournalEditorSheet({super.key, required this.provider, this.entry});
 
   @override
   State<JournalEditorSheet> createState() => _JournalEditorSheetState();
@@ -36,8 +32,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.entry?.title ?? '');
-    _contentController =
-        TextEditingController(text: widget.entry?.content ?? '');
+    _contentController = TextEditingController(
+      text: widget.entry?.content ?? '',
+    );
 
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
@@ -68,11 +65,17 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     final content = _contentController.text.trim();
 
     if (widget.entry != null) {
-      widget.provider
-          .updateEntry(widget.entry!.id, title: title, content: content);
+      widget.provider.updateEntry(
+        widget.entry!.id,
+        title: title,
+        content: content,
+      );
     } else if (_createdEntryId != null) {
-      widget.provider
-          .updateEntry(_createdEntryId!, title: title, content: content);
+      widget.provider.updateEntry(
+        _createdEntryId!,
+        title: title,
+        content: content,
+      );
     } else {
       final now = DateTime.now();
       final newId = now.millisecondsSinceEpoch.toString();
@@ -93,7 +96,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       context: context,
       title: 'Modifications non sauvegardées',
       child: const Text(
-          'Voulez-vous sauvegarder vos modifications avant de fermer ?'),
+        'Voulez-vous sauvegarder vos modifications avant de fermer ?',
+      ),
       actions: [
         LiquidGlassDialogAction(
           label: 'Annuler',
@@ -163,23 +167,18 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           _buildAppBar(isDark),
           // Contenu
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              0,
-              8,
-              0,
-              bottomInset + 24,
-            ),
+            padding: EdgeInsets.fromLTRB(0, 8, 0, bottomInset + 24),
             child: Column(
               children: [
                 // Champ titre
                 GlassTextField(
-                  controller: _titleController,
-                  hint: 'Titre (optionnel)',
-                  isDark: isDark,
-                  maxLines: 1,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                )
+                      controller: _titleController,
+                      hint: 'Titre (optionnel)',
+                      isDark: isDark,
+                      maxLines: 1,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    )
                     .animate()
                     .fadeIn(
                       duration: 300.ms,
@@ -195,13 +194,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                 const SizedBox(height: 16),
                 // Champ contenu
                 GlassTextField(
-                  controller: _contentController,
-                  hint: 'Exprime ce que tu ressens...',
-                  isDark: isDark,
-                  maxLines: null,
-                  minLines: 12,
-                  fontSize: 16,
-                )
+                      controller: _contentController,
+                      hint: 'Exprime ce que tu ressens...',
+                      isDark: isDark,
+                      maxLines: null,
+                      minLines: 12,
+                      fontSize: 16,
+                    )
                     .animate()
                     .fadeIn(
                       duration: 300.ms,
@@ -260,9 +259,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           ),
           const SizedBox(width: 12),
           // Status
-          Expanded(
-            child: _buildStatusIndicator(isDark),
-          ),
+          Expanded(child: _buildStatusIndicator(isDark)),
           // Bouton ajouter/sauvegarder
           GestureDetector(
             onTap: () {
@@ -280,9 +277,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               ),
               child: Text(
                 widget.entry != null ? 'Modifier' : 'Ajouter',
-                style: AppTextStyles.labelMedium(
-                  color: AppColors.primary,
-                ),
+                style: AppTextStyles.labelMedium(color: AppColors.primary),
               ),
             ),
           ),
@@ -327,9 +322,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           const SizedBox(width: 8),
           Text(
             'Sauvegarde...',
-            style: AppTextStyles.labelMedium(
-              color: AppColors.primary,
-            ),
+            style: AppTextStyles.labelMedium(color: AppColors.primary),
           ),
         ],
       );
@@ -369,9 +362,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         const SizedBox(width: 6),
         Text(
           'Sauvegardé',
-          style: AppTextStyles.labelMedium(
-            color: AppColors.success,
-          ),
+          style: AppTextStyles.labelMedium(color: AppColors.success),
         ),
       ],
     );

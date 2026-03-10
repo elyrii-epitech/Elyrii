@@ -40,14 +40,8 @@ class _MascotWidgetState extends State<MascotWidget>
       vsync: this,
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.06,
-    ).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOutSine,
-      ),
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
     );
 
     _playOpeningAnimation();
@@ -91,20 +85,23 @@ class _MascotWidgetState extends State<MascotWidget>
 
   void _startInactivityTimer() {
     _inactivityTimer?.cancel();
-    _inactivityTimer =
-        Timer(const Duration(seconds: _inactivityDelaySeconds), () {
-      if (mounted) {
-        _playInactivityAnimation();
-      }
-    });
+    _inactivityTimer = Timer(
+      const Duration(seconds: _inactivityDelaySeconds),
+      () {
+        if (mounted) {
+          _playInactivityAnimation();
+        }
+      },
+    );
   }
 
   void _playInactivityAnimation() {
     final inactivityAnimations = MascotAnimations.inactivityAnimations;
     if (inactivityAnimations.isEmpty) return;
 
-    final animation =
-        MascotAnimations.selectWeightedRandom(inactivityAnimations);
+    final animation = MascotAnimations.selectWeightedRandom(
+      inactivityAnimations,
+    );
     if (animation != null) {
       _playAnimation(animation);
     }
@@ -168,8 +165,9 @@ class _MascotWidgetState extends State<MascotWidget>
           gradient: LinearGradient(
             colors: [
               AppColors.primary.withValues(alpha: 0.15),
-              (isDark ? AppColors.cardDark : AppColors.cardLight)
-                  .withValues(alpha: 0.95),
+              (isDark ? AppColors.cardDark : AppColors.cardLight).withValues(
+                alpha: 0.95,
+              ),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -208,18 +206,17 @@ class _MascotWidgetState extends State<MascotWidget>
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _buildMascotText(true, isDark),
-            ),
+            Expanded(child: _buildMascotText(true, isDark)),
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Icon(
                 Icons.lock_outline_rounded,
                 size: 16,
-                color: (isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight)
-                    .withValues(alpha: 0.6),
+                color:
+                    (isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight)
+                        .withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -261,16 +258,18 @@ class _MascotWidgetState extends State<MascotWidget>
 
   Widget _buildMascotText(bool isMinimized, bool isDark) {
     return Column(
-      crossAxisAlignment:
-          isMinimized ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: isMinimized
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           isMinimized ? 'Elyrii' : 'Discuter avec Elyrii',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
-            color:
-                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
             fontSize: isMinimized ? 15 : 26,
             fontWeight: isMinimized ? FontWeight.w600 : FontWeight.w600,
             letterSpacing: isMinimized ? 0.3 : 0.5,

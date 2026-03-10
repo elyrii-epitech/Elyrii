@@ -9,10 +9,7 @@ import 'package:flutter/foundation.dart';
 class GlobalErrorBoundary extends StatefulWidget {
   final Widget child;
 
-  const GlobalErrorBoundary({
-    super.key,
-    required this.child,
-  });
+  const GlobalErrorBoundary({super.key, required this.child});
 
   @override
   State<GlobalErrorBoundary> createState() => _GlobalErrorBoundaryState();

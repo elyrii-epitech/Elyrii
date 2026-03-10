@@ -10,11 +10,7 @@ class AuthResult {
   final UserModel? user;
   final String message;
 
-  const AuthResult({
-    required this.token,
-    this.user,
-    required this.message,
-  });
+  const AuthResult({required this.token, this.user, required this.message});
 }
 
 /// Repository handling authentication API calls
@@ -29,11 +25,13 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    final response = await _client.post(
-      ApiConfig.loginUrl,
-      body: {'email': email, 'password': password},
-      auth: false,
-    ) as Map<String, dynamic>;
+    final response =
+        await _client.post(
+              ApiConfig.loginUrl,
+              body: {'email': email, 'password': password},
+              auth: false,
+            )
+            as Map<String, dynamic>;
     final token = response['token'] as String? ?? '';
     final user = _decodeTokenPayload(token);
     return AuthResult(
@@ -58,11 +56,9 @@ class AuthRepository {
       'lastName': lastName,
     };
     if (age != null) body['age'] = age;
-    final response = await _client.post(
-      ApiConfig.registerUrl,
-      body: body,
-      auth: false,
-    ) as Map<String, dynamic>;
+    final response =
+        await _client.post(ApiConfig.registerUrl, body: body, auth: false)
+            as Map<String, dynamic>;
     final token = response['token'] as String? ?? '';
     final user = _decodeTokenPayload(token);
     return AuthResult(

@@ -105,8 +105,9 @@ class _ChatbotPageState extends State<ChatbotPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       extendBody: true,
       body: SafeArea(
         bottom: false,
@@ -172,7 +173,8 @@ class _ChatbotPageState extends State<ChatbotPage>
                                           top: 8,
                                           bottom: 8,
                                         ),
-                                        itemCount: provider.messages.length +
+                                        itemCount:
+                                            provider.messages.length +
                                             (provider.isTyping ? 1 : 0),
                                         itemBuilder: (context, index) {
                                           if (index == 0 && provider.isTyping) {
@@ -181,8 +183,10 @@ class _ChatbotPageState extends State<ChatbotPage>
                                           final messageIndex = provider.isTyping
                                               ? index - 1
                                               : index;
-                                          final message = provider.messages[
-                                              provider.messages.length -
+                                          final message =
+                                              provider.messages[provider
+                                                      .messages
+                                                      .length -
                                                   1 -
                                                   messageIndex];
                                           return ChatMessageBubble(
@@ -197,9 +201,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                           )
                         : const Center(
                             key: ValueKey('full'),
-                            child: MascotWidget(
-                              isMinimized: false,
-                            ),
+                            child: MascotWidget(isMinimized: false),
                           ),
                   );
                 },
@@ -244,10 +246,7 @@ class _ChatbotPageState extends State<ChatbotPage>
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: (isDark ? AppColors.cardDark : AppColors.cardLight)
                 .withValues(alpha: 0.6),
@@ -311,26 +310,29 @@ class _ChatbotPageState extends State<ChatbotPage>
                   builder: (context, child) {
                     return Container(
                       decoration: BoxDecoration(
-                        color:
-                            isDark ? AppColors.cardDark : AppColors.cardLight,
+                        color: isDark
+                            ? AppColors.cardDark
+                            : AppColors.cardLight,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: _hasStartedTyping
-                              ? AppColors.primary
-                                  .withValues(alpha: _inputGlowAnimation.value)
+                              ? AppColors.primary.withValues(
+                                  alpha: _inputGlowAnimation.value,
+                                )
                               : _isTextFieldFocused
-                                  ? AppColors.primary.withValues(alpha: 0.5)
-                                  : (isDark
-                                          ? AppColors.borderDark
-                                          : AppColors.borderLight)
-                                      .withValues(alpha: 0.3),
+                              ? AppColors.primary.withValues(alpha: 0.5)
+                              : (isDark
+                                        ? AppColors.borderDark
+                                        : AppColors.borderLight)
+                                    .withValues(alpha: 0.3),
                           width: _hasStartedTyping ? 1.5 : 1,
                         ),
                         boxShadow: _hasStartedTyping
                             ? [
                                 BoxShadow(
                                   color: AppColors.primary.withValues(
-                                      alpha: _inputGlowAnimation.value * 0.3),
+                                    alpha: _inputGlowAnimation.value * 0.3,
+                                  ),
                                   blurRadius: 12,
                                   spreadRadius: 0,
                                 ),
@@ -379,10 +381,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: _hasStartedTyping
-                        ? [
-                            AppColors.primary,
-                            const Color(0xFF7B5FE0),
-                          ]
+                        ? [AppColors.primary, const Color(0xFF7B5FE0)]
                         : [
                             AppColors.primary.withValues(alpha: 0.6),
                             const Color(0xFF7B5FE0).withValues(alpha: 0.6),

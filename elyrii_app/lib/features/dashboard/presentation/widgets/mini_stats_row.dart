@@ -33,17 +33,15 @@ class MiniStatCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(
-              emoji,
-              style: const TextStyle(fontSize: 20),
-            ),
+            Text(emoji, style: const TextStyle(fontSize: 20)),
             const SizedBox(height: 6),
             Text(
               value,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: accentColor ??
+                color:
+                    accentColor ??
                     (isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight),

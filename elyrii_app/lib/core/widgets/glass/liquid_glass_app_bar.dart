@@ -79,7 +79,8 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               // Title
               Expanded(
-                child: titleWidget ??
+                child:
+                    titleWidget ??
                     Text(
                       title ?? '',
                       style: TextStyle(

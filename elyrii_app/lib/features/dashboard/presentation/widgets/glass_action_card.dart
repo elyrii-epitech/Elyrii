@@ -113,11 +113,7 @@ class _GlassActionCardState extends State<GlassActionCard> {
                             width: 1,
                           ),
                         ),
-                        child: Icon(
-                          widget.icon,
-                          color: accentColor,
-                          size: 24,
-                        ),
+                        child: Icon(widget.icon, color: accentColor, size: 24),
                       ),
                       const SizedBox(height: AppDimensions.spacingMd),
                       // Titre

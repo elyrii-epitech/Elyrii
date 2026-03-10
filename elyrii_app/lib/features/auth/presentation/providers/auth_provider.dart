@@ -20,8 +20,8 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider({
     required ApiClient client,
     required SecureStorageService storage,
-  })  : _repository = AuthRepository(client: client),
-        _storage = storage;
+  }) : _repository = AuthRepository(client: client),
+       _storage = storage;
 
   AuthStatus get status => _status;
   UserModel? get user => _user;
@@ -45,18 +45,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Login with email and password
-  Future<bool> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> login({required String email, required String password}) async {
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
     try {
-      final result = await _repository.login(
-        email: email,
-        password: password,
-      );
+      final result = await _repository.login(email: email, password: password);
       await _storage.saveAccessToken(result.token);
       if (result.user != null) {
         _user = result.user;

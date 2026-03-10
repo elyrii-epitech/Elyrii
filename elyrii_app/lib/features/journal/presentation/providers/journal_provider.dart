@@ -21,7 +21,7 @@ class JournalProvider extends ChangeNotifier {
   String? get error => _error;
 
   JournalProvider({required ApiClient client})
-      : _repository = JournalRepository(client: client);
+    : _repository = JournalRepository(client: client);
 
   /// Load entries from the backend
   Future<void> loadEntries({DateTime? startDate, DateTime? endDate}) async {
@@ -44,9 +44,11 @@ class JournalProvider extends ChangeNotifier {
 
   List<JournalEntryModel> _getSortedEntries() {
     final sorted = List<JournalEntryModel>.from(_entries);
-    sorted.sort((a, b) => _sortNewest
-        ? b.createdAt.compareTo(a.createdAt)
-        : a.createdAt.compareTo(b.createdAt));
+    sorted.sort(
+      (a, b) => _sortNewest
+          ? b.createdAt.compareTo(a.createdAt)
+          : a.createdAt.compareTo(b.createdAt),
+    );
     return sorted;
   }
 

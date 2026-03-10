@@ -26,10 +26,7 @@ void main() async {
   final themeProvider = ThemeProvider();
   final performanceService = GlassPerformanceService();
 
-  await Future.wait([
-    themeProvider.init(),
-    performanceService.init(),
-  ]);
+  await Future.wait([themeProvider.init(), performanceService.init()]);
 
   // Create providers that depend on ApiClient
   final authProvider = AuthProvider(client: apiClient, storage: secureStorage);
@@ -90,8 +87,9 @@ class MyApp extends StatelessWidget {
             return GlobalErrorBoundary(child: child!);
           },
 
-          initialRoute:
-              authProvider.isAuthenticated ? AppRoutes.home : AppRoutes.login,
+          initialRoute: authProvider.isAuthenticated
+              ? AppRoutes.home
+              : AppRoutes.login,
           onGenerateRoute: RouteGenerator.generateRoute,
         );
       },

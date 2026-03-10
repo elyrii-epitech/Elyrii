@@ -10,10 +10,7 @@ import '../providers/dashboard_provider.dart';
 class GlassMoodSelector extends StatelessWidget {
   final bool isDark;
 
-  const GlassMoodSelector({
-    super.key,
-    this.isDark = false,
-  });
+  const GlassMoodSelector({super.key, this.isDark = false});
 
   @override
   Widget build(BuildContext context) {
@@ -88,10 +85,7 @@ class _MoodButtonState extends State<_MoodButton>
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.15,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
   }
 
   @override
@@ -145,22 +139,22 @@ class _MoodButtonState extends State<_MoodButton>
                           AppColors.primaryDark.withValues(alpha: 0.6),
                         ]
                       : widget.isDark
-                          ? [
-                              Colors.white.withValues(alpha: 0.12),
-                              Colors.white.withValues(alpha: 0.06),
-                            ]
-                          : [
-                              Colors.white.withValues(alpha: 0.8),
-                              Colors.white.withValues(alpha: 0.5),
-                            ],
+                      ? [
+                          Colors.white.withValues(alpha: 0.12),
+                          Colors.white.withValues(alpha: 0.06),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.8),
+                          Colors.white.withValues(alpha: 0.5),
+                        ],
                 ),
                 borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                 border: Border.all(
                   color: widget.isSelected
                       ? AppColors.primary.withValues(alpha: 0.5)
                       : widget.isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : Colors.white.withValues(alpha: 0.6),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.6),
                   width: widget.isSelected ? 2 : 1,
                 ),
                 boxShadow: widget.isSelected
@@ -182,9 +176,7 @@ class _MoodButtonState extends State<_MoodButton>
               child: Center(
                 child: Text(
                   widget.mood.emoji,
-                  style: TextStyle(
-                    fontSize: widget.isSelected ? 28 : 24,
-                  ),
+                  style: TextStyle(fontSize: widget.isSelected ? 28 : 24),
                 ),
               ),
             ),

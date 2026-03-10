@@ -48,8 +48,9 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     final nameParts = _nameController.text.trim().split(' ');
     final firstName = nameParts.first;
-    final lastName =
-        nameParts.length > 1 ? nameParts.sublist(1).join(' ') : firstName;
+    final lastName = nameParts.length > 1
+        ? nameParts.sublist(1).join(' ')
+        : firstName;
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.register(
       email: _emailController.text.trim(),
@@ -75,8 +76,9 @@ class _RegisterPageState extends State<RegisterPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -88,12 +90,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   // Mascot
                   Hero(
-                    tag: 'mascot',
-                    child: Image.asset(
-                      'assets/mascotte.png',
-                      height: 100,
-                    ),
-                  )
+                        tag: 'mascot',
+                        child: Image.asset('assets/mascotte.png', height: 100),
+                      )
                       .animate()
                       .fadeIn(duration: 600.ms)
                       .slideY(begin: 0.2, end: 0),
@@ -342,10 +341,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ],
                     ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 800.ms, delay: 200.ms)
-                      .slideY(begin: 0.2, end: 0),
+                  ).animate().fadeIn(duration: 800.ms, delay: 200.ms).slideY(begin: 0.2, end: 0),
                 ],
               ),
             ),

@@ -11,8 +11,9 @@ class MeditationPage extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -26,21 +27,22 @@ class MeditationPage extends StatelessWidget {
                 children: [
                   // Outer Glow
                   Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.primary.withValues(alpha: 0.2),
-                          AppColors.primary.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                  )
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.primary.withValues(alpha: 0.2),
+                              AppColors.primary.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                      )
                       .animate(
-                          onPlay: (controller) =>
-                              controller.repeat(reverse: true))
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true),
+                      )
                       .scale(
                         begin: const Offset(0.8, 0.8),
                         end: const Offset(1.2, 1.2),
@@ -50,25 +52,26 @@ class MeditationPage extends StatelessWidget {
 
                   // Glass Circle
                   LiquidGlassCard(
-                    padding: EdgeInsets.zero,
-                    borderRadius: 100,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.spa_rounded,
-                        size: 48,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  )
+                        padding: EdgeInsets.zero,
+                        borderRadius: 100,
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.spa_rounded,
+                            size: 48,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      )
                       .animate(
-                          onPlay: (controller) =>
-                              controller.repeat(reverse: true))
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true),
+                      )
                       .scale(
                         begin: const Offset(0.95, 0.95),
                         end: const Offset(1.05, 1.05),

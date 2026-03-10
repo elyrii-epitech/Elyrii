@@ -8,11 +8,7 @@ class StreakCard extends StatelessWidget {
   final int streakCount;
   final bool isDark;
 
-  const StreakCard({
-    super.key,
-    required this.streakCount,
-    this.isDark = false,
-  });
+  const StreakCard({super.key, required this.streakCount, this.isDark = false});
 
   @override
   Widget build(BuildContext context) {
@@ -33,15 +29,9 @@ class StreakCard extends StatelessWidget {
             duration: const Duration(milliseconds: 800),
             curve: Curves.easeInOut,
             builder: (context, scale, child) {
-              return Transform.scale(
-                scale: scale,
-                child: child,
-              );
+              return Transform.scale(scale: scale, child: child);
             },
-            child: const Text(
-              '🔥',
-              style: TextStyle(fontSize: 20),
-            ),
+            child: const Text('🔥', style: TextStyle(fontSize: 20)),
           ),
           const SizedBox(width: AppDimensions.spacingXs),
           // Compteur

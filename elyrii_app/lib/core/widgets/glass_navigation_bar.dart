@@ -51,8 +51,9 @@ class GlassNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final performanceService = GlassPerformanceService();
-    final effectiveBlurSigma = performanceService
-        .getEffectiveBlurSigma(AppDimensions.blurSigmaLiquidGlass);
+    final effectiveBlurSigma = performanceService.getEffectiveBlurSigma(
+      AppDimensions.blurSigmaLiquidGlass,
+    );
 
     return Container(
       margin: margin,
@@ -66,8 +67,9 @@ class GlassNavigationBar extends StatelessWidget {
               child: effectiveBlurSigma > 0
                   ? BackdropFilter(
                       filter: ImageFilter.blur(
-                          sigmaX: effectiveBlurSigma,
-                          sigmaY: effectiveBlurSigma),
+                        sigmaX: effectiveBlurSigma,
+                        sigmaY: effectiveBlurSigma,
+                      ),
                       child: _buildNavBarContainer(),
                     )
                   : _buildNavBarContainer(),
@@ -207,15 +209,16 @@ class GlassNavigationBar extends StatelessWidget {
               duration: const Duration(milliseconds: 100),
               child: AnimatedContainer(
                 duration: const Duration(
-                    milliseconds: AppDimensions.animationDurationLiquidGlass),
+                  milliseconds: AppDimensions.animationDurationLiquidGlass,
+                ),
                 curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
                 margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                 decoration: BoxDecoration(
                   // Fond gris plus visible quand sélectionné
                   color: isSelected
                       ? (isDark
-                          ? Colors.white.withValues(alpha: 0.12)
-                          : Colors.black.withValues(alpha: 0.08))
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : Colors.black.withValues(alpha: 0.08))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -233,8 +236,8 @@ class GlassNavigationBar extends StatelessWidget {
                           color: isSelected
                               ? primaryColor
                               : (isDark
-                                  ? AppColors.iconDefaultDark
-                                  : AppColors.iconDefaultLight),
+                                    ? AppColors.iconDefaultDark
+                                    : AppColors.iconDefaultLight),
                           size: 20,
                         ),
                       ),
@@ -248,14 +251,15 @@ class GlassNavigationBar extends StatelessWidget {
                         duration: const Duration(milliseconds: 200),
                         style: TextStyle(
                           fontSize: isSelected ? 9.5 : 9,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           // Texte en violet si sélectionné, sinon couleur adaptée au thème
                           color: isSelected
                               ? primaryColor
                               : (isDark
-                                  ? AppColors.iconDefaultDark
-                                  : AppColors.iconDefaultLight),
+                                    ? AppColors.iconDefaultDark
+                                    : AppColors.iconDefaultLight),
                           letterSpacing: isSelected ? 0.3 : 0,
                         ),
                         child: Text(
@@ -299,19 +303,24 @@ class RadialFlashPainter extends CustomPainter {
 
     // iOS 26: Fade out plus rapide à partir de 60% de l'animation
     final fadeOut = progress > 0.6
-        ? (1.0 - ((progress - 0.6) / 0.4))
-            .clamp(0.0, 1.0) // De 1.0 à 0 entre 60% et 100%
+        ? (1.0 - ((progress - 0.6) / 0.4)).clamp(
+            0.0,
+            1.0,
+          ) // De 1.0 à 0 entre 60% et 100%
         : 1.0;
 
     // Créer un gradient radial avec opacité qui diminue progressivement
     final gradient = RadialGradient(
       colors: [
         Colors.white.withValues(
-            alpha: ((0.5 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0))),
+          alpha: ((0.5 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0)),
+        ),
         Colors.white.withValues(
-            alpha: ((0.3 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0))),
+          alpha: ((0.3 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0)),
+        ),
         Colors.white.withValues(
-            alpha: ((0.15 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0))),
+          alpha: ((0.15 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0)),
+        ),
         Colors.white.withValues(alpha: 0),
       ],
       stops: const [0.0, 0.3, 0.6, 1.0],

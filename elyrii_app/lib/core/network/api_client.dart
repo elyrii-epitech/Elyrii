@@ -13,16 +13,14 @@ class ApiClient {
 
   static const int _timeoutSeconds = 30;
 
-  ApiClient({
-    required SecureStorageService storage,
-    http.Client? client,
-  })  : _storage = storage,
-        _client = client ?? http.Client();
+  ApiClient({required SecureStorageService storage, http.Client? client})
+    : _storage = storage,
+      _client = client ?? http.Client();
 
   Map<String, String> _baseHeaders() => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
   Future<Map<String, String>> _authHeaders() async {
     final headers = _baseHeaders();
@@ -84,10 +82,7 @@ class ApiClient {
   }
 
   /// Perform a DELETE request
-  Future<dynamic> delete(
-    String url, {
-    bool auth = true,
-  }) async {
+  Future<dynamic> delete(String url, {bool auth = true}) async {
     final headers = auth ? await _authHeaders() : _baseHeaders();
     final response = await _client
         .delete(Uri.parse(url), headers: headers)
@@ -98,8 +93,9 @@ class ApiClient {
   dynamic _handleResponse(http.Response response) {
     dynamic body;
     try {
-      body =
-          response.body.isNotEmpty ? jsonDecode(response.body) : <String, dynamic>{};
+      body = response.body.isNotEmpty
+          ? jsonDecode(response.body)
+          : <String, dynamic>{};
     } catch (e) {
       body = <String, dynamic>{'raw': response.body};
     }

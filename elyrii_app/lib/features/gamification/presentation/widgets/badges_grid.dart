@@ -21,11 +21,7 @@ class BadgesGrid extends StatelessWidget {
   final List<BadgeItem> badges;
   final Function(BadgeItem) onBadgeTap;
 
-  const BadgesGrid({
-    super.key,
-    required this.badges,
-    required this.onBadgeTap,
-  });
+  const BadgesGrid({super.key, required this.badges, required this.onBadgeTap});
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +53,8 @@ class BadgesGrid extends StatelessWidget {
         color: badge.isUnlocked
             ? AppColors.primary.withValues(alpha: isDark ? 0.15 : 0.05)
             : (isDark
-                ? Colors.white.withValues(alpha: 0.02)
-                : Colors.black.withValues(alpha: 0.02)),
+                  ? Colors.white.withValues(alpha: 0.02)
+                  : Colors.black.withValues(alpha: 0.02)),
         borderColor: badge.isUnlocked
             ? AppColors.primary.withValues(alpha: 0.3)
             : Colors.transparent,
@@ -67,51 +63,47 @@ class BadgesGrid extends StatelessWidget {
           children: [
             // Badge Icon
             Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: badge.isUnlocked
-                    ? const LinearGradient(
-                        colors: [
-                          AppColors.primaryLight,
-                          AppColors.primary,
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      )
-                    : null,
-                color: badge.isUnlocked
-                    ? null
-                    : (isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.05)),
-                boxShadow: badge.isUnlocked
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Icon(
-                badge.isUnlocked ? badge.icon : Icons.lock_outline_rounded,
-                color: badge.isUnlocked
-                    ? Colors.white
-                    : (isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight),
-                size: 24,
-              ),
-            )
-                .animate(
-                  target: badge.isUnlocked ? 1 : 0,
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: badge.isUnlocked
+                        ? const LinearGradient(
+                            colors: [AppColors.primaryLight, AppColors.primary],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: badge.isUnlocked
+                        ? null
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.05)),
+                    boxShadow: badge.isUnlocked
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Icon(
+                    badge.isUnlocked ? badge.icon : Icons.lock_outline_rounded,
+                    color: badge.isUnlocked
+                        ? Colors.white
+                        : (isDark
+                              ? AppColors.textTertiaryDark
+                              : AppColors.textTertiaryLight),
+                    size: 24,
+                  ),
                 )
+                .animate(target: badge.isUnlocked ? 1 : 0)
                 .shimmer(
-                    duration: 2000.ms,
-                    color: Colors.white.withValues(alpha: 0.5)),
+                  duration: 2000.ms,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
 
             const SizedBox(height: 8),
 
@@ -123,21 +115,25 @@ class BadgesGrid extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight:
-                    badge.isUnlocked ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: badge.isUnlocked
+                    ? FontWeight.w600
+                    : FontWeight.w400,
                 color: badge.isUnlocked
                     ? (isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight)
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight)
                     : (isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight),
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight),
               ),
             ),
           ],
         ),
       ),
     ).animate().scale(
-        delay: (50 * index).ms, duration: 300.ms, curve: Curves.easeOutBack);
+      delay: (50 * index).ms,
+      duration: 300.ms,
+      curve: Curves.easeOutBack,
+    );
   }
 }

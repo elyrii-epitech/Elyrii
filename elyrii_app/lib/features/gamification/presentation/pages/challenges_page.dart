@@ -49,35 +49,41 @@ class _ChallengesPageState extends State<ChallengesPage> {
   // Mock Badges
   final List<BadgeItem> _badges = [
     const BadgeItem(
-        id: '1',
-        title: 'Premiers Pas',
-        icon: Icons.directions_walk_rounded,
-        isUnlocked: true),
+      id: '1',
+      title: 'Premiers Pas',
+      icon: Icons.directions_walk_rounded,
+      isUnlocked: true,
+    ),
     const BadgeItem(
-        id: '2',
-        title: 'Explorateur',
-        icon: Icons.explore_rounded,
-        isUnlocked: true),
+      id: '2',
+      title: 'Explorateur',
+      icon: Icons.explore_rounded,
+      isUnlocked: true,
+    ),
     const BadgeItem(
-        id: '3',
-        title: 'Zen Master',
-        icon: Icons.spa_rounded,
-        isUnlocked: false),
+      id: '3',
+      title: 'Zen Master',
+      icon: Icons.spa_rounded,
+      isUnlocked: false,
+    ),
     const BadgeItem(
-        id: '4',
-        title: 'Bavard',
-        icon: Icons.record_voice_over_rounded,
-        isUnlocked: false),
+      id: '4',
+      title: 'Bavard',
+      icon: Icons.record_voice_over_rounded,
+      isUnlocked: false,
+    ),
     const BadgeItem(
-        id: '5',
-        title: 'Night Owl',
-        icon: Icons.nights_stay_rounded,
-        isUnlocked: false),
+      id: '5',
+      title: 'Night Owl',
+      icon: Icons.nights_stay_rounded,
+      isUnlocked: false,
+    ),
     const BadgeItem(
-        id: '6',
-        title: 'Early Bird',
-        icon: Icons.wb_sunny_rounded,
-        isUnlocked: false),
+      id: '6',
+      title: 'Early Bird',
+      icon: Icons.wb_sunny_rounded,
+      isUnlocked: false,
+    ),
   ];
 
   @override
@@ -86,13 +92,18 @@ class _ChallengesPageState extends State<ChallengesPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-              16, MediaQuery.of(context).padding.top + 16, 16, 32),
+            16,
+            MediaQuery.of(context).padding.top + 16,
+            16,
+            32,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
