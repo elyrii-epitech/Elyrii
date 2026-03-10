@@ -29,15 +29,20 @@ void main() {
         providers: [
           ChangeNotifierProvider<ThemeProvider>.value(value: themeProvider),
           ChangeNotifierProvider<GlassPerformanceService>.value(
-              value: performanceService),
+            value: performanceService,
+          ),
           ChangeNotifierProvider<AuthProvider>.value(
-              value: AuthProvider(client: apiClient, storage: secureStorage)),
+            value: AuthProvider(client: apiClient, storage: secureStorage),
+          ),
           ChangeNotifierProvider<JournalProvider>.value(
-              value: JournalProvider(client: apiClient)),
+            value: JournalProvider(client: apiClient),
+          ),
           ChangeNotifierProvider<ChatbotProvider>.value(
-              value: ChatbotProvider(storage: secureStorage)),
+            value: ChatbotProvider(storage: secureStorage),
+          ),
           ChangeNotifierProvider<GamificationProvider>.value(
-              value: GamificationProvider(client: apiClient)),
+            value: GamificationProvider(client: apiClient),
+          ),
         ],
         child: const MyApp(),
       ),
