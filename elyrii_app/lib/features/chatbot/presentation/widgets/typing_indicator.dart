@@ -86,9 +86,9 @@ class _TypingIndicatorState extends State<TypingIndicator>
                         final value = (_controller.value - delay) % 1.0;
                         final opacity =
                             (value < 0.5 ? value * 2 : 2 - value * 2).clamp(
-                              0.4,
-                              1.0,
-                            );
+                          0.4,
+                          1.0,
+                        );
 
                         return Container(
                           margin: EdgeInsets.only(right: index < 2 ? 4 : 0),

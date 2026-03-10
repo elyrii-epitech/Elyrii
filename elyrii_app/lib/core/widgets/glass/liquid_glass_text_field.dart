@@ -97,8 +97,8 @@ class _LiquidGlassTextFieldState extends State<LiquidGlassTextField> {
               color: _isFocused
                   ? primaryColor
                   : (isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.1)),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.black.withValues(alpha: 0.1)),
               width: _isFocused ? 1.5 : 0.5,
             ),
           ),

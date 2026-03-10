@@ -40,8 +40,7 @@ class MiniStatCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color:
-                    accentColor ??
+                color: accentColor ??
                     (isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight),

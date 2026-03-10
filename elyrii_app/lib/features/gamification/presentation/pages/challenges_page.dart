@@ -92,9 +92,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
+      backgroundColor:
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Padding(

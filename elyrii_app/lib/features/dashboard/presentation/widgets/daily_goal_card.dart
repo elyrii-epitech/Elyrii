@@ -107,22 +107,22 @@ class _DailyGoalCardState extends State<DailyGoalCard>
                             AppColors.success.withValues(alpha: 0.1),
                           ]
                         : widget.isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.1),
-                            Colors.white.withValues(alpha: 0.05),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.85),
-                            Colors.white.withValues(alpha: 0.6),
-                          ],
+                            ? [
+                                Colors.white.withValues(alpha: 0.1),
+                                Colors.white.withValues(alpha: 0.05),
+                              ]
+                            : [
+                                Colors.white.withValues(alpha: 0.85),
+                                Colors.white.withValues(alpha: 0.6),
+                              ],
                   ),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   border: Border.all(
                     color: widget.isCompleted
                         ? AppColors.success.withValues(alpha: 0.4)
                         : widget.isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : Colors.white.withValues(alpha: 0.6),
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : Colors.white.withValues(alpha: 0.6),
                     width: 1.5,
                   ),
                   boxShadow: [
@@ -166,8 +166,8 @@ class _DailyGoalCardState extends State<DailyGoalCard>
                               color: widget.isCompleted
                                   ? AppColors.success
                                   : widget.isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
                               decoration: widget.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
@@ -217,15 +217,15 @@ class _DailyGoalCardState extends State<DailyGoalCard>
             color: widget.isCompleted
                 ? null
                 : widget.isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.white.withValues(alpha: 0.8),
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.8),
             shape: BoxShape.circle,
             border: Border.all(
               color: widget.isCompleted
                   ? AppColors.success
                   : widget.isDark
-                  ? Colors.white.withValues(alpha: 0.2)
-                  : AppColors.primary.withValues(alpha: 0.3),
+                      ? Colors.white.withValues(alpha: 0.2)
+                      : AppColors.primary.withValues(alpha: 0.3),
               width: 2,
             ),
             boxShadow: widget.isCompleted

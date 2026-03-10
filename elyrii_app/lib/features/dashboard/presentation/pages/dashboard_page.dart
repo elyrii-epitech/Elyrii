@@ -24,9 +24,8 @@ class DashboardPage extends StatelessWidget {
       child: Consumer<DashboardProvider>(
         builder: (context, provider, child) {
           return Scaffold(
-            backgroundColor: isDark
-                ? AppColors.scaffoldDark
-                : AppColors.scaffoldLight,
+            backgroundColor:
+                isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
             body: Stack(
               clipBehavior: Clip.none,
               children: [
@@ -112,9 +111,8 @@ class DashboardPage extends StatelessWidget {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
+            color:
+                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
             letterSpacing: -0.5,
           ),
           textAlign: TextAlign.center,
@@ -319,8 +317,8 @@ class _MoodChipState extends State<_MoodChip> {
             color: widget.isSelected
                 ? AppColors.primary.withValues(alpha: 0.2)
                 : (widget.isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.03)),
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.03)),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: widget.isSelected

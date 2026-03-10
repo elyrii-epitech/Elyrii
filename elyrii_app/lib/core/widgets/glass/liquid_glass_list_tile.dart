@@ -57,8 +57,8 @@ class _LiquidGlassListTileState extends State<LiquidGlassListTile> {
         duration: const Duration(milliseconds: 100),
         color: _isPressed
             ? (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.04))
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.04))
             : Colors.transparent,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -161,15 +161,15 @@ class LiquidGlassChip extends StatelessWidget {
           color: isSelected
               ? primaryColor
               : (isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.06)),
+                  ? Colors.white.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.06)),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
                 ? primaryColor
                 : (isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.black.withValues(alpha: 0.1)),
+                    ? Colors.white.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.1)),
             width: 0.5,
           ),
         ),
@@ -183,8 +183,8 @@ class LiquidGlassChip extends StatelessWidget {
                 color: isSelected
                     ? Colors.white
                     : (isDark
-                          ? Colors.white
-                          : Colors.black.withValues(alpha: 0.7)),
+                        ? Colors.white
+                        : Colors.black.withValues(alpha: 0.7)),
               ),
               const SizedBox(width: 6),
             ],
@@ -196,8 +196,8 @@ class LiquidGlassChip extends StatelessWidget {
                 color: isSelected
                     ? Colors.white
                     : (isDark
-                          ? Colors.white
-                          : Colors.black.withValues(alpha: 0.7)),
+                        ? Colors.white
+                        : Colors.black.withValues(alpha: 0.7)),
               ),
             ),
           ],

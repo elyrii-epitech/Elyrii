@@ -212,11 +212,10 @@ class _MascotWidgetState extends State<MascotWidget>
               child: Icon(
                 Icons.lock_outline_rounded,
                 size: 16,
-                color:
-                    (isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight)
-                        .withValues(alpha: 0.6),
+                color: (isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight)
+                    .withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -258,18 +257,16 @@ class _MascotWidgetState extends State<MascotWidget>
 
   Widget _buildMascotText(bool isMinimized, bool isDark) {
     return Column(
-      crossAxisAlignment: isMinimized
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.center,
+      crossAxisAlignment:
+          isMinimized ? CrossAxisAlignment.start : CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           isMinimized ? 'Elyrii' : 'Discuter avec Elyrii',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
+            color:
+                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
             fontSize: isMinimized ? 15 : 26,
             fontWeight: isMinimized ? FontWeight.w600 : FontWeight.w600,
             letterSpacing: isMinimized ? 0.3 : 0.5,

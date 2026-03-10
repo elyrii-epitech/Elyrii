@@ -43,22 +43,19 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
 
     switch (widget.style) {
       case LiquidGlassButtonStyle.filled:
-        backgroundColor = isDisabled
-            ? primaryColor.withValues(alpha: 0.3)
-            : primaryColor;
+        backgroundColor =
+            isDisabled ? primaryColor.withValues(alpha: 0.3) : primaryColor;
         textColor = Colors.white;
         break;
       case LiquidGlassButtonStyle.tinted:
         backgroundColor = primaryColor.withValues(alpha: 0.15);
-        textColor = isDisabled
-            ? primaryColor.withValues(alpha: 0.5)
-            : primaryColor;
+        textColor =
+            isDisabled ? primaryColor.withValues(alpha: 0.5) : primaryColor;
         break;
       case LiquidGlassButtonStyle.plain:
         backgroundColor = Colors.transparent;
-        textColor = isDisabled
-            ? primaryColor.withValues(alpha: 0.5)
-            : primaryColor;
+        textColor =
+            isDisabled ? primaryColor.withValues(alpha: 0.5) : primaryColor;
         break;
       case LiquidGlassButtonStyle.gray:
         backgroundColor = isDark
@@ -223,8 +220,7 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
                   child: Icon(
                     widget.icon,
                     size: widget.size * 0.5,
-                    color:
-                        widget.color ??
+                    color: widget.color ??
                         (isDark
                             ? Colors.white
                             : Colors.black.withValues(alpha: 0.8)),

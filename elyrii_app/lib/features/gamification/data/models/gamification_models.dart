@@ -80,8 +80,7 @@ class UserChallenge {
     return UserChallenge(
       id: json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
-      challengeId:
-          json['challengeId'] as String? ??
+      challengeId: json['challengeId'] as String? ??
           json['challenge_id'] as String? ??
           '',
       status: json['status'] as String? ?? 'PENDING',

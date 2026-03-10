@@ -99,16 +99,15 @@ class _HomeNavigationState extends State<HomeNavigation>
       vsync: this,
     );
 
-    _navBarScaleAnimation =
-        Tween<double>(
-          begin: 1.0,
-          end: 1.02, // iOS 26: de 1.015 à 1.02
-        ).animate(
-          CurvedAnimation(
-            parent: _navBarPulseController,
-            curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
-          ),
-        );
+    _navBarScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.02, // iOS 26: de 1.015 à 1.02
+    ).animate(
+      CurvedAnimation(
+        parent: _navBarPulseController,
+        curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
+      ),
+    );
 
     // Animation de flash blanc (durée augmentée pour être visible)
     _flashController = AnimationController(

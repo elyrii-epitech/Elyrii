@@ -41,9 +41,8 @@ class GlassBubbleButton extends StatelessWidget {
   /// Calcule l'opacité du flash avec fade out progressif iOS 26
   double _calculateFlashOpacity(double progress) {
     // iOS 26: Fade out plus rapide à partir de 60% de l'animation
-    final fadeOut = progress > 0.6
-        ? (1.0 - ((progress - 0.6) / 0.4)).clamp(0.0, 1.0)
-        : 1.0;
+    final fadeOut =
+        progress > 0.6 ? (1.0 - ((progress - 0.6) / 0.4)).clamp(0.0, 1.0) : 1.0;
 
     return (0.25 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0);
   }
@@ -56,13 +55,12 @@ class GlassBubbleButton extends StatelessWidget {
     );
 
     // Couleur adaptée au thème : violet si sélectionné, sinon couleur par défaut
-    final effectiveIconColor =
-        iconColor ??
+    final effectiveIconColor = iconColor ??
         (isSelected
             ? AppColors.primary
             : (isDark
-                  ? AppColors.iconDefaultDark
-                  : AppColors.iconDefaultLight));
+                ? AppColors.iconDefaultDark
+                : AppColors.iconDefaultLight));
     final effectiveShimmerColor =
         shimmerColor ?? AppColors.primary.withValues(alpha: 0.3);
 
@@ -203,24 +201,24 @@ class GlassBubbleButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected
                   ? (isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : Colors.black.withValues(alpha: 0.08))
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : Colors.black.withValues(alpha: 0.08))
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(size / 2),
             ),
             child: Center(
               child: showShimmer
                   ? Icon(
-                          icon,
-                          color: effectiveIconColor,
-                          size: size * 0.4375, // 28/64 ratio
-                        )
-                        .animate(onPlay: (controller) => controller.repeat())
-                        .shimmer(
-                          duration: 2000.ms,
-                          delay: 3000.ms,
-                          color: effectiveShimmerColor,
-                        )
+                      icon,
+                      color: effectiveIconColor,
+                      size: size * 0.4375, // 28/64 ratio
+                    )
+                      .animate(onPlay: (controller) => controller.repeat())
+                      .shimmer(
+                        duration: 2000.ms,
+                        delay: 3000.ms,
+                        color: effectiveShimmerColor,
+                      )
                   : Icon(icon, color: effectiveIconColor, size: size * 0.4375),
             ),
           ),

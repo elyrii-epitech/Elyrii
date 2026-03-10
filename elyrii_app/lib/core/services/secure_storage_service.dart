@@ -13,15 +13,15 @@ class SecureStorageService {
   final FlutterSecureStorage _storage;
 
   SecureStorageService()
-    : _storage = const FlutterSecureStorage(
-        aOptions: AndroidOptions(
-          // EncryptedSharedPreferences is deprecated in v10 and removed.
-          // data is migrated automatically to AES.
-        ),
-        iOptions: IOSOptions(
-          accessibility: KeychainAccessibility.first_unlock_this_device,
-        ),
-      );
+      : _storage = const FlutterSecureStorage(
+          aOptions: AndroidOptions(
+              // EncryptedSharedPreferences is deprecated in v10 and removed.
+              // data is migrated automatically to AES.
+              ),
+          iOptions: IOSOptions(
+            accessibility: KeychainAccessibility.first_unlock_this_device,
+          ),
+        );
 
   // ==================== Initialization Check ====================
 

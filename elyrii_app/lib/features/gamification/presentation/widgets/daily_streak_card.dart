@@ -26,20 +26,20 @@ class DailyStreakCard extends StatelessWidget {
             children: [
               // Flame Icon with Glow
               Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.streak.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.streak.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          spreadRadius: -2,
-                        ),
-                      ],
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.streak.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.streak.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      spreadRadius: -2,
                     ),
-                    child: const Text('🔥', style: TextStyle(fontSize: 24)),
-                  )
+                  ],
+                ),
+                child: const Text('🔥', style: TextStyle(fontSize: 24)),
+              )
                   .animate(
                     onPlay: (controller) => controller.repeat(reverse: true),
                   )
@@ -86,69 +86,68 @@ class DailyStreakCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
-              final isCompleted = index < weekHistory.length
-                  ? weekHistory[index]
-                  : false;
+              final isCompleted =
+                  index < weekHistory.length ? weekHistory[index] : false;
               final dayInitial = _getDayInitial(index);
 
               return Column(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: isCompleted
-                              ? AppColors.streak
-                              : isDark
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: isCompleted
+                          ? AppColors.streak
+                          : isDark
                               ? Colors.white.withValues(alpha: 0.05)
                               : Colors.black.withValues(alpha: 0.03),
-                          shape: BoxShape.circle,
-                          boxShadow: isCompleted
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.streak.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : null,
-                          border: isCompleted
-                              ? null
-                              : Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.black.withValues(alpha: 0.05),
-                                  width: 1,
+                      shape: BoxShape.circle,
+                      boxShadow: isCompleted
+                          ? [
+                              BoxShadow(
+                                color: AppColors.streak.withValues(
+                                  alpha: 0.4,
                                 ),
-                        ),
-                        alignment: Alignment.center,
-                        child: isCompleted
-                            ? const Icon(
-                                Icons.check_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        dayInitial,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isCompleted
-                              ? (isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight)
-                              : (isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiaryLight),
-                        ),
-                      ),
-                    ],
-                  )
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                      border: isCompleted
+                          ? null
+                          : Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.05),
+                              width: 1,
+                            ),
+                    ),
+                    alignment: Alignment.center,
+                    child: isCompleted
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    dayInitial,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isCompleted
+                          ? (isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight)
+                          : (isDark
+                              ? AppColors.textTertiaryDark
+                              : AppColors.textTertiaryLight),
+                    ),
+                  ),
+                ],
+              )
                   .animate()
                   .fadeIn(delay: (100 * index).ms)
                   .slideY(begin: 0.2, end: 0);

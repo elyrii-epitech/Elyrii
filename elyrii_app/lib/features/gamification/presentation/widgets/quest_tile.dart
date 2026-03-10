@@ -32,13 +32,13 @@ class QuestTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         color: isCompleted
             ? (isDark
-                  ? AppColors.successDark.withValues(alpha: 0.15)
-                  : AppColors.successLight.withValues(alpha: 0.4))
+                ? AppColors.successDark.withValues(alpha: 0.15)
+                : AppColors.successLight.withValues(alpha: 0.4))
             : null,
         borderColor: isCompleted
             ? (isDark
-                  ? AppColors.successDark.withValues(alpha: 0.3)
-                  : AppColors.success.withValues(alpha: 0.3))
+                ? AppColors.successDark.withValues(alpha: 0.3)
+                : AppColors.success.withValues(alpha: 0.3))
             : null,
         child: Row(
           children: [
@@ -49,15 +49,15 @@ class QuestTile extends StatelessWidget {
                 color: isCompleted
                     ? AppColors.success.withValues(alpha: 0.2)
                     : (isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.03)),
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03)),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isCompleted
                       ? AppColors.success.withValues(alpha: 0.3)
                       : (isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.black.withValues(alpha: 0.05)),
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.black.withValues(alpha: 0.05)),
                   width: 1,
                 ),
               ),
@@ -66,8 +66,8 @@ class QuestTile extends StatelessWidget {
                 color: isCompleted
                     ? AppColors.success
                     : (isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight),
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight),
                 size: 20,
               ),
             ),
@@ -83,16 +83,15 @@ class QuestTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      decoration: isCompleted
-                          ? TextDecoration.lineThrough
-                          : null,
+                      decoration:
+                          isCompleted ? TextDecoration.lineThrough : null,
                       color: isDark
                           ? (isCompleted
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textPrimaryDark)
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textPrimaryDark)
                           : (isCompleted
-                                ? AppColors.textSecondaryLight
-                                : AppColors.textPrimaryLight),
+                              ? AppColors.textSecondaryLight
+                              : AppColors.textPrimaryLight),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -127,9 +126,8 @@ class QuestTile extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: isDark
-                                ? Colors.amber[200]
-                                : Colors.amber[800],
+                            color:
+                                isDark ? Colors.amber[200] : Colors.amber[800],
                           ),
                         ),
                       ),

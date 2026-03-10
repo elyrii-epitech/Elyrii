@@ -21,7 +21,7 @@ class JournalProvider extends ChangeNotifier {
   String? get error => _error;
 
   JournalProvider({required ApiClient client})
-    : _repository = JournalRepository(client: client);
+      : _repository = JournalRepository(client: client);
 
   /// Load entries from the backend
   Future<void> loadEntries({DateTime? startDate, DateTime? endDate}) async {

@@ -39,15 +39,13 @@ class LiquidGlassCard extends StatelessWidget {
         child: Container(
           padding: padding ?? const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color:
-                color ??
+            color: color ??
                 (isDark
                     ? AppColors.liquidGlassBackgroundDark
                     : AppColors.liquidGlassBackgroundLight),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color:
-                  borderColor ??
+              color: borderColor ??
                   (isDark
                       ? AppColors.liquidGlassBorderDark
                       : AppColors.liquidGlassBorderLight),

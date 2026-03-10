@@ -54,8 +54,8 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? (isDark
-                              ? Colors.white.withValues(alpha: 0.2)
-                              : Colors.white)
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : Colors.white)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: isSelected
@@ -73,9 +73,8 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
                       entry.value,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
                         color: isDark
                             ? Colors.white.withValues(
                                 alpha: isSelected ? 1.0 : 0.6,
@@ -132,8 +131,8 @@ class LiquidGlassSwitch extends StatelessWidget {
           color: value
               ? primaryColor
               : (isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1)),
+                  ? Colors.white.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.1)),
           borderRadius: BorderRadius.circular(16),
         ),
         child: AnimatedAlign(

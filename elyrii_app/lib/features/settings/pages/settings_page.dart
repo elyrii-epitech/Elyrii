@@ -29,9 +29,8 @@ class _SettingsPageState extends State<SettingsPage> {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
+      backgroundColor:
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       body: Stack(
         children: [
           // Contenu scrollable

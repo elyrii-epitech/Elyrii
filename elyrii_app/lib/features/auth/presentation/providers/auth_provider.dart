@@ -20,8 +20,8 @@ class AuthProvider extends ChangeNotifier {
   AuthProvider({
     required ApiClient client,
     required SecureStorageService storage,
-  }) : _repository = AuthRepository(client: client),
-       _storage = storage;
+  })  : _repository = AuthRepository(client: client),
+        _storage = storage;
 
   AuthStatus get status => _status;
   UserModel? get user => _user;

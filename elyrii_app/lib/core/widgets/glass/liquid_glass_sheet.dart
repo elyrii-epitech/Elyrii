@@ -59,103 +59,99 @@ class LiquidGlassSheetContent extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DraggableScrollableSheet(
-          initialChildSize: initialChildSize,
-          minChildSize: minChildSize,
-          maxChildSize: maxChildSize,
-          builder: (context, scrollController) {
-            return ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimensions.radiusLiquidGlassSheet),
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: AppDimensions.blurSigmaLiquidGlass,
-                  sigmaY: AppDimensions.blurSigmaLiquidGlass,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color:
-                        backgroundColor ??
-                        (isDark
-                            ? AppColors.liquidGlassBackgroundDark
-                            : AppColors.liquidGlassBackgroundLight),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(
-                        AppDimensions.radiusLiquidGlassSheet,
-                      ),
-                    ),
-                    border: Border(
-                      top: BorderSide(
-                        color: isDark
-                            ? AppColors.liquidGlassBorderDark
-                            : AppColors.liquidGlassBorderLight,
-                        width: 0.5,
-                      ),
-                    ),
+      initialChildSize: initialChildSize,
+      minChildSize: minChildSize,
+      maxChildSize: maxChildSize,
+      builder: (context, scrollController) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusLiquidGlassSheet),
+          ),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: AppDimensions.blurSigmaLiquidGlass,
+              sigmaY: AppDimensions.blurSigmaLiquidGlass,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: backgroundColor ??
+                    (isDark
+                        ? AppColors.liquidGlassBackgroundDark
+                        : AppColors.liquidGlassBackgroundLight),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(
+                    AppDimensions.radiusLiquidGlassSheet,
                   ),
-                  child: Stack(
-                    children: [
-                      // Specular highlight
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 80,
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  AppColors.liquidGlassSpecularLight,
-                                  Colors.transparent,
-                                ],
-                              ),
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(
-                                  AppDimensions.radiusLiquidGlassSheet,
-                                ),
-                              ),
+                ),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark
+                        ? AppColors.liquidGlassBorderDark
+                        : AppColors.liquidGlassBorderLight,
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Specular highlight
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 80,
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.liquidGlassSpecularLight,
+                              Colors.transparent,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(
+                              AppDimensions.radiusLiquidGlassSheet,
                             ),
                           ),
                         ),
                       ),
-                      // Content
-                      Column(
-                        children: [
-                          // Drag handle
-                          Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            width: 36,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.3)
-                                  : Colors.black.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(2.5),
-                            ),
-                          ),
-                          // Child content
-                          Expanded(
-                            child: SingleChildScrollView(
-                              controller: scrollController,
-                              padding: const EdgeInsets.all(20),
-                              child: child,
-                            ),
-                          ),
-                        ],
+                    ),
+                  ),
+                  // Content
+                  Column(
+                    children: [
+                      // Drag handle
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        width: 36,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.3)
+                              : Colors.black.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(2.5),
+                        ),
+                      ),
+                      // Child content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.all(20),
+                          child: child,
+                        ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-            );
-          },
-        )
-        .animate()
-        .fadeIn(duration: 300.ms, curve: Curves.easeOutCubic)
-        .slideY(
+            ),
+          ),
+        );
+      },
+    ).animate().fadeIn(duration: 300.ms, curve: Curves.easeOutCubic).slideY(
           begin: 0.1,
           end: 0,
           duration: 350.ms,

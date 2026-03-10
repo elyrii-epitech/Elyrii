@@ -22,11 +22,11 @@ class UserModel {
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'email': email,
-    'firstName': firstName,
-    'lastName': lastName,
-  };
+        'id': id,
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+      };
 
   String get displayName {
     if (firstName != null && firstName!.isNotEmpty) {

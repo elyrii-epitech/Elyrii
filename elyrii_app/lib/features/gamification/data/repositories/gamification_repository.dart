@@ -10,9 +10,8 @@ class GamificationRepository {
 
   /// Parse a list response into UserChallenge objects
   List<UserChallenge> _parseList(dynamic response) {
-    final List<dynamic> data = response is List
-        ? response
-        : (response['data'] ?? []);
+    final List<dynamic> data =
+        response is List ? response : (response['data'] ?? []);
     return data
         .map((e) => UserChallenge.fromJson(e as Map<String, dynamic>))
         .toList();
