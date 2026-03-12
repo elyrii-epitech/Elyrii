@@ -20,7 +20,7 @@ Detailed description of all mobile application features.
 - Profile creation
 
 **Session:**
-- JWT token stored in SharedPreferences
+- JWT token stored in SecureStorage (Keychain/AES)
 - Automatic refresh
 - Logout
 - Session expiration
@@ -306,6 +306,30 @@ Present in:
 - Preferences
 - Privacy Settings
 - About
+
+---
+
+## System & UX
+
+### Global Error Boundary
+
+**Location:** `lib/core/widgets/error_boundary.dart`
+
+**Features:**
+- **Crash Catching:** Intercepts unhandled UI exceptions during build phase.
+- **User Friendly:** Replaces the detailed "Red Screen of Death" with a friendly error page.
+- **Recovery:** "Retour à l'accueil" button to attempt app recovery.
+
+- **Developer Mode:** Expandable "Détails techniques" section for debugging (Debug builds only).
+
+### Secure Storage
+
+**Location:** `lib/core/services/secure_storage_service.dart`
+
+**Features:**
+- **Encryption:** AES (Android) / Keychain (iOS).
+- **Token Management:** Securely stores Access & Refresh Tokens.
+- **Data Isolation:** Isolates sensitive user data from standard shared preferences.
 
 ---
 

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import 'core/theme/app_theme.dart';
 import 'core/config/app_constants.dart';
 import 'core/services/theme_provider.dart';
 import 'core/services/glass_performance_service.dart';
+import 'core/widgets/error_boundary.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 
 void main() async {
+  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize services
@@ -60,6 +63,11 @@ class MyApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
+
+          builder: (context, child) {
+            return GlobalErrorBoundary(child: child!);
+          },
+
           initialRoute: AppRoutes.login,
           onGenerateRoute: RouteGenerator.generateRoute,
         );

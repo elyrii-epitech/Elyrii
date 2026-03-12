@@ -38,3 +38,4 @@ _build/
 _static/
 _templates/
 .windsurf/
+.agent/
