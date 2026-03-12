@@ -1,37 +1,98 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../../../../core/config/api_config.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../../data/entities/chat_message.dart';
-import '../../data/mock_responses.dart';
 
+/// Provider managing chatbot state with real WebSocket connection
 class ChatbotProvider extends ChangeNotifier {
+  final SecureStorageService _storage;
+
   final List<ChatMessage> _messages = [];
   bool _isMascotMinimized = false;
   bool _isTyping = false;
+  bool _isConnected = false;
+
+  WebSocket? _socket;
 
   List<ChatMessage> get messages => List.unmodifiable(_messages);
   bool get isMascotMinimized => _isMascotMinimized;
   bool get isTyping => _isTyping;
+  bool get isConnected => _isConnected;
 
-  Future<void> sendMessage(String content) async {
-    if (content.trim().isEmpty) return;
+  ChatbotProvider({required SecureStorageService storage}) : _storage = storage;
 
-    final userMessage = ChatMessage.user(content);
-    _messages.add(userMessage);
-    notifyListeners();
-
-    _isTyping = true;
-    notifyListeners();
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    final aiResponse = _generateMockResponse(content);
-    _messages.add(ChatMessage.ai(aiResponse));
-    _isTyping = false;
-    notifyListeners();
+  /// Connect to the chat WebSocket via the gateway
+  Future<void> connect() async {
+    if (_isConnected) return;
+    final userId = await _storage.getUserId();
+    if (userId == null || userId.isEmpty) {
+      debugPrint('[ChatbotProvider] No userId, cannot connect to WebSocket');
+      return;
+    }
+    try {
+      final wsUrl = ApiConfig.chatWsUrl(userId);
+      _socket = await WebSocket.connect(wsUrl);
+      _isConnected = true;
+      notifyListeners();
+      _socket!.listen(
+        (data) {
+          final aiResponse = data.toString();
+          _messages.add(ChatMessage.ai(aiResponse));
+          _isTyping = false;
+          notifyListeners();
+        },
+        onError: (Object error) {
+          debugPrint('[ChatbotProvider] WebSocket error: $error');
+          _isConnected = false;
+          _isTyping = false;
+          notifyListeners();
+        },
+        onDone: () {
+          debugPrint('[ChatbotProvider] WebSocket closed');
+          _isConnected = false;
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      debugPrint('[ChatbotProvider] Failed to connect: $e');
+      _isConnected = false;
+      notifyListeners();
+    }
   }
 
-  String _generateMockResponse(String userMessage) {
-    return mockChatbotResponses[
-        userMessage.length % mockChatbotResponses.length];
+  /// Send a message through the WebSocket
+  Future<void> sendMessage(String content) async {
+    if (content.trim().isEmpty) return;
+    final userMessage = ChatMessage.user(content);
+    _messages.add(userMessage);
+    _isTyping = true;
+    notifyListeners();
+    if (_socket != null && _isConnected) {
+      _socket!.add(content);
+    } else {
+      await connect();
+      if (_socket != null && _isConnected) {
+        _socket!.add(content);
+      } else {
+        _messages.add(
+          ChatMessage.ai(
+            'Impossible de se connecter au service. Veuillez réessayer.',
+          ),
+        );
+        _isTyping = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  /// Disconnect from the WebSocket
+  Future<void> disconnect() async {
+    await _socket?.close();
+    _socket = null;
+    _isConnected = false;
+    notifyListeners();
   }
 
   void toggleMascotSize(bool minimize) {
@@ -50,5 +111,11 @@ class ChatbotProvider extends ChangeNotifier {
     _messages.clear();
     _isMascotMinimized = false;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    disconnect();
+    super.dispose();
   }
 }

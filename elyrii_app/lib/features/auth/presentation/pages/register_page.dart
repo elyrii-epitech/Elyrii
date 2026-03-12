@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../routes/app_routes.dart';
+import '../providers/auth_provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,8 +23,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
   bool _acceptTerms = false;
+  bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
   void dispose() {
@@ -32,38 +35,38 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _handleRegister() {
-    if (_formKey.currentState!.validate()) {
-      if (!_acceptTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Veuillez accepter les conditions d\'utilisation'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Compte créé avec succès ! (Simulation)'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Navigate back to login
-          Navigator.pop(context);
-        }
-      });
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (!_acceptTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez accepter les conditions d\'utilisation'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    final nameParts = _nameController.text.trim().split(' ');
+    final firstName = nameParts.first;
+    final lastName =
+        nameParts.length > 1 ? nameParts.sublist(1).join(' ') : firstName;
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.register(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    if (!mounted) return;
+    if (success) {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error ?? 'Registration failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -86,10 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   // Mascot
                   Hero(
                     tag: 'mascot',
-                    child: Image.asset(
-                      'assets/mascotte.png',
-                      height: 100,
-                    ),
+                    child: Image.asset('assets/mascotte.png', height: 100),
                   )
                       .animate()
                       .fadeIn(duration: 600.ms)

@@ -161,12 +161,8 @@ class AppTheme {
         unselectedItemColor: AppColors.textTertiaryLight,
         type: BottomNavigationBarType.fixed,
         elevation: AppDimensions.elevationMd,
-        selectedIconTheme: IconThemeData(
-          size: AppDimensions.iconMd,
-        ),
-        unselectedIconTheme: IconThemeData(
-          size: AppDimensions.iconMd,
-        ),
+        selectedIconTheme: IconThemeData(size: AppDimensions.iconMd),
+        unselectedIconTheme: IconThemeData(size: AppDimensions.iconMd),
       ),
 
       // Floating Action Button
@@ -389,12 +385,8 @@ class AppTheme {
         unselectedItemColor: AppColors.textTertiaryDark,
         type: BottomNavigationBarType.fixed,
         elevation: AppDimensions.elevationMd,
-        selectedIconTheme: IconThemeData(
-          size: AppDimensions.iconMd,
-        ),
-        unselectedIconTheme: IconThemeData(
-          size: AppDimensions.iconMd,
-        ),
+        selectedIconTheme: IconThemeData(size: AppDimensions.iconMd),
+        unselectedIconTheme: IconThemeData(size: AppDimensions.iconMd),
       ),
 
       // Floating Action Button

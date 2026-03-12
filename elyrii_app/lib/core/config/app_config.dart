@@ -1,17 +1,17 @@
-import 'package:flutter/material.dart';
+import 'api_config.dart';
 
-class TempPage extends StatelessWidget {
-  const TempPage({super.key});
+/// App-wide configuration
+/// Use [ApiConfig] for endpoint URLs
+class AppConfig {
+  AppConfig._();
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'Page Temporaire',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
-    );
+  /// Whether the app is running in debug mode
+  static const bool isDebug = true;
+
+  /// Configure the gateway URL based on environment
+  static void initialize({String? gatewayUrl}) {
+    if (gatewayUrl != null) {
+      ApiConfig.setBaseUrl(gatewayUrl);
+    }
   }
 }

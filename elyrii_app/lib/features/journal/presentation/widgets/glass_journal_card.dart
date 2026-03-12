@@ -74,8 +74,9 @@ class _GlassJournalCardState extends State<GlassJournalCard> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black
-                        .withValues(alpha: widget.isDark ? 0.4 : 0.15),
+                    color: Colors.black.withValues(
+                      alpha: widget.isDark ? 0.4 : 0.15,
+                    ),
                     blurRadius: 24,
                     spreadRadius: 0,
                     offset: const Offset(0, 10),
@@ -99,10 +100,9 @@ class _GlassJournalCardState extends State<GlassJournalCard> {
                     ),
                     const SizedBox(height: AppDimensions.spacingSm),
                     // Titre (si présent)
-                    if (widget.entry.title != null &&
-                        widget.entry.title!.isNotEmpty) ...[
+                    if (widget.entry.title.isNotEmpty) ...[
                       Text(
-                        widget.entry.title!,
+                        widget.entry.title,
                         style: AppTextStyles.titleMedium(
                           color: widget.isDark
                               ? AppColors.textPrimaryDark
@@ -116,13 +116,13 @@ class _GlassJournalCardState extends State<GlassJournalCard> {
                     ],
                     // Preview du contenu
                     Text(
-                      widget.entry.content,
+                      widget.entry.content ?? '',
                       style: AppTextStyles.bodyMedium(
                         color: widget.isDark
                             ? AppColors.textSecondaryDark
                             : AppColors.textSecondaryLight,
                       ),
-                      maxLines: widget.entry.title != null ? 3 : 5,
+                      maxLines: widget.entry.title.isNotEmpty ? 3 : 5,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: AppDimensions.spacingXs),

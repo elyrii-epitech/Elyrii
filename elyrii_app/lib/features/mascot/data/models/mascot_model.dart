@@ -7,10 +7,7 @@ class TempPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: Text(
-          'Page Temporaire',
-          style: TextStyle(fontSize: 24),
-        ),
+        child: Text('Page Temporaire', style: TextStyle(fontSize: 24)),
       ),
     );
   }

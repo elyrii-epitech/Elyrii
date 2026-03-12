@@ -5,10 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 class ConversationSuggestions extends StatelessWidget {
   final Function(String) onSuggestionTap;
 
-  const ConversationSuggestions({
-    super.key,
-    required this.onSuggestionTap,
-  });
+  const ConversationSuggestions({super.key, required this.onSuggestionTap});
 
   static const List<Map<String, dynamic>> _suggestions = [
     {
@@ -141,9 +138,10 @@ class _SuggestionChipState extends State<_SuggestionChip>
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -164,10 +162,7 @@ class _SuggestionChipState extends State<_SuggestionChip>
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          );
+          return Transform.scale(scale: _scaleAnimation.value, child: child);
         },
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
@@ -195,11 +190,7 @@ class _SuggestionChipState extends State<_SuggestionChip>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    widget.icon,
-                    size: 18,
-                    color: widget.color,
-                  ),
+                  Icon(widget.icon, size: 18, color: widget.color),
                   const SizedBox(width: 8),
                   Text(
                     widget.text,

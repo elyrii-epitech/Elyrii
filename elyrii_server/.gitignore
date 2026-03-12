@@ -18,3 +18,7 @@ build/
 
 # Documentation
 docs/api/
+
+# Claude context files
+CLAUDE.md
+docs/progress.md
