@@ -21,11 +21,7 @@ class BadgesGrid extends StatelessWidget {
   final List<BadgeItem> badges;
   final Function(BadgeItem) onBadgeTap;
 
-  const BadgesGrid({
-    super.key,
-    required this.badges,
-    required this.onBadgeTap,
-  });
+  const BadgesGrid({super.key, required this.badges, required this.onBadgeTap});
 
   @override
   Widget build(BuildContext context) {
@@ -73,10 +69,7 @@ class BadgesGrid extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: badge.isUnlocked
                     ? const LinearGradient(
-                        colors: [
-                          AppColors.primaryLight,
-                          AppColors.primary,
-                        ],
+                        colors: [AppColors.primaryLight, AppColors.primary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       )
@@ -105,13 +98,10 @@ class BadgesGrid extends StatelessWidget {
                         : AppColors.textTertiaryLight),
                 size: 24,
               ),
-            )
-                .animate(
-                  target: badge.isUnlocked ? 1 : 0,
-                )
-                .shimmer(
-                    duration: 2000.ms,
-                    color: Colors.white.withValues(alpha: 0.5)),
+            ).animate(target: badge.isUnlocked ? 1 : 0).shimmer(
+                  duration: 2000.ms,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
 
             const SizedBox(height: 8),
 
@@ -138,6 +128,9 @@ class BadgesGrid extends StatelessWidget {
         ),
       ),
     ).animate().scale(
-        delay: (50 * index).ms, duration: 300.ms, curve: Curves.easeOutBack);
+          delay: (50 * index).ms,
+          duration: 300.ms,
+          curve: Curves.easeOutBack,
+        );
   }
 }

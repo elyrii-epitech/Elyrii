@@ -243,10 +243,7 @@ class _BubbleArrowPainter extends CustomPainter {
   final Color color;
   final Color borderColor;
 
-  _BubbleArrowPainter({
-    required this.color,
-    required this.borderColor,
-  });
+  _BubbleArrowPainter({required this.color, required this.borderColor});
 
   @override
   void paint(Canvas canvas, Size size) {

@@ -50,8 +50,9 @@ class GlassBubbleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final performanceService = GlassPerformanceService();
-    final effectiveBlurSigma = performanceService
-        .getEffectiveBlurSigma(AppDimensions.blurSigmaLiquidGlass);
+    final effectiveBlurSigma = performanceService.getEffectiveBlurSigma(
+      AppDimensions.blurSigmaLiquidGlass,
+    );
 
     // Couleur adaptée au thème : violet si sélectionné, sinon couleur par défaut
     final effectiveIconColor = iconColor ??
@@ -70,15 +71,19 @@ class GlassBubbleButton extends StatelessWidget {
         child: effectiveBlurSigma > 0
             ? BackdropFilter(
                 filter: ImageFilter.blur(
-                    sigmaX: effectiveBlurSigma, sigmaY: effectiveBlurSigma),
+                  sigmaX: effectiveBlurSigma,
+                  sigmaY: effectiveBlurSigma,
+                ),
                 child: SizedBox(
                   width: size,
                   height: size,
                   child: Stack(
                     children: [
                       _buildButtonContent(
-                          effectiveIconColor, effectiveShimmerColor,
-                          performanceService: performanceService),
+                        effectiveIconColor,
+                        effectiveShimmerColor,
+                        performanceService: performanceService,
+                      ),
                       // Flash blanc avec fade out progressif iOS 26
                       if (flashAnimation != null && flashAnimation!.value > 0)
                         Positioned.fill(
@@ -87,7 +92,8 @@ class GlassBubbleButton extends StatelessWidget {
                               borderRadius: BorderRadius.circular(size / 2),
                               color: Colors.white.withValues(
                                 alpha: _calculateFlashOpacity(
-                                    flashAnimation!.value),
+                                  flashAnimation!.value,
+                                ),
                               ),
                             ),
                           ),
@@ -102,8 +108,10 @@ class GlassBubbleButton extends StatelessWidget {
                 child: Stack(
                   children: [
                     _buildButtonContent(
-                        effectiveIconColor, effectiveShimmerColor,
-                        performanceService: performanceService),
+                      effectiveIconColor,
+                      effectiveShimmerColor,
+                      performanceService: performanceService,
+                    ),
                     // Flash blanc avec fade out progressif iOS 26
                     if (flashAnimation != null && flashAnimation!.value > 0)
                       Positioned.fill(
@@ -111,8 +119,9 @@ class GlassBubbleButton extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(size / 2),
                             color: Colors.white.withValues(
-                              alpha:
-                                  _calculateFlashOpacity(flashAnimation!.value),
+                              alpha: _calculateFlashOpacity(
+                                flashAnimation!.value,
+                              ),
                             ),
                           ),
                         ),
@@ -141,10 +150,7 @@ class GlassBubbleButton extends StatelessWidget {
 
     // Wrapper avec tooltip si fourni
     if (tooltip != null) {
-      buttonContent = Tooltip(
-        message: tooltip!,
-        child: buttonContent,
-      );
+      buttonContent = Tooltip(message: tooltip!, child: buttonContent);
     }
 
     return buttonContent;
@@ -213,11 +219,7 @@ class GlassBubbleButton extends StatelessWidget {
                         delay: 3000.ms,
                         color: effectiveShimmerColor,
                       )
-                  : Icon(
-                      icon,
-                      color: effectiveIconColor,
-                      size: size * 0.4375,
-                    ),
+                  : Icon(icon, color: effectiveIconColor, size: size * 0.4375),
             ),
           ),
         ),

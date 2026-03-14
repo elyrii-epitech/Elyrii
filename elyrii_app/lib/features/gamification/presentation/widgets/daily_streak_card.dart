@@ -38,18 +38,17 @@ class DailyStreakCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Text(
-                  '🔥',
-                  style: TextStyle(fontSize: 24),
-                ),
+                child: const Text('🔥', style: TextStyle(fontSize: 24)),
               )
                   .animate(
-                      onPlay: (controller) => controller.repeat(reverse: true))
+                    onPlay: (controller) => controller.repeat(reverse: true),
+                  )
                   .scaleXY(
-                      begin: 1.0,
-                      end: 1.1,
-                      duration: 1500.ms,
-                      curve: Curves.easeInOut),
+                    begin: 1.0,
+                    end: 1.1,
+                    duration: 1500.ms,
+                    curve: Curves.easeInOut,
+                  ),
 
               const SizedBox(width: 16),
 
@@ -106,10 +105,12 @@ class DailyStreakCard extends StatelessWidget {
                       boxShadow: isCompleted
                           ? [
                               BoxShadow(
-                                color: AppColors.streak.withValues(alpha: 0.4),
+                                color: AppColors.streak.withValues(
+                                  alpha: 0.4,
+                                ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
-                              )
+                              ),
                             ]
                           : null,
                       border: isCompleted
@@ -123,8 +124,11 @@ class DailyStreakCard extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: isCompleted
-                        ? const Icon(Icons.check_rounded,
-                            color: Colors.white, size: 20)
+                        ? const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          )
                         : null,
                   ),
                   const SizedBox(height: 6),

@@ -149,13 +149,12 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
             if (state.hasError)
               Padding(
                 padding: const EdgeInsets.only(
-                    top: AppDimensions.spacingXs,
-                    left: AppDimensions.paddingMd),
+                  top: AppDimensions.spacingXs,
+                  left: AppDimensions.paddingMd,
+                ),
                 child: Text(
                   state.errorText!,
-                  style: AppTextStyles.bodySmall(
-                    color: AppColors.error,
-                  ),
+                  style: AppTextStyles.bodySmall(color: AppColors.error),
                 ),
               ),
           ],

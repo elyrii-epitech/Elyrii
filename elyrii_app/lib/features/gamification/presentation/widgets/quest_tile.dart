@@ -110,7 +110,9 @@ class QuestTile extends StatelessWidget {
                       // XP Badge
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.xpBar.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),

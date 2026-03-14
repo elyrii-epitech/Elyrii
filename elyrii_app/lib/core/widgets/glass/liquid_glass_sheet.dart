@@ -79,7 +79,9 @@ class LiquidGlassSheetContent extends StatelessWidget {
                         ? AppColors.liquidGlassBackgroundDark
                         : AppColors.liquidGlassBackgroundLight),
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppDimensions.radiusLiquidGlassSheet),
+                  top: Radius.circular(
+                    AppDimensions.radiusLiquidGlassSheet,
+                  ),
                 ),
                 border: Border(
                   top: BorderSide(
@@ -111,7 +113,8 @@ class LiquidGlassSheetContent extends StatelessWidget {
                           ),
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(
-                                AppDimensions.radiusLiquidGlassSheet),
+                              AppDimensions.radiusLiquidGlassSheet,
+                            ),
                           ),
                         ),
                       ),
@@ -149,6 +152,10 @@ class LiquidGlassSheetContent extends StatelessWidget {
         );
       },
     ).animate().fadeIn(duration: 300.ms, curve: Curves.easeOutCubic).slideY(
-        begin: 0.1, end: 0, duration: 350.ms, curve: Curves.easeOutCubic);
+          begin: 0.1,
+          end: 0,
+          duration: 350.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
