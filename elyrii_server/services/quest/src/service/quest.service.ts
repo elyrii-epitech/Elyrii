@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { openAPIRouteHandler } from "hono-openapi";
+import { swaggerUI } from "@hono/swagger-ui";
 import QuestController from "../controllers/quest.controller";
 import type { HonoEnv } from "../utils/hono.types";
 import { authMiddleware } from "../middleware/auth.middleware";
@@ -25,6 +27,26 @@ class QuestService {
         this.router.post("/proposals", ...this.questController.createProposal); // AI calls this? Or user requesting one?
         this.router.post("/proposals/:challengeId/accept", ...this.questController.acceptChallenge);
         this.router.post("/proposals/:challengeId/reject", ...this.questController.rejectChallenge);
+
+        this.router.get("/openapi.json", openAPIRouteHandler(this.router, {
+            documentation: {
+                info: {
+                    title: "Elyrii Quest Service",
+                    version: "1.0.0",
+                    description: "Quest and Challenge service API"
+                },
+                servers: [
+                    {
+                        url: Bun.env.QUEST_SERVICE_PUBLIC_URL ?? "http://localhost:3004/",
+                        description: "Local development server"
+                    }
+                ]
+            }
+        }));
+
+        this.router.get("/swagger", swaggerUI({
+            url: "/challenge/openapi.json"
+        }));
     }
     
     get getRouter() {

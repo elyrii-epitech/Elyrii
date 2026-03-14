@@ -18,6 +18,8 @@ build/
 
 # Documentation
 docs/api/
+chat-rust/
+docs-app/
 
 # Claude context files
 CLAUDE.md

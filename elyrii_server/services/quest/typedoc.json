@@ -1,9 +1,9 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "name": "Auth Service",
+  "name": "Quest Service",
   "entryPoints": ["./src"],
   "entryPointStrategy": "expand",
-  "out": "../../docs/api/auth",
+  "out": "../../docs/api/quest",
   "exclude": [
     "**/node_modules/**",
     "**/tests/**",

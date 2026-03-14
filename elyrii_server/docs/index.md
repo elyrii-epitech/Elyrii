@@ -15,6 +15,12 @@ Manages real-time messaging, chat rooms, and message history. Includes WebSocket
 ### 🌐 [Gateway Service]()
 API gateway that routes requests to appropriate microservices. Handles request validation, rate limiting, and response aggregation.
 
+### 📔 [Journal Service](./api/journal/README.md)
+Handles personal journaling, including creating, retrieving, updating, and deleting journal entries.
+
+### ⚔️ [Quest Service](./api/quest/README.md)
+Manages gamified challenges (quests), including progress tracking, AI proposals, and completion logic.
+
 ## Quick Start
 
 ### Installation
@@ -29,6 +35,8 @@ bun install
 cd services/auth && bun run dev
 cd services/chat && bun run dev
 cd services/gateway && bun run dev
+cd services/journal && bun run start:dev
+cd services/quest && bun run start:dev
 
 # Or use Docker
 docker-compose up
@@ -43,6 +51,8 @@ bun run docs
 bun run docs:auth
 bun run docs:chat
 bun run docs:gateway
+bun run docs:journal
+bun run docs:quest
 ```
 
 ## API Overview
@@ -51,6 +61,8 @@ Each service exposes its own API endpoints:
 
 - **Auth Service**: Port 3001 - `/auth/*`
 - **Chat Service**: Port 3002 - `/chat/*`
+- **Journal Service**: Port 3003 - `/journal/*`
+- **Quest Service**: Port 3004 - `/challenge/*`
 - **Gateway Service**: Port 3000 - Proxies to other services
 
 ## Documentation Structure
@@ -64,7 +76,11 @@ docs/
     │   └── README.md
     ├── chat/               # Chat service documentation
     │   └── README.md
-    └── gateway/            # Gateway service documentation
+    ├── gateway/            # Gateway service documentation
+    │   └── README.md
+    ├── journal/            # Journal service documentation
+    │   └── README.md
+    └── quest/              # Quest service documentation
         └── README.md
 ```
 

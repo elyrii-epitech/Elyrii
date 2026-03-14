@@ -89,7 +89,7 @@ app.get("/openapi.json", openAPIRouteHandler(app, {
     }
 }))
 
-app.get("/swag", swaggerUI({
+app.get("/swagger", swaggerUI({
     url: "/chat/openapi.json",
     title: "Elyrii Chat Service API",
 }))
