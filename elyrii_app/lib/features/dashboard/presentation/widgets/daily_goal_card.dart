@@ -40,10 +40,7 @@ class _DailyGoalCardState extends State<DailyGoalCard>
     );
 
     _checkScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _checkController,
-        curve: Curves.elasticOut,
-      ),
+      CurvedAnimation(parent: _checkController, curve: Curves.elasticOut),
     );
 
     _checkOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -254,10 +251,7 @@ class _DailyGoalCardState extends State<DailyGoalCard>
                       ),
                     ),
                   )
-                : Text(
-                    widget.goal.emoji,
-                    style: const TextStyle(fontSize: 20),
-                  ),
+                : Text(widget.goal.emoji, style: const TextStyle(fontSize: 20)),
           ),
         );
       },

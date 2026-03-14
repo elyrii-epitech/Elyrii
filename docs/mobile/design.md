@@ -66,6 +66,8 @@ const brandTurquoise = Color(0xFF00CED1);
 
 ### Text levels
 
+**Font Family:** Poppins (via Google Fonts)
+
 **Headings:**
 - displayLarge: Main titles
 - displayMedium: Important subtitles
@@ -161,6 +163,13 @@ ShimmerLoader()
 // Circular loader
 CustomLoader()
 ```
+
+### Splash Screen
+
+**Native Launch:**
+- **Background:** Primary Color (#9D7FFE) / Dark (#1A1818)
+- **Logo:** Mascotte centered
+- **Platform:** Android 12+ adaptive icon support included.
 
 ## Glass Morphism
 

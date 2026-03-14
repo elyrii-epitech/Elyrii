@@ -39,8 +39,9 @@ class MeditationPage extends StatelessWidget {
                     ),
                   )
                       .animate(
-                          onPlay: (controller) =>
-                              controller.repeat(reverse: true))
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true),
+                      )
                       .scale(
                         begin: const Offset(0.8, 0.8),
                         end: const Offset(1.2, 1.2),
@@ -67,8 +68,9 @@ class MeditationPage extends StatelessWidget {
                     ),
                   )
                       .animate(
-                          onPlay: (controller) =>
-                              controller.repeat(reverse: true))
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true),
+                      )
                       .scale(
                         begin: const Offset(0.95, 0.95),
                         end: const Offset(1.05, 1.05),

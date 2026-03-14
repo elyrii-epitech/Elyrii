@@ -20,3 +20,7 @@ build/
 docs/api/
 chat-rust/
 docs-app/
+
+# Claude context files
+CLAUDE.md
+docs/progress.md

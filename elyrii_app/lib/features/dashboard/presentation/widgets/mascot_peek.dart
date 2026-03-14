@@ -41,13 +41,9 @@ class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
       vsync: this,
     )..repeat(reverse: true);
 
-    _floatAnimation = Tween<double>(
-      begin: 0,
-      end: 6,
-    ).animate(CurvedAnimation(
-      parent: _floatController,
-      curve: Curves.easeInOutSine,
-    ));
+    _floatAnimation = Tween<double>(begin: 0, end: 6).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOutSine),
+    );
 
     // Animation de clignement
     _blinkController = AnimationController(
@@ -55,13 +51,9 @@ class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _blinkAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.1,
-    ).animate(CurvedAnimation(
-      parent: _blinkController,
-      curve: Curves.easeInOut,
-    ));
+    _blinkAnimation = Tween<double>(begin: 1.0, end: 0.1).animate(
+      CurvedAnimation(parent: _blinkController, curve: Curves.easeInOut),
+    );
 
     // Animation de réaction au mood
     _reactionController = AnimationController(
@@ -69,13 +61,9 @@ class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
       vsync: this,
     );
 
-    _reactionAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.15,
-    ).animate(CurvedAnimation(
-      parent: _reactionController,
-      curve: Curves.elasticOut,
-    ));
+    _reactionAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _reactionController, curve: Curves.elasticOut),
+    );
 
     // Clignement périodique
     _startBlinking();
@@ -201,10 +189,7 @@ class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
               ),
 
               // Visage de la mascotte
-              Positioned(
-                bottom: 15,
-                child: _buildFace(),
-              ),
+              Positioned(bottom: 15, child: _buildFace()),
             ],
           ),
         ),

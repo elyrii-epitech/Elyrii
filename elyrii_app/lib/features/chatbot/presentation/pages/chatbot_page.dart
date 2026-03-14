@@ -197,9 +197,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                           )
                         : const Center(
                             key: ValueKey('full'),
-                            child: MascotWidget(
-                              isMinimized: false,
-                            ),
+                            child: MascotWidget(isMinimized: false),
                           ),
                   );
                 },
@@ -244,10 +242,7 @@ class _ChatbotPageState extends State<ChatbotPage>
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: (isDark ? AppColors.cardDark : AppColors.cardLight)
                 .withValues(alpha: 0.6),
@@ -316,8 +311,9 @@ class _ChatbotPageState extends State<ChatbotPage>
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: _hasStartedTyping
-                              ? AppColors.primary
-                                  .withValues(alpha: _inputGlowAnimation.value)
+                              ? AppColors.primary.withValues(
+                                  alpha: _inputGlowAnimation.value,
+                                )
                               : _isTextFieldFocused
                                   ? AppColors.primary.withValues(alpha: 0.5)
                                   : (isDark
@@ -330,7 +326,8 @@ class _ChatbotPageState extends State<ChatbotPage>
                             ? [
                                 BoxShadow(
                                   color: AppColors.primary.withValues(
-                                      alpha: _inputGlowAnimation.value * 0.3),
+                                    alpha: _inputGlowAnimation.value * 0.3,
+                                  ),
                                   blurRadius: 12,
                                   spreadRadius: 0,
                                 ),
@@ -379,10 +376,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: _hasStartedTyping
-                        ? [
-                            AppColors.primary,
-                            const Color(0xFF7B5FE0),
-                          ]
+                        ? [AppColors.primary, const Color(0xFF7B5FE0)]
                         : [
                             AppColors.primary.withValues(alpha: 0.6),
                             const Color(0xFF7B5FE0).withValues(alpha: 0.6),

@@ -2,21 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'dart:math';
 
 /// Enum représentant les différents moods disponibles
-enum MoodType {
-  verySad,
-  sad,
-  neutral,
-  happy,
-  veryHappy,
-}
+enum MoodType { verySad, sad, neutral, happy, veryHappy }
 
 /// Enum pour les types d'objectifs quotidiens
-enum GoalType {
-  journal,
-  meditation,
-  breathing,
-  gratitude,
-}
+enum GoalType { journal, meditation, breathing, gratitude }
 
 /// Extension pour obtenir les propriétés du mood
 extension MoodTypeExtension on MoodType {
@@ -238,8 +227,9 @@ class DashboardProvider extends ChangeNotifier {
     _selectedMood = mood;
 
     // Réinitialiser l'index du message pour le nouveau mood
-    _currentMascotMessageIndex =
-        Random().nextInt(_moodMascotMessages[mood]!.length);
+    _currentMascotMessageIndex = Random().nextInt(
+      _moodMascotMessages[mood]!.length,
+    );
 
     // Enregistrer dans l'historique
     final today = DateTime(

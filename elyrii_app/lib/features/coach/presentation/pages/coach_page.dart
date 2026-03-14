@@ -15,7 +15,11 @@ class CoachPage extends StatelessWidget {
           isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
-            16, MediaQuery.of(context).padding.top + 16, 16, 100),
+          16,
+          MediaQuery.of(context).padding.top + 16,
+          16,
+          100,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -47,8 +51,11 @@ class CoachPage extends StatelessWidget {
                           color: AppColors.primary.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.lightbulb_rounded,
-                            color: AppColors.primary, size: 20),
+                        child: const Icon(
+                          Icons.lightbulb_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       const Text(

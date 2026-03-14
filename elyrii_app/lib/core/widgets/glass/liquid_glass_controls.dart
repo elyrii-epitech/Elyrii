@@ -76,10 +76,12 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.w500,
                         color: isDark
-                            ? Colors.white
-                                .withValues(alpha: isSelected ? 1.0 : 0.6)
-                            : Colors.black
-                                .withValues(alpha: isSelected ? 0.9 : 0.5),
+                            ? Colors.white.withValues(
+                                alpha: isSelected ? 1.0 : 0.6,
+                              )
+                            : Colors.black.withValues(
+                                alpha: isSelected ? 0.9 : 0.5,
+                              ),
                       ),
                     ),
                   ),

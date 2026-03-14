@@ -40,14 +40,8 @@ class _MascotWidgetState extends State<MascotWidget>
       vsync: this,
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.06,
-    ).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOutSine,
-      ),
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
     );
 
     _playOpeningAnimation();
@@ -91,20 +85,23 @@ class _MascotWidgetState extends State<MascotWidget>
 
   void _startInactivityTimer() {
     _inactivityTimer?.cancel();
-    _inactivityTimer =
-        Timer(const Duration(seconds: _inactivityDelaySeconds), () {
-      if (mounted) {
-        _playInactivityAnimation();
-      }
-    });
+    _inactivityTimer = Timer(
+      const Duration(seconds: _inactivityDelaySeconds),
+      () {
+        if (mounted) {
+          _playInactivityAnimation();
+        }
+      },
+    );
   }
 
   void _playInactivityAnimation() {
     final inactivityAnimations = MascotAnimations.inactivityAnimations;
     if (inactivityAnimations.isEmpty) return;
 
-    final animation =
-        MascotAnimations.selectWeightedRandom(inactivityAnimations);
+    final animation = MascotAnimations.selectWeightedRandom(
+      inactivityAnimations,
+    );
     if (animation != null) {
       _playAnimation(animation);
     }
@@ -168,8 +165,9 @@ class _MascotWidgetState extends State<MascotWidget>
           gradient: LinearGradient(
             colors: [
               AppColors.primary.withValues(alpha: 0.15),
-              (isDark ? AppColors.cardDark : AppColors.cardLight)
-                  .withValues(alpha: 0.95),
+              (isDark ? AppColors.cardDark : AppColors.cardLight).withValues(
+                alpha: 0.95,
+              ),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -208,9 +206,7 @@ class _MascotWidgetState extends State<MascotWidget>
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _buildMascotText(true, isDark),
-            ),
+            Expanded(child: _buildMascotText(true, isDark)),
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Icon(

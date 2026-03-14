@@ -49,9 +49,7 @@ class MascotAnimations {
     playOnInactivity: true,
   );
 
-  static const List<MascotAnimation> specialAnimations = [
-    coucou,
-  ];
+  static const List<MascotAnimation> specialAnimations = [coucou];
 
   static List<MascotAnimation> get openingAnimations =>
       specialAnimations.where((a) => a.playOnOpen).toList();
@@ -60,7 +58,8 @@ class MascotAnimations {
       specialAnimations.where((a) => a.playOnInactivity).toList();
 
   static MascotAnimation? selectWeightedRandom(
-      List<MascotAnimation> animations) {
+    List<MascotAnimation> animations,
+  ) {
     if (animations.isEmpty) return null;
 
     final totalWeight = animations.fold<int>(0, (sum, a) => sum + a.weight);

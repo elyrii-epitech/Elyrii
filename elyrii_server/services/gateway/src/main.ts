@@ -1,6 +1,6 @@
 /**
  * Gateway Service Main Application
- * 
+ *
  * @remarks
  * This service acts as the single entry point for the Elyrii backend.
  * It routes requests to the appropriate microservices:
@@ -28,6 +28,7 @@ const {
     CHAT_SERVICE_URL,
     AUTH_SERVICE_URL,
     JOURNAL_SERVICE_URL,
+    USER_SERVICE_URL,
     QUEST_SERVICE_URL,
 } = envVars;
 
@@ -91,6 +92,8 @@ app.all("/journal/*", describeRoute({
     description: "Proxies requests to the Journal Service.",
     tags: ["Journal"]
 }), (ctx) => proxyRequest(JOURNAL_SERVICE_URL, ctx));
+
+app.all("/user/*", (ctx) => proxyRequest(USER_SERVICE_URL, ctx));
 
 app.all("/challenge/*", describeRoute({
     summary: "Quest Service Proxy",

@@ -50,7 +50,7 @@ jobs:
           if [ -d "_artifacts/mobile" ] && [ "$(ls -A _artifacts/mobile || true)" ]; then
             cp -r _artifacts/mobile/* docs/mobile/api/
           fi
-          
+
           # Ensure index.md exists for MkDocs build
           if [ ! -f "docs/mobile/api/index.md" ]; then
             echo "# Mobile API Documentation" > docs/mobile/api/index.md
@@ -74,14 +74,10 @@ jobs:
           if [ -d "_artifacts/server" ] && [ "$(ls -A _artifacts/server || true)" ]; then
             cp -r _artifacts/server/* docs/server/api/
           elif [ -d "elyrii_server/docs" ]; then
-            cp -r elyrii_server/docs/* docs/server/api/ || true
-          elif [ -d "elyrii-poc/docs" ]; then
-            cp -r elyrii-poc/docs/* docs/server/api/ || true
-          elif [ -d "poc/docs" ]; then
-            cp -r poc/docs/* docs/server/api/ || true
+            cp -r elyrii_server/docs/index.md docs/server/api/ || true
           fi
           
-          # Ensure index.md exists for MkDocs build
+          # Ensure index.md exists and is valid. 
           if [ ! -f "docs/server/api/index.md" ]; then
             echo "# Server API Documentation" > docs/server/api/index.md
             echo "" >> docs/server/api/index.md
