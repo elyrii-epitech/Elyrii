@@ -13,7 +13,8 @@ import type { Context } from "hono";
  */
 export async function proxyRequest(url: string, ctx: Context) {
     try {
-        const targetUrl = url + ctx.req.path;
+        const incomingUrl = new URL(ctx.req.url);
+        const targetUrl = url + incomingUrl.pathname + incomingUrl.search;
     
         const rawReq = ctx.req.raw;
         const headers = new Headers(rawReq.headers);

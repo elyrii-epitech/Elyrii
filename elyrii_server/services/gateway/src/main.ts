@@ -11,6 +11,7 @@
  */
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import { cors } from "hono/cors";
 import { upgradeWebSocket } from "hono/bun";
 import { openAPIRouteHandler, describeRoute } from "hono-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
@@ -33,6 +34,13 @@ const {
 } = envVars;
 
 app.use(logger());
+app.use("*", cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization", "Accept"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 86400,
+}));
 
 app.get(
     "/chat/ws",
@@ -93,7 +101,11 @@ app.all("/journal/*", describeRoute({
     tags: ["Journal"]
 }), (ctx) => proxyRequest(JOURNAL_SERVICE_URL, ctx));
 
-app.all("/user/*", (ctx) => proxyRequest(USER_SERVICE_URL, ctx));
+app.all("/user/*", describeRoute({
+    summary: "User Service Proxy",
+    description: "Proxies requests to the User Service.",
+    tags: ["User"]
+}), (ctx) => proxyRequest(USER_SERVICE_URL, ctx));
 
 app.all("/challenge/*", describeRoute({
     summary: "Quest Service Proxy",
