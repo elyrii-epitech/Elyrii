@@ -6,8 +6,8 @@
   "version": "1.0.0",
   "description": "Auth service",
   "scripts": {
-    "dev": "bun run --hot index.ts",
-    "start": "bun run index.ts",
+    "start:dev": "NODE_ENV=development bun run --hot index.ts",
+    "start:prod": "NODE_ENV=production bun run index.ts",
     "docs:build": "bun i ; typedoc --out ../../docs/api/auth",
     "db:generate": "mkdir .drizzle ; drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

@@ -36,6 +36,7 @@ services:
       - GATEWAY_URL=http://gateway:3000
       - CHAT_SERVICE_URL=http://chat-service:3002
       - PORT=${AUTH_PORT}
+      - AUTH_PORT=${AUTH_PORT}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
@@ -62,6 +63,7 @@ services:
       - GATEWAY_URL=http://gateway:3000
       - REDPANDA_URL=http://redpanda:9092
       - PORT=${CHAT_PORT}
+      - CHAT_PORT=${CHAT_PORT}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
@@ -86,11 +88,14 @@ services:
       - GATEWAY_URL=http://gateway:3000
       - REDPANDA_URL=http://redpanda:9092
       - PORT=${JOURNAL_PORT}
+      - JOURNAL_SERVICE_PORT=${JOURNAL_PORT}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
       - DB_NAME=${JOURNAL_DB_NAME}
       - DB_PORT=${DB_PORT}
+      - SECRET_KEY=${AUTH_SECRET_KEY}
+      - ACCESS_JWT_SIGN_KEY=${ACCESS_JWT_SIGN_KEY}
     networks:
       - elyrii_net
     depends_on:
@@ -110,6 +115,7 @@ services:
       - GATEWAY_URL=http://gateway:3000
       - REDPANDA_URL=http://redpanda:9092
       - PORT=${QUEST_PORT}
+      - QUEST_SERVICE_PORT=${QUEST_PORT}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
@@ -135,6 +141,7 @@ services:
       - "3005:3005"
     environment:
       - PORT=${USER_PORT}
+      - USER_PORT=${USER_PORT}
       - DB_HOST=${DB_HOST}
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASSWORD}
@@ -197,7 +204,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./init_dbs.sql:/docker-entrypoint-initdb.d/init_dbs.sql
+      - ./init_dbs.sh:/docker-entrypoint-initdb.d/init_dbs.sh
     networks:
       - elyrii_net
     healthcheck:
