@@ -1,13 +1,9 @@
 import JournalService from "./src/service/journal.service";
-import { runMigrations } from "./src/config/db.config";
 
 if (!Bun.env.JOURNAL_SERVICE_PORT) {
     console.error("[ERROR] JOURNAL_SERVICE_PORT environment variable is not set");
     process.exit(1);
 }
-
-// Run migrations before starting the service
-await runMigrations();
 
 const journalService = new JournalService();
 

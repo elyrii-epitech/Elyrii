@@ -1,6 +1,4 @@
 import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
-import path from "path";
 
 /**
  * Builds the database configuration object from environment variables.
@@ -32,18 +30,3 @@ const connectionString = `postgres://${config.user}:${config.password}@${config.
  * Drizzle ORM database client used by the auth service.
  */
 export const db = drizzle(connectionString);
-
-/**
- * Runs the database migrations for the auth service.
- */
-export const runMigrations = async () => {
-    try {
-        console.log("[INFO] Running database migrations for auth service...");
-        await migrate(db, { migrationsFolder: path.join(__dirname, "../../.drizzle") });
-        console.log("[INFO] Database migrations for auth service completed successfully");
-    } catch (error) {
-        console.error("[ERROR] Failed to run database migrations for auth service. Continuing startup...", error);
-        // We don't re-throw here to allow the service to start even if migrations fail
-        // (e.g. if the tables already exist or there's a transient connection issue)
-    }
-};

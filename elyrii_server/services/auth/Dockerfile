@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 3001
 
-ENTRYPOINT ["bun", "run", "start:prod"]
+ENTRYPOINT ["sh", "-c", "bun run db:push && bun run start:prod"]
