@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../core/services/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/liquid_glass_kit.dart';
+import '../../../routes/app_routes.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -192,9 +194,15 @@ class _SettingsPageState extends State<SettingsPage> {
                           LiquidGlassDialogAction(
                             label: 'Déconnecter',
                             isDestructive: true,
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.pop(context);
-                              // TODO: Implement logout
+                              await context.read<AuthProvider>().logout();
+                              if (context.mounted) {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  AppRoutes.login,
+                                  (route) => false,
+                                );
+                              }
                             },
                           ),
                         ],

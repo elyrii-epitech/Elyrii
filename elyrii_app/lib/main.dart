@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/config/app_constants.dart';
+import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
 import 'core/services/secure_storage_service.dart';
 import 'core/services/theme_provider.dart';
@@ -13,12 +14,16 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/journal/presentation/providers/journal_provider.dart';
 import 'features/chatbot/presentation/providers/chatbot_provider.dart';
 import 'features/gamification/presentation/providers/gamification_provider.dart';
+import 'features/settings/providers/settings_provider.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Configure API base URL for current platform
+  AppConfig.initialize();
 
   // Initialize core services
   final secureStorage = SecureStorageService();
@@ -33,6 +38,7 @@ void main() async {
   final journalProvider = JournalProvider(client: apiClient);
   final chatbotProvider = ChatbotProvider(storage: secureStorage);
   final gamificationProvider = GamificationProvider(client: apiClient);
+  final userProvider = UserProvider(client: apiClient);
 
   // Check if user is already authenticated
   await authProvider.checkAuthStatus();
@@ -60,6 +66,7 @@ void main() async {
         ChangeNotifierProvider.value(value: journalProvider),
         ChangeNotifierProvider.value(value: chatbotProvider),
         ChangeNotifierProvider.value(value: gamificationProvider),
+        ChangeNotifierProvider.value(value: userProvider),
       ],
       child: const MyApp(),
     ),
