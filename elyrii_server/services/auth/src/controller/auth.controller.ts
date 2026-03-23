@@ -68,7 +68,7 @@ class AuthController {
             await this.tokenRepository.createToken(refreshToken, user.id, ctx.req.header("User-Agent") || "Unknown");
             setCookie(ctx, "refresh_token", refreshToken, {
                 httpOnly: true,
-                secure: true,
+                secure: process.env.NODE_ENV === "production",
                 sameSite: "lax",
                 path: "/auth/refresh",
                 maxAge: JwtUtils.REFRESH_TOKEN_EXP
@@ -102,7 +102,6 @@ class AuthController {
         sValidator("json", registerValidation),
         async (ctx) => {
             const { email, password, lastName, firstName, age } = ctx.req.valid("json");
-            // TODO: Implement registration logic using authRepository
             try {
                 const user = await this.authRepository.createUser({
                     email,
@@ -111,7 +110,6 @@ class AuthController {
                     firstName,
                     age: age ?? 18,
                 });
-                //TODO: create the jwt logic here
 
                 const tokenPayload = {
                     userId: user!.id,
@@ -122,6 +120,15 @@ class AuthController {
                     JwtUtils.generateRefreshToken(tokenPayload)
                 ]);
                 await this.tokenRepository.createToken(refreshToken, user!.id, ctx.req.header("User-Agent") || "Unknown");
+                
+                setCookie(ctx, "refresh_token", refreshToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
+                    path: "/auth/refresh",
+                    maxAge: JwtUtils.REFRESH_TOKEN_EXP
+                });
+
                 return ctx.json({ message: "User registered successfully", token });
             } catch (error) {
                 console.error("Registration error:", error);
@@ -134,8 +141,7 @@ class AuthController {
      * Handler for processing user logout requests.
      * 
      * @remarks
-     * In a full implementation, this should invalidate the refresh token in the database.
-     * Currently returns a simple logout message.
+     * Invalidates the refresh token session and clears the refresh token cookie.
      * 
      * @param ctx - Hono Context
      * @returns JSON response confirming logout
@@ -148,7 +154,27 @@ class AuthController {
             200: { description: "Logout successful" },
         }
     }), async (ctx) => {
-        return ctx.json({ message: "Logout" });
+        const refreshToken = getCookie(ctx, "refresh_token");
+        if (refreshToken) {
+            try {
+                const session = await this.tokenRepository.getTokenByToken(refreshToken);
+                if (session) {
+                    await this.tokenRepository.deleteToken(session.id);
+                }
+            } catch (error) {
+                console.error("Logout session invalidation error:", error);
+            }
+        }
+
+        setCookie(ctx, "refresh_token", "", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/auth/refresh",
+            maxAge: 0
+        });
+
+        return ctx.json({ message: "Logout successful" });
     });
     
 
@@ -204,7 +230,7 @@ class AuthController {
 
         setCookie(ctx, "refresh_token", refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             path: "/auth/refresh",
             maxAge: JwtUtils.REFRESH_TOKEN_EXP

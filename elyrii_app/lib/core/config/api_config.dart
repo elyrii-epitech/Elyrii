@@ -35,4 +35,7 @@ class ApiConfig {
       '$_baseUrl/challenge/proposals/$id/accept';
   static String rejectChallengeUrl(String id) =>
       '$_baseUrl/challenge/proposals/$id/reject';
+
+  // ==================== User Profile ====================
+  static String get userMeUrl => '$_baseUrl/user/me';
 }
