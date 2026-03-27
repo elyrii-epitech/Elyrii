@@ -99,10 +99,7 @@ class LevelProgressHeader extends StatelessWidget {
             ),
           )
               .animate()
-              .scale(
-                duration: 600.ms,
-                curve: Curves.easeOutBack,
-              )
+              .scale(duration: 600.ms, curve: Curves.easeOutBack)
               .fadeIn(),
 
           const SizedBox(width: 24),
@@ -159,8 +156,9 @@ class LevelProgressHeader extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(3),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.primary
-                                          .withValues(alpha: 0.4),
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.4,
+                                      ),
                                       blurRadius: 6,
                                       offset: const Offset(0, 0),
                                     ),

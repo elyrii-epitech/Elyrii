@@ -8,11 +8,7 @@ class QuoteCard extends StatelessWidget {
   final String quote;
   final bool isDark;
 
-  const QuoteCard({
-    super.key,
-    required this.quote,
-    this.isDark = false,
-  });
+  const QuoteCard({super.key, required this.quote, this.isDark = false});
 
   @override
   Widget build(BuildContext context) {

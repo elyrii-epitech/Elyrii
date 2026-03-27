@@ -1,31 +1,33 @@
 {
-  "name": "journal",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "start:dev": "NODE_ENV=development bun run --hot index.ts",
-    "start:prod": "NODE_ENV=production bun run index.ts",
-    "docs:build": "bun i ; typedoc --out ../../docs/api/auth",
-    "db:generate": "mkdir .drizzle ; drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:seed": "drizzle-kit seed",
-    "db:push": "drizzle-kit push"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/pg": "^8.15.6",
-    "drizzle-kit": "^0.31.7",
-    "tsx": "^4.20.6"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@hono/standard-validator": "^0.2.0",
-    "drizzle-orm": "^0.44.7",
-    "hono": "^4.10.6",
-    "pg": "^8.16.3",
-    "zod": "^4.1.13"
-  }
+    "name": "journal",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "start:dev": "NODE_ENV=development bun run --hot index.ts",
+        "start:prod": "NODE_ENV=production bun run index.ts",
+        "docs:build": "bun i ; typedoc",
+        "db:generate": "mkdir -p .drizzle ; drizzle-kit generate",
+        "db:migrate": "drizzle-kit migrate",
+        "db:seed": "drizzle-kit seed",
+        "db:push": "drizzle-kit push"
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "@types/pg": "^8.15.6",
+        "drizzle-kit": "^0.31.7",
+        "tsx": "^4.20.6"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@hono/standard-validator": "^0.2.0",
+        "@hono/swagger-ui": "^0.5.3",
+        "drizzle-orm": "^0.44.7",
+        "hono": "^4.10.6",
+        "hono-openapi": "^1.1.2",
+        "pg": "^8.16.3",
+        "zod": "^4.1.13"
+    }
 }

@@ -55,8 +55,9 @@ class GlassPerformanceService extends ChangeNotifier {
         _isLowEndDevice = processorCount <= 4;
 
         debugPrint(
-            'GlassPerformanceService: Detected $processorCount processors, '
-            'isLowEndDevice: $_isLowEndDevice');
+          'GlassPerformanceService: Detected $processorCount processors, '
+          'isLowEndDevice: $_isLowEndDevice',
+        );
       } else if (Platform.isIOS) {
         // iOS: les appareils Apple sont généralement performants
         // Mais on peut détecter les anciens modèles via le nombre de processeurs
@@ -67,8 +68,9 @@ class GlassPerformanceService extends ChangeNotifier {
         _isLowEndDevice = processorCount < 4;
 
         debugPrint(
-            'GlassPerformanceService: iOS with $processorCount processors, '
-            'isLowEndDevice: $_isLowEndDevice');
+          'GlassPerformanceService: iOS with $processorCount processors, '
+          'isLowEndDevice: $_isLowEndDevice',
+        );
       } else {
         // Desktop platforms are generally powerful enough
         _isLowEndDevice = false;

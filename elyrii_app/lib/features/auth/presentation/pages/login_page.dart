@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -7,6 +8,7 @@ import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
+import '../providers/auth_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
   void dispose() {
@@ -28,24 +30,23 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _handleLogin() {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          // Navigate to home or show success
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Connexion réussie (Simulation)')),
-          );
-        }
-      });
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.login(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+    if (!mounted) return;
+    if (success) {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.error ?? 'Login failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -203,7 +204,8 @@ class _LoginPageState extends State<LoginPage> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: AppDimensions.paddingMd),
+                                    horizontal: AppDimensions.paddingMd,
+                                  ),
                                   child: Text(
                                     'ou',
                                     style: AppTextStyles.bodySmall(
@@ -258,7 +260,9 @@ class _LoginPageState extends State<LoginPage> {
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pushNamed(
-                                        context, AppRoutes.register);
+                                      context,
+                                      AppRoutes.register,
+                                    );
                                   },
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
@@ -282,7 +286,9 @@ class _LoginPageState extends State<LoginPage> {
                             TextButton(
                               onPressed: () {
                                 Navigator.pushReplacementNamed(
-                                    context, AppRoutes.home);
+                                  context,
+                                  AppRoutes.home,
+                                );
                               },
                               child: Text(
                                 'Passer (Dev)',
@@ -311,7 +317,11 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildSocialButtonFull(
-      String text, String assetPath, IconData fallbackIcon, bool isDark) {
+    String text,
+    String assetPath,
+    IconData fallbackIcon,
+    bool isDark,
+  ) {
     return LiquidGlassCard(
       onTap: () {},
       padding: EdgeInsets.zero,

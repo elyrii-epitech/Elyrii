@@ -32,10 +32,29 @@ void main() {
       expect(await service.hasAccessToken(), isTrue);
     });
 
-    test('hasAccessToken should return false when token does not exist',
-        () async {
-      expect(await service.hasAccessToken(), isFalse);
-    });
+<<<<<<< HEAD
+    test(
+      'hasAccessToken should return false when token does not exist',
+      () async {
+        expect(await service.hasAccessToken(), isFalse);
+      },
+    );
+>>>>>>> dev
+=======
+    test(
+      'hasAccessToken should return false when token does not exist',
+      () async {
+        expect(await service.hasAccessToken(), isFalse);
+      },
+    );
+=======
+    test(
+      'hasAccessToken should return false when token does not exist',
+      () async {
+        expect(await service.hasAccessToken(), isFalse);
+      },
+    );
+>>>>>>> dev
 
     test('should save and retrieve refresh token', () async {
       const token = 'test_refresh_token';

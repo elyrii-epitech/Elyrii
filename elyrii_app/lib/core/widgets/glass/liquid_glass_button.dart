@@ -5,12 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-enum LiquidGlassButtonStyle {
-  filled,
-  tinted,
-  plain,
-  gray,
-}
+enum LiquidGlassButtonStyle { filled, tinted, plain, gray }
 
 class LiquidGlassButton extends StatefulWidget {
   final String label;
@@ -214,8 +209,9 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.3 : 0.1,
+                        ),
                         blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),

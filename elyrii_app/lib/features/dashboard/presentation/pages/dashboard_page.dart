@@ -329,9 +329,7 @@ class _MoodChipState extends State<_MoodChip> {
           ),
           child: Text(
             widget.mood.emoji,
-            style: TextStyle(
-              fontSize: widget.isSelected ? 28 : 24,
-            ),
+            style: TextStyle(fontSize: widget.isSelected ? 28 : 24),
           ),
         ),
       ),
@@ -476,11 +474,7 @@ class _QuickActionButtonState extends State<_QuickActionButton> {
                   color: widget.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  widget.icon,
-                  color: widget.color,
-                  size: 20,
-                ),
+                child: Icon(widget.icon, color: widget.color, size: 20),
               ),
               const SizedBox(width: 10),
               Flexible(

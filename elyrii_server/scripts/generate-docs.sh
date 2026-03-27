@@ -41,6 +41,14 @@ case $COMMAND in
         echo "🌐 Generating documentation for gateway service..."
         bun run docs:gateway
         ;;
+    journal)
+        echo "📔 Generating documentation for journal service..."
+        bun run docs:journal
+        ;;
+    quest)
+        echo "⚔️  Generating documentation for quest service..."
+        bun run docs:quest
+        ;;
     serve)
         echo "🖥️  Starting documentation server on http://localhost:8080..."
         bun run docs:serve
@@ -50,13 +58,15 @@ case $COMMAND in
         bun run docs:clean
         ;;
     *)
-        echo "Usage: $0 [all|auth|chat|gateway|serve|clean]"
+        echo "Usage: $0 [all|auth|chat|gateway|journal|quest|serve|clean]"
         echo ""
         echo "Commands:"
         echo "  all      - Generate documentation for all services (default)"
         echo "  auth     - Generate documentation for auth service only"
         echo "  chat     - Generate documentation for chat service only"
         echo "  gateway  - Generate documentation for gateway service only"
+        echo "  journal  - Generate documentation for journal service only"
+        echo "  quest    - Generate documentation for quest service only"
         echo "  serve    - Start local documentation server"
         echo "  clean    - Clean generated documentation"
         exit 1

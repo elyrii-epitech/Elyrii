@@ -21,8 +21,10 @@ class MascotAnimationCache {
   }
 
   static Future<void> preloadAll() async {
-    await preload(
-        [MascotAnimations.idle, ...MascotAnimations.specialAnimations]);
+    await preload([
+      MascotAnimations.idle,
+      ...MascotAnimations.specialAnimations,
+    ]);
   }
 
   static LottieComposition? get(String assetPath) => _cache[assetPath];

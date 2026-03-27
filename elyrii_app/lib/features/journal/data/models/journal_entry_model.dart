@@ -1,17 +1,64 @@
-import 'package:flutter/material.dart';
+/// Journal entry model matching the backend journal_entries table
+class JournalEntryModel {
+  final String id;
+  final String userId;
+  final String title;
+  final String? content;
+  final String? mood;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
-class TempPage extends StatelessWidget {
-  const TempPage({super.key});
+  const JournalEntryModel({
+    required this.id,
+    required this.userId,
+    required this.title,
+    this.content,
+    this.mood,
+    required this.createdAt,
+    required this.updatedAt,
+  });
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'Page Temporaire',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
+  factory JournalEntryModel.fromJson(Map<String, dynamic> json) {
+    return JournalEntryModel(
+      id: json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      content: json['content'] as String?,
+      mood: json['mood'] as String?,
+      createdAt: _parseDate(json['createdAt'] ?? json['created_at']),
+      updatedAt: _parseDate(json['updatedAt'] ?? json['updated_at']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'content': content,
+        'mood': mood,
+      };
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
+  }
+
+  JournalEntryModel copyWith({
+    String? id,
+    String? userId,
+    String? title,
+    String? content,
+    String? mood,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return JournalEntryModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      mood: mood ?? this.mood,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

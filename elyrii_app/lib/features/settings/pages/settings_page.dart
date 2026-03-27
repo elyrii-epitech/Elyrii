@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../../core/services/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/liquid_glass_kit.dart';
+import '../../../routes/app_routes.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -37,9 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
           CustomScrollView(
             slivers: [
               // Espace pour l'AppBar
-              SliverToBoxAdapter(
-                child: SizedBox(height: topPadding + 70),
-              ),
+              SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
               // Section Apparence
               SliverToBoxAdapter(
                 child: _buildSection(
@@ -184,7 +184,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         context: context,
                         title: 'Se déconnecter',
                         child: const Text(
-                            'Êtes-vous sûr de vouloir vous déconnecter ?'),
+                          'Êtes-vous sûr de vouloir vous déconnecter ?',
+                        ),
                         actions: [
                           LiquidGlassDialogAction(
                             label: 'Annuler',
@@ -193,9 +194,15 @@ class _SettingsPageState extends State<SettingsPage> {
                           LiquidGlassDialogAction(
                             label: 'Déconnecter',
                             isDestructive: true,
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.pop(context);
-                              // TODO: Implement logout
+                              await context.read<AuthProvider>().logout();
+                              if (context.mounted) {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  AppRoutes.login,
+                                  (route) => false,
+                                );
+                              }
                             },
                           ),
                         ],
@@ -205,9 +212,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               // Espace en bas
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
           // Bouton retour en bulle Liquid Glass + Titre
@@ -294,10 +299,7 @@ class _LiquidGlassBackButton extends StatefulWidget {
   final bool isDark;
   final VoidCallback onTap;
 
-  const _LiquidGlassBackButton({
-    required this.isDark,
-    required this.onTap,
-  });
+  const _LiquidGlassBackButton({required this.isDark, required this.onTap});
 
   @override
   State<_LiquidGlassBackButton> createState() => _LiquidGlassBackButtonState();
@@ -350,8 +352,9 @@ class _LiquidGlassBackButtonState extends State<_LiquidGlassBackButton> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black
-                          .withValues(alpha: widget.isDark ? 0.3 : 0.1),
+                      color: Colors.black.withValues(
+                        alpha: widget.isDark ? 0.3 : 0.1,
+                      ),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),

@@ -103,8 +103,12 @@ class LiquidGlassActionSheetContent extends StatelessWidget {
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: isDark
-                                        ? Colors.white.withValues(alpha: 0.6)
-                                        : Colors.black.withValues(alpha: 0.5),
+                                        ? Colors.white.withValues(
+                                            alpha: 0.6,
+                                          )
+                                        : Colors.black.withValues(
+                                            alpha: 0.5,
+                                          ),
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -115,8 +119,12 @@ class LiquidGlassActionSheetContent extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: isDark
-                                        ? Colors.white.withValues(alpha: 0.5)
-                                        : Colors.black.withValues(alpha: 0.4),
+                                        ? Colors.white.withValues(
+                                            alpha: 0.5,
+                                          )
+                                        : Colors.black.withValues(
+                                            alpha: 0.4,
+                                          ),
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -188,7 +196,11 @@ class LiquidGlassActionSheetContent extends StatelessWidget {
         ),
       ),
     ).animate().fadeIn(duration: 250.ms).slideY(
-        begin: 0.1, end: 0, duration: 300.ms, curve: Curves.easeOutCubic);
+          begin: 0.1,
+          end: 0,
+          duration: 300.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 

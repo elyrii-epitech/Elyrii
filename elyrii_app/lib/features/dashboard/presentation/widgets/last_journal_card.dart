@@ -143,10 +143,7 @@ class _LastJournalCardState extends State<LastJournalCard> {
             const Spacer(),
             // Mood + Time
             if (widget.mood != null)
-              Text(
-                widget.mood!.emoji,
-                style: const TextStyle(fontSize: 16),
-              ),
+              Text(widget.mood!.emoji, style: const TextStyle(fontSize: 16)),
             const SizedBox(width: 6),
             if (widget.createdAt != null)
               Text(

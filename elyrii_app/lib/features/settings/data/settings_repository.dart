@@ -1,17 +1,34 @@
-import 'package:flutter/material.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/config/api_config.dart';
+import '../models/user_profile.dart';
 
-class TempPage extends StatelessWidget {
-  const TempPage({super.key});
+/// Repository handling user profile API calls
+class UserRepository {
+  final ApiClient _client;
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text(
-          'Page Temporaire',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
-    );
+  UserRepository({required ApiClient client}) : _client = client;
+
+  /// Fetch the authenticated user's profile
+  Future<UserProfile> getMe() async {
+    final response =
+        await _client.get(ApiConfig.userMeUrl) as Map<String, dynamic>;
+    return UserProfile.fromJson(response);
+  }
+
+  /// Update the authenticated user's profile
+  Future<UserProfile> updateMe({
+    String? firstName,
+    String? lastName,
+    int? age,
+    String? pfp,
+  }) async {
+    final body = <String, dynamic>{};
+    if (firstName != null) body['firstName'] = firstName;
+    if (lastName != null) body['lastName'] = lastName;
+    if (age != null) body['age'] = age;
+    if (pfp != null) body['pfp'] = pfp;
+    final response = await _client.put(ApiConfig.userMeUrl, body: body)
+        as Map<String, dynamic>;
+    return UserProfile.fromJson(response);
   }
 }

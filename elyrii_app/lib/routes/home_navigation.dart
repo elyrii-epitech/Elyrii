@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
 import '../features/coach/presentation/pages/coach_page.dart';
 import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
-import '../features/chatbot/presentation/providers/chatbot_provider.dart';
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_dimensions.dart';
 import '../core/widgets/glass_navigation_bar.dart';
@@ -56,7 +54,10 @@ class _HomeNavigationState extends State<HomeNavigation>
   final List<GlassNavItem> _navItems = const [
     GlassNavItem(icon: Icons.home_rounded, label: 'Home', index: 0),
     GlassNavItem(
-        icon: Icons.emoji_events_rounded, label: 'Challenges', index: 1),
+      icon: Icons.emoji_events_rounded,
+      label: 'Challenges',
+      index: 1,
+    ),
     GlassNavItem(icon: Icons.book_rounded, label: 'Journal', index: 2),
     GlassNavItem(icon: Icons.spa_rounded, label: 'Meditation', index: 3),
     GlassNavItem(icon: Icons.person_rounded, label: 'Coach', index: 4),
@@ -71,7 +72,8 @@ class _HomeNavigationState extends State<HomeNavigation>
       6,
       (index) => AnimationController(
         duration: const Duration(
-            milliseconds: AppDimensions.animationDurationLiquidGlass),
+          milliseconds: AppDimensions.animationDurationLiquidGlass,
+        ),
         vsync: this,
       ),
     );
@@ -116,12 +118,7 @@ class _HomeNavigationState extends State<HomeNavigation>
     _flashAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _flashController,
-        curve: Curves.easeOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _flashController, curve: Curves.easeOut));
 
     // iOS 26: Animation de transition de page
     _pageTransitionController = AnimationController(
@@ -129,24 +126,15 @@ class _HomeNavigationState extends State<HomeNavigation>
       vsync: this,
     );
 
-    _pageScaleAnimation = Tween<double>(
-      begin: 0.98,
-      end: 1.0,
-    ).animate(
+    _pageScaleAnimation = Tween<double>(begin: 0.98, end: 1.0).animate(
       CurvedAnimation(
         parent: _pageTransitionController,
         curve: Curves.easeOutCubic,
       ),
     );
 
-    _pageFadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _pageTransitionController,
-        curve: Curves.easeOut,
-      ),
+    _pageFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _pageTransitionController, curve: Curves.easeOut),
     );
 
     // Animer l'item sélectionné au démarrage
@@ -212,13 +200,10 @@ class _HomeNavigationState extends State<HomeNavigation>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final performanceService = GlassPerformanceService();
 
-    return ChangeNotifierProvider(
-      create: (_) => ChatbotProvider(),
-      child: Scaffold(
-        extendBody: true,
-        body: _buildPageContent(performanceService),
-        bottomNavigationBar: _buildBottomBar(isDark),
-      ),
+    return Scaffold(
+      extendBody: true,
+      body: _buildPageContent(performanceService),
+      bottomNavigationBar: _buildBottomBar(isDark),
     );
   }
 
@@ -228,10 +213,7 @@ class _HomeNavigationState extends State<HomeNavigation>
     final currentPage = _getPage(_currentIndex);
 
     if (!performanceService.showTransitionAnimations) {
-      return KeyedSubtree(
-        key: ValueKey(_currentIndex),
-        child: currentPage,
-      );
+      return KeyedSubtree(key: ValueKey(_currentIndex), child: currentPage);
     }
 
     return AnimatedBuilder(
@@ -260,14 +242,19 @@ class _HomeNavigationState extends State<HomeNavigation>
           child: Opacity(
             opacity: _navBarAnimation.value.clamp(0.0, 1.0),
             child: AnimatedBuilder(
-              animation:
-                  Listenable.merge([_navBarPulseController, _flashController]),
+              animation: Listenable.merge([
+                _navBarPulseController,
+                _flashController,
+              ]),
               builder: (context, child) {
                 return Transform.scale(
                   scale: _navBarScaleAnimation.value,
                   child: Container(
-                    margin:
-                        const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+                    margin: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 20,
+                    ),
                     height: 60,
                     child: Row(
                       children: [
