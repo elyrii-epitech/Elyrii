@@ -31,15 +31,15 @@ const connectionString = `postgres://${config.user}:${config.password}@${config.
 type Schema = typeof schema;
 
 export function getDb(): NodePgDatabase<Schema> | NeonHttpDatabase<Schema> {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'production') {
         const pool = new Pool({ connectionString });
         return pgDrizzle(pool, { schema }) as NodePgDatabase<Schema>;
-    } if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+    } if (process.env.NODE_ENV === 'development') {
         const sql = neon(connectionString);
         return neonDrizzle(sql, { schema }) as NeonHttpDatabase<Schema>;
     } else {
-        const sql = neon(connectionString);
-        return neonDrizzle(sql, { schema }) as NeonHttpDatabase<Schema>;
+        const sql = new Pool({ connectionString });
+        return pgDrizzle(sql, { schema }) as NodePgDatabase<Schema>;
     }
 }
 

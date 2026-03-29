@@ -4,7 +4,7 @@ import { integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-or
  * Drizzle ORM table definition for users authenticated by the auth service.
  */
 export const userTable = pgTable("users", {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: uuid("id").primaryKey().defaultRandom().unique(),
     lastName: text("last_name").notNull(),
     firstName: text("first_name").notNull(),
     email: text("email").notNull(),
