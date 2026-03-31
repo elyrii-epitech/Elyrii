@@ -5,6 +5,7 @@ import AuthRoutes from "./modules/auth/auth.routes";
 import JournalRoutes from "./modules/journal/journal.routes";
 import UserRoutes from "./modules/user/user.routes";
 import type { WSContext } from "hono/ws";
+import chatRouter from "./modules/chat/chat.controller";
 
 export const clientSockets = new Map<string, WSContext>();
 
@@ -26,5 +27,6 @@ app.use("*", cors({
 app.route("/auth", authRouter.Router);
 app.route("/journal", journalRouter.getRouter);
 app.route("/user", userRouter.getRouter);
+app.route("/chat", chatRouter)
 
 export default app;

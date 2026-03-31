@@ -5,9 +5,9 @@ import { clientSockets } from "../../main";
 import { sendMessageToTopic } from "./producer.service";
 
 
-const app = new Hono();
+const chatRouter = new Hono();
 
-app.get("/health", describeRoute({
+chatRouter.get("/health", describeRoute({
     summary: "Health check endpoint for chat",
     description: "Health check endpoint for chat",
     tags: ["Chat"],
@@ -20,7 +20,7 @@ app.get("/health", describeRoute({
     return ctx.json({message: "Chat service is healthy"});
 })
 
-app.get("/ws", describeRoute({
+chatRouter.get("/ws", describeRoute({
     summary: "WebSocket endpoint for chat",
     description: "WebSocket endpoint for chat",
     tags: ["Chat"],
@@ -56,4 +56,4 @@ app.get("/ws", describeRoute({
     }
 }))
 
-export default app;
+export default chatRouter;
