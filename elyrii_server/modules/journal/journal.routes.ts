@@ -7,16 +7,16 @@ import { authMiddleware } from "../../middleware/auth.middleware";
 import JournalController from "./journal.controller";
 
 class JournalRoutes {
-    private readonly Router = new Hono<HonoEnv>().basePath("/journal");
+    private readonly Router = new Hono<HonoEnv>();
     private readonly journalController = new JournalController();
     
     constructor() {
-        this.Router.use("*", authMiddleware);
         this.initRoutes();
     }
     
     private initRoutes() {
         this.Router.get("/health", (c) => c.text("Journal Service Healthy"));
+        this.Router.use("*", authMiddleware);
 
         this.Router.get("/", ...this.journalController.getEntries);
         this.Router.get("/:entryId", ...this.journalController.getEntryById);
