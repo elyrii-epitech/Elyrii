@@ -4,8 +4,9 @@ import { logger } from "hono/logger";
 import AuthRoutes from "./modules/auth/auth.routes";
 import JournalRoutes from "./modules/journal/journal.routes";
 import UserRoutes from "./modules/user/user.routes";
+import type { WSContext } from "hono/ws";
 
-
+export const clientSockets = new Map<string, WSContext>();
 
 const app = new Hono()
 
