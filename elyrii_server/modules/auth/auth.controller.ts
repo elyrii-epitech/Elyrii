@@ -1,7 +1,7 @@
 import { sValidator } from '@hono/standard-validator';
 import { describeRoute } from 'hono-openapi';
 import { createFactory } from 'hono/factory';
-import { registerValidation } from '../../utils/zod.valid';
+import { loginValidation, registerValidation } from '../../utils/zod.valid';
 import AuthRepository from '../../repository/auth.repository';
 import { JwtUtils, type TokenPayload } from '../../utils/jwt.utils';
 import TokenRepository from '../../repository/token.repository';
@@ -67,8 +67,44 @@ class AuthController {
             }
     })
     
-    public readonly login = this.factory.createHandlers((ctx) => {
-        return ctx.json({ message: 'login' });
+    public readonly login = this.factory.createHandlers(describeRoute({
+        summary: "User Login",
+        description: "Log in a user and receive an access token and refresh token.",
+        tags: ["Auth"],
+        responses: {
+            200: { description: "Login successful" },
+            400: { description: "Invalid credentials" },
+            404: { description: "User not found" },
+            500: { description: "Login failed" },
+        }
+        }), sValidator("json", loginValidation), async (ctx) => {
+        const { email, password } = ctx.req.valid("json");
+        if (!email || !password) {
+            return ctx.json({ message: 'invalid credentials' }, 400);
+        }
+        
+        try {
+            const isUser = await this.authRepository.findUserByEmail(email);
+            if (!isUser) {
+                return ctx.json({ message: 'user not found' }, 404);
+            }
+            if (!await Bun.password.verify(password, isUser.password)) {
+                return ctx.json({ message: 'invalid credentials' }, 401);
+            }
+            const tokenPayload: TokenPayload = {
+                userId: isUser.id,
+                email: isUser.email
+            }
+            const [token, refreshToken] = await Promise.all([
+                JwtUtils.generateAccessToken(tokenPayload),
+                JwtUtils.generateRefreshToken(tokenPayload)
+            ])
+            await this.tokenRepository.createToken(refreshToken, isUser.id, ctx.req.header("User-Agent") || "Unknown");
+            setCookie(ctx, "refreshToken", refreshToken, { httpOnly: true, secure: true, sameSite: "Strict", path: "/auth/refresh" });
+            return ctx.json({ message: 'login', token });
+        } catch (error) {
+            return ctx.json({ message: 'login failed' }, 500);
+        }
     })
     
     public readonly logout = this.factory.createHandlers(async (ctx) => {
