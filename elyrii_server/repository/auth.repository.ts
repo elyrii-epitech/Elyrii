@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "../config/db.config";
-import { userTable, type NewUser } from "../config/db/user.table";
+import { userTable, type NewUser, type User } from "../config/db/user.table";
 
 type AuthUserReturn = {
     readonly id: string;
@@ -8,26 +8,19 @@ type AuthUserReturn = {
 }
 
 class AuthRepository {
-    public async findUserByEmail(email: string) {
+    public async findUserByEmail(email: string): Promise<User | undefined> {
         return await db.query.userTable.findFirst({
             where: eq(userTable.email, email),
-            with: {
-                email: true,
-            },
-        })
-    }
-    
-    public async getUserById(id: string): Promise<AuthUserReturn | undefined> {
-        return await db.query.userTable.findFirst({
-            where: eq(userTable.id, id),
-            with: {
-                email: true,
-                id: true
-            },
         });
     }
     
-    public async createrUser(user: NewUser): Promise<AuthUserReturn | undefined> {
+    public async getUserById(id: string): Promise<User | undefined> {
+        return await db.query.userTable.findFirst({
+            where: eq(userTable.id, id),
+        });
+    }
+    
+    public async createUser(user: NewUser): Promise<User | undefined> {
         let hashedPass: string;
         
         try {

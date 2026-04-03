@@ -21,6 +21,7 @@ class AuthController {
             tags: ["Auth"],
             responses: {
                 200: { description: "User registered successfully" },
+                400: { description: "User already exists" },
                 500: { description: "Registration failed" },
             }
         }),
@@ -33,7 +34,7 @@ class AuthController {
                     return ctx.json({ message: 'user already exists' }, 400);
                 }
                 
-                const newUser = await this.authRepository.createrUser({
+                const newUser = await this.authRepository.createUser({
                     email,
                     password,
                     lastName,
@@ -54,15 +55,16 @@ class AuthController {
                 ])
                 await this.tokenRepository.createToken(refreshToken, newUser.id, ctx.req.header("User-Agent") || "unknown");
                 
-                setCookie(ctx, "refreshToken", refreshToken, {
+                setCookie(ctx, "refresh_token", refreshToken, {
                     httpOnly: true,
-                    secure: true,
-                    sameSite: "strict",
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
                     maxAge: JwtUtils.REFRESH_TOKEN_EXP,
                     path: "/auth/refresh"
                 });
-                return ctx.json({ message: 'register', token: token });
+                return ctx.json({ message: 'User registered successfully', token: token });
             } catch (error) {
+                console.error("Registration error:", error);
                 return ctx.json({ message: 'registration failed' }, 500);
             }
     })
@@ -100,19 +102,37 @@ class AuthController {
                 JwtUtils.generateRefreshToken(tokenPayload)
             ])
             await this.tokenRepository.createToken(refreshToken, isUser.id, ctx.req.header("User-Agent") || "Unknown");
-            setCookie(ctx, "refreshToken", refreshToken, { httpOnly: true, secure: true, sameSite: "Strict", path: "/auth/refresh" });
-            return ctx.json({ message: 'login', token });
+            setCookie(ctx, "refresh_token", refreshToken, { 
+                httpOnly: true, 
+                secure: process.env.NODE_ENV === "production", 
+                sameSite: "lax", 
+                path: "/auth/refresh",
+                maxAge: JwtUtils.REFRESH_TOKEN_EXP
+            });
+            return ctx.json({ message: 'Login successful', token });
         } catch (error) {
+            console.error("Login error:", error);
             return ctx.json({ message: 'login failed' }, 500);
         }
     })
     
-    public readonly logout = this.factory.createHandlers(async (ctx) => {
-        const refreshToken = getCookie(ctx, "refreshToken");
-        if (refreshToken) {
-            await this.tokenRepository.deleteToken(refreshToken);
+    public readonly logout = this.factory.createHandlers(describeRoute({
+        summary: "User Logout",
+        description: "Log out the user (invalidate session).",
+        tags: ["Auth"],
+        responses: {
+            200: { description: "Logout successful" },
         }
-        deleteCookie(ctx, "refreshToken");
+    }), async (ctx) => {
+        const refreshToken = getCookie(ctx, "refresh_token");
+        if (refreshToken) {
+            try {
+                await this.tokenRepository.deleteToken(refreshToken);
+            } catch (error) {
+                console.error("Logout session invalidation error:", error);
+            }
+        }
+        deleteCookie(ctx, "refresh_token", { path: "/auth/refresh" });
         return ctx.json({ message: 'logout success' });
     })
     
@@ -125,7 +145,6 @@ class AuthController {
             401: { description: "Invalid or missing refresh token" },
         }
     }), async (ctx) => {
-        // TODO: Implement refresh token logic
         const oldRefreshToken = getCookie(ctx, "refresh_token");
         if (!oldRefreshToken) {
             return ctx.json({ error: "Refresh token not found" }, 401);
@@ -146,13 +165,14 @@ class AuthController {
         }
 
         const refreshToken = await JwtUtils.generateRefreshToken(payload);
-        const newSession = await this.tokenRepository.updateToken(
+        const newSessionId = await this.tokenRepository.updateToken(
             refreshToken,
             payload.userId,
             ctx.req.header("User-Agent") || "Unknown",
             session.id
         );
-        if (!newSession) {
+        
+        if (!newSessionId) {
             return ctx.json({ error: "Invalid refresh token" }, 401);
         }
 
@@ -170,7 +190,7 @@ class AuthController {
         };
 
         const token = await JwtUtils.generateAccessToken(tokenPayload);
-        return ctx.json({ message: "Refresh token", token });
+        return ctx.json({ message: "Refresh token successful", token });
     });
     
 }
