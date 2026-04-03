@@ -8,7 +8,9 @@
     "build": "bun build index.ts --outdir dist --target bun",
     "start": "bun run dist/index.js",
     "prod": "bun run build && bun run start",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "docs:build": "cd scripts && ./generate-docs.sh build",
+    "docs:serve": "cd scripts && ./generate-docs.sh serve"
   },
   "devDependencies": {
     "@types/bun": "latest",
