@@ -1,158 +1,29 @@
 services:
-  gateway:
+  server:
     build:
-      context: ./services/gateway
+      context: .
       dockerfile: Dockerfile
-    container_name: gateway
+    container_name: server
     ports:
       - "3000:3000"
     environment:
-      - AUTH_SERVICE_URL=http://auth-service:3001
-      - CHAT_SERVICE_URL=http://chat-service:3002
-      - JOURNAL_SERVICE_URL=http://journal-service:3003
-      - QUEST_SERVICE_URL=http://quest-service:3004
-      - USER_SERVICE_URL=http://user-service:3005
-      - GATEWAY_PORT=${GATEWAY_PORT}
-      - GATEWAY_SECRET_KEY=${GATEWAY_SECRET_KEY}
+        - PORT=3000
+        - DB_USER=${DB_USER}
+        - DB_PASSWORD=${DB_PASSWORD}
+        - DB_HOST=${DB_HOST}
+        - DB_PORT=${DB_PORT}
+        - DB_NAME=${DB_NAME}
+        - REDPANDA_HOST=${REDPANDA_HOST}
+        - REDPANDA_PORT=${REDPANDA_PORT}
     networks:
       - elyrii_net
     depends_on:
-      auth-service:
-        condition: service_started
-      chat-service:
-        condition: service_started
-      user-service:
-        condition: service_started
-    command: sh -c "sleep 2 && bun run index.ts"
+        redpanda:
+            condition: service_healthy
+        postgres:
+            condition: service_healthy
+    command: sh -c "bun run db:push && bun run start"
 
-  auth-service:
-    build:
-      context: ./services/auth
-      dockerfile: Dockerfile
-    container_name: auth-service
-    ports:
-      - "3001:3001"
-    environment:
-      - GATEWAY_URL=http://gateway:3000
-      - CHAT_SERVICE_URL=http://chat-service:3002
-      - PORT=${AUTH_PORT}
-      - AUTH_PORT=${AUTH_PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${AUTH_DB_NAME}
-      - DB_PORT=${DB_PORT}
-      - SECRET_KEY=${AUTH_SECRET_KEY}
-      - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY}
-    networks:
-      - elyrii_net
-    depends_on:
-      redpanda:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-
-  chat-service:
-    build:
-      context: ./services/chat
-      dockerfile: Dockerfile
-    container_name: chat-service
-    ports:
-      - "3002:3002"
-    environment:
-      - GATEWAY_URL=http://gateway:3000
-      - REDPANDA_URL=http://redpanda:9092
-      - PORT=${CHAT_PORT}
-      - CHAT_PORT=${CHAT_PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${CHAT_DB_NAME}
-      - DB_PORT=${DB_PORT}
-    networks:
-      - elyrii_net
-    depends_on:
-      redpanda:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-
-  journal-service:
-    build:
-      context: ./services/journal
-      dockerfile: Dockerfile
-    container_name: journal-service
-    ports:
-      - "3003:3003"
-    environment:
-      - GATEWAY_URL=http://gateway:3000
-      - REDPANDA_URL=http://redpanda:9092
-      - PORT=${JOURNAL_PORT}
-      - JOURNAL_SERVICE_PORT=${JOURNAL_PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${JOURNAL_DB_NAME}
-      - DB_PORT=${DB_PORT}
-      - SECRET_KEY=${AUTH_SECRET_KEY}
-      - ACCESS_JWT_SIGN_KEY=${ACCESS_JWT_SIGN_KEY}
-    networks:
-      - elyrii_net
-    depends_on:
-      redpanda:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-
-  quest-service:
-    build:
-      context: ./services/quest
-      dockerfile: Dockerfile
-    container_name: quest-service
-    ports:
-      - "3004:3004"
-    environment:
-      - GATEWAY_URL=http://gateway:3000
-      - REDPANDA_URL=http://redpanda:9092
-      - PORT=${QUEST_PORT}
-      - QUEST_SERVICE_PORT=${QUEST_PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${QUEST_DB_NAME}
-      - DB_PORT=${DB_PORT}
-      - ACCESS_JWT_SIGN_KEY=${ACCESS_JWT_SIGN_KEY}
-      - SECRET_KEY=${AUTH_SECRET_KEY}
-      - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY}
-    networks:
-      - elyrii_net
-    depends_on:
-      redpanda:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-
-  user-service:
-    build:
-      context: ./services/user
-      dockerfile: Dockerfile
-    container_name: user-service
-    ports:
-      - "3005:3005"
-    environment:
-      - PORT=${USER_PORT}
-      - USER_PORT=${USER_PORT}
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASSWORD}
-      - DB_NAME=${AUTH_DB_NAME}
-      - DB_PORT=${DB_PORT}
-      - SECRET_KEY=${AUTH_SECRET_KEY}
-    networks:
-      - elyrii_net
-    depends_on:
-      postgres:
-        condition: service_healthy
 
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:latest

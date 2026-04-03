@@ -1,6 +1,6 @@
 import { Kafka } from "kafkajs";
 
-const kafka = new Kafka({ brokers: ["redpanda:9092"]})
+const kafka = new Kafka({ brokers: [`${process.env.REDPANDA_HOST}:${process.env.REDPANDA_PORT}`]})
 
 const producer = kafka.producer();
 const consumer = kafka.consumer({ groupId: "chat-service" });

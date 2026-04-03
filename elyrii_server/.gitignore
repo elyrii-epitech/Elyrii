@@ -24,3 +24,6 @@ docs-app/
 # Claude context files
 CLAUDE.md
 docs/progress.md
+services/
+out/
+dist/

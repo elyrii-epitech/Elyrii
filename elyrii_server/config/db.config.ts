@@ -8,16 +8,16 @@ import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
 
 const getDatabaseConfig = () => {
     const config = {
-        host: process.env.DATABASE_HOST || 'localhost',
-        user: process.env.DATABASE_USER || 'postgres',
-        password: process.env.DATABASE_PASSWORD || 'postgres',
-        database: process.env.DATABASE_NAME || 'postgres',
-        port: 5432,
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        database: process.env.DB_NAME || 'postgres',
+        port: Number(process.env.DB_PORT) || 5432,
         ssl: { rejectUnauthorized: false },
     }
 
     if (process.env.NODE_ENV === 'production') {
-        if (!process.env.DATABASE_HOST || !process.env.DATABASE_PASSWORD) {
+        if (!process.env.DB_HOST || !process.env.DB_PASSWORD) {
             throw new Error('Database configuration missing required values in production');
         }
     }
