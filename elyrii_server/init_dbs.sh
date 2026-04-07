@@ -14,7 +14,4 @@ create_database() {
 }
 
 # Create the required databases
-create_database "elyrii_users"
-create_database "elyrii_journal"
-create_database "elyrii_chats"
-create_database "elyrii_quests"
+create_database "elyrii_db"

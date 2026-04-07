@@ -19,16 +19,16 @@ navigation:
     url: /
   - title: API Documentation
     url: /api/
-  - title: Auth Service
+  - title: Auth
     url: /api/modules/auth.html
-  - title: Chat Service
+  - title: Chat
     url: /api/modules/chat.html
-  - title: Gateway Service
-    url: /api/modules/gateway.html
-  - title: Journal Service
+  - title: Journal
     url: /api/modules/journal.html
-  - title: Quest Service
+  - title: Quest
     url: /api/modules/quest.html
+  - title: User
+    url: /api/modules/user.html
 
 # Plugins for GitHub Pages
 plugins:
