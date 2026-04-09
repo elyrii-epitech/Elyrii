@@ -16,6 +16,9 @@ class UserService {
         this.router.get("/health", (c) => c.text("User Service Healthy"));
         this.router.get("/me", ...this.userController.getMe);
         this.router.put("/me", ...this.userController.updateMe);
+        
+        this.router.post("/mood", ...this.userController.logMood);
+        this.router.get("/mood/latest", ...this.userController.getLatestMood);
     }
 
     get getRouter() {
