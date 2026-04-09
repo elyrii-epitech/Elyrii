@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'dart:math';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/config/api_config.dart';
 
 /// Enum représentant les différents moods disponibles
 enum MoodType { verySad, sad, neutral, happy, veryHappy }
@@ -84,6 +86,7 @@ extension GoalTypeExtension on GoalType {
 
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
+  final ApiClient _apiClient;
   bool _isLoading = false;
   String? _error;
 
@@ -183,7 +186,7 @@ class DashboardProvider extends ChangeNotifier {
     return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
   }
 
-  DashboardProvider() {
+  DashboardProvider({required ApiClient apiClient}) : _apiClient = apiClient {
     _initializeQuoteOfTheDay();
     _initializeDailyGoal();
     _initializeMascotMessage();
@@ -223,7 +226,7 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   /// Sélectionne le mood du jour
-  void selectMood(MoodType mood) {
+  Future<void> selectMood(MoodType mood) async {
     _selectedMood = mood;
 
     // Réinitialiser l'index du message pour le nouveau mood
@@ -243,6 +246,16 @@ class DashboardProvider extends ChangeNotifier {
     _updateStreak();
 
     notifyListeners();
+
+    try {
+      await _apiClient.post(
+        ApiConfig.logMoodUrl,
+        body: {'moodType': mood.name},
+      );
+    } catch (e) {
+      _error = "Impossible d'enregistrer l'humeur: ${e.toString()}";
+      notifyListeners();
+    }
   }
 
   /// Marque l'objectif comme complété
@@ -295,8 +308,17 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // TODO: Appeler l'API pour récupérer les vraies données
-      await Future.delayed(const Duration(milliseconds: 500));
+      final response = await _apiClient.get(ApiConfig.latestMoodUrl);
+      final moodTypeStr = response['moodType'] as String?;
+      
+      if (moodTypeStr != null) {
+        _selectedMood = MoodType.values.firstWhere(
+          (m) => m.name == moodTypeStr,
+          orElse: () => MoodType.neutral,
+        );
+      }
+
+      // TODO: Call API for other stats
 
       _isLoading = false;
       notifyListeners();

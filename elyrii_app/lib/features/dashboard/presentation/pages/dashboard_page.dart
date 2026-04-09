@@ -19,87 +19,84 @@ class DashboardPage extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return ChangeNotifierProvider(
-      create: (_) => DashboardProvider(),
-      child: Consumer<DashboardProvider>(
-        builder: (context, provider, child) {
-          return Scaffold(
-            backgroundColor:
-                isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
-            body: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Contenu principal avec scroll
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // Safe area + espace pour le bouton settings
-                      SizedBox(height: topPadding + 24),
+    return Consumer<DashboardProvider>(
+      builder: (context, provider, child) {
+        return Scaffold(
+          backgroundColor:
+              isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+          body: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Contenu principal avec scroll
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    // Safe area + espace pour le bouton settings
+                    SizedBox(height: topPadding + 24),
 
-                      // Container principal avec le contenu
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.pageHorizontalPadding,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Greeting avec animation
-                            _buildGreeting(provider, isDark)
-                                .animate()
-                                .fadeIn(duration: 400.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 28),
-
-                            // Section "Comment te sens-tu ?"
-                            _buildMoodSection(isDark, provider)
-                                .animate()
-                                .fadeIn(duration: 400.ms, delay: 100.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 32),
-
-                            // Section Stats
-                            _buildStatsSection(provider, isDark)
-                                .animate()
-                                .fadeIn(duration: 400.ms, delay: 200.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 24),
-
-                            // Section "Ton activité"
-                            _buildActivitySection(isDark)
-                                .animate()
-                                .fadeIn(duration: 400.ms, delay: 300.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            // Espace pour la navbar
-                            const SizedBox(height: 140),
-                          ],
-                        ),
+                    // Container principal avec le contenu
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.pageHorizontalPadding,
                       ),
-                    ],
-                  ),
-                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Greeting avec animation
+                          _buildGreeting(provider, isDark)
+                              .animate()
+                              .fadeIn(duration: 400.ms)
+                              .slideY(begin: 0.1, end: 0),
 
-                // Bouton Settings (liquid glass)
-                Positioned(
-                  top: topPadding + 12,
-                  right: 16,
-                  child: GlassSettingsButton(
-                    isDark: isDark,
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.settings);
-                    },
-                  ),
+                          const SizedBox(height: 28),
+
+                          // Section "Comment te sens-tu ?"
+                          _buildMoodSection(isDark, provider)
+                              .animate()
+                              .fadeIn(duration: 400.ms, delay: 100.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          const SizedBox(height: 32),
+
+                          // Section Stats
+                          _buildStatsSection(provider, isDark)
+                              .animate()
+                              .fadeIn(duration: 400.ms, delay: 200.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          const SizedBox(height: 24),
+
+                          // Section "Ton activité"
+                          _buildActivitySection(isDark)
+                              .animate()
+                              .fadeIn(duration: 400.ms, delay: 300.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          // Espace pour la navbar
+                          const SizedBox(height: 140),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+
+              // Bouton Settings (liquid glass)
+              Positioned(
+                top: topPadding + 12,
+                right: 16,
+                child: GlassSettingsButton(
+                  isDark: isDark,
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.settings);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
