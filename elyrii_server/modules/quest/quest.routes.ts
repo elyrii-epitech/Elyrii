@@ -6,17 +6,18 @@ import QuestController from "./quest.controller";
 import { authMiddleware } from "../../middleware/auth.middleware";
 
 class QuestRoutes {
-    private readonly router = new Hono<HonoEnv>().basePath("/challenge");
+    private readonly router = new Hono<HonoEnv>();
     private readonly questController = new QuestController();
     
     constructor() {
-        // Protect all routes with auth middleware
-        this.router.use("*", authMiddleware);
         this.initRoutes();
     }
     
     private initRoutes() {
         this.router.get("/health", (c) => c.text("Quest Service Healthy"));
+        
+        // Protect remaining routes with auth middleware
+        this.router.use("*", authMiddleware);
 
         // User facing
         this.router.get("/active", ...this.questController.getActiveChallenges);

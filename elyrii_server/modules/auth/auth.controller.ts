@@ -27,8 +27,8 @@ class AuthController {
         }),
         sValidator("json", registerValidation),
         async (ctx) => {
-            const { email, password, lastName, firstName, age } = ctx.req.valid("json");
             try {
+                const { email, password, lastName, firstName, age } = ctx.req.valid("json");
                 const existUser = await this.authRepository.findUserByEmail(email);
                 if (existUser) {
                     return ctx.json({ message: 'user already exists' }, 400);
@@ -64,8 +64,8 @@ class AuthController {
                 });
                 return ctx.json({ message: 'User registered successfully', token: token });
             } catch (error) {
-                console.error("Registration error:", error);
-                return ctx.json({ message: 'registration failed' }, 500);
+                console.error("Registration error details:", error);
+                return ctx.json({ message: 'registration failed', error: String(error) }, 500);
             }
     })
     

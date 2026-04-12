@@ -16,6 +16,8 @@ class UserRoutes {
         this.router.use("*", authMiddleware);
         this.router.get("/me", ...this.userController.getMe);
         this.router.put("/me", ...this.userController.updateMe);
+        this.router.post("/mood", ...this.userController.logMood);
+        this.router.get("/mood/latest", ...this.userController.getLatestMood);
     }
 
     get getRouter() {

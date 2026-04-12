@@ -28,7 +28,6 @@ app.use("*", cors({
     allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "Accept"],
     exposeHeaders: ["Content-Length"],
-    maxAge: 86400,
 }));
 
 app.route("/auth", authRouter.Router);
@@ -58,12 +57,12 @@ app.get("/swagger", swaggerUI({
 }));
 
 // Initialize Kafka and Consumers
-initKafka().then(() => {
-    console.log("Kafka initialized");
-    handleAiResponse().catch(err => console.error("Failed to start Chat consumer", err));
-    initQuestConsumers().catch(err => console.error("Failed to start Quest consumer", err));
-}).catch(err => {
-    console.error("Failed to initialize Kafka", err);
-});
+// initKafka().then(() => {
+//     console.log("Kafka initialized");
+//     handleAiResponse().catch(err => console.error("Failed to start Chat consumer", err));
+//     initQuestConsumers().catch(err => console.error("Failed to start Quest consumer", err));
+// }).catch(err => {
+//     console.error("Failed to initialize Kafka", err);
+// });
 
 export default app;

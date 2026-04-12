@@ -9,6 +9,8 @@
     "start": "bun run dist/index.js",
     "prod": "bun run build && bun run start",
     "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
     "docs:build": "cd scripts && ./generate-docs.sh build",
     "docs:serve": "cd scripts && ./generate-docs.sh serve"
   },

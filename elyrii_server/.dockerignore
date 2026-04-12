@@ -1,1 +1,9 @@
-services/
+node_modules
+dist
+.env
+.env.*
+.drizzle
+.git
+.idea
+.vscode
+*.log
