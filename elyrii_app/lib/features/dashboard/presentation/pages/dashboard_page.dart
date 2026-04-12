@@ -11,6 +11,8 @@ import '../widgets/glass_settings_button.dart';
 import '../widgets/last_journal_card.dart';
 import '../../../journal/presentation/providers/journal_provider.dart';
 
+import '../../../auth/presentation/providers/auth_provider.dart';
+
 import '../widgets/mascot_peek.dart';
 import '../widgets/mascot_speech_bubble.dart';
 
@@ -37,8 +39,10 @@ class _DashboardPageState extends State<DashboardPage> {
     final isDark = theme.brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Consumer2<DashboardProvider, JournalProvider>(
-      builder: (context, provider, journalProvider, child) {
+    return Consumer3<DashboardProvider, JournalProvider, AuthProvider>(
+      builder: (context, provider, journalProvider, authProvider, child) {
+        final firstName = authProvider.user?.firstName ?? '';
+        
         return Scaffold(
           backgroundColor:
               isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
@@ -73,7 +77,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(height: 24),
 
                           // Greeting avec animation
-                          _buildGreeting(provider, isDark)
+                          _buildGreeting(provider, isDark, firstName)
                               .animate()
                               .fadeIn(duration: 400.ms)
                               .slideY(begin: 0.1, end: 0),
@@ -143,11 +147,11 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildGreeting(DashboardProvider provider, bool isDark) {
+  Widget _buildGreeting(DashboardProvider provider, bool isDark, String firstName) {
     return Column(
       children: [
         Text(
-          '${provider.getGreeting()} ${provider.userName}',
+          '${provider.getGreeting()} $firstName',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
