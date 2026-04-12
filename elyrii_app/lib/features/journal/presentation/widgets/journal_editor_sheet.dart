@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/liquid_glass_kit.dart';
+import 'package:provider/provider.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../providers/journal_provider.dart';
 import 'glass_text_field.dart';
 
@@ -63,23 +65,31 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+    final dashboardProvider = context.read<DashboardProvider>();
+    final currentMood = dashboardProvider.selectedMood?.name;
 
     if (widget.entry != null) {
       widget.provider.updateEntry(
         widget.entry!.id,
         title: title,
         content: content,
+        mood: currentMood,
       );
     } else if (_createdEntryId != null) {
       widget.provider.updateEntry(
         _createdEntryId!,
         title: title,
         content: content,
+        mood: currentMood,
       );
     } else {
       final now = DateTime.now();
       final newId = now.millisecondsSinceEpoch.toString();
-      widget.provider.createEntry(title: title, content: content);
+      widget.provider.createEntry(
+        title: title,
+        content: content,
+        mood: currentMood,
+      );
       _createdEntryId = newId;
     }
 

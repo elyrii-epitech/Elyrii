@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "../config/db.config";
-import { userTable } from "../config/db/user.table";
+import { moodLogsTable, userTable } from "../config/db/user.table";
 import type { UpdateProfileType } from "../utils/zod.valid";
 
 class UserRepository {
@@ -27,6 +27,24 @@ class UserRepository {
             .set(data)
             .where(eq(userTable.id, userId))
             .returning()
+        )[0];
+    }
+
+    async logMood(userId: string, moodType: string) {
+        return (await db
+            .insert(moodLogsTable)
+            .values({ userId, moodType })
+            .returning()
+        )[0];
+    }
+
+    async getLatestMood(userId: string) {
+        return (await db
+            .select()
+            .from(moodLogsTable)
+            .where(eq(moodLogsTable.userId, userId))
+            .orderBy(desc(moodLogsTable.createdAt))
+            .limit(1)
         )[0];
     }
 }

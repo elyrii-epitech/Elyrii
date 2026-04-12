@@ -41,12 +41,14 @@ class JournalRepository {
   Future<JournalEntryModel> createEntry({
     required String title,
     String? content,
+    String? mood,
     List<String>? tags,
   }) async {
     final body = <String, dynamic>{
       'title': title,
       'userId': '', // Backend overrides this from JWT
       'content': content,
+      'mood': mood,
       'tags': tags,
     };
     final response = await _client.post(ApiConfig.journalUrl, body: body)
@@ -60,10 +62,12 @@ class JournalRepository {
     required String id,
     String? title,
     String? content,
+    String? mood,
   }) async {
     final body = <String, dynamic>{};
     if (title != null) body['title'] = title;
     if (content != null) body['content'] = content;
+    if (mood != null) body['mood'] = mood;
     final response = await _client.put(ApiConfig.journalEntryUrl(id),
         body: body) as Map<String, dynamic>;
     final entryData = response['body'] ?? response;

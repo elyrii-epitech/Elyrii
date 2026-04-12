@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
@@ -41,6 +42,9 @@ void main() async {
   final gamificationProvider = GamificationProvider(client: apiClient);
   final userProvider = UserProvider(client: apiClient);
   final dashboardProvider = DashboardProvider(apiClient: apiClient);
+
+  // Perform backend health check
+  unawaited(apiClient.checkHealth());
 
   // Check if user is already authenticated
   await authProvider.checkAuthStatus();
