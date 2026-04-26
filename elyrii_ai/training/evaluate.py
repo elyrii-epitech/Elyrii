@@ -36,6 +36,10 @@ from transformers import (
 )
 from peft import PeftModel
 from elyrii_ai.prompt.system_prompt import get_system_prompt
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Optional import for Gemini
 try:

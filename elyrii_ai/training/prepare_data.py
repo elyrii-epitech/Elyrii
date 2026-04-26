@@ -27,6 +27,10 @@ from typing import Dict, Any, List
 from datasets import load_dataset, concatenate_datasets
 from transformers import AutoTokenizer
 from elyrii_ai.prompt.system_prompt import get_system_prompt
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

@@ -29,6 +29,10 @@ from peft import (
     TaskType
 )
 from datasets import load_from_disk
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
