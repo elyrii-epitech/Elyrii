@@ -34,9 +34,8 @@ logger = logging.getLogger(__name__)
 
 # --- Constants from Environment ---
 # Defaults match the .env.local template
-MODEL_ID = os.getenv("AI_MODEL")
-MAX_LENGTH = int(os.getenv("MAX_MODEL_LEN"))
-HF_TOKEN = os.getenv("HF_TOKEN")  # Required for gated models
+MAX_LENGTH = int(os.getenv("MAX_MODEL_LEN", "4096"))
+HF_TOKEN = os.getenv("HF_TOKEN")  # Required for gated models on HF hub
 
 SYSTEM_PROMPT = get_system_prompt()
 
@@ -136,14 +135,20 @@ def main():
         default="./data",
         help="Where to save the processed dataset",
     )
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default=os.getenv("AI_MODEL", "./model/mistral_7B_instruct_v0.3"),
+        help="Path to the base model or HF ID",
+    )
     args = parser.parse_args()
 
-    logger.info(f"🏗️  Loading tokenizer: {MODEL_ID}")
+    logger.info(f"🏗️  Loading tokenizer: {args.model_path}")
     try:
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN)
+        tokenizer = AutoTokenizer.from_pretrained(args.model_path, token=HF_TOKEN)
     except OSError as e:
         logger.error(
-            f"Failed to load tokenizer for {MODEL_ID}. Check your HF_TOKEN or internet connection."
+            f"Failed to load tokenizer for {args.model_path}. Check your path, HF_TOKEN, or internet connection."
         )
         raise e
 

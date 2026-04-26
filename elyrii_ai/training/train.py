@@ -2,17 +2,15 @@
 Elyrii Training Script
 ======================
 
-This script fine-tunes the Mistral-7B-Instruct-v0.2 model using QLoRA (Quantized Low-Rank Adaptation)
+This script fine-tunes a local Mistral-7B model using QLoRA (Quantized Low-Rank Adaptation)
 for the Elyrii emotional assistant.
 
 It expects a dataset prepared by `prepare_data.py` containing tokenized chat sessions.
 The training uses 8-bit quantization to fit within consumer/cloud GPU VRAM limits (approx 16-24GB).
 
 Usage:
-    python train.py --data_dir ./data --output_dir ./output --epochs 3
+    python train.py --model_path ./model/mistral_7B_instruct_v0.3 --data_dir ./data --output_dir ./output
 
-Attributes:
-    model_id (str): The HuggingFace ID of the base model.
 """
 
 import os, torch, argparse
@@ -40,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     """Parses command-line arguments for training configuration."""
-    parser = argparse.ArgumentParser(description="Fine-tune Mistral-7B for Elyrii")
+    parser = argparse.ArgumentParser(description="Fine-tune a local Mistral model for Elyrii")
 
     parser.add_argument(
         "--epochs",
@@ -75,8 +73,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="/output",
+        default="./output",
         help="Directory to save checkpoints and the final model."
+    )
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default="./model/mistral_7B_instruct_v0.3",
+        help="Path to the local base model directory.",
     )
 
     return parser.parse_args()
@@ -85,13 +89,11 @@ def main():
     """Main training execution flow."""
     args = parse_args()
 
-    model_id = "mistralai/Mistral-7B-v0.2"
-
-    logger.info(f"🚀 Initializing training for {model_id}")
+    logger.info(f"🚀 Initializing training for local model at {args.model_path}")
     logger.info(f"📂 Data directory: {args.data_dir}")
     logger.info(f"💾 Output directory: {args.output_dir}")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_path, local_files_only=True)
 
     # Mistral/Llama tokenizers often lack a pad token.
     # Setting it to eos_token as is standard workaround.
@@ -99,10 +101,11 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
 
     model = AutoModelForCausalLM.from_pretrained(
-        model_id,
+        args.model_path,
         device_map="auto",
         load_in_8bit=True,
         torch_dtype=torch.float16,
+        local_files_only=True,
     )
 
     model = prepare_model_for_kbit_training(model)
@@ -136,7 +139,7 @@ def main():
         learning_rate=args.lr,
         num_train_epochs=args.epochs,
         fp16=True,
-        eval_strategy="steps",
+        evaluation_strategy="steps",
         eval_steps=500,
         save_steps=500,
         logging_steps=100,

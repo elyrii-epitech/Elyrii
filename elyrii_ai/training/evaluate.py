@@ -10,7 +10,7 @@ This script evaluates the fine-tuned Elyrii model by:
 It loads the base Mistral model and applies your trained LoRA adapter.
 
 Usage:
-    python evaluate.py --adapter_path ./output/final_lora
+    python evaluate.py --adapter_path ./output/final_lora --model_path ./model/mistral_7B_instruct_v0.3
 """
 
 import os
@@ -39,7 +39,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # --- Constants ---
-BASE_MODEL_ID = os.getenv("AI_MODEL")
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 # Test prompts designed to trigger emotional support responses
@@ -56,30 +55,33 @@ SYSTEM_PROMPT = get_system_prompt()
 
 def load_model_and_tokenizer(
     adapter_path: str,
+    model_path: str,
 ) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
     """
     Loads the base Mistral model and merges the provided LoRA adapter.
 
     Args:
         adapter_path: The directory path containing the saved LoRA adapter.
+        model_path: The path to the local base model.
 
     Returns:
         A tuple containing:
             - model: The loaded PeftModel (Base + Adapter).
             - tokenizer: The associated tokenizer.
     """
-    logger.info(f"🏗️  Loading base model: {BASE_MODEL_ID}")
+    logger.info(f"🏗️  Loading base model: {model_path}")
 
     # Load Base Model
     model = AutoModelForCausalLM.from_pretrained(
-        BASE_MODEL_ID,
+        model_path,
         device_map="auto",
         torch_dtype=torch.float16,
         token=HF_TOKEN,
         load_in_8bit=True,  # Keep 8-bit for inference on consumer GPUs
+        local_files_only=True,
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_ID, token=HF_TOKEN)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, token=HF_TOKEN, local_files_only=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -171,10 +173,16 @@ def main():
         default="evaluation_results.csv",
         help="Output CSV file",
     )
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        default=os.getenv("AI_MODEL", "./model/mistral_7B_instruct_v0.3"),
+        help="Path to the base model or HF ID",
+    )
     args = parser.parse_args()
 
     # 1. Load Generation Model
-    model, tokenizer = load_model_and_tokenizer(args.adapter_path)
+    model, tokenizer = load_model_and_tokenizer(args.adapter_path, args.model_path)
 
     # 2. Load Judge Model (Sentiment/Empathy)
     logger.info("⚖️  Loading sentiment analyzer (The Judge)...")
