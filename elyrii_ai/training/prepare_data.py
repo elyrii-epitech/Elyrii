@@ -22,6 +22,7 @@ import os
 import argparse
 import functools
 import logging
+import json
 from typing import Dict, Any, List
 from datasets import load_dataset, concatenate_datasets
 from transformers import AutoTokenizer
@@ -45,27 +46,111 @@ def format_empathetic_dialogues(
 ) -> Dict[str, List[Dict[str, str]]]:
     """
     Converts an EmpatheticDialogues row to ChatML-style messages.
-
-    Args:
-        example: A dictionary containing 'prompt', 'utterance', and optionally 'context'.
-
-    Returns:
-        A dictionary with a 'messages' key containing the conversation history.
+    Uses the 'conversation' list if available, or fallback to prompt/utterance.
     """
-    # EmpatheticDialogues structure: 'prompt' (user), 'utterance' (assistant)
-    # We prepend the context to the user prompt to give the model more info about the situation.
-    user_content = (
-        f"{example['prompt']} (Context: {example['context']})"
-        if "context" in example
-        else example["prompt"]
-    )
+    messages = []
+    
+    if "conversation" in example and isinstance(example["conversation"], list) and len(example["conversation"]) > 0:
+        # Reconstruct the conversation from the list of strings
+        # Assume user starts
+        for i, turn in enumerate(example["conversation"]):
+            role = "user" if i % 2 == 0 else "assistant"
+            messages.append({"role": role, "content": str(turn)})
+    else:
+        # Fallback to older format or generic columns
+        prompt = example.get("prompt", "")
+        utterance = example.get("utterance", "")
+        context = example.get("context", "")
+        
+        user_content = (
+            f"{prompt} (Context: {context})"
+            if context
+            else prompt
+        )
+        
+        messages = [
+            {"role": "user", "content": user_content},
+            {"role": "assistant", "content": utterance},
+        ]
 
+    return {"messages": messages}
+
+
+def format_emobench(
+    example: Dict[str, Any],
+) -> Dict[str, List[Dict[str, str]]]:
+    """
+    Converts EmoBench row to ChatML-style messages.
+    """
+    # Create a descriptive prompt from the scenario and choices
+    scenario = example.get("scenario", "")
+    choices = example.get("choices", [])
+    
+    choices_str = "\n".join([f"- {c}" for c in choices])
+    
+    user_content = (
+        f"Scenario: {scenario}\n\n"
+        f"What is the best course of action among the following choices?\n"
+        f"{choices_str}"
+    )
+    
+    assistant_content = example.get("label", "")
+    
     return {
         "messages": [
             {"role": "user", "content": user_content},
-            {"role": "assistant", "content": example["utterance"]},
+            {"role": "assistant", "content": assistant_content},
         ]
     }
+
+
+def format_esconv(
+    example: Dict[str, Any],
+) -> Dict[str, List[Dict[str, str]]]:
+    """
+    Converts ESConv row to ChatML-style messages.
+    """
+    messages = []
+    
+    # Context
+    situation = example.get("situation", "")
+    problem_type = example.get("problem_type", "")
+    emotion_type = example.get("emotion_type", "")
+    
+    # Try to extract the first user message to append the context
+    dialog_str = example.get("dialog", "[]")
+    try:
+        dialog = json.loads(dialog_str)
+    except json.JSONDecodeError:
+        dialog = []
+        
+    for i, turn in enumerate(dialog):
+        # 'usr' is the seeker, 'sys' is the supporter
+        speaker = turn.get("speaker", "")
+        role = "user" if speaker == "usr" else "assistant"
+        
+        content = turn.get("text", "")
+        
+        # Prepend context to the very first user message
+        if i == 0 and role == "user":
+            context = f"Problem: {problem_type} | Emotion: {emotion_type} | Situation: {situation}"
+            content = f"{content}\n\n(Context: {context})"
+            
+        messages.append({"role": role, "content": content})
+        
+    # If the parsing failed or dialog was empty, create a dummy fallback to avoid errors downstream
+    if not messages:
+        messages = [
+            {"role": "user", "content": "Hello."},
+            {"role": "assistant", "content": "Hi, how can I help you?"},
+        ]
+        
+    # Mistral's apply_chat_template strictly requires conversation to start with 'user'
+    if messages and messages[0]["role"] == "assistant":
+        # Insert a dummy user message to satisfy the template constraint
+        messages.insert(0, {"role": "user", "content": "Hi."})
+        
+    return {"messages": messages}
 
 
 def format_custom_dataset(example):
@@ -126,6 +211,13 @@ def tokenize_function(
     )
 
 
+def filter_english(example: Dict[str, Any]) -> bool:
+    """Filters datasets to keep only English examples (for EmoBench)."""
+    if "language" in example:
+        return example["language"] == "en"
+    return True  # If no language column, assume it's valid
+
+
 def main():
     """Main execution flow for data preparation."""
     parser = argparse.ArgumentParser(description="Prepare dataset for Elyrii training")
@@ -140,6 +232,12 @@ def main():
         type=str,
         default=os.getenv("AI_MODEL", "./model/mistral_7B_instruct_v0.3"),
         help="Path to the base model or HF ID",
+    )
+    parser.add_argument(
+        "--data_base_dir",
+        type=str,
+        default="./datasets",
+        help="Base directory containing the raw local datasets",
     )
     args = parser.parse_args()
 
@@ -158,41 +256,75 @@ def main():
 
     datasets_to_merge = []
 
-    # 1. Load EmpatheticDialogues (English)
-    logger.info("📚 Loading 'empathetic_dialogues'...")
-    try:
-        ds_en = load_dataset("empathetic_dialogues", split="train")
-        ds_en = ds_en.map(
-            format_empathetic_dialogues, remove_columns=ds_en.column_names
-        )
-        datasets_to_merge.append(ds_en)
-    except Exception as e:
-        logger.warning(f"⚠️  Could not load empathetic_dialogues: {e}")
+    # 1. Load EmpatheticDialogues (Local Parquet)
+    logger.info("📚 Loading local 'empathetic_dialogues'...")
+    ed_path = os.path.join(args.data_base_dir, "Jithendra-k_EmpatheticDialogues", "train-00000-of-00001.parquet")
+    if os.path.exists(ed_path):
+        try:
+            ds_en = load_dataset("parquet", data_files=ed_path, split="train")
+            ds_en = ds_en.map(
+                format_empathetic_dialogues, remove_columns=ds_en.column_names
+            )
+            datasets_to_merge.append(ds_en)
+        except Exception as e:
+            logger.warning(f"⚠️  Could not load empathetic_dialogues: {e}")
+    else:
+        logger.warning(f"⚠️  Local empathetic_dialogues not found at {ed_path}")
 
-    # 2. Load Custom/Local Datasets (e.g., French, Portuguese)
-    # Uncomment and adapt the following lines when you have your files:
-    # if os.path.exists("french_empathy.csv"):
-    #     print("📚 Loading local 'french_empathy.csv'...")
-    #     ds_fr = load_dataset("csv", data_files="french_empathy.csv", split="train")
-    #     ds_fr = ds_fr.map(format_custom_dataset, remove_columns=ds_fr.column_names)
-    #     datasets_to_merge.append(ds_fr)
+    # 2. Load EmoBench (Local JSONL)
+    logger.info("📚 Loading local 'EmoBench'...")
+    eb_paths = [
+        os.path.join(args.data_base_dir, "SahandSab_EmoBench", "EA.jsonl"),
+        os.path.join(args.data_base_dir, "SahandSab_EmoBench", "EU.jsonl")
+    ]
+    # Filter only existing ones
+    eb_paths = [p for p in eb_paths if os.path.exists(p)]
+    
+    if eb_paths:
+        try:
+            ds_eb = load_dataset("json", data_files=eb_paths, split="train")
+            
+            # Filter non-English
+            initial_count = len(ds_eb)
+            ds_eb = ds_eb.filter(filter_english)
+            logger.info(f"Filtered EmoBench from {initial_count} to {len(ds_eb)} rows (English only).")
+
+            ds_eb = ds_eb.map(format_emobench, remove_columns=ds_eb.column_names)
+            datasets_to_merge.append(ds_eb)
+        except Exception as e:
+            logger.warning(f"⚠️  Could not load EmoBench: {e}")
+    else:
+        logger.warning(f"⚠️  Local EmoBench files not found at {os.path.join(args.data_base_dir, 'SahandSab_EmoBench')}")
+        
+    # 3. Load ESConv (Local Parquet)
+    logger.info("📚 Loading local 'ESConv'...")
+    esconv_path = os.path.join(args.data_base_dir, "giliit_esconv", "train-00000-of-00001.parquet")
+    if os.path.exists(esconv_path):
+        try:
+            ds_esconv = load_dataset("parquet", data_files=esconv_path, split="train")
+            ds_esconv = ds_esconv.map(format_esconv, remove_columns=ds_esconv.column_names)
+            datasets_to_merge.append(ds_esconv)
+        except Exception as e:
+            logger.warning(f"⚠️  Could not load ESConv: {e}")
+    else:
+        logger.warning(f"⚠️  Local ESConv not found at {esconv_path}")
 
     if not datasets_to_merge:
         logger.error("❌ No datasets loaded. Exiting.")
         return
 
-    # 3. Merge Datasets
+    # Merge Datasets
     full_dataset = concatenate_datasets(datasets_to_merge)
     logger.info(f"📊 Total examples: {len(full_dataset)}")
 
-    # 4. Apply Chat Template
+    # Apply Chat Template
     logger.info("📝 Applying chat template...")
     full_dataset = full_dataset.map(
         functools.partial(apply_chat_template, tokenizer=tokenizer),
         desc="Formatting chat template",
     )
 
-    # 5. Tokenize
+    # Tokenize
     logger.info("🔢 Tokenizing...")
     cols_to_remove = [
         c
@@ -207,7 +339,7 @@ def main():
         desc="Tokenizing",
     )
 
-    # 6. Split and Save
+    # Split and Save
     logger.info("✂️  Splitting Train (90%) / Val (10%)...")
     split_dataset = tokenized_dataset.train_test_split(test_size=0.1, seed=42)
 
