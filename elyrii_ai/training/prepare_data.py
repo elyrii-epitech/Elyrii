@@ -24,8 +24,11 @@ import functools
 import logging
 import json
 from typing import Dict, Any, List
+
+from pip._internal.resolution import legacy
+
 from datasets import load_dataset, concatenate_datasets
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, LlamaTokenizer
 from elyrii_ai.prompt.system_prompt import get_system_prompt
 from dotenv import load_dotenv
 
@@ -121,12 +124,17 @@ def format_esconv(
     problem_type = example.get("problem_type", "")
     emotion_type = example.get("emotion_type", "")
     
-    # Try to extract the first user message to append the context
-    dialog_str = example.get("dialog", "[]")
-    try:
-        dialog = json.loads(dialog_str)
-    except json.JSONDecodeError:
-        dialog = []
+    # The 'dialog' field might be a JSON string or an already-parsed list.
+    dialog_data = example.get("dialog", [])
+    dialog = []
+    if isinstance(dialog_data, str):
+        try:
+            dialog = json.loads(dialog_data)
+        except json.JSONDecodeError:
+            logger.warning("Failed to parse 'dialog' string in ESConv, skipping.")
+            dialog = []
+    elif isinstance(dialog_data, list):
+        dialog = dialog_data
         
     for i, turn in enumerate(dialog):
         # 'usr' is the seeker, 'sys' is the supporter
@@ -247,7 +255,7 @@ def main():
 
     logger.info(f"🏗️  Loading tokenizer: {args.model_path}")
     try:
-        tokenizer = AutoTokenizer.from_pretrained(args.model_path, token=HF_TOKEN)
+        tokenizer = LlamaTokenizer.from_pretrained(args.model_path, use_fast=False, legacy=False)
     except OSError as e:
         logger.error(
             f"Failed to load tokenizer for {args.model_path}. Check your path, HF_TOKEN, or internet connection."
@@ -275,30 +283,34 @@ def main():
     else:
         logger.warning(f"⚠️  Local empathetic_dialogues not found at {ed_path}")
 
-    # 2. Load EmoBench (Local JSONL)
+    # 2. Load EmoBench (Local JSONL) - Load files individually to avoid schema conflicts
     logger.info("📚 Loading local 'EmoBench'...")
     eb_paths = [
         os.path.join(args.data_base_dir, "SahandSab_EmoBench", "EA.jsonl"),
         os.path.join(args.data_base_dir, "SahandSab_EmoBench", "EU.jsonl")
     ]
-    # Filter only existing ones
-    eb_paths = [p for p in eb_paths if os.path.exists(p)]
     
-    if eb_paths:
-        try:
-            ds_eb = load_dataset("json", data_files=eb_paths, split="train")
-            
-            # Filter non-English
-            initial_count = len(ds_eb)
-            ds_eb = ds_eb.filter(filter_english)
-            logger.info(f"Filtered EmoBench from {initial_count} to {len(ds_eb)} rows (English only).")
+    for path in eb_paths:
+        if os.path.exists(path):
+            try:
+                ds_eb = load_dataset("json", data_files=[path], split="train")
+                
+                # Filter non-English
+                initial_count = len(ds_eb)
+                ds_eb = ds_eb.filter(filter_english)
+                logger.info(f"Filtered {os.path.basename(path)} from {initial_count} to {len(ds_eb)} rows (English only).")
 
-            ds_eb = ds_eb.map(format_emobench, remove_columns=ds_eb.column_names)
-            datasets_to_merge.append(ds_eb)
-        except Exception as e:
-            logger.warning(f"⚠️  Could not load EmoBench: {e}")
-    else:
-        logger.warning(f"⚠️  Local EmoBench files not found at {os.path.join(args.data_base_dir, 'SahandSab_EmoBench')}")
+                # The format function might fail if columns are different, so we wrap this too
+                try:
+                    ds_eb = ds_eb.map(format_emobench, remove_columns=ds_eb.column_names)
+                    datasets_to_merge.append(ds_eb)
+                except Exception as e:
+                    logger.warning(f"⚠️  Could not format EmoBench file {path}: {e}")
+
+            except Exception as e:
+                logger.warning(f"⚠️  Could not load or process EmoBench file {path}: {e}")
+        else:
+            logger.warning(f"⚠️  Local EmoBench file not found at {path}")
         
     # 3. Load ESConv (Local Parquet)
     logger.info("📚 Loading local 'ESConv'...")

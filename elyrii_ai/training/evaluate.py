@@ -25,10 +25,12 @@ import re
 
 import torch
 import pandas as pd
+from pip._internal.resolution import legacy
 from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
+    LlamaTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
     pipeline,
@@ -99,7 +101,7 @@ def load_model_and_tokenizer(
         local_files_only=True,
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path, token=HF_TOKEN, local_files_only=True)
+    tokenizer = LlamaTokenizer.from_pretrained(model_path, local_files_only=True, use_fast=False, legacy=False)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 

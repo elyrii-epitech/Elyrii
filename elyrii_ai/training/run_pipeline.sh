@@ -4,6 +4,9 @@
 
 set -e # Exit immediately if a command exits with a non-zero status
 
+# Add the current directory to PYTHONPATH so that 'elyrii_ai' can be imported
+export PYTHONPATH="$(pwd):$PYTHONPATH"
+
 # Default configuration paths
 MODEL_PATH="./model/mistral_7B_instruct_v0.3"
 DATA_BASE_DIR="./datasets"
@@ -28,7 +31,7 @@ if [ ! -d "$DATA_BASE_DIR" ]; then
     exit 1
 fi
 
-python prepare_data.py \
+python elyrii_ai/training/prepare_data.py \
     --model_path "$MODEL_PATH" \
     --data_base_dir "$DATA_BASE_DIR" \
     --output_dir "$PROCESSED_DATA_DIR"
@@ -43,13 +46,15 @@ echo "✅ Data preparation successful!"
 # Step 2: Model Training
 echo ""
 echo "==== [2/3] Model Training ===="
-python train.py \
-    --model_path "$MODEL_PATH" \
+# Force setuptools to use the standard library's distutils to avoid Conda/Torch conflicts
+export SETUPTOOLS_USE_DISTUTILS=stdlib
+
+python elyrii_ai/training/train.py \
     --data_dir "$PROCESSED_DATA_DIR" \
     --output_dir "$OUTPUT_DIR" \
     --epochs 3 \
-    --batch 4 \
-    --grad_acc 8
+    --batch 1 \
+    --grad_acc 16
 
 ADAPTER_PATH="$OUTPUT_DIR/final_lora"
 if [ ! -d "$ADAPTER_PATH" ]; then
@@ -63,7 +68,7 @@ echo "✅ Model training successful!"
 echo ""
 echo "==== [3/3] Model Evaluation ===="
 echo "Note: If GEMINI_API_KEY is exported, LLM-as-a-Judge will run."
-python evaluate.py \
+python elyrii_ai/training/evaluate.py \
     --adapter_path "$ADAPTER_PATH" \
     --model_path "$MODEL_PATH" \
     --output_file "$EVAL_RESULTS_FILE"
