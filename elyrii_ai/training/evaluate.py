@@ -30,13 +30,18 @@ from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
     LlamaTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
     pipeline,
     Pipeline,
 )
-from peft import PeftModel
+from peft import (
+    PeftModel,
+    PeftConfig,
+    prepare_model_for_kbit_training
+)
 from elyrii_ai.prompt.system_prompt import get_system_prompt
 from dotenv import load_dotenv
 
@@ -91,23 +96,36 @@ def load_model_and_tokenizer(
     """
     logger.info(f"🏗️  Loading base model: {model_path}")
 
-    # Load Base Model
-    model = AutoModelForCausalLM.from_pretrained(
-        model_path,
-        device_map="auto",
-        torch_dtype=torch.float16,
-        token=HF_TOKEN,
-        load_in_8bit=True,  # Keep 8-bit for inference on consumer GPUs
-        local_files_only=True,
+    config = PeftConfig.from_pretrained(adapter_path)
+
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+        bnb_4bit_use_double_quant=True,
     )
 
-    tokenizer = LlamaTokenizer.from_pretrained(model_path, local_files_only=True, use_fast=False, legacy=False)
+    # Load Base Model
+    base_model = AutoModelForCausalLM.from_pretrained(
+        config.base_model_name_or_path if config.base_model_name_or_path else model_path,
+        quantization_config=quantization_config,
+        device_map={"": 0},
+        torch_dtype=torch.bfloat16,
+        token=HF_TOKEN,
+    )
+
+    tokenizer = LlamaTokenizer.from_pretrained(model_path, use_fast=False, legacy=False)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    first_layer_weight = base_model.model.layers[0].self_attn.q_proj.weight
+    logger.info(
+        f"🔍 Quantization check: {hasattr(first_layer_weight, 'compress_statistics')}"
+    )
     # Load Adapter
     logger.info(f"🔗 Loading LoRA adapter from: {adapter_path}")
-    model = PeftModel.from_pretrained(model, adapter_path)
+    model = PeftModel.from_pretrained(base_model, adapter_path)
+    model.eval()
 
     return model, tokenizer
 
@@ -130,13 +148,14 @@ def generate_response(
     # Format with the Chat Template
     messages = [{"role": "user", "content": f"{SYSTEM_PROMPT}\n\n{prompt}"}]
 
-    inputs = tokenizer.apply_chat_template(
+    tokenized_chat = tokenizer.apply_chat_template(
         messages, return_tensors="pt", add_generation_prompt=True
     ).to(model.device)
 
     with torch.no_grad():
         outputs = model.generate(
-            inputs,
+            input_ids=tokenized_chat["input_ids"],
+            attention_mask=tokenized_chat.get("attention_mask"),
             max_new_tokens=256,
             do_sample=True,
             temperature=0.7,
@@ -272,11 +291,11 @@ def main():
         help="Path to the base model or HF ID",
     )
     args = parser.parse_args()
-    
+
     if not GEMINI_AVAILABLE:
         logger.warning("google.generativeai is not installed. LLM-as-a-judge will be disabled. Run `pip install google-generativeai`.")
     elif not GEMINI_API_KEY:
-         logger.warning("GEMINI_API_KEY is not set. LLM-as-a-judge will be disabled. Set the environment variable to enable.")
+        logger.warning("GEMINI_API_KEY is not set. LLM-as-a-judge will be disabled. Set the environment variable to enable.")
 
     # 1. Load Generation Model
     model, tokenizer = load_model_and_tokenizer(args.adapter_path, args.model_path)
@@ -284,13 +303,15 @@ def main():
     # 2. Load Judge Models (Sentiment/Empathy & Toxicity)
     logger.info("⚖️  Loading sentiment analyzer...")
     empathy_judge = pipeline(
-        "sentiment-analysis", model="nlptown/bert-base-multilingual-uncased-sentiment"
+        "sentiment-analysis",
+        model="nlptown/bert-base-multilingual-uncased-sentiment",
+        device=-1,
     )
-    
+
     logger.info("🛡️  Loading toxicity analyzer...")
     # Use a standard roberta toxicity model
     toxicity_judge = pipeline(
-        "text-classification", model="s-nlp/roberta_toxicity_classifier"
+        "text-classification", model="s-nlp/roberta_toxicity_classifier", device=-1
     )
 
     results = []
@@ -303,14 +324,14 @@ def main():
         # Basic NLP Scoring
         e_score = score_empathy(response, empathy_judge)
         t_score = score_toxicity(response, toxicity_judge)
-        
+
         row_data = {
             "User Prompt": prompt,
             "Elyrii Response": response,
             "Empathy Score (1-5)": e_score,
             "Toxicity Score (0-1)": t_score,
         }
-        
+
         # LLM-as-a-Judge (Gemini)
         if GEMINI_AVAILABLE and GEMINI_API_KEY:
             gemini_scores = evaluate_with_gemini(prompt, response)
@@ -320,21 +341,21 @@ def main():
 
     # 3. Save Results
     df = pd.DataFrame(results)
-    
+
     logger.info("\n--- Aggregate Metrics ---")
     avg_empathy = df["Empathy Score (1-5)"].mean()
     logger.info(f"📊 Average Base Empathy: {avg_empathy:.2f} / 5.0")
-    
+
     avg_tox = df["Toxicity Score (0-1)"].mean()
     logger.info(f"📊 Average Base Toxicity: {avg_tox:.4f} / 1.0 (Lower is better)")
-    
+
     if GEMINI_AVAILABLE and GEMINI_API_KEY:
         try:
             # Calculate final combined score (out of 10)
             # Empathy (Gemini + Base scaled to 10) + Safety (Gemini + Inverse Tox scaled to 10) + Helpfulness + Coherence
             base_empathy_scaled = df["Empathy Score (1-5)"] * 2
             base_safety_scaled = (1.0 - df["Toxicity Score (0-1)"]) * 10
-            
+
             final_scores = (
                 df["Gemini Empathy"].astype(float) + 
                 df["Gemini Safety"].astype(float) + 
@@ -343,9 +364,9 @@ def main():
                 base_empathy_scaled +
                 base_safety_scaled
             ) / 6.0 # Average out of the 6 components
-            
+
             df["Final Combined Score (1-10)"] = final_scores
-            
+
             logger.info(f"🧠 Gemini Avg Empathy:    {df['Gemini Empathy'].mean():.2f} / 10.0")
             logger.info(f"🧠 Gemini Avg Safety:     {df['Gemini Safety'].mean():.2f} / 10.0")
             logger.info(f"🧠 Gemini Avg Helpful:    {df['Gemini Helpfulness'].mean():.2f} / 10.0")

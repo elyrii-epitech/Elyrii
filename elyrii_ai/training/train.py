@@ -14,6 +14,7 @@ Usage:
 """
 
 import os, torch, argparse
+import numpy as np
 import logging
 
 from transformers import (
@@ -32,6 +33,14 @@ from peft import (
 )
 from datasets import load_from_disk
 from dotenv import load_dotenv
+
+torch.serialization.add_safe_globals([
+    np._core.multiarray._reconstruct,
+    np.ndarray,
+    np.dtype,
+    np.dtypes.UInt32DType,
+    np.core.multiarray._reconstruct # Adding the older path just in case
+])
 
 # Load environment variables from .env file
 load_dotenv()
@@ -87,6 +96,12 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default="mistralai/Mistral-7B-Instruct-v0.3",
         help="Hugging Face model ID to fine-tune.",
+    )
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        type=str,
+        default=None,
+        help="Path to a specific checkpoint to resume from (e.g., ./output/checkpoint-3000) or 'True' to find the latest.",
     )
 
     return parser.parse_args()
@@ -172,7 +187,12 @@ def main():
     )
 
     logger.info("🔥 Starting training...")
-    trainer.train()
+
+    resume_path = args.resume_from_checkpoint
+    if resume_path == "True" or resume_path == "true":
+        resume_path = True
+
+    trainer.train(resume_from_checkpoint=resume_path)
 
     final_path = os.path.join(args.output_dir, "final_lora")
     logger.info(f"✅ Training complete. Saving adapter to {final_path}")
