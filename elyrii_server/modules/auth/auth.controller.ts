@@ -1,4 +1,5 @@
 import { sValidator } from '@hono/standard-validator';
+import { zValidator } from '@hono/zod-validator';
 import { describeRoute } from 'hono-openapi';
 import { createFactory } from 'hono/factory';
 import { loginValidation, registerValidation } from '../../utils/zod.valid';
@@ -25,21 +26,21 @@ class AuthController {
                 500: { description: "Registration failed" },
             }
         }),
-        sValidator("json", registerValidation),
+        zValidator("json", registerValidation),
         async (ctx) => {
             try {
-                const { email, password, lastName, firstName, age } = ctx.req.valid("json");
+                const { email, password, lastName, firstName } = ctx.req.valid("json");
                 const existUser = await this.authRepository.findUserByEmail(email);
-                if (existUser) {
+                if (!existUser) {
                     return ctx.json({ message: 'user already exists' }, 400);
                 }
-                
+
                 const newUser = await this.authRepository.createUser({
                     email,
                     password,
                     lastName,
                     firstName,
-                    age: age ?? 18
+                    age: 18
                 });
                 
                 if (!newUser) {

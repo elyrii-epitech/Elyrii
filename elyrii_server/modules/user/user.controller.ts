@@ -73,6 +73,18 @@ class UserController {
             return ctx.json({ error: "Failed to retrieve latest mood" }, 500);
         }
     });
+
+    readonly getStats = this.factory.createHandlers(async (ctx) => {
+        const { userId } = ctx.get("user");
+
+        try {
+            const stats = await this.userRepository.getStats(userId);
+            return ctx.json(stats, 200);
+        } catch (error) {
+            console.error("getStats error:", error);
+            return ctx.json({ error: "Failed to retrieve statistics" }, 500);
+        }
+    });
 }
 
 export default UserController;
