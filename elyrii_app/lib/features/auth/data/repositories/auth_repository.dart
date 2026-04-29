@@ -19,6 +19,8 @@ class AuthRepository {
 
   AuthRepository({required ApiClient client}) : _client = client;
 
+  ApiClient get client => _client;
+
   /// Login with email and password
   /// Returns JWT access token on success
   Future<AuthResult> login({

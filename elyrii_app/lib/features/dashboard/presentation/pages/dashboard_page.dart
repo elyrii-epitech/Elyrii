@@ -262,7 +262,7 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         _StatChip(
           icon: '📝',
-          value: '${journalProvider.entries.length}',
+          value: '${provider.journalEntriesCount}',
           label: 'entrées',
           color: AppColors.primary,
           isDark: isDark,
@@ -278,7 +278,7 @@ class _DashboardPageState extends State<DashboardPage> {
         const SizedBox(width: 12),
         _StatChip(
           icon: '⭐',
-          value: '3',
+          value: '${provider.activeChallengesCount}',
           label: 'objectifs',
           color: AppColors.accent,
           isDark: isDark,

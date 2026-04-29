@@ -18,6 +18,7 @@ class UserRoutes {
         this.router.put("/me", ...this.userController.updateMe);
         this.router.post("/mood", ...this.userController.logMood);
         this.router.get("/mood/latest", ...this.userController.getLatestMood);
+        this.router.get("/stats", ...this.userController.getStats);
     }
 
     get getRouter() {

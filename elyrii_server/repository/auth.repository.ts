@@ -9,9 +9,8 @@ type AuthUserReturn = {
 
 class AuthRepository {
     public async findUserByEmail(email: string): Promise<User | undefined> {
-        return await db.query.userTable.findFirst({
-            where: eq(userTable.email, email),
-        });
+        const result = await db.select().from(userTable).where(eq(userTable.email, email)).limit(1);
+        return result[0];
     }
     
     public async getUserById(id: string): Promise<User | undefined> {
