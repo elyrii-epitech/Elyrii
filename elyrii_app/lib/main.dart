@@ -1,12 +1,3 @@
-import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/journal/presentation/providers/journal_provider.dart';
-import 'features/chatbot/presentation/providers/chatbot_provider.dart';
-import 'features/gamification/presentation/providers/gamification_provider.dart';
-import 'features/settings/providers/settings_provider.dart';
->>>>>>> dev
-import 'routes/app_routes.dart';
-import 'routes/route_generator.dart';
-=======
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
@@ -26,15 +17,6 @@ import 'features/chatbot/presentation/providers/chatbot_provider.dart';
 import 'features/gamification/presentation/providers/gamification_provider.dart';
 import 'features/settings/providers/settings_provider.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
-import 'routes/app_routes.dart';
-import 'routes/route_generator.dart';
-=======
-import 'features/auth/presentation/providers/auth_provider.dart';
-import 'features/journal/presentation/providers/journal_provider.dart';
-import 'features/chatbot/presentation/providers/chatbot_provider.dart';
-import 'features/gamification/presentation/providers/gamification_provider.dart';
-import 'features/settings/providers/settings_provider.dart';
->>>>>>> dev
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 
@@ -119,16 +101,7 @@ class MyApp extends StatelessWidget {
             return GlobalErrorBoundary(child: child!);
           },
 
-<<<<<<< HEAD
-          initialRoute:
-              authProvider.isAuthenticated ? AppRoutes.home : AppRoutes.login,
->>>>>>> dev
-=======
           initialRoute: authProvider.isAuthenticated ? AppRoutes.home : AppRoutes.login,
-=======
-          initialRoute:
-              authProvider.isAuthenticated ? AppRoutes.home : AppRoutes.login,
->>>>>>> dev
           onGenerateRoute: RouteGenerator.generateRoute,
         );
       },

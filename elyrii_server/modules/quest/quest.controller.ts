@@ -4,6 +4,7 @@ import type { HonoEnv } from "../../utils/hono.types";
 import { z } from "zod";
 import { sValidator } from "@hono/standard-validator";
 import { describeRoute } from "hono-openapi";
+import QuestLogic from "./quest.logic";
 
 /**
  * Controller that defines HTTP handlers for gamified challenges (quests).
@@ -17,6 +18,7 @@ import { describeRoute } from "hono-openapi";
 class QuestController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly questRepository: QuestRepository = new QuestRepository();
+    private readonly questLogic: QuestLogic = new QuestLogic();
 
     /**
      * Handler for retrieving active challenges for the user.
@@ -153,6 +155,82 @@ class QuestController {
                 return ctx.json(updated);
             } catch (e) {
                 return ctx.json({ error: "Failed to reject challenge" }, 500);
+            }
+        }
+    );
+
+    /**
+     * Handler for retrieving SYSTEM challenges not yet started by the user.
+     */
+    public readonly getAvailableChallenges = this.factory.createHandlers(
+        describeRoute({
+            summary: "Get Available Challenges",
+            description: "Retrieve SYSTEM challenges the user hasn't started or completed yet.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "List of available challenges" }
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const challenges = await this.questRepository.getAvailableChallenges(userId);
+            return ctx.json(challenges);
+        }
+    );
+
+    /**
+     * Handler for starting a SYSTEM challenge.
+     * Assigns the challenge to the user with status ACTIVE.
+     */
+    public readonly startChallenge = this.factory.createHandlers(
+        describeRoute({
+            summary: "Start Challenge",
+            description: "Start a SYSTEM challenge by assigning it to the user with ACTIVE status.",
+            tags: ["Quest"],
+            responses: {
+                201: { description: "Challenge started successfully" },
+                400: { description: "Challenge ID is required" },
+                404: { description: "Challenge not found" },
+                409: { description: "Challenge already active or completed" },
+                500: { description: "Failed to start challenge" }
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const challengeId = ctx.req.param("challengeId");
+            if (!challengeId) {
+                return ctx.json({ error: "Challenge ID is required" }, 400);
+            }
+
+            // Vérifier que le défi existe
+            const template = await this.questRepository.getChallengeTemplateById(challengeId);
+            if (!template) {
+                return ctx.json({ error: "Challenge not found" }, 404);
+            }
+
+            try {
+                // Initialiser la progression à zéro pour chaque condition
+                const conditions = template.conditions as { target: number }[];
+                const initialProgress: Record<string, { current: number; target: number; completed: boolean; updatedAt: string }> = {};
+                conditions.forEach((cond, i) => {
+                    initialProgress[`condition_${i}`] = {
+                        current: 0,
+                        target: cond.target,
+                        completed: false,
+                        updatedAt: new Date().toISOString(),
+                    };
+                });
+
+                const userChallenge = await this.questRepository.assignChallengeToUser({
+                    userId,
+                    challengeId,
+                    status: 'ACTIVE',
+                    progress: initialProgress,
+                });
+
+                return ctx.json({ challenge: template, userChallenge }, 201);
+            } catch (e) {
+                return ctx.json({ error: "Failed to start challenge" }, 500);
             }
         }
     );

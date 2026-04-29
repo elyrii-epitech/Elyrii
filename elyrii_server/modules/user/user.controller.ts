@@ -4,10 +4,12 @@ import { z } from "zod";
 import UserRepository from "../../repository/user.repository";
 import { updateProfileValidation } from "../../utils/zod.valid";
 import type { HonoEnv } from "../../utils/hono.types";
+import QuestLogic from "../quest/quest.logic";
 
 class UserController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly userRepository = new UserRepository();
+    private readonly questLogic = new QuestLogic();
 
     readonly getMe = this.factory.createHandlers(async (ctx) => {
         const { userId } = ctx.get("user");
@@ -51,6 +53,8 @@ class UserController {
 
             try {
                 const log = await this.userRepository.logMood(userId, moodType);
+                // Déclencher la vérification des défis en arrière-plan (non bloquant)
+                this.questLogic.checkAndUpdateProgress(userId, 'mood_logged').catch(() => {});
                 return ctx.json(log, 201);
             } catch (error) {
                 console.error("logMood error:", error);

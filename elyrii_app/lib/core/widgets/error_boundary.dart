@@ -9,14 +9,7 @@ import 'package:flutter/foundation.dart';
 class GlobalErrorBoundary extends StatefulWidget {
   final Widget child;
 
-<<<<<<< HEAD
   const GlobalErrorBoundary({super.key, required this.child});
->>>>>>> dev
-=======
-  const GlobalErrorBoundary({super.key, required this.child});
-=======
-  const GlobalErrorBoundary({super.key, required this.child});
->>>>>>> dev
 
   @override
   State<GlobalErrorBoundary> createState() => _GlobalErrorBoundaryState();
@@ -74,7 +67,6 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
-                    // Simple reload attempt by navigating to root
                     if (context.mounted) {
                       Navigator.of(context).pushNamedAndRemoveUntil(
                         AppRoutes.login,

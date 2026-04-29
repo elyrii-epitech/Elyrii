@@ -25,7 +25,7 @@ htmlcov/
 .idea/
 
 instance/
-models/
+elyrii_ai/models/
 .env
 .env.local
 
@@ -39,3 +39,10 @@ _static/
 _templates/
 .windsurf/
 .agent/
+
+# Claude Code — local only
+.claude/
+CLAUDE.md
+TODO.md
+CHANGELOG.md
+**/CLAUDE.md

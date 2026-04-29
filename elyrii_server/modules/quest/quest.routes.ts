@@ -19,13 +19,17 @@ class QuestRoutes {
         // Protect remaining routes with auth middleware
         this.router.use("*", authMiddleware);
 
-        // User facing
+        // Défis disponibles (SYSTEM, non commencés)
+        this.router.get("/available", ...this.questController.getAvailableChallenges);
+        this.router.post("/available/:challengeId/start", ...this.questController.startChallenge);
+
+        // Défis en cours et terminés
         this.router.get("/active", ...this.questController.getActiveChallenges);
         this.router.get("/completed", ...this.questController.getCompletedChallenges);
-        
-        // Proposals (AI Generated)
+
+        // Propositions IA (PENDING)
         this.router.get("/proposals", ...this.questController.getPendingChallenges);
-        this.router.post("/proposals", ...this.questController.createProposal); // AI calls this? Or user requesting one?
+        this.router.post("/proposals", ...this.questController.createProposal);
         this.router.post("/proposals/:challengeId/accept", ...this.questController.acceptChallenge);
         this.router.post("/proposals/:challengeId/reject", ...this.questController.rejectChallenge);
     }

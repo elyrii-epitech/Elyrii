@@ -4,6 +4,7 @@ import { sValidator } from "@hono/standard-validator";
 import { createEntriySchema, updateEntrySchema } from "../../utils/journal.zod";
 import type { HonoEnv } from "../../utils/hono.types";
 import { describeRoute } from "hono-openapi";
+import QuestLogic from "../quest/quest.logic";
 
 /**
  * Controller that defines HTTP handlers for journal entry management.
@@ -19,6 +20,7 @@ import { describeRoute } from "hono-openapi";
 class JournalController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly journalRepository: JournalRepository = new JournalRepository();
+    private readonly questLogic: QuestLogic = new QuestLogic();
     
     /**
      * Handler for retrieving journal entries for the authenticated user.
@@ -140,6 +142,8 @@ class JournalController {
             body["userId"] = userID;
             if (!body.userId) return ctx.json({ error: "User ID is required" }, 400);
             const entry = await this.journalRepository.createEntry({ ...body, userId: userID as string });
+            // Déclencher la vérification des défis en arrière-plan (non bloquant)
+            this.questLogic.checkAndUpdateProgress(userID, 'journal_created').catch(() => {});
             return ctx.json({ message: "Entry created successfully", body: entry }, 201);
         } catch (error) {
             return ctx.json({ error: "Failed to create entry" }, 500);
