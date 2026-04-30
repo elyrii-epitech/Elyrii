@@ -28,6 +28,9 @@ class ApiConfig {
       '${_baseUrl.replaceFirst('http', 'ws')}/chat/ws?userId=$userId';
 
   // ==================== Quest / Challenge ====================
+  static String get availableChallengesUrl => '$_baseUrl/challenge/available';
+  static String startChallengeUrl(String id) =>
+      '$_baseUrl/challenge/available/$id/start';
   static String get activeChallengesUrl => '$_baseUrl/challenge/active';
   static String get completedChallengesUrl => '$_baseUrl/challenge/completed';
   static String get proposalsUrl => '$_baseUrl/challenge/proposals';

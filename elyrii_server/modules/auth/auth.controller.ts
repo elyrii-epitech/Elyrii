@@ -31,7 +31,7 @@ class AuthController {
             try {
                 const { email, password, lastName, firstName } = ctx.req.valid("json");
                 const existUser = await this.authRepository.findUserByEmail(email);
-                if (!existUser) {
+                if (existUser) {
                     return ctx.json({ message: 'user already exists' }, 400);
                 }
 

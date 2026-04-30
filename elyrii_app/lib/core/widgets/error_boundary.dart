@@ -67,7 +67,6 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
-                    // Simple reload attempt by navigating to root
                     if (context.mounted) {
                       Navigator.of(context).pushNamedAndRemoveUntil(
                         AppRoutes.login,
