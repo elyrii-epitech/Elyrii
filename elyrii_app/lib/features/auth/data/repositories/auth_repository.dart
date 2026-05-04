@@ -81,12 +81,17 @@ class AuthRepository {
     try {
       final parts = token.split('.');
       if (parts.length != 3) return null;
-      final payload = parts[1];
-      final normalized = base64Url.normalize(payload);
-      final decoded = utf8.decode(base64Url.decode(normalized));
+      var payload = parts[1];
+      // Pad base64 payload to multiple of 4 characters
+      final padding = payload.length % 4;
+      if (padding != 0) {
+        payload += '=' * (4 - padding);
+      }
+      final decoded = utf8.decode(base64Url.decode(payload));
       final json = jsonDecode(decoded) as Map<String, dynamic>;
       return UserModel.fromJson(json);
-    } catch (_) {
+    } catch (e) {
+      print('Error decoding token payload: $e');
       return null;
     }
   }
