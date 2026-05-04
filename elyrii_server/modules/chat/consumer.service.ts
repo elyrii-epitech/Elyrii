@@ -18,11 +18,13 @@ export async function handleAiResponse() {
     await kafkaService.consumer.run({
         eachMessage: async ({ message }) => {
             if (!message.value) return;
-            const data: { userId: string, response: string } = JSON.parse(message.value.toString());
+            const data: { userId: string, response: string, conversationId?: string } = JSON.parse(message.value.toString());
             const { userId, response } = data;
+            const conversationId = data.conversationId ?? "default";
             try {
                 await chatRepository.createMessage({
                     userId,
+                    conversationId,
                     role: "ai",
                     message: response,
                 });
@@ -32,7 +34,7 @@ export async function handleAiResponse() {
             const ws = clientSockets.get(userId);
 
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ from: "ai", message: response }));
+                ws.send(JSON.stringify({ from: "ai", conversationId, message: response }));
             }
         }
     });

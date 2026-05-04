@@ -45,8 +45,9 @@ chatRouter.get("/history", describeRoute({
 }), async (ctx) => {
     const userId = ctx.get("user").userId;
     const limitRaw = ctx.req.query("limit");
+    const conversationId = ctx.req.query("conversationId") || undefined;
     const limit = Math.min(Math.max(Number(limitRaw || 50), 1), 200);
-    const history = await chatRepository.getHistory(userId, limit);
+    const history = await chatRepository.getHistory(userId, limit, conversationId);
     return ctx.json(history, 200);
 });
 
@@ -63,6 +64,8 @@ chatRouter.get("/ws", describeRoute({
         },
     },
 }), upgradeWebSocket(async (ctx) => {
+    const parsedUrl = new URL(ctx.req.url);
+    const defaultConversationId = parsedUrl.searchParams.get("conversationId") || "default";
     const identity = await resolveWsIdentity(
         ctx.req.url,
         ctx.req.header("Authorization") ?? ctx.req.header("authorization"),
@@ -89,10 +92,26 @@ chatRouter.get("/ws", describeRoute({
             clientSockets.delete(userId);
         },
         onMessage: async (event, ws) => {
-            const message = event.data.toString();
+            const rawMessage = event.data.toString();
+            let message = rawMessage;
+            let conversationId = defaultConversationId;
+
+            try {
+                const parsed = JSON.parse(rawMessage) as { message?: string; conversationId?: string };
+                if (typeof parsed.message === "string" && parsed.message.trim().length > 0) {
+                    message = parsed.message.trim();
+                }
+                if (typeof parsed.conversationId === "string" && parsed.conversationId.trim().length > 0) {
+                    conversationId = parsed.conversationId.trim();
+                }
+            } catch {
+                // Keep plain-text compatibility for legacy clients.
+            }
+
             try {
                 await chatRepository.createMessage({
                     userId,
+                    conversationId,
                     role: "user",
                     message,
                 });
@@ -100,18 +119,20 @@ chatRouter.get("/ws", describeRoute({
                 console.error("Failed to persist user chat message:", error);
             }
             try {
-                await sendMessageToTopic(userId, message);
+                const history = await chatRepository.getRecentMessagesForContext(userId, conversationId, 12);
+                await sendMessageToTopic(userId, message, { conversationId, history });
             } catch (error) {
                 try {
                     await chatRepository.createMessage({
                         userId,
+                        conversationId,
                         role: "system",
                         message: "Message dispatch failed",
                     });
                 } catch (_err) {
                     // Ignore persistence error
                 }
-                ws.send(JSON.stringify({ from: "system", error: "Message dispatch failed" }));
+                ws.send(JSON.stringify({ from: "system", conversationId, error: "Message dispatch failed" }));
             }
             // Optional: somehow store the messages.
         },
