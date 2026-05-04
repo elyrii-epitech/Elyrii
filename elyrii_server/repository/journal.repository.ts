@@ -29,6 +29,19 @@ class JournalRepository {
         return entry || null;
     }
 
+    public async getEntryByIdForUser(_id: string, userId: string): Promise<JournalEntry | null> {
+        const [entry] = await db
+            .select()
+            .from(journalEntriesTable)
+            .where(and(
+                eq(journalEntriesTable.id, _id),
+                eq(journalEntriesTable.userId, userId),
+                isNull(journalEntriesTable.deletedAt),
+            ))
+            .limit(1);
+        return entry || null;
+    }
+
     public async createEntry(data: NewJournalEntry): Promise<JournalEntry> {
         if (!data.userId || !data.title) {
             throw new Error('User ID and title are required');
@@ -87,6 +100,55 @@ class JournalRepository {
             return updated as JournalEntry;
         });
     }
+
+    async updateEntryForUser(_id: string, userId: string, data: Partial<JournalEntry>): Promise<JournalEntry> {
+        return await db.transaction(async (tx) => {
+            const [existing] = await tx
+                .select()
+                .from(journalEntriesTable)
+                .where(and(
+                    eq(journalEntriesTable.id, _id),
+                    eq(journalEntriesTable.userId, userId),
+                    isNull(journalEntriesTable.deletedAt),
+                ))
+                .limit(1);
+
+            if (!existing) {
+                tx.rollback();
+                throw new Error('Journal entry not found');
+            }
+
+            const updatePayload: Partial<JournalEntry> = {};
+            if (data.title !== undefined && data.title !== existing.title)
+                updatePayload.title = data.title;
+            if (data.content !== undefined && data.content !== existing.content)
+                updatePayload.content = data.content;
+            if (data.mood !== undefined && data.mood !== existing.mood)
+                updatePayload.mood = data.mood;
+            if (data.deletedAt !== undefined && data.deletedAt !== existing.deletedAt)
+                updatePayload.deletedAt = data.deletedAt;
+
+            if (Object.keys(updatePayload).length === 0) {
+                return existing as JournalEntry;
+            }
+
+            const [updated] = await tx
+                .update(journalEntriesTable)
+                .set(updatePayload)
+                .where(and(
+                    eq(journalEntriesTable.id, _id),
+                    eq(journalEntriesTable.userId, userId),
+                ))
+                .returning();
+
+            if (!updated) {
+                tx.rollback();
+                throw new Error('Failed to update journal entry');
+            }
+
+            return updated as JournalEntry;
+        });
+    }
     
     async softDeleteEntry(_id: string): Promise<boolean> {
         return await db.transaction(async (tx) => {
@@ -95,6 +157,26 @@ class JournalRepository {
                 .where(eq(journalEntriesTable.id, _id))
                 .returning();
             
+            if (!updated) {
+                tx.rollback();
+                throw new Error('Failed to soft delete journal entry');
+            }
+            return true;
+        });
+    }
+
+    async softDeleteEntryForUser(_id: string, userId: string): Promise<boolean> {
+        return await db.transaction(async (tx) => {
+            const [updated] = await tx
+                .update(journalEntriesTable)
+                .set({ deletedAt: new Date() })
+                .where(and(
+                    eq(journalEntriesTable.id, _id),
+                    eq(journalEntriesTable.userId, userId),
+                    isNull(journalEntriesTable.deletedAt),
+                ))
+                .returning();
+
             if (!updated) {
                 tx.rollback();
                 throw new Error('Failed to soft delete journal entry');

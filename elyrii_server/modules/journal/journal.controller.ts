@@ -104,15 +104,15 @@ class JournalController {
         }
     }), async (ctx) => { 
         const entryId = ctx.req.param("entryId");
+        const userID = ctx.get("user").userId;
         if (!entryId) {
             return ctx.json({ error: "Entry ID is required" }, 400);
         }
-        try {
-            const entry = await this.journalRepository.getEntryById(entryId);
-            return ctx.json(entry); 
-        } catch (error) {
+        const entry = await this.journalRepository.getEntryByIdForUser(entryId, userID);
+        if (!entry) {
             return ctx.json({ error: "Entry not found" }, 404);
         }
+        return ctx.json(entry);
     });
 
     /**
@@ -170,15 +170,19 @@ class JournalController {
     }), sValidator("json", updateEntrySchema), async (ctx) => {
         const body = ctx.req.valid("json");
         const entryId = ctx.req.param("entryId");
+        const userID = ctx.get("user").userId;
 
         if (!body || !entryId) {
             return ctx.json({ error: "Invalid request body" }, 400);
         }
 
         try {
-            const entry = await this.journalRepository.updateEntry(entryId, body);
+            const entry = await this.journalRepository.updateEntryForUser(entryId, userID, body);
             return ctx.json({ message: "Entry updated successfully", body: entry }, 200);
         } catch (error) {
+            if (error instanceof Error && error.message === "Journal entry not found") {
+                return ctx.json({ error: "Entry not found" }, 404);
+            }
             return ctx.json({ error: "Failed to update entry" }, 500);
         }
     });
@@ -201,13 +205,17 @@ class JournalController {
         }
     }), async (ctx) => { 
         const entryId = ctx.req.param("entryId");
+        const userID = ctx.get("user").userId;
         if (!entryId) {
             return ctx.json({ error: "Entry ID is required" }, 400);
         }
         try {
-            await this.journalRepository.softDeleteEntry(entryId);
+            await this.journalRepository.softDeleteEntryForUser(entryId, userID);
             return ctx.json({ message: "Entry soft-deleted successfully" }, 200);
         } catch (error) {
+            if (error instanceof Error && error.message === "Failed to soft delete journal entry") {
+                return ctx.json({ error: "Entry not found" }, 404);
+            }
             return ctx.json({ error: "Failed to soft-delete entry" }, 500);
         }
     });
