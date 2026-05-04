@@ -11,11 +11,13 @@ import type {
 } from "./quest.types";
 import RewardRepository from "../../repository/reward.repository";
 import QuestRepository from "../../repository/quest.repository";
+import NotificationRepository from "../../repository/notification.repository";
 import { sendQuestEvent } from "./producer.service";
 
 class QuestLogic {
     private readonly rewardRepository = new RewardRepository();
     private readonly questRepository = new QuestRepository();
+    private readonly notificationRepository = new NotificationRepository();
 
     /**
      * Point d'entrée principal : appelé après chaque action utilisateur.
@@ -88,6 +90,17 @@ class QuestLogic {
 
                 if (granted) {
                     await this.questRepository.markRewardGranted(userChallenge.id);
+                    await this.notificationRepository.createNotification({
+                        userId,
+                        type: "challenge_completed",
+                        title: "Défi complété",
+                        body: `Bravo ! Tu as complété "${challenge.title}" et gagné ${challenge.rewardPoints ?? 50} points.`,
+                        metadata: JSON.stringify({
+                            challengeId: challenge.id,
+                            userChallengeId: userChallenge.id,
+                            rewardPoints: challenge.rewardPoints ?? 50,
+                        }),
+                    });
                     sendQuestEvent("challenge_completed", {
                         userId,
                         challengeId: challenge.id,

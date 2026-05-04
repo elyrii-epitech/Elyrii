@@ -20,6 +20,28 @@ class QuestController {
     private readonly questRepository: QuestRepository = new QuestRepository();
     private readonly questLogic: QuestLogic = new QuestLogic();
 
+    private sortUserChallenges<T extends { createdAt: Date | null; completedAt: Date | null; challenge: { rewardPoints: number } }>(
+        rows: T[],
+        sort?: string,
+    ): T[] {
+        const normalized = (sort || "newest").toLowerCase();
+        const sorted = [...rows];
+        if (normalized === "oldest") {
+            sorted.sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
+            return sorted;
+        }
+        if (normalized === "points_desc") {
+            sorted.sort((a, b) => (b.challenge.rewardPoints ?? 0) - (a.challenge.rewardPoints ?? 0));
+            return sorted;
+        }
+        if (normalized === "completed_desc") {
+            sorted.sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0));
+            return sorted;
+        }
+        sorted.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+        return sorted;
+    }
+
     /**
      * Handler for retrieving active challenges for the user.
      * 
@@ -37,8 +59,10 @@ class QuestController {
         }),
         async (ctx) => {
             const userId = ctx.get("user").userId;
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
             const challenges = await this.questRepository.getUserChallenges(userId, 'ACTIVE');
-            return ctx.json(challenges);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
         }
     );
 
@@ -59,8 +83,10 @@ class QuestController {
         }),
         async (ctx) => {
             const userId = ctx.get("user").userId;
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
             const challenges = await this.questRepository.getUserChallenges(userId, 'COMPLETED');
-            return ctx.json(challenges);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
         }
     );
 
@@ -84,8 +110,32 @@ class QuestController {
         }),
         async (ctx) => {
             const userId = ctx.get("user").userId;
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
             const challenges = await this.questRepository.getUserChallenges(userId, 'PENDING');
-            return ctx.json(challenges);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
+        }
+    );
+
+    public readonly listChallenges = this.factory.createHandlers(
+        describeRoute({
+            summary: "List Challenges",
+            description: "List user challenges with optional status filter and sorting.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "List of challenges" },
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const status = ctx.req.query("status");
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
+            const allowedStatus = new Set(["PENDING", "ACTIVE", "COMPLETED", "REJECTED", "SKIPPED", "EXPIRED"]);
+            const normalizedStatus = status?.toUpperCase();
+            const finalStatus = normalizedStatus && allowedStatus.has(normalizedStatus) ? normalizedStatus : undefined;
+            const challenges = await this.questRepository.getUserChallenges(userId, finalStatus);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit), 200);
         }
     );
 
@@ -191,8 +241,18 @@ class QuestController {
         }),
         async (ctx) => {
             const userId = ctx.get("user").userId;
+            const sort = (ctx.req.query("sort") || "newest").toLowerCase();
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
             const challenges = await this.questRepository.getAvailableChallenges(userId);
-            return ctx.json(challenges);
+            const sorted = [...challenges];
+            if (sort === "oldest") {
+                sorted.sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
+            } else if (sort === "points_desc") {
+                sorted.sort((a, b) => (b.rewardPoints ?? 0) - (a.rewardPoints ?? 0));
+            } else {
+                sorted.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+            }
+            return ctx.json(sorted.slice(0, limit));
         }
     );
 
