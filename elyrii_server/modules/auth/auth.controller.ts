@@ -17,6 +17,14 @@ class AuthController {
     
     constructor() { }
 
+    private get requireEmailVerification() {
+        return Bun.env.REQUIRE_EMAIL_VERIFICATION === "true" || Bun.env.NODE_ENV === "production";
+    }
+
+    private get includeVerificationTokenInResponse() {
+        return Bun.env.NODE_ENV !== "production";
+    }
+
     private async issueSession(ctx: any, payload: TokenPayload) {
         const [token, refreshToken] = await Promise.all([
             JwtUtils.generateAccessToken(payload),
@@ -71,12 +79,23 @@ class AuthController {
                 if (!newUser) {
                     return ctx.json({ message: 'registration failed' }, 500);
                 }
+
+                if (this.requireEmailVerification) {
+                    await this.authRepository.clearEmailVerificationTokens(newUser.id);
+                    const verificationToken = await this.authRepository.createEmailVerificationToken(newUser.id);
+                    return ctx.json({
+                        message: "User registered successfully. Email verification required.",
+                        emailVerificationRequired: true,
+                        ...(this.includeVerificationTokenInResponse ? { verificationToken } : {}),
+                    }, 201);
+                }
+
                 const tokenPayload: TokenPayload = {
                     userId: newUser.id,
                     email: newUser.email
-                }
+                };
                 const { token } = await this.issueSession(ctx, tokenPayload);
-                return ctx.json({ message: 'User registered successfully', token: token });
+                return ctx.json({ message: 'User registered successfully', token: token }, 201);
             } catch (error) {
                 console.error("Registration error details:", error);
                 return ctx.json({ message: 'registration failed', error: String(error) }, 500);
@@ -103,6 +122,9 @@ class AuthController {
             const isUser = await this.authRepository.findUserByEmail(email);
             if (!isUser) {
                 return ctx.json({ message: 'user not found' }, 404);
+            }
+            if (this.requireEmailVerification && !isUser.emailVerified) {
+                return ctx.json({ message: "email not verified" }, 403);
             }
             if (!await Bun.password.verify(password, isUser.password)) {
                 return ctx.json({ message: 'invalid credentials' }, 401);
@@ -157,6 +179,7 @@ class AuthController {
                         firstName: profile.firstName ?? "Google",
                         lastName: profile.lastName ?? "User",
                         age: 18,
+                        emailVerified: profile.emailVerified,
                     });
                 }
 
@@ -170,6 +193,9 @@ class AuthController {
                     profile.providerUserId,
                     profile.email,
                 );
+                if (!user.emailVerified && profile.emailVerified) {
+                    await this.authRepository.updateEmailVerified(user.id, true);
+                }
 
                 const tokenPayload: TokenPayload = { userId: user.id, email: user.email };
                 const { token } = await this.issueSession(ctx, tokenPayload);
@@ -218,6 +244,7 @@ class AuthController {
                         firstName: profile.firstName ?? "Apple",
                         lastName: profile.lastName ?? "User",
                         age: 18,
+                        emailVerified: profile.emailVerified,
                     });
                 }
 
@@ -231,6 +258,9 @@ class AuthController {
                     profile.providerUserId,
                     profile.email,
                 );
+                if (!user.emailVerified && profile.emailVerified) {
+                    await this.authRepository.updateEmailVerified(user.id, true);
+                }
 
                 const tokenPayload: TokenPayload = { userId: user.id, email: user.email };
                 const { token } = await this.issueSession(ctx, tokenPayload);
@@ -347,6 +377,59 @@ class AuthController {
             }
         }),
         this.refreshHandler
+    );
+
+    public readonly verifyEmail = this.factory.createHandlers(
+        describeRoute({
+            summary: "Verify Email",
+            description: "Verify a user email with a one-time verification token.",
+            tags: ["Auth"],
+            responses: {
+                200: { description: "Email verified successfully" },
+                400: { description: "Invalid verification token" },
+            }
+        }),
+        zValidator("json", z.object({ token: z.string().min(10) })),
+        async (ctx) => {
+            const { token } = ctx.req.valid("json");
+            const user = await this.authRepository.consumeEmailVerificationToken(token);
+            if (!user) {
+                return ctx.json({ error: "Invalid or expired verification token" }, 400);
+            }
+
+            const tokenPayload: TokenPayload = { userId: user.id, email: user.email };
+            const { token: accessToken } = await this.issueSession(ctx, tokenPayload);
+            return ctx.json({
+                message: "Email verified successfully",
+                token: accessToken,
+            }, 200);
+        }
+    );
+
+    public readonly resendVerification = this.factory.createHandlers(
+        describeRoute({
+            summary: "Resend Verification Email",
+            description: "Regenerate a verification token for users who are not yet verified.",
+            tags: ["Auth"],
+            responses: {
+                200: { description: "Verification token regenerated" },
+            }
+        }),
+        zValidator("json", z.object({ email: z.string().email() })),
+        async (ctx) => {
+            const { email } = ctx.req.valid("json");
+            const user = await this.authRepository.findUserByEmail(email);
+            if (!user || user.emailVerified) {
+                return ctx.json({ message: "If the account exists, a verification email has been sent." }, 200);
+            }
+
+            await this.authRepository.clearEmailVerificationTokens(user.id);
+            const verificationToken = await this.authRepository.createEmailVerificationToken(user.id);
+            return ctx.json({
+                message: "Verification token regenerated.",
+                ...(this.includeVerificationTokenInResponse ? { verificationToken } : {}),
+            }, 200);
+        }
     );
     
 }

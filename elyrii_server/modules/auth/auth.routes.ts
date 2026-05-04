@@ -18,6 +18,8 @@ class AuthRoutes {
         this.router.post('/register', ...this.controller.register);
         this.router.post('/oauth/google', ...this.controller.googleOAuth);
         this.router.post('/oauth/apple', ...this.controller.appleOAuth);
+        this.router.post('/verify-email', ...this.controller.verifyEmail);
+        this.router.post('/resend-verification', ...this.controller.resendVerification);
         this.router.post('/logout', ...this.controller.logout);
         this.router.get('/refresh', ...this.controller.refreshToken);
         this.router.post('/refresh', ...this.controller.refreshTokenPost);
