@@ -1,4 +1,4 @@
-import { boolean, index, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { userTable } from "./user.table";
 
 export const userSettingsTable = pgTable("user_settings", {
@@ -7,6 +7,12 @@ export const userSettingsTable = pgTable("user_settings", {
     themeMode: text("theme_mode").notNull().default("SYSTEM"), // LIGHT | DARK | SYSTEM
     notificationsEnabled: boolean("notifications_enabled").notNull().default(true),
     privacyMode: text("privacy_mode").notNull().default("STANDARD"), // STANDARD | STRICT
+    mascotAppearance: text("mascot_appearance").notNull().default("default"),
+    mascotPersonality: jsonb("mascot_personality").notNull().default({
+        tone: "supportive",
+        energy: "balanced",
+        humor: "light",
+    }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [
