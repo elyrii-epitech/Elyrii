@@ -4,9 +4,13 @@ import { upgradeWebSocket } from "hono/bun";
 import { clientSockets } from "../../main";
 import { sendMessageToTopic } from "./producer.service";
 import { resolveWsIdentity } from "../../utils/ws-auth.utils";
+import { authMiddleware } from "../../middleware/auth.middleware";
+import ChatRepository from "../../repository/chat.repository";
+import type { HonoEnv } from "../../utils/hono.types";
 
 
-const chatRouter = new Hono();
+const chatRouter = new Hono<HonoEnv>();
+const chatRepository = new ChatRepository();
 const allowInsecureWsUserIdFallback =
     Bun.env.ALLOW_INSECURE_WS_USER_ID === "true"
         ? true
@@ -26,6 +30,25 @@ chatRouter.get("/health", describeRoute({
 }), (ctx) => {
     return ctx.json({message: "Chat service is healthy"});
 })
+
+chatRouter.use("/history", authMiddleware);
+
+chatRouter.get("/history", describeRoute({
+    summary: "Get chat history",
+    description: "Retrieve persisted chat history for the authenticated user.",
+    tags: ["Chat"],
+    responses: {
+        200: {
+            description: "Chat history returned",
+        },
+    },
+}), async (ctx) => {
+    const userId = ctx.get("user").userId;
+    const limitRaw = ctx.req.query("limit");
+    const limit = Math.min(Math.max(Number(limitRaw || 50), 1), 200);
+    const history = await chatRepository.getHistory(userId, limit);
+    return ctx.json(history, 200);
+});
 
 chatRouter.get("/ws", describeRoute({
     summary: "WebSocket endpoint for chat",
@@ -48,7 +71,7 @@ chatRouter.get("/ws", describeRoute({
 
     if (!identity) {
         return {
-            onOpen: (_event: unknown, ws: WebSocket) => {
+            onOpen: (_event, ws) => {
                 ws.close(1008, "Unauthorized");
             },
         };
@@ -68,8 +91,26 @@ chatRouter.get("/ws", describeRoute({
         onMessage: async (event, ws) => {
             const message = event.data.toString();
             try {
+                await chatRepository.createMessage({
+                    userId,
+                    role: "user",
+                    message,
+                });
+            } catch (error) {
+                console.error("Failed to persist user chat message:", error);
+            }
+            try {
                 await sendMessageToTopic(userId, message);
             } catch (error) {
+                try {
+                    await chatRepository.createMessage({
+                        userId,
+                        role: "system",
+                        message: "Message dispatch failed",
+                    });
+                } catch (_err) {
+                    // Ignore persistence error
+                }
                 ws.send(JSON.stringify({ from: "system", error: "Message dispatch failed" }));
             }
             // Optional: somehow store the messages.

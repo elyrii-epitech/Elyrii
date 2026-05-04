@@ -1,5 +1,8 @@
 import { clientSockets } from "../../main";
 import { kafkaService } from "./chat.service";
+import ChatRepository from "../../repository/chat.repository";
+
+const chatRepository = new ChatRepository();
 
 /**
  * Subscribes to AI responses from Kafka and forwards them to connected clients.
@@ -17,6 +20,15 @@ export async function handleAiResponse() {
             if (!message.value) return;
             const data: { userId: string, response: string } = JSON.parse(message.value.toString());
             const { userId, response } = data;
+            try {
+                await chatRepository.createMessage({
+                    userId,
+                    role: "ai",
+                    message: response,
+                });
+            } catch (error) {
+                console.error("Failed to persist AI chat message:", error);
+            }
             const ws = clientSockets.get(userId);
 
             if (ws && ws.readyState === WebSocket.OPEN) {
