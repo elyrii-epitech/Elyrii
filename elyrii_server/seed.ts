@@ -135,10 +135,11 @@ export async function seedChallenges(): Promise<void> {
 
     console.log(`[seed] Insertion de ${SYSTEM_CHALLENGES.length} défis SYSTEM...`);
     await db.insert(challengesTable).values(
-        SYSTEM_CHALLENGES.map(c => ({
+        SYSTEM_CHALLENGES.map((c, index) => ({
             title: c.title,
             description: c.description,
             source: 'SYSTEM' as const,
+            rewardPoints: 25 + index * 5,
             conditions: c.conditions,
             aggregator: c.aggregator,
             constraints: null,
