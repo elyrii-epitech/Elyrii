@@ -17,6 +17,7 @@ class UserRepository {
                 firstName: userTable.firstName,
                 lastName: userTable.lastName,
                 email: userTable.email,
+                emailVerified: userTable.emailVerified,
                 age: userTable.age,
                 pfp: userTable.pfp,
                 createdAt: userTable.createdAt,
@@ -47,6 +48,7 @@ class UserRepository {
                 firstName: userTable.firstName,
                 lastName: userTable.lastName,
                 email: userTable.email,
+                emailVerified: userTable.emailVerified,
                 age: userTable.age,
                 pfp: userTable.pfp,
                 createdAt: userTable.createdAt,
@@ -73,7 +75,8 @@ class UserRepository {
         )[0];
     }
 
-    async getStats(userId: string) {
+    async getStats(userId: string, days = 7) {
+        const safeDays = Number.isFinite(days) && days > 0 ? Math.min(days, 365) : 7;
         // Calculate streak from mood logs
         const logs = await db
             .select({ createdAt: moodLogsTable.createdAt })
@@ -155,14 +158,66 @@ class UserRepository {
             .from(moodLogsTable)
             .where(and(
                 eq(moodLogsTable.userId, userId),
-                sql`${moodLogsTable.createdAt} >= now() - interval '7 days'`,
+                sql`${moodLogsTable.createdAt} >= now() - (${safeDays} * interval '1 day')`,
             ))
             .groupBy(sql`date_trunc('day', ${moodLogsTable.createdAt})`)
             .orderBy(sql`date_trunc('day', ${moodLogsTable.createdAt}) asc`);
 
+        const moodDistribution = await db
+            .select({
+                moodType: moodLogsTable.moodType,
+                count: sql<number>`count(*)`,
+            })
+            .from(moodLogsTable)
+            .where(and(
+                eq(moodLogsTable.userId, userId),
+                sql`${moodLogsTable.createdAt} >= now() - (${safeDays} * interval '1 day')`,
+            ))
+            .groupBy(moodLogsTable.moodType)
+            .orderBy(sql`count(*) desc`);
+
+        const journalTrend = await db
+            .select({
+                day: sql<string>`to_char(date_trunc('day', ${journalEntriesTable.createdAt}), 'YYYY-MM-DD')`,
+                count: sql<number>`count(*)`,
+            })
+            .from(journalEntriesTable)
+            .where(and(
+                eq(journalEntriesTable.userId, userId),
+                isNull(journalEntriesTable.deletedAt),
+                sql`${journalEntriesTable.createdAt} >= now() - (${safeDays} * interval '1 day')`,
+            ))
+            .groupBy(sql`date_trunc('day', ${journalEntriesTable.createdAt})`)
+            .orderBy(sql`date_trunc('day', ${journalEntriesTable.createdAt}) asc`);
+
+        const timelineMap = new Map<string, { moodLogs: number; journalEntries: number }>();
+        for (const row of moodTrend) {
+            timelineMap.set(row.day, {
+                moodLogs: Number(row.count ?? 0),
+                journalEntries: 0,
+            });
+        }
+        for (const row of journalTrend) {
+            const existing = timelineMap.get(row.day);
+            timelineMap.set(row.day, {
+                moodLogs: existing?.moodLogs ?? 0,
+                journalEntries: Number(row.count ?? 0),
+            });
+        }
+
+        const activityTimeline = Array.from(timelineMap.entries())
+            .sort((a, b) => a[0].localeCompare(b[0]))
+            .map(([day, counts]) => ({
+                day,
+                moodLogs: counts.moodLogs,
+                journalEntries: counts.journalEntries,
+            }));
+
+        const latestMood = await this.getLatestMood(userId);
         const settings = await this.getOrCreateUserSettings(userId);
 
         return {
+            rangeDays: safeDays,
             streak,
             moodLogsCount: logs.length,
             journalEntriesCount: Number(journalCount?.count ?? 0),
@@ -171,7 +226,10 @@ class UserRepository {
             totalPoints: Number(pointsResult?.points ?? 0),
             meditationSessionsCount: Number(meditationCount?.count ?? 0),
             coachSessionsCount: Number(coachCount?.count ?? 0),
+            latestMood: latestMood?.moodType ?? null,
             moodTrend7Days: moodTrend,
+            moodDistribution,
+            activityTimeline,
             settings,
         };
     }
@@ -209,6 +267,15 @@ class UserRepository {
             throw new Error("Failed to update user settings");
         }
         return updated;
+    }
+
+    async deleteUserAccount(userId: string): Promise<boolean> {
+        const [deleted] = await db
+            .delete(userTable)
+            .where(eq(userTable.id, userId))
+            .returning({ id: userTable.id });
+
+        return Boolean(deleted);
     }
 }
 
