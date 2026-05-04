@@ -5,6 +5,8 @@ import AuthRoutes from "./modules/auth/auth.routes";
 import JournalRoutes from "./modules/journal/journal.routes";
 import UserRoutes from "./modules/user/user.routes";
 import QuestRoutes from "./modules/quest/quest.routes";
+import CoachRoutes from "./modules/coach/coach.routes";
+import MeditationRoutes from "./modules/meditation/meditation.routes";
 import type { WSContext } from "hono/ws";
 import chatRouter from "./modules/chat/chat.controller";
 import { initKafka } from "./config/kafka.config";
@@ -21,10 +23,15 @@ const authRouter = new AuthRoutes();
 const journalRouter = new JournalRoutes();
 const userRouter = new UserRoutes();
 const questRouter = new QuestRoutes();
+const coachRouter = new CoachRoutes();
+const meditationRouter = new MeditationRoutes();
+const corsOrigin = Bun.env.CORS_ORIGIN
+    ? Bun.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
+    : "*";
 
 app.use(logger());
 app.use("*", cors({
-    origin: "*",
+    origin: corsOrigin,
     allowMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "Accept"],
     exposeHeaders: ["Content-Length"],
@@ -35,6 +42,8 @@ app.route("/journal", journalRouter.getRouter);
 app.route("/user", userRouter.getRouter);
 app.route("/chat", chatRouter);
 app.route("/challenge", questRouter.getRouter);
+app.route("/coach", coachRouter.getRouter);
+app.route("/meditation", meditationRouter.getRouter);
 
 app.get("/openapi.json", openAPIRouteHandler(app, {
     documentation: {
