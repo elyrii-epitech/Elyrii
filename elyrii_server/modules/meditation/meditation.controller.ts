@@ -4,6 +4,7 @@ import { sValidator } from "@hono/standard-validator";
 import { z } from "zod";
 import type { HonoEnv } from "../../utils/hono.types";
 import MeditationRepository from "../../repository/meditation.repository";
+import { getMeditationProgramById, MEDITATION_PROGRAMS } from "./meditation.catalog";
 
 class MeditationController {
     private readonly factory = createFactory<HonoEnv>();
@@ -25,6 +26,18 @@ class MeditationController {
         }
     );
 
+    public readonly getCatalog = this.factory.createHandlers(
+        describeRoute({
+            summary: "Get Meditation Catalog",
+            description: "Retrieve available guided meditation programs.",
+            tags: ["Meditation"],
+            responses: { 200: { description: "Catalog of guided meditations" } },
+        }),
+        async (ctx) => {
+            return ctx.json(MEDITATION_PROGRAMS, 200);
+        }
+    );
+
     public readonly startSession = this.factory.createHandlers(
         describeRoute({
             summary: "Start Meditation Session",
@@ -43,6 +56,15 @@ class MeditationController {
         async (ctx) => {
             const userId = ctx.get("user").userId;
             const body = ctx.req.valid("json");
+            const program = getMeditationProgramById(body.type);
+
+            if (!program) {
+                return ctx.json({ error: "Unknown meditation program type" }, 400);
+            }
+            if (body.durationMinutes !== program.durationMinutes) {
+                return ctx.json({ error: "Duration does not match selected meditation program" }, 400);
+            }
+
             const session = await this.meditationRepository.startSession({
                 userId,
                 type: body.type,

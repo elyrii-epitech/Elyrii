@@ -15,6 +15,7 @@ class MeditationRoutes {
         this.router.get("/health", (c) => c.text("Meditation Service Healthy"));
         this.router.use("*", authMiddleware);
 
+        this.router.get("/catalog", ...this.meditationController.getCatalog);
         this.router.get("/sessions", ...this.meditationController.getSessions);
         this.router.post("/sessions/start", ...this.meditationController.startSession);
         this.router.post("/sessions/:sessionId/complete", ...this.meditationController.completeSession);
