@@ -56,13 +56,21 @@ app.get("/swagger", swaggerUI({
     url: "/openapi.json"
 }));
 
-// Initialize Kafka and Consumers
-// initKafka().then(() => {
-//     console.log("Kafka initialized");
-//     handleAiResponse().catch(err => console.error("Failed to start Chat consumer", err));
-//     initQuestConsumers().catch(err => console.error("Failed to start Quest consumer", err));
-// }).catch(err => {
-//     console.error("Failed to initialize Kafka", err);
-// });
+const shouldEnableKafkaConsumers =
+    Bun.env.ENABLE_KAFKA_CONSUMERS === "true" ||
+    Bun.env.NODE_ENV === "production";
+
+// Initialize Kafka and consumers only when explicitly enabled.
+if (shouldEnableKafkaConsumers) {
+    initKafka()
+        .then(() => {
+            console.log("[Kafka] initialized");
+            handleAiResponse().catch((err) => console.error("Failed to start Chat consumer", err));
+            initQuestConsumers().catch((err) => console.error("Failed to start Quest consumer", err));
+        })
+        .catch((err) => {
+            console.error("[Kafka] initialization failed:", err);
+        });
+}
 
 export default app;

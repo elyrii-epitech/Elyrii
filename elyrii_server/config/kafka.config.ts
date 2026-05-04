@@ -1,8 +1,7 @@
 import { Kafka } from "kafkajs";
+import { resolveKafkaBroker } from "../utils/kafka-broker.utils";
 
-const broker = process.env.REDPANDA_HOST && process.env.REDPANDA_PORT 
-    ? `${process.env.REDPANDA_HOST}:${process.env.REDPANDA_PORT}`
-    : "redpanda:9092";
+const broker = resolveKafkaBroker(Bun.env);
 
 const kafka = new Kafka({
     clientId: "elyrii-server",
