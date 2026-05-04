@@ -111,12 +111,21 @@ class QuestController {
             }
         }),
         async (ctx) => {
+            const userId = ctx.get("user").userId;
             const challengeId = ctx.req.param("challengeId");
             if (!challengeId) {
                 return ctx.json({ error: "Challenge ID is required" }, 400);
             }
+
+            const userChallenge = await this.questRepository.getUserChallengeByIdForUser(challengeId, userId);
+            if (!userChallenge) {
+                return ctx.json({ error: "Challenge not found" }, 404);
+            }
+            if (userChallenge.status !== 'PENDING') {
+                return ctx.json({ error: "Challenge is not pending" }, 409);
+            }
             try {
-                const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'ACTIVE');
+                const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'ACTIVE');
                 return ctx.json(updated);
             } catch (e) {
                 return ctx.json({ error: "Failed to accept challenge" }, 500);
@@ -146,12 +155,21 @@ class QuestController {
             }
         }),
         async (ctx) => {
+            const userId = ctx.get("user").userId;
             const challengeId = ctx.req.param("challengeId");
             if (!challengeId) {
                 return ctx.json({ error: "Challenge ID is required" }, 400);
             }
+
+            const userChallenge = await this.questRepository.getUserChallengeByIdForUser(challengeId, userId);
+            if (!userChallenge) {
+                return ctx.json({ error: "Challenge not found" }, 404);
+            }
+            if (userChallenge.status !== 'PENDING') {
+                return ctx.json({ error: "Challenge is not pending" }, 409);
+            }
             try {
-                const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'REJECTED');
+                const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'REJECTED');
                 return ctx.json(updated);
             } catch (e) {
                 return ctx.json({ error: "Failed to reject challenge" }, 500);
@@ -220,6 +238,21 @@ class QuestController {
                         updatedAt: new Date().toISOString(),
                     };
                 });
+
+                const existingAssignment = await this.questRepository.getUserChallengeAssignment(userId, challengeId);
+                if (existingAssignment && (existingAssignment.status === 'ACTIVE' || existingAssignment.status === 'COMPLETED')) {
+                    return ctx.json({ error: "Challenge already active or completed" }, 409);
+                }
+
+                if (existingAssignment) {
+                    const updated = await this.questRepository.updateUserChallengeStatusForUser(
+                        existingAssignment.id,
+                        userId,
+                        'ACTIVE',
+                        initialProgress,
+                    );
+                    return ctx.json({ challenge: template, userChallenge: updated }, 200);
+                }
 
                 const userChallenge = await this.questRepository.assignChallengeToUser({
                     userId,

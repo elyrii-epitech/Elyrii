@@ -23,6 +23,30 @@ class QuestRepository {
         return userChallenge;
     }
 
+    async getUserChallengeByIdForUser(id: string, userId: string): Promise<UserChallenge | null> {
+        const [userChallenge] = await db
+            .select()
+            .from(userChallengesTable)
+            .where(and(
+                eq(userChallengesTable.id, id),
+                eq(userChallengesTable.userId, userId),
+            ))
+            .limit(1);
+        return userChallenge || null;
+    }
+
+    async getUserChallengeAssignment(userId: string, challengeId: string): Promise<UserChallenge | null> {
+        const [assignment] = await db
+            .select()
+            .from(userChallengesTable)
+            .where(and(
+                eq(userChallengesTable.userId, userId),
+                eq(userChallengesTable.challengeId, challengeId),
+            ))
+            .limit(1);
+        return assignment || null;
+    }
+
     async getUserChallenges(userId: string, status?: string): Promise<(UserChallenge & { challenge: Challenge })[]> {
         // Simple join to get challenge details
         const query = db.select({
@@ -50,6 +74,24 @@ class QuestRepository {
         const [updated] = await db.update(userChallengesTable)
             .set(updateData)
             .where(eq(userChallengesTable.id, id))
+            .returning();
+
+        if (!updated) throw new Error("Failed to update user challenge");
+        return updated;
+    }
+
+    async updateUserChallengeStatusForUser(id: string, userId: string, status: string, progress?: any): Promise<UserChallenge> {
+        const updateData: Partial<UserChallenge> = { status };
+        if (progress) updateData.progress = progress;
+        if (status === 'COMPLETED') updateData.completedAt = new Date();
+
+        const [updated] = await db
+            .update(userChallengesTable)
+            .set(updateData)
+            .where(and(
+                eq(userChallengesTable.id, id),
+                eq(userChallengesTable.userId, userId),
+            ))
             .returning();
 
         if (!updated) throw new Error("Failed to update user challenge");
