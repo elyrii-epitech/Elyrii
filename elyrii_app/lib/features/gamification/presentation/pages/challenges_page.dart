@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:characters/characters.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 import '../../data/models/gamification_models.dart';
@@ -155,8 +156,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ...provider.activeChallenges.map(
                           (uc) => QuestTile(
                             title: uc.displayTitle,
-                            subtitle: uc.displayDescription.length > 40
-                                ? '${uc.displayDescription.substring(0, 40)}…'
+                            subtitle: uc.displayDescription.characters.length > 40
+                                ? '${uc.displayDescription.characters.take(40).toString()}…'
                                 : uc.displayDescription,
                             icon: uc.displayIcon,
                             xpReward: 0,
@@ -175,8 +176,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ...provider.completedChallenges.map(
                           (uc) => QuestTile(
                             title: uc.displayTitle,
-                            subtitle: uc.displayDescription.length > 40
-                                ? '${uc.displayDescription.substring(0, 40)}…'
+                            subtitle: uc.displayDescription.characters.length > 40
+                                ? '${uc.displayDescription.characters.take(40).toString()}…'
                                 : uc.displayDescription,
                             icon: uc.displayIcon,
                             xpReward: 50,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
+import 'package:characters/characters.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 
@@ -54,11 +55,11 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
   }
 
   void _startTypingAnimation() {
-    if (_charIndex < widget.message.length) {
+    if (_charIndex < widget.message.characters.length) {
       Future.delayed(Duration(milliseconds: 30 + (_charIndex % 3) * 10), () {
-        if (mounted && _charIndex < widget.message.length) {
+        if (mounted && _charIndex < widget.message.characters.length) {
           setState(() {
-            _displayedText = widget.message.substring(0, _charIndex + 1);
+            _displayedText = widget.message.characters.take(_charIndex + 1).toString();
             _charIndex++;
           });
           _startTypingAnimation();
