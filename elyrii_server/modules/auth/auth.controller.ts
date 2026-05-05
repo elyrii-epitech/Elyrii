@@ -84,7 +84,7 @@ class AuthController {
                     await this.authRepository.clearEmailVerificationTokens(newUser.id);
                     const verificationToken = await this.authRepository.createEmailVerificationToken(newUser.id);
                     return ctx.json({
-                        message: "User registered successfully. Email verification required.",
+                        message: "User registered successfully. Please login to activate your account.",
                         emailVerificationRequired: true,
                         ...(this.includeVerificationTokenInResponse ? { verificationToken } : {}),
                     }, 201);
@@ -123,12 +123,16 @@ class AuthController {
             if (!isUser) {
                 return ctx.json({ message: 'user not found' }, 404);
             }
-            if (this.requireEmailVerification && !isUser.emailVerified) {
-                return ctx.json({ message: "email not verified" }, 403);
-            }
             if (!await Bun.password.verify(password, isUser.password)) {
                 return ctx.json({ message: 'invalid credentials' }, 401);
             }
+
+            // If email is not verified, verify it now (first login verifies the account)
+            if (!isUser.emailVerified) {
+                await this.authRepository.updateEmailVerified(isUser.id, true);
+                await this.authRepository.clearEmailVerificationTokens(isUser.id);
+            }
+
             const tokenPayload: TokenPayload = {
                 userId: isUser.id,
                 email: isUser.email
