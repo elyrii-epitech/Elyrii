@@ -330,9 +330,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            'Sauvegarde...',
-            style: AppTextStyles.labelMedium(color: AppColors.primary),
+          Flexible(
+            child: Text(
+              'Sauvegarde...',
+              style: AppTextStyles.labelMedium(color: AppColors.primary),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       );
@@ -350,12 +353,15 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            'Modifications non sauvegardées',
-            style: AppTextStyles.labelSmall(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+          Flexible(
+            child: Text(
+              'Modifications non sauvegardées',
+              style: AppTextStyles.labelSmall(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -370,9 +376,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           size: 16,
         ),
         const SizedBox(width: 6),
-        Text(
-          'Sauvegardé',
-          style: AppTextStyles.labelMedium(color: AppColors.success),
+        Flexible(
+          child: Text(
+            'Sauvegardé',
+            style: AppTextStyles.labelMedium(color: AppColors.success),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );

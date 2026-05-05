@@ -27,7 +27,7 @@ class _JournalPageState extends State<JournalPage> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      _provider.loadEntries();
+      Future.microtask(() => _provider.loadEntries());
     }
   }
 
