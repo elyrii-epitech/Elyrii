@@ -70,6 +70,10 @@ class QuestRepository {
         const updateData: Partial<UserChallenge> = { status };
         if (progress) updateData.progress = progress;
         if (status === 'COMPLETED') updateData.completedAt = new Date();
+        if (status === 'ACTIVE') {
+            updateData.completedAt = null;
+            updateData.rewardGrantedAt = null;
+        }
 
         const [updated] = await db.update(userChallengesTable)
             .set(updateData)
@@ -84,6 +88,10 @@ class QuestRepository {
         const updateData: Partial<UserChallenge> = { status };
         if (progress) updateData.progress = progress;
         if (status === 'COMPLETED') updateData.completedAt = new Date();
+        if (status === 'ACTIVE') {
+            updateData.completedAt = null;
+            updateData.rewardGrantedAt = null;
+        }
 
         const [updated] = await db
             .update(userChallengesTable)
@@ -96,6 +104,13 @@ class QuestRepository {
 
         if (!updated) throw new Error("Failed to update user challenge");
         return updated;
+    }
+
+    async markRewardGranted(userChallengeId: string): Promise<void> {
+        await db
+            .update(userChallengesTable)
+            .set({ rewardGrantedAt: new Date() })
+            .where(eq(userChallengesTable.id, userChallengeId));
     }
 
     /**

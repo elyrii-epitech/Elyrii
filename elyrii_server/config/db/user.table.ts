@@ -1,4 +1,4 @@
-import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 /**
  * Drizzle ORM table definition for users authenticated by the auth service.
@@ -10,6 +10,7 @@ export const userTable = pgTable("users", {
     email: text("email").notNull(),
     password: text("password").notNull(),
     age: integer("age").notNull(),
+    emailVerified: boolean("email_verified").notNull().default(false),
     pfp: text("pfp"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),

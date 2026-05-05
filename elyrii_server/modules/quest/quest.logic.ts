@@ -2,15 +2,22 @@ import { db } from "../../config/db.config";
 import { moodLogsTable } from "../../config/db/user.table";
 import { journalEntriesTable } from "../../config/db/journal.table";
 import { challengesTable, userChallengesTable } from "../../config/db/quest.table";
-import { eq, and, isNull, desc, gte, sql, inArray } from "drizzle-orm";
+import { eq, and, isNull, desc, gte, sql } from "drizzle-orm";
 import type {
     ChallengeCondition,
     ChallengeProgress,
     ConditionProgress,
     TriggerEvent,
 } from "./quest.types";
+import RewardRepository from "../../repository/reward.repository";
+import QuestRepository from "../../repository/quest.repository";
+import NotificationRepository from "../../repository/notification.repository";
+import { sendQuestEvent } from "./producer.service";
 
 class QuestLogic {
+    private readonly rewardRepository = new RewardRepository();
+    private readonly questRepository = new QuestRepository();
+    private readonly notificationRepository = new NotificationRepository();
 
     /**
      * Point d'entrée principal : appelé après chaque action utilisateur.
@@ -64,10 +71,44 @@ class QuestLogic {
             const updateData: Record<string, unknown> = { progress: newProgress, status: newStatus };
             if (isComplete) updateData.completedAt = new Date();
 
-            await db
+            const [updatedUserChallenge] = await db
                 .update(userChallengesTable)
                 .set(updateData)
-                .where(eq(userChallengesTable.id, userChallenge.id));
+                .where(eq(userChallengesTable.id, userChallenge.id))
+                .returning();
+
+            if (isComplete && updatedUserChallenge && !updatedUserChallenge.rewardGrantedAt) {
+                const granted = await this.rewardRepository.grantChallengeCompletionPoints(
+                    userId,
+                    userChallenge.id,
+                    challenge.rewardPoints ?? 50,
+                    {
+                        challengeId: challenge.id,
+                        challengeTitle: challenge.title,
+                    },
+                );
+
+                if (granted) {
+                    await this.questRepository.markRewardGranted(userChallenge.id);
+                    await this.notificationRepository.createNotification({
+                        userId,
+                        type: "challenge_completed",
+                        title: "Défi complété",
+                        body: `Bravo ! Tu as complété "${challenge.title}" et gagné ${challenge.rewardPoints ?? 50} points.`,
+                        metadata: JSON.stringify({
+                            challengeId: challenge.id,
+                            userChallengeId: userChallenge.id,
+                            rewardPoints: challenge.rewardPoints ?? 50,
+                        }),
+                    });
+                    sendQuestEvent("challenge_completed", {
+                        userId,
+                        challengeId: challenge.id,
+                        userChallengeId: userChallenge.id,
+                        rewardPoints: challenge.rewardPoints ?? 50,
+                    }).catch(() => {});
+                }
+            }
         }
     }
 

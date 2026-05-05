@@ -1,10 +1,11 @@
-import { pgTable, uuid, text, timestamp, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, jsonb, index, integer } from "drizzle-orm/pg-core";
 
 export const challengesTable = pgTable("challenges", {
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     description: text("description"),
     source: text("source").notNull(), // 'AI' | 'SYSTEM'
+    rewardPoints: integer("reward_points").notNull().default(50),
     conditions: jsonb("conditions").notNull(),
     aggregator: text("aggregator").notNull().default('ALL'),
     constraints: jsonb("constraints"),
@@ -21,6 +22,7 @@ export const userChallengesTable = pgTable("user_challenges", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()),
     completedAt: timestamp("completed_at"),
+    rewardGrantedAt: timestamp("reward_granted_at"),
 }, (table) => [
     index("user_challenges_user_id_idx").on(table.userId),
     index("user_challenges_status_idx").on(table.status),

@@ -24,6 +24,7 @@ class QuestRoutes {
         this.router.post("/available/:challengeId/start", ...this.questController.startChallenge);
 
         // Défis en cours et terminés
+        this.router.get("/list", ...this.questController.listChallenges);
         this.router.get("/active", ...this.questController.getActiveChallenges);
         this.router.get("/completed", ...this.questController.getCompletedChallenges);
 
