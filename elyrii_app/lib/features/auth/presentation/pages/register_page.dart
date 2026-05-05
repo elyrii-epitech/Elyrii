@@ -61,12 +61,24 @@ class _RegisterPageState extends State<RegisterPage> {
     if (success) {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
+      // Show success color if it's an email verification message (which means registration worked)
+      final isVerificationMessage = authProvider.error?.contains('verification required') ?? false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.error ?? 'Registration failed'),
-          backgroundColor: Colors.red,
+          backgroundColor: isVerificationMessage ? AppColors.success : Colors.red,
+          duration: const Duration(seconds: 4),
         ),
       );
+
+      if (isVerificationMessage) {
+        // Optionnellement, on redirige vers la page de login après un petit délai
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pop(context); // Go back to login
+          }
+        });
+      }
     }
   }
 

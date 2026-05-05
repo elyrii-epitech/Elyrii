@@ -58,10 +58,26 @@ class AuthRepository {
     if (age != null) body['age'] = age;
     final response = await _client.post(ApiConfig.registerUrl,
         body: body, auth: false) as Map<String, dynamic>;
-    final token = response['token'] as String? ?? '';
-    final user = _decodeTokenPayload(token);
+
+    // Check if email verification is required and token is not returned
+    final bool emailVerificationRequired = response['emailVerificationRequired'] == true;
+    final token = response['token'] as String?;
+
+    if (emailVerificationRequired && token == null) {
+      // In this case, we don't have a token yet because the email needs verification.
+      // We will throw an exception or handle it to inform the UI that verification is required.
+      throw ApiException(
+        statusCode: 201,
+        message: response['message'] as String? ?? 'Email verification required.',
+        body: response,
+      );
+    }
+
+    final resolvedToken = token ?? '';
+    final user = _decodeTokenPayload(resolvedToken);
+
     return AuthResult(
-      token: token,
+      token: resolvedToken,
       user: user,
       message: response['message'] as String? ?? 'Registration successful',
     );
