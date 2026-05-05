@@ -62,7 +62,8 @@ class _RegisterPageState extends State<RegisterPage> {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {
       // Show success color if it's an email verification message (which means registration worked)
-      final isVerificationMessage = authProvider.error?.contains('verification required') ?? false;
+      final error = authProvider.error?.toLowerCase() ?? '';
+      final isVerificationMessage = error.contains('verification required') || error.contains('activate your account');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.error ?? 'Registration failed'),

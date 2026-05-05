@@ -70,7 +70,7 @@ dependencies:
   # Email validation
   email_validator: ^3.0.0
   google_fonts: ^8.0.0
-  characters: ^1.4.1
+  characters: ^1.4.0
 
 dev_dependencies:
   flutter_test:
