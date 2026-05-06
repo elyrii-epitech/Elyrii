@@ -1,6 +1,7 @@
 import { clientSockets } from "../../main";
 import { kafkaService } from "./chat.service";
 import ChatRepository from "../../repository/chat.repository";
+import { aiResponseTracker } from "./response-tracker.utils";
 
 const chatRepository = new ChatRepository();
 
@@ -18,9 +19,15 @@ export async function handleAiResponse() {
     await kafkaService.consumer.run({
         eachMessage: async ({ message }) => {
             if (!message.value) return;
-            const data: { userId: string, response: string, conversationId?: string } = JSON.parse(message.value.toString());
-            const { userId, response } = data;
+            const data: { userId: string, response: string, conversationId?: string, requestId?: string } = JSON.parse(message.value.toString());
+            const { userId, response, requestId } = data;
             const conversationId = data.conversationId ?? "default";
+
+            // Resolve pending promise if anyone is waiting for this requestId
+            if (requestId) {
+                aiResponseTracker.resolveResponse(requestId, response);
+            }
+
             try {
                 await chatRepository.createMessage({
                     userId,
@@ -34,7 +41,7 @@ export async function handleAiResponse() {
             const ws = clientSockets.get(userId);
 
             if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({ from: "ai", conversationId, message: response }));
+                ws.send(response);
             }
         }
     });

@@ -31,6 +31,9 @@ const corsOrigin = Bun.env.CORS_ORIGIN
     ? Bun.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
     : "*";
 
+console.log(`[Main] Starting Elyrii Server in ${Bun.env.NODE_ENV} mode`);
+console.log(`[Main] CORS Origin: ${corsOrigin}`);
+
 app.use(logger());
 app.use("*", cors({
     origin: corsOrigin,
@@ -70,7 +73,10 @@ app.get("/swagger", swaggerUI({
 
 const shouldEnableKafkaConsumers =
     Bun.env.ENABLE_KAFKA_CONSUMERS === "true" ||
-    Bun.env.NODE_ENV === "production";
+    Bun.env.NODE_ENV === "production" ||
+    Bun.env.NODE_ENV === "development"; // Enable by default in dev
+
+console.log(`[Main] Kafka consumers enabled: ${shouldEnableKafkaConsumers}`);
 
 // Initialize Kafka and consumers only when explicitly enabled.
 if (shouldEnableKafkaConsumers) {

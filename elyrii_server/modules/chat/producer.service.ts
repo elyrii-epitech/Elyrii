@@ -19,13 +19,14 @@ export async function sendMessageToTopic(
     conversationId?: string;
     history?: Array<{ role: string; message: string }>;
   }
-) {
+): Promise<string> {
+  const requestId = randomUUIDv7();
 
   await kafkaService.producer.send({
     compression: CompressionTypes.GZIP,
     topic: "elyrii.chat.messages",
     messages: [{
-      key: randomUUIDv7(),
+      key: requestId,
       value: JSON.stringify({
         userId,
         message,
@@ -36,4 +37,5 @@ export async function sendMessageToTopic(
     }],
   });
 
+  return requestId;
 }
