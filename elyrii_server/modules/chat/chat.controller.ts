@@ -19,7 +19,7 @@ const allowInsecureWsUserIdFallback =
         ? true
         : Bun.env.ALLOW_INSECURE_WS_USER_ID === "false"
             ? false
-            : true; // Default to true for ease of development
+            : Bun.env.NODE_ENV !== "production"; // Default to true only in non-production environments
 
 console.log(`[Chat] Insecure WS userId fallback enabled: ${allowInsecureWsUserIdFallback}`);
 
