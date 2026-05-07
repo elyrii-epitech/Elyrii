@@ -10,7 +10,7 @@ tokenizer = AutoTokenizer.from_pretrained(base_model_id)
 # We load in 16-bit to keep it simple; use device_map="auto" if you have a GPU
 base_model = AutoModelForCausalLM.from_pretrained(
     base_model_id,
-    torch_dtype=torch.float16,
+    torch_dtype=torch.bfloat16,
     device_map="auto"
 )
 
