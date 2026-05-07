@@ -9,6 +9,7 @@ import '../widgets/level_progress_header.dart';
 import '../widgets/daily_streak_card.dart';
 import '../widgets/quest_tile.dart';
 import '../widgets/challenge_card.dart';
+import '../widgets/ai_proposal_card.dart';
 import '../widgets/badges_grid.dart';
 
 class ChallengesPage extends StatefulWidget {
@@ -21,6 +22,7 @@ class ChallengesPage extends StatefulWidget {
 class _ChallengesPageState extends State<ChallengesPage> {
   // Suivi du défi en cours de démarrage (pour spinner local)
   String? _startingChallengeId;
+  String? _processingProposalId;
 
   // Badges mockés (pas encore de backend pour ça)
   final List<BadgeItem> _badges = [
@@ -76,6 +78,18 @@ class _ChallengesPageState extends State<ChallengesPage> {
     if (mounted) setState(() => _startingChallengeId = null);
   }
 
+  Future<void> _handleAcceptProposal(String proposalId) async {
+    setState(() => _processingProposalId = proposalId);
+    await context.read<GamificationProvider>().acceptChallenge(proposalId);
+    if (mounted) setState(() => _processingProposalId = null);
+  }
+
+  Future<void> _handleRejectProposal(String proposalId) async {
+    setState(() => _processingProposalId = proposalId);
+    await context.read<GamificationProvider>().rejectChallenge(proposalId);
+    if (mounted) setState(() => _processingProposalId = null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -127,6 +141,21 @@ class _ChallengesPageState extends State<ChallengesPage> {
                       ),
 
                       const SizedBox(height: 32),
+
+                      // ── Propositions IA ────────────────────────────
+                      if (provider.proposals.isNotEmpty) ...[
+                        _sectionTitle(context, 'Propositions IA', isDark),
+                        const SizedBox(height: 12),
+                        ...provider.proposals.map(
+                          (proposal) => AiProposalCard(
+                            proposal: proposal,
+                            isProcessing: _processingProposalId == proposal.id,
+                            onAccept: () => _handleAcceptProposal(proposal.id),
+                            onReject: () => _handleRejectProposal(proposal.id),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
 
                       // ── Défis disponibles ──────────────────────────
                       if (provider.availableChallenges.isNotEmpty) ...[
