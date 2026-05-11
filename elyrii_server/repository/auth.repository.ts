@@ -30,7 +30,7 @@ class AuthRepository {
             
             return newUser[0];
         } catch (error) {
-            throw new Error(error instanceof Error ? error.message : String(error));
+            throw error;
         }
     }
 

@@ -77,7 +77,7 @@ class AuthController {
                 });
                 
                 if (!newUser) {
-                    return ctx.json({ message: 'registration failed' }, 500);
+                    return ctx.json({ error: 'Registration failed' }, 500);
                 }
 
                 if (this.requireEmailVerification) {
@@ -98,7 +98,7 @@ class AuthController {
                 return ctx.json({ message: 'User registered successfully', token: token }, 201);
             } catch (error) {
                 console.error("Registration error details:", error);
-                return ctx.json({ message: 'registration failed', error: String(error) }, 500);
+                return ctx.json({ error: 'Registration failed' }, 500);
             }
     })
     

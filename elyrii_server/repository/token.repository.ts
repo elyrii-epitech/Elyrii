@@ -12,7 +12,7 @@ class TokenRepository {
                 device: device,
             })
         } catch (error) {
-            throw new Error(error instanceof Error ? error.message : String(error));
+            throw error;
         }
     }
     
