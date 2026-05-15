@@ -15,15 +15,14 @@ jobs:
       run:
         working-directory: elyrii_server
     env:
-      AUTH_DB_NAME: ${{ secrets.AUTH_DB_NAME }}
-      CHAT_DB_NAME: ${{ secrets.CHAT_DB_NAME }}
+      DB_NAME: ${{ secrets.DB_NAME }}
       DB_HOST: ${{ secrets.DB_HOST }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       DB_PORT: ${{ secrets.DB_PORT }}
-      GATEWAY_PORT: ${{ secrets.GATEWAY_PORT }}
-      GATEWAY_SECRET_KEY: ${{ secrets.GATEWAY_SECRET_KEY }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ACCESS_JWT_SIGN_KEY: ${{ secrets.ACCESS_JWT_SIGN_KEY }}
+      REFRESH_SECRET_KEY: ${{ secrets.REFRESH_SECRET_KEY }}
 
     steps:
       - name: Checkout repository
@@ -34,5 +33,5 @@ jobs:
 
       - name: Build backend Docker images
         run: |
-          echo "Building backend images with secrets..."
+          echo "Building monolithic backend image..."
           docker compose build

@@ -2,24 +2,25 @@
 Elyrii Training Script
 ======================
 
-This script fine-tunes the Mistral-7B-Instruct-v0.2 model using QLoRA (Quantized Low-Rank Adaptation)
+This script fine-tunes a Mistral-7B model using QLoRA (Quantized Low-Rank Adaptation)
 for the Elyrii emotional assistant.
 
 It expects a dataset prepared by `prepare_data.py` containing tokenized chat sessions.
-The training uses 8-bit quantization to fit within consumer/cloud GPU VRAM limits (approx 16-24GB).
+The training uses 4-bit quantization to fit within consumer/cloud GPU VRAM limits.
 
 Usage:
-    python train.py --data_dir ./data --output_dir ./output --epochs 3
+    python train.py --data_dir ./data --output_dir ./output
 
-Attributes:
-    model_id (str): The HuggingFace ID of the base model.
 """
 
 import os, torch, argparse
+import numpy as np
 import logging
+
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
     Trainer,
     TrainingArguments,
     DataCollatorForLanguageModeling
@@ -31,6 +32,18 @@ from peft import (
     TaskType
 )
 from datasets import load_from_disk
+from dotenv import load_dotenv
+
+torch.serialization.add_safe_globals([
+    np._core.multiarray._reconstruct,
+    np.ndarray,
+    np.dtype,
+    np.dtypes.UInt32DType,
+    np.core.multiarray._reconstruct # Adding the older path just in case
+])
+
+# Load environment variables from .env file
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,43 +53,55 @@ logger = logging.getLogger(__name__)
 
 def parse_args() -> argparse.Namespace:
     """Parses command-line arguments for training configuration."""
-    parser = argparse.ArgumentParser(description="Fine-tune Mistral-7B for Elyrii")
+    parser = argparse.ArgumentParser(description="Fine-tune a Mistral model for Elyrii using QLoRA")
 
     parser.add_argument(
         "--epochs",
         type=int,
-        default=5,
+        default=3,
         help="Number of training epochs."
     )
     parser.add_argument(
         "--lr",
         type=float,
-        default=1e-4,
+        default=2e-4,
         help="Learning rate."
     )
     parser.add_argument(
         "--batch",
         type=int,
-        default=4,
+        default=1,
         help="Per-device training batch size."
     )
     parser.add_argument(
         "--grad_acc",
         type=int,
-        default=8,
+        default=16,
         help="Gradient accumulation steps. (Effective batch = batch * grad_acc)"
     )
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="/data",
+        default="./data",
         help="Directory containing 'train' and 'val' dataset folders."
     )
     parser.add_argument(
         "--output_dir",
         type=str,
-        default="/output",
+        default="./output",
         help="Directory to save checkpoints and the final model."
+    )
+    parser.add_argument(
+        "--model_id",
+        type=str,
+        default="mistralai/Mistral-7B-Instruct-v0.3",
+        help="Hugging Face model ID to fine-tune.",
+    )
+    parser.add_argument(
+        "--resume_from_checkpoint",
+        type=str,
+        default=None,
+        help="Path to a specific checkpoint to resume from (e.g., ./output/checkpoint-3000) or 'True' to find the latest.",
     )
 
     return parser.parse_args()
@@ -85,33 +110,40 @@ def main():
     """Main training execution flow."""
     args = parse_args()
 
-    model_id = "mistralai/Mistral-7B-v0.2"
-
-    logger.info(f"🚀 Initializing training for {model_id}")
+    logger.info(f"🚀 Initializing training for model: {args.model_id}")
     logger.info(f"📂 Data directory: {args.data_dir}")
     logger.info(f"💾 Output directory: {args.output_dir}")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    # Use AutoTokenizer for better compatibility
+    tokenizer = AutoTokenizer.from_pretrained(args.model_id, use_fast=False)
 
     # Mistral/Llama tokenizers often lack a pad token.
-    # Setting it to eos_token as is standard workaround.
+    # Setting it to eos_token is a standard workaround.
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        device_map="auto",
-        load_in_8bit=True,
-        torch_dtype=torch.float16,
+    # QLoRA configuration using 4-bit quantization
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+        bnb_4bit_use_double_quant=True,
     )
 
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_id,
+        quantization_config=quantization_config,
+        device_map="auto",
+    )
+
+    # Prepare model for k-bit training (casts layer norms and head to float32 for stability)
     model = prepare_model_for_kbit_training(model)
 
-    # LoRA
+    # LoRA configuration
     lora_cfg = LoraConfig(
-        r=32,
-        lora_alpha=64,
-        target_modules=["q_proj","v_proj"],
+        r=16,
+        lora_alpha=32,
+        target_modules=["q_proj", "v_proj"],
         lora_dropout=0.05,
         bias="none",
         task_type=TaskType.CAUSAL_LM
@@ -135,8 +167,8 @@ def main():
         gradient_accumulation_steps=args.grad_acc,
         learning_rate=args.lr,
         num_train_epochs=args.epochs,
-        fp16=True,
-        eval_strategy="steps",
+        fp16=True, # Use fp16 for mixed-precision training on your GPU
+        eval_strategy="steps", # Use the correct argument name
         eval_steps=500,
         save_steps=500,
         logging_steps=100,
@@ -155,7 +187,12 @@ def main():
     )
 
     logger.info("🔥 Starting training...")
-    trainer.train()
+
+    resume_path = args.resume_from_checkpoint
+    if resume_path == "True" or resume_path == "true":
+        resume_path = True
+
+    trainer.train(resume_from_checkpoint=resume_path)
 
     final_path = os.path.join(args.output_dir, "final_lora")
     logger.info(f"✅ Training complete. Saving adapter to {final_path}")
