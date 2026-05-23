@@ -9,6 +9,7 @@ import '../../../../routes/app_routes.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/glass_settings_button.dart';
 import '../widgets/last_journal_card.dart';
+import '../../../mascot/presentation/widgets/mascot_widget.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -57,6 +58,14 @@ class DashboardPage extends StatelessWidget {
                             _buildMoodSection(isDark, provider)
                                 .animate()
                                 .fadeIn(duration: 400.ms, delay: 100.ms)
+                                .slideY(begin: 0.1, end: 0),
+
+                            const SizedBox(height: 24),
+
+                            // NOUVEAUTÉ : Section Mascotte 3D
+                            _buildMascotSection(context, isDark)
+                                .animate()
+                                .fadeIn(duration: 400.ms, delay: 150.ms)
                                 .slideY(begin: 0.1, end: 0),
 
                             const SizedBox(height: 32),
@@ -272,6 +281,130 @@ class DashboardPage extends StatelessWidget {
         // Quick actions
         _QuickActionsRow(isDark: isDark),
       ],
+    );
+  }
+
+  Widget _buildMascotSection(BuildContext context, bool isDark) {
+    return LiquidGlassCard(
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.mascotCustom);
+      },
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          // Left Info
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome, color: AppColors.primary, size: 12),
+                      SizedBox(width: 4),
+                      Text(
+                        'NOUVEAUTÉ 3D',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Mon compagnon',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Habille et interagis avec ta mascotte en 3D temps réel !',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppColors.primary, AppColors.accent],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.checkroom_rounded, color: Colors.white, size: 16),
+                      SizedBox(width: 6),
+                      Text(
+                        'Cabine d\'essayage',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Right 3D mascot preview
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: SizedBox(
+              height: 140,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Glow in background
+                  Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.35),
+                          blurRadius: 30,
+                          spreadRadius: 10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Mascot Widget
+                  const Mascot3DWidget(
+                    width: 130,
+                    height: 130,
+                    autoRotate: false,
+                    cameraControls: false,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

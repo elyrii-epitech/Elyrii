@@ -39,3 +39,6 @@ _static/
 _templates/
 .windsurf/
 .agent/
+.factory/
+.antigravitycli
+.playwright-mcp/
