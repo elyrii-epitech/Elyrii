@@ -32,14 +32,14 @@ class _ChallengesPageState extends State<ChallengesPage> {
     },
     {
       'title': 'Discuter avec Elyrii',
-      'subtitle': 'Partage une pensée',
+      'subtitle': 'Disponible quand tu veux',
       'icon': Icons.chat_bubble_outline_rounded,
       'xp': 30,
       'isCompleted': false,
     },
     {
       'title': 'Noter mon humeur',
-      'subtitle': 'Comment te sens-tu ?',
+      'subtitle': 'Disponible quand tu te sens prêt(e)',
       'icon': Icons.mood_rounded,
       'xp': 20,
       'isCompleted': false,
@@ -74,13 +74,13 @@ class _ChallengesPageState extends State<ChallengesPage> {
     ),
     const BadgeItem(
       id: '5',
-      title: 'Night Owl',
+      title: "L'aurore",
       icon: Icons.nights_stay_rounded,
       isUnlocked: false,
     ),
     const BadgeItem(
       id: '6',
-      title: 'Early Bird',
+      title: 'Petit matin',
       icon: Icons.wb_sunny_rounded,
       isUnlocked: false,
     ),
@@ -125,7 +125,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               const SizedBox(height: 32),
 
               // Quests Section
-              _buildSectionTitle(context, 'Quêtes du Jour', isDark),
+              _buildSectionTitle(context, 'Petits pas d\'aujourd\'hui', isDark),
               const SizedBox(height: 16),
               ListView.builder(
                 padding: EdgeInsets.zero,
@@ -150,11 +150,31 @@ class _ChallengesPageState extends State<ChallengesPage> {
               const SizedBox(height: 32),
 
               // Badges Section
-              _buildSectionTitle(context, 'Trophées & Badges', isDark),
+              _buildSectionTitle(context, 'Tes moments forts', isDark),
               const SizedBox(height: 16),
               BadgesGrid(
                 badges: _badges,
                 onBadgeTap: (badge) => _showBadgeDetails(context, badge),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Gentle supportive message
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'Chaque petit pas compte. Pas de pression, avance à ton rythme.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
+                    ),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 80), // Bottom padding for nav bar
@@ -193,8 +213,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
           const SizedBox(height: 16),
           Text(
             badge.isUnlocked
-                ? 'Félicitations ! Vous avez débloqué ce badge.'
-                : 'Continuez vos efforts pour débloquer ce badge mystère !',
+                ? 'Bravo, tu as vécu ce beau moment.'
+                : 'Ce moment t\'attendra quand tu seras prêt(e).',
             textAlign: TextAlign.center,
           ),
         ],

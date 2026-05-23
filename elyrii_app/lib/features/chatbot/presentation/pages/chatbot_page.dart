@@ -7,6 +7,7 @@ import '../widgets/typing_indicator.dart';
 import '../widgets/mascot_widget.dart';
 import '../widgets/conversation_suggestions.dart';
 import '../widgets/emergency_resources_button.dart';
+import '../widgets/crisis_detection_banner.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 
 class ChatbotPage extends StatefulWidget {
@@ -23,6 +24,7 @@ class _ChatbotPageState extends State<ChatbotPage>
   final FocusNode _focusNode = FocusNode();
   bool _isTextFieldFocused = false;
   bool _hasStartedTyping = false;
+  bool _showCrisisBanner = false;
   late AnimationController _inputAnimationController;
   late Animation<double> _inputGlowAnimation;
 
@@ -43,13 +45,21 @@ class _ChatbotPageState extends State<ChatbotPage>
     );
 
     _textController.addListener(() {
-      if (_textController.text.isNotEmpty && !_hasStartedTyping) {
+      final text = _textController.text;
+      if (text.isNotEmpty && !_hasStartedTyping) {
         setState(() => _hasStartedTyping = true);
         _inputAnimationController.repeat(reverse: true);
-      } else if (_textController.text.isEmpty && _hasStartedTyping) {
+      } else if (text.isEmpty && _hasStartedTyping) {
         setState(() => _hasStartedTyping = false);
         _inputAnimationController.stop();
         _inputAnimationController.reset();
+      }
+
+      // Crisis keyword detection
+      if (text.isNotEmpty && containsCrisisKeyword(text)) {
+        if (!_showCrisisBanner) {
+          setState(() => _showCrisisBanner = true);
+        }
       }
     });
 
@@ -61,6 +71,10 @@ class _ChatbotPageState extends State<ChatbotPage>
       _isTextFieldFocused = _focusNode.hasFocus;
     });
     context.read<ChatbotProvider>().toggleMascotSize(_focusNode.hasFocus);
+  }
+
+  void _dismissCrisisBanner() {
+    setState(() => _showCrisisBanner = false);
   }
 
   @override
@@ -202,6 +216,10 @@ class _ChatbotPageState extends State<ChatbotPage>
                   );
                 },
               ),
+            ),
+            CrisisDetectionBanner(
+              visible: _showCrisisBanner,
+              onDismiss: _dismissCrisisBanner,
             ),
             _buildInputArea(isDark),
           ],

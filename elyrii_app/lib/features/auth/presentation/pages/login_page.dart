@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:provider/provider.dart';
@@ -43,8 +44,10 @@ class _LoginPageState extends State<LoginPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? 'Login failed'),
-          backgroundColor: Colors.red,
+          content: Text(authProvider.error ?? 'Oops, petit souci de connexion. Reessaie quand tu es pret.'),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -282,23 +285,23 @@ class _LoginPageState extends State<LoginPage> {
 
                             const SizedBox(height: AppDimensions.spacingXl),
 
-                            // Bypass Button (Dev)
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  AppRoutes.home,
-                                );
-                              },
-                              child: Text(
-                                'Passer (Dev)',
-                                style: AppTextStyles.bodySmall(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.3)
-                                      : Colors.black.withValues(alpha: 0.3),
+                            if (kDebugMode)
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pushReplacementNamed(
+                                    context,
+                                    AppRoutes.home,
+                                  );
+                                },
+                                child: Text(
+                                  'Passer (Dev)',
+                                  style: AppTextStyles.bodySmall(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.3)
+                                        : Colors.black.withValues(alpha: 0.3),
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       )

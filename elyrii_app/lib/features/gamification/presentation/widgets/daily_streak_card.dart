@@ -57,7 +57,7 @@ class DailyStreakCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$streakDays jours de suite !',
+                      '$streakDays moments cette semaine',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -68,7 +68,7 @@ class DailyStreakCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Continue comme ça, c\'est super !',
+                      'Chaque moment partagé est précieux.',
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark
@@ -99,8 +99,8 @@ class DailyStreakCard extends StatelessWidget {
                       color: isCompleted
                           ? AppColors.streak
                           : isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.03),
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.04),
                       shape: BoxShape.circle,
                       boxShadow: isCompleted
                           ? [
@@ -117,8 +117,8 @@ class DailyStreakCard extends StatelessWidget {
                           ? null
                           : Border.all(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.05),
+                                  ? Colors.white.withValues(alpha: 0.12)
+                                  : Colors.black.withValues(alpha: 0.06),
                               width: 1,
                             ),
                     ),
@@ -129,7 +129,13 @@ class DailyStreakCard extends StatelessWidget {
                             color: Colors.white,
                             size: 20,
                           )
-                        : null,
+                        : Icon(
+                            Icons.circle_rounded,
+                            size: 6,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.2)
+                                : Colors.black.withValues(alpha: 0.1),
+                          ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -137,13 +143,9 @@ class DailyStreakCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isCompleted
-                          ? (isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight)
-                          : (isDark
-                              ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight),
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
                     ),
                   ),
                 ],
