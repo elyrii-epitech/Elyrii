@@ -5,7 +5,7 @@ import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
 class DailyStreakCard extends StatelessWidget {
   final int streakDays;
-  final List<bool> weekHistory; // true = completed, false = missed
+  final List<bool> weekHistory;
 
   const DailyStreakCard({
     super.key,
@@ -15,8 +15,7 @@ class DailyStreakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return LiquidGlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -24,40 +23,21 @@ class DailyStreakCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Flame Icon with Glow
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.streak.withValues(alpha: 0.15),
+                  color: AppColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.streak.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      spreadRadius: -2,
-                    ),
-                  ],
                 ),
-                child: const Text('🔥', style: TextStyle(fontSize: 24)),
-              )
-                  .animate(
-                    onPlay: (controller) => controller.repeat(reverse: true),
-                  )
-                  .scaleXY(
-                    begin: 1.0,
-                    end: 1.1,
-                    duration: 1500.ms,
-                    curve: Curves.easeInOut,
-                  ),
-
+                child: const Text('💜', style: TextStyle(fontSize: 22)),
+              ),
               const SizedBox(width: 16),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$streakDays moments cette semaine',
+                      'La semaine avec Elyrii',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -68,7 +48,9 @@ class DailyStreakCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Chaque moment partagé est précieux.',
+                      streakDays > 0
+                          ? 'Vous avez partage $streakDays moments ensemble'
+                          : 'Elyrii est la quand tu en as besoin',
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark
@@ -82,67 +64,50 @@ class DailyStreakCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Weekly Bubbles
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
-              final isCompleted =
+              final wasPresent =
                   index < weekHistory.length ? weekHistory[index] : false;
               final dayInitial = _getDayInitial(index);
 
               return Column(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
-                      color: isCompleted
-                          ? AppColors.streak
+                      color: wasPresent
+                          ? AppColors.accent.withValues(alpha: 0.2)
                           : isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.black.withValues(alpha: 0.04),
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : Colors.black.withValues(alpha: 0.02),
                       shape: BoxShape.circle,
-                      boxShadow: isCompleted
-                          ? [
-                              BoxShadow(
-                                color: AppColors.streak.withValues(
-                                  alpha: 0.4,
-                                ),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                      border: isCompleted
-                          ? null
+                      border: wasPresent
+                          ? Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.4),
+                              width: 1.5,
+                            )
                           : Border.all(
                               color: isDark
-                                  ? Colors.white.withValues(alpha: 0.12)
-                                  : Colors.black.withValues(alpha: 0.06),
-                              width: 1,
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.black.withValues(alpha: 0.04),
+                              width: 0.5,
                             ),
                     ),
                     alignment: Alignment.center,
-                    child: isCompleted
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          )
-                        : Icon(
-                            Icons.circle_rounded,
-                            size: 6,
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.2)
-                                : Colors.black.withValues(alpha: 0.1),
-                          ),
+                    child: Text(
+                      wasPresent ? '😊' : '😴',
+                      style: const TextStyle(fontSize: 18),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     dayInitial,
                     style: TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: isDark
                           ? AppColors.textSecondaryDark
                           : AppColors.textSecondaryLight,
@@ -151,8 +116,8 @@ class DailyStreakCard extends StatelessWidget {
                 ],
               )
                   .animate()
-                  .fadeIn(delay: (100 * index).ms)
-                  .slideY(begin: 0.2, end: 0);
+                  .fadeIn(delay: (80 * index).ms)
+                  .slideY(begin: 0.15, end: 0);
             }),
           ),
         ],
