@@ -37,7 +37,7 @@ class DailyStreakCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'La semaine avec Elyrii',
+                      'Ton rythme cette semaine',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -98,13 +98,13 @@ class DailyStreakCard extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: Icon(
-                      wasPresent ? Icons.check_circle_rounded : Icons.remove_circle_outline_rounded,
+                      wasPresent ? Icons.wb_sunny_rounded : Icons.cloud_rounded,
                       size: 18,
                       color: wasPresent
                           ? AppColors.accent
                           : (isDark
                               ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight),
+                              : AppColors.textTertiaryLight).withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -124,6 +124,33 @@ class DailyStreakCard extends StatelessWidget {
                   .fadeIn(delay: (80 * index).ms)
                   .slideY(begin: 0.15, end: 0);
             }),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.wb_sunny_rounded, size: 12, color: AppColors.accent),
+              const SizedBox(width: 4),
+              Text(
+                'Moments vécus',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Icon(Icons.cloud_rounded, size: 12, color: (isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight).withValues(alpha: 0.5)),
+              const SizedBox(width: 4),
+              Text(
+                'Repos & recharge',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ],
       ),

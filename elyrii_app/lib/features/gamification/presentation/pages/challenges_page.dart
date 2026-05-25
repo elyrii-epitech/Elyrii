@@ -90,131 +90,173 @@ class _ChallengesPageState extends State<ChallengesPage> {
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            MediaQuery.of(context).padding.top + 16,
-            16,
-            32,
+      body: Stack(
+        children: [
+          // Aurora Background Glow 1 (Top Left)
+          Positioned(
+            top: -100,
+            left: -100,
+            child: Container(
+              width: 320,
+              height: 320,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: isDark ? 0.08 : 0.04),
+                    blurRadius: 130,
+                    spreadRadius: 60,
+                  ),
+                ],
+              ),
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Mascot greeting
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.favorite_rounded, color: AppColors.primary, size: 36),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Ton espace bien-être',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Ici, il n\'y a rien à accomplir.\nJuste être, à ton rythme.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
+          // Aurora Background Glow 2 (Mid Right)
+          Positioned(
+            top: 350,
+            right: -120,
+            child: Container(
+              width: 350,
+              height: 350,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accent.withValues(alpha: isDark ? 0.06 : 0.03),
+                    blurRadius: 140,
+                    spreadRadius: 70,
                   ),
-                ),
+                ],
               ),
-
-              // Emotional state card
-              LevelProgressHeader(
-                level: _currentLevel,
-                currentXp: _currentXp,
-                maxXp: _maxXp,
-                title: '',
-              ),
-
-              const SizedBox(height: 16),
-
-              // Week mood
-              DailyStreakCard(
-                streakDays: _streakDays,
-                weekHistory: _weekHistory,
-              ),
-
-              const SizedBox(height: 32),
-
-              // Gentle invitations
-              _buildSectionTitle('Souffles du jour', isDark),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Des petites idées pour prendre soin de toi, si tu en as envie',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
-                ),
-              ),
-              ListView.builder(
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: _quests.length,
-                itemBuilder: (context, index) {
-                  final quest = _quests[index];
-                  return QuestTile(
-                    title: quest['title'],
-                    subtitle: quest['subtitle'],
-                    icon: quest['icon'],
-                    xpReward: quest['xp'],
-                    isCompleted: quest['isCompleted'],
-                    onTap: () {},
-                  );
-                },
-              ),
-
-              const SizedBox(height: 32),
-
-              // Emotional skills
-              _buildSectionTitle('Tes compétences émotionnelles', isDark),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Des qualités qui se développent avec le temps',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
-                ),
-              ),
-              BadgesGrid(
-                badges: _badges,
-                onBadgeTap: (badge) => _showBadgeDetails(context, badge),
-              ),
-
-              const SizedBox(height: 80),
-            ],
+            ),
           ),
-        ),
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                MediaQuery.of(context).padding.top + 16,
+                16,
+                32,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Mascot greeting
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: Column(
+                        children: [
+                          const Icon(Icons.explore_rounded, color: AppColors.primary, size: 36),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Ton espace bien-être',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: isDark
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textPrimaryLight,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Ici, il n\'y a rien à accomplir.\nJuste être, à ton rythme.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Emotional state card
+                  LevelProgressHeader(
+                    level: _currentLevel,
+                    currentXp: _currentXp,
+                    maxXp: _maxXp,
+                    title: '',
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Week mood
+                  DailyStreakCard(
+                    streakDays: _streakDays,
+                    weekHistory: _weekHistory,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Gentle invitations
+                  _buildSectionTitle('Douces invitations', isDark),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      'Des inspirations douces pour prendre soin de toi, sans aucune obligation',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
+                      ),
+                    ),
+                  ),
+                  ListView.builder(
+                    padding: EdgeInsets.zero,
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: _quests.length,
+                    itemBuilder: (context, index) {
+                      final quest = _quests[index];
+                      return QuestTile(
+                        title: quest['title'],
+                        subtitle: quest['subtitle'],
+                        icon: quest['icon'],
+                        xpReward: quest['xp'],
+                        isCompleted: quest['isCompleted'],
+                        onTap: () {},
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Emotional skills
+                  _buildSectionTitle('Tes compétences émotionnelles', isDark),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      'Des qualités qui se développent avec le temps',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
+                      ),
+                    ),
+                  ),
+                  BadgesGrid(
+                    badges: _badges,
+                    onBadgeTap: (badge) => _showBadgeDetails(context, badge),
+                  ),
+
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
