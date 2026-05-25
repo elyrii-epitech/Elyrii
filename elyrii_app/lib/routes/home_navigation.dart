@@ -54,8 +54,8 @@ class _HomeNavigationState extends State<HomeNavigation>
   final List<GlassNavItem> _navItems = const [
     GlassNavItem(icon: Icons.home_rounded, label: 'Home', index: 0),
     GlassNavItem(
-      icon: Icons.explore_rounded,
-      label: 'Voyage',
+      icon: Icons.yard_rounded,
+      label: 'Jardin',
       index: 1,
     ),
     GlassNavItem(icon: Icons.book_rounded, label: 'Journal', index: 2),

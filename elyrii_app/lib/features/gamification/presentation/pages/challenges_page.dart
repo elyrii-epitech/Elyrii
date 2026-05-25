@@ -148,10 +148,10 @@ class _ChallengesPageState extends State<ChallengesPage> {
                       padding: const EdgeInsets.only(bottom: 20),
                       child: Column(
                         children: [
-                          const Icon(Icons.explore_rounded, color: AppColors.primary, size: 36),
+                          const Icon(Icons.yard_rounded, color: AppColors.primary, size: 36),
                           const SizedBox(height: 8),
                           Text(
-                            'Ton espace bien-être',
+                            'Ton jardin intérieur',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.w700,
