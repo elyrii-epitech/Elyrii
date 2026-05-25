@@ -29,7 +29,7 @@ class DailyStreakCard extends StatelessWidget {
                   color: AppColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Text('💜', style: TextStyle(fontSize: 22)),
+                child: const Icon(Icons.favorite_rounded, color: AppColors.primary, size: 22),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -97,9 +97,14 @@ class DailyStreakCard extends StatelessWidget {
                             ),
                     ),
                     alignment: Alignment.center,
-                    child: Text(
-                      wasPresent ? '😊' : '😴',
-                      style: const TextStyle(fontSize: 18),
+                    child: Icon(
+                      wasPresent ? Icons.check_circle_rounded : Icons.remove_circle_outline_rounded,
+                      size: 18,
+                      color: wasPresent
+                          ? AppColors.accent
+                          : (isDark
+                              ? AppColors.textTertiaryDark
+                              : AppColors.textTertiaryLight),
                     ),
                   ),
                   const SizedBox(height: 6),

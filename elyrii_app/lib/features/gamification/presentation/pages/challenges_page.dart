@@ -22,7 +22,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
 
   final List<Map<String, dynamic>> _quests = [
     {
-      'title': 'Mediter 10 minutes',
+      'title': 'Méditer 10 minutes',
       'subtitle': 'Un moment rien que pour toi',
       'icon': Icons.self_improvement_rounded,
       'xp': 50,
@@ -30,14 +30,14 @@ class _ChallengesPageState extends State<ChallengesPage> {
     },
     {
       'title': 'Discuter avec Elyrii',
-      'subtitle': 'Elyrii est la pour t\'ecouter',
+      'subtitle': 'Elyrii est là pour t\'écouter',
       'icon': Icons.chat_bubble_outline_rounded,
       'xp': 30,
       'isCompleted': false,
     },
     {
       'title': 'Noter ton humeur',
-      'subtitle': 'Pose-tou quelques instants',
+      'subtitle': 'Pose-toi quelques instants',
       'icon': Icons.mood_rounded,
       'xp': 20,
       'isCompleted': false,
@@ -65,19 +65,19 @@ class _ChallengesPageState extends State<ChallengesPage> {
     ),
     const BadgeItem(
       id: '4',
-      title: 'Ecoute active',
+      title: 'Écoute active',
       icon: Icons.hearing_rounded,
       isUnlocked: false,
     ),
     const BadgeItem(
       id: '5',
-      title: 'Etoile du soir',
+      title: 'Étoile du soir',
       icon: Icons.nights_stay_rounded,
       isUnlocked: false,
     ),
     const BadgeItem(
       id: '6',
-      title: 'Lumiere du matin',
+      title: 'Lumière du matin',
       icon: Icons.wb_sunny_rounded,
       isUnlocked: false,
     ),
@@ -108,13 +108,10 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   padding: const EdgeInsets.only(bottom: 20),
                   child: Column(
                     children: [
-                      Text(
-                        '💜',
-                        style: const TextStyle(fontSize: 36),
-                      ),
+                      const Icon(Icons.favorite_rounded, color: AppColors.primary, size: 36),
                       const SizedBox(height: 8),
                       Text(
-                        'Ton espace bien-etre',
+                        'Ton espace bien-être',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -126,7 +123,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Ici, il n\'y a rien a accomplir.\nJuste etre, a ton rythme.',
+                        'Ici, il n\'y a rien à accomplir.\nJuste être, à ton rythme.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
@@ -165,7 +162,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  'Des petites idees pour prendre soin de toi, si tu en as envie',
+                  'Des petites idées pour prendre soin de toi, si tu en as envie',
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark
@@ -195,12 +192,12 @@ class _ChallengesPageState extends State<ChallengesPage> {
               const SizedBox(height: 32),
 
               // Emotional skills
-              _buildSectionTitle('Tes competences emotionnelles', isDark),
+              _buildSectionTitle('Tes compétences émotionnelles', isDark),
               const SizedBox(height: 4),
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Text(
-                  'Des qualites qui se developpent avec le temps',
+                  'Des qualités qui se développent avec le temps',
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark
@@ -264,8 +261,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
           const SizedBox(height: 16),
           Text(
             badge.isUnlocked
-                ? 'Tu as developpe cette belle competence.\nElle fait maintenant partie de toi.'
-                : 'Cette qualite grandit en toi,\npetit a petit, a ton rythme.',
+                ? 'Tu as développé cette belle compétence.\nElle fait maintenant partie de toi.'
+                : 'Cette qualité grandit en toi,\npetit à petit, à ton rythme.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,

@@ -39,3 +39,9 @@ _static/
 _templates/
 .windsurf/
 .agent/
+
+# AI Tools & Artifacts
+.factory/
+.antigravitycli/
+.playwright-mcp/
+screenshot-*.png

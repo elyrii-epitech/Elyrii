@@ -156,7 +156,7 @@ class DashboardPage extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('💭', style: TextStyle(fontSize: 20)),
+                child: const Icon(Icons.mood_rounded, color: AppColors.primary, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -213,7 +213,7 @@ class DashboardPage extends StatelessWidget {
     return Row(
       children: [
         _StatChip(
-          icon: '📝',
+          icon: Icons.edit_note_rounded,
           value: '7',
           label: 'entrées',
           color: AppColors.primary,
@@ -221,7 +221,7 @@ class DashboardPage extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         _StatChip(
-          icon: '🔥',
+          icon: Icons.local_fire_department_rounded,
           value: '${provider.currentStreak}',
           label: 'jours',
           color: AppColors.secondary,
@@ -229,7 +229,7 @@ class DashboardPage extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         _StatChip(
-          icon: '⭐',
+          icon: Icons.star_rounded,
           value: '3',
           label: 'objectifs',
           color: AppColors.accent,
@@ -327,9 +327,14 @@ class _MoodChipState extends State<_MoodChip> {
               width: 2,
             ),
           ),
-          child: Text(
-            widget.mood.emoji,
-            style: TextStyle(fontSize: widget.isSelected ? 28 : 24),
+          child: Icon(
+            widget.mood.icon,
+            size: widget.isSelected ? 28 : 24,
+            color: widget.isSelected
+                ? widget.mood.color
+                : (widget.isDark
+                    ? AppColors.textTertiaryDark
+                    : AppColors.textTertiaryLight),
           ),
         ),
       ),
@@ -339,7 +344,7 @@ class _MoodChipState extends State<_MoodChip> {
 
 /// Chip de statistique
 class _StatChip extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String value;
   final String label;
   final Color color;
@@ -360,7 +365,7 @@ class _StatChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         child: Column(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 22)),
+            Icon(icon, size: 22, color: color),
             const SizedBox(height: 8),
             Text(
               value,

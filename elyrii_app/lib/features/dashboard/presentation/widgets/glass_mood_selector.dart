@@ -174,9 +174,14 @@ class _MoodButtonState extends State<_MoodButton>
                       ],
               ),
               child: Center(
-                child: Text(
-                  widget.mood.emoji,
-                  style: TextStyle(fontSize: widget.isSelected ? 28 : 24),
+                child: Icon(
+                  widget.mood.icon,
+                  size: widget.isSelected ? 28 : 24,
+                  color: widget.isSelected
+                      ? Colors.white
+                      : (widget.isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight),
                 ),
               ),
             ),

@@ -91,11 +91,11 @@ class _MeditationPageState extends State<MeditationPage>
 
   // ---- Mood emoji list for post-session feedback ----
   static const List<_MoodOption> _moods = [
-    _MoodOption('😔', 'Pas bien'),
-    _MoodOption('😐', 'Neutre'),
-    _MoodOption('😊', 'Bien'),
-    _MoodOption('😌', 'Apaisé(e)'),
-    _MoodOption('🥰', 'Merveilleux'),
+    _MoodOption(Icons.sentiment_very_dissatisfied_rounded, 'Pas bien', Color(0xFF7BA3C7)),
+    _MoodOption(Icons.sentiment_neutral_rounded, 'Neutre', Color(0xFFA39C96)),
+    _MoodOption(Icons.sentiment_satisfied_rounded, 'Bien', Color(0xFFA8D5BA)),
+    _MoodOption(Icons.sentiment_satisfied_alt_rounded, 'Apaisé(e)', Color(0xFF7BC393)),
+    _MoodOption(Icons.sentiment_very_satisfied_rounded, 'Merveilleux', Color(0xFF5FA87A)),
   ];
 
   // ============================================================
@@ -335,7 +335,7 @@ class _MeditationPageState extends State<MeditationPage>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.play_arrow_rounded, color: AppColors.primary),
+                  const Icon(Icons.play_arrow_rounded, color: AppColors.primary),
                   const SizedBox(width: 8),
                   Text(
                     'Commencer',
@@ -444,7 +444,7 @@ class _MeditationPageState extends State<MeditationPage>
                   ),
                 ),
                 if (selected)
-                  Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                  const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
               ],
             ),
           ),
@@ -647,10 +647,8 @@ class _MeditationPageState extends State<MeditationPage>
           const SizedBox(height: AppDimensions.spacingXl),
 
           // Congratulatory text.
-          Text(
-            '🌟',
-            style: const TextStyle(fontSize: 48),
-          ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+          const Icon(Icons.wb_sunny_rounded, color: AppColors.accent, size: 48)
+              .animate().scale(duration: 500.ms, curve: Curves.elasticOut),
 
           const SizedBox(height: AppDimensions.spacingLg),
 
@@ -711,7 +709,7 @@ class _MeditationPageState extends State<MeditationPage>
                   ),
                   child: Column(
                     children: [
-                      Text(mood.emoji, style: const TextStyle(fontSize: 32)),
+                      Icon(mood.icon, size: 32, color: mood.color),
                       const SizedBox(height: 4),
                       Text(
                         mood.label,
@@ -766,7 +764,8 @@ class _MeditationPageState extends State<MeditationPage>
 // ============================================================
 
 class _MoodOption {
-  const _MoodOption(this.emoji, this.label);
-  final String emoji;
+  const _MoodOption(this.icon, this.label, this.color);
+  final IconData icon;
   final String label;
+  final Color color;
 }

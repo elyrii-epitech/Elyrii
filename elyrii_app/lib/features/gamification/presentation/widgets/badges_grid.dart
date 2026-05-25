@@ -92,10 +92,10 @@ class BadgesGrid extends StatelessWidget {
                     ),
                   ),
                   if (badge.isUnlocked)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4),
                       child: Text(
-                        'Developpe',
+                        'Développé',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w500,

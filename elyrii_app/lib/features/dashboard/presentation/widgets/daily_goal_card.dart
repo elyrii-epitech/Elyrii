@@ -159,7 +159,7 @@ class _DailyGoalCardState extends State<DailyGoalCard>
                           Text(
                             widget.isCompleted
                                 ? widget.goal.completedMessage
-                                : '${widget.goal.emoji} ${widget.goal.title}',
+                                : widget.goal.title,
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -251,7 +251,7 @@ class _DailyGoalCardState extends State<DailyGoalCard>
                       ),
                     ),
                   )
-                : Text(widget.goal.emoji, style: const TextStyle(fontSize: 20)),
+                : Icon(widget.goal.icon, size: 20, color: AppColors.primary),
           ),
         );
       },

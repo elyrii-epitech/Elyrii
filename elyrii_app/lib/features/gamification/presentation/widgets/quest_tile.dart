@@ -90,7 +90,7 @@ class QuestTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        isCompleted ? 'Ce moment a ete vecu' : subtitle,
+                        isCompleted ? 'Ce moment a été vécu' : subtitle,
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark

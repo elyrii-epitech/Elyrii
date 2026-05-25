@@ -52,6 +52,7 @@ class CrisisDetectionBanner extends StatelessWidget {
       curve: Curves.easeOutCubic,
       height: visible ? null : 0.0,
       clipBehavior: Clip.hardEdge,
+      decoration: const BoxDecoration(),
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
         opacity: visible ? 1.0 : 0.0,

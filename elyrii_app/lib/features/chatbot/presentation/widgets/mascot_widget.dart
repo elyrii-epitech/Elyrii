@@ -275,7 +275,7 @@ class _MascotWidgetState extends State<MascotWidget>
         SizedBox(height: isMinimized ? 2 : 12),
         Text(
           isMinimized
-              ? 'Je t\'écoute 💜'
+              ? 'Je t\'écoute'
               : 'Je suis là pour t\'écouter\nsans jugement',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(

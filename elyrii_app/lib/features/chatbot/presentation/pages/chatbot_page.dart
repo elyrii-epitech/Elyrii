@@ -307,7 +307,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                 opacity: _hasStartedTyping ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 child: Text(
-                  '💜 Continue, je t\'écoute...',
+                  'Continue, je t\'écoute...',
                   style: TextStyle(
                     color: AppColors.primary.withValues(alpha: 0.8),
                     fontSize: 12,
