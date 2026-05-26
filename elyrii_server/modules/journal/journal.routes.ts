@@ -18,19 +18,19 @@ class JournalRoutes {
         this.Router.get("/health", (c) => c.text("Journal Service Healthy"));
         this.Router.use("*", authMiddleware);
 
+        this.Router.get("/tags", ...this.journalController.getTags);
+        this.Router.post("/tags", ...this.journalController.createTag);
+        this.Router.put("/tags/:tagId", ...this.journalController.updateTag);
+        this.Router.delete("/tags/:tagId", ...this.journalController.deleteTag);
+
         this.Router.get("/", ...this.journalController.getEntries);
+        this.Router.get("/:entryId/media", ...this.journalController.listMedia);
+        this.Router.post("/:entryId/media", ...this.journalController.addMedia);
+        this.Router.delete("/:entryId/media/:mediaId", ...this.journalController.deleteMedia);
         this.Router.get("/:entryId", ...this.journalController.getEntryById);
         this.Router.post("/", ...this.journalController.createEntry);
         this.Router.put("/:entryId", ...this.journalController.updateEntry);
         this.Router.delete("/:entryId", ...this.journalController.deleteEntry);
-        
-        this.Router.post("/:entryId/media", (c) => c.text("Add media to entry"));
-        this.Router.delete("/:entryId/media/:mediaId", (c) => c.text("Delete media from entry"));
-        
-        this.Router.get("/tags", (c) => c.text("Get all tags"));
-        this.Router.post("/tags", (c) => c.text("Create tag"));
-        this.Router.put("/tags/:tagId", (c) => c.text("Update tag by ID"));
-        this.Router.delete("/tags/:tagId", (c) => c.text("Delete tag by ID"));
 
         this.Router.get("/openapi.json", openAPIRouteHandler(this.Router, {
             documentation: {

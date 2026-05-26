@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -34,14 +35,27 @@ class AuthProvider extends ChangeNotifier {
     final hasToken = await _storage.hasAccessToken();
     if (hasToken) {
       _status = AuthStatus.authenticated;
-      final userId = await _storage.getUserId();
-      if (userId != null) {
-        _user = UserModel(id: userId, email: '');
-      }
+      await fetchProfile();
     } else {
       _status = AuthStatus.unauthenticated;
     }
     notifyListeners();
+  }
+
+  /// Fetch full user profile from backend
+  Future<void> fetchProfile() async {
+    try {
+      final response = await _repository.client.get(ApiConfig.userMeUrl);
+      _user = UserModel.fromJson(response as Map<String, dynamic>);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[AuthProvider] Failed to fetch profile: $e');
+      // If we have a userId but fetch fails, keep the minimal user
+      final userId = await _storage.getUserId();
+      if (_user == null && userId != null) {
+        _user = UserModel(id: userId, email: '');
+      }
+    }
   }
 
   /// Login with email and password
@@ -91,7 +105,11 @@ class AuthProvider extends ChangeNotifier {
         lastName: lastName,
         age: age,
       );
-      await _storage.saveAccessToken(result.token);
+
+      if (result.token.isNotEmpty) {
+        await _storage.saveAccessToken(result.token);
+      }
+
       if (result.user != null) {
         _user = result.user;
         await _storage.saveUserId(result.user!.id);
@@ -100,6 +118,17 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } on ApiException catch (e) {
+      if (e.statusCode == 201 &&
+          e.body is Map &&
+          e.body['emailVerificationRequired'] == true) {
+        // Registration was successful, but email verification is required.
+        // We cannot log the user in yet.
+        _error = e
+            .message; // "User registered successfully. Email verification required."
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return false; // Return false so we don't navigate to home, user should see the message and wait for verification or go to login
+      }
       _error = e.message;
       _status = AuthStatus.unauthenticated;
       notifyListeners();

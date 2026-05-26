@@ -4,6 +4,7 @@ import type { HonoEnv } from "../../utils/hono.types";
 import { z } from "zod";
 import { sValidator } from "@hono/standard-validator";
 import { describeRoute } from "hono-openapi";
+import QuestLogic from "./quest.logic";
 
 /**
  * Controller that defines HTTP handlers for gamified challenges (quests).
@@ -17,6 +18,29 @@ import { describeRoute } from "hono-openapi";
 class QuestController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly questRepository: QuestRepository = new QuestRepository();
+    private readonly questLogic: QuestLogic = new QuestLogic();
+
+    private sortUserChallenges<T extends { createdAt: Date | null; completedAt: Date | null; challenge: { rewardPoints: number } }>(
+        rows: T[],
+        sort?: string,
+    ): T[] {
+        const normalized = (sort || "newest").toLowerCase();
+        const sorted = [...rows];
+        if (normalized === "oldest") {
+            sorted.sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
+            return sorted;
+        }
+        if (normalized === "points_desc") {
+            sorted.sort((a, b) => (b.challenge.rewardPoints ?? 0) - (a.challenge.rewardPoints ?? 0));
+            return sorted;
+        }
+        if (normalized === "completed_desc") {
+            sorted.sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0));
+            return sorted;
+        }
+        sorted.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+        return sorted;
+    }
 
     /**
      * Handler for retrieving active challenges for the user.
@@ -35,8 +59,10 @@ class QuestController {
         }),
         async (ctx) => {
             const userId = ctx.get("user").userId;
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
             const challenges = await this.questRepository.getUserChallenges(userId, 'ACTIVE');
-            return ctx.json(challenges);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
         }
     );
 
@@ -57,8 +83,10 @@ class QuestController {
         }),
         async (ctx) => {
             const userId = ctx.get("user").userId;
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
             const challenges = await this.questRepository.getUserChallenges(userId, 'COMPLETED');
-            return ctx.json(challenges);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
         }
     );
 
@@ -82,8 +110,32 @@ class QuestController {
         }),
         async (ctx) => {
             const userId = ctx.get("user").userId;
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
             const challenges = await this.questRepository.getUserChallenges(userId, 'PENDING');
-            return ctx.json(challenges);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
+        }
+    );
+
+    public readonly listChallenges = this.factory.createHandlers(
+        describeRoute({
+            summary: "List Challenges",
+            description: "List user challenges with optional status filter and sorting.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "List of challenges" },
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const status = ctx.req.query("status");
+            const sort = ctx.req.query("sort");
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
+            const allowedStatus = new Set(["PENDING", "ACTIVE", "COMPLETED", "REJECTED", "SKIPPED", "EXPIRED"]);
+            const normalizedStatus = status?.toUpperCase();
+            const finalStatus = normalizedStatus && allowedStatus.has(normalizedStatus) ? normalizedStatus : undefined;
+            const challenges = await this.questRepository.getUserChallenges(userId, finalStatus);
+            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit), 200);
         }
     );
 
@@ -109,12 +161,21 @@ class QuestController {
             }
         }),
         async (ctx) => {
+            const userId = ctx.get("user").userId;
             const challengeId = ctx.req.param("challengeId");
             if (!challengeId) {
                 return ctx.json({ error: "Challenge ID is required" }, 400);
             }
+
+            const userChallenge = await this.questRepository.getUserChallengeByIdForUser(challengeId, userId);
+            if (!userChallenge) {
+                return ctx.json({ error: "Challenge not found" }, 404);
+            }
+            if (userChallenge.status !== 'PENDING') {
+                return ctx.json({ error: "Challenge is not pending" }, 409);
+            }
             try {
-                const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'ACTIVE');
+                const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'ACTIVE');
                 return ctx.json(updated);
             } catch (e) {
                 return ctx.json({ error: "Failed to accept challenge" }, 500);
@@ -144,15 +205,125 @@ class QuestController {
             }
         }),
         async (ctx) => {
+            const userId = ctx.get("user").userId;
             const challengeId = ctx.req.param("challengeId");
             if (!challengeId) {
                 return ctx.json({ error: "Challenge ID is required" }, 400);
             }
+
+            const userChallenge = await this.questRepository.getUserChallengeByIdForUser(challengeId, userId);
+            if (!userChallenge) {
+                return ctx.json({ error: "Challenge not found" }, 404);
+            }
+            if (userChallenge.status !== 'PENDING') {
+                return ctx.json({ error: "Challenge is not pending" }, 409);
+            }
             try {
-                const updated = await this.questRepository.updateUserChallengeStatus(challengeId, 'REJECTED');
+                const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'REJECTED');
                 return ctx.json(updated);
             } catch (e) {
                 return ctx.json({ error: "Failed to reject challenge" }, 500);
+            }
+        }
+    );
+
+    /**
+     * Handler for retrieving SYSTEM challenges not yet started by the user.
+     */
+    public readonly getAvailableChallenges = this.factory.createHandlers(
+        describeRoute({
+            summary: "Get Available Challenges",
+            description: "Retrieve SYSTEM challenges the user hasn't started or completed yet.",
+            tags: ["Quest"],
+            responses: {
+                200: { description: "List of available challenges" }
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const sort = (ctx.req.query("sort") || "newest").toLowerCase();
+            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
+            const challenges = await this.questRepository.getAvailableChallenges(userId);
+            const sorted = [...challenges];
+            if (sort === "oldest") {
+                sorted.sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
+            } else if (sort === "points_desc") {
+                sorted.sort((a, b) => (b.rewardPoints ?? 0) - (a.rewardPoints ?? 0));
+            } else {
+                sorted.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+            }
+            return ctx.json(sorted.slice(0, limit));
+        }
+    );
+
+    /**
+     * Handler for starting a SYSTEM challenge.
+     * Assigns the challenge to the user with status ACTIVE.
+     */
+    public readonly startChallenge = this.factory.createHandlers(
+        describeRoute({
+            summary: "Start Challenge",
+            description: "Start a SYSTEM challenge by assigning it to the user with ACTIVE status.",
+            tags: ["Quest"],
+            responses: {
+                201: { description: "Challenge started successfully" },
+                400: { description: "Challenge ID is required" },
+                404: { description: "Challenge not found" },
+                409: { description: "Challenge already active or completed" },
+                500: { description: "Failed to start challenge" }
+            }
+        }),
+        async (ctx) => {
+            const userId = ctx.get("user").userId;
+            const challengeId = ctx.req.param("challengeId");
+            if (!challengeId) {
+                return ctx.json({ error: "Challenge ID is required" }, 400);
+            }
+
+            // Vérifier que le défi existe
+            const template = await this.questRepository.getChallengeTemplateById(challengeId);
+            if (!template) {
+                return ctx.json({ error: "Challenge not found" }, 404);
+            }
+
+            try {
+                // Initialiser la progression à zéro pour chaque condition
+                const conditions = template.conditions as { target: number }[];
+                const initialProgress: Record<string, { current: number; target: number; completed: boolean; updatedAt: string }> = {};
+                conditions.forEach((cond, i) => {
+                    initialProgress[`condition_${i}`] = {
+                        current: 0,
+                        target: cond.target,
+                        completed: false,
+                        updatedAt: new Date().toISOString(),
+                    };
+                });
+
+                const existingAssignment = await this.questRepository.getUserChallengeAssignment(userId, challengeId);
+                if (existingAssignment && (existingAssignment.status === 'ACTIVE' || existingAssignment.status === 'COMPLETED')) {
+                    return ctx.json({ error: "Challenge already active or completed" }, 409);
+                }
+
+                if (existingAssignment) {
+                    const updated = await this.questRepository.updateUserChallengeStatusForUser(
+                        existingAssignment.id,
+                        userId,
+                        'ACTIVE',
+                        initialProgress,
+                    );
+                    return ctx.json({ challenge: template, userChallenge: updated }, 200);
+                }
+
+                const userChallenge = await this.questRepository.assignChallengeToUser({
+                    userId,
+                    challengeId,
+                    status: 'ACTIVE',
+                    progress: initialProgress,
+                });
+
+                return ctx.json({ challenge: template, userChallenge }, 201);
+            } catch (e) {
+                return ctx.json({ error: "Failed to start challenge" }, 500);
             }
         }
     );

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 import '../services/secure_storage_service.dart';
 import 'api_exception.dart';
 
@@ -40,11 +41,17 @@ class ApiClient {
     final uri = queryParams != null
         ? Uri.parse(url).replace(queryParameters: queryParams)
         : Uri.parse(url);
+    debugPrint('[ApiClient] GET $uri (auth: $auth)');
     final headers = auth ? await _authHeaders() : _baseHeaders();
-    final response = await _client
-        .get(uri, headers: headers)
-        .timeout(const Duration(seconds: _timeoutSeconds));
-    return _handleResponse(response);
+    try {
+      final response = await _client
+          .get(uri, headers: headers)
+          .timeout(const Duration(seconds: _timeoutSeconds));
+      return _handleResponse(response);
+    } catch (e) {
+      debugPrint('[ApiClient] GET $uri failed: $e');
+      rethrow;
+    }
   }
 
   /// Perform a POST request
@@ -53,15 +60,21 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool auth = true,
   }) async {
+    debugPrint('[ApiClient] POST $url (auth: $auth)');
     final headers = auth ? await _authHeaders() : _baseHeaders();
-    final response = await _client
-        .post(
-          Uri.parse(url),
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        )
-        .timeout(const Duration(seconds: _timeoutSeconds));
-    return _handleResponse(response);
+    try {
+      final response = await _client
+          .post(
+            Uri.parse(url),
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(const Duration(seconds: _timeoutSeconds));
+      return _handleResponse(response);
+    } catch (e) {
+      debugPrint('[ApiClient] POST $url failed: $e');
+      rethrow;
+    }
   }
 
   /// Perform a PUT request
@@ -70,24 +83,67 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool auth = true,
   }) async {
+    debugPrint('[ApiClient] PUT $url (auth: $auth)');
     final headers = auth ? await _authHeaders() : _baseHeaders();
-    final response = await _client
-        .put(
-          Uri.parse(url),
-          headers: headers,
-          body: body != null ? jsonEncode(body) : null,
-        )
-        .timeout(const Duration(seconds: _timeoutSeconds));
-    return _handleResponse(response);
+    try {
+      final response = await _client
+          .put(
+            Uri.parse(url),
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(const Duration(seconds: _timeoutSeconds));
+      return _handleResponse(response);
+    } catch (e) {
+      debugPrint('[ApiClient] PUT $url failed: $e');
+      rethrow;
+    }
   }
 
   /// Perform a DELETE request
   Future<dynamic> delete(String url, {bool auth = true}) async {
+    debugPrint('[ApiClient] DELETE $url (auth: $auth)');
     final headers = auth ? await _authHeaders() : _baseHeaders();
-    final response = await _client
-        .delete(Uri.parse(url), headers: headers)
-        .timeout(const Duration(seconds: _timeoutSeconds));
-    return _handleResponse(response);
+    try {
+      final response = await _client
+          .delete(Uri.parse(url), headers: headers)
+          .timeout(const Duration(seconds: _timeoutSeconds));
+      return _handleResponse(response);
+    } catch (e) {
+      debugPrint('[ApiClient] DELETE $url failed: $e');
+      rethrow;
+    }
+  }
+
+  /// Check connectivity to various service health endpoints
+  Future<void> checkHealth() async {
+    debugPrint('[ApiClient] Starting health check...');
+    final baseUrl = urlWithoutTrailingSlash(ApiConfig.baseUrl);
+    final services = {
+      'Gateway': '$baseUrl/openapi.json',
+      'Auth': '$baseUrl/auth/health',
+      'Journal': '$baseUrl/journal/health',
+      'User': '$baseUrl/user/health',
+      'Chat': '$baseUrl/chat/health',
+      'Quest': '$baseUrl/challenge/health',
+    };
+
+    for (var entry in services.entries) {
+      try {
+        // Use the internal get method to benefit from logging, but disable auth
+        await get(entry.value, auth: false);
+        debugPrint('[ApiClient] ✅ ${entry.key} is UP');
+      } catch (e) {
+        debugPrint('[ApiClient] ❌ ${entry.key} is DOWN (or unreachable)');
+      }
+    }
+  }
+
+  String urlWithoutTrailingSlash(String url) {
+    if (url.endsWith('/')) {
+      return url.substring(0, url.length - 1);
+    }
+    return url;
   }
 
   dynamic _handleResponse(http.Response response) {

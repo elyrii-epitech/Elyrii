@@ -1,39 +1,49 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Service for securely storing sensitive data (tokens, credentials)
-/// Uses flutter_secure_storage which encrypts data using:
-/// - iOS: Keychain
-/// - Android: Custom AES encryption (migrated from EncryptedSharedPreferences)
+/// Uses flutter_secure_storage which encrypts data.
+/// Fallbacks to SharedPreferences (unencrypted) on macOS if entitlements are missing (-34018).
 class SecureStorageService {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userIdKey = 'user_id';
 
   final FlutterSecureStorage _storage;
+  SharedPreferences? _prefs;
+  bool _useFallback = false;
 
   SecureStorageService()
       : _storage = const FlutterSecureStorage(
-          aOptions: AndroidOptions(
-              // EncryptedSharedPreferences is deprecated in v10 and removed.
-              // data is migrated automatically to AES.
-              ),
+          aOptions: AndroidOptions(),
           iOptions: IOSOptions(
             accessibility: KeychainAccessibility.first_unlock_this_device,
           ),
+          mOptions: MacOsOptions(
+            accessibility: KeychainAccessibility.first_unlock_this_device,
+          ),
         );
+
+  Future<void> _initFallback() async {
+    if (_prefs != null) return;
+    _prefs = await SharedPreferences.getInstance();
+  }
 
   // ==================== Initialization Check ====================
 
   /// Check if the storage service is available and working
   Future<bool> isAvailable() async {
     try {
+      if (_useFallback) return true;
       // Attempt a dummy read to check access
       await _storage.containsKey(key: 'init_check');
       return true;
     } catch (e) {
-      debugPrint('SecureStorageService not available: $e');
-      return false;
+      debugPrint('SecureStorageService not available, using fallback: $e');
+      _useFallback = true;
+      return true;
     }
   }
 
@@ -82,7 +92,22 @@ class SecureStorageService {
   /// Store any sensitive value
   Future<void> write({required String key, required String value}) async {
     try {
+      if (_useFallback) {
+        await _initFallback();
+        await _prefs?.setString(key, value);
+        return;
+      }
       await _storage.write(key: key, value: value);
+    } on PlatformException catch (e) {
+      if (e.code == '-34018' || e.message?.contains('-34018') == true) {
+        debugPrint(
+            'SecureStorage: Keychain inaccessible. Using SharedPreferences fallback.');
+        _useFallback = true;
+        await _initFallback();
+        await _prefs?.setString(key, value);
+      } else {
+        rethrow;
+      }
     } catch (e) {
       debugPrint('Error writing to SecureStorage ($key): $e');
       rethrow;
@@ -92,8 +117,19 @@ class SecureStorageService {
   /// Read any sensitive value
   Future<String?> read({required String key}) async {
     try {
+      if (_useFallback) {
+        await _initFallback();
+        return _prefs?.getString(key);
+      }
       return await _storage.read(key: key);
     } catch (e) {
+      // If read fails, try fallback
+      await _initFallback();
+      final value = _prefs?.getString(key);
+      if (value != null) {
+        _useFallback = true;
+        return value;
+      }
       debugPrint('Error reading from SecureStorage ($key): $e');
       return null;
     }
@@ -103,19 +139,25 @@ class SecureStorageService {
   Future<void> delete({required String key}) async {
     try {
       await _storage.delete(key: key);
+      await _initFallback();
+      await _prefs?.remove(key);
     } catch (e) {
-      debugPrint('Error deleting from SecureStorage ($key): $e');
-      rethrow;
+      await _initFallback();
+      await _prefs?.remove(key);
     }
   }
 
   /// Check if a key exists
   Future<bool> containsKey({required String key}) async {
     try {
+      if (_useFallback) {
+        await _initFallback();
+        return _prefs?.containsKey(key) ?? false;
+      }
       return await _storage.containsKey(key: key);
     } catch (e) {
-      debugPrint('Error checking key in SecureStorage ($key): $e');
-      return false;
+      await _initFallback();
+      return _prefs?.containsKey(key) ?? false;
     }
   }
 
@@ -131,7 +173,6 @@ class SecureStorageService {
       ]);
     } catch (e) {
       debugPrint('Error clearing auth data: $e');
-      // Non-critical, just log
     }
   }
 
@@ -139,9 +180,14 @@ class SecureStorageService {
   Future<void> clearAll() async {
     try {
       await _storage.deleteAll();
+      await _initFallback();
+      final keys = _prefs?.getKeys() ?? {};
+      for (final key in keys) {
+        await _prefs?.remove(key);
+      }
     } catch (e) {
-      debugPrint('Error deleting all from SecureStorage: $e');
-      rethrow;
+      await _initFallback();
+      await _prefs?.clear();
     }
   }
 }

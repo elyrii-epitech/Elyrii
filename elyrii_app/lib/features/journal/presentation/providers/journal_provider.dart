@@ -52,11 +52,16 @@ class JournalProvider extends ChangeNotifier {
     return sorted;
   }
 
-  Future<void> createEntry({String? title, required String content}) async {
+  Future<void> createEntry({
+    String? title,
+    required String content,
+    String? mood,
+  }) async {
     try {
       final entry = await _repository.createEntry(
         title: title ?? 'Sans titre',
         content: content,
+        mood: mood,
       );
       _entries.add(entry);
       notifyListeners();
@@ -66,12 +71,18 @@ class JournalProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> updateEntry(String id, {String? title, String? content}) async {
+  Future<void> updateEntry(
+    String id, {
+    String? title,
+    String? content,
+    String? mood,
+  }) async {
     try {
       final updated = await _repository.updateEntry(
         id: id,
         title: title,
         content: content,
+        mood: mood,
       );
       final index = _entries.indexWhere((e) => e.id == id);
       if (index != -1) {

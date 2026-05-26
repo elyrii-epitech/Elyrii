@@ -3,10 +3,10 @@ import '../../../../core/network/api_client.dart';
 import '../../data/models/gamification_models.dart';
 import '../../data/repositories/gamification_repository.dart';
 
-/// Provider managing gamification/quest state
 class GamificationProvider extends ChangeNotifier {
   final GamificationRepository _repository;
 
+  List<ChallengeTemplate> _availableChallenges = [];
   List<UserChallenge> _activeChallenges = [];
   List<UserChallenge> _completedChallenges = [];
   List<UserChallenge> _proposals = [];
@@ -16,6 +16,8 @@ class GamificationProvider extends ChangeNotifier {
   GamificationProvider({required ApiClient client})
       : _repository = GamificationRepository(client: client);
 
+  List<ChallengeTemplate> get availableChallenges =>
+      List.unmodifiable(_availableChallenges);
   List<UserChallenge> get activeChallenges =>
       List.unmodifiable(_activeChallenges);
   List<UserChallenge> get completedChallenges =>
@@ -24,58 +26,50 @@ class GamificationProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Load all challenge data from the backend
+  /// Charge toutes les données en parallèle
   Future<void> loadAll() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
       final results = await Future.wait([
+        _repository.getAvailableChallenges(),
         _repository.getActiveChallenges(),
         _repository.getCompletedChallenges(),
         _repository.getProposals(),
       ]);
-      _activeChallenges = results[0];
-      _completedChallenges = results[1];
-      _proposals = results[2];
+      _availableChallenges = results[0] as List<ChallengeTemplate>;
+      _activeChallenges = results[1] as List<UserChallenge>;
+      _completedChallenges = results[2] as List<UserChallenge>;
+      _proposals = results[3] as List<UserChallenge>;
+    } catch (e) {
+      _error = e.toString();
+      debugPrint('[GamificationProvider] loadAll error: $e');
+    } finally {
       _isLoading = false;
       notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
     }
   }
 
-  /// Load only active challenges
-  Future<void> loadActive() async {
+  /// Démarre un défi SYSTEM et le déplace dans la liste active
+  Future<bool> startChallenge(String challengeId) async {
     try {
-      _activeChallenges = await _repository.getActiveChallenges();
-      notifyListeners();
+      await _repository.startChallenge(challengeId);
+      await loadAll(); // Refresh everything to get updated streak and lists
+      return true;
     } catch (e) {
       _error = e.toString();
+      debugPrint('[GamificationProvider] startChallenge error: $e');
       notifyListeners();
+      return false;
     }
   }
 
-  /// Load only proposals
-  Future<void> loadProposals() async {
-    try {
-      _proposals = await _repository.getProposals();
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  /// Accept a proposed challenge
+  /// Accepte une proposition IA et la déplace dans la liste active
   Future<bool> acceptChallenge(String challengeId) async {
     try {
-      final updated = await _repository.acceptChallenge(challengeId);
-      _proposals.removeWhere((c) => c.id == challengeId);
-      _activeChallenges.add(updated);
-      notifyListeners();
+      await _repository.acceptChallenge(challengeId);
+      await loadAll(); // Refresh everything
       return true;
     } catch (e) {
       _error = e.toString();
@@ -84,7 +78,7 @@ class GamificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Reject a proposed challenge
+  /// Rejette une proposition IA
   Future<bool> rejectChallenge(String challengeId) async {
     try {
       await _repository.rejectChallenge(challengeId);
@@ -95,6 +89,16 @@ class GamificationProvider extends ChangeNotifier {
       _error = e.toString();
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<void> loadActive() async {
+    try {
+      _activeChallenges = await _repository.getActiveChallenges();
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
     }
   }
 }

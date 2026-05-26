@@ -1,10 +1,63 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
-class MeditationPage extends StatelessWidget {
+class MeditationPage extends StatefulWidget {
   const MeditationPage({super.key});
+
+  @override
+  State<MeditationPage> createState() => _MeditationPageState();
+}
+
+class _MeditationPageState extends State<MeditationPage>
+    with SingleTickerProviderStateMixin {
+  bool _isMeditating = false;
+  String _instruction = 'Prends un moment pour toi';
+  Timer? _timer;
+  bool _isInhaling = true;
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController =
+        AnimationController(vsync: this, duration: 4.seconds);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleMeditation() {
+    setState(() {
+      _isMeditating = !_isMeditating;
+      if (_isMeditating) {
+        _isInhaling = true;
+        _instruction = 'Inspirez...';
+        _animationController.repeat(reverse: true);
+        _startTimer();
+      } else {
+        _timer?.cancel();
+        _instruction = 'Prends un moment pour toi';
+        _animationController.stop();
+        _animationController.reset();
+      }
+    });
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      setState(() {
+        _isInhaling = !_isInhaling;
+        _instruction = _isInhaling ? 'Inspirez...' : 'Expirez...';
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +92,8 @@ class MeditationPage extends StatelessWidget {
                     ),
                   )
                       .animate(
-                        onPlay: (controller) =>
-                            controller.repeat(reverse: true),
+                        controller: _animationController,
+                        autoPlay: false,
                       )
                       .scale(
                         begin: const Offset(0.8, 0.8),
@@ -68,8 +121,8 @@ class MeditationPage extends StatelessWidget {
                     ),
                   )
                       .animate(
-                        onPlay: (controller) =>
-                            controller.repeat(reverse: true),
+                        controller: _animationController,
+                        autoPlay: false,
                       )
                       .scale(
                         begin: const Offset(0.95, 0.95),
@@ -97,27 +150,31 @@ class MeditationPage extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            Text(
-              'Prends un moment pour toi',
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              child: Text(
+                _instruction,
+                key: ValueKey<String>(_instruction),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
               ),
-            ).animate().fadeIn(duration: 1.seconds, delay: 800.ms),
+            ),
 
             const SizedBox(height: 48),
 
-            // Start Button Placeholder
+            // Start Button
             LiquidGlassCard(
-              onTap: () {},
+              onTap: _toggleMeditation,
               borderRadius: 30,
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               color: AppColors.primary.withValues(alpha: 0.2),
-              child: const Text(
-                'Commencer',
-                style: TextStyle(
+              child: Text(
+                _isMeditating ? 'Arrêter' : 'Commencer',
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primary,
