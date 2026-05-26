@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_exception.dart';
@@ -107,7 +108,7 @@ class AuthRepository {
       final json = jsonDecode(decoded) as Map<String, dynamic>;
       return UserModel.fromJson(json);
     } catch (e) {
-      print('Error decoding token payload: $e');
+      debugPrint('Error decoding token payload: $e');
       return null;
     }
   }

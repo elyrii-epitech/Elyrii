@@ -157,7 +157,7 @@ class QuestTile extends StatelessWidget {
                               backgroundColor: isDark
                                   ? Colors.white.withValues(alpha: 0.08)
                                   : Colors.black.withValues(alpha: 0.06),
-                              valueColor: AlwaysStoppedAnimation<Color>(
+                              valueColor: const AlwaysStoppedAnimation<Color>(
                                 AppColors.primary,
                               ),
                             ),

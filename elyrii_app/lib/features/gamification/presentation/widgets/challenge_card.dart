@@ -85,7 +85,7 @@ class ChallengeAvailableCard extends StatelessWidget {
 
             // Bouton Commencer
             isStarting
-                ? SizedBox(
+                ? const SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(

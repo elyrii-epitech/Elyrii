@@ -14,7 +14,7 @@ class AppConstants {
   static const String baseUrl =
       'http://localhost:3000'; // À remplacer plus tard
   static const String apiVersion = 'v1';
-  static const String apiBaseUrl = '$baseUrl';
+  static const String apiBaseUrl = baseUrl;
 
   // ==================== STORAGE KEYS ====================
 
