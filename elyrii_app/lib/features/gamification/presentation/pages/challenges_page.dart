@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:characters/characters.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
-import '../../data/models/gamification_models.dart';
 import '../providers/gamification_provider.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../widgets/level_progress_header.dart';
 import '../widgets/daily_streak_card.dart';
 import '../widgets/quest_tile.dart';
@@ -95,9 +94,10 @@ class _ChallengesPageState extends State<ChallengesPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final provider = context.watch<GamificationProvider>();
+    final dashboardProvider = context.watch<DashboardProvider>();
 
-    // Streak dérivé du nombre de défis actifs (placeholder jusqu'à /user/stats branché)
-    final streakDays = provider.activeChallenges.length;
+    // Use real streak from dashboard provider
+    final streakDays = dashboardProvider.currentStreak;
 
     return Scaffold(
       backgroundColor:
@@ -185,7 +185,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ...provider.activeChallenges.map(
                           (uc) => QuestTile(
                             title: uc.displayTitle,
-                            subtitle: uc.displayDescription.characters.length > 40
+                            subtitle: uc.displayDescription.characters.length >
+                                    40
                                 ? '${uc.displayDescription.characters.take(40).toString()}…'
                                 : uc.displayDescription,
                             icon: uc.displayIcon,
@@ -205,7 +206,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ...provider.completedChallenges.map(
                           (uc) => QuestTile(
                             title: uc.displayTitle,
-                            subtitle: uc.displayDescription.characters.length > 40
+                            subtitle: uc.displayDescription.characters.length >
+                                    40
                                 ? '${uc.displayDescription.characters.take(40).toString()}…'
                                 : uc.displayDescription,
                             icon: uc.displayIcon,

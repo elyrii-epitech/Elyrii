@@ -12,6 +12,9 @@ export const userTable = pgTable("users", {
     age: integer("age").notNull(),
     emailVerified: boolean("email_verified").notNull().default(false),
     pfp: text("pfp"),
+    currentStreak: integer("current_streak").notNull().default(0),
+    highestStreak: integer("highest_streak").notNull().default(0),
+    lastActivityDate: timestamp("last_activity_date"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().$onUpdate(() => new Date()),
 }, (table) => [

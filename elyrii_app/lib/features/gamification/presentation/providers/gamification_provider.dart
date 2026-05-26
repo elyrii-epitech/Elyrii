@@ -54,10 +54,8 @@ class GamificationProvider extends ChangeNotifier {
   /// Démarre un défi SYSTEM et le déplace dans la liste active
   Future<bool> startChallenge(String challengeId) async {
     try {
-      final started = await _repository.startChallenge(challengeId);
-      _availableChallenges.removeWhere((c) => c.id == challengeId);
-      _activeChallenges.insert(0, started);
-      notifyListeners();
+      await _repository.startChallenge(challengeId);
+      await loadAll(); // Refresh everything to get updated streak and lists
       return true;
     } catch (e) {
       _error = e.toString();
@@ -70,10 +68,8 @@ class GamificationProvider extends ChangeNotifier {
   /// Accepte une proposition IA et la déplace dans la liste active
   Future<bool> acceptChallenge(String challengeId) async {
     try {
-      final updated = await _repository.acceptChallenge(challengeId);
-      _proposals.removeWhere((c) => c.id == challengeId);
-      _activeChallenges.insert(0, updated);
-      notifyListeners();
+      await _repository.acceptChallenge(challengeId);
+      await loadAll(); // Refresh everything
       return true;
     } catch (e) {
       _error = e.toString();
