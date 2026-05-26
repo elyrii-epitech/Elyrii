@@ -9,8 +9,10 @@ class QuestTile extends StatelessWidget {
   final int xpReward;
   final bool isCompleted;
   final VoidCallback? onTap;
+
   /// Si fourni, affiche une barre de progression (valeur entre 0.0 et 1.0)
   final double? progressFraction;
+
   /// Texte affiché sous la barre, ex: "3 / 7"
   final String? progressText;
 

@@ -22,7 +22,8 @@ class _MeditationPageState extends State<MeditationPage>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this, duration: 4.seconds);
+    _animationController =
+        AnimationController(vsync: this, duration: 4.seconds);
   }
 
   @override

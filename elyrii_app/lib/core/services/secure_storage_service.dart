@@ -100,7 +100,8 @@ class SecureStorageService {
       await _storage.write(key: key, value: value);
     } on PlatformException catch (e) {
       if (e.code == '-34018' || e.message?.contains('-34018') == true) {
-        debugPrint('SecureStorage: Keychain inaccessible. Using SharedPreferences fallback.');
+        debugPrint(
+            'SecureStorage: Keychain inaccessible. Using SharedPreferences fallback.');
         _useFallback = true;
         await _initFallback();
         await _prefs?.setString(key, value);
@@ -189,5 +190,4 @@ class SecureStorageService {
       await _prefs?.clear();
     }
   }
-
 }

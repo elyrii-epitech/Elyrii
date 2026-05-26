@@ -118,10 +118,13 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } on ApiException catch (e) {
-      if (e.statusCode == 201 && e.body is Map && e.body['emailVerificationRequired'] == true) {
+      if (e.statusCode == 201 &&
+          e.body is Map &&
+          e.body['emailVerificationRequired'] == true) {
         // Registration was successful, but email verification is required.
         // We cannot log the user in yet.
-        _error = e.message; // "User registered successfully. Email verification required."
+        _error = e
+            .message; // "User registered successfully. Email verification required."
         _status = AuthStatus.unauthenticated;
         notifyListeners();
         return false; // Return false so we don't navigate to home, user should see the message and wait for verification or go to login

@@ -63,9 +63,8 @@ class GamificationRepository {
 
   /// Start a SYSTEM challenge (assigns it as ACTIVE)
   Future<UserChallenge> startChallenge(String challengeId) async {
-    final response =
-        await _client.post(ApiConfig.startChallengeUrl(challengeId))
-            as Map<String, dynamic>;
+    final response = await _client
+        .post(ApiConfig.startChallengeUrl(challengeId)) as Map<String, dynamic>;
     // Backend returns { challenge, userChallenge }
     if (response['userChallenge'] is Map<String, dynamic>) {
       final uc = UserChallenge.fromJson(

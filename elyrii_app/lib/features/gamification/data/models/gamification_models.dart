@@ -155,10 +155,8 @@ class UserChallenge {
       }
     }
     // Plusieurs conditions : compter combien sont complètes
-    final completed = map.values
-        .whereType<Map>()
-        .where((v) => v['completed'] == true)
-        .length;
+    final completed =
+        map.values.whereType<Map>().where((v) => v['completed'] == true).length;
     return '$completed / ${map.length}';
   }
 

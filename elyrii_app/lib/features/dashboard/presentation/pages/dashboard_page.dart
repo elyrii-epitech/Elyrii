@@ -42,7 +42,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Consumer3<DashboardProvider, JournalProvider, AuthProvider>(
       builder: (context, provider, journalProvider, authProvider, child) {
         final firstName = authProvider.user?.firstName ?? '';
-        
+
         return Scaffold(
           backgroundColor:
               isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
@@ -147,7 +147,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildGreeting(DashboardProvider provider, bool isDark, String firstName) {
+  Widget _buildGreeting(
+      DashboardProvider provider, bool isDark, String firstName) {
     return Column(
       children: [
         Text(
@@ -288,8 +289,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildActivitySection(bool isDark, JournalProvider journalProvider) {
-    final lastEntry =
-        journalProvider.entries.isNotEmpty ? journalProvider.entries.first : null;
+    final lastEntry = journalProvider.entries.isNotEmpty
+        ? journalProvider.entries.first
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

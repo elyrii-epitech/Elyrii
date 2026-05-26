@@ -61,7 +61,8 @@ class AuthRepository {
         body: body, auth: false) as Map<String, dynamic>;
 
     // Check if email verification is required and token is not returned
-    final bool emailVerificationRequired = response['emailVerificationRequired'] == true;
+    final bool emailVerificationRequired =
+        response['emailVerificationRequired'] == true;
     final token = response['token'] as String?;
 
     if (emailVerificationRequired && token == null) {
@@ -69,7 +70,8 @@ class AuthRepository {
       // We will throw an exception or handle it to inform the UI that verification is required.
       throw ApiException(
         statusCode: 201,
-        message: response['message'] as String? ?? 'Email verification required.',
+        message:
+            response['message'] as String? ?? 'Email verification required.',
         body: response,
       );
     }
