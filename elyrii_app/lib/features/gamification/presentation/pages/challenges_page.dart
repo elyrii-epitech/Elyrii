@@ -103,7 +103,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: isDark ? 0.08 : 0.04),
+                    color: AppColors.primary
+                        .withValues(alpha: isDark ? 0.08 : 0.04),
                     blurRadius: 130,
                     spreadRadius: 60,
                   ),
@@ -122,7 +123,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.accent.withValues(alpha: isDark ? 0.06 : 0.03),
+                    color: AppColors.accent
+                        .withValues(alpha: isDark ? 0.06 : 0.03),
                     blurRadius: 140,
                     spreadRadius: 70,
                   ),
@@ -148,7 +150,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                       padding: const EdgeInsets.only(bottom: 20),
                       child: Column(
                         children: [
-                          const Icon(Icons.yard_rounded, color: AppColors.primary, size: 36),
+                          const Icon(Icons.yard_rounded,
+                              color: AppColors.primary, size: 36),
                           const SizedBox(height: 8),
                           Text(
                             'Ton jardin intérieur',

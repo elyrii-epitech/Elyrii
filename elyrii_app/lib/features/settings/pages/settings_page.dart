@@ -61,6 +61,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         },
                       ),
                     ),
+                    _buildDivider(isDark),
+                    LiquidGlassListTile(
+                      title: 'Mascotte Elyrii',
+                      subtitle: 'Personnaliser sa présence',
+                      leadingIcon: Icons.auto_awesome_rounded,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.mascotCustomization,
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -111,28 +123,40 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     LiquidGlassListTile(
                       title: 'Profil',
-                      subtitle: 'Gérer vos informations',
+                      subtitle: 'Gérer vos informations personnelles',
                       leadingIcon: Icons.person_rounded,
                       onTap: () {
-                        // TODO: Navigate to profile
+                        _showInfoDialog(
+                          title: 'Profil',
+                          message:
+                              'Cet espace regroupera ton prénom, tes préférences de ton et les informations utiles à ton accompagnement. Les réglages sensibles doivent rester explicites et modifiables à tout moment.',
+                        );
                       },
                     ),
                     _buildDivider(isDark),
                     LiquidGlassListTile(
                       title: 'Confidentialité',
-                      subtitle: 'Paramètres de vie privée',
+                      subtitle: 'Ce qui est privé reste clairement indiqué',
                       leadingIcon: Icons.lock_rounded,
                       onTap: () {
-                        // TODO: Navigate to privacy settings
+                        _showInfoDialog(
+                          title: 'Confidentialité',
+                          message:
+                              'Elyrii doit expliquer simplement quelles données sont utilisées, pourquoi elles le sont, et comment les retirer. Les contenus de journal et de conversation doivent être traités comme des données hautement sensibles.',
+                        );
                       },
                     ),
                     _buildDivider(isDark),
                     LiquidGlassListTile(
                       title: 'Données et stockage',
-                      subtitle: 'Gérer vos données',
+                      subtitle: 'Exporter ou supprimer tes contenus',
                       leadingIcon: Icons.storage_rounded,
                       onTap: () {
-                        // TODO: Navigate to data settings
+                        _showInfoDialog(
+                          title: 'Données et stockage',
+                          message:
+                              'Prévois ici l’export du journal, la suppression de l’historique de chat, la suppression du compte et une indication claire des données conservées localement ou côté serveur.',
+                        );
                       },
                     ),
                   ],
@@ -156,7 +180,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: 'Conditions d\'utilisation',
                       leadingIcon: Icons.description_rounded,
                       onTap: () {
-                        // TODO: Open terms
+                        _showInfoDialog(
+                          title: 'Conditions d\'utilisation',
+                          message:
+                              'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+                        );
                       },
                     ),
                     _buildDivider(isDark),
@@ -164,7 +192,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: 'Politique de confidentialité',
                       leadingIcon: Icons.privacy_tip_rounded,
                       onTap: () {
-                        // TODO: Open privacy policy
+                        _showInfoDialog(
+                          title: 'Politique de confidentialité',
+                          message:
+                              'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
+                        );
                       },
                     ),
                   ],
@@ -290,6 +322,25 @@ class _SettingsPageState extends State<SettingsPage> {
       color: isDark
           ? Colors.white.withValues(alpha: 0.1)
           : Colors.black.withValues(alpha: 0.08),
+    );
+  }
+
+  void _showInfoDialog({required String title, required String message}) {
+    showLiquidGlassDialog(
+      context: context,
+      title: title,
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(height: 1.45),
+      ),
+      actions: [
+        LiquidGlassDialogAction(
+          label: 'Compris',
+          isDefault: true,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
     );
   }
 }

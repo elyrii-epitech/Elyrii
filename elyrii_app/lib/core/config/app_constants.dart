@@ -229,4 +229,7 @@ class AppConstants {
   /// Chemins des assets (backup si asset_paths.dart n'existe pas)
   static const String assetMascot = 'assets/mascotte.png';
   static const String assetMascotEyesClosed = 'assets/mascotte_eyes_closed.png';
+
+  /// Modèle 3D de la mascotte (.glb)
+  static const String assetMascot3D = 'assets/base_basic_shaded_v3.glb';
 }

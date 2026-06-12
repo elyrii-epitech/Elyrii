@@ -9,6 +9,8 @@ import '../widgets/glass_auth_text_field.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/config/mascot_3d_config.dart';
+import '../../../../core/widgets/mascot_3d_viewer.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -40,10 +42,12 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Presque ! N\'oublie pas d\'accepter les conditions pour continuer.'),
+          content: const Text(
+              'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
@@ -65,10 +69,12 @@ class _RegisterPageState extends State<RegisterPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ?? 'Oops, petit souci lors de la creation. Reessaie quand tu es pret.'),
+          content: Text(authProvider.error ??
+              'Oops, petit souci lors de la creation. Reessaie quand tu es pret.'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
     }
@@ -90,16 +96,20 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Mascot
-                  Hero(
-                    tag: 'mascot',
-                    child: Image.asset('assets/mascotte.png', height: 100),
+                  // Mascot (translated vertically to center the model's visual body within the 250x250 container)
+                  Transform.translate(
+                    offset: const Offset(0, 25),
+                    child: const Mascot3DViewer(
+                      config: Mascot3DConfig.authPage(),
+                      width: 250,
+                      height: 250,
+                    ),
                   )
                       .animate()
                       .fadeIn(duration: 600.ms)
                       .slideY(begin: 0.2, end: 0),
 
-                  const SizedBox(height: AppDimensions.spacingLg),
+                  const SizedBox(height: 45),
 
                   Text(
                     'Créer un compte',

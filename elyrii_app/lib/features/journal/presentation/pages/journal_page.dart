@@ -27,7 +27,11 @@ class _JournalPageState extends State<JournalPage> {
     super.didChangeDependencies();
     if (!_initialized) {
       _initialized = true;
-      _provider.loadEntries();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _provider.loadEntries();
+        }
+      });
     }
   }
 

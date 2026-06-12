@@ -6,6 +6,7 @@ class AppRoutes {
   static const String coach = '/coach';
   static const String meditation = '/meditation';
   static const String chatbot = '/chatbot';
+  static const String mascotCustomization = '/mascot-customization';
   static const String settings = '/settings';
   static const String login = '/login';
   static const String register = '/register';

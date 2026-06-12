@@ -156,7 +156,8 @@ class DashboardPage extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.mood_rounded, color: AppColors.primary, size: 20),
+                child: const Icon(Icons.mood_rounded,
+                    color: AppColors.primary, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(

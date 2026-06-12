@@ -63,7 +63,9 @@ class BadgesGrid extends StatelessWidget {
                               : Colors.black.withValues(alpha: 0.03)),
                     ),
                     child: Icon(
-                      badge.isUnlocked ? badge.icon : Icons.hourglass_empty_rounded,
+                      badge.isUnlocked
+                          ? badge.icon
+                          : Icons.hourglass_empty_rounded,
                       color: badge.isUnlocked
                           ? AppColors.primary
                           : (isDark

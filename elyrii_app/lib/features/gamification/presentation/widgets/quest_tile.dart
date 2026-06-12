@@ -44,9 +44,8 @@ class QuestTile extends StatelessWidget {
                     ? AppColors.accentDark.withValues(alpha: 0.12)
                     : AppColors.accentLight.withValues(alpha: 0.35))
                 : null,
-            borderColor: isCompleted
-                ? AppColors.accent.withValues(alpha: 0.25)
-                : null,
+            borderColor:
+                isCompleted ? AppColors.accent.withValues(alpha: 0.25) : null,
             child: Row(
               children: [
                 Container(

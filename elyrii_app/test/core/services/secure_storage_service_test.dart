@@ -32,7 +32,8 @@ void main() {
       expect(await service.hasAccessToken(), isTrue);
     });
 
-    test('hasAccessToken should return false when token does not exist', () async {
+    test('hasAccessToken should return false when token does not exist',
+        () async {
       expect(await service.hasAccessToken(), isFalse);
     });
 

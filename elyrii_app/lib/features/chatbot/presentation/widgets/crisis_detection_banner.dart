@@ -96,9 +96,7 @@ class CrisisDetectionBanner extends StatelessWidget {
               Icon(
                 Icons.favorite_rounded,
                 size: 28,
-                color: isDark
-                    ? AppColors.warningLight
-                    : AppColors.warningDark,
+                color: isDark ? AppColors.warningLight : AppColors.warningDark,
               ),
               const SizedBox(height: 10),
               Text(
@@ -176,9 +174,7 @@ class CrisisDetectionBanner extends StatelessWidget {
           Icon(
             Icons.phone_rounded,
             size: 16,
-            color: isDark
-                ? AppColors.warningLight
-                : AppColors.warningDark,
+            color: isDark ? AppColors.warningLight : AppColors.warningDark,
           ),
           const SizedBox(width: 8),
           Flexible(

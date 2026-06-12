@@ -91,11 +91,14 @@ class _MeditationPageState extends State<MeditationPage>
 
   // ---- Mood emoji list for post-session feedback ----
   static const List<_MoodOption> _moods = [
-    _MoodOption(Icons.sentiment_very_dissatisfied_rounded, 'Pas bien', Color(0xFF7BA3C7)),
+    _MoodOption(Icons.sentiment_very_dissatisfied_rounded, 'Pas bien',
+        Color(0xFF7BA3C7)),
     _MoodOption(Icons.sentiment_neutral_rounded, 'Neutre', Color(0xFFA39C96)),
     _MoodOption(Icons.sentiment_satisfied_rounded, 'Bien', Color(0xFFA8D5BA)),
-    _MoodOption(Icons.sentiment_satisfied_alt_rounded, 'Apaisé(e)', Color(0xFF7BC393)),
-    _MoodOption(Icons.sentiment_very_satisfied_rounded, 'Merveilleux', Color(0xFF5FA87A)),
+    _MoodOption(
+        Icons.sentiment_satisfied_alt_rounded, 'Apaisé(e)', Color(0xFF7BC393)),
+    _MoodOption(Icons.sentiment_very_satisfied_rounded, 'Merveilleux',
+        Color(0xFF5FA87A)),
   ];
 
   // ============================================================
@@ -202,8 +205,7 @@ class _MeditationPageState extends State<MeditationPage>
 
     // Animate circle.
     final isContracting =
-        _selectedBreathingType.phaseLabels[_currentPhaseIndex] ==
-            'Expire...';
+        _selectedBreathingType.phaseLabels[_currentPhaseIndex] == 'Expire...';
     if (isContracting) {
       _circleScaleController.reverse();
     } else {
@@ -227,7 +229,8 @@ class _MeditationPageState extends State<MeditationPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor:
+          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -242,10 +245,7 @@ class _MeditationPageState extends State<MeditationPage>
                   repeat: true,
                   animate: true,
                 ),
-              )
-                    .animate()
-                    .fadeIn(duration: 600.ms)
-                    .slideY(begin: -0.1, end: 0),
+              ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.1, end: 0),
 
             Expanded(child: _buildBody(isDark)),
           ],
@@ -335,7 +335,8 @@ class _MeditationPageState extends State<MeditationPage>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.play_arrow_rounded, color: AppColors.primary),
+                  const Icon(Icons.play_arrow_rounded,
+                      color: AppColors.primary),
                   const SizedBox(width: 8),
                   Text(
                     'Commencer',
@@ -370,9 +371,8 @@ class _MeditationPageState extends State<MeditationPage>
                 : isDark
                     ? AppColors.liquidGlassBackgroundDark
                     : AppColors.liquidGlassBackgroundLight,
-            borderColor: selected
-                ? AppColors.primary.withValues(alpha: 0.5)
-                : null,
+            borderColor:
+                selected ? AppColors.primary.withValues(alpha: 0.5) : null,
             child: Text(
               '$d min',
               style: AppTextStyles.labelMedium(
@@ -427,8 +427,7 @@ class _MeditationPageState extends State<MeditationPage>
                       const SizedBox(height: 2),
                       Text(
                         type.description,
-                        style:
-                            AppTextStyles.bodySmall(color: subtitleColor),
+                        style: AppTextStyles.bodySmall(color: subtitleColor),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -444,7 +443,8 @@ class _MeditationPageState extends State<MeditationPage>
                   ),
                 ),
                 if (selected)
-                  const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+                  const Icon(Icons.check_circle,
+                      color: AppColors.primary, size: 20),
               ],
             ),
           ),
@@ -486,20 +486,26 @@ class _MeditationPageState extends State<MeditationPage>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Outer glow (pulsing).
+              // Outer glow: transform-only animation to avoid layout work.
               AnimatedBuilder(
                 animation: _glowController,
                 builder: (context, _) {
-                  return Container(
-                    width: 200 + (_glowController.value * 30),
-                    height: 200 + (_glowController.value * 30),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          AppColors.primary.withValues(alpha: 0.15),
-                          AppColors.primary.withValues(alpha: 0.0),
-                        ],
+                  return Opacity(
+                    opacity: 0.7 + (_glowController.value * 0.2),
+                    child: Transform.scale(
+                      scale: 1.0 + (_glowController.value * 0.12),
+                      child: Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.primary.withValues(alpha: 0.12),
+                              AppColors.primary.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -510,8 +516,7 @@ class _MeditationPageState extends State<MeditationPage>
               AnimatedBuilder(
                 animation: _circleScaleController,
                 builder: (context, _) {
-                  final scale =
-                      0.75 + (_circleScaleController.value * 0.35);
+                  final scale = 0.75 + (_circleScaleController.value * 0.35);
                   return Transform.scale(
                     scale: scale,
                     child: Container(
@@ -533,10 +538,9 @@ class _MeditationPageState extends State<MeditationPage>
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color:
-                                AppColors.primary.withValues(alpha: 0.2),
-                            blurRadius: 40,
-                            spreadRadius: 5,
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            blurRadius: 20,
+                            spreadRadius: 2,
                           ),
                         ],
                       ),
@@ -648,7 +652,8 @@ class _MeditationPageState extends State<MeditationPage>
 
           // Congratulatory text.
           const Icon(Icons.wb_sunny_rounded, color: AppColors.accent, size: 48)
-              .animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+              .animate()
+              .scale(duration: 500.ms, curve: Curves.elasticOut),
 
           const SizedBox(height: AppDimensions.spacingLg),
 
@@ -701,8 +706,7 @@ class _MeditationPageState extends State<MeditationPage>
                     borderRadius: BorderRadius.circular(16),
                     border: selected
                         ? Border.all(
-                            color:
-                                AppColors.primary.withValues(alpha: 0.4),
+                            color: AppColors.primary.withValues(alpha: 0.4),
                             width: 1.5,
                           )
                         : null,
@@ -714,9 +718,7 @@ class _MeditationPageState extends State<MeditationPage>
                       Text(
                         mood.label,
                         style: AppTextStyles.labelSmall(
-                          color: selected
-                              ? AppColors.primary
-                              : subtitleColor,
+                          color: selected ? AppColors.primary : subtitleColor,
                         ),
                       ),
                     ],

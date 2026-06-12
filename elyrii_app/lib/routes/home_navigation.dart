@@ -27,8 +27,6 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _navBarAnimation;
   late AnimationController _navBarPulseController;
   late Animation<double> _navBarScaleAnimation;
-  late AnimationController _flashController;
-  late Animation<double> _flashAnimation;
   late AnimationController _pageTransitionController;
   late Animation<double> _pageScaleAnimation;
   late Animation<double> _pageFadeAnimation;
@@ -109,18 +107,7 @@ class _HomeNavigationState extends State<HomeNavigation>
       ),
     );
 
-    // Animation de flash blanc (durée augmentée pour être visible)
-    _flashController = AnimationController(
-      duration: const Duration(milliseconds: 450), // Légèrement plus court
-      vsync: this,
-    );
-
-    _flashAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _flashController, curve: Curves.easeOut));
-
-    // iOS 26: Animation de transition de page
+    // Transition de page courte, uniquement transform + opacity.
     _pageTransitionController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -152,7 +139,6 @@ class _HomeNavigationState extends State<HomeNavigation>
     }
     _navBarController.dispose();
     _navBarPulseController.dispose();
-    _flashController.dispose();
     _pageTransitionController.dispose();
     super.dispose();
   }
@@ -177,16 +163,6 @@ class _HomeNavigationState extends State<HomeNavigation>
         _navBarPulseController.reverse();
       });
 
-      // Flash unique - disparition instantanée à la fin
-      if (_flashController.isAnimating) {
-        _flashController.stop();
-      }
-      _flashController.reset();
-      _flashController.forward().then((_) {
-        _flashController.reset(); // Reset instantané au lieu de reverse
-      });
-
-      // iOS 26: Animation de transition de page
       final performanceService = GlassPerformanceService();
       if (performanceService.showTransitionAnimations) {
         _pageTransitionController.reset();
@@ -242,10 +218,7 @@ class _HomeNavigationState extends State<HomeNavigation>
           child: Opacity(
             opacity: _navBarAnimation.value.clamp(0.0, 1.0),
             child: AnimatedBuilder(
-              animation: Listenable.merge([
-                _navBarPulseController,
-                _flashController,
-              ]),
+              animation: _navBarPulseController,
               builder: (context, child) {
                 return Transform.scale(
                   scale: _navBarScaleAnimation.value,
@@ -266,7 +239,6 @@ class _HomeNavigationState extends State<HomeNavigation>
                             onItemSelected: _onItemTapped,
                             iconControllers: _iconControllers,
                             scaleAnimation: _navBarScaleAnimation,
-                            flashAnimation: _flashAnimation,
                             isDark: isDark,
                             margin: EdgeInsets.zero,
                           ),
@@ -296,11 +268,10 @@ class _HomeNavigationState extends State<HomeNavigation>
         _onItemTapped(5);
       },
       size: 54,
-      showShimmer: isChatbotSelected, // Shimmer uniquement si sélectionné
+      showShimmer: false,
       shimmerColor: AppColors.primary.withValues(alpha: 0.3),
       isDark: isDark,
       scaleAnimation: _navBarScaleAnimation,
-      flashAnimation: _flashAnimation,
       tooltip: 'Chatbot',
       isSelected: isChatbotSelected, // Indiquer si sélectionné
     );

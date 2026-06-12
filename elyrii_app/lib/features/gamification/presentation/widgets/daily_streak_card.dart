@@ -29,7 +29,8 @@ class DailyStreakCard extends StatelessWidget {
                   color: AppColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.favorite_rounded, color: AppColors.primary, size: 22),
+                child: const Icon(Icons.favorite_rounded,
+                    color: AppColors.primary, size: 22),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -103,8 +104,9 @@ class DailyStreakCard extends StatelessWidget {
                       color: wasPresent
                           ? AppColors.accent
                           : (isDark
-                              ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight).withValues(alpha: 0.5),
+                                  ? AppColors.textTertiaryDark
+                                  : AppColors.textTertiaryLight)
+                              .withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -129,24 +131,34 @@ class DailyStreakCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wb_sunny_rounded, size: 12, color: AppColors.accent),
+              const Icon(Icons.wb_sunny_rounded,
+                  size: 12, color: AppColors.accent),
               const SizedBox(width: 4),
               Text(
                 'Moments vécus',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
                   fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(width: 24),
-              Icon(Icons.cloud_rounded, size: 12, color: (isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight).withValues(alpha: 0.5)),
+              Icon(Icons.cloud_rounded,
+                  size: 12,
+                  color: (isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight)
+                      .withValues(alpha: 0.5)),
               const SizedBox(width: 4),
               Text(
                 'Repos & recharge',
                 style: TextStyle(
                   fontSize: 11,
-                  color: isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
                   fontWeight: FontWeight.w500,
                 ),
               ),

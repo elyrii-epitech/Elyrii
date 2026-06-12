@@ -26,7 +26,6 @@ class GlassNavigationBar extends StatelessWidget {
   final Function(int) onItemSelected;
   final List<AnimationController> iconControllers;
   final Animation<double>? scaleAnimation;
-  final Animation<double>? flashAnimation;
   final bool isDark;
   final int pressedIndex;
   final EdgeInsets margin;
@@ -40,7 +39,6 @@ class GlassNavigationBar extends StatelessWidget {
     required this.onItemSelected,
     required this.iconControllers,
     this.scaleAnimation,
-    this.flashAnimation,
     this.isDark = false,
     this.pressedIndex = -1,
     this.margin = const EdgeInsets.only(left: 16, right: 16, bottom: 24),
@@ -103,32 +101,6 @@ class GlassNavigationBar extends StatelessWidget {
                 ),
               ),
             ),
-          // Flash radial par-dessus
-          if (flashAnimation != null && flashAnimation!.value > 0)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(borderRadius),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculer la position X de l'item sélectionné
-                      final itemWidth = constraints.maxWidth / items.length;
-                      final selectedX = (currentIndex + 0.5) * itemWidth;
-                      final centerY = constraints.maxHeight / 2;
-
-                      return CustomPaint(
-                        painter: RadialFlashPainter(
-                          progress: flashAnimation!.value,
-                          centerX: selectedX,
-                          centerY: centerY,
-                          maxRadius: constraints.maxWidth,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -161,10 +133,10 @@ class GlassNavigationBar extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-            blurRadius: 20,
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+            blurRadius: 14,
             spreadRadius: 0,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -200,9 +172,8 @@ class GlassNavigationBar extends StatelessWidget {
         child: AnimatedBuilder(
           animation: controller,
           builder: (context, child) {
-            // iOS 26: Animation spring avec damping 0.7
-            final springValue = Curves.elasticOut.transform(controller.value);
-            final scale = 1.0 + (springValue * 0.15); // Réduit de 0.2 à 0.15
+            final easedValue = Curves.easeOutCubic.transform(controller.value);
+            final scale = 1.0 + (easedValue * 0.08);
 
             return AnimatedScale(
               scale: isPressedItem ? 0.95 : 1.0, // iOS 26: 0.95 au lieu de 0.9
@@ -259,7 +230,7 @@ class GlassNavigationBar extends StatelessWidget {
                               : (isDark
                                   ? AppColors.iconDefaultDark
                                   : AppColors.iconDefaultLight),
-                          letterSpacing: isSelected ? 0.3 : 0,
+                          letterSpacing: 0,
                         ),
                         child: Text(
                           item.label,
@@ -276,67 +247,5 @@ class GlassNavigationBar extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// Painter pour créer un effet de flash radial iOS 26
-class RadialFlashPainter extends CustomPainter {
-  final double progress;
-  final double centerX;
-  final double centerY;
-  final double maxRadius;
-
-  RadialFlashPainter({
-    required this.progress,
-    required this.centerX,
-    required this.centerY,
-    required this.maxRadius,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (progress <= 0) return;
-
-    final center = Offset(centerX, centerY);
-    final radius = maxRadius * 1.5 * progress; // Rayon plus grand
-
-    // iOS 26: Fade out plus rapide à partir de 60% de l'animation
-    final fadeOut = progress > 0.6
-        ? (1.0 - ((progress - 0.6) / 0.4)).clamp(
-            0.0,
-            1.0,
-          ) // De 1.0 à 0 entre 60% et 100%
-        : 1.0;
-
-    // Créer un gradient radial avec opacité qui diminue progressivement
-    final gradient = RadialGradient(
-      colors: [
-        Colors.white.withValues(
-          alpha: ((0.5 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0)),
-        ),
-        Colors.white.withValues(
-          alpha: ((0.3 * (1 - progress * 0.6) * fadeOut).clamp(0.0, 1.0)),
-        ),
-        Colors.white.withValues(
-          alpha: ((0.15 * (1 - progress * 0.8) * fadeOut).clamp(0.0, 1.0)),
-        ),
-        Colors.white.withValues(alpha: 0),
-      ],
-      stops: const [0.0, 0.3, 0.6, 1.0],
-    );
-
-    final paint = Paint()
-      ..shader = gradient.createShader(
-        Rect.fromCircle(center: center, radius: radius),
-      );
-
-    canvas.drawCircle(center, radius, paint);
-  }
-
-  @override
-  bool shouldRepaint(RadialFlashPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.centerX != centerX ||
-        oldDelegate.centerY != centerY;
   }
 }
