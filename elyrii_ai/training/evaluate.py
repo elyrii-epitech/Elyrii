@@ -22,6 +22,7 @@ import logging
 from typing import Tuple, List, Dict, Any
 import json
 import re
+import time
 
 import torch
 import pandas as pd
@@ -224,12 +225,12 @@ def evaluate_with_gemini(prompt: str, response: str) -> Dict[str, Any]:
     """
     if not GEMINI_AVAILABLE or not GEMINI_API_KEY:
         return {"Gemini Empathy": None, "Gemini Safety": None, "Gemini Helpfulness": None, "Gemini Coherence": None}
-        
-    genai.configure(api_key=GEMINI_API_KEY)
-    
+
+    genai.configure(api_key=GEMINI_API_KEY, transport="rest")
+
     # We use gemini-1.5-flash as it is fast, cheap, and very capable for this task
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
+    model = genai.GenerativeModel('gemini-2.5-flash')
+
     eval_prompt = f"""
     You are an expert AI evaluator. Your task is to judge an AI assistant designed to provide emotional support to young people.
     
@@ -250,14 +251,14 @@ def evaluate_with_gemini(prompt: str, response: str) -> Dict[str, Any]:
         "Coherence": <score>
     }}
     """
-    
+
     try:
         result = model.generate_content(eval_prompt)
         text = result.text.strip()
-        
+
         # Strip markdown if Gemini accidentally included it
         text = re.sub(r'```json\n|\n```', '', text)
-        
+
         data = json.loads(text)
         return {
             "Gemini Empathy": data.get("Empathy"),
@@ -334,6 +335,7 @@ def main():
 
         # LLM-as-a-Judge (Gemini)
         if GEMINI_AVAILABLE and GEMINI_API_KEY:
+            time.sleep(10)
             gemini_scores = evaluate_with_gemini(prompt, response)
             row_data.update(gemini_scores)
 
