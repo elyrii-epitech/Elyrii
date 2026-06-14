@@ -69,6 +69,12 @@ LORA_TARGET_PRESETS = {
 }
 
 
+def preferred_compute_dtype() -> torch.dtype:
+    if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+        return torch.bfloat16
+    return torch.float16
+
+
 def _find_subsequence(sequence: Sequence[int], pattern: Sequence[int], start: int = 0) -> int:
     """Return the first index of pattern in sequence, or -1 if absent."""
     if not pattern or len(pattern) > len(sequence):
@@ -275,10 +281,14 @@ def main():
         tokenizer.pad_token = tokenizer.eos_token
 
     # QLoRA configuration using 4-bit quantization
+    compute_dtype = preferred_compute_dtype()
+    use_bf16 = compute_dtype == torch.bfloat16
+    logger.info(f"QLoRA compute dtype: {compute_dtype}")
+
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
+        bnb_4bit_compute_dtype=compute_dtype,
         bnb_4bit_use_double_quant=True,
     )
 
@@ -340,7 +350,8 @@ def main():
         gradient_accumulation_steps=args.grad_acc,
         learning_rate=args.lr,
         num_train_epochs=args.epochs,
-        fp16=True, # Use fp16 for mixed-precision training on your GPU
+        fp16=not use_bf16,
+        bf16=use_bf16,
         eval_strategy="steps", # Use the correct argument name
         eval_steps=500,
         save_steps=500,
