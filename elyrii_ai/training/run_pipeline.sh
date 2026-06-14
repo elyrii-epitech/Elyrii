@@ -52,7 +52,11 @@ export SETUPTOOLS_USE_DISTUTILS=stdlib
 python elyrii_ai/training/train.py \
     --data_dir "$PROCESSED_DATA_DIR" \
     --output_dir "$OUTPUT_DIR" \
-    --epochs 3 \
+    --epochs 1 \
+    --lr 5e-5 \
+    --lora_alpha 4 \
+    --lora_dropout 0.10 \
+    --target_preset all-linear \
     --batch 1 \
     --grad_acc 16
 
