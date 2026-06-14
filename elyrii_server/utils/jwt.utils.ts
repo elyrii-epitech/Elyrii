@@ -3,6 +3,9 @@ import { sign, verify } from "hono/jwt";
 export type TokenPayload = {
     userId: string;
     email: string;
+    jti?: string;
+    exp?: number;
+    iat?: number;
 };
 
 export class JwtUtils {
@@ -16,6 +19,7 @@ export class JwtUtils {
         try {
             return await sign({
                 ...payload,
+                jti: crypto.randomUUID(),
                 exp: Math.floor(Date.now() / 1000) + this.ACCESS_TOKEN_EXP,
                 iat: Math.floor(Date.now() / 1000)
             }, Bun.env.SECRET_KEY, "HS256");

@@ -9,9 +9,29 @@ import '../../../../routes/app_routes.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/glass_settings_button.dart';
 import '../widgets/last_journal_card.dart';
+import '../../../journal/presentation/providers/journal_provider.dart';
 
-class DashboardPage extends StatelessWidget {
+import '../../../auth/presentation/providers/auth_provider.dart';
+
+import '../widgets/mascot_peek.dart';
+import '../widgets/mascot_speech_bubble.dart';
+
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashboardProvider>().loadDashboardData();
+      context.read<JournalProvider>().loadEntries();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,95 +39,120 @@ class DashboardPage extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return ChangeNotifierProvider(
-      create: (_) => DashboardProvider(),
-      child: Consumer<DashboardProvider>(
-        builder: (context, provider, child) {
-          return Scaffold(
-            backgroundColor:
-                isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
-            body: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Contenu principal avec scroll
-                SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    children: [
-                      // Safe area + espace pour le bouton settings
-                      SizedBox(height: topPadding + 24),
+    return Consumer3<DashboardProvider, JournalProvider, AuthProvider>(
+      builder: (context, provider, journalProvider, authProvider, child) {
+        final firstName = authProvider.user?.firstName ?? '';
 
-                      // Container principal avec le contenu
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.pageHorizontalPadding,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Greeting avec animation
-                            _buildGreeting(provider, isDark)
-                                .animate()
-                                .fadeIn(duration: 400.ms)
-                                .slideY(begin: 0.1, end: 0),
+        return Scaffold(
+          backgroundColor:
+              isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+          body: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Contenu principal avec scroll
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    // Espace pour la mascotte peek
+                    SizedBox(height: topPadding + 100),
 
-                            const SizedBox(height: 28),
-
-                            // Section "Comment te sens-tu ?"
-                            _buildMoodSection(isDark, provider)
-                                .animate()
-                                .fadeIn(duration: 400.ms, delay: 100.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 32),
-
-                            // Section Stats
-                            _buildStatsSection(provider, isDark)
-                                .animate()
-                                .fadeIn(duration: 400.ms, delay: 200.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            const SizedBox(height: 24),
-
-                            // Section "Ton activité"
-                            _buildActivitySection(isDark)
-                                .animate()
-                                .fadeIn(duration: 400.ms, delay: 300.ms)
-                                .slideY(begin: 0.1, end: 0),
-
-                            // Espace pour la navbar
-                            const SizedBox(height: 140),
-                          ],
-                        ),
+                    // Container principal avec le contenu
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.pageHorizontalPadding,
                       ),
-                    ],
-                  ),
-                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Speech Bubble de la mascotte
+                          MascotSpeechBubble(
+                            message: provider.mascotMessage,
+                            isDark: isDark,
+                            onTap: provider.nextMascotMessage,
+                          ).animate().fadeIn(delay: 400.ms).scale(
+                                curve: Curves.easeOutBack,
+                              ),
 
-                // Bouton Settings (liquid glass)
-                Positioned(
-                  top: topPadding + 12,
-                  right: 16,
-                  child: GlassSettingsButton(
+                          const SizedBox(height: 24),
+
+                          // Greeting avec animation
+                          _buildGreeting(provider, isDark, firstName)
+                              .animate()
+                              .fadeIn(duration: 400.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          const SizedBox(height: 28),
+
+                          // Section "Comment te sens-tu ?"
+                          _buildMoodSection(isDark, provider)
+                              .animate()
+                              .fadeIn(duration: 400.ms, delay: 100.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          const SizedBox(height: 32),
+
+                          // Section Stats
+                          _buildStatsSection(provider, isDark, journalProvider)
+                              .animate()
+                              .fadeIn(duration: 400.ms, delay: 200.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          const SizedBox(height: 24),
+
+                          // Section "Ton activité"
+                          _buildActivitySection(isDark, journalProvider)
+                              .animate()
+                              .fadeIn(duration: 400.ms, delay: 300.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          // Espace pour la navbar
+                          const SizedBox(height: 140),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Mascotte Peek en haut
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: MascotPeek(
+                    selectedMood: provider.selectedMood,
                     isDark: isDark,
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.settings);
-                    },
+                    onTap: provider.nextMascotMessage,
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+
+              // Bouton Settings (liquid glass)
+              Positioned(
+                top: topPadding + 12,
+                right: 16,
+                child: GlassSettingsButton(
+                  isDark: isDark,
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.settings);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildGreeting(DashboardProvider provider, bool isDark) {
+  Widget _buildGreeting(
+      DashboardProvider provider, bool isDark, String firstName) {
     return Column(
       children: [
         Text(
-          '${provider.getGreeting()} ${provider.userName}',
+          '${provider.getGreeting()} $firstName',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
@@ -210,7 +255,11 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSection(DashboardProvider provider, bool isDark) {
+  Widget _buildStatsSection(
+    DashboardProvider provider,
+    bool isDark,
+    JournalProvider journalProvider,
+  ) {
     return Row(
       children: [
         _StatChip(
@@ -240,7 +289,11 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildActivitySection(bool isDark) {
+  Widget _buildActivitySection(bool isDark, JournalProvider journalProvider) {
+    final lastEntry = journalProvider.entries.isNotEmpty
+        ? journalProvider.entries.first
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -259,11 +312,10 @@ class DashboardPage extends StatelessWidget {
         ),
         // Last Journal Entry
         LastJournalCard(
-          title: 'Une journée productive',
-          content:
-              'Aujourd\'hui j\'ai réussi à finir mon projet et je me sens vraiment accompli...',
-          mood: MoodType.happy,
-          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+          title: lastEntry?.title,
+          content: lastEntry?.content,
+          mood: _parseMood(lastEntry?.mood),
+          createdAt: lastEntry?.createdAt,
           isDark: isDark,
           onTap: () {
             // Navigate to journal
@@ -274,6 +326,15 @@ class DashboardPage extends StatelessWidget {
         _QuickActionsRow(isDark: isDark),
       ],
     );
+  }
+
+  MoodType? _parseMood(String? moodName) {
+    if (moodName == null) return null;
+    try {
+      return MoodType.values.firstWhere((m) => m.name == moodName);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

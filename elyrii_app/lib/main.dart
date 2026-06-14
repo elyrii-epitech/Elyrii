@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:async';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
@@ -16,6 +17,7 @@ import 'features/chatbot/presentation/providers/chatbot_provider.dart';
 import 'features/gamification/presentation/providers/gamification_provider.dart';
 import 'features/settings/providers/settings_provider.dart';
 import 'features/mascot/presentation/providers/mascot_provider.dart';
+import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 
@@ -37,6 +39,10 @@ void main() async {
   final gamificationProvider = GamificationProvider(client: apiClient);
   final userProvider = UserProvider(client: apiClient);
   final mascotProvider = MascotProvider();
+  final dashboardProvider = DashboardProvider(apiClient: apiClient);
+
+  // Perform backend health check
+  unawaited(apiClient.checkHealth());
 
   await authProvider.checkAuthStatus();
 
@@ -63,6 +69,7 @@ void main() async {
         ChangeNotifierProvider.value(value: gamificationProvider),
         ChangeNotifierProvider.value(value: userProvider),
         ChangeNotifierProvider.value(value: mascotProvider),
+        ChangeNotifierProvider.value(value: dashboardProvider),
       ],
       child: const MyApp(),
     ),

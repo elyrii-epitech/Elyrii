@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # vLLM GPU service (optional, if you have a GPU)
+  vllm-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: elyrii-vllm-gpu
+    ports:
+      - "8000:8000"
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    environment:
+      - AI_MODEL=${AI_MODEL:-mistralai/Mistral-7B-Instruct-v0.2}
+      - DEPLOYMENT_MODE=local
+      - TENSOR_PARALLEL_SIZE=${TENSOR_PARALLEL_SIZE:-1}
+      - GPU_MEMORY_UTILIZATION=${GPU_MEMORY_UTILIZATION:-0.85}
+      - MAX_MODEL_LEN=${MAX_MODEL_LEN:-4096}
+      - HF_TOKEN=${HF_TOKEN}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+    profiles:
+      - gpu
+
+  # Controller service
+  controller:
+    build:
+      context: .
+      dockerfile: controller/ControllerDockerfile
+    container_name: elyrii-controller
+    ports:
+      - "8081:8080"
+    environment:
+      - GPU_APP_NAME=elyrii-vllm-gpu
+      - GPU_INTERNAL_URL=http://vllm-gpu:8000
+      - STARTUP_TIMEOUT=180
+      - IDLE_TIMEOUT=300
+      - AI_MODEL=${AI_MODEL:-mistralai/Mistral-7B-Instruct-v0.2}
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+    profiles:
+      - gpu
+
+  # AI Kafka Bridge (connects Server to LOCAL Ollama via Kafka)
+  ai-bridge:
+    build:
+      context: .
+      dockerfile: BridgeDockerfile
+    container_name: elyrii-ai-bridge
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+      - AI_BASE_URL=http://host.docker.internal:11434
+      - AI_MODEL=mistral
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "redpanda:host-gateway"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+networks:
+  elyrii_net:
+    name: elyrii_net
+    driver: bridge
+
+volumes:
+  huggingface_cache:

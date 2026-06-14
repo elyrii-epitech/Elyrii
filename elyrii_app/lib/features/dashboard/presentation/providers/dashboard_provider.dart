@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/config/api_config.dart';
 
 /// Enum représentant les différents moods disponibles
 enum MoodType { verySad, sad, neutral, happy, veryHappy }
@@ -99,6 +101,7 @@ extension GoalTypeExtension on GoalType {
 
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
+  final ApiClient _apiClient;
   bool _isLoading = false;
   String? _error;
 
@@ -107,7 +110,9 @@ class DashboardProvider extends ChangeNotifier {
   final Map<DateTime, MoodType> _moodHistory = {};
 
   // Streak (série de jours consécutifs)
-  int _currentStreak = 12;
+  int _currentStreak = 0;
+  int _activeChallengesCount = 0;
+  int _journalEntriesCount = 0;
 
   // Quote du jour
   int _currentQuoteIndex = 0;
@@ -176,13 +181,15 @@ class DashboardProvider extends ChangeNotifier {
   bool _goalCompleted = false;
 
   // Nom utilisateur (à récupérer depuis l'auth plus tard)
-  String _userName = 'Marie';
+  String _userName = '';
 
   // Getters
   bool get isLoading => _isLoading;
   String? get error => _error;
   MoodType? get selectedMood => _selectedMood;
   int get currentStreak => _currentStreak;
+  int get activeChallengesCount => _activeChallengesCount;
+  int get journalEntriesCount => _journalEntriesCount;
   String get userName => _userName;
   String get currentQuote => _quotes[_currentQuoteIndex];
   Map<DateTime, MoodType> get moodHistory => Map.unmodifiable(_moodHistory);
@@ -198,7 +205,7 @@ class DashboardProvider extends ChangeNotifier {
     return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
   }
 
-  DashboardProvider() {
+  DashboardProvider({required ApiClient apiClient}) : _apiClient = apiClient {
     _initializeQuoteOfTheDay();
     _initializeDailyGoal();
     _initializeMascotMessage();
@@ -246,6 +253,18 @@ class DashboardProvider extends ChangeNotifier {
     _moodHistory[today] = mood;
     _updateStreak();
     notifyListeners();
+
+    try {
+      await _apiClient.post(
+        ApiConfig.logMoodUrl,
+        body: {'moodType': mood.name},
+      );
+      // Refresh stats to get updated streak from backend
+      await loadDashboardData();
+    } catch (e) {
+      _error = "Impossible d'enregistrer l'humeur: ${e.toString()}";
+      notifyListeners();
+    }
   }
 
   void completeGoal() {
@@ -293,6 +312,28 @@ class DashboardProvider extends ChangeNotifier {
 
     try {
       await Future.delayed(const Duration(milliseconds: 500));
+      // Parallel fetch for mood and stats
+      final results = await Future.wait([
+        _apiClient.get(ApiConfig.latestMoodUrl),
+        _apiClient.get(ApiConfig.userStatsUrl),
+      ]);
+
+      final moodResponse = results[0] as Map<String, dynamic>;
+      final statsResponse = results[1] as Map<String, dynamic>;
+
+      final moodTypeStr = moodResponse['moodType'] as String?;
+      if (moodTypeStr != null) {
+        _selectedMood = MoodType.values.firstWhere(
+          (m) => m.name == moodTypeStr,
+          orElse: () => MoodType.neutral,
+        );
+      }
+
+      _currentStreak = statsResponse['streak'] as int? ?? 0;
+      _activeChallengesCount =
+          statsResponse['activeChallengesCount'] as int? ?? 0;
+      _journalEntriesCount = statsResponse['journalEntriesCount'] as int? ?? 0;
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_exception.dart';
@@ -18,6 +19,8 @@ class AuthRepository {
   final ApiClient _client;
 
   AuthRepository({required ApiClient client}) : _client = client;
+
+  ApiClient get client => _client;
 
   /// Login with email and password
   /// Returns JWT access token on success
@@ -56,10 +59,28 @@ class AuthRepository {
     if (age != null) body['age'] = age;
     final response = await _client.post(ApiConfig.registerUrl,
         body: body, auth: false) as Map<String, dynamic>;
-    final token = response['token'] as String? ?? '';
-    final user = _decodeTokenPayload(token);
+
+    // Check if email verification is required and token is not returned
+    final bool emailVerificationRequired =
+        response['emailVerificationRequired'] == true;
+    final token = response['token'] as String?;
+
+    if (emailVerificationRequired && token == null) {
+      // In this case, we don't have a token yet because the email needs verification.
+      // We will throw an exception or handle it to inform the UI that verification is required.
+      throw ApiException(
+        statusCode: 201,
+        message:
+            response['message'] as String? ?? 'Email verification required.',
+        body: response,
+      );
+    }
+
+    final resolvedToken = token ?? '';
+    final user = _decodeTokenPayload(resolvedToken);
+
     return AuthResult(
-      token: token,
+      token: resolvedToken,
       user: user,
       message: response['message'] as String? ?? 'Registration successful',
     );
@@ -79,12 +100,17 @@ class AuthRepository {
     try {
       final parts = token.split('.');
       if (parts.length != 3) return null;
-      final payload = parts[1];
-      final normalized = base64Url.normalize(payload);
-      final decoded = utf8.decode(base64Url.decode(normalized));
+      var payload = parts[1];
+      // Pad base64 payload to multiple of 4 characters
+      final padding = payload.length % 4;
+      if (padding != 0) {
+        payload += '=' * (4 - padding);
+      }
+      final decoded = utf8.decode(base64Url.decode(payload));
       final json = jsonDecode(decoded) as Map<String, dynamic>;
       return UserModel.fromJson(json);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Error decoding token payload: $e');
       return null;
     }
   }

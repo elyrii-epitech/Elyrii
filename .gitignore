@@ -25,7 +25,7 @@ htmlcov/
 .idea/
 
 instance/
-models/
+elyrii_ai/models/
 .env
 .env.local
 
@@ -45,3 +45,9 @@ _templates/
 .antigravitycli/
 .playwright-mcp/
 screenshot-*.png
+# Claude Code — local only
+.claude/
+CLAUDE.md
+TODO.md
+CHANGELOG.md
+**/CLAUDE.md

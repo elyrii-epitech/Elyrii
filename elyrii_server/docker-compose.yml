@@ -10,11 +10,14 @@ services:
         - PORT=3000
         - DB_USER=${DB_USER}
         - DB_PASSWORD=${DB_PASSWORD}
-        - DB_HOST=${DB_HOST}
-        - DB_PORT=${DB_PORT}
+        - DB_HOST=postgres
+        - DB_PORT=5432
         - DB_NAME=${DB_NAME}
         - REDPANDA_HOST=${REDPANDA_HOST}
         - REDPANDA_PORT=${REDPANDA_PORT}
+        - SECRET_KEY=${SECRET_KEY:-super-secret-key}
+        - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY:-super-refresh-secret-key}
+        - NODE_ENV=production
     networks:
       - elyrii_net
     depends_on:
@@ -22,7 +25,7 @@ services:
             condition: service_healthy
         postgres:
             condition: service_healthy
-    command: sh -c "bun run db:push && bun run start"
+    command: sh -c "sleep 5 && bun run db:push && bun run start"
 
 
   redpanda:
@@ -69,10 +72,11 @@ services:
     image: postgres:16-alpine
     container_name: postgres_elyrii
     ports:
-      - "5431:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./init_dbs.sh:/docker-entrypoint-initdb.d/init_dbs.sh

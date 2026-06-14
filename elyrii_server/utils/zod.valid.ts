@@ -9,7 +9,7 @@ export const registerValidation = z.object({
 })
 
 export const loginValidation = z.object({
-    email: z.email(),
+    email: z.string().email(),
     password: z.string().min(6),
 })
 
@@ -17,7 +17,7 @@ export const updateProfileValidation = z.object({
     firstName: z.string().min(1).optional(),
     lastName: z.string().min(1).optional(),
     age: z.number().min(0).max(150).optional(),
-    pfp: z.url().optional(),
+    pfp: z.string().url().optional(),
 });
 
 

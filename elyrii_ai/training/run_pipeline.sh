@@ -7,12 +7,23 @@ set -e # Exit immediately if a command exits with a non-zero status
 # Add the current directory to PYTHONPATH so that 'elyrii_ai' can be imported
 export PYTHONPATH="$(pwd):$PYTHONPATH"
 
-# Default configuration paths
-MODEL_PATH="./model/mistral_7B_instruct_v0.3"
-DATA_BASE_DIR="./datasets"
-PROCESSED_DATA_DIR="./data"
-OUTPUT_DIR="./output"
-EVAL_RESULTS_FILE="./evaluation_results.csv"
+# Default configuration.
+#
+# Override these on the VM when needed, for example:
+#   MODEL_PATH=/mnt/models/mistral_7B_instruct_v0.3 bash elyrii_ai/training/run_pipeline.sh
+# If MODEL_PATH is a Hugging Face ID, export HF_TOKEN first for gated models.
+MODEL_PATH="${MODEL_PATH:-mistralai/Mistral-7B-Instruct-v0.3}"
+DATA_BASE_DIR="${DATA_BASE_DIR:-./datasets}"
+PROCESSED_DATA_DIR="${PROCESSED_DATA_DIR:-./data}"
+OUTPUT_DIR="${OUTPUT_DIR:-./output}"
+EVAL_RESULTS_FILE="${EVAL_RESULTS_FILE:-./evaluation_results.csv}"
+EPOCHS="${EPOCHS:-1}"
+LR="${LR:-5e-5}"
+LORA_ALPHA="${LORA_ALPHA:-4}"
+LORA_DROPOUT="${LORA_DROPOUT:-0.10}"
+TARGET_PRESET="${TARGET_PRESET:-all-linear}"
+BATCH="${BATCH:-1}"
+GRAD_ACC="${GRAD_ACC:-16}"
 
 echo "========================================"
 echo "🚀 Starting Elyrii Training Pipeline"
@@ -52,9 +63,14 @@ export SETUPTOOLS_USE_DISTUTILS=stdlib
 python elyrii_ai/training/train.py \
     --data_dir "$PROCESSED_DATA_DIR" \
     --output_dir "$OUTPUT_DIR" \
-    --epochs 3 \
-    --batch 1 \
-    --grad_acc 16
+    --model_id "$MODEL_PATH" \
+    --epochs "$EPOCHS" \
+    --lr "$LR" \
+    --lora_alpha "$LORA_ALPHA" \
+    --lora_dropout "$LORA_DROPOUT" \
+    --target_preset "$TARGET_PRESET" \
+    --batch "$BATCH" \
+    --grad_acc "$GRAD_ACC"
 
 ADAPTER_PATH="$OUTPUT_DIR/final_lora"
 if [ ! -d "$ADAPTER_PATH" ]; then

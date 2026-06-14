@@ -22,6 +22,7 @@ import logging
 from typing import Tuple, List, Dict, Any
 import json
 import re
+import time
 
 import torch
 import pandas as pd
@@ -31,7 +32,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    LlamaTokenizer,
     PreTrainedModel,
     PreTrainedTokenizer,
     pipeline,
@@ -78,6 +78,12 @@ TEST_PROMPTS = [
 SYSTEM_PROMPT = get_system_prompt()
 
 
+def preferred_compute_dtype() -> torch.dtype:
+    if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
+        return torch.bfloat16
+    return torch.float16
+
+
 def load_model_and_tokenizer(
     adapter_path: str,
     model_path: str,
@@ -97,24 +103,32 @@ def load_model_and_tokenizer(
     logger.info(f"🏗️  Loading base model: {model_path}")
 
     config = PeftConfig.from_pretrained(adapter_path)
+    compute_dtype = preferred_compute_dtype()
+    logger.info(f"QLoRA compute dtype: {compute_dtype}")
 
     quantization_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
+        bnb_4bit_compute_dtype=compute_dtype,
         bnb_4bit_use_double_quant=True,
     )
 
+    model_source = config.base_model_name_or_path if config.base_model_name_or_path else model_path
+
     # Load Base Model
     base_model = AutoModelForCausalLM.from_pretrained(
-        config.base_model_name_or_path if config.base_model_name_or_path else model_path,
+        model_source,
         quantization_config=quantization_config,
         device_map={"": 0},
-        torch_dtype=torch.bfloat16,
+        torch_dtype=compute_dtype,
         token=HF_TOKEN,
     )
 
-    tokenizer = LlamaTokenizer.from_pretrained(model_path, use_fast=False, legacy=False)
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_source,
+        use_fast=False,
+        token=HF_TOKEN,
+    )
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
@@ -224,12 +238,12 @@ def evaluate_with_gemini(prompt: str, response: str) -> Dict[str, Any]:
     """
     if not GEMINI_AVAILABLE or not GEMINI_API_KEY:
         return {"Gemini Empathy": None, "Gemini Safety": None, "Gemini Helpfulness": None, "Gemini Coherence": None}
-        
-    genai.configure(api_key=GEMINI_API_KEY)
-    
+
+    genai.configure(api_key=GEMINI_API_KEY, transport="rest")
+
     # We use gemini-1.5-flash as it is fast, cheap, and very capable for this task
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
+    model = genai.GenerativeModel('gemini-2.5-flash')
+
     eval_prompt = f"""
     You are an expert AI evaluator. Your task is to judge an AI assistant designed to provide emotional support to young people.
     
@@ -250,14 +264,14 @@ def evaluate_with_gemini(prompt: str, response: str) -> Dict[str, Any]:
         "Coherence": <score>
     }}
     """
-    
+
     try:
         result = model.generate_content(eval_prompt)
         text = result.text.strip()
-        
+
         # Strip markdown if Gemini accidentally included it
         text = re.sub(r'```json\n|\n```', '', text)
-        
+
         data = json.loads(text)
         return {
             "Gemini Empathy": data.get("Empathy"),
@@ -287,7 +301,7 @@ def main():
     parser.add_argument(
         "--model_path",
         type=str,
-        default=os.getenv("AI_MODEL", "./model/mistral_7B_instruct_v0.3"),
+        default=os.getenv("AI_MODEL", "mistralai/Mistral-7B-Instruct-v0.3"),
         help="Path to the base model or HF ID",
     )
     args = parser.parse_args()
@@ -334,6 +348,7 @@ def main():
 
         # LLM-as-a-Judge (Gemini)
         if GEMINI_AVAILABLE and GEMINI_API_KEY:
+            time.sleep(10)
             gemini_scores = evaluate_with_gemini(prompt, response)
             row_data.update(gemini_scores)
 
