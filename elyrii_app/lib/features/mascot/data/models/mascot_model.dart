@@ -9,7 +9,7 @@ class MascotModel {
   /// Chemin vers le modèle 3D de base (.glb)
   final String baseModelPath;
 
-  /// Liste des identifiants des cosmétiques équipés (accessoires, chapeaux, etc.)
+  /// Liste des identifiants de détails visuels sélectionnés.
   final List<String> equippedCosmetics;
 
   /// État actuel de l'animation (ex: 'idle', 'wave', 'jump')
@@ -75,10 +75,11 @@ class MascotModel {
           animationState == other.animationState;
 
   @override
-  int get hashCode =>
-      baseModelPath.hashCode ^
-      equippedCosmetics.hashCode ^
-      animationState.hashCode;
+  int get hashCode => Object.hash(
+        baseModelPath,
+        Object.hashAll(equippedCosmetics),
+        animationState,
+      );
 
   @override
   String toString() {

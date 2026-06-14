@@ -70,7 +70,7 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.error ??
-              'Oops, petit souci lors de la creation. Reessaie quand tu es pret.'),
+              'Oops, petit souci lors de la création. Réessaie quand tu es prêt.'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
           shape:

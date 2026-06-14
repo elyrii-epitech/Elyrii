@@ -56,10 +56,10 @@ class _ChatbotPageState extends State<ChatbotPage>
       }
 
       // Crisis keyword detection
-      if (text.isNotEmpty && containsCrisisKeyword(text)) {
-        if (!_showCrisisBanner) {
-          setState(() => _showCrisisBanner = true);
-        }
+      final shouldShowCrisisBanner =
+          text.isNotEmpty && containsCrisisKeyword(text);
+      if (_showCrisisBanner != shouldShowCrisisBanner) {
+        setState(() => _showCrisisBanner = shouldShowCrisisBanner);
       }
     });
 

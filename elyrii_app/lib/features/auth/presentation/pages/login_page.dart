@@ -47,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.error ??
-              'Oops, petit souci de connexion. Reessaie quand tu es pret.'),
+              'Oops, petit souci de connexion. Réessaie quand tu es prêt.'),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
           shape:

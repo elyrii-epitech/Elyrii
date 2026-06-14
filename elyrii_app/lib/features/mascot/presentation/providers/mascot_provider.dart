@@ -74,13 +74,13 @@ class MascotProvider extends ChangeNotifier {
     }
   }
 
-  /// Équipe un cosmétique (accessoire, couleur, etc.)
+  /// Sélectionne ou retire un détail visuel (aura, accessoire futur, ambiance).
   ///
   /// Prépare le terrain pour la customisation future de la mascotte.
   void equipCosmetic(String cosmeticId) {
     final List<String> updatedCosmetics = List.from(_mascot.equippedCosmetics);
     if (updatedCosmetics.contains(cosmeticId)) {
-      updatedCosmetics.remove(cosmeticId); // Déséquiper si déjà équipé
+      updatedCosmetics.remove(cosmeticId);
     } else {
       updatedCosmetics.add(cosmeticId);
     }

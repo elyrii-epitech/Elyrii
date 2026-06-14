@@ -196,7 +196,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                 ),
               ),
               Text(
-                'Personnalise sa présence, sans pression',
+                'Choisis son ambiance visuelle, sans pression',
                 style: AppTextStyles.bodySmall(color: subtitleColor),
               ),
             ],
@@ -266,7 +266,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Une customisation volontairement douce : elle accompagne ton espace mental sans voler l’attention.',
+              'Ces détails ajustent l’ambiance autour d’Elyrii. Le modèle 3D reste volontairement stable pour l’instant.',
               style: AppTextStyles.bodySmall(color: subtitleColor),
               textAlign: TextAlign.center,
             ),
@@ -348,7 +348,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Choisis un détail qui rend Elyrii plus familier.',
+          'Choisis un détail d’ambiance autour d’Elyrii.',
           style: AppTextStyles.bodySmall(color: subtitleColor),
         ),
         const SizedBox(height: 12),
@@ -387,8 +387,8 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
   String _previewTitle(MascotProvider provider) {
     final count = provider.mascot.equippedCosmetics.length;
     if (count == 0) return 'Présence par défaut';
-    if (count == 1) return '1 détail équipé';
-    return '$count détails équipés';
+    if (count == 1) return '1 détail sélectionné';
+    return '$count détails sélectionnés';
   }
 }
 

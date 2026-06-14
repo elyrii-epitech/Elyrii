@@ -74,6 +74,12 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
         widget.controller != oldWidget.controller) {
       _controller = widget.controller!;
     }
+    if (widget.config.assetPath != oldWidget.config.assetPath) {
+      setState(() {
+        _isLoading = true;
+        _hasError = false;
+      });
+    }
   }
 
   void _onModelLoaded(String modelAddress) {
@@ -89,8 +95,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
             widget.config.cameraOrbitRadius,
           );
         }
-        _controller
-            .playAnimation(); // Lance automatiquement l'animation par défaut
+        _applyRotationConfig();
       }
     });
 
@@ -100,6 +105,19 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
     });
 
     widget.onModelLoaded?.call();
+  }
+
+  void _applyRotationConfig() {
+    try {
+      if (widget.config.autoRotate) {
+        final speed = widget.config.autoRotateSpeed.round();
+        _controller.startRotation(rotationSpeed: speed <= 0 ? 1 : speed);
+      } else {
+        _controller.stopRotation();
+      }
+    } catch (error) {
+      debugPrint('Mascot3DViewer: Erreur configuration rotation: $error');
+    }
   }
 
   void _onModelError(String error) {
@@ -119,7 +137,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: IgnorePointer(
-        ignoring: true,
+        ignoring: !widget.config.interactionEnabled,
         child: SizedBox(
           width: widget.width,
           height: widget.height,
@@ -137,8 +155,8 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
         Flutter3DViewer(
           controller: _controller,
           src: widget.config.assetPath,
-          activeGestureInterceptor: false,
-          enableTouch: false,
+          activeGestureInterceptor: widget.config.interactionEnabled,
+          enableTouch: widget.config.interactionEnabled,
           progressBarColor: widget.config.showLoadingIndicator
               ? AppColors.primary
               : Colors.transparent,

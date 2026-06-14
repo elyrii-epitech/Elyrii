@@ -203,13 +203,23 @@ class _MeditationPageState extends State<MeditationPage>
     _currentPhaseIndex = (_currentPhaseIndex + 1) % phases.length;
     _phaseSecondsRemaining = phases[_currentPhaseIndex];
 
-    // Animate circle.
-    final isContracting =
-        _selectedBreathingType.phaseLabels[_currentPhaseIndex] == 'Expire...';
-    if (isContracting) {
-      _circleScaleController.reverse();
-    } else {
-      _circleScaleController.forward();
+    // Inhale expands, exhale contracts, holds keep the previous scale.
+    if (_selectedBreathingType == BreathingType.carree) {
+      switch (_currentPhaseIndex) {
+        case 0:
+          _circleScaleController.forward();
+        case 2:
+          _circleScaleController.reverse();
+      }
+      return;
+    }
+
+    switch (_currentPhaseIndex) {
+      case 0:
+      case 1:
+        _circleScaleController.forward();
+      case 2:
+        _circleScaleController.reverse();
     }
   }
 

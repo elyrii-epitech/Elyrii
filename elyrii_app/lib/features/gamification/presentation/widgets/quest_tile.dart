@@ -100,6 +100,27 @@ class QuestTile extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.xpBar.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    '+$xpReward XP',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.xpBar
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

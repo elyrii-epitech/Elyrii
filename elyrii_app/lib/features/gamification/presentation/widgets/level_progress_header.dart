@@ -19,11 +19,11 @@ class LevelProgressHeader extends StatelessWidget {
   });
 
   static const List<Map<String, dynamic>> _states = [
-    {'label': 'Eveil', 'emoji': '🌱', 'desc': 'Le debut du chemin'},
-    {'label': 'Epanouissement', 'emoji': '🌿', 'desc': 'Tu grandis doucement'},
-    {'label': 'Serenite', 'emoji': '🌸', 'desc': 'La paix s\'installe'},
+    {'label': 'Éveil', 'emoji': '🌱', 'desc': 'Le début du chemin'},
+    {'label': 'Épanouissement', 'emoji': '🌿', 'desc': 'Tu grandis doucement'},
+    {'label': 'Sérénité', 'emoji': '🌸', 'desc': 'La paix s\'installe'},
     {'label': 'Harmonie', 'emoji': '🦋', 'desc': 'Tout s\'aligne'},
-    {'label': 'Lumiere interieure', 'emoji': '✨', 'desc': 'Tu rayonnes'},
+    {'label': 'Lumière intérieure', 'emoji': '✨', 'desc': 'Tu rayonnes'},
   ];
 
   String get _stateLabel =>
@@ -78,7 +78,7 @@ class LevelProgressHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _stateLabel,
+                      title.isNotEmpty ? title : _stateLabel,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
@@ -140,8 +140,8 @@ class LevelProgressHeader extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             progress >= 1.0
-                ? 'Une nouvelle etape s\'ouvre a toi...'
-                : 'Ton chemin continue, a ton rythme',
+                ? 'Une nouvelle étape s\'ouvre à toi...'
+                : 'Ton chemin continue, à ton rythme',
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,
