@@ -15,5 +15,5 @@ model = PeftModel.from_pretrained(model, lora_path)
 model = model.merge_and_unload()
 
 # Save
-model.save_pretrained("./merged_mistral")
-tokenizer.save_pretrained("./merged_mistral")
+model.save_pretrained("./elyrii-merged-bf16")
+tokenizer.save_pretrained("./elyrii-merged-bf16")
