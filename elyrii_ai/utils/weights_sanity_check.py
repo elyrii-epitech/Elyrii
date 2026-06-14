@@ -31,7 +31,7 @@ print("\n--- Generating Response ---")
 with torch.no_grad():
     outputs = model.generate(
         **inputs,
-        max_new_tokens=100,
+        max_new_tokens=500,
         min_new_tokens=20,
         temperature=0.9,
         do_sample=True,
