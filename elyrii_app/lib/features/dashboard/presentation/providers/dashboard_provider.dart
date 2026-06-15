@@ -240,7 +240,7 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void selectMood(MoodType mood) {
+  Future<void> selectMood(MoodType mood) async {
     _selectedMood = mood;
     _currentMascotMessageIndex = Random().nextInt(
       _moodMascotMessages[mood]!.length,

@@ -56,6 +56,7 @@ class QuestTile extends StatelessWidget {
                 isCompleted ? AppColors.accent.withValues(alpha: 0.25) : null,
             child: Row(
               children: [
+                // Left icon circle
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -81,6 +82,8 @@ class QuestTile extends StatelessWidget {
                         ),
                 ),
                 const SizedBox(width: 16),
+
+                // Title, Subtitle, and Progress Bar
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,133 +99,104 @@ class QuestTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        isCompleted ? 'Ce moment a été vécu' : subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark
-                              ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.xpBar.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    '+$xpReward XP',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.xpBar
-                          : AppColors.textSecondaryLight,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-                      Flexible(
-                        child: Text(
-                          subtitle,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark
-                                ? AppColors.textTertiaryDark
-                                : AppColors.textTertiaryLight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (xpReward > 0)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.xpBar.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: AppColors.xpBar.withValues(alpha: 0.4),
-                              width: 0.5,
-                            ),
-                          ),
-                          child: Text(
-                            '+$xpReward XP',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? Colors.amber[200]
-                                  : Colors.amber[800],
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  // Barre de progression (uniquement si fournie)
-                  if (progressFraction != null && !isCompleted) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progressFraction,
-                              minHeight: 4,
-                              backgroundColor: isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : Colors.black.withValues(alpha: 0.06),
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (progressText != null && progressText!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
+                      Row(
+                        children: [
+                          Flexible(
                             child: Text(
-                              progressText!,
-                              overflow: TextOverflow.clip,
+                              isCompleted ? 'Ce moment a été vécu' : subtitle,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
                               ),
                             ),
                           ),
+                          if (xpReward > 0 && !isCompleted) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.xpBar.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.xpBar.withValues(alpha: 0.4),
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: Text(
+                                '+$xpReward XP',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? Colors.amber[200]
+                                      : Colors.amber[800],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      // Progress bar (if provided)
+                      if (progressFraction != null && !isCompleted) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: progressFraction,
+                                  minHeight: 4,
+                                  backgroundColor: isDark
+                                      ? Colors.white.withValues(alpha: 0.08)
+                                      : Colors.black.withValues(alpha: 0.06),
+                                  valueColor: const AlwaysStoppedAnimation<Color>(
+                                    AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (progressText != null && progressText!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Text(
+                                  progressText!,
+                                  overflow: TextOverflow.clip,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.textTertiaryDark
+                                        : AppColors.textTertiaryLight,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-            if (!isCompleted && progressFraction == null && onTap != null)
-              Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
-              ),
-          ],
+                // Right arrow (if tappable and not completed)
+                if (!isCompleted && progressFraction == null && onTap != null)
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight,
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

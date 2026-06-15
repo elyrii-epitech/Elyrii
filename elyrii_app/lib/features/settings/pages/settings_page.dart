@@ -61,18 +61,6 @@ class _SettingsPageState extends State<SettingsPage> {
                         },
                       ),
                     ),
-                    _buildDivider(isDark),
-                    LiquidGlassListTile(
-                      title: 'Mascotte Elyrii',
-                      subtitle: 'Personnaliser sa présence',
-                      leadingIcon: Icons.auto_awesome_rounded,
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRoutes.mascotCustomization,
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),

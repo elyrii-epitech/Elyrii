@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
+import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/gamification_provider.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../widgets/level_progress_header.dart';
@@ -19,36 +26,6 @@ class ChallengesPage extends StatefulWidget {
 }
 
 class _ChallengesPageState extends State<ChallengesPage> {
-  final int _currentLevel = 3;
-  final int _currentXp = 340;
-  final int _maxXp = 500;
-  final int _streakDays = 5;
-  final List<bool> _weekHistory = [true, true, true, true, true, false, false];
-
-  final List<Map<String, dynamic>> _quests = [
-    {
-      'title': 'Méditer 10 minutes',
-      'subtitle': 'Un moment rien que pour toi',
-      'icon': Icons.self_improvement_rounded,
-      'xp': 50,
-      'isCompleted': true,
-    },
-    {
-      'title': 'Discuter avec Elyrii',
-      'subtitle': 'Elyrii est là pour t\'écouter',
-      'icon': Icons.chat_bubble_outline_rounded,
-      'xp': 30,
-      'isCompleted': false,
-    },
-    {
-      'title': 'Noter ton humeur',
-      'subtitle': 'Pose-toi quelques instants',
-      'icon': Icons.mood_rounded,
-      'xp': 20,
-      'isCompleted': false,
-    },
-  ];
-
   // Suivi du défi en cours de démarrage (pour spinner local)
   String? _startingChallengeId;
   String? _processingProposalId;
@@ -132,181 +109,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
     return Scaffold(
       backgroundColor:
           isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
-      body: Stack(
-        children: [
-          // Aurora Background Glow 1 (Top Left)
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 320,
-              height: 320,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary
-                        .withValues(alpha: isDark ? 0.08 : 0.04),
-                    blurRadius: 130,
-                    spreadRadius: 60,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Aurora Background Glow 2 (Mid Right)
-          Positioned(
-            top: 350,
-            right: -120,
-            child: Container(
-              width: 350,
-              height: 350,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.accent
-                        .withValues(alpha: isDark ? 0.06 : 0.03),
-                    blurRadius: 140,
-                    spreadRadius: 70,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                MediaQuery.of(context).padding.top + 16,
-                16,
-                32,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Mascot greeting
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: Column(
-                        children: [
-                          const Icon(Icons.yard_rounded,
-                              color: AppColors.primary, size: 36),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Ton jardin intérieur',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Ici, il n\'y a rien à accomplir.\nJuste être, à ton rythme.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Emotional state card
-                  LevelProgressHeader(
-                    level: _currentLevel,
-                    currentXp: _currentXp,
-                    maxXp: _maxXp,
-                    title: '',
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Week mood
-                  DailyStreakCard(
-                    streakDays: _streakDays,
-                    weekHistory: _weekHistory,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Gentle invitations
-                  _buildSectionTitle('Douces invitations', isDark),
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      'Des inspirations douces pour prendre soin de toi, sans aucune obligation',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                      ),
-                    ),
-                  ),
-                  ListView.builder(
-                    padding: EdgeInsets.zero,
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: _quests.length,
-                    itemBuilder: (context, index) {
-                      final quest = _quests[index];
-                      return QuestTile(
-                        title: quest['title'],
-                        subtitle: quest['subtitle'],
-                        icon: quest['icon'],
-                        xpReward: quest['xp'],
-                        isCompleted: quest['isCompleted'],
-                        onTap: () {},
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Emotional skills
-                  _buildSectionTitle('Tes compétences émotionnelles', isDark),
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      'Des qualités qui se développent avec le temps',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                      ),
-                    ),
-                  ),
-                  BadgesGrid(
-                    badges: _badges,
-                    onBadgeTap: (badge) => _showBadgeDetails(context, badge),
-                  ),
-
-                  const SizedBox(height: 80),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, bool isDark) {
       body: RefreshIndicator(
         onRefresh: () => provider.loadAll(),
         color: AppColors.primary,
@@ -326,6 +128,10 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Mascot greeting premium header
+                      _buildGardenHero(isDark),
+                      const SizedBox(height: 20),
+
                       // Header niveau (mock — sera connecté quand /user/stats est branché)
                       LevelProgressHeader(
                         level: 1 + provider.completedChallenges.length ~/ 3,
@@ -439,6 +245,322 @@ class _ChallengesPageState extends State<ChallengesPage> {
               ),
       ),
     );
+  }
+
+  Widget _buildGardenHero(bool isDark) {
+    return Consumer<MascotProvider>(
+      builder: (context, provider, _) {
+        final equippedCount = provider.mascot.equippedCosmetics.length;
+        final selectedColor =
+            equippedCount > 0 ? AppColors.accent : AppColors.primary;
+
+        return LiquidGlassCard(
+          onTap: () => _openMascotCustomization(context),
+          padding: EdgeInsets.zero,
+          borderRadius: 28,
+          color: isDark
+              ? AppColors.liquidGlassBackgroundDark
+              : AppColors.liquidGlassBackgroundLight,
+          borderColor: selectedColor.withValues(alpha: isDark ? 0.28 : 0.38),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -72,
+                  right: -34,
+                  child: _buildHeroGlow(
+                    selectedColor.withValues(alpha: isDark ? 0.22 : 0.18),
+                    180,
+                  ),
+                ),
+                Positioned(
+                  bottom: -72,
+                  left: -42,
+                  child: _buildHeroGlow(
+                    AppColors.secondary.withValues(
+                      alpha: isDark ? 0.16 : 0.13,
+                    ),
+                    160,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final compact = constraints.maxWidth < 340;
+                      final textBlock = _buildHeroText(
+                        context,
+                        isDark,
+                        equippedCount,
+                      );
+                      final mascotPreview = _buildHeroMascotPreview(
+                        selectedColor,
+                        isDark,
+                      );
+
+                      if (compact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Align(
+                              alignment: Alignment.center,
+                              child: mascotPreview,
+                            ),
+                            const SizedBox(height: 12),
+                            textBlock,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: textBlock),
+                          const SizedBox(width: 12),
+                          mascotPreview,
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildHeroText(
+    BuildContext context,
+    bool isDark,
+    int equippedCount,
+  ) {
+    final titleColor =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final bodyColor =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.accent.withValues(alpha: isDark ? 0.15 : 0.18),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: isDark ? 0.28 : 0.34),
+            ),
+          ),
+          child: Text(
+            'Atelier de présence',
+            style: AppTextStyles.labelSmall(
+              color: isDark ? AppColors.accentDark : AppColors.successDark,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Ton jardin intérieur',
+          style: AppTextStyles.headlineSmall(
+            color: titleColor,
+            fontWeight: FontWeight.w800,
+          ).copyWith(height: 1.08),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Ajuste la présence d’Elyrii ici, au même endroit que tes rituels et tes progrès doux.',
+          style: AppTextStyles.bodySmall(color: bodyColor).copyWith(
+            height: 1.45,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildStatusPill(
+              icon: Icons.auto_awesome_rounded,
+              label: _equippedDetailsLabel(equippedCount),
+              isDark: isDark,
+            ),
+            _buildCustomizeButton(context),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusPill({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+  }) {
+    final color =
+        isDark ? AppColors.textSecondaryDark : AppColors.textPrimaryLight;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.white.withValues(alpha: 0.68),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.white.withValues(alpha: 0.74),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.primary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.labelSmall(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomizeButton(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _openMascotCustomization(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+        decoration: BoxDecoration(
+          gradient: AppColors.chatbotGradient,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.22),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Personnaliser Elyrii',
+              style: AppTextStyles.labelSmall(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.arrow_forward_rounded,
+              color: Colors.white,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroMascotPreview(Color selectedColor, bool isDark) {
+    return SizedBox(
+      width: 118,
+      height: 136,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 104,
+            height: 104,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selectedColor.withValues(alpha: isDark ? 0.14 : 0.12),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.72),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: selectedColor.withValues(alpha: isDark ? 0.22 : 0.18),
+                  blurRadius: 34,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+          const Positioned(
+            bottom: 0,
+            child: Mascot3DViewer(
+              config: Mascot3DConfig(
+                autoRotateSpeed: 8,
+                interactionEnabled: false,
+                showLoadingIndicator: false,
+              ),
+              width: 112,
+              height: 126,
+            ),
+          ),
+          Positioned(
+            top: 14,
+            right: 10,
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: isDark ? 0.14 : 0.84),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.78),
+                ),
+              ),
+              child: Icon(
+                Icons.brush_rounded,
+                size: 14,
+                color: selectedColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroGlow(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color,
+            blurRadius: size * 0.32,
+            spreadRadius: size * 0.12,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _equippedDetailsLabel(int count) {
+    if (count == 0) return 'Présence naturelle';
+    if (count == 1) return '1 détail équipé';
+    return '$count détails équipés';
+  }
+
+  void _openMascotCustomization(BuildContext context) {
+    HapticFeedback.selectionClick();
+    Navigator.pushNamed(context, AppRoutes.mascotCustomization);
   }
 
   Widget _sectionTitle(BuildContext context, String title, bool isDark) {
