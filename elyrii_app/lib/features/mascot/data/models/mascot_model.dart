@@ -15,10 +15,15 @@ class MascotModel {
   /// État actuel de l'animation (ex: 'idle', 'wave', 'jump')
   final String animationState;
 
+  /// Identifiant du thème visuel appliqué (ex: 'nature', 'halloween').
+  /// Voir [MascotThemes] pour le catalogue complet.
+  final String themeId;
+
   const MascotModel({
     required this.baseModelPath,
     this.equippedCosmetics = const [],
     this.animationState = 'idle',
+    this.themeId = 'nature',
   });
 
   /// Crée un modèle par défaut de la mascotte.
@@ -27,6 +32,7 @@ class MascotModel {
       baseModelPath: 'assets/base_basic_shaded_v3.glb',
       equippedCosmetics: [],
       animationState: 'idle',
+      themeId: 'nature',
     );
   }
 
@@ -35,11 +41,13 @@ class MascotModel {
     String? baseModelPath,
     List<String>? equippedCosmetics,
     String? animationState,
+    String? themeId,
   }) {
     return MascotModel(
       baseModelPath: baseModelPath ?? this.baseModelPath,
       equippedCosmetics: equippedCosmetics ?? this.equippedCosmetics,
       animationState: animationState ?? this.animationState,
+      themeId: themeId ?? this.themeId,
     );
   }
 
@@ -53,6 +61,7 @@ class MascotModel {
               .toList() ??
           const [],
       animationState: json['animationState'] as String? ?? 'idle',
+      themeId: json['themeId'] as String? ?? 'nature',
     );
   }
 
@@ -62,6 +71,7 @@ class MascotModel {
       'baseModelPath': baseModelPath,
       'equippedCosmetics': equippedCosmetics,
       'animationState': animationState,
+      'themeId': themeId,
     };
   }
 
@@ -72,17 +82,19 @@ class MascotModel {
           runtimeType == other.runtimeType &&
           baseModelPath == other.baseModelPath &&
           listEquals(equippedCosmetics, other.equippedCosmetics) &&
-          animationState == other.animationState;
+          animationState == other.animationState &&
+          themeId == other.themeId;
 
   @override
   int get hashCode => Object.hash(
         baseModelPath,
         Object.hashAll(equippedCosmetics),
         animationState,
+        themeId,
       );
 
   @override
   String toString() {
-    return 'MascotModel(baseModelPath: $baseModelPath, equippedCosmetics: $equippedCosmetics, animationState: $animationState)';
+    return 'MascotModel(baseModelPath: $baseModelPath, equippedCosmetics: $equippedCosmetics, animationState: $animationState, themeId: $themeId)';
   }
 }

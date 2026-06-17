@@ -1,82 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/config/mascot_themes.dart';
 import '../../data/models/mascot_model.dart';
 
 /// Provider gérant l'état et l'interaction avec la mascotte 3D.
 ///
-/// Permet de contrôler le modèle 3D globalement et prépare le terrain
-/// pour la personnalisation (cosmétiques, accessoires) et le contrôle
-/// des animations futures.
+/// Permet de contrôler le modèle 3D globalement, gérer les thèmes visuels
+/// (recoloration via ColorFilter) et préparer le terrain pour les
+/// accessoires futurs et le contrôle des animations.
 class MascotProvider extends ChangeNotifier {
   static const String _storageKey = 'elyrii_mascot_customization';
+  static const String _themeKey = 'elyrii_mascot_theme';
 
-  /// L'état de la mascotte (modèle de données)
   MascotModel _mascot = MascotModel.defaultMascot();
 
-  /// Contrôleur de l'affichage 3D de la mascotte
-  final Flutter3DController _controller = Flutter3DController();
-
-  /// Indique si le modèle 3D est en cours de chargement
-  bool _isLoading = false;
-
-  /// Message d'erreur éventuel en cas d'échec de chargement
   String? _error;
 
   MascotProvider() {
     _loadSavedMascot();
   }
 
-  // ==================== GETTERS ====================
-
-  /// L'état courant de la mascotte
   MascotModel get mascot => _mascot;
 
-  /// Le contrôleur 3D exposé pour piloter le modèle
-  Flutter3DController get controller => _controller;
-
-  /// Si le chargement est en cours
-  bool get isLoading => _isLoading;
-
-  /// Message d'erreur s'il y en a un
   String? get error => _error;
 
-  /// Si la mascotte a une erreur
-  bool get hasError => _error != null;
+  MascotTheme get currentTheme => MascotThemes.getById(_mascot.themeId);
 
-  // ==================== ACTIONS ====================
-
-  /// Définit si le modèle est en cours de chargement
-  void setLoading(bool loading) {
-    if (_isLoading == loading) return;
-    _isLoading = loading;
-    notifyListeners();
-  }
-
-  /// Définit une erreur de chargement
-  void setError(String? errorMessage) {
-    _error = errorMessage;
-    notifyListeners();
-  }
-
-  /// Change l'animation de la mascotte si elle est disponible dans le .glb.
-  Future<void> changeAnimation(String animationName) async {
-    if (_mascot.animationState == animationName) return;
-
-    try {
-      _controller.playAnimation(animationName: animationName);
-      _mascot = _mascot.copyWith(animationState: animationName);
-      _error = null;
-      notifyListeners();
-    } catch (e) {
-      _error = "Impossible de jouer l'animation $animationName: $e";
-      notifyListeners();
-    }
-  }
-
-  /// Sélectionne ou retire un détail visuel (aura, accessoire futur, ambiance).
+  /// Applique un thème visuel à la mascotte.
   ///
-  /// Prépare le terrain pour la customisation future de la mascotte.
+  /// Le thème recolore le modèle 3D à la volée via une ColorMatrix,
+  /// sans nécessiter de nouveau fichier GLB.
+  void setTheme(String themeId) {
+    if (_mascot.themeId == themeId) return;
+
+    _mascot = _mascot.copyWith(themeId: themeId);
+    notifyListeners();
+    _saveTheme(themeId);
+  }
+
+  /// Sélectionne ou retire un détail visuel (accessoire futur).
   void equipCosmetic(String cosmeticId) {
     final List<String> updatedCosmetics = List.from(_mascot.equippedCosmetics);
     if (updatedCosmetics.contains(cosmeticId)) {
@@ -93,19 +55,26 @@ class MascotProvider extends ChangeNotifier {
   /// Réinitialise l'état de la mascotte par défaut
   void resetToDefault() {
     _mascot = MascotModel.defaultMascot();
-    _isLoading = false;
     _error = null;
     notifyListeners();
     _saveMascot();
+    _saveTheme('nature');
   }
 
   Future<void> _loadSavedMascot() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final rawCosmetics = prefs.getStringList(_storageKey);
-      if (rawCosmetics == null) return;
 
-      _mascot = _mascot.copyWith(equippedCosmetics: rawCosmetics);
+      final savedTheme = prefs.getString(_themeKey);
+      if (savedTheme != null && savedTheme != 'nature') {
+        _mascot = _mascot.copyWith(themeId: savedTheme);
+      }
+
+      final rawCosmetics = prefs.getStringList(_storageKey);
+      if (rawCosmetics != null) {
+        _mascot = _mascot.copyWith(equippedCosmetics: rawCosmetics);
+      }
+
       notifyListeners();
     } catch (e) {
       _error = 'Impossible de charger la personnalisation: $e';
@@ -119,6 +88,16 @@ class MascotProvider extends ChangeNotifier {
       await prefs.setStringList(_storageKey, _mascot.equippedCosmetics);
     } catch (e) {
       _error = 'Impossible de sauvegarder la personnalisation: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> _saveTheme(String themeId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_themeKey, themeId);
+    } catch (e) {
+      _error = 'Impossible de sauvegarder le thème: $e';
       notifyListeners();
     }
   }

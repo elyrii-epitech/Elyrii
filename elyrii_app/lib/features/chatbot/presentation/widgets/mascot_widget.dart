@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 
 /// Widget d'affichage de la mascotte Elyrii dans le chatbot.
 ///
@@ -111,7 +114,7 @@ class _MascotWidgetState extends State<MascotWidget>
               width: 100,
               height: visibleHeight,
               child: Center(
-                child: Mascot3DViewer(
+                child: _ThemedMascot(
                   key: ValueKey('mascot_3d_mini'),
                   config: Mascot3DConfig.chatbotMinimized(),
                   width: 80,
@@ -158,7 +161,7 @@ class _MascotWidgetState extends State<MascotWidget>
       height: size,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        child: Mascot3DViewer(
+        child: _ThemedMascot(
           key: const ValueKey('mascot_3d_full'),
           config: const Mascot3DConfig.chatbotFull(),
           width: size,
@@ -202,6 +205,35 @@ class _MascotWidgetState extends State<MascotWidget>
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Wrapper qui applique automatiquement le thème courant de la mascotte.
+class _ThemedMascot extends StatelessWidget {
+  final Mascot3DConfig config;
+  final double width;
+  final double height;
+
+  const _ThemedMascot({
+    super.key,
+    required this.config,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = context.select<MascotProvider, MascotTheme>(
+      (p) => p.currentTheme,
+    );
+    final matrix = theme.id == 'nature' ? null : theme.colorMatrix;
+
+    return Mascot3DViewer(
+      config: config,
+      width: width,
+      height: height,
+      colorMatrix: matrix,
     );
   }
 }

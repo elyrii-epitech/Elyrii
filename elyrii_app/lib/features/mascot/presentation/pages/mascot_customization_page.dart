@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/config/mascot_3d_config.dart';
+import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -9,8 +10,6 @@ import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/widgets/mascot_3d_viewer.dart';
 import '../providers/mascot_provider.dart';
-
-enum _MascotTab { appearance, accessories, ambience }
 
 class MascotCustomizationPage extends StatefulWidget {
   const MascotCustomizationPage({super.key});
@@ -21,102 +20,6 @@ class MascotCustomizationPage extends StatefulWidget {
 }
 
 class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
-  _MascotTab _selectedTab = _MascotTab.appearance;
-
-  static const List<_CosmeticOption> _appearanceOptions = [
-    _CosmeticOption(
-      id: 'aura_lavender',
-      title: 'Aura lavande',
-      subtitle: 'Une présence douce et rassurante',
-      icon: Icons.auto_awesome_rounded,
-      color: AppColors.primary,
-    ),
-    _CosmeticOption(
-      id: 'aura_mint',
-      title: 'Aura menthe',
-      subtitle: 'Fraiche, calme, très légère',
-      icon: Icons.spa_rounded,
-      color: AppColors.accent,
-    ),
-    _CosmeticOption(
-      id: 'aura_peach',
-      title: 'Aura pêche',
-      subtitle: 'Chaleureuse pour le soir',
-      icon: Icons.wb_twilight_rounded,
-      color: AppColors.secondary,
-    ),
-  ];
-
-  static const List<_CosmeticOption> _accessoryOptions = [
-    _CosmeticOption(
-      id: 'scarf_soft',
-      title: 'Écharpe douce',
-      subtitle: 'Petit repère de confort',
-      icon: Icons.checkroom_rounded,
-      color: AppColors.secondary,
-    ),
-    _CosmeticOption(
-      id: 'journal_leaf',
-      title: 'Feuille-journal',
-      subtitle: 'Pour accompagner tes notes',
-      icon: Icons.eco_rounded,
-      color: AppColors.accent,
-    ),
-    _CosmeticOption(
-      id: 'tiny_star',
-      title: 'Étoile discrète',
-      subtitle: 'Un rappel de progression douce',
-      icon: Icons.star_rounded,
-      color: AppColors.xpBar,
-    ),
-  ];
-
-  static const List<_CosmeticOption> _ambienceOptions = [
-    _CosmeticOption(
-      id: 'ambience_morning',
-      title: 'Matin clair',
-      subtitle: 'Lumière simple pour commencer',
-      icon: Icons.light_mode_rounded,
-      color: AppColors.warning,
-    ),
-    _CosmeticOption(
-      id: 'ambience_garden',
-      title: 'Jardin calme',
-      subtitle: 'Idéal pour le journal',
-      icon: Icons.yard_rounded,
-      color: AppColors.accent,
-    ),
-    _CosmeticOption(
-      id: 'ambience_night',
-      title: 'Soir paisible',
-      subtitle: 'Contraste doux avant de dormir',
-      icon: Icons.nightlight_round,
-      color: AppColors.info,
-    ),
-  ];
-
-  List<_CosmeticOption> get _currentOptions {
-    switch (_selectedTab) {
-      case _MascotTab.appearance:
-        return _appearanceOptions;
-      case _MascotTab.accessories:
-        return _accessoryOptions;
-      case _MascotTab.ambience:
-        return _ambienceOptions;
-    }
-  }
-
-  String get _currentTitle {
-    switch (_selectedTab) {
-      case _MascotTab.appearance:
-        return 'Apparence';
-      case _MascotTab.accessories:
-        return 'Accessoires';
-      case _MascotTab.ambience:
-        return 'Ambiance';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -146,14 +49,48 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                 SliverToBoxAdapter(child: _buildPreview(isDark, provider)),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                    child: _buildTabs(isDark),
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                    child: _buildSectionTitle(isDark),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.72,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final theme = MascotThemes.all[index];
+                        final isSelected = provider.mascot.themeId == theme.id;
+                        return _ThemeCard(
+                          theme: theme,
+                          isSelected: isSelected,
+                          isDark: isDark,
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            provider.setTheme(theme.id);
+                          },
+                        );
+                      },
+                      childCount: MascotThemes.all.length,
+                    ),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildOptionSection(isDark, provider),
+                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+                    child: _buildAccessoriesTitle(isDark),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildAccessoriesGrid(isDark, provider),
                   ),
                 ),
                 const SliverToBoxAdapter(child: SizedBox(height: 120)),
@@ -196,7 +133,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                 ),
               ),
               Text(
-                'Choisis son ambiance visuelle, sans pression',
+                'Choisis son thème visuel',
                 style: AppTextStyles.bodySmall(color: subtitleColor),
               ),
             ],
@@ -213,11 +150,14 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
   }
 
   Widget _buildPreview(bool isDark, MascotProvider provider) {
-    final selectedColor = _selectedColor(provider);
+    final theme = provider.currentTheme;
     final textColor =
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
     final subtitleColor =
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
+    final hasHat = provider.mascot.equippedCosmetics.contains('custom1');
+    final matrix = theme.id == 'nature' ? null : theme.colorMatrix;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -238,35 +178,58 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                     height: 190,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color:
-                          selectedColor.withValues(alpha: isDark ? 0.10 : 0.08),
+                      color: theme.accentColor
+                          .withValues(alpha: isDark ? 0.10 : 0.08),
                     ),
                   ),
-                  const Mascot3DViewer(
-                    config: Mascot3DConfig(
-                      cameraOrbitRadius: 4.0,
-                      autoRotateSpeed: 8,
+                  Mascot3DViewer(
+                    config: const Mascot3DConfig(
+                      autoRotate: false,
                       interactionEnabled: false,
                       showLoadingIndicator: true,
                     ),
                     width: 210,
                     height: 220,
+                    colorMatrix: matrix,
                   ),
+                  if (hasHat)
+                    const Positioned(
+                      top: 10,
+                      child: Mascot3DViewer(
+                        config: Mascot3DConfig(
+                          assetPath: 'assets/custom1.glb',
+                          autoRotate: false,
+                          interactionEnabled: false,
+                          showLoadingIndicator: false,
+                        ),
+                        width: 90,
+                        height: 90,
+                      ),
+                    ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              _previewTitle(provider),
-              style: AppTextStyles.titleMedium(
-                color: textColor,
-                fontWeight: FontWeight.w700,
-              ),
-              textAlign: TextAlign.center,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  theme.emoji,
+                  style: const TextStyle(fontSize: 20),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  theme.name,
+                  style: AppTextStyles.titleMedium(
+                    color: textColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
             Text(
-              'Ces détails ajustent l’ambiance autour d’Elyrii. Le modèle 3D reste volontairement stable pour l’instant.',
+              theme.description,
               style: AppTextStyles.bodySmall(color: subtitleColor),
               textAlign: TextAlign.center,
             ),
@@ -276,61 +239,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
     );
   }
 
-  Widget _buildTabs(bool isDark) {
-    return Row(
-      children: _MascotTab.values.map((tab) {
-        final selected = tab == _selectedTab;
-        final label = switch (tab) {
-          _MascotTab.appearance => 'Apparence',
-          _MascotTab.accessories => 'Accessoires',
-          _MascotTab.ambience => 'Ambiance',
-        };
-
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _selectedTab = tab);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.primary.withValues(alpha: 0.14)
-                      : (isDark
-                          ? Colors.white.withValues(alpha: 0.04)
-                          : Colors.black.withValues(alpha: 0.03)),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: selected
-                        ? AppColors.primary.withValues(alpha: 0.35)
-                        : Colors.transparent,
-                  ),
-                ),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.labelMedium(
-                    color: selected
-                        ? AppColors.primary
-                        : (isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight),
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildOptionSection(bool isDark, MascotProvider provider) {
+  Widget _buildSectionTitle(bool isDark) {
     final textColor =
         isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
     final subtitleColor =
@@ -340,7 +249,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _currentTitle,
+          'Thèmes',
           style: AppTextStyles.titleMedium(
             color: textColor,
             fontWeight: FontWeight.w700,
@@ -348,60 +257,182 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Choisis un détail d’ambiance autour d’Elyrii.',
+          'Recolore Elyrii selon ton humeur ou la saison.',
           style: AppTextStyles.bodySmall(color: subtitleColor),
-        ),
-        const SizedBox(height: 12),
-        ..._currentOptions.map(
-          (option) {
-            final selected = provider.mascot.equippedCosmetics.contains(
-              option.id,
-            );
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _CosmeticOptionTile(
-                option: option,
-                selected: selected,
-                isDark: isDark,
-                onTap: () => provider.equipCosmetic(option.id),
-              ),
-            );
-          },
         ),
       ],
     );
   }
 
-  Color _selectedColor(MascotProvider provider) {
-    final ids = provider.mascot.equippedCosmetics;
-    for (final option in [
-      ..._appearanceOptions,
-      ..._accessoryOptions,
-      ..._ambienceOptions,
-    ]) {
-      if (ids.contains(option.id)) return option.color;
-    }
-    return AppColors.primary;
+  Widget _buildAccessoriesTitle(bool isDark) {
+    final textColor =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final subtitleColor =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Accessoires',
+          style: AppTextStyles.titleMedium(
+            color: textColor,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Équipe Elyrii avec des objets débloqués.',
+          style: AppTextStyles.bodySmall(color: subtitleColor),
+        ),
+      ],
+    );
   }
 
-  String _previewTitle(MascotProvider provider) {
-    final count = provider.mascot.equippedCosmetics.length;
-    if (count == 0) return 'Présence par défaut';
-    if (count == 1) return '1 détail sélectionné';
-    return '$count détails sélectionnés';
+  Widget _buildAccessoriesGrid(bool isDark, MascotProvider provider) {
+    const accessories = [
+      _AccessoryDef(id: 'custom1', name: 'Chapeau de diplomé', emoji: '🎓'),
+    ];
+
+    return Wrap(
+      spacing: 14,
+      runSpacing: 14,
+      children: accessories.map((acc) {
+        final isEquipped = provider.mascot.equippedCosmetics.contains(acc.id);
+        final theme = provider.currentTheme;
+        return _AccessoryCard(
+          name: acc.name,
+          emoji: acc.emoji,
+          isEquipped: isEquipped,
+          isDark: isDark,
+          accentColor: theme.accentColor,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            provider.equipCosmetic(acc.id);
+          },
+        );
+      }).toList(),
+    );
   }
 }
 
-class _CosmeticOptionTile extends StatelessWidget {
-  final _CosmeticOption option;
-  final bool selected;
+class _ThemeCard extends StatelessWidget {
+  final MascotTheme theme;
+  final bool isSelected;
   final bool isDark;
   final VoidCallback onTap;
 
-  const _CosmeticOptionTile({
-    required this.option,
-    required this.selected,
+  const _ThemeCard({
+    required this.theme,
+    required this.isSelected,
     required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: LiquidGlassCard(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        color: isSelected
+            ? theme.accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
+            : null,
+        borderColor:
+            isSelected ? theme.accentColor.withValues(alpha: 0.45) : null,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    theme.accentColor.withValues(alpha: 0.35),
+                    theme.accentColor.withValues(alpha: 0.10),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.7, 1.0],
+                ),
+                border: Border.all(
+                  color: isSelected
+                      ? theme.accentColor.withValues(alpha: 0.6)
+                      : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  theme.emoji,
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              theme.name,
+              style: AppTextStyles.labelMedium(
+                color: isSelected ? theme.accentColor : textColor,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: isSelected
+                  ? Container(
+                      key: const ValueKey('selected'),
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.accentColor,
+                      ),
+                    )
+                  : const SizedBox.shrink(
+                      key: ValueKey('idle'),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AccessoryDef {
+  final String id;
+  final String name;
+  final String emoji;
+
+  const _AccessoryDef({
+    required this.id,
+    required this.name,
+    required this.emoji,
+  });
+}
+
+class _AccessoryCard extends StatelessWidget {
+  final String name;
+  final String emoji;
+  final bool isEquipped;
+  final bool isDark;
+  final Color accentColor;
+  final VoidCallback onTap;
+
+  const _AccessoryCard({
+    required this.name,
+    required this.emoji,
+    required this.isEquipped,
+    required this.isDark,
+    required this.accentColor,
     required this.onTap,
   });
 
@@ -412,78 +443,70 @@ class _CosmeticOptionTile extends StatelessWidget {
     final subtitleColor =
         isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
 
-    return LiquidGlassCard(
+    return GestureDetector(
       onTap: onTap,
-      padding: const EdgeInsets.all(14),
-      color: selected
-          ? option.color.withValues(alpha: isDark ? 0.16 : 0.12)
-          : null,
-      borderColor: selected ? option.color.withValues(alpha: 0.35) : null,
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: option.color.withValues(alpha: isDark ? 0.18 : 0.14),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(option.icon, color: option.color, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  option.title,
-                  style: AppTextStyles.titleSmall(
-                    color: selected ? option.color : textColor,
-                    fontWeight: FontWeight.w700,
+      child: LiquidGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        color: isEquipped
+            ? accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
+            : null,
+        borderColor: isEquipped ? accentColor.withValues(alpha: 0.45) : null,
+        child: SizedBox(
+          width: 140,
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      accentColor.withValues(alpha: 0.30),
+                      accentColor.withValues(alpha: 0.08),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.7, 1.0],
+                  ),
+                  border: Border.all(
+                    color: isEquipped
+                        ? accentColor.withValues(alpha: 0.6)
+                        : Colors.transparent,
+                    width: 1.5,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  option.subtitle,
-                  style: AppTextStyles.bodySmall(color: subtitleColor),
+                child: Center(
+                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: AppTextStyles.titleSmall(
+                        color: isEquipped ? accentColor : textColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isEquipped ? 'Equipé' : 'Touche pour équiper',
+                      style: AppTextStyles.labelSmall(
+                        color: subtitleColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
-            child: selected
-                ? Icon(
-                    Icons.check_circle_rounded,
-                    key: const ValueKey('selected'),
-                    color: option.color,
-                    size: 22,
-                  )
-                : Icon(
-                    Icons.circle_outlined,
-                    key: const ValueKey('idle'),
-                    color: subtitleColor.withValues(alpha: 0.35),
-                    size: 22,
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }
-}
-
-class _CosmeticOption {
-  final String id;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-
-  const _CosmeticOption({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-  });
 }

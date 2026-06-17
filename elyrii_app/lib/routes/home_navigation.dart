@@ -10,7 +10,9 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_dimensions.dart';
 import '../core/widgets/glass_navigation_bar.dart';
 import '../core/widgets/glass_bubble_button.dart';
+import '../core/widgets/mascot_customize_button.dart';
 import '../core/services/glass_performance_service.dart';
+import 'app_routes.dart';
 
 class HomeNavigation extends StatefulWidget {
   const HomeNavigation({super.key});
@@ -175,10 +177,30 @@ class _HomeNavigationState extends State<HomeNavigation>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final performanceService = GlassPerformanceService();
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       extendBody: true,
-      body: _buildPageContent(performanceService),
+      body: Stack(
+        children: [
+          _buildPageContent(performanceService),
+          // Bouton de personnalisation mascotte (overlay global, haut gauche)
+          Positioned(
+            top: topPadding + 12,
+            left: 16,
+            child: MascotCustomizeButton(
+              isDark: isDark,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.mascotCustomization,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: _buildBottomBar(isDark),
     );
   }

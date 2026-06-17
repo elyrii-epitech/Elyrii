@@ -54,8 +54,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // Espace pour la mascotte peek
-                    SizedBox(height: topPadding + 100),
+                    // Espace pour la mascotte 3D peek
+                    SizedBox(height: topPadding + 132),
 
                     // Container principal avec le contenu
                     Padding(

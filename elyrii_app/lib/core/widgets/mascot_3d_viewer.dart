@@ -31,6 +31,11 @@ class Mascot3DViewer extends StatefulWidget {
   /// Si non fourni, un contrôleur interne est créé automatiquement.
   final Flutter3DController? controller;
 
+  /// Matrice de couleur optionnelle (20 valeurs) pour recolorer le modèle.
+  /// Si null, aucune transformation n'est appliquée.
+  /// Utilisée par le système de thèmes (voir [MascotThemes]).
+  final List<double>? colorMatrix;
+
   /// Callback appelé quand le modèle est chargé avec succès.
   final VoidCallback? onModelLoaded;
 
@@ -43,6 +48,7 @@ class Mascot3DViewer extends StatefulWidget {
     this.width = 150,
     this.height = 150,
     this.controller,
+    this.colorMatrix,
     this.onModelLoaded,
     this.onError,
   });
@@ -69,7 +75,6 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
   @override
   void didUpdateWidget(Mascot3DViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Si un nouveau contrôleur externe est fourni, l'utiliser
     if (widget.controller != null &&
         widget.controller != oldWidget.controller) {
       _controller = widget.controller!;
@@ -85,7 +90,6 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
   void _onModelLoaded(String modelAddress) {
     if (!mounted) return;
 
-    // Configurer la caméra après un court délai pour laisser la plateforme s'initialiser
     Future.delayed(const Duration(milliseconds: 300), () {
       if (mounted) {
         if (widget.config.useCameraOrbit) {
@@ -96,6 +100,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
           );
         }
         _applyRotationConfig();
+        _playIdleAnimation();
       }
     });
 
@@ -105,6 +110,16 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
     });
 
     widget.onModelLoaded?.call();
+  }
+
+  /// Joue l'animation "idle" intégrée au modèle GLB en boucle.
+  /// Le modèle Elyrii embarque les animations : idle, wave, twitch, look.
+  void _playIdleAnimation() {
+    try {
+      _controller.playAnimation(animationName: 'idle');
+    } catch (error) {
+      debugPrint('Mascot3DViewer: Erreur lecture animation idle: $error');
+    }
   }
 
   void _applyRotationConfig() {
@@ -135,7 +150,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    final child = RepaintBoundary(
       child: IgnorePointer(
         ignoring: !widget.config.interactionEnabled,
         child: SizedBox(
@@ -145,13 +160,20 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
         ),
       ),
     );
+
+    if (widget.colorMatrix != null) {
+      return ColorFiltered(
+        colorFilter: ColorFilter.matrix(widget.colorMatrix!),
+        child: child,
+      );
+    }
+    return child;
   }
 
   Widget _buildViewer() {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // Le viewer 3D
         Flutter3DViewer(
           controller: _controller,
           src: widget.config.assetPath,
@@ -160,14 +182,10 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
           progressBarColor: widget.config.showLoadingIndicator
               ? AppColors.primary
               : Colors.transparent,
-          onProgress: (double progressValue) {
-            // Progression du chargement disponible si besoin
-          },
+          onProgress: (_) {},
           onLoad: _onModelLoaded,
           onError: _onModelError,
         ),
-
-        // Shimmer loading overlay
         if (_isLoading && widget.config.showLoadingIndicator)
           Positioned.fill(
             child: _buildLoadingShimmer(),
@@ -199,7 +217,6 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
       height: widget.height,
       fit: BoxFit.contain,
       errorBuilder: (context, error, stackTrace) {
-        // Si même le PNG échoue, afficher un placeholder
         return Icon(
           Icons.pets_rounded,
           size: widget.width * 0.5,

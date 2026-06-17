@@ -38,7 +38,7 @@ class Mascot3DConfig {
     this.cameraOrbitTheta = 0,
     this.cameraOrbitPhi = 75,
     this.cameraOrbitRadius = 5.0,
-    this.autoRotate = true,
+    this.autoRotate = false,
     this.autoRotateSpeed = 20,
     this.interactionEnabled = false,
     this.showLoadingIndicator = true,
@@ -46,42 +46,42 @@ class Mascot3DConfig {
   });
 
   /// Configuration pour les pages d'authentification (login/register).
-  /// Rotation douce, pas d'interaction tactile.
+  /// Animation idle intégrée au modèle, pas d'interaction tactile.
   const Mascot3DConfig.authPage()
       : assetPath = 'assets/base_basic_shaded_v3.glb',
         cameraOrbitTheta = 0,
         cameraOrbitPhi = 60,
         cameraOrbitRadius =
             14.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
-        autoRotate = true,
+        autoRotate = false,
         autoRotateSpeed = 15,
         interactionEnabled = false,
         showLoadingIndicator = false,
         useCameraOrbit = false;
 
   /// Configuration pour le chatbot en mode plein écran.
-  /// Rotation douce, sans interaction tactile.
+  /// Animation idle intégrée au modèle, sans interaction tactile.
   const Mascot3DConfig.chatbotFull()
       : assetPath = 'assets/base_basic_shaded_v3.glb',
         cameraOrbitTheta = 0,
         cameraOrbitPhi = 75,
         cameraOrbitRadius =
             5.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
-        autoRotate = true,
+        autoRotate = false,
         autoRotateSpeed = 20,
         interactionEnabled = false, // Désactiver les interactions tactiles
         showLoadingIndicator = true,
         useCameraOrbit = false;
 
   /// Configuration pour le chatbot en mode minimisé (banner).
-  /// Rotation très lente, pas d'interaction tactile.
+  /// Animation idle intégrée au modèle, pas d'interaction tactile.
   const Mascot3DConfig.chatbotMinimized()
       : assetPath = 'assets/base_basic_shaded_v3.glb',
         cameraOrbitTheta = 0,
         cameraOrbitPhi = 75,
         cameraOrbitRadius =
             5.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
-        autoRotate = true,
+        autoRotate = false,
         autoRotateSpeed = 10,
         interactionEnabled = false,
         showLoadingIndicator = false,
