@@ -58,8 +58,9 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
       Future.delayed(Duration(milliseconds: 30 + (_charIndex % 3) * 10), () {
         if (mounted && _charIndex < widget.message.characters.length) {
           setState(() {
-            _displayedText =
-                widget.message.characters.take(_charIndex + 1).toString();
+            _displayedText = widget.message.characters
+                .take(_charIndex + 1)
+                .toString();
             _charIndex++;
           });
           _startTypingAnimation();

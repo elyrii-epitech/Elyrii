@@ -10,8 +10,9 @@ class GamificationRepository {
 
   /// Parse a list response into UserChallenge objects
   List<UserChallenge> _parseList(dynamic response) {
-    final List<dynamic> data =
-        response is List ? response : (response['data'] ?? []);
+    final List<dynamic> data = response is List
+        ? response
+        : (response['data'] ?? []);
     return data
         .map((e) => UserChallenge.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -54,8 +55,9 @@ class GamificationRepository {
   /// Fetch SYSTEM challenges not yet started by the user
   Future<List<ChallengeTemplate>> getAvailableChallenges() async {
     final response = await _client.get(ApiConfig.availableChallengesUrl);
-    final List<dynamic> data =
-        response is List ? response : (response['data'] ?? []);
+    final List<dynamic> data = response is List
+        ? response
+        : (response['data'] ?? []);
     return data
         .map((e) => ChallengeTemplate.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -63,8 +65,9 @@ class GamificationRepository {
 
   /// Start a SYSTEM challenge (assigns it as ACTIVE)
   Future<UserChallenge> startChallenge(String challengeId) async {
-    final response = await _client
-        .post(ApiConfig.startChallengeUrl(challengeId)) as Map<String, dynamic>;
+    final response =
+        await _client.post(ApiConfig.startChallengeUrl(challengeId))
+            as Map<String, dynamic>;
     // Backend returns { challenge, userChallenge }
     if (response['userChallenge'] is Map<String, dynamic>) {
       final uc = UserChallenge.fromJson(

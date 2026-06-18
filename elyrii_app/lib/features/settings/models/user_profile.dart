@@ -34,16 +34,17 @@ class UserProfile {
   }
 
   Map<String, dynamic> toJson() => {
-        'firstName': firstName,
-        'lastName': lastName,
-        'age': age,
-        'pfp': pfp,
-      };
+    'firstName': firstName,
+    'lastName': lastName,
+    'age': age,
+    'pfp': pfp,
+  };
 
   String get displayName {
     if (firstName != null && firstName!.isNotEmpty) {
-      final last =
-          (lastName != null && lastName!.isNotEmpty) ? ' $lastName' : '';
+      final last = (lastName != null && lastName!.isNotEmpty)
+          ? ' $lastName'
+          : '';
       return '$firstName$last';
     }
     return email.split('@').first;

@@ -44,8 +44,9 @@ class _DashboardPageState extends State<DashboardPage> {
         final firstName = authProvider.user?.firstName ?? '';
 
         return Scaffold(
-          backgroundColor:
-              isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+          backgroundColor: isDark
+              ? AppColors.scaffoldDark
+              : AppColors.scaffoldLight,
           body: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -54,8 +55,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // Espace pour la mascotte peek
-                    SizedBox(height: topPadding + 100),
+                    // Espace pour la mascotte 3D peek
+                    SizedBox(height: topPadding + 132),
 
                     // Container principal avec le contenu
                     Padding(
@@ -67,12 +68,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           // Speech Bubble de la mascotte
                           MascotSpeechBubble(
-                            message: provider.mascotMessage,
-                            isDark: isDark,
-                            onTap: provider.nextMascotMessage,
-                          ).animate().fadeIn(delay: 400.ms).scale(
-                                curve: Curves.easeOutBack,
-                              ),
+                                message: provider.mascotMessage,
+                                isDark: isDark,
+                                onTap: provider.nextMascotMessage,
+                              )
+                              .animate()
+                              .fadeIn(delay: 400.ms)
+                              .scale(curve: Curves.easeOutBack),
 
                           const SizedBox(height: 24),
 
@@ -148,7 +150,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildGreeting(
-      DashboardProvider provider, bool isDark, String firstName) {
+    DashboardProvider provider,
+    bool isDark,
+    String firstName,
+  ) {
     return Column(
       children: [
         Text(
@@ -156,8 +161,9 @@ class _DashboardPageState extends State<DashboardPage> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color:
-                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
             letterSpacing: -0.5,
           ),
           textAlign: TextAlign.center,
@@ -201,7 +207,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('💭', style: TextStyle(fontSize: 20)),
+                child: const Icon(
+                  Icons.mood_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -262,15 +272,15 @@ class _DashboardPageState extends State<DashboardPage> {
     return Row(
       children: [
         _StatChip(
-          icon: '📝',
-          value: '${provider.journalEntriesCount}',
+          icon: Icons.edit_note_rounded,
+          value: '7',
           label: 'entrées',
           color: AppColors.primary,
           isDark: isDark,
         ),
         const SizedBox(width: 12),
         _StatChip(
-          icon: '🔥',
+          icon: Icons.local_fire_department_rounded,
           value: '${provider.currentStreak}',
           label: 'jours',
           color: AppColors.secondary,
@@ -278,8 +288,8 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         const SizedBox(width: 12),
         _StatChip(
-          icon: '⭐',
-          value: '${provider.activeChallengesCount}',
+          icon: Icons.star_rounded,
+          value: '3',
           label: 'objectifs',
           color: AppColors.accent,
           isDark: isDark,
@@ -378,8 +388,8 @@ class _MoodChipState extends State<_MoodChip> {
             color: widget.isSelected
                 ? AppColors.primary.withValues(alpha: 0.2)
                 : (widget.isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.03)),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03)),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: widget.isSelected
@@ -388,9 +398,14 @@ class _MoodChipState extends State<_MoodChip> {
               width: 2,
             ),
           ),
-          child: Text(
-            widget.mood.emoji,
-            style: TextStyle(fontSize: widget.isSelected ? 28 : 24),
+          child: Icon(
+            widget.mood.icon,
+            size: widget.isSelected ? 28 : 24,
+            color: widget.isSelected
+                ? widget.mood.color
+                : (widget.isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight),
           ),
         ),
       ),
@@ -400,7 +415,7 @@ class _MoodChipState extends State<_MoodChip> {
 
 /// Chip de statistique
 class _StatChip extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String value;
   final String label;
   final Color color;
@@ -421,7 +436,7 @@ class _StatChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         child: Column(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 22)),
+            Icon(icon, size: 22, color: color),
             const SizedBox(height: 8),
             Text(
               value,

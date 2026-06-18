@@ -5,7 +5,7 @@ import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
 class DailyStreakCard extends StatelessWidget {
   final int streakDays;
-  final List<bool> weekHistory; // true = completed, false = missed
+  final List<bool> weekHistory;
 
   const DailyStreakCard({
     super.key,
@@ -15,8 +15,7 @@ class DailyStreakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return LiquidGlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -24,40 +23,25 @@ class DailyStreakCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Flame Icon with Glow
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.streak.withValues(alpha: 0.15),
+                  color: AppColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.streak.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      spreadRadius: -2,
-                    ),
-                  ],
                 ),
-                child: const Text('🔥', style: TextStyle(fontSize: 24)),
-              )
-                  .animate(
-                    onPlay: (controller) => controller.repeat(reverse: true),
-                  )
-                  .scaleXY(
-                    begin: 1.0,
-                    end: 1.1,
-                    duration: 1500.ms,
-                    curve: Curves.easeInOut,
-                  ),
-
+                child: const Icon(
+                  Icons.favorite_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
               const SizedBox(width: 16),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '$streakDays jours de suite !',
+                      'Ton rythme cette semaine',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -68,7 +52,9 @@ class DailyStreakCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Continue comme ça, c\'est super !',
+                      streakDays > 0
+                          ? 'Vous avez partage $streakDays moments ensemble'
+                          : 'Elyrii est la quand tu en as besoin',
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark
@@ -82,76 +68,115 @@ class DailyStreakCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          // Weekly Bubbles
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
-              final isCompleted =
-                  index < weekHistory.length ? weekHistory[index] : false;
+              final wasPresent = index < weekHistory.length
+                  ? weekHistory[index]
+                  : false;
               final dayInitial = _getDayInitial(index);
 
               return Column(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: isCompleted
-                          ? AppColors.streak
-                          : isDark
-                              ? Colors.white.withValues(alpha: 0.05)
-                              : Colors.black.withValues(alpha: 0.03),
-                      shape: BoxShape.circle,
-                      boxShadow: isCompleted
-                          ? [
-                              BoxShadow(
-                                color: AppColors.streak.withValues(
-                                  alpha: 0.4,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 400),
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: wasPresent
+                              ? AppColors.accent.withValues(alpha: 0.2)
+                              : isDark
+                              ? Colors.white.withValues(alpha: 0.04)
+                              : Colors.black.withValues(alpha: 0.02),
+                          shape: BoxShape.circle,
+                          border: wasPresent
+                              ? Border.all(
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  width: 1.5,
+                                )
+                              : Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.06)
+                                      : Colors.black.withValues(alpha: 0.04),
+                                  width: 0.5,
                                 ),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                      border: isCompleted
-                          ? null
-                          : Border.all(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : Colors.black.withValues(alpha: 0.05),
-                              width: 1,
-                            ),
-                    ),
-                    alignment: Alignment.center,
-                    child: isCompleted
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    dayInitial,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isCompleted
-                          ? (isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight)
-                          : (isDark
-                              ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight),
-                    ),
-                  ),
-                ],
-              )
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          wasPresent
+                              ? Icons.wb_sunny_rounded
+                              : Icons.cloud_rounded,
+                          size: 18,
+                          color: wasPresent
+                              ? AppColors.accent
+                              : (isDark
+                                        ? AppColors.textTertiaryDark
+                                        : AppColors.textTertiaryLight)
+                                    .withValues(alpha: 0.5),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        dayInitial,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  )
                   .animate()
-                  .fadeIn(delay: (100 * index).ms)
-                  .slideY(begin: 0.2, end: 0);
+                  .fadeIn(delay: (80 * index).ms)
+                  .slideY(begin: 0.15, end: 0);
             }),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.wb_sunny_rounded,
+                size: 12,
+                color: AppColors.accent,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Moments vécus',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Icon(
+                Icons.cloud_rounded,
+                size: 12,
+                color:
+                    (isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight)
+                        .withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Repos & recharge',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -182,13 +182,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               children: [
                 // Champ titre
                 GlassTextField(
-                  controller: _titleController,
-                  hint: 'Titre (optionnel)',
-                  isDark: isDark,
-                  maxLines: 1,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                )
+                      controller: _titleController,
+                      hint: 'Titre (optionnel)',
+                      isDark: isDark,
+                      maxLines: 1,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    )
                     .animate()
                     .fadeIn(
                       duration: 300.ms,
@@ -204,13 +204,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                 const SizedBox(height: 16),
                 // Champ contenu
                 GlassTextField(
-                  controller: _contentController,
-                  hint: 'Exprime ce que tu ressens...',
-                  isDark: isDark,
-                  maxLines: null,
-                  minLines: 12,
-                  fontSize: 16,
-                )
+                      controller: _contentController,
+                      hint: 'Exprime ce que tu ressens...',
+                      isDark: isDark,
+                      maxLines: null,
+                      minLines: 12,
+                      fontSize: 16,
+                    )
                     .animate()
                     .fadeIn(
                       duration: 300.ms,

@@ -192,7 +192,8 @@ class GlassContainer extends StatelessWidget {
       return null;
     }
 
-    final isLiquidGlass = intensity == GlassIntensity.liquidGlass ||
+    final isLiquidGlass =
+        intensity == GlassIntensity.liquidGlass ||
         intensity == GlassIntensity.intense;
 
     return Positioned(
@@ -286,7 +287,8 @@ class GlassContainer extends StatelessWidget {
                   color: borderColor ?? _defaultBorderColor,
                   width: borderWidth,
                 ),
-                boxShadow: boxShadow ??
+                boxShadow:
+                    boxShadow ??
                     [
                       // iOS 26: ombre douce par défaut
                       BoxShadow(

@@ -40,6 +40,11 @@ _templates/
 .windsurf/
 .agent/
 
+# AI Tools & Artifacts
+.factory/
+.antigravitycli/
+.playwright-mcp/
+screenshot-*.png
 # Claude Code — local only
 .claude/
 CLAUDE.md

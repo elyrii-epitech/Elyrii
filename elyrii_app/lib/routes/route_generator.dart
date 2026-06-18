@@ -7,6 +7,7 @@ import '../features/journal/presentation/pages/journal_page.dart';
 import '../features/coach/presentation/pages/coach_page.dart';
 import '../features/meditation/presentation/pages/meditation_page.dart';
 import '../features/chatbot/presentation/pages/chatbot_page.dart';
+import '../features/mascot/presentation/pages/mascot_customization_page.dart';
 import '../features/settings/pages/settings_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
@@ -34,6 +35,21 @@ class RouteGenerator {
 
       case AppRoutes.chatbot:
         return MaterialPageRoute(builder: (_) => const ChatbotPage());
+
+      case AppRoutes.mascotCustomization:
+        return PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const MascotCustomizationPage(),
+          transitionDuration: const Duration(milliseconds: 260),
+          reverseTransitionDuration: const Duration(milliseconds: 220),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final fadeAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOut,
+            );
+            return FadeTransition(opacity: fadeAnimation, child: child);
+          },
+        );
 
       case AppRoutes.settings:
         return PageRouteBuilder(

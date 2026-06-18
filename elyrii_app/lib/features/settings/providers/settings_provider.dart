@@ -12,7 +12,7 @@ class UserProvider extends ChangeNotifier {
   String? _error;
 
   UserProvider({required ApiClient client})
-      : _repository = UserRepository(client: client);
+    : _repository = UserRepository(client: client);
 
   UserProfile? get profile => _profile;
   bool get isLoading => _isLoading;

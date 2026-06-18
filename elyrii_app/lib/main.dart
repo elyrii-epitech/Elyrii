@@ -16,18 +16,16 @@ import 'features/journal/presentation/providers/journal_provider.dart';
 import 'features/chatbot/presentation/providers/chatbot_provider.dart';
 import 'features/gamification/presentation/providers/gamification_provider.dart';
 import 'features/settings/providers/settings_provider.dart';
+import 'features/mascot/presentation/providers/mascot_provider.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 
 void main() async {
-  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configure API base URL for current platform
   AppConfig.initialize();
 
-  // Initialize core services
   final secureStorage = SecureStorageService();
   final apiClient = ApiClient(storage: secureStorage);
   final themeProvider = ThemeProvider();
@@ -35,21 +33,19 @@ void main() async {
 
   await Future.wait([themeProvider.init(), performanceService.init()]);
 
-  // Create providers that depend on ApiClient
   final authProvider = AuthProvider(client: apiClient, storage: secureStorage);
   final journalProvider = JournalProvider(client: apiClient);
   final chatbotProvider = ChatbotProvider(storage: secureStorage);
   final gamificationProvider = GamificationProvider(client: apiClient);
   final userProvider = UserProvider(client: apiClient);
+  final mascotProvider = MascotProvider();
   final dashboardProvider = DashboardProvider(apiClient: apiClient);
 
   // Perform backend health check
   unawaited(apiClient.checkHealth());
 
-  // Check if user is already authenticated
   await authProvider.checkAuthStatus();
 
-  // Configuration de la barre de statut
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -57,7 +53,6 @@ void main() async {
     ),
   );
 
-  // Verrouiller l'orientation en portrait
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -73,6 +68,7 @@ void main() async {
         ChangeNotifierProvider.value(value: chatbotProvider),
         ChangeNotifierProvider.value(value: gamificationProvider),
         ChangeNotifierProvider.value(value: userProvider),
+        ChangeNotifierProvider.value(value: mascotProvider),
         ChangeNotifierProvider.value(value: dashboardProvider),
       ],
       child: const MyApp(),
@@ -91,44 +87,18 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: AppConstants.appName,
           debugShowCheckedModeBanner: false,
-
-          // Thèmes
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.themeMode,
-
           builder: (context, child) {
             return GlobalErrorBoundary(child: child!);
           },
-
-          initialRoute:
-              authProvider.isAuthenticated ? AppRoutes.home : AppRoutes.login,
+          initialRoute: authProvider.isAuthenticated
+              ? AppRoutes.home
+              : AppRoutes.login,
           onGenerateRoute: RouteGenerator.generateRoute,
         );
       },
     );
-  }
-}
-
-/// @deprecated Use ThemeProvider instead via Provider.of[ThemeProvider](context)
-/// Kept for backward compatibility during migration
-class ThemeSwitcher extends InheritedWidget {
-  final VoidCallback toggleTheme;
-  final ThemeMode themeMode;
-
-  const ThemeSwitcher({
-    super.key,
-    required this.toggleTheme,
-    required this.themeMode,
-    required super.child,
-  });
-
-  static ThemeSwitcher? of(BuildContext context) {
-    return context.dependOnInheritedWidgetOfExactType<ThemeSwitcher>();
-  }
-
-  @override
-  bool updateShouldNotify(ThemeSwitcher oldWidget) {
-    return themeMode != oldWidget.themeMode;
   }
 }

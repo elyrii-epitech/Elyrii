@@ -40,11 +40,7 @@ class ChallengeAvailableCard extends StatelessWidget {
                   width: 1,
                 ),
               ),
-              child: Icon(
-                challenge.icon,
-                color: AppColors.primary,
-                size: 20,
-              ),
+              child: Icon(challenge.icon, color: AppColors.primary, size: 20),
             ),
             const SizedBox(width: 16),
 

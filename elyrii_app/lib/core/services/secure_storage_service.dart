@@ -16,15 +16,15 @@ class SecureStorageService {
   bool _useFallback = false;
 
   SecureStorageService()
-      : _storage = const FlutterSecureStorage(
-          aOptions: AndroidOptions(),
-          iOptions: IOSOptions(
-            accessibility: KeychainAccessibility.first_unlock_this_device,
-          ),
-          mOptions: MacOsOptions(
-            accessibility: KeychainAccessibility.first_unlock_this_device,
-          ),
-        );
+    : _storage = const FlutterSecureStorage(
+        aOptions: AndroidOptions(),
+        iOptions: IOSOptions(
+          accessibility: KeychainAccessibility.first_unlock_this_device,
+        ),
+        mOptions: MacOsOptions(
+          accessibility: KeychainAccessibility.first_unlock_this_device,
+        ),
+      );
 
   Future<void> _initFallback() async {
     if (_prefs != null) return;
@@ -101,7 +101,8 @@ class SecureStorageService {
     } on PlatformException catch (e) {
       if (e.code == '-34018' || e.message?.contains('-34018') == true) {
         debugPrint(
-            'SecureStorage: Keychain inaccessible. Using SharedPreferences fallback.');
+          'SecureStorage: Keychain inaccessible. Using SharedPreferences fallback.',
+        );
         _useFallback = true;
         await _initFallback();
         await _prefs?.setString(key, value);

@@ -7,6 +7,7 @@ import '../widgets/typing_indicator.dart';
 import '../widgets/mascot_widget.dart';
 import '../widgets/conversation_suggestions.dart';
 import '../widgets/emergency_resources_button.dart';
+import '../widgets/crisis_detection_banner.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 
 class ChatbotPage extends StatefulWidget {
@@ -23,6 +24,7 @@ class _ChatbotPageState extends State<ChatbotPage>
   final FocusNode _focusNode = FocusNode();
   bool _isTextFieldFocused = false;
   bool _hasStartedTyping = false;
+  bool _showCrisisBanner = false;
   late AnimationController _inputAnimationController;
   late Animation<double> _inputGlowAnimation;
 
@@ -43,13 +45,21 @@ class _ChatbotPageState extends State<ChatbotPage>
     );
 
     _textController.addListener(() {
-      if (_textController.text.isNotEmpty && !_hasStartedTyping) {
+      final text = _textController.text;
+      if (text.isNotEmpty && !_hasStartedTyping) {
         setState(() => _hasStartedTyping = true);
         _inputAnimationController.repeat(reverse: true);
-      } else if (_textController.text.isEmpty && _hasStartedTyping) {
+      } else if (text.isEmpty && _hasStartedTyping) {
         setState(() => _hasStartedTyping = false);
         _inputAnimationController.stop();
         _inputAnimationController.reset();
+      }
+
+      // Crisis keyword detection
+      final shouldShowCrisisBanner =
+          text.isNotEmpty && containsCrisisKeyword(text);
+      if (_showCrisisBanner != shouldShowCrisisBanner) {
+        setState(() => _showCrisisBanner = shouldShowCrisisBanner);
       }
     });
 
@@ -61,6 +71,10 @@ class _ChatbotPageState extends State<ChatbotPage>
       _isTextFieldFocused = _focusNode.hasFocus;
     });
     context.read<ChatbotProvider>().toggleMascotSize(_focusNode.hasFocus);
+  }
+
+  void _dismissCrisisBanner() {
+    setState(() => _showCrisisBanner = false);
   }
 
   @override
@@ -105,8 +119,9 @@ class _ChatbotPageState extends State<ChatbotPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       extendBody: true,
       body: SafeArea(
         bottom: false,
@@ -172,7 +187,8 @@ class _ChatbotPageState extends State<ChatbotPage>
                                           top: 8,
                                           bottom: 8,
                                         ),
-                                        itemCount: provider.messages.length +
+                                        itemCount:
+                                            provider.messages.length +
                                             (provider.isTyping ? 1 : 0),
                                         itemBuilder: (context, index) {
                                           if (index == 0 && provider.isTyping) {
@@ -181,8 +197,10 @@ class _ChatbotPageState extends State<ChatbotPage>
                                           final messageIndex = provider.isTyping
                                               ? index - 1
                                               : index;
-                                          final message = provider.messages[
-                                              provider.messages.length -
+                                          final message =
+                                              provider.messages[provider
+                                                      .messages
+                                                      .length -
                                                   1 -
                                                   messageIndex];
                                           return ChatMessageBubble(
@@ -202,6 +220,10 @@ class _ChatbotPageState extends State<ChatbotPage>
                   );
                 },
               ),
+            ),
+            CrisisDetectionBanner(
+              visible: _showCrisisBanner,
+              onDismiss: _dismissCrisisBanner,
             ),
             _buildInputArea(isDark),
           ],
@@ -289,7 +311,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                 opacity: _hasStartedTyping ? 1.0 : 0.0,
                 duration: const Duration(milliseconds: 300),
                 child: Text(
-                  '💜 Continue, je t\'écoute...',
+                  'Continue, je t\'écoute...',
                   style: TextStyle(
                     color: AppColors.primary.withValues(alpha: 0.8),
                     fontSize: 12,
@@ -306,8 +328,9 @@ class _ChatbotPageState extends State<ChatbotPage>
                   builder: (context, child) {
                     return Container(
                       decoration: BoxDecoration(
-                        color:
-                            isDark ? AppColors.cardDark : AppColors.cardLight,
+                        color: isDark
+                            ? AppColors.cardDark
+                            : AppColors.cardLight,
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
                           color: _hasStartedTyping
@@ -315,11 +338,11 @@ class _ChatbotPageState extends State<ChatbotPage>
                                   alpha: _inputGlowAnimation.value,
                                 )
                               : _isTextFieldFocused
-                                  ? AppColors.primary.withValues(alpha: 0.5)
-                                  : (isDark
-                                          ? AppColors.borderDark
-                                          : AppColors.borderLight)
-                                      .withValues(alpha: 0.3),
+                              ? AppColors.primary.withValues(alpha: 0.5)
+                              : (isDark
+                                        ? AppColors.borderDark
+                                        : AppColors.borderLight)
+                                    .withValues(alpha: 0.3),
                           width: _hasStartedTyping ? 1.5 : 1,
                         ),
                         boxShadow: _hasStartedTyping

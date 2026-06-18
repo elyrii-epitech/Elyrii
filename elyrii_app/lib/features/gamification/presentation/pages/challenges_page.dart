@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 import '../providers/gamification_provider.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
@@ -19,45 +20,43 @@ class ChallengesPage extends StatefulWidget {
 }
 
 class _ChallengesPageState extends State<ChallengesPage> {
-  // Suivi du défi en cours de démarrage (pour spinner local)
   String? _startingChallengeId;
   String? _processingProposalId;
 
-  // Badges mockés (pas encore de backend pour ça)
-  final List<BadgeItem> _badges = [
-    const BadgeItem(
+  static const List<BadgeItem> _badges = [
+    BadgeItem(
       id: '1',
-      title: 'Premiers Pas',
+      title: 'Premier pas',
       icon: Icons.directions_walk_rounded,
       isUnlocked: true,
     ),
-    const BadgeItem(
+    BadgeItem(
       id: '2',
       title: 'Explorateur',
       icon: Icons.explore_rounded,
       isUnlocked: true,
     ),
-    const BadgeItem(
+    BadgeItem(
       id: '3',
-      title: 'Zen Master',
+      title: 'Pleine conscience',
       icon: Icons.spa_rounded,
       isUnlocked: false,
     ),
-    const BadgeItem(
+    BadgeItem(
       id: '4',
-      title: 'Bavard',
-      icon: Icons.record_voice_over_rounded,
+      title: 'Écoute active',
+      icon: Icons.hearing_rounded,
       isUnlocked: false,
     ),
-    const BadgeItem(
+    BadgeItem(
       id: '5',
-      title: 'Night Owl',
+      title: 'Étoile du soir',
       icon: Icons.nights_stay_rounded,
       isUnlocked: false,
     ),
-    const BadgeItem(
+    BadgeItem(
       id: '6',
-      title: 'Early Bird',
+      title: 'Lumière du matin',
       icon: Icons.wb_sunny_rounded,
       isUnlocked: false,
     ),
@@ -96,12 +95,12 @@ class _ChallengesPageState extends State<ChallengesPage> {
     final provider = context.watch<GamificationProvider>();
     final dashboardProvider = context.watch<DashboardProvider>();
 
-    // Use real streak from dashboard provider
     final streakDays = dashboardProvider.currentStreak;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: RefreshIndicator(
         onRefresh: () => provider.loadAll(),
         color: AppColors.primary,
@@ -121,28 +120,20 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header niveau (mock — sera connecté quand /user/stats est branché)
+                      _buildGardenHeader(isDark),
+                      const SizedBox(height: 20),
                       LevelProgressHeader(
                         level: 1 + provider.completedChallenges.length ~/ 3,
                         currentXp: provider.completedChallenges.length * 50,
                         maxXp: 150,
                         title: 'Explorateur de l\'esprit',
                       ),
-
                       const SizedBox(height: 16),
-
-                      // Streak
                       DailyStreakCard(
                         streakDays: streakDays,
-                        weekHistory: List.generate(
-                          7,
-                          (i) => i < streakDays,
-                        ),
+                        weekHistory: List.generate(7, (i) => i < streakDays),
                       ),
-
                       const SizedBox(height: 32),
-
-                      // ── Propositions IA ────────────────────────────
                       if (provider.proposals.isNotEmpty) ...[
                         _sectionTitle(context, 'Propositions IA', isDark),
                         const SizedBox(height: 12),
@@ -156,8 +147,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ),
                         const SizedBox(height: 24),
                       ],
-
-                      // ── Défis disponibles ──────────────────────────
                       if (provider.availableChallenges.isNotEmpty) ...[
                         _sectionTitle(context, 'Défis disponibles', isDark),
                         const SizedBox(height: 12),
@@ -170,8 +159,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ),
                         const SizedBox(height: 24),
                       ],
-
-                      // ── En cours ──────────────────────────────────
                       _sectionTitle(context, 'En cours', isDark),
                       const SizedBox(height: 12),
                       if (provider.activeChallenges.isEmpty)
@@ -185,10 +172,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ...provider.activeChallenges.map(
                           (uc) => QuestTile(
                             title: uc.displayTitle,
-                            subtitle: uc.displayDescription.characters.length >
-                                    40
-                                ? '${uc.displayDescription.characters.take(40).toString()}…'
-                                : uc.displayDescription,
+                            subtitle: _shortDescription(uc.displayDescription),
                             icon: uc.displayIcon,
                             xpReward: 0,
                             isCompleted: false,
@@ -196,20 +180,14 @@ class _ChallengesPageState extends State<ChallengesPage> {
                             progressText: uc.progressText,
                           ),
                         ),
-
                       const SizedBox(height: 32),
-
-                      // ── Terminés ──────────────────────────────────
                       if (provider.completedChallenges.isNotEmpty) ...[
                         _sectionTitle(context, 'Terminés', isDark),
                         const SizedBox(height: 12),
                         ...provider.completedChallenges.map(
                           (uc) => QuestTile(
                             title: uc.displayTitle,
-                            subtitle: uc.displayDescription.characters.length >
-                                    40
-                                ? '${uc.displayDescription.characters.take(40).toString()}…'
-                                : uc.displayDescription,
+                            subtitle: _shortDescription(uc.displayDescription),
                             icon: uc.displayIcon,
                             xpReward: 50,
                             isCompleted: true,
@@ -217,8 +195,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ),
                         const SizedBox(height: 32),
                       ],
-
-                      // ── Trophées & Badges ─────────────────────────
                       _sectionTitle(context, 'Trophées & Badges', isDark),
                       const SizedBox(height: 16),
                       BadgesGrid(
@@ -226,7 +202,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         onBadgeTap: (badge) =>
                             _showBadgeDetails(context, badge),
                       ),
-
                       const SizedBox(height: 80),
                     ],
                   ),
@@ -236,11 +211,64 @@ class _ChallengesPageState extends State<ChallengesPage> {
     );
   }
 
+  String _shortDescription(String description) {
+    const maxLength = 40;
+    if (description.characters.length <= maxLength) return description;
+    return '${description.characters.take(maxLength)}…';
+  }
+
+  Widget _buildGardenHeader(bool isDark) {
+    final titleColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final bodyColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.accent.withValues(alpha: isDark ? 0.15 : 0.18),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: AppColors.accent.withValues(alpha: isDark ? 0.28 : 0.34),
+            ),
+          ),
+          child: Text(
+            'Atelier de présence',
+            style: AppTextStyles.labelSmall(
+              color: isDark ? AppColors.accentDark : AppColors.successDark,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'Ton jardin intérieur',
+          style: AppTextStyles.headlineSmall(
+            color: titleColor,
+            fontWeight: FontWeight.w800,
+          ).copyWith(height: 1.08),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Cultive tes rituels, tes progrès doux et tes défis personnels.',
+          style: AppTextStyles.bodySmall(
+            color: bodyColor,
+          ).copyWith(height: 1.45),
+        ),
+      ],
+    );
+  }
+
   Widget _sectionTitle(BuildContext context, String title, bool isDark) {
     return Text(
       title,
       style: TextStyle(
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: FontWeight.bold,
         color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
       ),
@@ -283,31 +311,52 @@ class _ChallengesPageState extends State<ChallengesPage> {
   }
 
   void _showBadgeDetails(BuildContext context, BadgeItem badge) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     showLiquidGlassDialog(
       context: context,
       title: badge.title,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            badge.isUnlocked ? badge.icon : Icons.lock_outline_rounded,
-            size: 48,
-            color: badge.isUnlocked
-                ? AppColors.primary
-                : AppColors.textTertiaryLight,
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: badge.isUnlocked
+                  ? AppColors.primary.withValues(alpha: 0.15)
+                  : (isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03)),
+            ),
+            child: Icon(
+              badge.isUnlocked ? badge.icon : Icons.hourglass_empty_rounded,
+              size: 28,
+              color: badge.isUnlocked
+                  ? AppColors.primary
+                  : AppColors.textTertiaryLight,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             badge.isUnlocked
-                ? 'Félicitations ! Vous avez débloqué ce badge.'
-                : 'Continuez vos efforts pour débloquer ce badge mystère !',
+                ? 'Tu as développé cette belle compétence.\nElle fait maintenant partie de toi.'
+                : 'Cette qualité grandit en toi,\npetit à petit, à ton rythme.',
             textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
           ),
         ],
       ),
       actions: [
         LiquidGlassDialogAction(
-          label: 'Fermer',
+          label: 'Merci',
           isDefault: true,
           onPressed: () => Navigator.pop(context),
         ),

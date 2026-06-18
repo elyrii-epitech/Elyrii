@@ -72,7 +72,9 @@ class AiProposalCard extends StatelessWidget {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.purpleAccent.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),

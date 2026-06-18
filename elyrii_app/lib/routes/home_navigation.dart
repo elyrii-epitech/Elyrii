@@ -10,7 +10,9 @@ import '../core/theme/app_colors.dart';
 import '../core/theme/app_dimensions.dart';
 import '../core/widgets/glass_navigation_bar.dart';
 import '../core/widgets/glass_bubble_button.dart';
+import '../core/widgets/mascot_customize_button.dart';
 import '../core/services/glass_performance_service.dart';
+import 'app_routes.dart';
 
 class HomeNavigation extends StatefulWidget {
   const HomeNavigation({super.key});
@@ -27,8 +29,6 @@ class _HomeNavigationState extends State<HomeNavigation>
   late Animation<double> _navBarAnimation;
   late AnimationController _navBarPulseController;
   late Animation<double> _navBarScaleAnimation;
-  late AnimationController _flashController;
-  late Animation<double> _flashAnimation;
   late AnimationController _pageTransitionController;
   late Animation<double> _pageScaleAnimation;
   late Animation<double> _pageFadeAnimation;
@@ -53,11 +53,7 @@ class _HomeNavigationState extends State<HomeNavigation>
 
   final List<GlassNavItem> _navItems = const [
     GlassNavItem(icon: Icons.home_rounded, label: 'Home', index: 0),
-    GlassNavItem(
-      icon: Icons.emoji_events_rounded,
-      label: 'Challenges',
-      index: 1,
-    ),
+    GlassNavItem(icon: Icons.yard_rounded, label: 'Jardin', index: 1),
     GlassNavItem(icon: Icons.book_rounded, label: 'Journal', index: 2),
     GlassNavItem(icon: Icons.spa_rounded, label: 'Meditation', index: 3),
     GlassNavItem(icon: Icons.person_rounded, label: 'Coach', index: 4),
@@ -99,28 +95,18 @@ class _HomeNavigationState extends State<HomeNavigation>
       vsync: this,
     );
 
-    _navBarScaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.02, // iOS 26: de 1.015 à 1.02
-    ).animate(
-      CurvedAnimation(
-        parent: _navBarPulseController,
-        curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
-      ),
-    );
+    _navBarScaleAnimation =
+        Tween<double>(
+          begin: 1.0,
+          end: 1.02, // iOS 26: de 1.015 à 1.02
+        ).animate(
+          CurvedAnimation(
+            parent: _navBarPulseController,
+            curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
+          ),
+        );
 
-    // Animation de flash blanc (durée augmentée pour être visible)
-    _flashController = AnimationController(
-      duration: const Duration(milliseconds: 450), // Légèrement plus court
-      vsync: this,
-    );
-
-    _flashAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _flashController, curve: Curves.easeOut));
-
-    // iOS 26: Animation de transition de page
+    // Transition de page courte, uniquement transform + opacity.
     _pageTransitionController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -152,7 +138,6 @@ class _HomeNavigationState extends State<HomeNavigation>
     }
     _navBarController.dispose();
     _navBarPulseController.dispose();
-    _flashController.dispose();
     _pageTransitionController.dispose();
     super.dispose();
   }
@@ -177,16 +162,6 @@ class _HomeNavigationState extends State<HomeNavigation>
         _navBarPulseController.reverse();
       });
 
-      // Flash unique - disparition instantanée à la fin
-      if (_flashController.isAnimating) {
-        _flashController.stop();
-      }
-      _flashController.reset();
-      _flashController.forward().then((_) {
-        _flashController.reset(); // Reset instantané au lieu de reverse
-      });
-
-      // iOS 26: Animation de transition de page
       final performanceService = GlassPerformanceService();
       if (performanceService.showTransitionAnimations) {
         _pageTransitionController.reset();
@@ -199,10 +174,27 @@ class _HomeNavigationState extends State<HomeNavigation>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final performanceService = GlassPerformanceService();
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       extendBody: true,
-      body: _buildPageContent(performanceService),
+      body: Stack(
+        children: [
+          _buildPageContent(performanceService),
+          // Bouton de personnalisation mascotte (overlay global, haut gauche)
+          Positioned(
+            top: topPadding + 12,
+            left: 16,
+            child: MascotCustomizeButton(
+              isDark: isDark,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                Navigator.pushNamed(context, AppRoutes.mascotCustomization);
+              },
+            ),
+          ),
+        ],
+      ),
       bottomNavigationBar: _buildBottomBar(isDark),
     );
   }
@@ -242,10 +234,7 @@ class _HomeNavigationState extends State<HomeNavigation>
           child: Opacity(
             opacity: _navBarAnimation.value.clamp(0.0, 1.0),
             child: AnimatedBuilder(
-              animation: Listenable.merge([
-                _navBarPulseController,
-                _flashController,
-              ]),
+              animation: _navBarPulseController,
               builder: (context, child) {
                 return Transform.scale(
                   scale: _navBarScaleAnimation.value,
@@ -266,7 +255,6 @@ class _HomeNavigationState extends State<HomeNavigation>
                             onItemSelected: _onItemTapped,
                             iconControllers: _iconControllers,
                             scaleAnimation: _navBarScaleAnimation,
-                            flashAnimation: _flashAnimation,
                             isDark: isDark,
                             margin: EdgeInsets.zero,
                           ),
@@ -296,11 +284,10 @@ class _HomeNavigationState extends State<HomeNavigation>
         _onItemTapped(5);
       },
       size: 54,
-      showShimmer: isChatbotSelected, // Shimmer uniquement si sélectionné
+      showShimmer: false,
       shimmerColor: AppColors.primary.withValues(alpha: 0.3),
       isDark: isDark,
       scaleAnimation: _navBarScaleAnimation,
-      flashAnimation: _flashAnimation,
       tooltip: 'Chatbot',
       isSelected: isChatbotSelected, // Indiquer si sélectionné
     );

@@ -23,14 +23,12 @@ class QuoteCard extends StatelessWidget {
       child: Row(
         children: [
           // Icône citation
-          Text(
-            '💭',
-            style: TextStyle(
-              fontSize: 20,
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
+          Icon(
+            Icons.format_quote_rounded,
+            size: 20,
+            color: isDark
+                ? AppColors.textTertiaryDark
+                : AppColors.textTertiaryLight,
           ),
           const SizedBox(width: AppDimensions.spacingSm),
           // Texte de la citation

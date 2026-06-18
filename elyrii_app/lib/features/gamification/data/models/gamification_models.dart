@@ -99,7 +99,8 @@ class UserChallenge {
     return UserChallenge(
       id: json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
-      challengeId: json['challengeId'] as String? ??
+      challengeId:
+          json['challengeId'] as String? ??
           json['challenge_id'] as String? ??
           '',
       status: json['status'] as String? ?? 'PENDING',
@@ -155,8 +156,10 @@ class UserChallenge {
       }
     }
     // Plusieurs conditions : compter combien sont complètes
-    final completed =
-        map.values.whereType<Map>().where((v) => v['completed'] == true).length;
+    final completed = map.values
+        .whereType<Map>()
+        .where((v) => v['completed'] == true)
+        .length;
     return '$completed / ${map.length}';
   }
 
