@@ -127,8 +127,11 @@ class _LastJournalCardState extends State<LastJournalCard> {
                 color: AppColors.accent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.book_rounded,
-                  size: 16, color: AppColors.accent),
+              child: const Icon(
+                Icons.book_rounded,
+                size: 16,
+                color: AppColors.accent,
+              ),
             ),
             const SizedBox(width: AppDimensions.spacingSm),
             Text(
@@ -202,8 +205,11 @@ class _LastJournalCardState extends State<LastJournalCard> {
             color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child:
-              const Icon(Icons.book_rounded, size: 20, color: AppColors.accent),
+          child: const Icon(
+            Icons.book_rounded,
+            size: 20,
+            color: AppColors.accent,
+          ),
         ),
         const SizedBox(width: AppDimensions.spacingMd),
         Expanded(

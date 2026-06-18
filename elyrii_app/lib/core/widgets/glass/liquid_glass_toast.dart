@@ -118,7 +118,8 @@ class _LiquidGlassToastState extends State<LiquidGlassToast>
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: widget.backgroundColor ??
+                  color:
+                      widget.backgroundColor ??
                       (isDark
                           ? AppColors.liquidGlassBackgroundDark
                           : AppColors.liquidGlassBackgroundLight),

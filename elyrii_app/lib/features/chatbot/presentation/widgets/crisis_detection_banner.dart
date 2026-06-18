@@ -63,9 +63,7 @@ class CrisisDetectionBanner extends StatelessWidget {
 
   Widget _buildBannerContent(BuildContext context, bool isDark) {
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        bottom: Radius.circular(16),
-      ),
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: Container(
@@ -160,8 +158,9 @@ class CrisisDetectionBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: (isDark ? AppColors.cardDark : AppColors.cardLight)
-            .withValues(alpha: 0.5),
+        color: (isDark ? AppColors.cardDark : AppColors.cardLight).withValues(
+          alpha: 0.5,
+        ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.warning.withValues(alpha: 0.15),

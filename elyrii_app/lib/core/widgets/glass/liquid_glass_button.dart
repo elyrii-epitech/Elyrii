@@ -45,19 +45,22 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
 
     switch (widget.style) {
       case LiquidGlassButtonStyle.filled:
-        backgroundColor =
-            isDisabled ? primaryColor.withValues(alpha: 0.3) : primaryColor;
+        backgroundColor = isDisabled
+            ? primaryColor.withValues(alpha: 0.3)
+            : primaryColor;
         textColor = Colors.white;
         break;
       case LiquidGlassButtonStyle.tinted:
         backgroundColor = primaryColor.withValues(alpha: 0.15);
-        textColor =
-            isDisabled ? primaryColor.withValues(alpha: 0.5) : primaryColor;
+        textColor = isDisabled
+            ? primaryColor.withValues(alpha: 0.5)
+            : primaryColor;
         break;
       case LiquidGlassButtonStyle.plain:
         backgroundColor = Colors.transparent;
-        textColor =
-            isDisabled ? primaryColor.withValues(alpha: 0.5) : primaryColor;
+        textColor = isDisabled
+            ? primaryColor.withValues(alpha: 0.5)
+            : primaryColor;
         break;
       case LiquidGlassButtonStyle.gray:
         backgroundColor = isDark
@@ -191,9 +194,7 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(
-              alpha: isDark ? 0.22 : 0.08,
-            ),
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -202,7 +203,8 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
       child: Icon(
         widget.icon,
         size: widget.size * 0.5,
-        color: widget.color ??
+        color:
+            widget.color ??
             (isDark ? Colors.white : Colors.black.withValues(alpha: 0.8)),
       ),
     );
@@ -230,7 +232,9 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
               child: blurSigma > 0
                   ? BackdropFilter(
                       filter: ImageFilter.blur(
-                          sigmaX: blurSigma, sigmaY: blurSigma),
+                        sigmaX: blurSigma,
+                        sigmaY: blurSigma,
+                      ),
                       child: button,
                     )
                   : button,

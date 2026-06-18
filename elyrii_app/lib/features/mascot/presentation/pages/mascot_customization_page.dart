@@ -26,8 +26,9 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: SafeArea(
         bottom: false,
         child: Consumer<MascotProvider>(
@@ -58,27 +59,24 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                   sliver: SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.72,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final theme = MascotThemes.all[index];
-                        final isSelected = provider.mascot.themeId == theme.id;
-                        return _ThemeCard(
-                          theme: theme,
-                          isSelected: isSelected,
-                          isDark: isDark,
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            provider.setTheme(theme.id);
-                          },
-                        );
-                      },
-                      childCount: MascotThemes.all.length,
-                    ),
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.72,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final theme = MascotThemes.all[index];
+                      final isSelected = provider.mascot.themeId == theme.id;
+                      return _ThemeCard(
+                        theme: theme,
+                        isSelected: isSelected,
+                        isDark: isDark,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          provider.setTheme(theme.id);
+                        },
+                      );
+                    }, childCount: MascotThemes.all.length),
                   ),
                 ),
                 SliverToBoxAdapter(
@@ -107,10 +105,12 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
     bool isDark,
     MascotProvider provider,
   ) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return Row(
       children: [
@@ -151,10 +151,12 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
 
   Widget _buildPreview(bool isDark, MascotProvider provider) {
     final theme = provider.currentTheme;
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     final hasHat = provider.mascot.equippedCosmetics.contains('custom1');
     final matrix = theme.id == 'nature' ? null : theme.colorMatrix;
@@ -178,8 +180,9 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                     height: 190,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: theme.accentColor
-                          .withValues(alpha: isDark ? 0.10 : 0.08),
+                      color: theme.accentColor.withValues(
+                        alpha: isDark ? 0.10 : 0.08,
+                      ),
                     ),
                   ),
                   Mascot3DViewer(
@@ -213,10 +216,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  theme.emoji,
-                  style: const TextStyle(fontSize: 20),
-                ),
+                Text(theme.emoji, style: const TextStyle(fontSize: 20)),
                 const SizedBox(width: 8),
                 Text(
                   theme.name,
@@ -240,10 +240,12 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
   }
 
   Widget _buildSectionTitle(bool isDark) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,10 +267,12 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
   }
 
   Widget _buildAccessoriesTitle(bool isDark) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -331,8 +335,9 @@ class _ThemeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
 
     return GestureDetector(
       onTap: onTap,
@@ -341,8 +346,9 @@ class _ThemeCard extends StatelessWidget {
         color: isSelected
             ? theme.accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
             : null,
-        borderColor:
-            isSelected ? theme.accentColor.withValues(alpha: 0.45) : null,
+        borderColor: isSelected
+            ? theme.accentColor.withValues(alpha: 0.45)
+            : null,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -367,10 +373,7 @@ class _ThemeCard extends StatelessWidget {
                 ),
               ),
               child: Center(
-                child: Text(
-                  theme.emoji,
-                  style: const TextStyle(fontSize: 24),
-                ),
+                child: Text(theme.emoji, style: const TextStyle(fontSize: 24)),
               ),
             ),
             const SizedBox(height: 8),
@@ -396,9 +399,7 @@ class _ThemeCard extends StatelessWidget {
                         color: theme.accentColor,
                       ),
                     )
-                  : const SizedBox.shrink(
-                      key: ValueKey('idle'),
-                    ),
+                  : const SizedBox.shrink(key: ValueKey('idle')),
             ),
           ],
         ),
@@ -438,10 +439,12 @@ class _AccessoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return GestureDetector(
       onTap: onTap,
@@ -496,9 +499,7 @@ class _AccessoryCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       isEquipped ? 'Equipé' : 'Touche pour équiper',
-                      style: AppTextStyles.labelSmall(
-                        color: subtitleColor,
-                      ),
+                      style: AppTextStyles.labelSmall(color: subtitleColor),
                     ),
                   ],
                 ),

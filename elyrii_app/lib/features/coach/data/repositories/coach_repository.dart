@@ -155,8 +155,9 @@ class CoachRepository {
   ];
 
   DailyAdvice getAdviceForToday() {
-    final dayOfYear =
-        DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
+    final dayOfYear = DateTime.now()
+        .difference(DateTime(DateTime.now().year, 1, 1))
+        .inDays;
     return _advices[dayOfYear % _advices.length];
   }
 

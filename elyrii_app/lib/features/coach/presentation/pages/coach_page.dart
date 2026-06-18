@@ -21,8 +21,9 @@ class CoachPage extends StatelessWidget {
       child: Consumer<CoachProvider>(
         builder: (context, provider, _) {
           return Scaffold(
-            backgroundColor:
-                isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+            backgroundColor: isDark
+                ? AppColors.scaffoldDark
+                : AppColors.scaffoldLight,
             body: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Padding(
@@ -86,8 +87,9 @@ class CoachPage extends StatelessWidget {
             fontSize: 28,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.5,
-            color:
-                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
           ),
         ),
         const SizedBox(height: 6),
@@ -171,8 +173,9 @@ class CoachPage extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color:
-                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
           ),
         ),
         const SizedBox(height: 4),
@@ -203,10 +206,10 @@ class CoachPage extends StatelessWidget {
       itemCount: activities.length,
       itemBuilder: (context, index) {
         final activity = activities[index];
-        return _ActivityGridCard(activity: activity, isDark: isDark)
-            .animate()
-            .fadeIn(delay: (50 * index).ms)
-            .slideY(begin: 0.05, end: 0);
+        return _ActivityGridCard(
+          activity: activity,
+          isDark: isDark,
+        ).animate().fadeIn(delay: (50 * index).ms).slideY(begin: 0.05, end: 0);
       },
     );
   }
@@ -251,11 +254,7 @@ class _ActivityCardState extends State<_ActivityCard> {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(
-                  child: Icon(
-                    widget.activity.icon,
-                    size: 22,
-                    color: color,
-                  ),
+                  child: Icon(widget.activity.icon, size: 22, color: color),
                 ),
               ),
               const SizedBox(width: 14),
@@ -357,17 +356,15 @@ class _ActivityGridCardState extends State<_ActivityGridCard> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
-                      child: Icon(
-                        widget.activity.icon,
-                        size: 18,
-                        color: color,
-                      ),
+                      child: Icon(widget.activity.icon, size: 18, color: color),
                     ),
                   ),
                   const Spacer(),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
@@ -414,11 +411,7 @@ class _ActivityGridCardState extends State<_ActivityGridCard> {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Icon(
-                    widget.activity.category.icon,
-                    size: 12,
-                    color: color,
-                  ),
+                  Icon(widget.activity.category.icon, size: 12, color: color),
                   const SizedBox(width: 4),
                   Text(
                     widget.activity.category.label,

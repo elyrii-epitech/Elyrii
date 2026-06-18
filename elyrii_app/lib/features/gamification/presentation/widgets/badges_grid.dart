@@ -59,8 +59,8 @@ class BadgesGrid extends StatelessWidget {
                       color: badge.isUnlocked
                           ? AppColors.primary.withValues(alpha: 0.15)
                           : (isDark
-                              ? Colors.white.withValues(alpha: 0.04)
-                              : Colors.black.withValues(alpha: 0.03)),
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : Colors.black.withValues(alpha: 0.03)),
                     ),
                     child: Icon(
                       badge.isUnlocked
@@ -69,8 +69,8 @@ class BadgesGrid extends StatelessWidget {
                       color: badge.isUnlocked
                           ? AppColors.primary
                           : (isDark
-                              ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight),
+                                ? AppColors.textTertiaryDark
+                                : AppColors.textTertiaryLight),
                       size: 22,
                     ),
                   ),
@@ -82,15 +82,16 @@ class BadgesGrid extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight:
-                          badge.isUnlocked ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: badge.isUnlocked
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                       color: badge.isUnlocked
                           ? (isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight)
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight)
                           : (isDark
-                              ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight),
+                                ? AppColors.textTertiaryDark
+                                : AppColors.textTertiaryLight),
                     ),
                   ),
                   if (badge.isUnlocked)

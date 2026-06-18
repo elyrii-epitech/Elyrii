@@ -70,9 +70,7 @@ class Mascot3DService {
   /// Retournera un path de modèle personnalisé avec les cosmétiques appliqués.
   ///
   /// Pour l'instant, retourne simplement le path par défaut.
-  String getCustomizedModelPath({
-    List<String>? equippedCosmetics,
-  }) {
+  String getCustomizedModelPath({List<String>? equippedCosmetics}) {
     // TODO: Implémenter la logique de personnalisation
     // ex: assembler un modèle avec les cosmétiques sélectionnés
     return _defaultConfig.assetPath;

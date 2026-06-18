@@ -68,10 +68,7 @@ class LevelProgressHeader extends StatelessWidget {
                     style: const TextStyle(fontSize: 28),
                   ),
                 ),
-              ).animate().scale(
-                    duration: 600.ms,
-                    curve: Curves.easeOutBack,
-                  ),
+              ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
               const SizedBox(width: 20),
               Expanded(
                 child: Column(

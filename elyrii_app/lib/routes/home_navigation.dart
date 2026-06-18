@@ -53,11 +53,7 @@ class _HomeNavigationState extends State<HomeNavigation>
 
   final List<GlassNavItem> _navItems = const [
     GlassNavItem(icon: Icons.home_rounded, label: 'Home', index: 0),
-    GlassNavItem(
-      icon: Icons.yard_rounded,
-      label: 'Jardin',
-      index: 1,
-    ),
+    GlassNavItem(icon: Icons.yard_rounded, label: 'Jardin', index: 1),
     GlassNavItem(icon: Icons.book_rounded, label: 'Journal', index: 2),
     GlassNavItem(icon: Icons.spa_rounded, label: 'Meditation', index: 3),
     GlassNavItem(icon: Icons.person_rounded, label: 'Coach', index: 4),
@@ -99,15 +95,16 @@ class _HomeNavigationState extends State<HomeNavigation>
       vsync: this,
     );
 
-    _navBarScaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.02, // iOS 26: de 1.015 à 1.02
-    ).animate(
-      CurvedAnimation(
-        parent: _navBarPulseController,
-        curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
-      ),
-    );
+    _navBarScaleAnimation =
+        Tween<double>(
+          begin: 1.0,
+          end: 1.02, // iOS 26: de 1.015 à 1.02
+        ).animate(
+          CurvedAnimation(
+            parent: _navBarPulseController,
+            curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
+          ),
+        );
 
     // Transition de page courte, uniquement transform + opacity.
     _pageTransitionController = AnimationController(
@@ -192,10 +189,7 @@ class _HomeNavigationState extends State<HomeNavigation>
               isDark: isDark,
               onTap: () {
                 HapticFeedback.selectionClick();
-                Navigator.pushNamed(
-                  context,
-                  AppRoutes.mascotCustomization,
-                );
+                Navigator.pushNamed(context, AppRoutes.mascotCustomization);
               },
             ),
           ),

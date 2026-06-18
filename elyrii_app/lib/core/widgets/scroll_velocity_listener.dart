@@ -61,8 +61,8 @@ class _ScrollVelocityListenerState extends State<ScrollVelocityListener> {
     final timeDelta = now.difference(_lastScrollTime).inMilliseconds;
 
     if (timeDelta > 0) {
-      final positionDelta =
-          (notification.metrics.pixels - _lastScrollPosition).abs();
+      final positionDelta = (notification.metrics.pixels - _lastScrollPosition)
+          .abs();
       final velocityPxPerMs = positionDelta / timeDelta;
       final velocityPxPerSec = velocityPxPerMs * 1000;
 

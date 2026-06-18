@@ -43,19 +43,22 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-              'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.'),
+            'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.',
+          ),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
     }
     final nameParts = _nameController.text.trim().split(' ');
     final firstName = nameParts.first;
-    final lastName =
-        nameParts.length > 1 ? nameParts.sublist(1).join(' ') : firstName;
+    final lastName = nameParts.length > 1
+        ? nameParts.sublist(1).join(' ')
+        : firstName;
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.register(
       email: _emailController.text.trim(),
@@ -69,16 +72,20 @@ class _RegisterPageState extends State<RegisterPage> {
     } else {
       // Show success color if it's an email verification message (which means registration worked)
       final error = authProvider.error?.toLowerCase() ?? '';
-      final isVerificationMessage = error.contains('verification required') ||
+      final isVerificationMessage =
+          error.contains('verification required') ||
           error.contains('activate your account');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.error ??
-              'Oops, petit souci lors de la création. Réessaie quand tu es prêt.'),
+          content: Text(
+            authProvider.error ??
+                'Oops, petit souci lors de la création. Réessaie quand tu es prêt.',
+          ),
           backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
 
@@ -98,8 +105,9 @@ class _RegisterPageState extends State<RegisterPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -111,13 +119,13 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   // Mascot (translated vertically to center the model's visual body within the 250x250 container)
                   Transform.translate(
-                    offset: const Offset(0, 25),
-                    child: const Mascot3DViewer(
-                      config: Mascot3DConfig.authPage(),
-                      width: 250,
-                      height: 250,
-                    ),
-                  )
+                        offset: const Offset(0, 25),
+                        child: const Mascot3DViewer(
+                          config: Mascot3DConfig.authPage(),
+                          width: 250,
+                          height: 250,
+                        ),
+                      )
                       .animate()
                       .fadeIn(duration: 600.ms)
                       .slideY(begin: 0.2, end: 0),
@@ -366,10 +374,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ],
                     ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 800.ms, delay: 200.ms)
-                      .slideY(begin: 0.2, end: 0),
+                  ).animate().fadeIn(duration: 800.ms, delay: 200.ms).slideY(begin: 0.2, end: 0),
                 ],
               ),
             ),

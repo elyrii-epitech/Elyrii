@@ -31,9 +31,7 @@ void main() {
             create: (_) => DashboardProvider(apiClient: apiClient),
           ),
         ],
-        child: const MaterialApp(
-          home: ChallengesPage(),
-        ),
+        child: const MaterialApp(home: ChallengesPage()),
       ),
     );
 

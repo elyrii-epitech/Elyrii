@@ -15,11 +15,7 @@ class MascotCustomizeButton extends StatefulWidget {
   final VoidCallback? onTap;
   final bool isDark;
 
-  const MascotCustomizeButton({
-    super.key,
-    this.onTap,
-    this.isDark = false,
-  });
+  const MascotCustomizeButton({super.key, this.onTap, this.isDark = false});
 
   @override
   State<MascotCustomizeButton> createState() => _MascotCustomizeButtonState();

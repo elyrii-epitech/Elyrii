@@ -93,8 +93,9 @@ class MyApp extends StatelessWidget {
           builder: (context, child) {
             return GlobalErrorBoundary(child: child!);
           },
-          initialRoute:
-              authProvider.isAuthenticated ? AppRoutes.home : AppRoutes.login,
+          initialRoute: authProvider.isAuthenticated
+              ? AppRoutes.home
+              : AppRoutes.login,
           onGenerateRoute: RouteGenerator.generateRoute,
         );
       },

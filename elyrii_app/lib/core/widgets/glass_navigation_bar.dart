@@ -188,8 +188,8 @@ class GlassNavigationBar extends StatelessWidget {
                   // Fond gris plus visible quand sélectionné
                   color: isSelected
                       ? (isDark
-                          ? Colors.white.withValues(alpha: 0.12)
-                          : Colors.black.withValues(alpha: 0.08))
+                            ? Colors.white.withValues(alpha: 0.12)
+                            : Colors.black.withValues(alpha: 0.08))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -207,8 +207,8 @@ class GlassNavigationBar extends StatelessWidget {
                           color: isSelected
                               ? primaryColor
                               : (isDark
-                                  ? AppColors.iconDefaultDark
-                                  : AppColors.iconDefaultLight),
+                                    ? AppColors.iconDefaultDark
+                                    : AppColors.iconDefaultLight),
                           size: 20,
                         ),
                       ),
@@ -222,14 +222,15 @@ class GlassNavigationBar extends StatelessWidget {
                         duration: const Duration(milliseconds: 200),
                         style: TextStyle(
                           fontSize: isSelected ? 9.5 : 9,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           // Texte en violet si sélectionné, sinon couleur adaptée au thème
                           color: isSelected
                               ? primaryColor
                               : (isDark
-                                  ? AppColors.iconDefaultDark
-                                  : AppColors.iconDefaultLight),
+                                    ? AppColors.iconDefaultDark
+                                    : AppColors.iconDefaultLight),
                           letterSpacing: 0,
                         ),
                         child: Text(

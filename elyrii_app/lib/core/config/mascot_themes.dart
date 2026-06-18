@@ -168,10 +168,7 @@ class MascotThemes {
   /// Retourne [nature] par défaut si l'id n'existe pas.
   static MascotTheme getById(String? id) {
     if (id == null) return nature;
-    return all.firstWhere(
-      (t) => t.id == id,
-      orElse: () => nature,
-    );
+    return all.firstWhere((t) => t.id == id, orElse: () => nature);
   }
 
   /// Matrice identité (pas de transformation).

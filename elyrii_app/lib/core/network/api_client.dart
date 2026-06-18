@@ -15,13 +15,13 @@ class ApiClient {
   static const int _timeoutSeconds = 30;
 
   ApiClient({required SecureStorageService storage, http.Client? client})
-      : _storage = storage,
-        _client = client ?? http.Client();
+    : _storage = storage,
+      _client = client ?? http.Client();
 
   Map<String, String> _baseHeaders() => {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
   Future<Map<String, String>> _authHeaders() async {
     final headers = _baseHeaders();

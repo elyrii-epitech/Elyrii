@@ -56,7 +56,8 @@ class MascotModel {
     return MascotModel(
       baseModelPath:
           json['baseModelPath'] as String? ?? 'assets/base_basic_shaded_v3.glb',
-      equippedCosmetics: (json['equippedCosmetics'] as List<dynamic>?)
+      equippedCosmetics:
+          (json['equippedCosmetics'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           const [],
@@ -87,11 +88,11 @@ class MascotModel {
 
   @override
   int get hashCode => Object.hash(
-        baseModelPath,
-        Object.hashAll(equippedCosmetics),
-        animationState,
-        themeId,
-      );
+    baseModelPath,
+    Object.hashAll(equippedCosmetics),
+    animationState,
+    themeId,
+  );
 
   @override
   String toString() {

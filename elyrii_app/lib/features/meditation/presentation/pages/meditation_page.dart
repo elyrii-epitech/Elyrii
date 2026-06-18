@@ -54,7 +54,7 @@ enum _SessionState {
   paused,
 
   /// Session completed – showing mood picker.
-  finished;
+  finished,
 }
 
 class MeditationPage extends StatefulWidget {
@@ -91,14 +91,23 @@ class _MeditationPageState extends State<MeditationPage>
 
   // ---- Mood emoji list for post-session feedback ----
   static const List<_MoodOption> _moods = [
-    _MoodOption(Icons.sentiment_very_dissatisfied_rounded, 'Pas bien',
-        Color(0xFF7BA3C7)),
+    _MoodOption(
+      Icons.sentiment_very_dissatisfied_rounded,
+      'Pas bien',
+      Color(0xFF7BA3C7),
+    ),
     _MoodOption(Icons.sentiment_neutral_rounded, 'Neutre', Color(0xFFA39C96)),
     _MoodOption(Icons.sentiment_satisfied_rounded, 'Bien', Color(0xFFA8D5BA)),
     _MoodOption(
-        Icons.sentiment_satisfied_alt_rounded, 'Apaisé(e)', Color(0xFF7BC393)),
-    _MoodOption(Icons.sentiment_very_satisfied_rounded, 'Merveilleux',
-        Color(0xFF5FA87A)),
+      Icons.sentiment_satisfied_alt_rounded,
+      'Apaisé(e)',
+      Color(0xFF7BC393),
+    ),
+    _MoodOption(
+      Icons.sentiment_very_satisfied_rounded,
+      'Merveilleux',
+      Color(0xFF5FA87A),
+    ),
   ];
 
   @override
@@ -235,8 +244,9 @@ class _MeditationPageState extends State<MeditationPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: SafeArea(
         child: Column(
           children: [
@@ -278,10 +288,12 @@ class _MeditationPageState extends State<MeditationPage>
   // ============================================================
 
   Widget _buildSetupView(bool isDark) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
@@ -309,10 +321,7 @@ class _MeditationPageState extends State<MeditationPage>
           const SizedBox(height: AppDimensions.spacingXl),
 
           // Duration selector.
-          Text(
-            'Durée',
-            style: AppTextStyles.titleMedium(color: textColor),
-          ),
+          Text('Durée', style: AppTextStyles.titleMedium(color: textColor)),
           const SizedBox(height: AppDimensions.spacingSm),
           _buildDurationChips(isDark),
 
@@ -333,16 +342,15 @@ class _MeditationPageState extends State<MeditationPage>
             child: LiquidGlassCard(
               onTap: _startSession,
               borderRadius: 30,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 40,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               color: AppColors.primary.withValues(alpha: 0.2),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.play_arrow_rounded,
-                      color: AppColors.primary),
+                  const Icon(
+                    Icons.play_arrow_rounded,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     'Commencer',
@@ -375,18 +383,19 @@ class _MeditationPageState extends State<MeditationPage>
             color: selected
                 ? AppColors.primary.withValues(alpha: 0.25)
                 : isDark
-                    ? AppColors.liquidGlassBackgroundDark
-                    : AppColors.liquidGlassBackgroundLight,
-            borderColor:
-                selected ? AppColors.primary.withValues(alpha: 0.5) : null,
+                ? AppColors.liquidGlassBackgroundDark
+                : AppColors.liquidGlassBackgroundLight,
+            borderColor: selected
+                ? AppColors.primary.withValues(alpha: 0.5)
+                : null,
             child: Text(
               '$d min',
               style: AppTextStyles.labelMedium(
                 color: selected
                     ? AppColors.primary
                     : isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
                 fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
@@ -413,10 +422,11 @@ class _MeditationPageState extends State<MeditationPage>
             color: selected
                 ? AppColors.primary.withValues(alpha: 0.12)
                 : isDark
-                    ? AppColors.liquidGlassBackgroundDark
-                    : AppColors.liquidGlassBackgroundLight,
-            borderColor:
-                selected ? AppColors.primary.withValues(alpha: 0.4) : null,
+                ? AppColors.liquidGlassBackgroundDark
+                : AppColors.liquidGlassBackgroundLight,
+            borderColor: selected
+                ? AppColors.primary.withValues(alpha: 0.4)
+                : null,
             child: Row(
               children: [
                 Expanded(
@@ -448,8 +458,11 @@ class _MeditationPageState extends State<MeditationPage>
                   ),
                 ),
                 if (selected)
-                  const Icon(Icons.check_circle,
-                      color: AppColors.primary, size: 20),
+                  const Icon(
+                    Icons.check_circle,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
               ],
             ),
           ),
@@ -463,10 +476,12 @@ class _MeditationPageState extends State<MeditationPage>
   // ============================================================
 
   Widget _buildExerciseView(bool isDark) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     final currentPhaseLabel =
         _selectedBreathingType.phaseLabels[_currentPhaseIndex];
@@ -640,10 +655,12 @@ class _MeditationPageState extends State<MeditationPage>
   // ============================================================
 
   Widget _buildFinishedView(bool isDark) {
-    final textColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final subtitleColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
@@ -655,9 +672,11 @@ class _MeditationPageState extends State<MeditationPage>
           const SizedBox(height: AppDimensions.spacingXl),
 
           // Congratulatory text.
-          const Icon(Icons.wb_sunny_rounded, color: AppColors.accent, size: 48)
-              .animate()
-              .scale(duration: 500.ms, curve: Curves.elasticOut),
+          const Icon(
+            Icons.wb_sunny_rounded,
+            color: AppColors.accent,
+            size: 48,
+          ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
 
           const SizedBox(height: AppDimensions.spacingLg),
 
@@ -729,9 +748,9 @@ class _MeditationPageState extends State<MeditationPage>
                   ),
                 ),
               ).animate().fadeIn(
-                    duration: 400.ms,
-                    delay: Duration(milliseconds: 800 + (index * 100)),
-                  );
+                duration: 400.ms,
+                delay: Duration(milliseconds: 800 + (index * 100)),
+              );
             }).toList(),
           ),
 

@@ -10,9 +10,7 @@ class AppColors {
   /// Couleur principale de l'application.
   /// Lavande apaisée, utilisée comme accent plutôt que comme ambiance dominante.
   static const Color primary = Color(0xFF7E6AD8);
-  static const Color primaryLight = Color(
-    0xFFEDE8FF,
-  ); // Lavande très pâle
+  static const Color primaryLight = Color(0xFFEDE8FF); // Lavande très pâle
   static const Color primaryDark = Color(
     0xFFA99AF0,
   ); // Lavande lisible en dark mode
@@ -91,25 +89,16 @@ class AppColors {
 
   /// Couleurs pour les objectifs
   static const Color objectiveCompleted = Color(0xFF7BC393);
-  static const Color objectiveInProgress = Color(
-    0xFF7E6AD8,
-  );
+  static const Color objectiveInProgress = Color(0xFF7E6AD8);
   static const Color objectiveNotStarted = Color(0xFFBFC5D1);
 
   /// Couleurs pour la méditation
-  static const Color meditationActive = Color(
-    0xFF7E6AD8,
-  );
-  static const Color meditationBreathing = Color(
-    0xFFA99AF0,
-  );
+  static const Color meditationActive = Color(0xFF7E6AD8);
+  static const Color meditationBreathing = Color(0xFFA99AF0);
 
   /// Gradient pour le chatbot
   static const LinearGradient chatbotGradient = LinearGradient(
-    colors: [
-      Color(0xFF7E6AD8),
-      Color(0xFFA99AF0),
-    ],
+    colors: [Color(0xFF7E6AD8), Color(0xFFA99AF0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

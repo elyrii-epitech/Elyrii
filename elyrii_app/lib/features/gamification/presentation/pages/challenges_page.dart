@@ -98,8 +98,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
     final streakDays = dashboardProvider.currentStreak;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: RefreshIndicator(
         onRefresh: () => provider.loadAll(),
         color: AppColors.primary,
@@ -130,10 +131,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                       const SizedBox(height: 16),
                       DailyStreakCard(
                         streakDays: streakDays,
-                        weekHistory: List.generate(
-                          7,
-                          (i) => i < streakDays,
-                        ),
+                        weekHistory: List.generate(7, (i) => i < streakDays),
                       ),
                       const SizedBox(height: 32),
                       if (provider.proposals.isNotEmpty) ...[
@@ -220,10 +218,12 @@ class _ChallengesPageState extends State<ChallengesPage> {
   }
 
   Widget _buildGardenHeader(bool isDark) {
-    final titleColor =
-        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final bodyColor =
-        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final titleColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final bodyColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,9 +256,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
         const SizedBox(height: 8),
         Text(
           'Cultive tes rituels, tes progrès doux et tes défis personnels.',
-          style: AppTextStyles.bodySmall(color: bodyColor).copyWith(
-            height: 1.45,
-          ),
+          style: AppTextStyles.bodySmall(
+            color: bodyColor,
+          ).copyWith(height: 1.45),
         ),
       ],
     );
@@ -327,8 +327,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
               color: badge.isUnlocked
                   ? AppColors.primary.withValues(alpha: 0.15)
                   : (isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.03)),
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03)),
             ),
             child: Icon(
               badge.isUnlocked ? badge.icon : Icons.hourglass_empty_rounded,

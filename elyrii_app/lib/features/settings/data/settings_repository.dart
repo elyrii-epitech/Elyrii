@@ -27,8 +27,9 @@ class UserRepository {
     if (lastName != null) body['lastName'] = lastName;
     if (age != null) body['age'] = age;
     if (pfp != null) body['pfp'] = pfp;
-    final response = await _client.put(ApiConfig.userMeUrl, body: body)
-        as Map<String, dynamic>;
+    final response =
+        await _client.put(ApiConfig.userMeUrl, body: body)
+            as Map<String, dynamic>;
     return UserProfile.fromJson(response);
   }
 }

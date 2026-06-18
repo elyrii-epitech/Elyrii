@@ -48,44 +48,44 @@ class Mascot3DConfig {
   /// Configuration pour les pages d'authentification (login/register).
   /// Animation idle intégrée au modèle, pas d'interaction tactile.
   const Mascot3DConfig.authPage()
-      : assetPath = 'assets/base_basic_shaded_v3.glb',
-        cameraOrbitTheta = 0,
-        cameraOrbitPhi = 60,
-        cameraOrbitRadius =
-            14.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
-        autoRotate = false,
-        autoRotateSpeed = 15,
-        interactionEnabled = false,
-        showLoadingIndicator = false,
-        useCameraOrbit = false;
+    : assetPath = 'assets/base_basic_shaded_v3.glb',
+      cameraOrbitTheta = 0,
+      cameraOrbitPhi = 60,
+      cameraOrbitRadius =
+          14.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
+      autoRotate = false,
+      autoRotateSpeed = 15,
+      interactionEnabled = false,
+      showLoadingIndicator = false,
+      useCameraOrbit = false;
 
   /// Configuration pour le chatbot en mode plein écran.
   /// Animation idle intégrée au modèle, sans interaction tactile.
   const Mascot3DConfig.chatbotFull()
-      : assetPath = 'assets/base_basic_shaded_v3.glb',
-        cameraOrbitTheta = 0,
-        cameraOrbitPhi = 75,
-        cameraOrbitRadius =
-            5.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
-        autoRotate = false,
-        autoRotateSpeed = 20,
-        interactionEnabled = false, // Désactiver les interactions tactiles
-        showLoadingIndicator = true,
-        useCameraOrbit = false;
+    : assetPath = 'assets/base_basic_shaded_v3.glb',
+      cameraOrbitTheta = 0,
+      cameraOrbitPhi = 75,
+      cameraOrbitRadius =
+          5.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
+      autoRotate = false,
+      autoRotateSpeed = 20,
+      interactionEnabled = false, // Désactiver les interactions tactiles
+      showLoadingIndicator = true,
+      useCameraOrbit = false;
 
   /// Configuration pour le chatbot en mode minimisé (banner).
   /// Animation idle intégrée au modèle, pas d'interaction tactile.
   const Mascot3DConfig.chatbotMinimized()
-      : assetPath = 'assets/base_basic_shaded_v3.glb',
-        cameraOrbitTheta = 0,
-        cameraOrbitPhi = 75,
-        cameraOrbitRadius =
-            5.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
-        autoRotate = false,
-        autoRotateSpeed = 10,
-        interactionEnabled = false,
-        showLoadingIndicator = false,
-        useCameraOrbit = false;
+    : assetPath = 'assets/base_basic_shaded_v3.glb',
+      cameraOrbitTheta = 0,
+      cameraOrbitPhi = 75,
+      cameraOrbitRadius =
+          5.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
+      autoRotate = false,
+      autoRotateSpeed = 10,
+      interactionEnabled = false,
+      showLoadingIndicator = false,
+      useCameraOrbit = false;
 
   /// Crée une copie de cette configuration avec les champs modifiés.
   /// Utile pour la personnalisation future (changer le modèle, la caméra, etc.)

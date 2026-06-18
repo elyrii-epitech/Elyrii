@@ -187,9 +187,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
           onError: _onModelError,
         ),
         if (_isLoading && widget.config.showLoadingIndicator)
-          Positioned.fill(
-            child: _buildLoadingShimmer(),
-          ),
+          Positioned.fill(child: _buildLoadingShimmer()),
       ],
     );
   }

@@ -49,11 +49,12 @@ class QuestTile extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             color: isCompleted
                 ? (isDark
-                    ? AppColors.accentDark.withValues(alpha: 0.12)
-                    : AppColors.accentLight.withValues(alpha: 0.35))
+                      ? AppColors.accentDark.withValues(alpha: 0.12)
+                      : AppColors.accentLight.withValues(alpha: 0.35))
                 : null,
-            borderColor:
-                isCompleted ? AppColors.accent.withValues(alpha: 0.25) : null,
+            borderColor: isCompleted
+                ? AppColors.accent.withValues(alpha: 0.25)
+                : null,
             child: Row(
               children: [
                 // Left icon circle
@@ -63,8 +64,8 @@ class QuestTile extends StatelessWidget {
                     color: isCompleted
                         ? AppColors.accent.withValues(alpha: 0.15)
                         : (isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03)),
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03)),
                     shape: BoxShape.circle,
                   ),
                   child: isCompleted
@@ -158,8 +159,8 @@ class QuestTile extends StatelessWidget {
                                       : Colors.black.withValues(alpha: 0.06),
                                   valueColor:
                                       const AlwaysStoppedAnimation<Color>(
-                                    AppColors.primary,
-                                  ),
+                                        AppColors.primary,
+                                      ),
                                 ),
                               ),
                             ),

@@ -44,8 +44,9 @@ class _DashboardPageState extends State<DashboardPage> {
         final firstName = authProvider.user?.firstName ?? '';
 
         return Scaffold(
-          backgroundColor:
-              isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+          backgroundColor: isDark
+              ? AppColors.scaffoldDark
+              : AppColors.scaffoldLight,
           body: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -67,12 +68,13 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           // Speech Bubble de la mascotte
                           MascotSpeechBubble(
-                            message: provider.mascotMessage,
-                            isDark: isDark,
-                            onTap: provider.nextMascotMessage,
-                          ).animate().fadeIn(delay: 400.ms).scale(
-                                curve: Curves.easeOutBack,
-                              ),
+                                message: provider.mascotMessage,
+                                isDark: isDark,
+                                onTap: provider.nextMascotMessage,
+                              )
+                              .animate()
+                              .fadeIn(delay: 400.ms)
+                              .scale(curve: Curves.easeOutBack),
 
                           const SizedBox(height: 24),
 
@@ -148,7 +150,10 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildGreeting(
-      DashboardProvider provider, bool isDark, String firstName) {
+    DashboardProvider provider,
+    bool isDark,
+    String firstName,
+  ) {
     return Column(
       children: [
         Text(
@@ -156,8 +161,9 @@ class _DashboardPageState extends State<DashboardPage> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w700,
-            color:
-                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
             letterSpacing: -0.5,
           ),
           textAlign: TextAlign.center,
@@ -201,8 +207,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.mood_rounded,
-                    color: AppColors.primary, size: 20),
+                child: const Icon(
+                  Icons.mood_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -379,8 +388,8 @@ class _MoodChipState extends State<_MoodChip> {
             color: widget.isSelected
                 ? AppColors.primary.withValues(alpha: 0.2)
                 : (widget.isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.03)),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03)),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: widget.isSelected
@@ -395,8 +404,8 @@ class _MoodChipState extends State<_MoodChip> {
             color: widget.isSelected
                 ? widget.mood.color
                 : (widget.isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight),
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight),
           ),
         ),
       ),

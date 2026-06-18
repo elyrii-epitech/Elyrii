@@ -139,22 +139,22 @@ class _MoodButtonState extends State<_MoodButton>
                           AppColors.primaryDark.withValues(alpha: 0.6),
                         ]
                       : widget.isDark
-                          ? [
-                              Colors.white.withValues(alpha: 0.12),
-                              Colors.white.withValues(alpha: 0.06),
-                            ]
-                          : [
-                              Colors.white.withValues(alpha: 0.8),
-                              Colors.white.withValues(alpha: 0.5),
-                            ],
+                      ? [
+                          Colors.white.withValues(alpha: 0.12),
+                          Colors.white.withValues(alpha: 0.06),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.8),
+                          Colors.white.withValues(alpha: 0.5),
+                        ],
                 ),
                 borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                 border: Border.all(
                   color: widget.isSelected
                       ? AppColors.primary.withValues(alpha: 0.5)
                       : widget.isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : Colors.white.withValues(alpha: 0.6),
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.6),
                   width: widget.isSelected ? 2 : 1,
                 ),
                 boxShadow: widget.isSelected
@@ -180,8 +180,8 @@ class _MoodButtonState extends State<_MoodButton>
                   color: widget.isSelected
                       ? Colors.white
                       : (widget.isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight),
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight),
                 ),
               ),
             ),

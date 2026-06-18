@@ -31,10 +31,10 @@ class JournalEntryModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'content': content,
-        'mood': mood,
-      };
+    'title': title,
+    'content': content,
+    'mood': mood,
+  };
 
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.now();

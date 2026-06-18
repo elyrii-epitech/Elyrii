@@ -29,8 +29,11 @@ class DailyStreakCard extends StatelessWidget {
                   color: AppColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.favorite_rounded,
-                    color: AppColors.primary, size: 22),
+                child: const Icon(
+                  Icons.favorite_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -68,60 +71,65 @@ class DailyStreakCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
-              final wasPresent =
-                  index < weekHistory.length ? weekHistory[index] : false;
+              final wasPresent = index < weekHistory.length
+                  ? weekHistory[index]
+                  : false;
               final dayInitial = _getDayInitial(index);
 
               return Column(
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 400),
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: wasPresent
-                          ? AppColors.accent.withValues(alpha: 0.2)
-                          : isDark
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 400),
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: wasPresent
+                              ? AppColors.accent.withValues(alpha: 0.2)
+                              : isDark
                               ? Colors.white.withValues(alpha: 0.04)
                               : Colors.black.withValues(alpha: 0.02),
-                      shape: BoxShape.circle,
-                      border: wasPresent
-                          ? Border.all(
-                              color: AppColors.accent.withValues(alpha: 0.4),
-                              width: 1.5,
-                            )
-                          : Border.all(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.06)
-                                  : Colors.black.withValues(alpha: 0.04),
-                              width: 0.5,
-                            ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      wasPresent ? Icons.wb_sunny_rounded : Icons.cloud_rounded,
-                      size: 18,
-                      color: wasPresent
-                          ? AppColors.accent
-                          : (isDark
-                                  ? AppColors.textTertiaryDark
-                                  : AppColors.textTertiaryLight)
-                              .withValues(alpha: 0.5),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    dayInitial,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
-                    ),
-                  ),
-                ],
-              )
+                          shape: BoxShape.circle,
+                          border: wasPresent
+                              ? Border.all(
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  width: 1.5,
+                                )
+                              : Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.06)
+                                      : Colors.black.withValues(alpha: 0.04),
+                                  width: 0.5,
+                                ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          wasPresent
+                              ? Icons.wb_sunny_rounded
+                              : Icons.cloud_rounded,
+                          size: 18,
+                          color: wasPresent
+                              ? AppColors.accent
+                              : (isDark
+                                        ? AppColors.textTertiaryDark
+                                        : AppColors.textTertiaryLight)
+                                    .withValues(alpha: 0.5),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        dayInitial,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  )
                   .animate()
                   .fadeIn(delay: (80 * index).ms)
                   .slideY(begin: 0.15, end: 0);
@@ -131,8 +139,11 @@ class DailyStreakCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wb_sunny_rounded,
-                  size: 12, color: AppColors.accent),
+              const Icon(
+                Icons.wb_sunny_rounded,
+                size: 12,
+                color: AppColors.accent,
+              ),
               const SizedBox(width: 4),
               Text(
                 'Moments vécus',
@@ -145,12 +156,15 @@ class DailyStreakCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 24),
-              Icon(Icons.cloud_rounded,
-                  size: 12,
-                  color: (isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight)
-                      .withValues(alpha: 0.5)),
+              Icon(
+                Icons.cloud_rounded,
+                size: 12,
+                color:
+                    (isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight)
+                        .withValues(alpha: 0.5),
+              ),
               const SizedBox(width: 4),
               Text(
                 'Repos & recharge',
