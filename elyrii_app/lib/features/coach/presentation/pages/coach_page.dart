@@ -16,16 +16,27 @@ class CoachPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return ChangeNotifierProvider(
-      create: (_) => CoachProvider(),
-      child: Consumer<CoachProvider>(
-        builder: (context, provider, _) {
-          return Scaffold(
-            backgroundColor: isDark
-                ? AppColors.scaffoldDark
-                : AppColors.scaffoldLight,
-            body: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+    return Consumer<CoachProvider>(
+      builder: (context, provider, _) {
+        if (!provider.hasLoadedRemote && !provider.isLoading) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              context.read<CoachProvider>().loadCoachData();
+            }
+          });
+        }
+
+        return Scaffold(
+          backgroundColor: isDark
+              ? AppColors.scaffoldDark
+              : AppColors.scaffoldLight,
+          body: RefreshIndicator(
+            onRefresh: provider.loadCoachData,
+            color: AppColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
                   AppDimensions.pageHorizontalPadding,
@@ -43,6 +54,18 @@ class CoachPage extends StatelessWidget {
                           .animate()
                           .fadeIn(duration: 400.ms)
                           .slideY(begin: 0.1, end: 0),
+                    if (provider.isCreatingSession) ...[
+                      const SizedBox(height: 16),
+                      const LinearProgressIndicator(minHeight: 3),
+                    ],
+                    if (provider.error != null) ...[
+                      const SizedBox(height: 16),
+                      _buildErrorBanner(provider.error!, isDark),
+                    ],
+                    if (provider.latestSession != null) ...[
+                      const SizedBox(height: 16),
+                      _buildLatestSessionCard(provider.latestSession!, isDark),
+                    ],
                     const SizedBox(height: 28),
                     _buildSectionTitle(
                       'Recommandé pour toi',
@@ -56,6 +79,7 @@ class CoachPage extends StatelessWidget {
                         child: _ActivityCard(
                           activity: activity,
                           isDark: isDark,
+                          onTap: () => _requestGuidance(context, activity),
                         ),
                       ),
                     ),
@@ -66,14 +90,18 @@ class CoachPage extends StatelessWidget {
                       isDark,
                     ),
                     const SizedBox(height: 12),
-                    _buildCategoryGrid(provider.allActivities, isDark),
+                    _buildCategoryGrid(
+                      context,
+                      provider.allActivities,
+                      isDark,
+                    ),
                   ],
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -192,7 +220,11 @@ class CoachPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryGrid(List<CoachActivity> activities, bool isDark) {
+  Widget _buildCategoryGrid(
+    BuildContext context,
+    List<CoachActivity> activities,
+    bool isDark,
+  ) {
     return GridView.builder(
       padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
@@ -209,8 +241,92 @@ class CoachPage extends StatelessWidget {
         return _ActivityGridCard(
           activity: activity,
           isDark: isDark,
+          onTap: () => _requestGuidance(context, activity),
         ).animate().fadeIn(delay: (50 * index).ms).slideY(begin: 0.05, end: 0);
       },
+    );
+  }
+
+  Widget _buildLatestSessionCard(CoachSession session, bool isDark) {
+    final textColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final subtitleColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
+
+    return LiquidGlassCard(
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Text(
+                'Guidance personnalisée',
+                style: AppTextStyles.titleSmall(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            session.response,
+            style: AppTextStyles.bodySmall(
+              color: subtitleColor,
+            ).copyWith(height: 1.45),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(String message, bool isDark) {
+    return LiquidGlassCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AppColors.error),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestGuidance(
+    BuildContext context,
+    CoachActivity activity,
+  ) async {
+    HapticFeedback.lightImpact();
+    final success = await context
+        .read<CoachProvider>()
+        .requestGuidanceForActivity(activity);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Conseil personnalisé enregistré.'
+              : 'Impossible de générer un conseil pour le moment.',
+        ),
+      ),
     );
   }
 }
@@ -218,8 +334,13 @@ class CoachPage extends StatelessWidget {
 class _ActivityCard extends StatefulWidget {
   final CoachActivity activity;
   final bool isDark;
+  final VoidCallback onTap;
 
-  const _ActivityCard({required this.activity, required this.isDark});
+  const _ActivityCard({
+    required this.activity,
+    required this.isDark,
+    required this.onTap,
+  });
 
   @override
   State<_ActivityCard> createState() => _ActivityCardState();
@@ -236,7 +357,7 @@ class _ActivityCardState extends State<_ActivityCard> {
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        HapticFeedback.lightImpact();
+        widget.onTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
@@ -317,8 +438,13 @@ class _ActivityCardState extends State<_ActivityCard> {
 class _ActivityGridCard extends StatefulWidget {
   final CoachActivity activity;
   final bool isDark;
+  final VoidCallback onTap;
 
-  const _ActivityGridCard({required this.activity, required this.isDark});
+  const _ActivityGridCard({
+    required this.activity,
+    required this.isDark,
+    required this.onTap,
+  });
 
   @override
   State<_ActivityGridCard> createState() => _ActivityGridCardState();
@@ -335,7 +461,7 @@ class _ActivityGridCardState extends State<_ActivityGridCard> {
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
-        HapticFeedback.lightImpact();
+        widget.onTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(

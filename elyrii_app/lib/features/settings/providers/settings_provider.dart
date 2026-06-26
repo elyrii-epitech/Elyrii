@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/network/api_client.dart';
 import '../data/settings_repository.dart';
+import '../models/app_settings.dart';
 import '../models/user_profile.dart';
 
 /// Provider managing user profile state
@@ -8,6 +9,7 @@ class UserProvider extends ChangeNotifier {
   final UserRepository _repository;
 
   UserProfile? _profile;
+  AppSettings? _settings;
   bool _isLoading = false;
   String? _error;
 
@@ -15,6 +17,7 @@ class UserProvider extends ChangeNotifier {
     : _repository = UserRepository(client: client);
 
   UserProfile? get profile => _profile;
+  AppSettings? get settings => _settings;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -31,6 +34,53 @@ class UserProvider extends ChangeNotifier {
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> loadSettings() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      _settings = await _repository.getSettings();
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> updateSettings({
+    String? themeMode,
+    bool? notificationsEnabled,
+    String? privacyMode,
+  }) async {
+    final previous = _settings;
+    if (previous != null) {
+      _settings = previous.copyWith(
+        themeMode: themeMode,
+        notificationsEnabled: notificationsEnabled,
+        privacyMode: privacyMode,
+      );
+      notifyListeners();
+    }
+
+    try {
+      _settings = await _repository.updateSettings(
+        themeMode: themeMode,
+        notificationsEnabled: notificationsEnabled,
+        privacyMode: privacyMode,
+      );
+      _error = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _settings = previous;
+      _error = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 

@@ -58,7 +58,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
   }
 
-  void _autoSave() {
+  Future<void> _autoSave() async {
     if (!_hasChanges || _contentController.text.trim().isEmpty) return;
 
     setState(() => _isSaving = true);
@@ -69,30 +69,29 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     final currentMood = dashboardProvider.selectedMood?.name;
 
     if (widget.entry != null) {
-      widget.provider.updateEntry(
+      await widget.provider.updateEntry(
         widget.entry!.id,
         title: title,
         content: content,
         mood: currentMood,
       );
     } else if (_createdEntryId != null) {
-      widget.provider.updateEntry(
+      await widget.provider.updateEntry(
         _createdEntryId!,
         title: title,
         content: content,
         mood: currentMood,
       );
     } else {
-      final now = DateTime.now();
-      final newId = now.millisecondsSinceEpoch.toString();
-      widget.provider.createEntry(
+      final created = await widget.provider.createEntry(
         title: title,
         content: content,
         mood: currentMood,
       );
-      _createdEntryId = newId;
+      _createdEntryId = created?.id;
     }
 
+    if (!mounted) return;
     setState(() {
       _hasChanges = false;
       _isSaving = false;
@@ -126,7 +125,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       ],
     );
 
-    if (result == 'save') _autoSave();
+    if (result == 'save') await _autoSave();
     return result == 'save' || result == 'discard';
   }
 

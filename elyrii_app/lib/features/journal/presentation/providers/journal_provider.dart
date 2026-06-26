@@ -52,7 +52,7 @@ class JournalProvider extends ChangeNotifier {
     return sorted;
   }
 
-  Future<void> createEntry({
+  Future<JournalEntryModel?> createEntry({
     String? title,
     required String content,
     String? mood,
@@ -65,9 +65,11 @@ class JournalProvider extends ChangeNotifier {
       );
       _entries.add(entry);
       notifyListeners();
+      return entry;
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      return null;
     }
   }
 

@@ -126,6 +126,9 @@ class ApiClient {
       'User': '$baseUrl/user/health',
       'Chat': '$baseUrl/chat/health',
       'Quest': '$baseUrl/challenge/health',
+      'Coach': '$baseUrl/coach/health',
+      'Meditation': '$baseUrl/meditation/health',
+      'Notifications': '$baseUrl/notifications/health',
     };
 
     for (var entry in services.entries) {

@@ -26,14 +26,20 @@ class ChatbotProvider extends ChangeNotifier {
   /// Connect to the chat WebSocket via the gateway
   Future<void> connect() async {
     if (_isConnected) return;
+    final token = await _storage.getAccessToken();
     final userId = await _storage.getUserId();
-    if (userId == null || userId.isEmpty) {
-      debugPrint('[ChatbotProvider] No userId, cannot connect to WebSocket');
+    if ((token == null || token.isEmpty) && (userId == null || userId.isEmpty)) {
+      debugPrint('[ChatbotProvider] No auth token or userId for WebSocket');
       return;
     }
     try {
-      final wsUrl = ApiConfig.chatWsUrl(userId);
-      _socket = await WebSocket.connect(wsUrl);
+      final wsUrl = ApiConfig.chatWsUrl(userId: userId, token: token);
+      _socket = await WebSocket.connect(
+        wsUrl,
+        headers: token != null && token.isNotEmpty
+            ? {'Authorization': 'Bearer $token'}
+            : null,
+      );
       _isConnected = true;
       notifyListeners();
       _socket!.listen(
