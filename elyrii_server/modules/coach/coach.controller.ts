@@ -5,11 +5,13 @@ import { z } from "zod";
 import type { HonoEnv } from "../../utils/hono.types";
 import CoachRepository from "../../repository/coach.repository";
 import CoachLogic from "./coach.logic";
+import UserRepository from "../../repository/user.repository";
 
 class CoachController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly coachRepository = new CoachRepository();
     private readonly coachLogic = new CoachLogic();
+    private readonly userRepository = new UserRepository();
 
     public readonly getSessions = this.factory.createHandlers(
         describeRoute({
@@ -55,6 +57,7 @@ class CoachController {
                     ...(body.context ?? {}),
                 },
             });
+            this.userRepository.touchActivity(userId).catch(() => {});
 
             return ctx.json(session, 201);
         }

@@ -16,10 +16,14 @@ const updateSettingsValidation = z.object({
 
 const updateMascotValidation = z.object({
     appearance: z.string().min(1).max(50).optional(),
+    themeId: z.string().min(1).max(50).optional(),
+    equippedCosmetics: z.array(z.string().min(1).max(80)).max(20).optional(),
     personality: z.object({
         tone: z.enum(["supportive", "neutral", "energetic", "calm"]).optional(),
         energy: z.enum(["low", "balanced", "high"]).optional(),
         humor: z.enum(["none", "light", "playful"]).optional(),
+        themeId: z.string().min(1).max(50).optional(),
+        equippedCosmetics: z.array(z.string().min(1).max(80)).max(20).optional(),
     }).partial().optional(),
 });
 
@@ -212,12 +216,17 @@ class UserController {
 
             try {
                 const current = await this.userRepository.getOrCreateUserSettings(userId);
+                const currentPersonality = current.mascotPersonality as Record<string, unknown>;
+                const mascotAppearance = body.appearance ?? body.themeId ?? current.mascotAppearance;
+                const mascotPersonality = {
+                    ...currentPersonality,
+                    ...(body.personality ?? {}),
+                    ...(body.themeId ? { themeId: body.themeId } : {}),
+                    ...(body.equippedCosmetics ? { equippedCosmetics: body.equippedCosmetics } : {}),
+                };
                 const updated = await this.userRepository.updateUserSettings(userId, {
-                    mascotAppearance: body.appearance ?? current.mascotAppearance,
-                    mascotPersonality: {
-                        ...(current.mascotPersonality as Record<string, unknown>),
-                        ...(body.personality ?? {}),
-                    },
+                    mascotAppearance,
+                    mascotPersonality,
                 });
                 return ctx.json({
                     appearance: updated.mascotAppearance,
