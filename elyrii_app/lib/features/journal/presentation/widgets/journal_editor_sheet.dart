@@ -16,7 +16,15 @@ class JournalEditorSheet extends StatefulWidget {
   final JournalProvider provider;
   final JournalEntry? entry;
 
-  const JournalEditorSheet({super.key, required this.provider, this.entry});
+  /// Prompt d'inspiration optionnel pour pré-remplir le titre.
+  final String? initialPrompt;
+
+  const JournalEditorSheet({
+    super.key,
+    required this.provider,
+    this.entry,
+    this.initialPrompt,
+  });
 
   @override
   State<JournalEditorSheet> createState() => _JournalEditorSheetState();
@@ -33,10 +41,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.entry?.title ?? '');
-    _contentController = TextEditingController(
-      text: widget.entry?.content ?? '',
+    final entry = widget.entry;
+    _titleController = TextEditingController(
+      text: entry?.title ?? widget.initialPrompt ?? '',
     );
+    _contentController = TextEditingController(text: entry?.content ?? '');
 
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
@@ -179,6 +188,46 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             padding: EdgeInsets.fromLTRB(0, 8, 0, bottomInset + 24),
             child: Column(
               children: [
+                // Badge d'inspiration
+                if (widget.initialPrompt != null && widget.entry == null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.lightbulb_rounded,
+                                size: 14,
+                                color: AppColors.accent,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Inspiration',
+                                style: AppTextStyles.labelSmall(
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ).animate().fadeIn(duration: 200.ms).slideY(begin: 0.1),
+                  ),
                 // Champ titre
                 GlassTextField(
                       controller: _titleController,

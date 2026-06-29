@@ -27,7 +27,15 @@ class AppConfig {
 
   /// Configure the gateway URL based on environment or auto-detect platform
   static void initialize({String? gatewayUrl}) {
-    final override = gatewayUrl ?? _gatewayUrlOverride;
-    ApiConfig.setBaseUrl(override.isNotEmpty ? override : _defaultGatewayUrl);
+    const baseUrlDefine = String.fromEnvironment('BASE_URL');
+    final override = gatewayUrl ?? '';
+    final resolved = override.isNotEmpty
+        ? override
+        : _gatewayUrlOverride.isNotEmpty
+            ? _gatewayUrlOverride
+            : baseUrlDefine.isNotEmpty
+                ? baseUrlDefine
+                : _defaultGatewayUrl;
+    ApiConfig.setBaseUrl(resolved);
   }
 }
