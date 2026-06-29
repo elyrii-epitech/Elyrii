@@ -45,7 +45,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.release
+            // Use the real release keystore when key.properties is present;
+            // otherwise fall back to debug signing so CI can still build the APK.
+            signingConfig = keystorePropertiesFile.exists()
+                ? signingConfigs.release
+                : signingConfigs.debug
         }
     }
 }
