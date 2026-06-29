@@ -21,9 +21,7 @@ class MascotRepository {
                 'appearance': mascot.themeId,
                 'themeId': mascot.themeId,
                 'equippedCosmetics': mascot.equippedCosmetics,
-                'personality': {
-                  'equippedCosmetics': mascot.equippedCosmetics,
-                },
+                'personality': {'equippedCosmetics': mascot.equippedCosmetics},
               },
             )
             as Map<String, dynamic>;
@@ -34,10 +32,12 @@ class MascotRepository {
     final personality = Map<String, dynamic>.from(
       json['personality'] as Map? ?? const <String, dynamic>{},
     );
-    final rawTheme = json['appearance'] as String? ??
+    final rawTheme =
+        json['appearance'] as String? ??
         personality['themeId'] as String? ??
         'nature';
-    final cosmetics = (json['equippedCosmetics'] as List<dynamic>?) ??
+    final cosmetics =
+        (json['equippedCosmetics'] as List<dynamic>?) ??
         (personality['equippedCosmetics'] as List<dynamic>?) ??
         const <dynamic>[];
 

@@ -28,7 +28,8 @@ class ChatbotProvider extends ChangeNotifier {
     if (_isConnected) return;
     final token = await _storage.getAccessToken();
     final userId = await _storage.getUserId();
-    if ((token == null || token.isEmpty) && (userId == null || userId.isEmpty)) {
+    if ((token == null || token.isEmpty) &&
+        (userId == null || userId.isEmpty)) {
       debugPrint('[ChatbotProvider] No auth token or userId for WebSocket');
       return;
     }

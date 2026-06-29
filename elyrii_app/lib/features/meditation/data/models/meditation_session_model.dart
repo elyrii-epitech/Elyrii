@@ -20,9 +20,13 @@ class MeditationProgram {
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
-      durationMinutes: _parseInt(json['durationMinutes'] ?? json['duration_minutes']),
-      audioUrl: json['audioUrl'] as String? ?? json['audio_url'] as String? ?? '',
-      tags: (json['tags'] as List<dynamic>?)
+      durationMinutes: _parseInt(
+        json['durationMinutes'] ?? json['duration_minutes'],
+      ),
+      audioUrl:
+          json['audioUrl'] as String? ?? json['audio_url'] as String? ?? '',
+      tags:
+          (json['tags'] as List<dynamic>?)
               ?.map((tag) => tag.toString())
               .toList() ??
           const [],
@@ -59,15 +63,18 @@ class MeditationSessionModel {
     return MeditationSessionModel(
       id: json['id'] as String? ?? '',
       type: json['type'] as String? ?? '',
-      durationMinutes: _parseInt(json['durationMinutes'] ?? json['duration_minutes']),
+      durationMinutes: _parseInt(
+        json['durationMinutes'] ?? json['duration_minutes'],
+      ),
       status: json['status'] as String? ?? 'STARTED',
       notes: json['notes'] as String?,
-      moodBefore: json['moodBefore'] as String? ?? json['mood_before'] as String?,
+      moodBefore:
+          json['moodBefore'] as String? ?? json['mood_before'] as String?,
       moodAfter: json['moodAfter'] as String? ?? json['mood_after'] as String?,
       startedAt: _parseDate(json['startedAt'] ?? json['started_at']),
       endedAt: _parseDate(json['endedAt'] ?? json['ended_at']),
-      createdAt: _parseDate(json['createdAt'] ?? json['created_at']) ??
-          DateTime.now(),
+      createdAt:
+          _parseDate(json['createdAt'] ?? json['created_at']) ?? DateTime.now(),
     );
   }
 }

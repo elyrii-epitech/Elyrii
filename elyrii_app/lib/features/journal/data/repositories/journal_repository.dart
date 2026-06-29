@@ -100,10 +100,7 @@ class JournalRepository {
     final response =
         await _client.post(
               ApiConfig.journalMediaUrl(entryId),
-              body: {
-                'url': url,
-                if (type != null) 'type': type,
-              },
+              body: {'url': url, 'type': ?type},
             )
             as Map<String, dynamic>;
     return JournalMediaModel.fromJson(response);

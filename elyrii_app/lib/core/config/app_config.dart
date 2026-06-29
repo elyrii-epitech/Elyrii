@@ -32,10 +32,10 @@ class AppConfig {
     final resolved = override.isNotEmpty
         ? override
         : _gatewayUrlOverride.isNotEmpty
-            ? _gatewayUrlOverride
-            : baseUrlDefine.isNotEmpty
-                ? baseUrlDefine
-                : _defaultGatewayUrl;
+        ? _gatewayUrlOverride
+        : baseUrlDefine.isNotEmpty
+        ? baseUrlDefine
+        : _defaultGatewayUrl;
     ApiConfig.setBaseUrl(resolved);
   }
 }

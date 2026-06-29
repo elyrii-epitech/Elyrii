@@ -90,11 +90,7 @@ class CoachPage extends StatelessWidget {
                       isDark,
                     ),
                     const SizedBox(height: 12),
-                    _buildCategoryGrid(
-                      context,
-                      provider.allActivities,
-                      isDark,
-                    ),
+                    _buildCategoryGrid(context, provider.allActivities, isDark),
                   ],
                 ),
               ),

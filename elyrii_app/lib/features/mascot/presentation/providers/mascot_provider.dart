@@ -155,9 +155,7 @@ class MascotProvider extends ChangeNotifier {
           'appearance': _mascot.themeId,
           'themeId': _mascot.themeId,
           'equippedCosmetics': _mascot.equippedCosmetics,
-          'personality': {
-            'equippedCosmetics': _mascot.equippedCosmetics,
-          },
+          'personality': {'equippedCosmetics': _mascot.equippedCosmetics},
         },
       );
     } catch (e) {
@@ -172,11 +170,13 @@ class MascotProvider extends ChangeNotifier {
     final personality = Map<String, dynamic>.from(
       json['personality'] as Map? ?? const <String, dynamic>{},
     );
-    final rawTheme = json['appearance'] as String? ??
+    final rawTheme =
+        json['appearance'] as String? ??
         personality['themeId'] as String? ??
         'nature';
     final themeId = _validThemeId(rawTheme == 'default' ? 'nature' : rawTheme);
-    final cosmetics = (json['equippedCosmetics'] as List<dynamic>?) ??
+    final cosmetics =
+        (json['equippedCosmetics'] as List<dynamic>?) ??
         (personality['equippedCosmetics'] as List<dynamic>?) ??
         const <dynamic>[];
 

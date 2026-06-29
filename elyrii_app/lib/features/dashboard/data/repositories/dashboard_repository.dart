@@ -8,18 +8,22 @@ class DashboardRepository {
   DashboardRepository({required ApiClient client}) : _client = client;
 
   Future<DashboardData> getDashboard({String range = '30d'}) async {
-    final response = (await _client.get(
-      ApiConfig.userDashboardUrl,
-      queryParams: {'range': range},
-    )) as Map<String, dynamic>;
+    final response =
+        (await _client.get(
+              ApiConfig.userDashboardUrl,
+              queryParams: {'range': range},
+            ))
+            as Map<String, dynamic>;
     return DashboardData.fromJson(response);
   }
 
   Future<DashboardStats> getStats({String range = '30d'}) async {
-    final response = (await _client.get(
-      ApiConfig.userStatsUrl,
-      queryParams: {'range': range},
-    )) as Map<String, dynamic>;
+    final response =
+        (await _client.get(
+              ApiConfig.userStatsUrl,
+              queryParams: {'range': range},
+            ))
+            as Map<String, dynamic>;
     return DashboardStats.fromJson(response);
   }
 

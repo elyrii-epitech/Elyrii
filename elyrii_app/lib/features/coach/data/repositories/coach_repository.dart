@@ -199,10 +199,7 @@ class CoachRepository {
     final response =
         await _client.post(
               ApiConfig.coachSessionsUrl,
-              body: {
-                'prompt': prompt,
-                if (context != null) 'context': context,
-              },
+              body: {'prompt': prompt, 'context': ?context},
             )
             as Map<String, dynamic>;
     return CoachSession.fromJson(response);

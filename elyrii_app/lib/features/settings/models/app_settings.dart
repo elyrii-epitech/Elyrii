@@ -27,16 +27,20 @@ class AppSettings {
     return AppSettings(
       id: json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
-      themeMode: json['themeMode'] as String? ??
+      themeMode:
+          json['themeMode'] as String? ??
           json['theme_mode'] as String? ??
           'SYSTEM',
-      notificationsEnabled: json['notificationsEnabled'] as bool? ??
+      notificationsEnabled:
+          json['notificationsEnabled'] as bool? ??
           json['notifications_enabled'] as bool? ??
           true,
-      privacyMode: json['privacyMode'] as String? ??
+      privacyMode:
+          json['privacyMode'] as String? ??
           json['privacy_mode'] as String? ??
           'STANDARD',
-      mascotAppearance: json['mascotAppearance'] as String? ??
+      mascotAppearance:
+          json['mascotAppearance'] as String? ??
           json['mascot_appearance'] as String? ??
           'nature',
       mascotPersonality: Map<String, dynamic>.from(
@@ -71,8 +75,7 @@ class AppSettings {
       id: id,
       userId: userId,
       themeMode: themeMode ?? this.themeMode,
-      notificationsEnabled:
-          notificationsEnabled ?? this.notificationsEnabled,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       privacyMode: privacyMode ?? this.privacyMode,
       mascotAppearance: mascotAppearance ?? this.mascotAppearance,
       mascotPersonality: mascotPersonality ?? this.mascotPersonality,

@@ -337,9 +337,7 @@ class DashboardProvider extends ChangeNotifier {
       }
 
       _currentStreak = _readInt(statsResponse['streak']);
-      _activeChallengesCount = _readInt(
-        statsResponse['activeChallengesCount'],
-      );
+      _activeChallengesCount = _readInt(statsResponse['activeChallengesCount']);
       _journalEntriesCount = _readInt(statsResponse['journalEntriesCount']);
       _completedChallengesCount = _readInt(
         statsResponse['completedChallengesCount'],

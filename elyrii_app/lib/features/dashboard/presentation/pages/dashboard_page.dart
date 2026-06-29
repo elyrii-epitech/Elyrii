@@ -266,10 +266,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildStatsSection(
-    DashboardProvider provider,
-    bool isDark,
-  ) {
+  Widget _buildStatsSection(DashboardProvider provider, bool isDark) {
     return Column(
       children: [
         Row(

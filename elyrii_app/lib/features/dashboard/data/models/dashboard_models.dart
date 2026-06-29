@@ -57,8 +57,9 @@ class DashboardData {
         json['stats'] as Map<String, dynamic>? ?? json,
       ),
       activeChallenges: List<dynamic>.from(challenges['active'] as List? ?? []),
-      pendingChallenges:
-          List<dynamic>.from(challenges['pending'] as List? ?? []),
+      pendingChallenges: List<dynamic>.from(
+        challenges['pending'] as List? ?? [],
+      ),
     );
   }
 }

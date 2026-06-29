@@ -7,11 +7,7 @@ class MascotThemePreview extends StatelessWidget {
   final MascotTheme theme;
   final double size;
 
-  const MascotThemePreview({
-    super.key,
-    required this.theme,
-    this.size = 180,
-  });
+  const MascotThemePreview({super.key, required this.theme, this.size = 180});
 
   @override
   Widget build(BuildContext context) {

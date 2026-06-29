@@ -27,7 +27,8 @@ class MeditationRepository {
         : (response['data'] ?? []);
     return data
         .map(
-          (item) => MeditationSessionModel.fromJson(item as Map<String, dynamic>),
+          (item) =>
+              MeditationSessionModel.fromJson(item as Map<String, dynamic>),
         )
         .toList();
   }
@@ -43,7 +44,7 @@ class MeditationRepository {
               body: {
                 'type': type,
                 'durationMinutes': durationMinutes,
-                if (moodBefore != null) 'moodBefore': moodBefore,
+                'moodBefore': ?moodBefore,
               },
             )
             as Map<String, dynamic>;
@@ -61,9 +62,9 @@ class MeditationRepository {
               ApiConfig.completeMeditationSessionUrl(sessionId),
               body: {
                 'endedAt': DateTime.now().toUtc().toIso8601String(),
-                if (moodBefore != null) 'moodBefore': moodBefore,
-                if (moodAfter != null) 'moodAfter': moodAfter,
-                if (notes != null) 'notes': notes,
+                'moodBefore': ?moodBefore,
+                'moodAfter': ?moodAfter,
+                'notes': ?notes,
               },
             )
             as Map<String, dynamic>;
