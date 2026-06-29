@@ -18,6 +18,7 @@ import 'features/gamification/presentation/providers/gamification_provider.dart'
 import 'features/settings/providers/settings_provider.dart';
 import 'features/mascot/presentation/providers/mascot_provider.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'features/coach/presentation/providers/coach_provider.dart';
 import 'routes/app_routes.dart';
 import 'routes/route_generator.dart';
 
@@ -38,13 +39,27 @@ void main() async {
   final chatbotProvider = ChatbotProvider(storage: secureStorage);
   final gamificationProvider = GamificationProvider(client: apiClient);
   final userProvider = UserProvider(client: apiClient);
-  final mascotProvider = MascotProvider();
+  final mascotProvider = MascotProvider(client: apiClient);
   final dashboardProvider = DashboardProvider(apiClient: apiClient);
+  final coachProvider = CoachProvider(client: apiClient);
 
   // Perform backend health check
   unawaited(apiClient.checkHealth());
 
   await authProvider.checkAuthStatus();
+  if (authProvider.isAuthenticated) {
+    await Future.wait([
+      userProvider.loadProfile(),
+      userProvider.loadSettings(),
+      mascotProvider.loadMascot(),
+      dashboardProvider.loadDashboardData(),
+      coachProvider.loadCoachData(),
+    ]);
+    final savedTheme = userProvider.settings?.themeModeValue;
+    if (savedTheme != null) {
+      themeProvider.setThemeMode(savedTheme);
+    }
+  }
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -61,6 +76,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider<ApiClient>.value(value: apiClient),
+        Provider<SecureStorageService>.value(value: secureStorage),
         ChangeNotifierProvider.value(value: themeProvider),
         ChangeNotifierProvider.value(value: performanceService),
         ChangeNotifierProvider.value(value: authProvider),
@@ -70,6 +87,7 @@ void main() async {
         ChangeNotifierProvider.value(value: userProvider),
         ChangeNotifierProvider.value(value: mascotProvider),
         ChangeNotifierProvider.value(value: dashboardProvider),
+        ChangeNotifierProvider.value(value: coachProvider),
       ],
       child: const MyApp(),
     ),

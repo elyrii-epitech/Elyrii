@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
-class TempPage extends StatelessWidget {
-  const TempPage({super.key});
+class AccessibilityService {
+  bool reduceMotion(BuildContext context) {
+    return MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Text('Page Temporaire', style: TextStyle(fontSize: 24)),
-      ),
-    );
+  bool largeText(BuildContext context) {
+    final scaler = MediaQuery.maybeOf(context)?.textScaler;
+    return (scaler?.scale(1.0) ?? 1.0) >= 1.25;
+  }
+
+  bool highContrast(BuildContext context) {
+    return MediaQuery.maybeOf(context)?.highContrast ?? false;
   }
 }

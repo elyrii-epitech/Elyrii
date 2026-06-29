@@ -6,6 +6,7 @@ class ChallengeTemplate {
   final String title;
   final String? description;
   final String source;
+  final int rewardPoints;
   final dynamic conditions;
   final String aggregator;
   final dynamic constraints;
@@ -17,6 +18,7 @@ class ChallengeTemplate {
     required this.title,
     this.description,
     required this.source,
+    required this.rewardPoints,
     this.conditions,
     required this.aggregator,
     this.constraints,
@@ -30,6 +32,7 @@ class ChallengeTemplate {
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
       source: json['source'] as String? ?? 'SYSTEM',
+      rewardPoints: _parseInt(json['rewardPoints'] ?? json['reward_points']),
       conditions: json['conditions'],
       aggregator: json['aggregator'] as String? ?? 'ALL',
       constraints: json['constraints'],
@@ -60,6 +63,13 @@ class ChallengeTemplate {
     if (value == null) return DateTime.now();
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 50;
+    return 50;
   }
 }
 

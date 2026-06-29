@@ -55,8 +55,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // Espace pour la mascotte 3D peek
-                    SizedBox(height: topPadding + 132),
+                    // Espace pour le status bar
+                    SizedBox(height: topPadding),
+
+                    // Mascotte 3D
+                    MascotPeek(
+                      selectedMood: provider.selectedMood,
+                      isDark: isDark,
+                      onTap: provider.nextMascotMessage,
+                    ),
 
                     // Container principal avec le contenu
                     Padding(
@@ -84,6 +91,15 @@ class _DashboardPageState extends State<DashboardPage> {
                               .fadeIn(duration: 400.ms)
                               .slideY(begin: 0.1, end: 0),
 
+                          if (provider.isLoading) ...[
+                            const SizedBox(height: 16),
+                            const LinearProgressIndicator(minHeight: 3),
+                          ],
+                          if (provider.error != null) ...[
+                            const SizedBox(height: 16),
+                            _buildErrorBanner(provider.error!, isDark),
+                          ],
+
                           const SizedBox(height: 28),
 
                           // Section "Comment te sens-tu ?"
@@ -95,7 +111,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(height: 32),
 
                           // Section Stats
-                          _buildStatsSection(provider, isDark, journalProvider)
+                          _buildStatsSection(provider, isDark)
                               .animate()
                               .fadeIn(duration: 400.ms, delay: 200.ms)
                               .slideY(begin: 0.1, end: 0),
@@ -114,20 +130,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              // Mascotte Peek en haut
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: MascotPeek(
-                    selectedMood: provider.selectedMood,
-                    isDark: isDark,
-                    onTap: provider.nextMascotMessage,
-                  ),
                 ),
               ),
 
@@ -264,37 +266,74 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildStatsSection(
-    DashboardProvider provider,
-    bool isDark,
-    JournalProvider journalProvider,
-  ) {
-    return Row(
+  Widget _buildStatsSection(DashboardProvider provider, bool isDark) {
+    return Column(
       children: [
-        _StatChip(
-          icon: Icons.edit_note_rounded,
-          value: '7',
-          label: 'entrées',
-          color: AppColors.primary,
-          isDark: isDark,
+        Row(
+          children: [
+            _StatChip(
+              icon: Icons.edit_note_rounded,
+              value: '${provider.journalEntriesCount}',
+              label: 'entrées',
+              color: AppColors.primary,
+              isDark: isDark,
+            ),
+            const SizedBox(width: 12),
+            _StatChip(
+              icon: Icons.local_fire_department_rounded,
+              value: '${provider.currentStreak}',
+              label: 'jours',
+              color: AppColors.secondary,
+              isDark: isDark,
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        _StatChip(
-          icon: Icons.local_fire_department_rounded,
-          value: '${provider.currentStreak}',
-          label: 'jours',
-          color: AppColors.secondary,
-          isDark: isDark,
-        ),
-        const SizedBox(width: 12),
-        _StatChip(
-          icon: Icons.star_rounded,
-          value: '3',
-          label: 'objectifs',
-          color: AppColors.accent,
-          isDark: isDark,
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _StatChip(
+              icon: Icons.flag_rounded,
+              value: '${provider.activeChallengesCount}',
+              label: 'défis',
+              color: AppColors.accent,
+              isDark: isDark,
+            ),
+            const SizedBox(width: 12),
+            _StatChip(
+              icon: Icons.stars_rounded,
+              value: '${provider.totalPoints}',
+              label: 'points',
+              color: AppColors.success,
+              isDark: isDark,
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildErrorBanner(String message, bool isDark) {
+    return LiquidGlassCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AppColors.error),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

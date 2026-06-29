@@ -10,7 +10,13 @@ class AppConfig {
   /// Whether the app is running in debug mode
   static const bool isDebug = true;
 
-  static const int _gatewayPort = 3000;
+  static const int _gatewayPort = int.fromEnvironment(
+    'ELYRII_API_PORT',
+    defaultValue: 3000,
+  );
+  static const String _gatewayUrlOverride = String.fromEnvironment(
+    'ELYRII_API_URL',
+  );
 
   /// Resolve the correct gateway host for the current platform
   static String get _defaultGatewayUrl {
@@ -21,6 +27,15 @@ class AppConfig {
 
   /// Configure the gateway URL based on environment or auto-detect platform
   static void initialize({String? gatewayUrl}) {
-    ApiConfig.setBaseUrl(gatewayUrl ?? _defaultGatewayUrl);
+    const baseUrlDefine = String.fromEnvironment('BASE_URL');
+    final override = gatewayUrl ?? '';
+    final resolved = override.isNotEmpty
+        ? override
+        : _gatewayUrlOverride.isNotEmpty
+        ? _gatewayUrlOverride
+        : baseUrlDefine.isNotEmpty
+        ? baseUrlDefine
+        : _defaultGatewayUrl;
+    ApiConfig.setBaseUrl(resolved);
   }
 }

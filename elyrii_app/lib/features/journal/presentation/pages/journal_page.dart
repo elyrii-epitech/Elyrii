@@ -35,14 +35,18 @@ class _JournalPageState extends State<JournalPage> {
     }
   }
 
-  void _showEditorSheet({JournalEntry? entry}) {
+  void _showEditorSheet({JournalEntry? entry, String? initialPrompt}) {
     HapticFeedback.lightImpact();
     showLiquidGlassSheet(
       context: context,
       initialChildSize: 0.92,
       maxChildSize: 0.92,
       minChildSize: 0.5,
-      child: JournalEditorSheet(provider: _provider, entry: entry),
+      child: JournalEditorSheet(
+        provider: _provider,
+        entry: entry,
+        initialPrompt: initialPrompt,
+      ),
     );
   }
 
@@ -65,6 +69,8 @@ class _JournalPageState extends State<JournalPage> {
                     if (provider.entries.isEmpty) {
                       return EmptyJournalState(
                         onCreateFirst: () => _showEditorSheet(),
+                        onPromptSelected: (prompt) =>
+                            _showEditorSheet(initialPrompt: prompt.title),
                         isDark: isDark,
                       );
                     }

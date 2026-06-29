@@ -1,4 +1,4 @@
-package com.example.elyrii_app
+package com.elyrii.elyrii_app
 
 import io.flutter.embedding.android.FlutterActivity
 

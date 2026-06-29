@@ -21,6 +21,14 @@ class MascotCustomizationPage extends StatefulWidget {
 
 class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MascotProvider>().loadMascot();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;

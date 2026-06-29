@@ -6,6 +6,7 @@ import type { HonoEnv } from "../../utils/hono.types";
 import { describeRoute } from "hono-openapi";
 import QuestLogic from "../quest/quest.logic";
 import { z } from "zod";
+import UserRepository from "../../repository/user.repository";
 
 /**
  * Controller that defines HTTP handlers for journal entry management.
@@ -22,6 +23,7 @@ class JournalController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly journalRepository: JournalRepository = new JournalRepository();
     private readonly questLogic: QuestLogic = new QuestLogic();
+    private readonly userRepository: UserRepository = new UserRepository();
     private readonly mediaSchema = z.object({
         url: z.string().url(),
         type: z.string().optional().nullable(),
@@ -156,6 +158,7 @@ class JournalController {
             });
             // Déclencher la vérification des défis en arrière-plan (non bloquant)
             this.questLogic.checkAndUpdateProgress(userID, 'journal_created').catch(() => {});
+            this.userRepository.touchActivity(userID).catch(() => {});
             return ctx.json({ message: "Entry created successfully", body: entry }, 201);
         } catch (error) {
             return ctx.json({ error: "Failed to create entry" }, 500);

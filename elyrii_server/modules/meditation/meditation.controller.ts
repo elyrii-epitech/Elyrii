@@ -5,10 +5,12 @@ import { z } from "zod";
 import type { HonoEnv } from "../../utils/hono.types";
 import MeditationRepository from "../../repository/meditation.repository";
 import { getMeditationProgramById, MEDITATION_PROGRAMS } from "./meditation.catalog";
+import UserRepository from "../../repository/user.repository";
 
 class MeditationController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly meditationRepository = new MeditationRepository();
+    private readonly userRepository = new UserRepository();
 
     public readonly getSessions = this.factory.createHandlers(
         describeRoute({
@@ -106,6 +108,7 @@ class MeditationController {
                     moodAfter: body.moodAfter,
                     endedAt: body.endedAt ? new Date(body.endedAt) : undefined,
                 });
+                this.userRepository.touchActivity(userId).catch(() => {});
                 return ctx.json(updated, 200);
             } catch (error) {
                 return ctx.json({ error: "Meditation session not found" }, 404);

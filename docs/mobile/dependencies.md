@@ -1,247 +1,277 @@
 # Flutter Dependencies
 
-Technical explanation of all Elyrii mobile project dependencies.
+This page is aligned with `elyrii_app/pubspec.yaml`.
 
-## Configuration
+## Environment
 
-**SDK Environment**
 ```yaml
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.10.3 <4.0.0"
+  flutter: ">=3.38.4"
 ```
-Compatible with Dart 3.5.0 and higher (currently 3.10.0).
 
-## Production dependencies
+GitHub Actions CI uses Flutter `3.38.4` stable. Local machines may use a newer
+stable version as long as the constraints above are respected.
 
-### UI and Interface
+## Production Dependencies
 
-#### cupertino_icons (^1.0.8)
-Native iOS Cupertino-style icon library provided by Flutter.
+### Flutter SDK
 
-**Technical explanation:** Provides iOS system icon vector glyphs to ensure consistent appearance with Apple ecosystem. Directly integrated into Flutter framework.
+#### flutter
 
-**Justification:** Necessary for native iOS support and respect Apple Human Interface guidelines. Allows using standard iOS icons without additional assets.
+Main SDK for the application.
 
----
+**Usage:** widgets, Material 3 rendering, navigation, basic animations, platform
+integration.
+
+### UI and Assets
+
+#### cupertino_icons (^1.0.9)
+
+Standard iOS icons.
+
+**Usage:** available for components that should follow iOS conventions.
 
 #### iconsax (^0.0.8)
-Collection of modern and modular vector icons.
 
-**Technical explanation:** SVG icon library converted to Flutter IconData. Alternative to Material Icons with more modern and consistent design. Used for application business icons.
+Additional icon pack.
 
-**Justification:** Choice of coherent and modern icon design system for application visual identity. More suitable than Material Icons for a contemporary look.
+**Usage:** modern business icons, alongside Flutter `Icons`.
 
+#### google_fonts (^8.1.0)
 
----
+Poppins font loading.
 
-#### google_fonts (^8.0.0)
-Flutter package to use fonts from fonts.google.com.
+**Usage:** `AppTextStyles` builds styles from `GoogleFonts.poppins()`.
 
-**Technical explanation:** HTTP client that downloads font files at runtime and caches them locally. Also supports bundling fonts in assets for offline use. 
+#### flutter_launcher_icons (^0.14.4)
 
-**Justification:** Easy access to "Poppins" font family without manually managing font assets. Ensures consistent typography across platforms.
+Application icon generation.
 
----
+**Config:** source `assets/icon_black_bg.png`, Android + iOS.
 
-#### flutter_launcher_icons (^0.14.3)
-Automatic application icon generator for all platforms.
+#### flutter_staggered_grid_view (^0.7.0)
 
-**Technical explanation:** CLI tool that generates all required icon variants (Android: mipmap, iOS: Assets.xcassets, Web: favicon, etc.) à partir d'une image source unique. Executed via `flutter pub run` during build phase.
+Advanced grid layouts.
 
-**Justification:** Automates generation of dozens of different icon sizes, avoids manual errors and accelerates deployment workflow.
-
-
----
-
-#### flutter_native_splash (^2.4.7)
-Native splash screen generator.
-
-**Technical explanation:** Automatically generates native launch screens (Android drawable/XML, iOS Storyboard) from a source image. Configured via `flutter_native_splash.yaml`. Supports dark mode and Android 12+ API.
-
-**Justification:** Provides a professional "first paint" experience consistent with the brand, hiding the Flutter engine initialization time.
-
----
+**Usage:** available for badge, collection, and non-uniform gamification
+layouts. The current code mostly uses standard Flutter grids, but the dependency
+remains available for gamification layouts.
 
 ### Animations
 
-#### flutter_animate (^4.5.0)
-Declarative animation framework based on widget extensions.
+#### flutter_animate (^4.5.2)
 
-**Technical explanation:** Uses Builder pattern and Dart extensions to chain animations declaratively. Optimized with reusable AnimationControllers and automatic lifecycle management. Supports parallel and sequential animations.
+Declarative animations through widget extensions.
 
-**Justification:** Simple and expressive API to create complex animations without boilerplate code. Optimal performance with automatic controller management. Modern alternative to AnimatedBuilder.
-
----
+**Usage:** auth, coach, gamification, journal, meditation.
 
 #### shimmer (^3.0.0)
-Animated loading effect with linear gradient.
 
-**Technical explanation:** Implements animated gradient via LinearGradient and AnimationController to create shimmer effect. Uses CustomPainter for performant rendering. Commonly used for skeleton loaders.
+Loading effects.
 
-**Justification:** Improves UX during loading by giving pleasant visual feedback. Recognized design pattern that reduces waiting time perception.
+**Usage:** 3D mascot viewer loading state.
 
----
+#### lottie (^3.3.3)
 
-#### lottie (^3.1.0)
-Lottie animation player (After Effects JSON format).
+Lottie JSON animation playback.
 
-**Technical explanation:** Parser and renderer of vector animations in Lottie format (JSON). Uses Flutter canvas to draw frames. Supports complex animations with interpolation, masks, and effects. Lightweight alternative to GIFs and videos.
+**Current assets:**
+- `assets/animations/breath.json`
+- `assets/animations/Coucou.json`
 
-**Justification:** Allows integrating complex animations created by designers without compromising quality or size. Files ~10x lighter than equivalent GIFs.
+### 3D
 
----
+#### flutter_3d_controller (^2.3.0)
 
-#### flutter_staggered_grid_view (^0.7.0)
-Advanced grid layouts with variable size tiles.
+Viewer and controller for GLB 3D models.
 
-**Technical explanation:** GridView extension with support for masonry layout, quilted patterns, and staggered grids. Implements custom SliverGridDelegate to calculate non-uniform tile positions.
+**Usage:**
+- `Mascot3DViewer`;
+- auth pages;
+- chatbot;
+- mascot customization.
 
-**Justification:** Necessary to create complex Pinterest/masonry layouts impossible with standard GridView. Used for achievement and quest galleries.
-
----
+**Current GLB assets:**
+- `assets/base_basic_design.glb`
+- `assets/base_basic_shaded.glb`
+- `assets/base_basic_shaded_v3.glb`
+- `assets/custom1.glb`
 
 ### Network
 
-#### http (^1.2.0)
-Official Dart HTTP client for network requests.
+#### http (^1.6.0)
 
-**Technical explanation:** Wrapper around dart:io HttpClient with simplified API. Automatically handles encodings (UTF-8, JSON), headers, and status codes. Support for asynchronous requests with Future. Used for communication with REST backend.
+Dart HTTP client.
 
-**Justification:** Official Dart package, well maintained and stable. Simple API sufficient for application REST needs. No need for Dio complexity for this project.
+**Usage:** `ApiClient` centralizes `GET`, `POST`, `PUT`, `DELETE`, JSON headers,
+Bearer token injection, and the 30-second timeout.
 
----
+The chatbot does not use `http`; it uses `dart:io WebSocket`.
 
-### State management
+### State Management
 
-#### provider (^6.1.1)
-State management solution based on InheritedWidget.
+#### provider (^6.1.5+1)
 
-**Technical explanation:** Implements Provider/Consumer pattern using InheritedWidget for data propagation in widget tree. ChangeNotifierProvider listens to notifications via ChangeNotifier and triggers targeted rebuilds. Optimal performance thanks to selective rebuild.
+State management through `ChangeNotifier`.
 
-**Justification:** Officially recommended by Flutter. Simpler than Bloc/Redux for an app of this size. Excellent performance with low learning curve. Perfect for theme management and global services.
-
----
+**Current global providers:**
+- `ThemeProvider`
+- `GlassPerformanceService`
+- `AuthProvider`
+- `JournalProvider`
+- `ChatbotProvider`
+- `GamificationProvider`
+- `UserProvider`
+- `MascotProvider`
+- `DashboardProvider`
 
 ### Storage
 
-#### shared_preferences (^2.5.4)
-Storage persistant clé-valeur cross-platform.
+#### shared_preferences (^2.5.5)
 
-**Technical explanation:** Platform-specific abstraction (SharedPreferences Android, UserDefaults iOS, localStorage Web). Storage asynchrone en fichier sur disque. Limited to primitive types (String, int, double, bool, List<String>). Used for tokens, preferences, and simple cache.
+Local unencrypted key-value storage.
 
-**Justification:** Standard solution for preferences and simple data. No need for SQLite for current use cases (tokens, settings). Simple and reliable cross-platform API.
+**Usage:**
+- theme;
+- Liquid Glass preferences;
+- mascot customization;
+- macOS fallback for secure storage in development/tests.
 
+#### flutter_secure_storage (^10.3.1)
 
+Secure storage for sensitive data.
 
-#### flutter_secure_storage (^10.0.0)
-Secure storage for sensitive data (Keychain / AES).
+**Usage:**
+- access token;
+- refresh token;
+- user id.
 
-**Technical explanation:** Uses iOS Keychain and Android EncryptedSharedPreferences (migrated to custom AES in v10) to store data securely. 
+**Details:** iOS/macOS Keychain and secure Android storage. The service handles
+a `SharedPreferences` fallback if macOS Keychain returns `-34018`.
 
-**Justification:** Essential for storing JWT access and refresh tokens. Compliance with security standards by not storing sensitive data in plain text.
-
----
-
-### Internationalization
+### Date and Internationalization
 
 #### intl (^0.20.2)
-Official internationalization and formatting package.
 
-**Technical explanation:** Provides DateFormat, NumberFormat, and ICU locale support. Handles plurals, genders, and localized messages via ARB files. Integration with flutter_localizations for complete i18n.
+Date, number, and i18n formatting.
 
-**Justification:** Official Flutter package for i18n. Necessary for French date formatting and future multilingual support. Industry standard for internationalization.
-
----
+**Usage:** available for journal dates, stats, and future localization work.
 
 ### Accessibility
 
 #### flutter_tts (^4.2.5)
-Text-to-Speech via platform native APIs.
 
-**Technical explanation:** Bridge to native TTS engines (Android TextToSpeech, iOS AVSpeechSynthesizer). Communication via Flutter MethodChannel. Multi-language support, pitch, rate, and volume. Improves accessibility for visually impaired users.
+Text-to-Speech through native engines.
 
-**Justification:** Improves accessibility for visually impaired users, aligned with the app's social mission. Uses native engines for better voice quality. WCAG level AA criteria.
-
----
+**Current usage:** dependency available, not yet wired into a dedicated UI
+service.
 
 ### Utilities
 
-#### uuid (^4.5.1)
-Universal unique identifier (UUID) generator.
+#### uuid (^4.5.3)
 
-**Technical explanation:** Implements RFC 4122 for UUID v1 (timestamp-based) and v4 (random) generation. Uses crypto.Random to ensure uniqueness. Standard 128-bit format for distributed IDs without collision.
+Unique ID generation.
 
-**Justification:** Necessary to generate unique IDs for messages, sessions, objects without depending on backend. Avoids collisions in distributed system. Recognized standard.
-
----
+**Usage:** local `ChatMessage` IDs.
 
 #### email_validator (^3.0.0)
-Email address validation according to RFC 5322.
 
-**Technical explanation:** Advanced RFC 5322 compliant regex for email syntax validation. Checks format, allowed characters, and domain structure. Client-side validation before server submission.
+Client-side email validation.
 
-**Justification:** Client-side validation improves UX by detecting errors before submission. More robust than custom regex. Compliant with RFC standards.
+**Usage:** login and registration.
 
----
+#### characters (^1.4.0)
 
-## Development dependencies
+Unicode grapheme manipulation.
 
-#### flutter_lints (^6.0.0)
-Set of linting rules for Flutter.
+**Usage:** safe truncation of challenge descriptions through
+`description.characters`.
 
-**Technical explanation:** Dart analyzer configuration with strict rules recommended by Flutter team. Version 6.0.0 includes rules for null-safety, performance, and best practices. Executed by `flutter analyze` via analysis_options.yaml.
+## Development Dependencies
 
-**Justification:** Ensures code quality and consistency. Detects potential bugs and antipatterns. Version 6.0 includes strictest rules for production-ready code.
+### flutter_test
 
----
+Flutter test SDK.
 
-## Technical summary by category
+**Usage:** widget tests and unit tests.
 
-### UI and Rendering (5 packages)
-- Native and modern icons
-- Multi-platform asset generator
-- Advanced layouts with custom grids
-- Complex vector animations
+### flutter_lints (^6.0.0)
 
-### Animations (3 packages)
-- Performant declarative framework
-- Loading visual effects
-- After Effects animation support
+Official Flutter lint rules.
 
-### Infrastructure (4 packages)
-- Asynchronous HTTP client
-- State management with InheritedWidget
-- Multi-platform local persistence
-- Internationalization complète
+**Config:** `analysis_options.yaml` also enables:
+- `prefer_const_constructors`
+- `prefer_final_fields`
+- `always_declare_return_types`
+- `avoid_print`
+- `curly_braces_in_flow_control_structures`
 
-### Accessibility (1 package)
-- Multi-platform native text-to-speech
+### flutter_native_splash (^2.4.7)
 
-### Utilities (2 packages)
-- RFC 4122 compliant UUIDs
-- RFC 5322 email validation
+Native splash screen generation.
 
-### Code quality (1 package)
-- Strict linting with recommended Flutter rules
+**Config:** `flutter_native_splash.yaml`.
 
-## Impact on application
+## Declared Assets
 
-**APK size:** ~15-20 MB (with dependencies)  
-**Compatibility:**
-- Android 5.0+ (API 21+)
-- iOS 13.0+
-- Dart 3.5.0+
-- Flutter 3.38.2+
+```yaml
+flutter:
+  assets:
+    - assets/mascotte.png
+    - assets/mascotte_eyes_closed.png
+    - assets/animations/
+    - assets/base_basic_design.glb
+    - assets/base_basic_shaded.glb
+    - assets/base_basic_shaded_v3.glb
+    - assets/custom1.glb
+    - assets/mascot_design_texture.png
+    - assets/shaded_painted.png
+```
 
-## Version management
+## Summary by Category
+
+| Category | Packages |
+| --- | --- |
+| UI | `cupertino_icons`, `iconsax`, `google_fonts`, `flutter_launcher_icons` |
+| Animations | `flutter_animate`, `shimmer`, `lottie` |
+| 3D | `flutter_3d_controller` |
+| Layout | `flutter_staggered_grid_view` |
+| Network | `http` |
+| State | `provider` |
+| Storage | `shared_preferences`, `flutter_secure_storage` |
+| I18n/date | `intl` |
+| Accessibility | `flutter_tts` |
+| Utilities | `uuid`, `email_validator`, `characters` |
+| Quality | `flutter_test`, `flutter_lints`, `flutter_native_splash` |
+
+## Platforms
+
+The project contains generated Flutter folders for:
+- Android;
+- iOS;
+- Web;
+- macOS;
+- Linux;
+- Windows.
+
+The main mobile experience targets Android and iOS. Desktop and web targets are
+mainly useful for development and cross-platform verification.
+
+## Useful Commands
 
 ```bash
-# Check updates
+cd elyrii_app
+
+# Install dependencies
+flutter pub get
+
+# Check available updates
 flutter pub outdated
 
-# Minor updates
+# Upgrade within existing constraints
 flutter pub upgrade
 
-# Major updates
+# Propose major upgrades
 flutter pub upgrade --major-versions
 ```
