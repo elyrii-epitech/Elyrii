@@ -21,6 +21,9 @@ class AppConfig {
 
   /// Configure the gateway URL based on environment or auto-detect platform
   static void initialize({String? gatewayUrl}) {
-    ApiConfig.setBaseUrl(gatewayUrl ?? _defaultGatewayUrl);
+    const dartDefine = String.fromEnvironment('BASE_URL');
+    ApiConfig.setBaseUrl(
+      gatewayUrl ?? (dartDefine.isNotEmpty ? dartDefine : _defaultGatewayUrl),
+    );
   }
 }

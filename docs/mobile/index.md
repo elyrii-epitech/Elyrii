@@ -1,59 +1,90 @@
 # Elyrii Mobile Documentation
 
-Complete technical documentation for the Elyrii mobile application.
+Technical documentation for the Flutter app located in `elyrii_app`.
 
 ## Overview
 
-Elyrii is a cross-platform mobile application developed with Flutter that offers an AI-powered personal assistant to help young people who feel socially isolated.
+Elyrii mobile is a Flutter well-being companion app with:
+- authentication through the backend gateway;
+- mood and stats dashboard;
+- personal journal;
+- WebSocket chatbot with emergency resources;
+- garden/challenge-based gamification;
+- local coach;
+- breathing exercises;
+- customizable 3D mascot;
+- Liquid Glass design system.
 
 ## Quick Information
 
-- **Version**: 1.0.0+1
-- **Framework**: Flutter 3.38.2
-- **SDK**: Dart 3.10.0+
-- **Platforms**: Android, iOS
+- **App version:** `1.0.0+1`
+- **Minimum Flutter:** `>= 3.38.4`
+- **Dart:** `>= 3.10.3 < 4.0.0`
+- **CI Flutter:** `3.38.4` stable
+- **Android:** `compileSdk 36`, `targetSdk 36`
+- **iOS:** deployment target `15.0`
+- **Default backend:** gateway port `3000`
+- **Backend override:** `--dart-define=BASE_URL=...`
 
-## Documentation Structure
+## Documentation Pages
 
 ### [Architecture](architecture.md)
-Application architecture, design patterns, and code organization.
 
-### [Dependencies](dependencies.md)
-Detailed explanation of all `pubspec.yaml` dependencies.
+Code structure, providers, navigation, backend flows, storage, and security.
 
 ### [Features](features.md)
-Description of all application features.
+
+Current features, with separation between backend-backed behavior, local data,
+and placeholders.
 
 ### [Design System](design.md)
-Design system, themes, UI components, and visual guidelines.
 
-### [CI/CD](ci-cd.md)
-Configuration and usage of GitHub Actions workflows.
+Theme, colors, typography, Liquid Glass, 3D mascot, animations, and responsive
+layout.
+
+### [Dependencies](dependencies.md)
+
+Dependency list aligned with `pubspec.yaml`, versions, and usage rationale.
 
 ### [Development](development.md)
-Development guide, conventions, and best practices.
+
+Installation, running the app, `BASE_URL` configuration, tests, builds, and best
+practices.
+
+### [CI/CD](ci-cd.md)
+
+Flutter GitHub Actions workflows, artifacts, and equivalent local commands.
 
 ## Quick Start
-
-### Installation
 
 ```bash
 cd elyrii_app
 flutter pub get
-```
-
-### Launch
-
-```bash
 flutter run
 ```
 
-### Tests
+With a specific backend:
 
 ```bash
+flutter run --dart-define=BASE_URL=http://localhost:3000
+```
+
+Local verification:
+
+```bash
+cd elyrii_app
+dart format --set-exit-if-changed .
+flutter analyze
 flutter test
 ```
 
-## Contributing
+## Important Files
 
-See [Development Guide](development.md) for code conventions and Git workflow.
+- `elyrii_app/lib/main.dart`
+- `elyrii_app/lib/core/config/app_config.dart`
+- `elyrii_app/lib/core/config/api_config.dart`
+- `elyrii_app/lib/core/network/api_client.dart`
+- `elyrii_app/lib/routes/home_navigation.dart`
+- `elyrii_app/pubspec.yaml`
+- `.github/workflows/flutter-build.yml`
+- `.github/workflows/flutter-check-and-docs.yml`

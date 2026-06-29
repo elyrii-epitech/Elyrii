@@ -10,7 +10,7 @@ import '../../features/mascot/presentation/providers/mascot_provider.dart';
 /// Bouton de personnalisation de la mascotte (effet liquid glass, subtil).
 ///
 /// Affiche un point quand des cosmétiques sont équipés.
-/// Concu pour etre place en overlay global sur toutes les pages.
+/// Concu pour etre place en overlay sur la page Home.
 class MascotCustomizeButton extends StatefulWidget {
   final VoidCallback? onTap;
   final bool isDark;

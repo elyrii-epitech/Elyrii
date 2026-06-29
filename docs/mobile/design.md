@@ -1,393 +1,318 @@
 # Elyrii Mobile Design System
 
-Design system, themes, and visual guidelines for the mobile application.
+The Elyrii mobile design system is based on Material 3, a soft color palette,
+Poppins through Google Fonts, and reusable Liquid Glass components.
 
-## Overview
+## Reference Files
 
-The Elyrii application uses a consistent design system based on Material Design 3 with customizations for unique visual identity.
+```text
+lib/core/theme/
++-- app_colors.dart
++-- app_dimensions.dart
++-- app_text_styles.dart
++-- app_theme.dart
 
-## Themes
-
-### Dual theme support
-
-The application supports two modes:
-- Light mode (light theme)
-- Dark mode (dark theme)
-
-**Management:**
-```dart
-// Via Provider
-final themeProvider = Provider.of<ThemeProvider>(context);
-themeProvider.toggleTheme();
-
-// Current mode
-ThemeMode currentMode = themeProvider.themeMode;
+lib/core/widgets/
++-- glass/
+|   +-- liquid_glass_action_sheet.dart
+|   +-- liquid_glass_app_bar.dart
+|   +-- liquid_glass_button.dart
+|   +-- liquid_glass_card.dart
+|   +-- liquid_glass_controls.dart
+|   +-- liquid_glass_dialog.dart
+|   +-- liquid_glass_list_tile.dart
+|   +-- liquid_glass_sheet.dart
+|   +-- liquid_glass_text_field.dart
+|   +-- liquid_glass_toast.dart
++-- glass_container.dart
++-- glass_navigation_bar.dart
++-- glass_bubble_button.dart
++-- mascot_3d_viewer.dart
++-- mascot_customize_button.dart
 ```
 
-### Configuration
+## Theme
 
-Defined in `lib/core/theme/app_theme.dart`:
+The app exposes three modes through `ThemeProvider`:
+- `ThemeMode.system`
+- `ThemeMode.light`
+- `ThemeMode.dark`
 
-```dart
-class AppTheme {
-  static ThemeData lightTheme = ThemeData(...);
-  static ThemeData darkTheme = ThemeData(...);
-}
-```
-
-## Color palette
-
-### Primary colors
-
-**Light theme:**
-- Primary: Primary brand color
-- Secondary: Accent color
-- Background: Primary background
-- Surface: Surfaces (cards, dialogs)
-- Error: Error messages
-
-**Dark theme:**
-- Adapted versions for dark mode
-- Optimized contrast for readability
-
-### Usage
+The selected mode is persisted in `SharedPreferences` with the `theme_mode` key.
 
 ```dart
-// Access theme colors
-final colorScheme = Theme.of(context).colorScheme;
-Color primary = colorScheme.primary;
-Color background = colorScheme.background;
-
-// Custom colors
-const brandTurquoise = Color(0xFF00CED1);
+final themeProvider = context.watch<ThemeProvider>();
+themeProvider.setThemeMode(ThemeMode.dark);
 ```
+
+`MaterialApp` uses:
+
+```dart
+theme: AppTheme.lightTheme,
+darkTheme: AppTheme.darkTheme,
+themeMode: themeProvider.themeMode,
+```
+
+## Color Palette
+
+### Primary Colors
+
+- Primary: `#7E6AD8`
+- Primary light: `#EDE8FF`
+- Primary dark: `#A99AF0`
+- Secondary: `#FFB5A8`
+- Accent: `#A8D5BA`
+
+### Semantic Colors
+
+- Success: `#7BC393`
+- Error: `#EA9999`
+- Warning: `#FFCFA8`
+- Info: `#93B8DA`
+
+### Backgrounds
+
+- Light background: `#FAF8F5`
+- Light scaffold: `#E8E8EB`
+- Dark background: `#1A1818`
+- Dark scaffold: `#171719`
+- Dark surface: `#2A2627`
+
+### Feature Colors
+
+- XP bar: `#FDD876`
+- Level badge: `#7E6AD8`
+- Streak: `#FFB5A8`
+- Meditation active: `#7E6AD8`
+- Chatbot gradient: `#7E6AD8` to `#A99AF0`
 
 ## Typography
 
-### Text levels
-
-**Font Family:** Poppins (via Google Fonts)
-
-**Headings:**
-- displayLarge: Main titles
-- displayMedium: Important subtitles
-- displaySmall: Section titles
-
-**Body:**
-- bodyLarge: Main text
-- bodyMedium: Standard text
-- bodySmall: Secondary text
-
-**Labels:**
-- labelLarge: Button labels
-- labelMedium: Form labels
-- labelSmall: Secondary labels
-
-### Usage
+`AppTextStyles` uses Poppins:
 
 ```dart
-Text(
-  'Titre',
-  style: Theme.of(context).textTheme.displayLarge,
-)
-
-Text(
-  'Contenu',
-  style: Theme.of(context).textTheme.bodyMedium,
-)
+static final TextStyle _baseStyle = GoogleFonts.poppins();
 ```
 
-## Spacing
+Available levels:
+- `displayLarge`, `displayMedium`, `displaySmall`
+- `headlineLarge`, `headlineMedium`, `headlineSmall`
+- `titleLarge`, `titleMedium`, `titleSmall`
+- `bodyLarge`, `bodyMedium`, `bodySmall`
+- `labelLarge`, `labelMedium`, `labelSmall`
 
-### Spacing system
+Specialized styles:
+- `chatbotMessage`
+- `journalEntry`
+- `timestamp`
+- `emotionLabel`
+- `objectiveTitle`
+- `achievementBadge`
+- `statNumber`
+- `statLabel`
 
-**Constants** (définis dans `app_constants.dart`):
+## Dimensions
+
+Spacing and sizes live in `AppDimensions`.
+
+### Spacing
+
 ```dart
-static const double spacingXS = 4.0;
-static const double spacingS = 8.0;
-static const double spacingM = 16.0;
-static const double spacingL = 24.0;
-static const double spacingXL = 32.0;
+spacingXxs = 4
+spacingXs = 8
+spacingSm = 12
+spacingMd = 16
+spacingLg = 24
+spacingXl = 32
+spacingXxl = 48
+spacingXxxl = 64
 ```
 
-### Usage
+### Radius
 
 ```dart
-Padding(
-  padding: EdgeInsets.all(AppConstants.spacingM),
-  child: child,
-)
-
-SizedBox(height: AppConstants.spacingL)
+radiusXs = 4
+radiusSm = 8
+radiusMd = 12
+radiusLg = 16
+radiusXl = 24
+radiusXxl = 32
+radiusCircular = 1000
 ```
 
-## UI Components
+### Content Widths
 
-### Buttons
+- mobile: `480`
+- tablet: `768`
+- desktop: `1200`
+- max content: `600`
 
-**Reusable widgets** dans `lib/core/widgets/`:
+## Liquid Glass
+
+The Liquid Glass layer provides standard app components:
+- `LiquidGlassCard`
+- `LiquidGlassButton`
+- `LiquidGlassIconButton`
+- `LiquidGlassListTile`
+- `LiquidGlassChip`
+- `LiquidGlassSwitch`
+- `LiquidGlassSlider`
+- `LiquidGlassSegmentedControl`
+- `LiquidGlassTextField`
+- `LiquidGlassDialogContent`
+- `LiquidGlassSheetContent`
+- `LiquidGlassActionSheetContent`
+- `LiquidGlassToast`
+- `LiquidGlassAppBar`
+
+Imports can use:
 
 ```dart
-// Primary button
-CustomButton(
-  text: 'Connexion',
-  onPressed: () {},
-)
-
-// Secondary button
-CustomButton(
-  text: 'Annuler',
-  variant: ButtonVariant.secondary,
-  onPressed: () {},
-)
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 ```
 
-### Cards
+or the historical re-export:
 
 ```dart
-CustomCard(
-  child: Column(
-    children: [
-      // Contenu
-    ],
-  ),
-)
+import '../../../../core/widgets/liquid_glass_kit.dart';
 ```
 
-### Loaders
+## Visual Performance
+
+`GlassPerformanceService` adapts visual effects:
+- low-end device heuristics;
+- manual effect reduction;
+- adaptive blur while scrolling;
+- optional highlight and transition disabling.
+
+Persisted preferences:
+- `reduce_glass_effects`
+- `adaptive_blur_on_scroll`
+
+Typical usage:
 
 ```dart
-// Loader with shimmer
-ShimmerLoader()
-
-// Circular loader
-CustomLoader()
-```
-
-### Splash Screen
-
-**Native Launch:**
-- **Background:** Primary Color (#9D7FFE) / Dark (#1A1818)
-- **Logo:** Mascotte centered
-- **Platform:** Android 12+ adaptive icon support included.
-
-## Glass Morphism
-
-### GlassPerformanceService
-
-Automatic optimization of glass effects based on performance:
-
-```dart
-final glassService = Provider.of<GlassPerformanceService>(context);
-
-// Use optimized glass effect
-GlassContainer(
-  blur: glassService.blurIntensity,
-  opacity: glassService.opacity,
-  child: child,
-)
-```
-
-### Quality levels
-
-**High performance:**
-- High blur
-- High transparency
-- Smooth animations
-
-**Low performance:**
-- Reduced blur
-- Increased opacity
-- Simplified animations
-
-## Animations
-
-### Flutter Animate
-
-**Usage:**
-```dart
-Text('Hello')
-  .animate()
-  .fadeIn(duration: 300.ms)
-  .slideX(begin: -0.2, end: 0);
-```
-
-### Shimmer
-
-**Loading states:**
-```dart
-Shimmer.fromColors(
-  baseColor: Colors.grey[300],
-  highlightColor: Colors.grey[100],
-  child: Container(
-    height: 50,
-    width: double.infinity,
-  ),
-)
-```
-
-### Lottie
-
-**Complex animations:**
-```dart
-Lottie.asset(
-  'assets/animations/mascotte.json',
-  width: 200,
-  height: 200,
-)
+final performance = GlassPerformanceService();
+final blur = performance.getEffectiveBlurSigma(22);
 ```
 
 ## Navigation
 
-### Transitions
+The main navigation uses:
+- `GlassNavigationBar` for the five main tabs;
+- `GlassBubbleButtonStateful` for the chatbot;
+- `MascotCustomizeButton` as a global overlay.
 
-Consistent transitions between screens:
+`HomeNavigation` animates:
+- tab changes with fade/scale;
+- nav bar pulse;
+- selected icons;
+- haptic feedback.
 
-```dart
-MaterialPageRoute(
-  builder: (context) => NextScreen(),
-)
+Special route transitions:
+- `/mascot-customization`: fade;
+- `/settings`: slide from the right plus fade.
 
-// Or with custom animations
-PageRouteBuilder(
-  pageBuilder: (context, animation, secondaryAnimation) => NextScreen(),
-  transitionsBuilder: (context, animation, secondaryAnimation, child) {
-    return FadeTransition(opacity: animation, child: child);
-  },
-)
-```
+## 3D Mascot
 
-## Icons
+The base component is `Mascot3DViewer`.
 
-### Sources
+Capabilities:
+- loads GLB files through `flutter_3d_controller`;
+- shimmer while loading;
+- `assets/mascotte.png` fallback;
+- `idle` animation on load;
+- optional auto-rotation;
+- touch interactions disabled by default;
+- recoloring through a color matrix.
 
-**Iconsax:**
-```dart
-Icon(Iconsax.heart)
-Icon(Iconsax.message)
-Icon(Iconsax.calendar)
-```
+Configurations:
+- `Mascot3DConfig.authPage()`
+- `Mascot3DConfig.chatbotFull()`
+- `Mascot3DConfig.chatbotMinimized()`
 
-**Material Icons:**
-```dart
-Icon(Icons.settings)
-Icon(Icons.person)
-```
+Themes:
+- Nature;
+- Halloween;
+- Panda;
+- Noel;
+- Cosmic;
+- Ocean.
 
-**Cupertino (iOS):**
-```dart
-Icon(CupertinoIcons.heart)
-```
+Themes recolor the same GLB through `ColorFilter.matrix`; they do not load a new
+model.
 
-## Mascot
+## Animations
 
-### Assets
+Packages in use:
+- `flutter_animate` for declarative transitions;
+- `lottie` for `breath.json` and `Coucou.json`;
+- `shimmer` for loading states.
 
-- `assets/mascotte.png`: Eyes open
-- `assets/mascotte_eyes_closed.png`: Eyes closed
+Real usages:
+- auth pages: mascot and form fade/slide;
+- journal: animation limited to the first 8 items;
+- meditation: breathing circle through `AnimationController`;
+- chatbot: text field glow while typing;
+- chatbot mascot: slow pulse in full-screen mode.
 
-### Animation
+## Accessibility and Emotional Safety
 
-Configuration dans `lib/core/config/mascot_animations.dart`:
+Already present:
+- system text scaling through standard Flutter widgets;
+- dedicated light/dark contrast colors;
+- `flutter_tts` available as a dependency;
+- emergency button in the chatbot;
+- crisis keyword detection and help banner;
+- useful phone numbers shown directly in the UI.
 
-```dart
-// Mascot states
-enum MascotState {
-  idle,
-  happy,
-  thinking,
-  sleeping,
-}
-```
+Needs improvement:
+- add explicit `Semantics` to icon-only buttons;
+- verify contrast across all Liquid Glass components;
+- wire `flutter_tts` into flows that should read content aloud;
+- avoid relying only on keyword matching for crisis messages.
 
-## Accessibility
+## Responsive
 
-### Contrast
-
-**Verification:**
-- Minimum ratio: 4.5:1 for normal text
-- Minimum ratio: 3:1 for large text
-
-**Tools:**
-- Flutter DevTools > Inspector > Performance Overlay
-- Color Contrast Analyzer
-
-### Text sizes
-
-System scaling support:
-
-```dart
-Text(
-  'Texte',
-  style: Theme.of(context).textTheme.bodyMedium,
-  // Automatically inherits system scale factor
-)
-```
-
-### Screen readers
-
-Support for flutter_tts for text-to-speech.
-
-## Responsive Design
-
-### Breakpoints
+`core/utils/responsive.dart` defines:
 
 ```dart
-class Breakpoints {
-  static const double mobile = 600;
-  static const double tablet = 900;
-  static const double desktop = 1200;
-}
+compact: < 360
+phone: < 600
+foldable: < 840
+tablet: < 1200
+desktop: >= 1200
 ```
 
-### Adaptive layout
+Available helpers:
+- `Responsive.getBreakpoint(context)`
+- `Responsive.getGridColumns(context)`
+- `Responsive.getHorizontalPadding(context)`
+- `Responsive.getMaxContentWidth(context)`
+- `ResponsiveBuilder`
+- `ResponsiveConstrainedBox`
+- `ResponsivePadding`
 
-```dart
-LayoutBuilder(
-  builder: (context, constraints) {
-    if (constraints.maxWidth < Breakpoints.mobile) {
-      return MobileLayout();
-    } else if (constraints.maxWidth < Breakpoints.tablet) {
-      return TabletLayout();
-    } else {
-      return DesktopLayout();
-    }
-  },
-)
-```
+## Splash and Icons
 
-## Maintenance
+`flutter_native_splash.yaml`:
+- black background in light and dark mode;
+- image `assets/icon.png`;
+- Android 12 configured;
+- web splash disabled.
 
-### Add a color
+`flutter_launcher_icons`:
+- source `assets/icon_black_bg.png`;
+- Android launcher icon;
+- iOS with alpha removal.
 
-1. Définir dans `app_theme.dart`
-2. Add for light and dark theme
-3. Document usage
-4. Check contrast
+## UI Contribution Rules
 
-### Add a component
-
-1. Create in `lib/core/widgets/`
-2. Use theme constants
-3. Support dark mode
-4. Add documentation
-5. Create widget test
-
-### Modify theme
-
-1. Update `app_theme.dart`
-2. Test on all screens
-3. Check light and dark mode
-4. Validate accessibility
-5. Update la documentation
-
-## Resources
-
-**Material Design 3:**
-https://m3.material.io/
-
-**Flutter Theming:**
-https://docs.flutter.dev/cookbook/design/themes
-
-**Accessibility:**
-https://docs.flutter.dev/development/accessibility-and-localization/accessibility
+- Use `AppColors`, `AppDimensions`, and `AppTextStyles` before adding inline
+  values.
+- Prefer existing Liquid Glass components for buttons, cards, dialogs, sheets,
+  and list tiles.
+- Preserve light/dark support on every new screen.
+- Add a visual fallback when a 3D or Lottie asset can fail.
+- Limit animations in long lists to avoid frame drops.
+- Test screens with reduced effects through `GlassPerformanceService`.

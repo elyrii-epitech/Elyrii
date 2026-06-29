@@ -55,8 +55,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // Espace pour la mascotte 3D peek
-                    SizedBox(height: topPadding + 132),
+                    // Espace pour le status bar
+                    SizedBox(height: topPadding),
+
+                    // Mascotte 3D
+                    MascotPeek(
+                      selectedMood: provider.selectedMood,
+                      isDark: isDark,
+                      onTap: provider.nextMascotMessage,
+                    ),
 
                     // Container principal avec le contenu
                     Padding(
@@ -114,20 +121,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              // Mascotte Peek en haut
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: MascotPeek(
-                    selectedMood: provider.selectedMood,
-                    isDark: isDark,
-                    onTap: provider.nextMascotMessage,
-                  ),
                 ),
               ),
 
