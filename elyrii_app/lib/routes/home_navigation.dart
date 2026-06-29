@@ -181,18 +181,18 @@ class _HomeNavigationState extends State<HomeNavigation>
       body: Stack(
         children: [
           _buildPageContent(performanceService),
-          // Bouton de personnalisation mascotte (overlay global, haut gauche)
-          Positioned(
-            top: topPadding + 12,
-            left: 16,
-            child: MascotCustomizeButton(
-              isDark: isDark,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                Navigator.pushNamed(context, AppRoutes.mascotCustomization);
-              },
+          if (_currentIndex == 0)
+            Positioned(
+              top: topPadding + 12,
+              left: 16,
+              child: MascotCustomizeButton(
+                isDark: isDark,
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.pushNamed(context, AppRoutes.mascotCustomization);
+                },
+              ),
             ),
-          ),
         ],
       ),
       bottomNavigationBar: _buildBottomBar(isDark),
