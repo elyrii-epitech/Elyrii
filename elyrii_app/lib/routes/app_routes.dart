@@ -8,6 +8,9 @@ class AppRoutes {
   static const String chatbot = '/chatbot';
   static const String mascotCustomization = '/mascot-customization';
   static const String settings = '/settings';
+  static const String profileSetup = '/profile-setup';
+  static const String editProfile = '/edit-profile';
+  static const String avatarPicker = '/avatar-picker';
   static const String login = '/login';
   static const String register = '/register';
 }

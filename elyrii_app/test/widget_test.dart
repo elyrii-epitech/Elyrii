@@ -44,7 +44,7 @@ void main() {
             value: GamificationProvider(client: apiClient),
           ),
         ],
-        child: const MyApp(),
+        child: const MyApp(profileSetupDone: true),
       ),
     );
 

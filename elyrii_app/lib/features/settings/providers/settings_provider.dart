@@ -85,11 +85,24 @@ class UserProvider extends ChangeNotifier {
   }
 
   /// Update the user's profile
+  ///
+  /// ┌──────────────────────────────────────────────────────────────────┐
+  // │ BACKEND TEAM: [pfp] = null signifie "mascotte". Voir              │
+  // │ l'annotation dans data/settings_repository.dart -> [updateMe]     │
+  // │ pour le probleme de non-effacement de l'ancienne URL.             │
+  // │ Les nouveaux champs (bio, gender, pronouns, wellnessGoal,         │
+  // │ timezone) necessitent un support backend.                         │
+  // └──────────────────────────────────────────────────────────────────┘
   Future<bool> updateProfile({
     String? firstName,
     String? lastName,
     int? age,
     String? pfp,
+    String? bio,
+    String? gender,
+    String? pronouns,
+    String? wellnessGoal,
+    String? timezone,
   }) async {
     try {
       _profile = await _repository.updateMe(
@@ -97,6 +110,11 @@ class UserProvider extends ChangeNotifier {
         lastName: lastName,
         age: age,
         pfp: pfp,
+        bio: bio,
+        gender: gender,
+        pronouns: pronouns,
+        wellnessGoal: wellnessGoal,
+        timezone: timezone,
       );
       notifyListeners();
       return true;
