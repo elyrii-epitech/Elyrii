@@ -24,8 +24,20 @@ class ApiConfig {
   static String journalEntryUrl(String id) => '$_baseUrl/journal/$id';
 
   // ==================== Chat (WebSocket) ====================
-  static String chatWsUrl(String userId) =>
-      '${_baseUrl.replaceFirst('http', 'ws')}/chat/ws?userId=$userId';
+  static String chatWsUrl({String? userId, String? token}) {
+    final params = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      params['token'] = token;
+    } else if (userId != null && userId.isNotEmpty) {
+      params['userId'] = userId;
+    }
+
+    final wsBaseUrl = _baseUrl.replaceFirst(RegExp(r'^http'), 'ws');
+    final uri = Uri.parse('$wsBaseUrl/chat/ws');
+    return params.isEmpty
+        ? uri.toString()
+        : uri.replace(queryParameters: params).toString();
+  }
 
   // ==================== Quest / Challenge ====================
   static String get availableChallengesUrl => '$_baseUrl/challenge/available';
@@ -41,7 +53,29 @@ class ApiConfig {
 
   // ==================== User Profile ====================
   static String get userMeUrl => '$_baseUrl/user/me';
+  static String get userDashboardUrl => '$_baseUrl/user/dashboard';
   static String get userStatsUrl => '$_baseUrl/user/stats';
+  static String get userSettingsUrl => '$_baseUrl/user/settings';
+  static String get userMascotUrl => '$_baseUrl/user/mascot';
   static String get logMoodUrl => '$_baseUrl/user/mood';
   static String get latestMoodUrl => '$_baseUrl/user/mood/latest';
+
+  // ==================== Coach ====================
+  static String get coachSessionsUrl => '$_baseUrl/coach/sessions';
+
+  // ==================== Meditation ====================
+  static String get meditationCatalogUrl => '$_baseUrl/meditation/catalog';
+  static String get meditationSessionsUrl => '$_baseUrl/meditation/sessions';
+  static String get startMeditationSessionUrl =>
+      '$_baseUrl/meditation/sessions/start';
+  static String completeMeditationSessionUrl(String id) =>
+      '$_baseUrl/meditation/sessions/$id/complete';
+  static String cancelMeditationSessionUrl(String id) =>
+      '$_baseUrl/meditation/sessions/$id/cancel';
+
+  // ==================== Journal Media ====================
+  static String journalMediaUrl(String entryId) =>
+      '$_baseUrl/journal/$entryId/media';
+  static String journalMediaItemUrl(String entryId, String mediaId) =>
+      '$_baseUrl/journal/$entryId/media/$mediaId';
 }

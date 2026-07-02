@@ -113,6 +113,11 @@ class DashboardProvider extends ChangeNotifier {
   int _currentStreak = 0;
   int _activeChallengesCount = 0;
   int _journalEntriesCount = 0;
+  int _completedChallengesCount = 0;
+  int _totalPoints = 0;
+  int _meditationSessionsCount = 0;
+  int _coachSessionsCount = 0;
+  int _moodLogsCount = 0;
 
   // Quote du jour
   int _currentQuoteIndex = 0;
@@ -190,6 +195,11 @@ class DashboardProvider extends ChangeNotifier {
   int get currentStreak => _currentStreak;
   int get activeChallengesCount => _activeChallengesCount;
   int get journalEntriesCount => _journalEntriesCount;
+  int get completedChallengesCount => _completedChallengesCount;
+  int get totalPoints => _totalPoints;
+  int get meditationSessionsCount => _meditationSessionsCount;
+  int get coachSessionsCount => _coachSessionsCount;
+  int get moodLogsCount => _moodLogsCount;
   String get userName => _userName;
   String get currentQuote => _quotes[_currentQuoteIndex];
   Map<DateTime, MoodType> get moodHistory => Map.unmodifiable(_moodHistory);
@@ -251,7 +261,7 @@ class DashboardProvider extends ChangeNotifier {
       DateTime.now().day,
     );
     _moodHistory[today] = mood;
-    _updateStreak();
+    _error = null;
     notifyListeners();
 
     try {
@@ -270,10 +280,6 @@ class DashboardProvider extends ChangeNotifier {
   void completeGoal() {
     _goalCompleted = true;
     notifyListeners();
-  }
-
-  void _updateStreak() {
-    _currentStreak++;
   }
 
   String getGreeting() {
@@ -311,28 +317,37 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      // Parallel fetch for mood and stats
-      final results = await Future.wait([
-        _apiClient.get(ApiConfig.latestMoodUrl),
-        _apiClient.get(ApiConfig.userStatsUrl),
-      ]);
+      final dashboardResponse =
+          await _apiClient.get(ApiConfig.userDashboardUrl)
+              as Map<String, dynamic>;
+      final statsResponse =
+          dashboardResponse['stats'] as Map<String, dynamic>? ??
+          dashboardResponse;
 
-      final moodResponse = results[0] as Map<String, dynamic>;
-      final statsResponse = results[1] as Map<String, dynamic>;
-
-      final moodTypeStr = moodResponse['moodType'] as String?;
+      final moodTypeStr =
+          dashboardResponse['latestMood'] as String? ??
+          statsResponse['latestMood'] as String?;
       if (moodTypeStr != null) {
         _selectedMood = MoodType.values.firstWhere(
           (m) => m.name == moodTypeStr,
           orElse: () => MoodType.neutral,
         );
+      } else {
+        _selectedMood = null;
       }
 
-      _currentStreak = statsResponse['streak'] as int? ?? 0;
-      _activeChallengesCount =
-          statsResponse['activeChallengesCount'] as int? ?? 0;
-      _journalEntriesCount = statsResponse['journalEntriesCount'] as int? ?? 0;
+      _currentStreak = _readInt(statsResponse['streak']);
+      _activeChallengesCount = _readInt(statsResponse['activeChallengesCount']);
+      _journalEntriesCount = _readInt(statsResponse['journalEntriesCount']);
+      _completedChallengesCount = _readInt(
+        statsResponse['completedChallengesCount'],
+      );
+      _totalPoints = _readInt(statsResponse['totalPoints']);
+      _meditationSessionsCount = _readInt(
+        statsResponse['meditationSessionsCount'],
+      );
+      _coachSessionsCount = _readInt(statsResponse['coachSessionsCount']);
+      _moodLogsCount = _readInt(statsResponse['moodLogsCount']);
 
       _isLoading = false;
       notifyListeners();
@@ -350,5 +365,12 @@ class DashboardProvider extends ChangeNotifier {
   void setUserName(String name) {
     _userName = name;
     notifyListeners();
+  }
+
+  int _readInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 }

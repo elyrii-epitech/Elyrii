@@ -2,10 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../data/repositories/meditation_repository.dart';
 
 /// Breathing exercise types available in the meditation page.
 enum BreathingType {
@@ -82,6 +85,11 @@ class _MeditationPageState extends State<MeditationPage>
 
   /// Timer driving the breathing countdown.
   Timer? _timer;
+  MeditationRepository? _repository;
+  String? _backendSessionId;
+  String? _backendError;
+  bool _isStartingSession = false;
+  bool _hasCompletedBackend = false;
 
   /// Whether the post-session mood has been picked.
   int? _selectedMood;
@@ -94,18 +102,31 @@ class _MeditationPageState extends State<MeditationPage>
     _MoodOption(
       Icons.sentiment_very_dissatisfied_rounded,
       'Pas bien',
+      'verySad',
       Color(0xFF7BA3C7),
     ),
-    _MoodOption(Icons.sentiment_neutral_rounded, 'Neutre', Color(0xFFA39C96)),
-    _MoodOption(Icons.sentiment_satisfied_rounded, 'Bien', Color(0xFFA8D5BA)),
+    _MoodOption(
+      Icons.sentiment_neutral_rounded,
+      'Neutre',
+      'neutral',
+      Color(0xFFA39C96),
+    ),
+    _MoodOption(
+      Icons.sentiment_satisfied_rounded,
+      'Bien',
+      'happy',
+      Color(0xFFA8D5BA),
+    ),
     _MoodOption(
       Icons.sentiment_satisfied_alt_rounded,
       'Apaisé(e)',
+      'happy',
       Color(0xFF7BC393),
     ),
     _MoodOption(
       Icons.sentiment_very_satisfied_rounded,
       'Merveilleux',
+      'veryHappy',
       Color(0xFF5FA87A),
     ),
   ];
@@ -129,6 +150,12 @@ class _MeditationPageState extends State<MeditationPage>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _repository ??= MeditationRepository(client: context.read<ApiClient>());
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     _circleScaleController.dispose();
@@ -140,19 +167,43 @@ class _MeditationPageState extends State<MeditationPage>
   // Session control
   // ============================================================
 
-  void _startSession() {
+  Future<void> _startSession() async {
+    if (_isStartingSession) return;
+
     setState(() {
-      _sessionState = _SessionState.running;
-      _remainingSeconds = _selectedDurationMinutes * 60;
-      _currentPhaseIndex = 0;
-      _phaseSecondsRemaining = _selectedBreathingType.phases.first;
-      _selectedMood = null;
+      _isStartingSession = true;
+      _backendError = null;
     });
 
-    // Start with inhale → expand.
-    _circleScaleController.forward();
+    try {
+      final session = await _repository!.startSession(
+        type: _programIdForDuration(_selectedDurationMinutes),
+        durationMinutes: _selectedDurationMinutes,
+      );
 
-    _startTimer();
+      setState(() {
+        _backendSessionId = session.id;
+        _hasCompletedBackend = false;
+        _sessionState = _SessionState.running;
+        _remainingSeconds = _selectedDurationMinutes * 60;
+        _currentPhaseIndex = 0;
+        _phaseSecondsRemaining = _selectedBreathingType.phases.first;
+        _selectedMood = null;
+      });
+
+      // Start with inhale → expand.
+      _circleScaleController.forward();
+
+      _startTimer();
+    } catch (e) {
+      setState(() {
+        _backendError = 'Impossible de démarrer la session: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isStartingSession = false);
+      }
+    }
   }
 
   void _pauseSession() {
@@ -165,12 +216,27 @@ class _MeditationPageState extends State<MeditationPage>
     _startTimer();
   }
 
-  void _stopSession({bool finished = false}) {
+  Future<void> _stopSession({bool finished = false}) async {
     _timer?.cancel();
     _circleScaleController.reverse();
+    final shouldCancel =
+        !finished &&
+        _sessionState != _SessionState.finished &&
+        _backendSessionId != null;
+    final sessionId = _backendSessionId;
+
+    if (shouldCancel && sessionId != null) {
+      try {
+        await _repository!.cancelSession(sessionId);
+      } catch (e) {
+        _backendError = 'Impossible d\'annuler la session: $e';
+      }
+    }
+
     setState(() {
       _sessionState = finished ? _SessionState.finished : _SessionState.setup;
       if (!finished) _remainingSeconds = _selectedDurationMinutes * 60;
+      if (!finished) _backendSessionId = null;
     });
   }
 
@@ -198,9 +264,45 @@ class _MeditationPageState extends State<MeditationPage>
           _timer?.cancel();
           _circleScaleController.reverse();
           _sessionState = _SessionState.finished;
+          unawaited(_completeBackendSession());
         }
       });
     });
+  }
+
+  Future<void> _completeBackendSession({String? moodAfter}) async {
+    final sessionId = _backendSessionId;
+    if (sessionId == null) return;
+    if (_hasCompletedBackend && moodAfter == null) return;
+
+    try {
+      await _repository!.completeSession(
+        sessionId: sessionId,
+        moodAfter: moodAfter,
+      );
+      _hasCompletedBackend = true;
+      if (mounted) {
+        setState(() => _backendError = null);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _backendError = 'Impossible d\'enregistrer la méditation: $e';
+        });
+      }
+    }
+  }
+
+  String _programIdForDuration(int durationMinutes) {
+    switch (durationMinutes) {
+      case 10:
+        return 'body-scan-10m';
+      case 15:
+        return 'grounding-15m';
+      case 5:
+      default:
+        return 'breathing-5m';
+    }
   }
 
   void _advancePhase() {
@@ -318,6 +420,11 @@ class _MeditationPageState extends State<MeditationPage>
             ),
           ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
 
+          if (_backendError != null) ...[
+            const SizedBox(height: AppDimensions.spacingMd),
+            _buildSyncError(isDark),
+          ],
+
           const SizedBox(height: AppDimensions.spacingXl),
 
           // Duration selector.
@@ -340,20 +447,22 @@ class _MeditationPageState extends State<MeditationPage>
           // Start button.
           Center(
             child: LiquidGlassCard(
-              onTap: _startSession,
+              onTap: _isStartingSession ? null : _startSession,
               borderRadius: 30,
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
               color: AppColors.primary.withValues(alpha: 0.2),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.play_arrow_rounded,
+                  Icon(
+                    _isStartingSession
+                        ? Icons.sync_rounded
+                        : Icons.play_arrow_rounded,
                     color: AppColors.primary,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Commencer',
+                    _isStartingSession ? 'Connexion...' : 'Commencer',
                     style: AppTextStyles.labelLarge(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -468,6 +577,31 @@ class _MeditationPageState extends State<MeditationPage>
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildSyncError(bool isDark) {
+    return LiquidGlassCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AppColors.error),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _backendError!,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -714,7 +848,10 @@ class _MeditationPageState extends State<MeditationPage>
               final selected = _selectedMood == index;
 
               return GestureDetector(
-                onTap: () => setState(() => _selectedMood = index),
+                onTap: () {
+                  setState(() => _selectedMood = index);
+                  unawaited(_completeBackendSession(moodAfter: mood.value));
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeOutCubic,
@@ -789,8 +926,9 @@ class _MeditationPageState extends State<MeditationPage>
 // ============================================================
 
 class _MoodOption {
-  const _MoodOption(this.icon, this.label, this.color);
+  const _MoodOption(this.icon, this.label, this.value, this.color);
   final IconData icon;
   final String label;
+  final String value;
   final Color color;
 }

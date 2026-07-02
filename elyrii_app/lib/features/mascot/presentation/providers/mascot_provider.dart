@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/config/api_config.dart';
 import '../../../../core/config/mascot_themes.dart';
+import '../../../../core/network/api_client.dart';
 import '../../data/models/mascot_model.dart';
 
 /// Provider gérant l'état et l'interaction avec la mascotte 3D.
@@ -12,16 +16,21 @@ class MascotProvider extends ChangeNotifier {
   static const String _storageKey = 'elyrii_mascot_customization';
   static const String _themeKey = 'elyrii_mascot_theme';
 
+  final ApiClient? _client;
   MascotModel _mascot = MascotModel.defaultMascot();
 
+  bool _isLoading = false;
+  bool _isSyncing = false;
   String? _error;
 
-  MascotProvider() {
+  MascotProvider({ApiClient? client}) : _client = client {
     _loadSavedMascot();
   }
 
   MascotModel get mascot => _mascot;
 
+  bool get isLoading => _isLoading;
+  bool get isSyncing => _isSyncing;
   String? get error => _error;
 
   MascotTheme get currentTheme => MascotThemes.getById(_mascot.themeId);
@@ -36,6 +45,7 @@ class MascotProvider extends ChangeNotifier {
     _mascot = _mascot.copyWith(themeId: themeId);
     notifyListeners();
     _saveTheme(themeId);
+    unawaited(_syncToBackend());
   }
 
   /// Sélectionne ou retire un détail visuel (accessoire futur).
@@ -50,6 +60,7 @@ class MascotProvider extends ChangeNotifier {
     _mascot = _mascot.copyWith(equippedCosmetics: updatedCosmetics);
     notifyListeners();
     _saveMascot();
+    unawaited(_syncToBackend());
   }
 
   /// Réinitialise l'état de la mascotte par défaut
@@ -59,6 +70,34 @@ class MascotProvider extends ChangeNotifier {
     notifyListeners();
     _saveMascot();
     _saveTheme('nature');
+    unawaited(_syncToBackend());
+  }
+
+  Future<void> loadMascot() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    await _loadSavedMascot();
+
+    if (_client == null) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final response =
+          await _client.get(ApiConfig.userMascotUrl) as Map<String, dynamic>;
+      _mascot = _mascotFromBackend(response);
+      await _saveMascot();
+      await _saveTheme(_mascot.themeId);
+    } catch (e) {
+      _error = 'Impossible de charger la mascotte depuis le serveur: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _loadSavedMascot() async {
@@ -100,5 +139,55 @@ class MascotProvider extends ChangeNotifier {
       _error = 'Impossible de sauvegarder le thème: $e';
       notifyListeners();
     }
+  }
+
+  Future<void> _syncToBackend() async {
+    if (_client == null) return;
+
+    _isSyncing = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _client.put(
+        ApiConfig.userMascotUrl,
+        body: {
+          'appearance': _mascot.themeId,
+          'themeId': _mascot.themeId,
+          'equippedCosmetics': _mascot.equippedCosmetics,
+          'personality': {'equippedCosmetics': _mascot.equippedCosmetics},
+        },
+      );
+    } catch (e) {
+      _error = 'Impossible de synchroniser la mascotte: $e';
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  MascotModel _mascotFromBackend(Map<String, dynamic> json) {
+    final personality = Map<String, dynamic>.from(
+      json['personality'] as Map? ?? const <String, dynamic>{},
+    );
+    final rawTheme =
+        json['appearance'] as String? ??
+        personality['themeId'] as String? ??
+        'nature';
+    final themeId = _validThemeId(rawTheme == 'default' ? 'nature' : rawTheme);
+    final cosmetics =
+        (json['equippedCosmetics'] as List<dynamic>?) ??
+        (personality['equippedCosmetics'] as List<dynamic>?) ??
+        const <dynamic>[];
+
+    return _mascot.copyWith(
+      themeId: themeId,
+      equippedCosmetics: cosmetics.map((item) => item.toString()).toList(),
+    );
+  }
+
+  String _validThemeId(String themeId) {
+    final exists = MascotThemes.all.any((theme) => theme.id == themeId);
+    return exists ? themeId : 'nature';
   }
 }

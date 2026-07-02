@@ -81,4 +81,35 @@ class JournalRepository {
   Future<void> deleteEntry(String id) async {
     await _client.delete(ApiConfig.journalEntryUrl(id));
   }
+
+  Future<List<JournalMediaModel>> listMedia(String entryId) async {
+    final response = await _client.get(ApiConfig.journalMediaUrl(entryId));
+    final List<dynamic> data = response is List
+        ? response
+        : (response['data'] ?? []);
+    return data
+        .map((item) => JournalMediaModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<JournalMediaModel> addMedia({
+    required String entryId,
+    required String url,
+    String? type,
+  }) async {
+    final response =
+        await _client.post(
+              ApiConfig.journalMediaUrl(entryId),
+              body: {'url': url, 'type': ?type},
+            )
+            as Map<String, dynamic>;
+    return JournalMediaModel.fromJson(response);
+  }
+
+  Future<void> deleteMedia({
+    required String entryId,
+    required String mediaId,
+  }) async {
+    await _client.delete(ApiConfig.journalMediaItemUrl(entryId, mediaId));
+  }
 }

@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/liquid_glass_kit.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -22,13 +23,21 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().loadSettings();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final userProvider = context.watch<UserProvider>();
+    final appSettings = userProvider.settings;
     final isDark = themeProvider.isDarkMode;
     final topPadding = MediaQuery.of(context).padding.top;
+    final notificationsEnabled =
+        appSettings?.notificationsEnabled ?? _notifications;
+    final strictPrivacy = appSettings?.privacyMode == 'STRICT';
 
     return Scaffold(
       backgroundColor: isDark
@@ -56,8 +65,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       trailing: LiquidGlassSwitch(
                         value: isDark,
                         onChanged: (value) {
-                          themeProvider.setThemeMode(
-                            value ? ThemeMode.dark : ThemeMode.light,
+                          final mode = value ? ThemeMode.dark : ThemeMode.light;
+                          themeProvider.setThemeMode(mode);
+                          context.read<UserProvider>().updateSettings(
+                            themeMode: _themeModeToServerValue(mode),
                           );
                         },
                       ),
@@ -78,9 +89,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       leadingIcon: Icons.notifications_rounded,
                       showChevron: false,
                       trailing: LiquidGlassSwitch(
-                        value: _notifications,
+                        value: notificationsEnabled,
                         onChanged: (value) {
                           setState(() => _notifications = value);
+                          context.read<UserProvider>().updateSettings(
+                            notificationsEnabled: value,
+                          );
                         },
                       ),
                     ),
@@ -124,14 +138,23 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     _buildDivider(isDark),
                     LiquidGlassListTile(
-                      title: 'Confidentialité',
-                      subtitle: 'Ce qui est privé reste clairement indiqué',
+                      title: 'Confidentialité stricte',
+                      subtitle: strictPrivacy
+                          ? 'Mode strict activé'
+                          : 'Limiter au maximum les usages de données',
                       leadingIcon: Icons.lock_rounded,
+                      showChevron: false,
+                      trailing: LiquidGlassSwitch(
+                        value: strictPrivacy,
+                        onChanged: (value) {
+                          context.read<UserProvider>().updateSettings(
+                            privacyMode: value ? 'STRICT' : 'STANDARD',
+                          );
+                        },
+                      ),
                       onTap: () {
-                        _showInfoDialog(
-                          title: 'Confidentialité',
-                          message:
-                              'Elyrii doit expliquer simplement quelles données sont utilisées, pourquoi elles le sont, et comment les retirer. Les contenus de journal et de conversation doivent être traités comme des données hautement sensibles.',
+                        context.read<UserProvider>().updateSettings(
+                          privacyMode: strictPrivacy ? 'STANDARD' : 'STRICT',
                         );
                       },
                     ),
@@ -302,6 +325,17 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
+  }
+
+  String _themeModeToServerValue(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'LIGHT';
+      case ThemeMode.dark:
+        return 'DARK';
+      case ThemeMode.system:
+        return 'SYSTEM';
+    }
   }
 
   Widget _buildDivider(bool isDark) {

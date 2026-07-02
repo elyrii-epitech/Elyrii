@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../../../core/config/api_config.dart';
+import '../../../../core/network/api_client.dart';
 import '../models/coach_model.dart';
 
 class CoachRepository {
+  final ApiClient _client;
+
+  CoachRepository({required ApiClient client}) : _client = client;
+
   static const List<DailyAdvice> _advices = [
     DailyAdvice(
       text:
@@ -171,5 +177,31 @@ class CoachRepository {
 
   List<CoachActivity> getActivitiesByCategory(ActivityCategory category) {
     return _activities.where((a) => a.category == category).toList();
+  }
+
+  Future<List<CoachSession>> getSessions({int limit = 20}) async {
+    final response = await _client.get(
+      ApiConfig.coachSessionsUrl,
+      queryParams: {'limit': '$limit'},
+    );
+    final List<dynamic> data = response is List
+        ? response
+        : (response['data'] ?? []);
+    return data
+        .map((item) => CoachSession.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<CoachSession> createSession({
+    required String prompt,
+    Map<String, dynamic>? context,
+  }) async {
+    final response =
+        await _client.post(
+              ApiConfig.coachSessionsUrl,
+              body: {'prompt': prompt, 'context': ?context},
+            )
+            as Map<String, dynamic>;
+    return CoachSession.fromJson(response);
   }
 }

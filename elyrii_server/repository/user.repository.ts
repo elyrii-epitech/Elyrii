@@ -131,12 +131,17 @@ class UserRepository {
     }
 
     async logMood(userId: string, moodType: string) {
-        return (
-            await db
-                .insert(moodLogsTable)
-                .values({ userId, moodType })
-                .returning()
-        )[0];
+        const [log] = await db
+            .insert(moodLogsTable)
+            .values({ userId, moodType })
+            .returning();
+
+        await this.updateUserStreak(userId);
+        return log;
+    }
+
+    async touchActivity(userId: string) {
+        await this.updateUserStreak(userId);
     }
 
     async getLatestMood(userId: string) {

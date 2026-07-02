@@ -93,3 +93,37 @@ class DailyAdvice {
     required this.icon,
   });
 }
+
+class CoachSession {
+  final String id;
+  final String prompt;
+  final String response;
+  final Map<String, dynamic> context;
+  final DateTime createdAt;
+
+  const CoachSession({
+    required this.id,
+    required this.prompt,
+    required this.response,
+    required this.context,
+    required this.createdAt,
+  });
+
+  factory CoachSession.fromJson(Map<String, dynamic> json) {
+    return CoachSession(
+      id: json['id'] as String? ?? '',
+      prompt: json['prompt'] as String? ?? '',
+      response: json['response'] as String? ?? '',
+      context: Map<String, dynamic>.from(
+        json['context'] as Map? ?? const <String, dynamic>{},
+      ),
+      createdAt: _parseDate(json['createdAt'] ?? json['created_at']),
+    );
+  }
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
+  }
+}
