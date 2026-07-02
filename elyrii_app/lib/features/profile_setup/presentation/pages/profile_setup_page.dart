@@ -129,9 +129,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     }
   }
 
-  void _skipAll() {
+  void _skipStep() {
     HapticFeedback.lightImpact();
-    _finish();
+    _nextStep();
   }
 
   @override
@@ -458,7 +458,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           if (!isLastStep) ...[
             const SizedBox(height: AppDimensions.spacingSm),
             TextButton(
-              onPressed: _isSaving ? null : _skipAll,
+              onPressed: _isSaving ? null : _skipStep,
               child: Text(
                 'Passer pour l\'instant',
                 style: AppTextStyles.bodyMedium(
