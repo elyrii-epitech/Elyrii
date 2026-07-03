@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -9,6 +11,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/constants/avatar_options.dart';
+import '../../../../core/services/glass_performance_service.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../auth/presentation/widgets/glass_auth_text_field.dart';
@@ -134,38 +137,51 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     _nextStep();
   }
 
+  void _previousStep() {
+    if (_currentStep == 0 || _isSaving) return;
+    HapticFeedback.lightImpact();
+    setState(() => _currentStep--);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildProgressHeader(isDark),
-            Expanded(
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0.05, 0),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  );
-                },
-                child: _buildStepContent(isDark),
+    return PopScope(
+      canPop: _currentStep == 0 && !_isSaving,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || _currentStep == 0 || _isSaving) return;
+        _previousStep();
+      },
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppColors.scaffoldDark
+            : AppColors.scaffoldLight,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildProgressHeader(isDark),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.05, 0),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: _buildStepContent(isDark),
+                ),
               ),
-            ),
-            _buildFooter(isDark),
-          ],
+              _buildFooter(isDark),
+            ],
+          ),
         ),
       ),
     );
@@ -176,25 +192,45 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   Widget _buildProgressHeader(bool isDark) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(3, (index) {
-          final isActive = index <= _currentStep;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            width: isActive ? 28 : 8,
-            height: 8,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: isActive
-                  ? AppColors.primary
-                  : (isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.1)),
+      child: SizedBox(
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (_currentStep > 0)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: LiquidGlassIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  size: 40,
+                  onPressed: _isSaving ? null : _previousStep,
+                  color: isDark
+                      ? Colors.white
+                      : AppColors.textPrimaryLight.withValues(alpha: 0.82),
+                ),
+              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(3, (index) {
+                final isActive = index <= _currentStep;
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: isActive ? 28 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    color: isActive
+                        ? AppColors.primary
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : Colors.black.withValues(alpha: 0.1)),
+                  ),
+                );
+              }),
             ),
-          );
-        }),
+          ],
+        ),
       ),
     );
   }
@@ -448,29 +484,171 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       child: Column(
         children: [
-          LiquidGlassButton(
+          _ProfileSetupGlassButton(
             label: isLastStep ? 'Commencer mon parcours' : 'Continuer',
             icon: isLastStep ? Icons.favorite_rounded : null,
             isLoading: _isSaving,
             isExpanded: true,
+            isPrimary: true,
             onPressed: _isSaving ? null : _nextStep,
           ),
           if (!isLastStep) ...[
             const SizedBox(height: AppDimensions.spacingSm),
-            TextButton(
+            _ProfileSetupGlassButton(
+              label: 'Passer pour l\'instant',
               onPressed: _isSaving ? null : _skipStep,
-              child: Text(
-                'Passer pour l\'instant',
-                style: AppTextStyles.bodyMedium(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
+              isExpanded: true,
             ),
           ],
         ],
       ),
+    );
+  }
+}
+
+class _ProfileSetupGlassButton extends StatefulWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool isExpanded;
+  final bool isLoading;
+  final bool isPrimary;
+
+  const _ProfileSetupGlassButton({
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.isExpanded = false,
+    this.isLoading = false,
+    this.isPrimary = false,
+  });
+
+  @override
+  State<_ProfileSetupGlassButton> createState() =>
+      _ProfileSetupGlassButtonState();
+}
+
+class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDisabled = widget.onPressed == null || widget.isLoading;
+    final blurSigma = GlassPerformanceService().getEffectiveBlurSigma(
+      AppDimensions.blurSigmaLiquidGlass,
+    );
+    final radius = BorderRadius.circular(AppDimensions.radiusLiquidGlassButton);
+    const primary = AppColors.primary;
+    final textColor = widget.isPrimary
+        ? (isDark ? Colors.white : primary.withValues(alpha: 0.92))
+        : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight);
+
+    final button = Container(
+      width: widget.isExpanded ? double.infinity : null,
+      constraints: const BoxConstraints(minHeight: 52),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: widget.isPrimary
+              ? [
+                  primary.withValues(alpha: isDark ? 0.30 : 0.18),
+                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.58),
+                  primary.withValues(alpha: isDark ? 0.18 : 0.10),
+                ]
+              : [
+                  Colors.white.withValues(alpha: isDark ? 0.10 : 0.50),
+                  Colors.white.withValues(alpha: isDark ? 0.05 : 0.26),
+                ],
+        ),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.42),
+          width: 0.6,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: isDark ? 0.04 : 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Center(child: _buildContent(textColor)),
+    );
+
+    return Semantics(
+      button: true,
+      enabled: !isDisabled,
+      label: widget.label,
+      child: GestureDetector(
+        onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
+        onTapUp: isDisabled ? null : (_) => setState(() => _isPressed = false),
+        onTapCancel: isDisabled
+            ? null
+            : () => setState(() => _isPressed = false),
+        onTap: isDisabled ? null : widget.onPressed,
+        child: AnimatedScale(
+          scale: _isPressed ? 0.98 : 1,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 150),
+            opacity: isDisabled ? 0.55 : (_isPressed ? 0.78 : 1),
+            child: RepaintBoundary(
+              child: ClipRRect(
+                borderRadius: radius,
+                child: blurSigma > 0
+                    ? BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: blurSigma,
+                          sigmaY: blurSigma,
+                        ),
+                        child: button,
+                      )
+                    : button,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(Color textColor) {
+    if (widget.isLoading) {
+      return SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation(textColor),
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisSize: widget.isExpanded ? MainAxisSize.max : MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (widget.icon != null) ...[
+          Icon(widget.icon, size: 20, color: textColor),
+          const SizedBox(width: 8),
+        ],
+        Text(
+          widget.label,
+          style: AppTextStyles.bodyLarge(
+            color: textColor,
+          ).copyWith(fontWeight: FontWeight.w700),
+        ),
+      ],
     );
   }
 }
