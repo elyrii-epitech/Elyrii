@@ -1,6 +1,7 @@
 class AppRoutes {
   static const String home = '/';
   static const String dashboard = '/dashboard';
+  static const String reviews = '/reviews';
   static const String challenges = '/challenges';
   static const String journal = '/journal';
   static const String coach = '/coach';

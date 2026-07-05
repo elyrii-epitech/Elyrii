@@ -118,6 +118,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
                           const SizedBox(height: 24),
 
+                          _buildReviewEntry(isDark)
+                              .animate()
+                              .fadeIn(duration: 400.ms, delay: 250.ms)
+                              .slideY(begin: 0.1, end: 0),
+
+                          const SizedBox(height: 24),
+
                           // Section "Ton activité"
                           _buildActivitySection(isDark, journalProvider)
                               .animate()
@@ -309,6 +316,69 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildReviewEntry(bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.pushNamed(context, AppRoutes.reviews);
+      },
+      child: LiquidGlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.analytics_rounded,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Voir le bilan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Analyse ton humeur, tes journaux et tes progrès sur une période donnée.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: isDark
+                  ? AppColors.textTertiaryDark
+                  : AppColors.textTertiaryLight,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
