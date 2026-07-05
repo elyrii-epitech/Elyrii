@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -134,7 +133,7 @@ class _JournalPageState extends State<JournalPage> {
         AppDimensions.pageHorizontalPadding,
         100, // Extra padding pour le bottom
       ),
-      scrollCacheExtent: const ScrollCacheExtent.pixels(200),
+      cacheExtent: 200,
       itemCount: provider.entries.length,
       itemBuilder: (context, index) {
         final entry = provider.entries[index];

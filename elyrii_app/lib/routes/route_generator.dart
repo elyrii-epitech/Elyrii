@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'app_routes.dart';
 import 'home_navigation.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
-import '../features/dashboard/presentation/pages/reviews_page.dart';
 import '../features/gamification/presentation/pages/challenges_page.dart';
 import '../features/journal/presentation/pages/journal_page.dart';
 import '../features/coach/presentation/pages/coach_page.dart';
