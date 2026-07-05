@@ -100,6 +100,33 @@ class ApiClient {
     }
   }
 
+  /// Upload a single file with multipart/form-data.
+  Future<dynamic> uploadFile(
+    String url, {
+    required String fieldName,
+    required String filePath,
+    bool auth = true,
+  }) async {
+    debugPrint('[ApiClient] UPLOAD $url (auth: $auth)');
+    final headers = auth ? await _authHeaders() : _baseHeaders();
+    headers.remove('Content-Type');
+
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(url));
+      request.headers.addAll(headers);
+      request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+
+      final streamedResponse = await _client
+          .send(request)
+          .timeout(const Duration(seconds: _timeoutSeconds));
+      final response = await http.Response.fromStream(streamedResponse);
+      return _handleResponse(response);
+    } catch (e) {
+      debugPrint('[ApiClient] UPLOAD $url failed: $e');
+      rethrow;
+    }
+  }
+
   /// Perform a DELETE request
   Future<dynamic> delete(String url, {bool auth = true}) async {
     debugPrint('[ApiClient] DELETE $url (auth: $auth)');

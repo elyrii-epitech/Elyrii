@@ -47,7 +47,9 @@ void main() async {
   unawaited(apiClient.checkHealth());
 
   await authProvider.checkAuthStatus();
+  bool profileSetupDone = true;
   if (authProvider.isAuthenticated) {
+    profileSetupDone = await secureStorage.isProfileSetupCompleted();
     await Future.wait([
       userProvider.loadProfile(),
       userProvider.loadSettings(),
@@ -89,13 +91,15 @@ void main() async {
         ChangeNotifierProvider.value(value: dashboardProvider),
         ChangeNotifierProvider.value(value: coachProvider),
       ],
-      child: const MyApp(),
+      child: MyApp(profileSetupDone: profileSetupDone),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool profileSetupDone;
+
+  const MyApp({super.key, required this.profileSetupDone});
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +116,7 @@ class MyApp extends StatelessWidget {
             return GlobalErrorBoundary(child: child!);
           },
           initialRoute: authProvider.isAuthenticated
-              ? AppRoutes.home
+              ? (profileSetupDone ? AppRoutes.home : AppRoutes.profileSetup)
               : AppRoutes.login,
           onGenerateRoute: RouteGenerator.generateRoute,
         );

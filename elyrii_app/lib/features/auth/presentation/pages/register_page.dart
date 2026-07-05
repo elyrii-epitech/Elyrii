@@ -9,6 +9,7 @@ import '../widgets/glass_auth_text_field.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
+import '../../../settings/providers/settings_provider.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_3d_viewer.dart';
 
@@ -60,6 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ? nameParts.sublist(1).join(' ')
         : firstName;
     final authProvider = context.read<AuthProvider>();
+    final userProvider = context.read<UserProvider>();
     final success = await authProvider.register(
       email: _emailController.text.trim(),
       password: _passwordController.text,
@@ -68,7 +70,10 @@ class _RegisterPageState extends State<RegisterPage> {
     );
     if (!mounted) return;
     if (success) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      // Charger le profil pour pre-remplir l'onboarding
+      await userProvider.loadProfile();
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.profileSetup);
     } else {
       // Show success color if it's an email verification message (which means registration worked)
       final error = authProvider.error?.toLowerCase() ?? '';

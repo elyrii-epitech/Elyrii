@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/dashboard_provider.dart';
 
@@ -115,13 +115,6 @@ class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
     );
     final haloColor = theme.accentColor;
 
-    final equippedCosmetics = context.select<MascotProvider, List<String>>(
-      (p) => p.mascot.equippedCosmetics,
-    );
-    final hasHat = equippedCosmetics.contains('custom1');
-
-    final matrix = theme.id == 'nature' ? null : theme.colorMatrix;
-
     return Container(
       width: 132,
       height: 132,
@@ -162,30 +155,15 @@ class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
               ],
             ),
           ),
-          Mascot3DViewer(
-            config: const Mascot3DConfig(
+          const MascotWithAccessories(
+            config: Mascot3DConfig(
               autoRotate: false,
               interactionEnabled: false,
               showLoadingIndicator: false,
             ),
             width: 118,
             height: 118,
-            colorMatrix: matrix,
           ),
-          if (hasHat)
-            const Positioned(
-              top: 2,
-              child: Mascot3DViewer(
-                config: Mascot3DConfig(
-                  assetPath: 'assets/custom1.glb',
-                  autoRotate: false,
-                  interactionEnabled: false,
-                  showLoadingIndicator: false,
-                ),
-                width: 60,
-                height: 60,
-              ),
-            ),
         ],
       ),
     );

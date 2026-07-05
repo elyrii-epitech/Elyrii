@@ -16,6 +16,7 @@ class UserRoutes {
         this.router.use("*", authMiddleware);
         this.router.get("/me", ...this.userController.getMe);
         this.router.put("/me", ...this.userController.updateMe);
+        this.router.post("/avatar", ...this.userController.uploadAvatar);
         this.router.get("/dashboard", ...this.userController.getDashboard);
         this.router.get("/settings", ...this.userController.getSettings);
         this.router.put("/settings", ...this.userController.updateSettings);

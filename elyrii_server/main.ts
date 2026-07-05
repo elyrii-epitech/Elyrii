@@ -17,6 +17,7 @@ import { openAPIRouteHandler } from "hono-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 
 export const clientSockets = new Map<string, WSContext>();
+const AVATAR_UPLOAD_DIR = Bun.env.AVATAR_UPLOAD_DIR ?? "./uploads/avatars";
 
 const app = new Hono()
 
@@ -41,6 +42,24 @@ app.use("*", cors({
     allowHeaders: ["Content-Type", "Authorization", "Accept"],
     exposeHeaders: ["Content-Length"],
 }));
+
+app.get("/uploads/avatars/:filename", async (c) => {
+    const filename = c.req.param("filename");
+    if (!/^[a-zA-Z0-9_-]+-[0-9a-f-]+\.(jpg|png|webp|gif)$/.test(filename)) {
+        return c.notFound();
+    }
+
+    const file = Bun.file(`${AVATAR_UPLOAD_DIR}/${filename}`);
+    if (!(await file.exists())) {
+        return c.notFound();
+    }
+
+    return new Response(file, {
+        headers: {
+            "Cache-Control": "public, max-age=31536000, immutable",
+        },
+    });
+});
 
 app.route("/auth", authRouter.Router);
 app.route("/journal", journalRouter.getRouter);

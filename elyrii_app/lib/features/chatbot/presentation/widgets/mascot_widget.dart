@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/config/mascot_3d_config.dart';
-import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 
 /// Widget d'affichage de la mascotte Elyrii dans le chatbot.
@@ -212,7 +212,8 @@ class _MascotWidgetState extends State<MascotWidget>
   }
 }
 
-/// Wrapper qui applique automatiquement le thème courant de la mascotte.
+/// Wrapper qui applique automatiquement le thème courant de la mascotte
+/// **et** ses accessoires équipés, de façon cohérente avec les autres pages.
 class _ThemedMascot extends StatelessWidget {
   final Mascot3DConfig config;
   final double width;
@@ -227,16 +228,9 @@ class _ThemedMascot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.select<MascotProvider, MascotTheme>(
-      (p) => p.currentTheme,
-    );
-    final matrix = theme.id == 'nature' ? null : theme.colorMatrix;
-
-    return Mascot3DViewer(
-      config: config,
-      width: width,
-      height: height,
-      colorMatrix: matrix,
-    );
+    // Conserve une dépendance au thème pour repeindre si l'utilisateur change
+    // de personnalisation pendant la session chatbot.
+    context.select<MascotProvider, MascotTheme>((p) => p.currentTheme);
+    return MascotWithAccessories(config: config, width: width, height: height);
   }
 }

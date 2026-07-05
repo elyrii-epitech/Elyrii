@@ -133,7 +133,7 @@ class _JournalPageState extends State<JournalPage> {
         AppDimensions.pageHorizontalPadding,
         100, // Extra padding pour le bottom
       ),
-      cacheExtent: 200, // Pre-render items for smoother scrolling
+      cacheExtent: 200,
       itemCount: provider.entries.length,
       itemBuilder: (context, index) {
         final entry = provider.entries[index];

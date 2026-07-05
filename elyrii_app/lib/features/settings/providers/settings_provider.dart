@@ -55,14 +55,18 @@ class UserProvider extends ChangeNotifier {
   Future<bool> updateSettings({
     String? themeMode,
     bool? notificationsEnabled,
+    bool? hapticsEnabled,
     String? privacyMode,
+    String? language,
   }) async {
     final previous = _settings;
     if (previous != null) {
       _settings = previous.copyWith(
         themeMode: themeMode,
         notificationsEnabled: notificationsEnabled,
+        hapticsEnabled: hapticsEnabled,
         privacyMode: privacyMode,
+        language: language,
       );
       notifyListeners();
     }
@@ -71,7 +75,9 @@ class UserProvider extends ChangeNotifier {
       _settings = await _repository.updateSettings(
         themeMode: themeMode,
         notificationsEnabled: notificationsEnabled,
+        hapticsEnabled: hapticsEnabled,
         privacyMode: privacyMode,
+        language: language,
       );
       _error = null;
       notifyListeners();
@@ -84,12 +90,18 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Update the user's profile
+  /// Update the user's profile.
   Future<bool> updateProfile({
     String? firstName,
     String? lastName,
     int? age,
     String? pfp,
+    bool clearPfp = false,
+    String? bio,
+    String? gender,
+    String? pronouns,
+    String? wellnessGoal,
+    String? timezone,
   }) async {
     try {
       _profile = await _repository.updateMe(
@@ -97,6 +109,12 @@ class UserProvider extends ChangeNotifier {
         lastName: lastName,
         age: age,
         pfp: pfp,
+        clearPfp: clearPfp,
+        bio: bio,
+        gender: gender,
+        pronouns: pronouns,
+        wellnessGoal: wellnessGoal,
+        timezone: timezone,
       );
       notifyListeners();
       return true;

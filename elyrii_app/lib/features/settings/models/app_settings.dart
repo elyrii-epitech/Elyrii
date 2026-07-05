@@ -5,7 +5,9 @@ class AppSettings {
   final String userId;
   final String themeMode;
   final bool notificationsEnabled;
+  final bool hapticsEnabled;
   final String privacyMode;
+  final String language;
   final String mascotAppearance;
   final Map<String, dynamic> mascotPersonality;
   final DateTime? createdAt;
@@ -16,7 +18,9 @@ class AppSettings {
     required this.userId,
     required this.themeMode,
     required this.notificationsEnabled,
+    required this.hapticsEnabled,
     required this.privacyMode,
+    required this.language,
     required this.mascotAppearance,
     required this.mascotPersonality,
     this.createdAt,
@@ -35,10 +39,15 @@ class AppSettings {
           json['notificationsEnabled'] as bool? ??
           json['notifications_enabled'] as bool? ??
           true,
+      hapticsEnabled:
+          json['hapticsEnabled'] as bool? ??
+          json['haptics_enabled'] as bool? ??
+          true,
       privacyMode:
           json['privacyMode'] as String? ??
           json['privacy_mode'] as String? ??
           'STANDARD',
+      language: json['language'] as String? ?? 'fr',
       mascotAppearance:
           json['mascotAppearance'] as String? ??
           json['mascot_appearance'] as String? ??
@@ -67,7 +76,9 @@ class AppSettings {
   AppSettings copyWith({
     String? themeMode,
     bool? notificationsEnabled,
+    bool? hapticsEnabled,
     String? privacyMode,
+    String? language,
     String? mascotAppearance,
     Map<String, dynamic>? mascotPersonality,
   }) {
@@ -76,7 +87,9 @@ class AppSettings {
       userId: userId,
       themeMode: themeMode ?? this.themeMode,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       privacyMode: privacyMode ?? this.privacyMode,
+      language: language ?? this.language,
       mascotAppearance: mascotAppearance ?? this.mascotAppearance,
       mascotPersonality: mascotPersonality ?? this.mascotPersonality,
       createdAt: createdAt,

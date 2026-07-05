@@ -92,7 +92,7 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
               ),
               // Actions
-              if (actions != null) ...actions!,
+              ...?actions,
               // Balance for centering title
               if (leading == null &&
                   showBackButton &&

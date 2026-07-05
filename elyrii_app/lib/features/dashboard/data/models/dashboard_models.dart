@@ -1,4 +1,53 @@
+class MoodTrendPoint {
+  final String day;
+  final int count;
+
+  const MoodTrendPoint({required this.day, required this.count});
+
+  factory MoodTrendPoint.fromJson(Map<String, dynamic> json) {
+    return MoodTrendPoint(
+      day: json['day'] as String? ?? '',
+      count: _readInt(json['count']),
+    );
+  }
+}
+
+class MoodDistributionItem {
+  final String moodType;
+  final int count;
+
+  const MoodDistributionItem({required this.moodType, required this.count});
+
+  factory MoodDistributionItem.fromJson(Map<String, dynamic> json) {
+    return MoodDistributionItem(
+      moodType: json['moodType'] as String? ?? '',
+      count: _readInt(json['count']),
+    );
+  }
+}
+
+class ActivityTimelinePoint {
+  final String day;
+  final int moodLogs;
+  final int journalEntries;
+
+  const ActivityTimelinePoint({
+    required this.day,
+    required this.moodLogs,
+    required this.journalEntries,
+  });
+
+  factory ActivityTimelinePoint.fromJson(Map<String, dynamic> json) {
+    return ActivityTimelinePoint(
+      day: json['day'] as String? ?? '',
+      moodLogs: _readInt(json['moodLogs']),
+      journalEntries: _readInt(json['journalEntries']),
+    );
+  }
+}
+
 class DashboardStats {
+  final int rangeDays;
   final int streak;
   final int moodLogsCount;
   final int journalEntriesCount;
@@ -8,8 +57,12 @@ class DashboardStats {
   final int meditationSessionsCount;
   final int coachSessionsCount;
   final String? latestMood;
+  final List<MoodTrendPoint> moodTrend7Days;
+  final List<MoodDistributionItem> moodDistribution;
+  final List<ActivityTimelinePoint> activityTimeline;
 
   const DashboardStats({
+    required this.rangeDays,
     required this.streak,
     required this.moodLogsCount,
     required this.journalEntriesCount,
@@ -19,10 +72,34 @@ class DashboardStats {
     required this.meditationSessionsCount,
     required this.coachSessionsCount,
     this.latestMood,
+    required this.moodTrend7Days,
+    required this.moodDistribution,
+    required this.activityTimeline,
   });
+
+  factory DashboardStats.empty() {
+    return const DashboardStats(
+      rangeDays: 7,
+      streak: 0,
+      moodLogsCount: 0,
+      journalEntriesCount: 0,
+      activeChallengesCount: 0,
+      completedChallengesCount: 0,
+      totalPoints: 0,
+      meditationSessionsCount: 0,
+      coachSessionsCount: 0,
+      latestMood: null,
+      moodTrend7Days: [],
+      moodDistribution: [],
+      activityTimeline: [],
+    );
+  }
 
   factory DashboardStats.fromJson(Map<String, dynamic> json) {
     return DashboardStats(
+      rangeDays: _readInt(json['rangeDays']) == 0
+          ? 7
+          : _readInt(json['rangeDays']),
       streak: _readInt(json['streak']),
       moodLogsCount: _readInt(json['moodLogsCount']),
       journalEntriesCount: _readInt(json['journalEntriesCount']),
@@ -32,7 +109,33 @@ class DashboardStats {
       meditationSessionsCount: _readInt(json['meditationSessionsCount']),
       coachSessionsCount: _readInt(json['coachSessionsCount']),
       latestMood: json['latestMood'] as String?,
+      moodTrend7Days: (json['moodTrend7Days'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) => MoodTrendPoint.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
+      moodDistribution: (json['moodDistribution'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                MoodDistributionItem.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
+      activityTimeline: (json['activityTimeline'] as List? ?? const [])
+          .whereType<Map>()
+          .map(
+            (item) =>
+                ActivityTimelinePoint.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .toList(),
     );
+  }
+
+  double get completionRate {
+    final attempts = completedChallengesCount + activeChallengesCount;
+    if (attempts == 0) return 0.0;
+    return completedChallengesCount / attempts;
   }
 }
 

@@ -10,6 +10,7 @@ class SecureStorageService {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userIdKey = 'user_id';
+  static const String _profileSetupCompletedKey = 'profile_setup_completed';
 
   final FlutterSecureStorage _storage;
   SharedPreferences? _prefs;
@@ -160,6 +161,19 @@ class SecureStorageService {
       await _initFallback();
       return _prefs?.containsKey(key) ?? false;
     }
+  }
+
+  // ==================== Profile Setup ====================
+
+  /// Indique si l'utilisateur a complete (ou ignore) l'onboarding de profil.
+  Future<bool> isProfileSetupCompleted() async {
+    final value = await read(key: _profileSetupCompletedKey);
+    return value == 'true';
+  }
+
+  /// Marque l'onboarding de profil comme complete.
+  Future<void> setProfileSetupCompleted() async {
+    await write(key: _profileSetupCompletedKey, value: 'true');
   }
 
   // ==================== Session Management ====================

@@ -17,7 +17,7 @@ services:
         - REDPANDA_PORT=${REDPANDA_PORT}
         - SECRET_KEY=${SECRET_KEY:-super-secret-key}
         - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY:-super-refresh-secret-key}
-        - NODE_ENV=production
+        - NODE_ENV=development
     networks:
       - elyrii_net
     depends_on:
