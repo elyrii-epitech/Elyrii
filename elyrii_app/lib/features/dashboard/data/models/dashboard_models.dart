@@ -112,24 +112,21 @@ class DashboardStats {
       moodTrend7Days: (json['moodTrend7Days'] as List? ?? const [])
           .whereType<Map>()
           .map(
-            (item) =>
-                MoodTrendPoint.fromJson(Map<String, dynamic>.from(item as Map)),
+            (item) => MoodTrendPoint.fromJson(Map<String, dynamic>.from(item)),
           )
           .toList(),
       moodDistribution: (json['moodDistribution'] as List? ?? const [])
           .whereType<Map>()
           .map(
-            (item) => MoodDistributionItem.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            ),
+            (item) =>
+                MoodDistributionItem.fromJson(Map<String, dynamic>.from(item)),
           )
           .toList(),
       activityTimeline: (json['activityTimeline'] as List? ?? const [])
           .whereType<Map>()
           .map(
-            (item) => ActivityTimelinePoint.fromJson(
-              Map<String, dynamic>.from(item as Map),
-            ),
+            (item) =>
+                ActivityTimelinePoint.fromJson(Map<String, dynamic>.from(item)),
           )
           .toList(),
     );
