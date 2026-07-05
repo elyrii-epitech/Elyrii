@@ -727,8 +727,9 @@ class _ReviewsPageState extends State<ReviewsPage> {
     final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: SafeArea(
         top: false,
         bottom: false,
@@ -898,8 +899,8 @@ class _RangeSelector extends StatelessWidget {
                   color: selected
                       ? AppColors.primary.withValues(alpha: 0.16)
                       : (isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.black.withValues(alpha: 0.03)),
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03)),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                   border: Border.all(
                     color: selected
@@ -916,8 +917,8 @@ class _RangeSelector extends StatelessWidget {
                       color: selected
                           ? AppColors.primary
                           : (isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight),
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight),
                     ),
                   ),
                 ),
@@ -934,10 +935,7 @@ class _OverviewGrid extends StatelessWidget {
   final DashboardStats stats;
   final bool isDark;
 
-  const _OverviewGrid({
-    required this.stats,
-    required this.isDark,
-  });
+  const _OverviewGrid({required this.stats, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -1122,10 +1120,7 @@ class _TrendChart extends StatelessWidget {
   final DashboardStats stats;
   final bool isDark;
 
-  const _TrendChart({
-    required this.stats,
-    required this.isDark,
-  });
+  const _TrendChart({required this.stats, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -1144,8 +1139,11 @@ class _TrendChart extends StatelessWidget {
       );
     }
 
-    final maxCount =
-        points.map((point) => point.count).fold<int>(0, (max, value) => value > max ? value : max).clamp(1, 9999).toDouble();
+    final maxCount = points
+        .map((point) => point.count)
+        .fold<int>(0, (max, value) => value > max ? value : max)
+        .clamp(1, 9999)
+        .toDouble();
     return LiquidGlassCard(
       padding: const EdgeInsets.all(16),
       child: SizedBox(
@@ -1235,10 +1233,7 @@ class _MoodDistributionList extends StatelessWidget {
   final DashboardStats stats;
   final bool isDark;
 
-  const _MoodDistributionList({
-    required this.stats,
-    required this.isDark,
-  });
+  const _MoodDistributionList({required this.stats, required this.isDark});
 
   Color _moodColor(String moodType) {
     switch (moodType) {
@@ -1366,10 +1361,7 @@ class _ActivityTimeline extends StatelessWidget {
   final DashboardStats stats;
   final bool isDark;
 
-  const _ActivityTimeline({
-    required this.stats,
-    required this.isDark,
-  });
+  const _ActivityTimeline({required this.stats, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -1401,7 +1393,9 @@ class _ActivityTimeline extends StatelessWidget {
                 SizedBox(
                   width: 88,
                   child: Text(
-                    parsedDate != null ? _shortDateLabel(parsedDate) : point.day,
+                    parsedDate != null
+                        ? _shortDateLabel(parsedDate)
+                        : point.day,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -1432,15 +1426,18 @@ class _ActivityTimeline extends StatelessWidget {
                             child: Container(
                               height: 8,
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.75),
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.75,
+                                ),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            flex:
-                                point.journalEntries == 0 ? 1 : point.journalEntries,
+                            flex: point.journalEntries == 0
+                                ? 1
+                                : point.journalEntries,
                             child: Container(
                               height: 8,
                               decoration: BoxDecoration(
