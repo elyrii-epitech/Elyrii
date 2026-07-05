@@ -24,11 +24,9 @@ class ApiConfig {
   static String journalEntryUrl(String id) => '$_baseUrl/journal/$id';
 
   // ==================== Chat (WebSocket) ====================
-  static String chatWsUrl({String? userId, String? token}) {
+  static String chatWsUrl({String? userId}) {
     final params = <String, String>{};
-    if (token != null && token.isNotEmpty) {
-      params['token'] = token;
-    } else if (userId != null && userId.isNotEmpty) {
+    if (userId != null && userId.isNotEmpty) {
       params['userId'] = userId;
     }
 

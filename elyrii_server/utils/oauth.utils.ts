@@ -49,6 +49,23 @@ function isAppleIssuer(iss?: string): boolean {
     return Boolean(iss && (iss === "https://appleid.apple.com" || iss === "appleid.apple.com"));
 }
 
+function isGoogleIssuer(iss?: string): boolean {
+    if (!iss) {
+        return false;
+    }
+
+    if (iss === "https://accounts.google.com" || iss === "accounts.google.com") {
+        return true;
+    }
+
+    try {
+        const parsed = new URL(iss);
+        return parsed.hostname === "accounts.google.com";
+    } catch {
+        return false;
+    }
+}
+
 async function getAppleJwks(): Promise<AppleJwk[]> {
     const now = Date.now();
     if (appleJwksCache && now - appleJwksCache.fetchedAt < 1000 * 60 * 60) {
@@ -141,7 +158,7 @@ export async function verifyGoogleOAuth(input: {
             const exp = Number(data.exp ?? 0);
             const nowInSeconds = Math.floor(Date.now() / 1000);
 
-            if (!sub || !email || !iss || !iss.includes("accounts.google.com")) {
+            if (!sub || !email || !iss || !isGoogleIssuer(iss)) {
                 throw new Error("Invalid Google token payload");
             }
             if (!Number.isFinite(exp) || exp <= nowInSeconds) {

@@ -194,7 +194,7 @@ class _MeditationPageState extends State<MeditationPage>
   int? _selectedMood;
 
   // ---- Available durations (minutes) ----
-  static const List<int> _durations = [3, 5, 10, 15];
+  static const List<int> _durations = [5, 10, 15];
 
   // ---- Mood emoji list for post-session feedback ----
   static const List<_MoodOption> _moods = [

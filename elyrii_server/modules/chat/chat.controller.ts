@@ -13,13 +13,11 @@ import { aiResponseTracker } from "./response-tracker.utils";
 const chatRouter = new Hono<HonoEnv>();
 const chatRepository = new ChatRepository();
 
-// In development, we usually want to allow userId query param if no token is provided.
+// Only enable userId query auth when explicitly requested for local development.
 const allowInsecureWsUserIdFallback =
     Bun.env.ALLOW_INSECURE_WS_USER_ID === "true"
         ? true
-        : Bun.env.ALLOW_INSECURE_WS_USER_ID === "false"
-            ? false
-            : true; // Default to true for ease of development
+        : false;
 
 console.log(`[Chat] Insecure WS userId fallback enabled: ${allowInsecureWsUserIdFallback}`);
 

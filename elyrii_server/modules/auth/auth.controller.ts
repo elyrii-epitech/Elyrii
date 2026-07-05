@@ -42,7 +42,7 @@ class AuthController {
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             maxAge: JwtUtils.REFRESH_TOKEN_EXP,
-            path: "/auth/refresh",
+            path: "/auth",
         });
 
         return { token, refreshToken };
@@ -109,7 +109,8 @@ class AuthController {
         responses: {
             200: { description: "Login successful" },
             400: { description: "Invalid credentials" },
-            404: { description: "User not found" },
+            401: { description: "Invalid credentials" },
+            403: { description: "Email verification required" },
             500: { description: "Login failed" },
         }
         }), sValidator("json", loginValidation), async (ctx) => {
@@ -121,16 +122,14 @@ class AuthController {
         try {
             const isUser = await this.authRepository.findUserByEmail(email);
             if (!isUser) {
-                return ctx.json({ message: 'user not found' }, 404);
+                return ctx.json({ message: 'invalid credentials' }, 401);
             }
             if (!await Bun.password.verify(password, isUser.password)) {
                 return ctx.json({ message: 'invalid credentials' }, 401);
             }
 
-            // If email is not verified, verify it now (first login verifies the account)
-            if (!isUser.emailVerified) {
-                await this.authRepository.updateEmailVerified(isUser.id, true);
-                await this.authRepository.clearEmailVerificationTokens(isUser.id);
+            if (this.requireEmailVerification && !isUser.emailVerified) {
+                return ctx.json({ message: 'email verification required' }, 403);
             }
 
             const tokenPayload: TokenPayload = {
@@ -311,6 +310,7 @@ class AuthController {
             }
         }
 
+        deleteCookie(ctx, "refresh_token", { path: "/auth" });
         deleteCookie(ctx, "refresh_token", { path: "/auth/refresh" });
         return ctx.json({ message: 'logout success' });
     })
@@ -347,7 +347,7 @@ class AuthController {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            path: "/auth/refresh",
+            path: "/auth",
             maxAge: JwtUtils.REFRESH_TOKEN_EXP
         });
 

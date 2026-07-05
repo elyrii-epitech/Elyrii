@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import '../config/api_config.dart';
 import '../services/secure_storage_service.dart';
 import 'api_exception.dart';
@@ -114,7 +115,13 @@ class ApiClient {
     try {
       final request = http.MultipartRequest('POST', Uri.parse(url));
       request.headers.addAll(headers);
-      request.files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fieldName,
+          filePath,
+          contentType: _contentTypeForPath(filePath),
+        ),
+      );
 
       final streamedResponse = await _client
           .send(request)
@@ -174,6 +181,23 @@ class ApiClient {
       return url.substring(0, url.length - 1);
     }
     return url;
+  }
+
+  MediaType _contentTypeForPath(String filePath) {
+    final path = filePath.toLowerCase();
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      return MediaType('image', 'jpeg');
+    }
+    if (path.endsWith('.png')) {
+      return MediaType('image', 'png');
+    }
+    if (path.endsWith('.webp')) {
+      return MediaType('image', 'webp');
+    }
+    if (path.endsWith('.gif')) {
+      return MediaType('image', 'gif');
+    }
+    return MediaType('application', 'octet-stream');
   }
 
   dynamic _handleResponse(http.Response response) {

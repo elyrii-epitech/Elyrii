@@ -336,7 +336,7 @@ class QuestController {
      * It creates a challenge template and assigns it to the user with 'PENDING' status.
      * 
      * @param ctx - Hono Context containing the JSON body
-     * @param ctx.req.valid.json - Validated body: { title, description?, conditions, aggregator, constraints, userId }
+     * @param ctx.req.valid.json - Validated body: { title, description?, conditions, aggregator, constraints }
      * @returns JSON object containing the created template and user challenge assignment
      */
     public readonly createProposal = this.factory.createHandlers(
@@ -354,10 +354,10 @@ class QuestController {
             description: z.string().optional(),
             conditions: z.any(),
             aggregator: z.enum(['ALL', 'ANY']).default('ALL'),
-            constraints: z.any(),
-            userId: z.string().uuid()
+            constraints: z.any()
         })),
         async (ctx) => {
+            const userId = ctx.get("user").userId;
             const body = ctx.req.valid("json");
             
             const template = await this.questRepository.createChallengeTemplate({
@@ -370,7 +370,7 @@ class QuestController {
             });
 
             const userChallenge = await this.questRepository.assignChallengeToUser({
-                userId: body.userId,
+                userId,
                 challengeId: template.id,
                 status: 'PENDING',
                 progress: {}

@@ -128,103 +128,111 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
     Navigator.pop(context, _resultValue);
   }
 
+  void _cancel() {
+    Navigator.pop(context, kAvatarPickerCancelled);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
+    return WillPopScope(
+      onWillPop: () async {
+        _cancel();
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: isDark
+            ? AppColors.scaffoldDark
+            : AppColors.scaffoldLight,
+        body: Stack(
+          children: [
+            CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
 
-              // Aperçu
-              SliverToBoxAdapter(child: _buildPreview(isDark)),
+                // Aperçu
+                SliverToBoxAdapter(child: _buildPreview(isDark)),
 
-              // Import depuis galerie
-              SliverToBoxAdapter(child: _buildImportCard(isDark)),
+                // Import depuis galerie
+                SliverToBoxAdapter(child: _buildImportCard(isDark)),
 
-              // Presets
-              SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final option = kAvatarOptions[index];
-                    final isSelected =
-                        _customImagePath == null &&
-                        _customAvatarUrl == null &&
-                        _selectedId == option.id;
-                    return _PresetAvatarTile(
-                      option: option,
-                      isSelected: isSelected,
-                      isDark: isDark,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() {
-                          _customImagePath = null;
-                          _customAvatarUrl = null;
-                          _selectedId = option.id;
-                        });
-                      },
-                    );
-                  }, childCount: kAvatarOptions.length),
-                ),
-              ),
-
-              // Bouton confirmer
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
-                  child: LiquidGlassButton(
-                    label: 'Choisir cet avatar',
-                    icon: Icons.check_rounded,
-                    isExpanded: true,
-                    onPressed: _confirm,
+                // Presets
+                SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 1,
+                        ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final option = kAvatarOptions[index];
+                      final isSelected =
+                          _customImagePath == null &&
+                          _customAvatarUrl == null &&
+                          _selectedId == option.id;
+                      return _PresetAvatarTile(
+                        option: option,
+                        isSelected: isSelected,
+                        isDark: isDark,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _customImagePath = null;
+                            _customAvatarUrl = null;
+                            _selectedId = option.id;
+                          });
+                        },
+                      );
+                    }, childCount: kAvatarOptions.length),
                   ),
                 ),
-              ),
-            ],
-          ),
 
-          // Top bar
-          Positioned(
-            top: topPadding + 12,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                _BackButton(
-                  isDark: isDark,
-                  onTap: () => Navigator.pop(context, kAvatarPickerCancelled),
-                ),
-                Expanded(
-                  child: Text(
-                    'Mon avatar',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black,
+                // Bouton confirmer
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
+                    child: LiquidGlassButton(
+                      label: 'Choisir cet avatar',
+                      icon: Icons.check_rounded,
+                      isExpanded: true,
+                      onPressed: _confirm,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(width: 44),
               ],
             ),
-          ),
-        ],
+
+            // Top bar
+            Positioned(
+              top: topPadding + 12,
+              left: 16,
+              right: 16,
+              child: Row(
+                children: [
+                  _BackButton(isDark: isDark, onTap: _cancel),
+                  Expanded(
+                    child: Text(
+                      'Mon avatar',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(width: 44),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

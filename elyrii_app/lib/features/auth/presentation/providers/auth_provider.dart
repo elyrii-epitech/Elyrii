@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_client.dart';
@@ -32,29 +34,58 @@ class AuthProvider extends ChangeNotifier {
 
   /// Check if user has a stored token on app start
   Future<void> checkAuthStatus() async {
-    final hasToken = await _storage.hasAccessToken();
-    if (hasToken) {
-      _status = AuthStatus.authenticated;
-      await fetchProfile();
-    } else {
+    final token = await _storage.getAccessToken();
+    if (token == null || token.isEmpty || _isJwtExpired(token)) {
+      await _storage.clearAuthData();
       _status = AuthStatus.unauthenticated;
+      _user = null;
+      notifyListeners();
+      return;
+    }
+
+    final hasProfile = await fetchProfile();
+    _status = hasProfile
+        ? AuthStatus.authenticated
+        : AuthStatus.unauthenticated;
+    if (!hasProfile) {
+      _user = null;
+      await _storage.clearAuthData();
     }
     notifyListeners();
   }
 
   /// Fetch full user profile from backend
-  Future<void> fetchProfile() async {
+  Future<bool> fetchProfile() async {
     try {
       final response = await _repository.client.get(ApiConfig.userMeUrl);
       _user = UserModel.fromJson(response as Map<String, dynamic>);
       notifyListeners();
+      return true;
     } catch (e) {
       debugPrint('[AuthProvider] Failed to fetch profile: $e');
-      // If we have a userId but fetch fails, keep the minimal user
-      final userId = await _storage.getUserId();
-      if (_user == null && userId != null) {
-        _user = UserModel(id: userId, email: '');
+      if (e is ApiException && e.statusCode == 401) {
+        await _storage.clearAuthData();
+        _user = null;
       }
+      return false;
+    }
+  }
+
+  bool _isJwtExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final json = jsonDecode(payload) as Map<String, dynamic>;
+      final exp = json['exp'];
+      if (exp is! num) return true;
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      return exp <= now;
+    } catch (e) {
+      debugPrint('[AuthProvider] Invalid stored token: $e');
+      return true;
     }
   }
 

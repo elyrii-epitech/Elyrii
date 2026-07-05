@@ -34,7 +34,9 @@ class ChatbotProvider extends ChangeNotifier {
       return;
     }
     try {
-      final wsUrl = ApiConfig.chatWsUrl(userId: userId, token: token);
+      final wsUrl = ApiConfig.chatWsUrl(
+        userId: token == null || token.isEmpty ? userId : null,
+      );
       _socket = await WebSocket.connect(
         wsUrl,
         headers: token != null && token.isNotEmpty

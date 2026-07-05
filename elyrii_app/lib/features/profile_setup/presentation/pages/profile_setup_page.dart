@@ -92,7 +92,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     final previousPfp = userProvider.profile?.pfp;
     final clearPfp = _selectedPfp == null && previousPfp != null;
 
-    await userProvider.updateProfile(
+    final success = await userProvider.updateProfile(
       firstName: _firstNameController.text.trim().isNotEmpty
           ? _firstNameController.text.trim()
           : null,
@@ -106,10 +106,24 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       wellnessGoal: _selectedWellnessGoal,
     );
 
-    await storage.setProfileSetupCompleted();
-
     if (!mounted) return;
     setState(() => _isSaving = false);
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(userProvider.error ?? 'Une erreur est survenue'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    await storage.setProfileSetupCompleted();
 
     Navigator.pushNamedAndRemoveUntil(
       context,

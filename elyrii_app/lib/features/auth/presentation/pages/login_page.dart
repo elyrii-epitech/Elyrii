@@ -241,15 +241,13 @@ class _LoginPageState extends State<LoginPage> {
 
                                 // Social Buttons (Stacked)
                                 _buildSocialButtonFull(
-                                  'Continuer avec Google',
-                                  'assets/google_logo.png', // Placeholder icon
+                                  'Google bientôt disponible',
                                   Icons.g_mobiledata,
                                   isDark,
                                 ),
                                 const SizedBox(height: AppDimensions.spacingMd),
                                 _buildSocialButtonFull(
-                                  'Continuer avec Apple',
-                                  'assets/apple_logo.png', // Placeholder icon
+                                  'Apple bientôt disponible',
                                   Icons.apple,
                                   isDark,
                                 ),
@@ -334,12 +332,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildSocialButtonFull(
     String text,
-    String assetPath,
     IconData fallbackIcon,
     bool isDark,
   ) {
     return LiquidGlassCard(
-      onTap: () {},
       padding: EdgeInsets.zero,
       color: isDark
           ? Colors.white.withValues(alpha: 0.05)

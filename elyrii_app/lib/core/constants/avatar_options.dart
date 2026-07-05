@@ -27,35 +27,35 @@ const List<AvatarOption> kAvatarOptions = [
   AvatarOption.mascot,
   AvatarOption(
     id: 'calmlotus',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=calmlotus&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=calmlotus&radius=50',
   ),
   AvatarOption(
     id: 'softbreeze',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=softbreeze&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=softbreeze&radius=50',
   ),
   AvatarOption(
     id: 'gentlesun',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=gentlesun&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=gentlesun&radius=50',
   ),
   AvatarOption(
     id: 'peacedove',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=peacedove&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=peacedove&radius=50',
   ),
   AvatarOption(
     id: 'warmharbor',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=warmharbor&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=warmharbor&radius=50',
   ),
   AvatarOption(
     id: 'quietsky',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=quietsky&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=quietsky&radius=50',
   ),
   AvatarOption(
     id: 'kindfern',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=kindfern&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=kindfern&radius=50',
   ),
   AvatarOption(
     id: 'mellowbloom',
-    url: 'https://api.dicebear.com/9.x/thumbs/svg?seed=mellowbloom&radius=50',
+    url: 'https://api.dicebear.com/9.x/thumbs/png?seed=mellowbloom&radius=50',
   ),
 ];
 

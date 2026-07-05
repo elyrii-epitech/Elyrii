@@ -38,6 +38,7 @@ dependencies:
   
   # Network
   http: ^1.6.0
+  http_parser: ^4.1.2
   
   # State Management
   provider: ^6.1.5+1

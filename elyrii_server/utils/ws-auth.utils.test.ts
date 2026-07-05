@@ -31,16 +31,14 @@ describe("resolveWsIdentity", () => {
         expect(identity?.source).toBe("token");
     });
 
-    test("resolves identity from query token", async () => {
+    test("rejects identity from query token", async () => {
         const token = await JwtUtils.generateAccessToken({
             userId: "user-2",
             email: "user2@example.com",
         });
 
         const identity = await resolveWsIdentity(`/chat/ws?token=${token}`, undefined, false);
-        expect(identity).not.toBeNull();
-        expect(identity?.userId).toBe("user-2");
-        expect(identity?.source).toBe("token");
+        expect(identity).toBeNull();
     });
 
     test("uses userId query fallback when enabled", async () => {
