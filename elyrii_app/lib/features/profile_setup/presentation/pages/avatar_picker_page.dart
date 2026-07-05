@@ -137,10 +137,11 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         _cancel();
-        return false;
       },
       child: Scaffold(
         backgroundColor: isDark

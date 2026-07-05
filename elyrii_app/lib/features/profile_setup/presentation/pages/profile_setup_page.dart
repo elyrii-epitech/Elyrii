@@ -123,10 +123,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       return;
     }
 
+    final navigator = Navigator.of(context);
     await storage.setProfileSetupCompleted();
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
+    navigator.pushNamedAndRemoveUntil(
       AppRoutes.home,
       (route) => false,
     );
