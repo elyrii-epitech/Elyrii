@@ -4,14 +4,8 @@
 /// des avatars apaisants generes via DiceBear, bases sur des styles doux
 /// et chaleureux coherents avec l'univers bien-etre.
 ///
-/// ┌─────────────────────────────────────────────────────────────────────┐
-/// │ BACKEND TEAM: La valeur envoyee au backend est une URL (string)    │
-/// │ stockee dans le champ `pfp`. Pour la mascotte, `pfp` est null,      │
-/// │ ce qui signifie "utiliser la mascotte par defaut".                  │
-/// │ Actuellement les URLs sont des SVG DiceBear. Si le backend stocke  │
-/// │ des fichiers uploades (ex: S3), il faudra adapter [kAvatarOptions] │
-/// │ et le widget [UserAvatar] en consequence.                           │
-/// └─────────────────────────────────────────────────────────────────────┘
+/// La valeur envoyee au backend est une URL stockee dans `pfp`.
+/// Pour la mascotte, `pfp` vaut null.
 class AvatarOption {
   final String id;
   final String? url;
@@ -69,6 +63,17 @@ const List<AvatarOption> kAvatarOptions = [
 bool isMascotAvatar(String? pfp) {
   if (pfp == null || pfp.isEmpty) return true;
   return pfp == kMascotAvatarId;
+}
+
+bool isLocalAvatarPath(String pfp) {
+  return pfp.startsWith('/') || pfp.startsWith('file://');
+}
+
+String localAvatarFilePath(String pfp) {
+  if (pfp.startsWith('file://')) {
+    return Uri.parse(pfp).toFilePath();
+  }
+  return pfp;
 }
 
 /// Sentinel retournee par AvatarPickerPage quand l'utilisateur annule (back).

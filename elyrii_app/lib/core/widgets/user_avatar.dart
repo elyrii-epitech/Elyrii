@@ -23,7 +23,7 @@ class UserAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final useMascot = isMascotAvatar(pfp);
-    final isLocalFile = pfp != null && pfp!.startsWith('/');
+    final isLocalFile = pfp != null && isLocalAvatarPath(pfp!);
 
     return Container(
       width: size,
@@ -53,7 +53,7 @@ class UserAvatar extends StatelessWidget {
                 ? Image.asset('assets/mascotte.png', fit: BoxFit.cover)
                 : isLocalFile
                 ? Image.file(
-                    File(pfp!),
+                    File(localAvatarFilePath(pfp!)),
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) =>
                         Image.asset('assets/mascotte.png', fit: BoxFit.cover),
