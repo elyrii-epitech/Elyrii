@@ -37,6 +37,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final topPadding = MediaQuery.of(context).padding.top;
     final notificationsEnabled =
         appSettings?.notificationsEnabled ?? _notifications;
+    final hapticsEnabled = appSettings?.hapticsEnabled ?? _haptics;
     final strictPrivacy = appSettings?.privacyMode == 'STRICT';
 
     return Scaffold(
@@ -105,9 +106,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       leadingIcon: Icons.vibration_rounded,
                       showChevron: false,
                       trailing: LiquidGlassSwitch(
-                        value: _haptics,
+                        value: hapticsEnabled,
                         onChanged: (value) {
                           setState(() => _haptics = value);
+                          context.read<UserProvider>().updateSettings(
+                            hapticsEnabled: value,
+                          );
                           if (value) {
                             HapticFeedback.mediumImpact();
                           }

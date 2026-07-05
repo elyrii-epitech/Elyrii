@@ -17,12 +17,7 @@ import '../../../../core/constants/avatar_options.dart';
 /// La selection est retournee via [Navigator.pop] sous forme de [String?]:
 /// - null => mascotte par defaut
 /// - URL DiceBear => avatar preset
-/// - "file:///..." => image importee localement
-///   ┌─────────────────────────────────────────────────────────────────┐
-///   │ BACKEND TEAM: Pour les images importees, le path local devra    │
-///   │ etre uploade (POST /user/avatar -> retourne URL). Pour l'instant│
-///   │ on stocke le path local cote front.                             │
-///   └─────────────────────────────────────────────────────────────────┘
+/// - chemin local => image importee, uploadee au moment de la sauvegarde
 class AvatarPickerPage extends StatefulWidget {
   /// Avatar actuel (pour pre-selectionner)
   final String? currentPfp;
@@ -36,6 +31,7 @@ class AvatarPickerPage extends StatefulWidget {
 class _AvatarPickerPageState extends State<AvatarPickerPage> {
   late String _selectedId;
   String? _customImagePath;
+  String? _customAvatarUrl;
   bool _isProcessing = false;
 
   @override
@@ -44,12 +40,17 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
     _selectedId = avatarIdFromPfp(widget.currentPfp);
     // Si l'utilisateur avait une image custom, la conserver pour l'apercu
     if (_selectedId == '__custom__' && widget.currentPfp != null) {
-      _customImagePath = widget.currentPfp;
+      if (isLocalAvatarPath(widget.currentPfp!)) {
+        _customImagePath = localAvatarFilePath(widget.currentPfp!);
+      } else {
+        _customAvatarUrl = widget.currentPfp;
+      }
     }
   }
 
   String? get _resultValue {
     if (_customImagePath != null) return _customImagePath;
+    if (_customAvatarUrl != null) return _customAvatarUrl;
     if (_selectedId == kMascotAvatarId) return null;
     final option = kAvatarOptions.firstWhere(
       (o) => o.id == _selectedId,
@@ -99,6 +100,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
         HapticFeedback.lightImpact();
         setState(() {
           _customImagePath = cropped.path;
+          _customAvatarUrl = null;
           // Deselectionner les presets
           _selectedId = '__custom__';
         });
@@ -161,7 +163,9 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final option = kAvatarOptions[index];
                     final isSelected =
-                        _customImagePath == null && _selectedId == option.id;
+                        _customImagePath == null &&
+                        _customAvatarUrl == null &&
+                        _selectedId == option.id;
                     return _PresetAvatarTile(
                       option: option,
                       isSelected: isSelected,
@@ -170,6 +174,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
                         HapticFeedback.selectionClick();
                         setState(() {
                           _customImagePath = null;
+                          _customAvatarUrl = null;
                           _selectedId = option.id;
                         });
                       },
@@ -256,6 +261,15 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
                   child: ClipOval(
                     child: _customImagePath != null
                         ? Image.file(File(_customImagePath!), fit: BoxFit.cover)
+                        : _customAvatarUrl != null
+                        ? Image.network(
+                            _customAvatarUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Image.asset(
+                              'assets/mascotte.png',
+                              fit: BoxFit.cover,
+                            ),
+                          )
                         : (_resultValue == null
                               ? Image.asset(
                                   'assets/mascotte.png',

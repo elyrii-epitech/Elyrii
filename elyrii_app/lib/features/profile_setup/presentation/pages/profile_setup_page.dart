@@ -89,13 +89,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
     final userProvider = context.read<UserProvider>();
     final storage = context.read<SecureStorageService>();
+    final previousPfp = userProvider.profile?.pfp;
+    final clearPfp = _selectedPfp == null && previousPfp != null;
 
-    // ┌──────────────────────────────────────────────────────────────────┐
-    // │ BACKEND TEAM: Sauvegarde du profil via PUT /user/me              │
-    // │ Voir annotations detaillees dans data/settings_repository.dart.  │
-    // │ [pfp] = null => mascotte | path local => upload requis.          │
-    // │ Nouveaux champs: bio, wellnessGoal (support backend necessaire). │
-    // └──────────────────────────────────────────────────────────────────┘
     await userProvider.updateProfile(
       firstName: _firstNameController.text.trim().isNotEmpty
           ? _firstNameController.text.trim()
@@ -105,9 +101,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           : null,
       age: int.tryParse(_ageController.text.trim()),
       pfp: _selectedPfp,
-      bio: _bioController.text.trim().isNotEmpty
-          ? _bioController.text.trim()
-          : null,
+      clearPfp: clearPfp,
+      bio: _bioController.text.trim(),
       wellnessGoal: _selectedWellnessGoal,
     );
 

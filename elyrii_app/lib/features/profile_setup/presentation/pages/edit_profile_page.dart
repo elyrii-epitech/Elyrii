@@ -101,12 +101,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _saveProfile() async {
     setState(() => _isSaving = true);
     final userProvider = context.read<UserProvider>();
+    final previousPfp = userProvider.profile?.pfp;
+    final clearPfp = _selectedPfp == null && previousPfp != null;
 
-    // ┌──────────────────────────────────────────────────────────────────┐
-    // │ BACKEND TEAM: Voir annotations dans data/settings_repository.dart│
-    // │ pour le champ pfp (null = mascotte, path local = upload requis).  │
-    // │ Les champs bio/gender/pronouns/wellnessGoal sont nouveaux.       │
-    // └──────────────────────────────────────────────────────────────────┘
     final success = await userProvider.updateProfile(
       firstName: _firstNameController.text.trim().isNotEmpty
           ? _firstNameController.text.trim()
@@ -116,13 +113,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           : null,
       age: int.tryParse(_ageController.text.trim()),
       pfp: _selectedPfp,
-      bio: _bioController.text.trim().isNotEmpty
-          ? _bioController.text.trim()
-          : null,
+      clearPfp: clearPfp,
+      bio: _bioController.text.trim(),
       gender: _selectedGender,
-      pronouns: _pronounsController.text.trim().isNotEmpty
-          ? _pronounsController.text.trim()
-          : null,
+      pronouns: _pronounsController.text.trim(),
       wellnessGoal: _selectedWellnessGoal,
     );
     if (!mounted) return;
