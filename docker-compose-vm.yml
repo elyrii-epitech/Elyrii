@@ -98,6 +98,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: elyrii-ollama
+    working_dir: /adapter
     ports:
       - "127.0.0.1:11434:11434"
     volumes:
@@ -121,6 +122,7 @@ services:
   ollama-init:
     image: ollama/ollama:latest
     container_name: elyrii-ollama-init
+    working_dir: /adapter
     depends_on:
       ollama:
         condition: service_healthy
