@@ -51,16 +51,62 @@ services:
     profiles:
       - gpu
 
-  # AI Kafka Bridge (connects Server to LOCAL Ollama via Kafka)
+  # Ollama runtime for cloud VM inference without vLLM.
+  ollama:
+    image: ollama/ollama:latest
+    container_name: elyrii-ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ../elyrii_lora:/models/elyrii_lora:ro
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  # Creates/updates the Ollama model with the Elyrii LoRA adapter.
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: elyrii-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - AI_MODEL=${AI_MODEL:-elyrii-lora}
+    volumes:
+      - ./ollama/Modelfile:/Modelfile:ro
+      - ../elyrii_lora:/models/elyrii_lora:ro
+    entrypoint:
+      - sh
+      - -c
+    command:
+      - |
+        ollama pull mistral:7b-instruct-v0.3-q4_K_M
+        ollama create ${AI_MODEL:-elyrii-lora} -f /Modelfile
+    restart: "no"
+    networks:
+      - elyrii_net
+
+  # AI Kafka Bridge (connects Server to Ollama via Kafka)
   ai-bridge:
     build:
       context: .
       dockerfile: BridgeDockerfile
     container_name: elyrii-ai-bridge
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
     environment:
       - KAFKA_BROKER=host.docker.internal:9092
-      - AI_BASE_URL=http://host.docker.internal:11434
-      - AI_MODEL=mistral
+      - AI_BASE_URL=http://ollama:11434
+      - AI_MODEL=${AI_MODEL:-elyrii-lora}
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "redpanda:host-gateway"
@@ -75,3 +121,4 @@ networks:
 
 volumes:
   huggingface_cache:
+  ollama_data:
