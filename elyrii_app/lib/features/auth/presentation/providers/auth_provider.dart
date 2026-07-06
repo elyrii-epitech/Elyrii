@@ -175,6 +175,10 @@ class AuthProvider extends ChangeNotifier {
   /// Logout and clear stored tokens
   Future<void> logout() async {
     await _repository.logout();
+    await clearLocalSession();
+  }
+
+  Future<void> clearLocalSession() async {
     await _storage.clearAuthData();
     _user = null;
     _status = AuthStatus.unauthenticated;

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exception.dart';
 import '../data/settings_repository.dart';
 import '../models/app_settings.dart';
 import '../models/user_profile.dart';
@@ -30,6 +31,10 @@ class UserProvider extends ChangeNotifier {
       _profile = await _repository.getMe();
       _isLoading = false;
       notifyListeners();
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -43,6 +48,10 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _settings = await _repository.getSettings();
+      _isLoading = false;
+      notifyListeners();
+    } on ApiException catch (e) {
+      _error = e.message;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -118,8 +127,38 @@ class UserProvider extends ChangeNotifier {
       );
       notifyListeners();
       return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
       _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteAccount({required String password}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteAccount(password: password);
+      _profile = null;
+      _settings = null;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
       notifyListeners();
       return false;
     }
