@@ -19,7 +19,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.10.3 <4.0.0"
+  flutter: ">=3.38.4"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -32,44 +33,53 @@ dependencies:
     sdk: flutter
 
   # UI
-  cupertino_icons: ^1.0.8
-  flutter_launcher_icons: ^0.14.3
+  cupertino_icons: ^1.0.9
+  flutter_launcher_icons: ^0.14.4
   
   # Network
-  http: ^1.2.0
+  http: ^1.6.0
+  http_parser: ^4.1.2
   
   # State Management
-  provider: ^6.1.1
+  provider: ^6.1.5+1
   
   # Storage Local
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.5
   
   # Secure Storage (for tokens, credentials)
-  flutter_secure_storage: ^10.0.0
+  flutter_secure_storage: ^10.3.1
   
   # Date & Time
   intl: ^0.20.2
   
   # Accessibilité
-  flutter_tts: ^4.0.2
+  flutter_tts: ^4.2.5
   
   # Icons
   iconsax: ^0.0.8
   
   # Advanced Animations
-  flutter_animate: ^4.5.0
+  flutter_animate: ^4.5.2
   shimmer: ^3.0.0
-  lottie: ^3.1.0
+  lottie: ^3.3.3
+
+  # 3D Model Viewer
+  flutter_3d_controller: ^2.3.0
   
   # Grid Layout
   flutter_staggered_grid_view: ^0.7.0
   
   # UUID
-  uuid: ^4.5.1
+  uuid: ^4.5.3
   
   # Email validation
   email_validator: ^3.0.0
-  google_fonts: ^8.0.0
+  google_fonts: ^8.1.0
+  characters: ^1.4.0
+
+  # Image picking & cropping
+  image_picker: ^1.1.2
+  image_cropper: ^9.1.0
 
 dev_dependencies:
   flutter_test:
@@ -99,6 +109,13 @@ flutter:
     - assets/mascotte.png
     - assets/mascotte_eyes_closed.png
     - assets/animations/
+    - assets/base_basic_design.glb
+    - assets/base_basic_shaded.glb
+    - assets/base_basic_shaded_v3.glb
+    - assets/custom1.glb
+    - assets/mascot_design_texture.png
+    - assets/shaded_painted.png
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -125,3 +142,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon_black_bg.png"
+  remove_alpha_ios: true

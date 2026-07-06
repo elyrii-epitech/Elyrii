@@ -34,6 +34,9 @@ nav:
       - Scalability: ai/scalability.md
       - Training: ai/training.md
       - Generated Docs: ai/api/index.md
+  - Epitech:
+      - BTP: epitech/btp.md
+      - C39: epitech/c39-diffusion-information.md
 plugins:
   - search
 markdown_extensions:

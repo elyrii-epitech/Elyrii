@@ -1,120 +1,85 @@
 # Elyrii Server Documentation
 
-This repository contains the Elyrii server with microservices architecture and auto-generated documentation using TypeDoc.
+This repository contains the Elyrii monolithic server, consolidating multiple services into a single, maintainable application.
 
-## Services
+## Architecture
 
-- **Auth Service**: Handles authentication and authorization
-- **Chat Service**: Manages real-time messaging and chat functionality  
-- **Gateway Service**: API gateway for routing and request handling
+The server is built using **Hono** and **Bun**, organized into modular components:
+
+- **Auth**: Handles user authentication, registration, and session management (JWT).
+- **Chat**: Real-time messaging with WebSocket support and Kafka integration.
+- **Journal**: Personal journaling with multimedia support and tagging.
+- **Quest**: Gamified challenges and AI-proposed tasks.
+- **User**: Profile management and user-related operations.
 
 ## Documentation
 
 ### Generating Documentation
 
-To generate the complete documentation for all services:
+Documentation is auto-generated using **TypeDoc**. To generate the complete API reference:
 
 ```bash
-# Install dependencies (if not already installed)
+# Install dependencies
 bun install
 
-# Generate documentation for all services
+# Generate documentation
 bun run docs:build
-
-# Or simply
-bun run docs
 ```
+
+The documentation will be generated in `docs/api/`.
 
 ### Viewing Documentation
 
-After generation, you can view the documentation locally:
+After generation, you can serve the documentation locally:
 
 ```bash
-# Serve the documentation locally
+# Start documentation server
 bun run docs:serve
 ```
 
 Then open http://localhost:8080 in your browser.
 
-### Individual Service Documentation
-
-You can also generate documentation for individual services:
-
-```bash
-# Auth service only
-bun run docs:auth
-
-# Chat service only  
-bun run docs:chat
-
-# Gateway service only
-bun run docs:gateway
-```
-
 ## Project Structure
 
 ```
 elyrii_server/
-├── services/
-│   ├── auth/           # Authentication service
-│   ├── chat/           # Chat service
-│   └── gateway/        # API Gateway service
-├── docs/
-│   ├── index.html      # Documentation landing page
-│   └── api/            # Generated TypeDoc documentation
-├── package.json        # Root package configuration
-├── typedoc.json        # TypeDoc configuration
-└── docker-compose.yml  # Docker orchestration
+├── config/             # Shared configurations (DB, Kafka)
+├── middleware/         # Shared middlewares (Auth, etc.)
+├── modules/            # Core business logic modules
+│   ├── auth/
+│   ├── chat/
+│   ├── journal/
+│   ├── quest/
+│   └── user/
+├── repository/         # Data access layer
+├── utils/              # Shared utility functions
+├── docs/               # Generated and static documentation
+├── scripts/            # Utility scripts (docs generation, etc.)
+└── package.json        # Main configuration
 ```
 
 ## Development
 
-Each service can be run independently:
+To start the development server with hot-reload:
 
 ```bash
-# Run auth service
-cd services/auth && bun run dev
-
-# Run chat service  
-cd services/chat && bun run dev
-
-# Run gateway service
-cd services/gateway && bun run dev
+bun run dev
 ```
 
-Or use Docker Compose to run all services:
+### Database Management
+
+The project uses **Drizzle ORM**. To push schema changes to the database:
 
 ```bash
-docker-compose up
+bun run db:push
 ```
 
-## TypeDoc Configuration
+## Deployment
 
-The documentation is configured with:
-- Automatic API documentation from TypeScript source
-- Service-level documentation separation
-- Navigation links between services
-- Full type information and JSDoc comments support
-- Code examples from comments
+The server is Docker-ready. Use Docker Compose to spin up the entire environment (Server, Redpanda, Postgres):
 
-### Adding Documentation Comments
-
-Use JSDoc comments in your TypeScript files:
-
-```typescript
-/**
- * Authenticates a user with credentials
- * @param username - The user's username
- * @param password - The user's password
- * @returns Authentication token if successful
- * @example
- * ```typescript
- * const token = await authenticate('user@example.com', 'password123');
- * ```
- */
-export async function authenticate(username: string, password: string): Promise<string> {
-  // Implementation
-}
+```bash
+docker compose up
 ```
 
 ## License

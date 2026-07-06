@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../../routes/app_routes.dart';
 
-import 'package:flutter/foundation.dart';
-
 class GlobalErrorBoundary extends StatefulWidget {
   final Widget child;
 
-  const GlobalErrorBoundary({
-    super.key,
-    required this.child,
-  });
+  const GlobalErrorBoundary({super.key, required this.child});
 
   @override
   State<GlobalErrorBoundary> createState() => _GlobalErrorBoundaryState();
@@ -46,14 +42,14 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.error_outline_rounded,
-                  color: AppColors.error,
+                Icon(
+                  Icons.self_improvement_rounded,
+                  color: AppColors.primary.withValues(alpha: 0.6),
                   size: 64,
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Oups ! Une erreur est survenue.',
+                  'Oups, un petit souci...',
                   style: AppTextStyles.headlineSmall(
                     color: Theme.of(context).textTheme.titleLarge?.color,
                   ),
@@ -61,7 +57,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Nous avons rencontré un problème inattendu.\nNe vous inquiétez pas, nos robots travaillent déjà dessus !',
+                  'Ce n\'est rien de grave. On recommence ensemble ?',
                   style: AppTextStyles.bodyMedium(
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
@@ -70,7 +66,6 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
-                    // Simple reload attempt by navigating to root
                     if (context.mounted) {
                       Navigator.of(context).pushNamedAndRemoveUntil(
                         AppRoutes.login,
@@ -89,7 +84,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text('Retour à l\'accueil'),
+                  child: const Text('Recommencer'),
                 ),
                 if (kDebugMode && details.exceptionAsString().isNotEmpty) ...[
                   const SizedBox(height: 48),

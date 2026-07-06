@@ -6,6 +6,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/liquid_glass_kit.dart';
+import 'package:provider/provider.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../providers/journal_provider.dart';
 import 'glass_text_field.dart';
 
@@ -14,10 +16,14 @@ class JournalEditorSheet extends StatefulWidget {
   final JournalProvider provider;
   final JournalEntry? entry;
 
+  /// Prompt d'inspiration optionnel pour pré-remplir le titre.
+  final String? initialPrompt;
+
   const JournalEditorSheet({
     super.key,
     required this.provider,
     this.entry,
+    this.initialPrompt,
   });
 
   @override
@@ -35,9 +41,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.entry?.title ?? '');
-    _contentController =
-        TextEditingController(text: widget.entry?.content ?? '');
+    final entry = widget.entry;
+    _titleController = TextEditingController(
+      text: entry?.title ?? widget.initialPrompt ?? '',
+    );
+    _contentController = TextEditingController(text: entry?.content ?? '');
 
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
@@ -59,27 +67,40 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
   }
 
-  void _autoSave() {
+  Future<void> _autoSave() async {
     if (!_hasChanges || _contentController.text.trim().isEmpty) return;
 
     setState(() => _isSaving = true);
 
     final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+    final dashboardProvider = context.read<DashboardProvider>();
+    final currentMood = dashboardProvider.selectedMood?.name;
 
     if (widget.entry != null) {
-      widget.provider
-          .updateEntry(widget.entry!.id, title: title, content: content);
+      await widget.provider.updateEntry(
+        widget.entry!.id,
+        title: title,
+        content: content,
+        mood: currentMood,
+      );
     } else if (_createdEntryId != null) {
-      widget.provider
-          .updateEntry(_createdEntryId!, title: title, content: content);
+      await widget.provider.updateEntry(
+        _createdEntryId!,
+        title: title,
+        content: content,
+        mood: currentMood,
+      );
     } else {
-      final now = DateTime.now();
-      final newId = now.millisecondsSinceEpoch.toString();
-      widget.provider.createEntry(title: title, content: content);
-      _createdEntryId = newId;
+      final created = await widget.provider.createEntry(
+        title: title,
+        content: content,
+        mood: currentMood,
+      );
+      _createdEntryId = created?.id;
     }
 
+    if (!mounted) return;
     setState(() {
       _hasChanges = false;
       _isSaving = false;
@@ -93,7 +114,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       context: context,
       title: 'Modifications non sauvegardées',
       child: const Text(
-          'Voulez-vous sauvegarder vos modifications avant de fermer ?'),
+        'Voulez-vous sauvegarder vos modifications avant de fermer ?',
+      ),
       actions: [
         LiquidGlassDialogAction(
           label: 'Annuler',
@@ -112,7 +134,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       ],
     );
 
-    if (result == 'save') _autoSave();
+    if (result == 'save') await _autoSave();
     return result == 'save' || result == 'discard';
   }
 
@@ -163,23 +185,58 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           _buildAppBar(isDark),
           // Contenu
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              0,
-              8,
-              0,
-              bottomInset + 24,
-            ),
+            padding: EdgeInsets.fromLTRB(0, 8, 0, bottomInset + 24),
             child: Column(
               children: [
+                // Badge d'inspiration
+                if (widget.initialPrompt != null && widget.entry == null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.lightbulb_rounded,
+                                size: 14,
+                                color: AppColors.accent,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Inspiration',
+                                style: AppTextStyles.labelSmall(
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ).animate().fadeIn(duration: 200.ms).slideY(begin: 0.1),
+                  ),
                 // Champ titre
                 GlassTextField(
-                  controller: _titleController,
-                  hint: 'Titre (optionnel)',
-                  isDark: isDark,
-                  maxLines: 1,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                )
+                      controller: _titleController,
+                      hint: 'Titre (optionnel)',
+                      isDark: isDark,
+                      maxLines: 1,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    )
                     .animate()
                     .fadeIn(
                       duration: 300.ms,
@@ -195,13 +252,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                 const SizedBox(height: 16),
                 // Champ contenu
                 GlassTextField(
-                  controller: _contentController,
-                  hint: 'Exprime ce que tu ressens...',
-                  isDark: isDark,
-                  maxLines: null,
-                  minLines: 12,
-                  fontSize: 16,
-                )
+                      controller: _contentController,
+                      hint: 'Exprime ce que tu ressens...',
+                      isDark: isDark,
+                      maxLines: null,
+                      minLines: 12,
+                      fontSize: 16,
+                    )
                     .animate()
                     .fadeIn(
                       duration: 300.ms,
@@ -260,9 +317,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           ),
           const SizedBox(width: 12),
           // Status
-          Expanded(
-            child: _buildStatusIndicator(isDark),
-          ),
+          Expanded(child: _buildStatusIndicator(isDark)),
           // Bouton ajouter/sauvegarder
           GestureDetector(
             onTap: () {
@@ -280,9 +335,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               ),
               child: Text(
                 widget.entry != null ? 'Modifier' : 'Ajouter',
-                style: AppTextStyles.labelMedium(
-                  color: AppColors.primary,
-                ),
+                style: AppTextStyles.labelMedium(color: AppColors.primary),
               ),
             ),
           ),
@@ -325,10 +378,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            'Sauvegarde...',
-            style: AppTextStyles.labelMedium(
-              color: AppColors.primary,
+          Flexible(
+            child: Text(
+              'Sauvegarde...',
+              style: AppTextStyles.labelMedium(color: AppColors.primary),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -347,12 +401,15 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            'Modifications non sauvegardées',
-            style: AppTextStyles.labelSmall(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+          Flexible(
+            child: Text(
+              'Modifications non sauvegardées',
+              style: AppTextStyles.labelSmall(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -367,10 +424,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           size: 16,
         ),
         const SizedBox(width: 6),
-        Text(
-          'Sauvegardé',
-          style: AppTextStyles.labelMedium(
-            color: AppColors.success,
+        Flexible(
+          child: Text(
+            'Sauvegardé',
+            style: AppTextStyles.labelMedium(color: AppColors.success),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

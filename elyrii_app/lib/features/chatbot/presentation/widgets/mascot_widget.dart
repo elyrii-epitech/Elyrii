@@ -1,21 +1,30 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import '../../../../core/config/mascot_animations.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/config/mascot_3d_config.dart';
+import '../../../../core/widgets/mascot_with_accessories.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 
+/// Widget d'affichage de la mascotte Elyrii dans le chatbot.
+///
+/// Gère la transition animée entre les modes réduit (bannière) et plein écran,
+/// avec un effet de pulsation visuelle.
 class MascotWidget extends StatefulWidget {
+  /// Indique si la mascotte doit être affichée en mode réduit.
   final bool isMinimized;
+
+  /// Hauteur de la mascotte en mode plein écran.
   final double lottieHeight;
+
+  /// Action déclenchée au clic sur la mascotte.
   final VoidCallback? onTap;
-  final MascotAnimation? triggerAnimation;
 
   const MascotWidget({
     super.key,
     required this.isMinimized,
     this.lottieHeight = 150,
     this.onTap,
-    this.triggerAnimation,
   });
 
   @override
@@ -26,108 +35,25 @@ class _MascotWidgetState extends State<MascotWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  MascotAnimation _currentAnimation = MascotAnimations.idle;
-  bool _isPlayingSpecialAnimation = false;
-  bool _hasPlayedInitialAnimation = false;
-  Timer? _inactivityTimer;
-  static const int _inactivityDelaySeconds = 10;
 
   @override
   void initState() {
     super.initState();
+
+    // Animation de pulsation lente pour donner de la vie au modèle 3D
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 4000),
       vsync: this,
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.06,
-    ).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOutSine,
-      ),
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
     );
-
-    _playOpeningAnimation();
-  }
-
-  void _playOpeningAnimation() {
-    if (_hasPlayedInitialAnimation) return;
-
-    final openingAnimations = MascotAnimations.openingAnimations;
-    if (openingAnimations.isEmpty) {
-      _hasPlayedInitialAnimation = true;
-      _startInactivityTimer();
-      return;
-    }
-
-    final animation = MascotAnimations.selectWeightedRandom(openingAnimations);
-    if (animation != null) {
-      _playAnimation(animation, isInitial: true);
-    }
-  }
-
-  void _playAnimation(MascotAnimation animation, {bool isInitial = false}) {
-    if (_isPlayingSpecialAnimation && !isInitial) return;
-
-    setState(() {
-      _currentAnimation = animation;
-      _isPlayingSpecialAnimation = true;
-      if (isInitial) _hasPlayedInitialAnimation = true;
-    });
-
-    Future.delayed(Duration(seconds: animation.durationSeconds), () {
-      if (mounted) {
-        setState(() {
-          _currentAnimation = MascotAnimations.idle;
-          _isPlayingSpecialAnimation = false;
-        });
-        _startInactivityTimer();
-      }
-    });
-  }
-
-  void _startInactivityTimer() {
-    _inactivityTimer?.cancel();
-    _inactivityTimer =
-        Timer(const Duration(seconds: _inactivityDelaySeconds), () {
-      if (mounted) {
-        _playInactivityAnimation();
-      }
-    });
-  }
-
-  void _playInactivityAnimation() {
-    final inactivityAnimations = MascotAnimations.inactivityAnimations;
-    if (inactivityAnimations.isEmpty) return;
-
-    final animation =
-        MascotAnimations.selectWeightedRandom(inactivityAnimations);
-    if (animation != null) {
-      _playAnimation(animation);
-    }
-  }
-
-  @override
-  void didUpdateWidget(MascotWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    if (widget.isMinimized != oldWidget.isMinimized) {
-      _startInactivityTimer();
-    }
-
-    if (widget.triggerAnimation != null &&
-        widget.triggerAnimation != oldWidget.triggerAnimation) {
-      _playAnimation(widget.triggerAnimation!);
-    }
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
-    _inactivityTimer?.cancel();
     super.dispose();
   }
 
@@ -155,10 +81,9 @@ class _MascotWidgetState extends State<MascotWidget>
     );
   }
 
+  /// Construit la mascotte en mode réduit (bannière horizontale).
   Widget _buildMinimizedMascot(bool isDark) {
-    const double lottieSize = 140;
     const double visibleHeight = 80;
-    const double topOffset = -10;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -168,8 +93,9 @@ class _MascotWidgetState extends State<MascotWidget>
           gradient: LinearGradient(
             colors: [
               AppColors.primary.withValues(alpha: 0.15),
-              (isDark ? AppColors.cardDark : AppColors.cardLight)
-                  .withValues(alpha: 0.95),
+              (isDark ? AppColors.cardDark : AppColors.cardLight).withValues(
+                alpha: 0.95,
+              ),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -184,42 +110,30 @@ class _MascotWidgetState extends State<MascotWidget>
         ),
         child: Row(
           children: [
-            SizedBox(
-              width: lottieSize,
+            const SizedBox(
+              width: 100,
               height: visibleHeight,
-              child: ClipRect(
-                child: OverflowBox(
-                  maxHeight: lottieSize,
-                  maxWidth: lottieSize,
-                  alignment: Alignment.topCenter,
-                  child: Transform.translate(
-                    offset: const Offset(0, topOffset),
-                    child: Lottie.asset(
-                      _currentAnimation.assetPath,
-                      key: ValueKey('minimized_${_currentAnimation.id}'),
-                      width: lottieSize,
-                      height: lottieSize,
-                      fit: BoxFit.contain,
-                      repeat: _currentAnimation.loop,
-                      animate: true,
-                    ),
-                  ),
+              child: Center(
+                child: _ThemedMascot(
+                  key: ValueKey('mascot_3d_mini'),
+                  config: Mascot3DConfig.chatbotMinimized(),
+                  width: 80,
+                  height: 80,
                 ),
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _buildMascotText(true, isDark),
-            ),
+            Expanded(child: _buildMascotText(true, isDark)),
             Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Icon(
                 Icons.lock_outline_rounded,
                 size: 16,
-                color: (isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight)
-                    .withValues(alpha: 0.6),
+                color:
+                    (isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight)
+                        .withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -228,58 +142,60 @@ class _MascotWidgetState extends State<MascotWidget>
     );
   }
 
+  /// Construit la mascotte en mode plein écran.
   Widget _buildFullMascot(double maxHeight, bool isDark) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildMascotAvatar(widget.lottieHeight, Icons.favorite_rounded),
+        _buildMascotAvatar(widget.lottieHeight),
         SizedBox(height: maxHeight * 0.04),
         _buildMascotText(false, isDark),
       ],
     );
   }
 
-  Widget _buildMascotAvatar(double size, IconData icon) {
+  /// Construit le viewer 3D de la mascotte pour le mode plein écran.
+  Widget _buildMascotAvatar(double size) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       width: size,
       height: size,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
-        child: Lottie.asset(
-          _currentAnimation.assetPath,
-          key: ValueKey(_currentAnimation.id),
+        child: _ThemedMascot(
+          key: const ValueKey('mascot_3d_full'),
+          config: const Mascot3DConfig.chatbotFull(),
           width: size,
           height: size,
-          fit: BoxFit.contain,
-          repeat: _currentAnimation.loop,
-          animate: true,
         ),
       ),
     );
   }
 
+  /// Construit les textes informatifs accompagnant la mascotte.
   Widget _buildMascotText(bool isMinimized, bool isDark) {
     return Column(
-      crossAxisAlignment:
-          isMinimized ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      crossAxisAlignment: isMinimized
+          ? CrossAxisAlignment.start
+          : CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           isMinimized ? 'Elyrii' : 'Discuter avec Elyrii',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
-            color:
-                isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
             fontSize: isMinimized ? 15 : 26,
-            fontWeight: isMinimized ? FontWeight.w600 : FontWeight.w600,
+            fontWeight: FontWeight.w600,
             letterSpacing: isMinimized ? 0.3 : 0.5,
           ),
         ),
         SizedBox(height: isMinimized ? 2 : 12),
         Text(
           isMinimized
-              ? 'Je t\'écoute 💜'
+              ? 'Je t\'écoute'
               : 'Je suis là pour t\'écouter\nsans jugement',
           textAlign: isMinimized ? TextAlign.left : TextAlign.center,
           style: TextStyle(
@@ -293,5 +209,28 @@ class _MascotWidgetState extends State<MascotWidget>
         ),
       ],
     );
+  }
+}
+
+/// Wrapper qui applique automatiquement le thème courant de la mascotte
+/// **et** ses accessoires équipés, de façon cohérente avec les autres pages.
+class _ThemedMascot extends StatelessWidget {
+  final Mascot3DConfig config;
+  final double width;
+  final double height;
+
+  const _ThemedMascot({
+    super.key,
+    required this.config,
+    required this.width,
+    required this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Conserve une dépendance au thème pour repeindre si l'utilisateur change
+    // de personnalisation pendant la session chatbot.
+    context.select<MascotProvider, MascotTheme>((p) => p.currentTheme);
+    return MascotWithAccessories(config: config, width: width, height: height);
   }
 }

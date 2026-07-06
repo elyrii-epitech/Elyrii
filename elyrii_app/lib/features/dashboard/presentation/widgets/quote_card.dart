@@ -8,11 +8,7 @@ class QuoteCard extends StatelessWidget {
   final String quote;
   final bool isDark;
 
-  const QuoteCard({
-    super.key,
-    required this.quote,
-    this.isDark = false,
-  });
+  const QuoteCard({super.key, required this.quote, this.isDark = false});
 
   @override
   Widget build(BuildContext context) {
@@ -27,14 +23,12 @@ class QuoteCard extends StatelessWidget {
       child: Row(
         children: [
           // Icône citation
-          Text(
-            '💭',
-            style: TextStyle(
-              fontSize: 20,
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
+          Icon(
+            Icons.format_quote_rounded,
+            size: 20,
+            color: isDark
+                ? AppColors.textTertiaryDark
+                : AppColors.textTertiaryLight,
           ),
           const SizedBox(width: AppDimensions.spacingSm),
           // Texte de la citation

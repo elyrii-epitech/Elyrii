@@ -125,7 +125,9 @@ class GlassContainer extends StatelessWidget {
     // Appliquer la réduction de blur si scroll velocity > 0
     if (scrollVelocity > 0) {
       return performanceService.getScrollAdaptedBlurSigma(
-          baseSigma, scrollVelocity);
+        baseSigma,
+        scrollVelocity,
+      );
     }
 
     return performanceService.getEffectiveBlurSigma(baseSigma);
@@ -163,15 +165,9 @@ class GlassContainer extends StatelessWidget {
 
     // Valeurs par défaut pour les autres intensités
     if (isDark) {
-      return [
-        AppColors.glassBackgroundDark,
-        AppColors.glassBackgroundDarkEnd,
-      ];
+      return [AppColors.glassBackgroundDark, AppColors.glassBackgroundDarkEnd];
     }
-    return [
-      AppColors.glassBackgroundLight,
-      AppColors.glassBackgroundLightEnd,
-    ];
+    return [AppColors.glassBackgroundLight, AppColors.glassBackgroundLightEnd];
   }
 
   /// Couleur de bordure par défaut (iOS 26)
@@ -196,7 +192,8 @@ class GlassContainer extends StatelessWidget {
       return null;
     }
 
-    final isLiquidGlass = intensity == GlassIntensity.liquidGlass ||
+    final isLiquidGlass =
+        intensity == GlassIntensity.liquidGlass ||
         intensity == GlassIntensity.intense;
 
     return Positioned(
@@ -271,7 +268,9 @@ class GlassContainer extends StatelessWidget {
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
         filter: ImageFilter.blur(
-            sigmaX: effectiveBlurSigma, sigmaY: effectiveBlurSigma),
+          sigmaX: effectiveBlurSigma,
+          sigmaY: effectiveBlurSigma,
+        ),
         child: Stack(
           children: [
             // Container principal
@@ -288,12 +287,14 @@ class GlassContainer extends StatelessWidget {
                   color: borderColor ?? _defaultBorderColor,
                   width: borderWidth,
                 ),
-                boxShadow: boxShadow ??
+                boxShadow:
+                    boxShadow ??
                     [
                       // iOS 26: ombre douce par défaut
                       BoxShadow(
-                        color:
-                            Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                        color: Colors.black.withValues(
+                          alpha: isDark ? 0.3 : 0.1,
+                        ),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -316,9 +317,7 @@ class GlassContainer extends StatelessWidget {
       return glassWidget;
     }
 
-    return RepaintBoundary(
-      child: glassWidget,
-    );
+    return RepaintBoundary(child: glassWidget);
   }
 }
 

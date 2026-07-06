@@ -75,10 +75,7 @@ class _LiquidGlassToastState extends State<LiquidGlassToast>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -1),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.forward();
 
@@ -121,7 +118,8 @@ class _LiquidGlassToastState extends State<LiquidGlassToast>
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: widget.backgroundColor ??
+                  color:
+                      widget.backgroundColor ??
                       (isDark
                           ? AppColors.liquidGlassBackgroundDark
                           : AppColors.liquidGlassBackgroundLight),

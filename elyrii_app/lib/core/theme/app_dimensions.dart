@@ -210,6 +210,15 @@ class AppDimensions {
   /// Taille de la mascotte en plein écran
   static const double mascotSizeFullscreen = 300.0;
 
+  /// Taille du viewer 3D de la mascotte sur les pages d'authentification
+  static const double mascot3DViewerAuth = 150.0;
+
+  /// Taille du viewer 3D de la mascotte en mode chatbot plein écran
+  static const double mascot3DViewerChatbotFull = 250.0;
+
+  /// Taille du viewer 3D de la mascotte en mode chatbot minimisé
+  static const double mascot3DViewerChatbotMini = 100.0;
+
   /// Hauteur de la bulle de message du chatbot
   static const double chatBubbleMaxWidth = 280.0;
 
@@ -293,19 +302,19 @@ class AppDimensions {
   // ==================== iOS 26 LIQUID GLASS ====================
 
   /// Blur sigma pour liquid glass - léger (ultraThin)
-  static const double blurSigmaLiquidGlassUltraThin = 10.0;
+  static const double blurSigmaLiquidGlassUltraThin = 6.0;
 
   /// Blur sigma pour liquid glass - fin (thin)
-  static const double blurSigmaLiquidGlassThin = 16.0;
+  static const double blurSigmaLiquidGlassThin = 10.0;
 
   /// Blur sigma pour liquid glass - régulier
-  static const double blurSigmaLiquidGlassRegular = 22.0;
+  static const double blurSigmaLiquidGlassRegular = 14.0;
 
   /// Alias pour blur sigma régulier (compatibilité)
-  static const double blurSigmaRegular = 22.0;
+  static const double blurSigmaRegular = 14.0;
 
   /// Blur sigma pour liquid glass - épais (navbar, boutons)
-  static const double blurSigmaLiquidGlass = 28.0;
+  static const double blurSigmaLiquidGlass = 16.0;
 
   /// Border radius pour liquid glass navigation
   static const double radiusLiquidGlassNav = 44.0;
@@ -320,7 +329,7 @@ class AppDimensions {
   static const double radiusLiquidGlassButton = 100.0;
 
   /// Animation duration pour liquid glass transitions
-  static const int animationDurationLiquidGlass = 350;
+  static const int animationDurationLiquidGlass = 200;
 
   /// Spring damping pour animations iOS 26
   static const double springDampingLiquidGlass = 0.7;

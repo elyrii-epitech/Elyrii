@@ -79,7 +79,8 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               // Title
               Expanded(
-                child: titleWidget ??
+                child:
+                    titleWidget ??
                     Text(
                       title ?? '',
                       style: TextStyle(
@@ -91,7 +92,7 @@ class LiquidGlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
               ),
               // Actions
-              if (actions != null) ...actions!,
+              ...?actions,
               // Balance for centering title
               if (leading == null &&
                   showBackButton &&

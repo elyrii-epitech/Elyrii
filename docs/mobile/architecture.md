@@ -2,332 +2,355 @@
 
 ## Overview
 
-The Elyrii mobile application follows a modular feature-first architecture, with clear separation between core code (shared) and features (independent functional modules).
+The Elyrii mobile app is a feature-first Flutter application. Shared code lives
+in `core/`, while screens, providers, models, and repositories are grouped under
+`features/`.
 
-## Architecture diagram
+The app uses `provider` for dependency injection and state management, a
+centralized HTTP client for the backend gateway, and a Liquid Glass UI system
+that adapts its visual effects to device capability.
 
-```
-┌─────────────────────────────────────────┐
-│           Presentation Layer            │
-│  (Screens, Widgets, State Management)   │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────┴──────────────────────────┐
-│           Features Layer                │
-│  (Business Logic, Use Cases, Models)    │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────┴──────────────────────────┐
-│            Core Layer                   │
-│   (Services, Utils, Network, Theme)     │
-└──────────────┬──────────────────────────┘
-               │
-┌──────────────┴──────────────────────────┐
-│         External Dependencies           │
-│    (Flutter SDK, Packages, Platform)    │
-└─────────────────────────────────────────┘
-```
+## Current Structure
 
-## Application layers
-
-### 1. Presentation Layer
-
-Responsible for user interface and user interaction.
-
-**Components:**
-- Screens: Application pages
-- Widgets: Components UI réutilisables
-- State Management: Provider for state management
-
-**Responsibilities:**
-- Data display
-- User interaction handling
-- Navigation between screens
-- Animations and transitions
-
-### 2. Features Layer
-
-Contains business logic organized by feature.
-
-**Current features:**
-- Auth: Authentication and session management
-- Chatbot: Conversation with AI
-- Coach: Personalized guidance
-- Dashboard: Main dashboard
-- Gamification: Quests and rewards
-- Journal: Personal journal
-- Mascot: Interactive mascot
-- Meditation: Guided meditation
-- Notifications: Notification management
-- Settings: Settings and preferences
-
-**Typical feature structure:**
-```
-feature_name/
-├── models/          # Data models
-├── screens/         # Feature screens
-├── widgets/         # Specific widgets
-├── providers/       # State management (if needed)
-└── services/        # Business services (if needed)
+```text
+elyrii_app/lib/
++-- main.dart
++-- core/
+|   +-- config/       # API URLs, constants, 3D mascot config
+|   +-- network/      # ApiClient, ApiException
+|   +-- services/     # storage, theme, glass performance, 3D mascot
+|   +-- theme/        # colors, dimensions, text styles, ThemeData
+|   +-- utils/        # responsive helpers
+|   +-- widgets/      # global widgets and Liquid Glass components
++-- features/
+|   +-- auth/
+|   +-- chatbot/
+|   +-- coach/
+|   +-- dashboard/
+|   +-- gamification/
+|   +-- journal/
+|   +-- mascot/
+|   +-- meditation/
+|   +-- settings/
++-- routes/
+    +-- app_routes.dart
+    +-- home_navigation.dart
+    +-- route_generator.dart
 ```
 
-### 3. Core Layer
+## Layers
 
-Shared code between all features.
+### Presentation
 
-**Modules:**
+The presentation layer contains Flutter pages, widgets, and providers.
 
-**Config**
-- Application configuration
-- Global constants
-- API endpoints
-- Animation configuration
+Examples:
+- `features/auth/presentation/pages/login_page.dart`
+- `features/journal/presentation/widgets/journal_editor_sheet.dart`
+- `features/gamification/presentation/providers/gamification_provider.dart`
+- `core/widgets/glass/liquid_glass_*.dart`
 
-**Services**
-- ThemeProvider: Theme management
-- GlassPerformanceService: Performance optimization
-- Network services
-- Storage services
+### Data
 
-**Theme**
-- Theme definition (light/dark)
-- Reusable styles
-- Color palette
-- Typography
+The data layer contains models and repositories that either talk to the backend
+or provide local data.
 
-**Widgets**
-- Components réutilisables
-- Boutons personnalisés
-- Cards
-- Loaders et indicateurs
+Examples:
+- `AuthRepository` calls `/auth/login`, `/auth/register`, and `/auth/logout`.
+- `JournalRepository` handles CRUD for `/journal`.
+- `GamificationRepository` handles `/challenge/*`.
+- `UserRepository` handles `/user/me`.
+- `CoachRepository` still provides local advice and activities.
 
-**Network**
-- HTTP client
-- Interceptors
-- Network error handling
+Some files are still placeholders (`TempPage`) in `dashboard`, `meditation`, or
+`mascot`; the real behavior currently lives in pages and providers.
 
-**Utils**
-- Utility functions
-- Extensions
-- Helpers
+### Core
 
-**Errors**
-- Centralized error handling
-- Error messages
-- Error handling
+The `core/` layer contains:
+- runtime and API configuration;
+- HTTP client with Bearer token support;
+- secure storage;
+- theme and design tokens;
+- Liquid Glass components;
+- 3D mascot viewer;
+- global error boundary;
+- responsive helpers.
 
-## Design patterns
+## Initialization
 
-### State Management: Provider
-
-L'application utilise Provider for state management:
+`main.dart` initializes services before `runApp`:
 
 ```dart
-MultiProvider(
-  providers: [
-    ChangeNotifierProvider.value(value: themeProvider),
-    ChangeNotifierProvider.value(value: performanceService),
-  ],
-  child: MyApp(),
-)
+AppConfig.initialize();
+
+final secureStorage = SecureStorageService();
+final apiClient = ApiClient(storage: secureStorage);
+final themeProvider = ThemeProvider();
+final performanceService = GlassPerformanceService();
+
+await Future.wait([themeProvider.init(), performanceService.init()]);
 ```
 
-**Advantages:**
-- Simple to use
-- Optimal performance
-- Well integrated with Flutter
-- Testable
+Current global providers:
+- `ThemeProvider`
+- `GlassPerformanceService`
+- `AuthProvider`
+- `JournalProvider`
+- `ChatbotProvider`
+- `GamificationProvider`
+- `UserProvider`
+- `MascotProvider`
+- `DashboardProvider`
 
-### Navigation: Named Routes
+`CoachProvider` is created locally inside `CoachPage`.
 
-Routing system based on named routes:
+## Backend Configuration
+
+All endpoint URLs go through `ApiConfig` and the backend gateway.
+
+The base URL is configured by `AppConfig.initialize()`:
 
 ```dart
-MaterialApp(
-  initialRoute: AppRoutes.login,
-  onGenerateRoute: RouteGenerator.generateRoute,
-)
+static void initialize({String? gatewayUrl}) {
+  final dartDefine = const String.fromEnvironment('BASE_URL');
+  ApiConfig.setBaseUrl(
+    gatewayUrl ?? (dartDefine.isNotEmpty ? dartDefine : _defaultGatewayUrl),
+  );
+}
 ```
 
-**Advantages:**
-- Centralized navigation
-- Type-safe with constants
-- Unified parameter handling
-- Facilitates deep links
+Default resolution:
+- Web: `http://localhost:3000`
+- Android emulator: `http://10.0.2.2:3000`
+- iOS, macOS, Linux, Windows: `http://localhost:3000`
 
-### Dependency Injection
+Runtime override:
 
-Using Provider for global service dependency injection.
+```bash
+flutter run --dart-define=BASE_URL=http://192.168.1.20:3000
+```
 
-## Data flow
+## Consumed Endpoints
+
+```text
+Auth
+  POST /auth/login
+  POST /auth/register
+  POST /auth/logout
+  POST /auth/refresh
+
+User
+  GET /user/me
+  PUT /user/me
+  GET /user/stats
+  POST /user/mood
+  GET /user/mood/latest
+
+Journal
+  GET /journal
+  POST /journal
+  GET /journal/:id
+  PUT /journal/:id
+  DELETE /journal/:id
+
+Challenge
+  GET /challenge/available
+  POST /challenge/available/:id/start
+  GET /challenge/active
+  GET /challenge/completed
+  GET /challenge/proposals
+  POST /challenge/proposals/:id/accept
+  POST /challenge/proposals/:id/reject
+
+Chat
+  WS /chat/ws?userId=:userId
+```
+
+`ApiClient.checkHealth()` also checks gateway, auth, journal, user, chat, and
+quest health endpoints at startup without blocking the app.
+
+## Navigation
+
+Navigation is centralized in `RouteGenerator`.
+
+Current routes:
+- `/` -> `HomeNavigation`
+- `/dashboard`
+- `/challenges`
+- `/journal`
+- `/coach`
+- `/meditation`
+- `/chatbot`
+- `/mascot-customization`
+- `/settings`
+- `/login`
+- `/register`
+
+The initial route depends on `AuthProvider.isAuthenticated`:
+- authenticated user: `AppRoutes.home`;
+- otherwise: `AppRoutes.login`.
+
+`HomeNavigation` lazy-loads the main pages:
+- Home / Dashboard
+- Jardin / Challenges
+- Journal
+- Meditation
+- Coach
+- Chatbot through a separate bubble button
+
+The mascot customization button is a global overlay in the top-left corner of
+the main navigation.
+
+## Data Flows
 
 ### Authentication
 
-```
-Login Screen
-    ↓
-Auth Service (API Call)
-    ↓
-Store Token (SharedPreferences)
-    ↓
-Update Auth State (Provider)
-    ↓
-Navigate to Dashboard
-```
-
-### Communication with backend
-
-```
-User Action
-    ↓
-Feature Service
-    ↓
-HTTP Service (core/network)
-    ↓
-API Backend
-    ↓
-Response Processing
-    ↓
-Update UI (Provider/setState)
+```text
+Login/Register page
+  -> AuthProvider
+  -> AuthRepository
+  -> ApiClient
+  -> Gateway /auth/*
+  -> SecureStorageService.saveAccessToken()
+  -> SecureStorageService.saveUserId()
+  -> route /
 ```
 
-## Error handling
+On startup, `AuthProvider.checkAuthStatus()` checks whether an access token
+exists. If it does, the app considers the session authenticated and attempts to
+fetch the profile through `/user/me`.
 
-### Error hierarchy
+Note: `/auth/refresh` is configured, but automatic token refresh is not wired
+into `ApiClient` yet.
 
+### Journal
+
+```text
+JournalPage
+  -> JournalProvider
+  -> JournalRepository
+  -> ApiClient
+  -> /journal
 ```
-AppException (base)
-├── NetworkException
-│   ├── NoConnectionException
-│   ├── TimeoutException
-│   └── ServerException
-├── AuthException
-│   ├── InvalidCredentialsException
-│   └── TokenExpiredException
-└── ValidationException
+
+The provider keeps the list in memory, sorts it locally by newest/oldest, and
+updates it after create, update, or delete operations.
+
+### Chatbot
+
+```text
+ChatbotPage
+  -> ChatbotProvider.connect()
+  -> SecureStorageService.getUserId()
+  -> WebSocket.connect(ApiConfig.chatWsUrl(userId))
+  -> local in-memory messages
 ```
 
-### Gestion centralisée
+Chat history is local to the current app session. The provider exposes
+connection state, typing state, and minimized mascot mode.
 
-- All errors inherit from `AppException`
-- Uniform handling in `core/errors`
-- Error messages localisés
-- Centralized logging
+### Gamification
+
+```text
+ChallengesPage
+  -> GamificationProvider.loadAll()
+  -> Future.wait([
+       available,
+       active,
+       completed,
+       proposals
+     ])
+```
+
+AI proposals can be accepted or rejected. System challenges can be started and
+then tracked in the "En cours" section.
+
+### Dashboard
+
+```text
+DashboardPage
+  -> DashboardProvider.loadDashboardData()
+  -> GET /user/mood/latest
+  -> GET /user/stats
+```
+
+Selecting a mood calls `POST /user/mood`, then reloads user stats.
+
+## Error Handling
+
+The network client throws `ApiException` for non-2xx HTTP responses:
+
+```dart
+class ApiException implements Exception {
+  final int statusCode;
+  final String message;
+  final dynamic body;
+}
+```
+
+Unhandled UI errors are wrapped by `GlobalErrorBoundary`, installed through
+`MaterialApp.builder`. Providers generally expose an `error` field and reset
+`isLoading` to `false` on failure.
+
+## Storage
+
+`SecureStorageService` stores:
+- `access_token`
+- `refresh_token`
+- `user_id`
+
+It uses `flutter_secure_storage` with Keychain on iOS/macOS and secure Android
+storage. If macOS Keychain returns `-34018`, it falls back to
+`SharedPreferences`, mainly for development and tests.
+
+`SharedPreferences` is also used for:
+- theme mode;
+- reduced glass effects;
+- adaptive blur on scroll;
+- mascot theme and cosmetics.
 
 ## Performance
 
-### Implemented optimizations
-
-**Lazy Loading**
-- Deferred loading of features
-- Conditional import of heavy assets
-
-**Caching**
-- Local cache with SharedPreferences
-- Network cache for images
-- API response memorization
-
-**Rendering**
-- GlassPerformanceService to adapt graphics quality
-- Use of const constructors
-- Appropriate keys for lists
-
-**Build Optimization**
-- Split APK by ABI (Android)
-- Tree-shaking to reduce size
-- Obfuscation in production
+Implemented optimizations:
+- main pages are lazy-loaded in `HomeNavigation`;
+- `GlassPerformanceService` is a singleton with low-end device heuristics;
+- blur and transitions can be reduced when visual effects are disabled;
+- `RepaintBoundary` is used around the 3D viewer;
+- PNG fallback for the 3D mascot on error or widget tests;
+- journal list animations are limited to the first items;
+- `RefreshIndicator` and parallel loading for gamification/dashboard.
 
 ## Security
 
-### Implemented best practices
+Already covered:
+- access token in secure storage;
+- centralized `Authorization: Bearer <token>` header;
+- client-side email and password validation;
+- emergency resources and crisis banners in the chatbot;
+- local auth data is cleared on logout even if the backend logout call fails.
 
-**Sensitive data**
-- Tokens stored securely
-- No sensitive data in plain text in code
-- HTTPS communication only
-
-**Validation**
-- Client-side validation (email_validator)
-- Input sanitization
-- Permission verification
-
-**Authentication**
-- Session management with expiration
-- Refresh tokens
-- Automatic logout
+Needs improvement:
+- automatic refresh token handling;
+- global session expiration handling on HTTP 401;
+- privacy policies connected to settings screens;
+- no sensitive logs in production builds;
+- TLS outside local development.
 
 ## Tests
 
-### Testing strategy
+Current tests:
+- `test/widget_test.dart`: boots the app with main providers;
+- `test/core/services/secure_storage_service_test.dart`: tokens, user id,
+  cleanup, and storage availability;
+- `test/features/gamification/presentation/pages/challenges_page_test.dart`:
+  renders the Jardin page without embedded mascot customization.
 
-**Unit tests**
-- Business services
-- Data models
-- Utilities
+Commands:
 
-**Widget tests**
-- Components réutilisables
-- Critical screens
-
-**Integration tests**
-- Complete user flows
-- Navigation
-- API interaction
-
-## Scalability
-
-### Extensibility
-
-**Adding a new feature:**
-
-1. Create folder in `features/`
-2. Implement models
-3. Create screens and widgets
-4. Add routes in `app_routes.dart`
-5. Implement business logic
-6. Add tests
-
-**Modularity:**
-- Each feature is independent
-- Minimal dependencies between features
-- Stable and decoupled core layer
-
-## Multi-environment configuration
-
-The application supports different environments:
-
-- Development: Debug, detailed logs
-- Staging: Pre-production tests
-- Production: Optimized, obfuscated
-
-Configuration via `app_config.dart` and environment variables.
-
-## Best practices
-
-### Code
-
-- Follow Dart/Flutter conventions
-- Use flutter_lints
-- Public API documentation
-- Explicit and consistent naming
-
-### Architecture
-
-- Separation of concerns
-- DRY (Don't Repeat Yourself)
-- SOLID principles
-- Composition over inheritance
-
-### Performance
-
-- Avoid unnecessary rebuilds
-- Use const when possible
-- Profile regularly
-- Lazy loading of resources
-
-### Security
-
-- Never secrets in code
-- Input validation
-- Permission handling
-- Secure logging (no sensitive data)
+```bash
+cd elyrii_app
+flutter test
+flutter analyze
+dart format --set-exit-if-changed .
+```

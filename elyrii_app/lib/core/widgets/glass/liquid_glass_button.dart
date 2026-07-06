@@ -4,13 +4,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../services/glass_performance_service.dart';
+import '../../theme/app_dimensions.dart';
 
-enum LiquidGlassButtonStyle {
-  filled,
-  tinted,
-  plain,
-  gray,
-}
+enum LiquidGlassButtonStyle { filled, tinted, plain, gray }
 
 class LiquidGlassButton extends StatefulWidget {
   final String label;
@@ -48,19 +45,22 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
 
     switch (widget.style) {
       case LiquidGlassButtonStyle.filled:
-        backgroundColor =
-            isDisabled ? primaryColor.withValues(alpha: 0.3) : primaryColor;
+        backgroundColor = isDisabled
+            ? primaryColor.withValues(alpha: 0.3)
+            : primaryColor;
         textColor = Colors.white;
         break;
       case LiquidGlassButtonStyle.tinted:
         backgroundColor = primaryColor.withValues(alpha: 0.15);
-        textColor =
-            isDisabled ? primaryColor.withValues(alpha: 0.5) : primaryColor;
+        textColor = isDisabled
+            ? primaryColor.withValues(alpha: 0.5)
+            : primaryColor;
         break;
       case LiquidGlassButtonStyle.plain:
         backgroundColor = Colors.transparent;
-        textColor =
-            isDisabled ? primaryColor.withValues(alpha: 0.5) : primaryColor;
+        textColor = isDisabled
+            ? primaryColor.withValues(alpha: 0.5)
+            : primaryColor;
         break;
       case LiquidGlassButtonStyle.gray:
         backgroundColor = isDark
@@ -165,6 +165,49 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDisabled = widget.onPressed == null;
+    final blurSigma = GlassPerformanceService().getEffectiveBlurSigma(
+      AppDimensions.blurSigmaLiquidGlass,
+    );
+    final button = Container(
+      width: widget.size,
+      height: widget.size,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: isDark
+              ? [
+                  Colors.white.withValues(alpha: 0.12),
+                  Colors.white.withValues(alpha: 0.07),
+                ]
+              : [
+                  Colors.white.withValues(alpha: 0.85),
+                  Colors.white.withValues(alpha: 0.72),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(widget.size / 2),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.16)
+              : Colors.black.withValues(alpha: 0.06),
+          width: 0.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Icon(
+        widget.icon,
+        size: widget.size * 0.5,
+        color:
+            widget.color ??
+            (isDark ? Colors.white : Colors.black.withValues(alpha: 0.8)),
+      ),
+    );
 
     return GestureDetector(
       onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
@@ -186,51 +229,15 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
           child: RepaintBoundary(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(widget.size / 2),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-                child: Container(
-                  width: widget.size,
-                  height: widget.size,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: isDark
-                          ? [
-                              Colors.white.withValues(alpha: 0.15),
-                              Colors.white.withValues(alpha: 0.08),
-                            ]
-                          : [
-                              Colors.white.withValues(alpha: 0.85),
-                              Colors.white.withValues(alpha: 0.75),
-                            ],
-                    ),
-                    borderRadius: BorderRadius.circular(widget.size / 2),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.08),
-                      width: 0.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
+              child: blurSigma > 0
+                  ? BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: blurSigma,
+                        sigmaY: blurSigma,
                       ),
-                    ],
-                  ),
-                  child: Icon(
-                    widget.icon,
-                    size: widget.size * 0.5,
-                    color: widget.color ??
-                        (isDark
-                            ? Colors.white
-                            : Colors.black.withValues(alpha: 0.8)),
-                  ),
-                ),
-              ),
+                      child: button,
+                    )
+                  : button,
             ),
           ),
         ),

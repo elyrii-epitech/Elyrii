@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:email_validator/email_validator.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../routes/app_routes.dart';
+import '../providers/auth_provider.dart';
+import '../../../settings/providers/settings_provider.dart';
+import '../../../../core/config/mascot_3d_config.dart';
+import '../../../../core/widgets/mascot_3d_viewer.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -20,8 +26,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
   bool _acceptTerms = false;
+  bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
   void dispose() {
@@ -32,38 +38,70 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _handleRegister() {
-    if (_formKey.currentState!.validate()) {
-      if (!_acceptTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Veuillez accepter les conditions d\'utilisation'),
-            backgroundColor: Colors.red,
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (!_acceptTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.',
           ),
-        );
-        return;
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+    final nameParts = _nameController.text.trim().split(' ');
+    final firstName = nameParts.first;
+    final lastName = nameParts.length > 1
+        ? nameParts.sublist(1).join(' ')
+        : firstName;
+    final authProvider = context.read<AuthProvider>();
+    final userProvider = context.read<UserProvider>();
+    final success = await authProvider.register(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      firstName: firstName,
+      lastName: lastName,
+    );
+    if (!mounted) return;
+    if (success) {
+      // Charger le profil pour pre-remplir l'onboarding
+      await userProvider.loadProfile();
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRoutes.profileSetup);
+    } else {
+      // Show success color if it's an email verification message (which means registration worked)
+      final error = authProvider.error?.toLowerCase() ?? '';
+      final isVerificationMessage =
+          error.contains('verification required') ||
+          error.contains('activate your account');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            authProvider.error ??
+                'Oops, petit souci lors de la création. Réessaie quand tu es prêt.',
+          ),
+          backgroundColor: AppColors.warning,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+
+      if (isVerificationMessage) {
+        // Optionnellement, on redirige vers la page de login après un petit délai
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pop(context); // Go back to login
+          }
+        });
       }
-
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate API call
-      Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Compte créé avec succès ! (Simulation)'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Navigate back to login
-          Navigator.pop(context);
-        }
-      });
     }
   }
 
@@ -72,8 +110,9 @@ class _RegisterPageState extends State<RegisterPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -83,19 +122,20 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Mascot
-                  Hero(
-                    tag: 'mascot',
-                    child: Image.asset(
-                      'assets/mascotte.png',
-                      height: 100,
-                    ),
-                  )
+                  // Mascot (translated vertically to center the model's visual body within the 250x250 container)
+                  Transform.translate(
+                        offset: const Offset(0, 25),
+                        child: const Mascot3DViewer(
+                          config: Mascot3DConfig.authPage(),
+                          width: 250,
+                          height: 250,
+                        ),
+                      )
                       .animate()
                       .fadeIn(duration: 600.ms)
                       .slideY(begin: 0.2, end: 0),
 
-                  const SizedBox(height: AppDimensions.spacingLg),
+                  const SizedBox(height: 45),
 
                   Text(
                     'Créer un compte',
@@ -339,10 +379,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ],
                     ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 800.ms, delay: 200.ms)
-                      .slideY(begin: 0.2, end: 0),
+                  ).animate().fadeIn(duration: 800.ms, delay: 200.ms).slideY(begin: 0.2, end: 0),
                 ],
               ),
             ),

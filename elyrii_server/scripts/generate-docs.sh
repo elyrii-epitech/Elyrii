@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Elyrii Server Documentation Generator
-# This script generates documentation for all microservices
+# This script generates documentation for the monolithic server
 
 set -e
 
@@ -22,24 +22,12 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Parse command line arguments
-COMMAND=${1:-all}
+COMMAND=${1:-build}
 
 case $COMMAND in
-    all)
-        echo "📚 Generating documentation for all services..."
-        bun run docs:all
-        ;;
-    auth)
-        echo "🔐 Generating documentation for auth service..."
-        bun run docs:auth
-        ;;
-    chat)
-        echo "💬 Generating documentation for chat service..."
-        bun run docs:chat
-        ;;
-    gateway)
-        echo "🌐 Generating documentation for gateway service..."
-        bun run docs:gateway
+    build)
+        echo "📚 Generating documentation..."
+        bun run docs:build
         ;;
     serve)
         echo "🖥️  Starting documentation server on http://localhost:8080..."
@@ -50,13 +38,10 @@ case $COMMAND in
         bun run docs:clean
         ;;
     *)
-        echo "Usage: $0 [all|auth|chat|gateway|serve|clean]"
+        echo "Usage: $0 [build|serve|clean]"
         echo ""
         echo "Commands:"
-        echo "  all      - Generate documentation for all services (default)"
-        echo "  auth     - Generate documentation for auth service only"
-        echo "  chat     - Generate documentation for chat service only"
-        echo "  gateway  - Generate documentation for gateway service only"
+        echo "  build    - Generate documentation (default)"
         echo "  serve    - Start local documentation server"
         echo "  clean    - Clean generated documentation"
         exit 1

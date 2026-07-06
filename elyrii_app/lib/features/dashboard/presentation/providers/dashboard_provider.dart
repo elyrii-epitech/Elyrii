@@ -1,37 +1,43 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'dart:math';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/config/api_config.dart';
 
 /// Enum représentant les différents moods disponibles
-enum MoodType {
-  verySad,
-  sad,
-  neutral,
-  happy,
-  veryHappy,
-}
+enum MoodType { verySad, sad, neutral, happy, veryHappy }
 
 /// Enum pour les types d'objectifs quotidiens
-enum GoalType {
-  journal,
-  meditation,
-  breathing,
-  gratitude,
-}
+enum GoalType { journal, meditation, breathing, gratitude }
 
 /// Extension pour obtenir les propriétés du mood
 extension MoodTypeExtension on MoodType {
-  String get emoji {
+  IconData get icon {
     switch (this) {
       case MoodType.verySad:
-        return '😢';
+        return Icons.sentiment_very_dissatisfied_rounded;
       case MoodType.sad:
-        return '😕';
+        return Icons.sentiment_dissatisfied_rounded;
       case MoodType.neutral:
-        return '😐';
+        return Icons.sentiment_neutral_rounded;
       case MoodType.happy:
-        return '🙂';
+        return Icons.sentiment_satisfied_rounded;
       case MoodType.veryHappy:
-        return '😊';
+        return Icons.sentiment_very_satisfied_rounded;
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case MoodType.verySad:
+        return const Color(0xFF7BA3C7);
+      case MoodType.sad:
+        return const Color(0xFF93B8DA);
+      case MoodType.neutral:
+        return const Color(0xFFA39C96);
+      case MoodType.happy:
+        return const Color(0xFFA8D5BA);
+      case MoodType.veryHappy:
+        return const Color(0xFF7BC393);
     }
   }
 
@@ -66,35 +72,36 @@ extension GoalTypeExtension on GoalType {
     }
   }
 
-  String get emoji {
+  IconData get icon {
     switch (this) {
       case GoalType.journal:
-        return '📝';
+        return Icons.edit_note_rounded;
       case GoalType.meditation:
-        return '🧘';
+        return Icons.self_improvement_rounded;
       case GoalType.breathing:
-        return '🌬️';
+        return Icons.air_rounded;
       case GoalType.gratitude:
-        return '🙏';
+        return Icons.favorite_rounded;
     }
   }
 
   String get completedMessage {
     switch (this) {
       case GoalType.journal:
-        return 'Bravo ! Tu as pris le temps d\'écrire 💜';
+        return 'Bravo ! Tu as pris le temps d\'écrire';
       case GoalType.meditation:
-        return 'Magnifique ! Ton esprit te remercie 🧘';
+        return 'Magnifique ! Ton esprit te remercie';
       case GoalType.breathing:
-        return 'Super ! Tu respires la sérénité 🌬️';
+        return 'Super ! Tu respires la sérénité';
       case GoalType.gratitude:
-        return 'Génial ! La gratitude illumine ta journée ✨';
+        return 'Génial ! La gratitude illumine ta journée';
     }
   }
 }
 
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
+  final ApiClient _apiClient;
   bool _isLoading = false;
   String? _error;
 
@@ -103,7 +110,14 @@ class DashboardProvider extends ChangeNotifier {
   final Map<DateTime, MoodType> _moodHistory = {};
 
   // Streak (série de jours consécutifs)
-  int _currentStreak = 12;
+  int _currentStreak = 0;
+  int _activeChallengesCount = 0;
+  int _journalEntriesCount = 0;
+  int _completedChallengesCount = 0;
+  int _totalPoints = 0;
+  int _meditationSessionsCount = 0;
+  int _coachSessionsCount = 0;
+  int _moodLogsCount = 0;
 
   // Quote du jour
   int _currentQuoteIndex = 0;
@@ -121,48 +135,48 @@ class DashboardProvider extends ChangeNotifier {
   // Messages de la mascotte Elyrii
   int _currentMascotMessageIndex = 0;
   final List<String> _mascotMessages = [
-    "Coucou ! Je suis contente de te voir 💜",
+    "Je suis contente de te voir",
     "Comment vas-tu aujourd'hui ?",
     "N'oublie pas : tu es incroyable !",
-    "Prends un moment pour toi ✨",
+    "Prends un moment pour toi",
     "Je suis là si tu as besoin de parler",
-    "Chaque petit pas compte 🌱",
+    "Chaque petit pas compte",
     "Tu fais du super boulot !",
-    "Respire profondément... voilà 😊",
+    "Respire profondément... voilà",
     "Ta présence ici est déjà une victoire",
-    "Je crois en toi, toujours 💪",
+    "Je crois en toi, toujours",
   ];
 
   // Messages adaptés au mood
   final Map<MoodType, List<String>> _moodMascotMessages = {
     MoodType.verySad: [
-      "Je suis là pour toi, toujours 💜",
+      "Je suis là pour toi, toujours",
       "C'est ok de ne pas aller bien...",
       "Veux-tu qu'on en parle ensemble ?",
-      "Je t'envoie plein de douceur 🤗",
+      "Je t'envoie plein de douceur",
     ],
     MoodType.sad: [
-      "Les nuages passent, le soleil revient ☀️",
+      "Les nuages passent, le soleil revient",
       "Prends le temps qu'il te faut",
-      "Un câlin virtuel pour toi 🤗",
+      "Courage, je suis là",
       "Demain sera un nouveau jour",
     ],
     MoodType.neutral: [
       "Une journée tranquille, c'est bien aussi",
       "Que dirais-tu d'un petit moment zen ?",
-      "Parfois, neutre c'est parfait 😌",
+      "Parfois, neutre c'est parfait",
       "On avance à notre rythme",
     ],
     MoodType.happy: [
       "Ça fait plaisir de te voir sourire !",
-      "Continue comme ça, tu gères ! 🌟",
-      "Ta bonne humeur est contagieuse 😊",
+      "Continue comme ça, tu gères !",
+      "Ta bonne humeur est contagieuse",
       "Profite bien de cette belle énergie !",
     ],
     MoodType.veryHappy: [
-      "Waouh ! Quelle belle énergie ! ✨",
-      "Tu rayonnes aujourd'hui ! 🌟",
-      "J'adore te voir comme ça ! 💜",
+      "Quelle belle énergie !",
+      "Tu rayonnes aujourd'hui !",
+      "J'adore te voir comme ça !",
       "Partage cette joie avec le monde !",
     ],
   };
@@ -172,13 +186,20 @@ class DashboardProvider extends ChangeNotifier {
   bool _goalCompleted = false;
 
   // Nom utilisateur (à récupérer depuis l'auth plus tard)
-  String _userName = 'Marie';
+  String _userName = '';
 
   // Getters
   bool get isLoading => _isLoading;
   String? get error => _error;
   MoodType? get selectedMood => _selectedMood;
   int get currentStreak => _currentStreak;
+  int get activeChallengesCount => _activeChallengesCount;
+  int get journalEntriesCount => _journalEntriesCount;
+  int get completedChallengesCount => _completedChallengesCount;
+  int get totalPoints => _totalPoints;
+  int get meditationSessionsCount => _meditationSessionsCount;
+  int get coachSessionsCount => _coachSessionsCount;
+  int get moodLogsCount => _moodLogsCount;
   String get userName => _userName;
   String get currentQuote => _quotes[_currentQuoteIndex];
   Map<DateTime, MoodType> get moodHistory => Map.unmodifiable(_moodHistory);
@@ -194,33 +215,29 @@ class DashboardProvider extends ChangeNotifier {
     return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
   }
 
-  DashboardProvider() {
+  DashboardProvider({required ApiClient apiClient}) : _apiClient = apiClient {
     _initializeQuoteOfTheDay();
     _initializeDailyGoal();
     _initializeMascotMessage();
   }
 
-  /// Initialise la quote du jour basée sur la date
   void _initializeQuoteOfTheDay() {
     final now = DateTime.now();
     _currentQuoteIndex = (now.day + now.month) % _quotes.length;
   }
 
-  /// Initialise l'objectif du jour
   void _initializeDailyGoal() {
     final now = DateTime.now();
     final goalIndex = (now.day + now.month + now.year) % GoalType.values.length;
     _dailyGoal = GoalType.values[goalIndex];
   }
 
-  /// Initialise le message de la mascotte
   void _initializeMascotMessage() {
     final now = DateTime.now();
     _currentMascotMessageIndex =
         (now.hour + now.minute) % _mascotMessages.length;
   }
 
-  /// Change le message de la mascotte (pour le prochain)
   void nextMascotMessage() {
     if (_selectedMood != null) {
       final messages = _moodMascotMessages[_selectedMood]!;
@@ -233,41 +250,38 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sélectionne le mood du jour
-  void selectMood(MoodType mood) {
+  Future<void> selectMood(MoodType mood) async {
     _selectedMood = mood;
-
-    // Réinitialiser l'index du message pour le nouveau mood
-    _currentMascotMessageIndex =
-        Random().nextInt(_moodMascotMessages[mood]!.length);
-
-    // Enregistrer dans l'historique
+    _currentMascotMessageIndex = Random().nextInt(
+      _moodMascotMessages[mood]!.length,
+    );
     final today = DateTime(
       DateTime.now().year,
       DateTime.now().month,
       DateTime.now().day,
     );
     _moodHistory[today] = mood;
-
-    // Incrémenter le streak si c'est la première fois aujourd'hui
-    _updateStreak();
-
+    _error = null;
     notifyListeners();
+
+    try {
+      await _apiClient.post(
+        ApiConfig.logMoodUrl,
+        body: {'moodType': mood.name},
+      );
+      // Refresh stats to get updated streak from backend
+      await loadDashboardData();
+    } catch (e) {
+      _error = "Impossible d'enregistrer l'humeur: ${e.toString()}";
+      notifyListeners();
+    }
   }
 
-  /// Marque l'objectif comme complété
   void completeGoal() {
     _goalCompleted = true;
     notifyListeners();
   }
 
-  /// Met à jour le streak
-  void _updateStreak() {
-    // Logique simplifiée - dans une vraie app, vérifier les jours consécutifs
-    _currentStreak++;
-  }
-
-  /// Retourne le message de salutation basé sur l'heure
   String getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
@@ -279,7 +293,6 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
-  /// Retourne le message adapté au mood sélectionné
   String getMoodMessage() {
     if (_selectedMood == null) {
       return 'Comment te sens-tu aujourd\'hui ?';
@@ -294,19 +307,47 @@ class DashboardProvider extends ChangeNotifier {
       case MoodType.happy:
         return 'Super ! Continue sur cette lancée !';
       case MoodType.veryHappy:
-        return 'Quelle belle énergie ! 🌟';
+        return 'Quelle belle énergie !';
     }
   }
 
-  /// Charge les données du dashboard
   Future<void> loadDashboardData() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // TODO: Appeler l'API pour récupérer les vraies données
-      await Future.delayed(const Duration(milliseconds: 500));
+      final dashboardResponse =
+          await _apiClient.get(ApiConfig.userDashboardUrl)
+              as Map<String, dynamic>;
+      final statsResponse =
+          dashboardResponse['stats'] as Map<String, dynamic>? ??
+          dashboardResponse;
+
+      final moodTypeStr =
+          dashboardResponse['latestMood'] as String? ??
+          statsResponse['latestMood'] as String?;
+      if (moodTypeStr != null) {
+        _selectedMood = MoodType.values.firstWhere(
+          (m) => m.name == moodTypeStr,
+          orElse: () => MoodType.neutral,
+        );
+      } else {
+        _selectedMood = null;
+      }
+
+      _currentStreak = _readInt(statsResponse['streak']);
+      _activeChallengesCount = _readInt(statsResponse['activeChallengesCount']);
+      _journalEntriesCount = _readInt(statsResponse['journalEntriesCount']);
+      _completedChallengesCount = _readInt(
+        statsResponse['completedChallengesCount'],
+      );
+      _totalPoints = _readInt(statsResponse['totalPoints']);
+      _meditationSessionsCount = _readInt(
+        statsResponse['meditationSessionsCount'],
+      );
+      _coachSessionsCount = _readInt(statsResponse['coachSessionsCount']);
+      _moodLogsCount = _readInt(statsResponse['moodLogsCount']);
 
       _isLoading = false;
       notifyListeners();
@@ -317,14 +358,19 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
-  /// Rafraîchit les données
   Future<void> refresh() async {
     await loadDashboardData();
   }
 
-  /// Met à jour le nom d'utilisateur
   void setUserName(String name) {
     _userName = name;
     notifyListeners();
+  }
+
+  int _readInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
   }
 }

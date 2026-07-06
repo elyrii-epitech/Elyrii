@@ -21,8 +21,9 @@ class ChatMessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isUser) _buildAvatar(isDark),
@@ -49,10 +50,7 @@ class ChatMessageBubble extends StatelessWidget {
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width * 0.75,
           ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: isDark
@@ -94,16 +92,10 @@ class ChatMessageBubble extends StatelessWidget {
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.75,
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            AppColors.primary,
-            Color(0xFF7B5FE0),
-          ],
+          colors: [AppColors.primary, Color(0xFF7B5FE0)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -130,8 +122,8 @@ class ChatMessageBubble extends StatelessWidget {
             color: isUser
                 ? Colors.white
                 : (isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight),
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight),
             fontSize: 15,
             height: 1.4,
             fontWeight: FontWeight.w400,
@@ -144,8 +136,8 @@ class ChatMessageBubble extends StatelessWidget {
             color: isUser
                 ? Colors.white.withValues(alpha: 0.7)
                 : (isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight),
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight),
             fontSize: 11,
           ),
         ),
@@ -183,8 +175,8 @@ class ChatMessageBubble extends StatelessWidget {
         isUser ? Icons.person_rounded : Icons.smart_toy_rounded,
         color: isUser
             ? (isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight)
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight)
             : AppColors.primary,
         size: 18,
       ),

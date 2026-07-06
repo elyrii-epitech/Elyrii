@@ -71,19 +71,22 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
                   color: state.hasError
                       ? AppColors.error
                       : (_isFocused
-                          ? (isDark ? Colors.white : AppColors.primary)
-                          : (isDark
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.1))),
+                            ? (isDark ? Colors.white : AppColors.primary)
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.1))),
                   width: 1.5,
                 ),
                 boxShadow: _isFocused
                     ? [
                         BoxShadow(
-                          color: (state.hasError
-                                  ? AppColors.error
-                                  : (isDark ? Colors.white : AppColors.primary))
-                              .withValues(alpha: 0.15),
+                          color:
+                              (state.hasError
+                                      ? AppColors.error
+                                      : (isDark
+                                            ? Colors.white
+                                            : AppColors.primary))
+                                  .withValues(alpha: 0.15),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -149,13 +152,12 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
             if (state.hasError)
               Padding(
                 padding: const EdgeInsets.only(
-                    top: AppDimensions.spacingXs,
-                    left: AppDimensions.paddingMd),
+                  top: AppDimensions.spacingXs,
+                  left: AppDimensions.paddingMd,
+                ),
                 child: Text(
                   state.errorText!,
-                  style: AppTextStyles.bodySmall(
-                    color: AppColors.error,
-                  ),
+                  style: AppTextStyles.bodySmall(color: AppColors.error),
                 ),
               ),
           ],

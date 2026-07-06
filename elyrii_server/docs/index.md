@@ -1,80 +1,79 @@
 # Elyrii Server API Documentation
 
-Welcome to the Elyrii Server API documentation. This documentation is auto-generated from the TypeScript source code using TypeDoc.
+Welcome to the Elyrii Monolithic Server API documentation. This documentation is consolidated from all system modules and auto-generated using TypeDoc.
 
-## Services
+## Modules
 
-The Elyrii server consists of three microservices:
+The Elyrii server is organized into five core modules:
 
-### 📦 [Auth Service]()
-Handles user authentication, authorization, and session management. Provides secure endpoints for login, registration, and token validation.
+### 🔐 [Auth](./api/modules/auth.html)
+Handles user authentication, registration, and session management using JWT.
 
-### 💬 [Chat Service]()
-Manages real-time messaging, chat rooms, and message history. Includes WebSocket support for live communications and Kafka integration for message processing.
+### 💬 [Chat](./api/modules/chat.html)
+Manages real-time messaging, WebSocket connections, and Kafka integration for AI message processing.
 
-### 🌐 [Gateway Service]()
-API gateway that routes requests to appropriate microservices. Handles request validation, rate limiting, and response aggregation.
+### 📔 [Journal](./api/modules/journal.html)
+Handles personal journaling, including creation, retrieval, multimedia support, and tagging.
+
+### ⚔️ [Quest](./api/modules/quest.html)
+Manages gamified challenges, AI-proposed quests, and progress tracking.
+
+### 👤 [User](./api/modules/user.html)
+Handles user profile management and data retrieval.
 
 ## Quick Start
 
 ### Installation
 ```bash
-# Install dependencies
+# Install root dependencies
 bun install
 ```
 
-### Running Services
+### Running the Server
 ```bash
-# Run individual services
-cd services/auth && bun run dev
-cd services/chat && bun run dev
-cd services/gateway && bun run dev
+# Development mode
+bun run dev
 
-# Or use Docker
-docker-compose up
+# Production mode
+bun run prod
 ```
 
 ### Generating Documentation
 ```bash
-# Generate all documentation
-bun run docs
-
-# Generate individual service docs
-bun run docs:auth
-bun run docs:chat
-bun run docs:gateway
+# Run the documentation build script
+bun run docs:build
 ```
 
 ## API Overview
 
-Each service exposes its own API endpoints:
+The monolithic server exposes a unified API on port 3000 (default):
 
-- **Auth Service**: Port 3001 - `/auth/*`
-- **Chat Service**: Port 3002 - `/chat/*`
-- **Gateway Service**: Port 3000 - Proxies to other services
+- **Auth**: `/auth/*`
+- **Chat**: `/chat/*`
+- **Journal**: `/journal/*`
+- **Quest**: `/challenge/*`
+- **User**: `/user/*`
+- **Swagger UI**: `/swagger`
+- **OpenAPI Spec**: `/openapi.json`
 
 ## Documentation Structure
 
 ```
 docs/
 ├── index.md                # This file
-└── api/
-    ├── README.md           # Main API documentation
-    ├── auth/               # Auth service documentation
-    │   └── README.md
-    ├── chat/               # Chat service documentation
-    │   └── README.md
-    └── gateway/            # Gateway service documentation
-        └── README.md
+├── index.html              # Documentation landing page
+└── api/                    # Main API documentation (generated)
+    ├── modules/            # Individual module documentation
+    └── classes/            # Repository and controller classes
 ```
 
 ## Contributing
 
 When adding new features or modifying existing code, please ensure to:
 
-1. Add JSDoc comments to your functions, classes, and interfaces
-2. Run `bun run docs` to regenerate documentation
-3. Review the generated markdown files for accuracy
+1. Add JSDoc comments to your functions, classes, and interfaces.
+2. Run `bun run docs:build` to regenerate documentation.
+3. Verify changes in the local documentation server (`bun run docs:serve`).
 
 ## License
 

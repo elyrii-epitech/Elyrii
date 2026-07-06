@@ -41,8 +41,9 @@ class GlassBubbleButton extends StatelessWidget {
   /// Calcule l'opacité du flash avec fade out progressif iOS 26
   double _calculateFlashOpacity(double progress) {
     // iOS 26: Fade out plus rapide à partir de 60% de l'animation
-    final fadeOut =
-        progress > 0.6 ? (1.0 - ((progress - 0.6) / 0.4)).clamp(0.0, 1.0) : 1.0;
+    final fadeOut = progress > 0.6
+        ? (1.0 - ((progress - 0.6) / 0.4)).clamp(0.0, 1.0)
+        : 1.0;
 
     return (0.25 * (1 - progress * 0.5) * fadeOut).clamp(0.0, 1.0);
   }
@@ -50,16 +51,18 @@ class GlassBubbleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final performanceService = GlassPerformanceService();
-    final effectiveBlurSigma = performanceService
-        .getEffectiveBlurSigma(AppDimensions.blurSigmaLiquidGlass);
+    final effectiveBlurSigma = performanceService.getEffectiveBlurSigma(
+      AppDimensions.blurSigmaLiquidGlass,
+    );
 
     // Couleur adaptée au thème : violet si sélectionné, sinon couleur par défaut
-    final effectiveIconColor = iconColor ??
+    final effectiveIconColor =
+        iconColor ??
         (isSelected
             ? AppColors.primary
             : (isDark
-                ? AppColors.iconDefaultDark
-                : AppColors.iconDefaultLight));
+                  ? AppColors.iconDefaultDark
+                  : AppColors.iconDefaultLight));
     final effectiveShimmerColor =
         shimmerColor ?? AppColors.primary.withValues(alpha: 0.3);
 
@@ -70,15 +73,19 @@ class GlassBubbleButton extends StatelessWidget {
         child: effectiveBlurSigma > 0
             ? BackdropFilter(
                 filter: ImageFilter.blur(
-                    sigmaX: effectiveBlurSigma, sigmaY: effectiveBlurSigma),
+                  sigmaX: effectiveBlurSigma,
+                  sigmaY: effectiveBlurSigma,
+                ),
                 child: SizedBox(
                   width: size,
                   height: size,
                   child: Stack(
                     children: [
                       _buildButtonContent(
-                          effectiveIconColor, effectiveShimmerColor,
-                          performanceService: performanceService),
+                        effectiveIconColor,
+                        effectiveShimmerColor,
+                        performanceService: performanceService,
+                      ),
                       // Flash blanc avec fade out progressif iOS 26
                       if (flashAnimation != null && flashAnimation!.value > 0)
                         Positioned.fill(
@@ -87,7 +94,8 @@ class GlassBubbleButton extends StatelessWidget {
                               borderRadius: BorderRadius.circular(size / 2),
                               color: Colors.white.withValues(
                                 alpha: _calculateFlashOpacity(
-                                    flashAnimation!.value),
+                                  flashAnimation!.value,
+                                ),
                               ),
                             ),
                           ),
@@ -102,8 +110,10 @@ class GlassBubbleButton extends StatelessWidget {
                 child: Stack(
                   children: [
                     _buildButtonContent(
-                        effectiveIconColor, effectiveShimmerColor,
-                        performanceService: performanceService),
+                      effectiveIconColor,
+                      effectiveShimmerColor,
+                      performanceService: performanceService,
+                    ),
                     // Flash blanc avec fade out progressif iOS 26
                     if (flashAnimation != null && flashAnimation!.value > 0)
                       Positioned.fill(
@@ -111,8 +121,9 @@ class GlassBubbleButton extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(size / 2),
                             color: Colors.white.withValues(
-                              alpha:
-                                  _calculateFlashOpacity(flashAnimation!.value),
+                              alpha: _calculateFlashOpacity(
+                                flashAnimation!.value,
+                              ),
                             ),
                           ),
                         ),
@@ -141,10 +152,7 @@ class GlassBubbleButton extends StatelessWidget {
 
     // Wrapper avec tooltip si fourni
     if (tooltip != null) {
-      buttonContent = Tooltip(
-        message: tooltip!,
-        child: buttonContent,
-      );
+      buttonContent = Tooltip(message: tooltip!, child: buttonContent);
     }
 
     return buttonContent;
@@ -195,29 +203,25 @@ class GlassBubbleButton extends StatelessWidget {
             decoration: BoxDecoration(
               color: isSelected
                   ? (isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.black.withValues(alpha: 0.08))
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.08))
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(size / 2),
             ),
             child: Center(
               child: showShimmer
                   ? Icon(
-                      icon,
-                      color: effectiveIconColor,
-                      size: size * 0.4375, // 28/64 ratio
-                    )
-                      .animate(onPlay: (controller) => controller.repeat())
-                      .shimmer(
-                        duration: 2000.ms,
-                        delay: 3000.ms,
-                        color: effectiveShimmerColor,
-                      )
-                  : Icon(
-                      icon,
-                      color: effectiveIconColor,
-                      size: size * 0.4375,
-                    ),
+                          icon,
+                          color: effectiveIconColor,
+                          size: size * 0.4375, // 28/64 ratio
+                        )
+                        .animate(onPlay: (controller) => controller.repeat())
+                        .shimmer(
+                          duration: 2000.ms,
+                          delay: 3000.ms,
+                          color: effectiveShimmerColor,
+                        )
+                  : Icon(icon, color: effectiveIconColor, size: size * 0.4375),
             ),
           ),
         ),

@@ -7,22 +7,22 @@ class AppColors {
 
   // ==================== COULEURS PRINCIPALES ====================
 
-  /// Couleur principale de l'application (violet brillant et glossy)
-  /// Base: #8B6FF0 → Light: #9D7FFE (plus brillant et saturé)
-  /// Dark: #B99CFF - Violet glossy très lumineux
-  static const Color primary = Color(0xFF9D7FFE);
-  static const Color primaryLight =
-      Color(0xFFEBE3FF); // Lavande glossy très pâle
-  static const Color primaryDark =
-      Color(0xFFB99CFF); // Violet glossy très lumineux (dark mode)
+  /// Couleur principale de l'application.
+  /// Lavande apaisée, utilisée comme accent plutôt que comme ambiance dominante.
+  static const Color primary = Color(0xFF7E6AD8);
+  static const Color primaryLight = Color(0xFFEDE8FF); // Lavande très pâle
+  static const Color primaryDark = Color(
+    0xFFA99AF0,
+  ); // Lavande lisible en dark mode
 
   /// Couleur secondaire (pêche rosé chaleureux)
   /// Light: #FFB5A8 - Pêche doux
   /// Dark: #FFCCBF - Pêche très pâle
   static const Color secondary = Color(0xFFFFB5A8);
   static const Color secondaryLight = Color(0xFFFFE4DD);
-  static const Color secondaryDark =
-      Color(0xFFFFCCBF); // Pêche pâle (dark mode)
+  static const Color secondaryDark = Color(
+    0xFFFFCCBF,
+  ); // Pêche pâle (dark mode)
 
   /// Couleur d'accent (menthe douce)
   static const Color accent = Color(0xFFA8D5BA);
@@ -51,8 +51,9 @@ class AppColors {
   // ==================== COULEURS NEUTRES - LIGHT MODE ====================
 
   /// Light Theme: Tons chauds et apaisants
-  static const Color backgroundLight =
-      Color(0xFFFAF8F5); // Beige très clair chaleureux
+  static const Color backgroundLight = Color(
+    0xFFFAF8F5,
+  ); // Beige très clair chaleureux
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color cardLight = Color(0xFFF5F2EF); // Crème doux
 
@@ -83,27 +84,21 @@ class AppColors {
 
   /// Couleurs pour la gamification
   static const Color xpBar = Color(0xFFFDD876); // Jaune miel doux
-  static const Color levelBadge = Color(0xFF9D7FFE); // Violet brillant glossy
+  static const Color levelBadge = Color(0xFF7E6AD8);
   static const Color streak = Color(0xFFFFB5A8); // Pêche doux
 
   /// Couleurs pour les objectifs
   static const Color objectiveCompleted = Color(0xFF7BC393);
-  static const Color objectiveInProgress =
-      Color(0xFF9D7FFE); // Violet brillant glossy
+  static const Color objectiveInProgress = Color(0xFF7E6AD8);
   static const Color objectiveNotStarted = Color(0xFFBFC5D1);
 
   /// Couleurs pour la méditation
-  static const Color meditationActive =
-      Color(0xFF9D7FFE); // Violet brillant glossy
-  static const Color meditationBreathing =
-      Color(0xFFB99CFF); // Violet glossy très lumineux
+  static const Color meditationActive = Color(0xFF7E6AD8);
+  static const Color meditationBreathing = Color(0xFFA99AF0);
 
   /// Gradient pour le chatbot
   static const LinearGradient chatbotGradient = LinearGradient(
-    colors: [
-      Color(0xFF9D7FFE),
-      Color(0xFFB99CFF)
-    ], // Violet brillant glossy -> Violet très lumineux
+    colors: [Color(0xFF7E6AD8), Color(0xFFA99AF0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -112,7 +107,7 @@ class AppColors {
   static const LinearGradient cardGradient = LinearGradient(
     colors: [
       Color(0xFFFAF8F5),
-      Color(0xFFEBE3FF)
+      Color(0xFFEBE3FF),
     ], // Beige clair -> Lavande glossy très pâle
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -146,17 +141,21 @@ class AppColors {
 
   /// Liquid Glass backgrounds - Light mode (iOS 26)
   /// Opacités réduites pour plus de transparence "liquide"
-  static const Color liquidGlassBackgroundLight =
-      Color(0xB3FFFFFF); // 70% opacity
-  static const Color liquidGlassBackgroundLightEnd =
-      Color(0x80FFFFFF); // 50% opacity
+  static const Color liquidGlassBackgroundLight = Color(
+    0xCCFFFFFF,
+  ); // 80% opacity for calmer readability
+  static const Color liquidGlassBackgroundLightEnd = Color(
+    0xA6FFFFFF,
+  ); // 65% opacity
 
   /// Liquid Glass backgrounds - Dark mode (iOS 26)
   /// Opacités augmentées pour meilleure lisibilité
-  static const Color liquidGlassBackgroundDark =
-      Color(0x2EFFFFFF); // 18% opacity
-  static const Color liquidGlassBackgroundDarkEnd =
-      Color(0x1FFFFFFF); // 12% opacity
+  static const Color liquidGlassBackgroundDark = Color(
+    0x38FFFFFF,
+  ); // 22% opacity
+  static const Color liquidGlassBackgroundDarkEnd = Color(
+    0x29FFFFFF,
+  ); // 16% opacity
 
   /// Liquid Glass borders (iOS 26)
   static const Color liquidGlassBorderLight = Color(0x66FFFFFF); // 40% opacity
@@ -164,19 +163,23 @@ class AppColors {
 
   /// Specular highlight pour liquid glass (reflet en haut)
   static const Color liquidGlassSpecular = Color(0x14FFFFFF); // 8% opacity
-  static const Color liquidGlassSpecularLight =
-      Color(0x14FFFFFF); // 8% opacity - Light mode
-  static const Color liquidGlassSpecularDark =
-      Color(0x0AFFFFFF); // 4% opacity - Dark mode
-  static const Color liquidGlassSpecularStrong =
-      Color(0x1FFFFFFF); // 12% opacity
+  static const Color liquidGlassSpecularLight = Color(
+    0x14FFFFFF,
+  ); // 8% opacity - Light mode
+  static const Color liquidGlassSpecularDark = Color(
+    0x0AFFFFFF,
+  ); // 4% opacity - Dark mode
+  static const Color liquidGlassSpecularStrong = Color(
+    0x14FFFFFF,
+  ); // 8% opacity
 
   /// Inner glow pour liquid glass
   static const Color liquidGlassInnerGlow = Color(0x0AFFFFFF); // 4% opacity
 
   /// Tint adaptatif (pour gradient adaptatif au background)
-  static const Color liquidGlassTint =
-      Color(0x08000000); // 3% opacity - blend subtil
+  static const Color liquidGlassTint = Color(
+    0x08000000,
+  ); // 3% opacity - blend subtil
 
   // ==================== COULEURS ICÔNES NAVIGATION ====================
 

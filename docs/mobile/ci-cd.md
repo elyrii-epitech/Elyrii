@@ -1,102 +1,145 @@
-# Mobile CI/CD Elyrii
+# Elyrii Mobile CI/CD
 
-Automated configuration and testing for the mobile application.
+Mobile workflows live in `.github/workflows/`.
 
-## GitHub Actions Workflows
+## Flutter Workflows
 
-The project uses two automatic workflows:
+### `flutter-build.yml`
 
-**flutter-build.yml**
-- Build Android and iOS
-- Triggered on push and PR to `main` and `dev`
+GitHub Actions name: `Flutter Build & Test`
 
-**flutter-check-and-docs.yml**
-- Formatting, analysis, tests verification
-- Triggered on push and PR to `main` and `dev`
+Triggers:
+- push to `main` or `dev`;
+- pull request to `main` or `dev`.
 
-## Configuration
+Jobs:
+- `build-android` on `ubuntu-latest`;
+- `build-ios` on `macos-latest`.
 
-**Flutter version:** 3.38.2  
-**Cache enabled:** Yes (30-50% build time reduction)
+Common steps:
+1. checkout;
+2. install Flutter `3.38.4` stable;
+3. cache `~/.pub-cache` and `elyrii_app/.dart_tool`;
+4. `flutter pub get`;
+5. `flutter analyze`;
+6. `flutter test`.
 
-## Run all tests locally
+Android steps:
+- `flutter build apk --release`;
+- upload artifact `app-android-apk`.
 
-Before pushing, execute these commands in order:
+iOS steps:
+- `flutter build ios --no-codesign`;
+- upload artifact `app-ios-build`.
 
-### 1. Formatting
+### `flutter-check-and-docs.yml`
+
+GitHub Actions name: `Flutter Style, Test & Docs`
+
+Triggers:
+- push to `main` or `dev`;
+- pull request to `main` or `dev`.
+
+Job:
+- `check` on `ubuntu-latest`.
+
+Steps:
+1. checkout;
+2. install Flutter `3.38.4` stable;
+3. cache dependencies;
+4. `flutter pub get`;
+5. `dart format --set-exit-if-changed .`;
+6. `flutter analyze`;
+7. `flutter test`;
+8. generate Dartdoc;
+9. upload artifact `dartdoc-html`.
+
+## Main Documentation
+
+`build-and-deploy-docs.yml` assembles the main MkDocs documentation. It retrieves
+the mobile `dartdoc-html` artifact and copies it into `docs/mobile/api`.
+
+If the artifact is not available, the workflow creates a placeholder
+`docs/mobile/api/index.md` so MkDocs can continue.
+
+## CI Flutter Version
+
+```yaml
+flutter-version: '3.38.4'
+channel: 'stable'
+```
+
+This version must remain compatible with:
+
+```yaml
+environment:
+  sdk: ">=3.10.3 <4.0.0"
+  flutter: ">=3.38.4"
+```
+
+## Equivalent Local Commands
+
+```bash
+cd elyrii_app
+flutter pub get
+dart format --set-exit-if-changed .
+flutter analyze
+flutter test
+flutter build apk --release
+```
+
+To test Dartdoc generation:
+
+```bash
+cd elyrii_app
+flutter pub global activate dartdoc
+flutter pub global run dartdoc
+```
+
+## Artifacts
+
+| Workflow | Artifact | Contents |
+| --- | --- | --- |
+| `flutter-build.yml` | `app-android-apk` | Android release APK |
+| `flutter-build.yml` | `app-ios-build` | iOS build without code signing |
+| `flutter-check-and-docs.yml` | `dartdoc-html` | Dartdoc documentation |
+
+## Common Fixes
+
+### Formatting
 
 ```bash
 cd elyrii_app
 dart format .
 ```
 
-### 2. Static analysis
+### Static Analysis
 
 ```bash
+cd elyrii_app
 flutter analyze
 ```
 
-Must return: `No issues found!`
-
-### 3. Unit tests
+### Tests
 
 ```bash
+cd elyrii_app
 flutter test
 ```
 
-All tests must pass.
-
-### 4. Android build (optional)
+### Dependencies
 
 ```bash
-flutter build apk --release
+cd elyrii_app
+flutter clean
+flutter pub get
 ```
 
-### 5. All in one command
+## Current Limitations
 
-```bash
-cd elyrii_app && \
-dart format . && \
-flutter analyze && \
-flutter test && \
-echo "All checks pass"
-```
-
-## Check workflows
-
-**URL:** https://github.com/elyrii-epitech/Elyrii/actions
-
-**Status:**
-- Yellow: In progress
-- Green: Success
-- Red: Failure
-
-## Fix failures
-
-**If formatting fails:**
-```bash
-dart format .
-git add .
-git commit -m "style: format code"
-```
-
-**If analyze fails:**
-```bash
-flutter analyze
-# Fix displayed errors
-git commit -m "fix: resolve analysis issues"
-```
-
-**If tests fail:**
-```bash
-flutter test
-# Fix tests or code
-git commit -m "fix: resolve test failures"
-```
-
-## Artifacts
-
-Successful builds generate downloadable artifacts:
-- Android APK: `app-android-apk`
-- iOS build: `app-ios-build`
-- Documentation: `dartdoc-html`
+- No automated Play Store/App Store publishing.
+- No dedicated Android release signing config in the repository.
+- CI iOS build runs without code signing.
+- No separate Flutter flavors for dev/staging/prod.
+- `BASE_URL` must be provided with `--dart-define` at runtime or build time if
+  the target does not use local defaults.

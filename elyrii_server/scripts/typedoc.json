@@ -1,10 +1,16 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "name": "Elyrii Server Documentation",
+  "name": "Elyrii Monolith Documentation",
   "entryPoints": [
-    "../services/auth/index.ts",
-    "../services/chat/index.ts",
-    "../services/gateway/index.ts"
+    "../modules/auth",
+    "../modules/chat",
+    "../modules/journal",
+    "../modules/quest",
+    "../modules/user",
+    "../repository",
+    "../config",
+    "../middleware",
+    "../utils"
   ],
   "entryPointStrategy": "expand",
   "out": "../docs/api",
@@ -13,7 +19,8 @@
     "**/tests/**",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "**/bun.lock"
+    "**/bun.lock",
+    "**/.drizzle/**"
   ],
   "plugin": ["typedoc-plugin-markdown"],
   "theme": "markdown",

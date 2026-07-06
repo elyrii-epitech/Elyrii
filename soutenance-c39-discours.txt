@@ -1,0 +1,224 @@
+DISCOURS C39 - COMMUNICATION D'EQUIPE
+=====================================
+
+Objectif de la competence
+-------------------------
+
+Pour la competence C39, l'objectif est de montrer que j'ai su diffuser les
+informations au sein de l'equipe avec les bons outils, en respectant les regles
+de securite et de confidentialite, afin que chaque membre comprenne clairement
+ses missions.
+
+Dans le projet Elyrii, j'ai donc mis en avant trois points :
+- les canaux utilises pour communiquer ;
+- la maniere dont les informations etaient tracees et comprises par l'equipe ;
+- les precautions prises pour la securite, la confidentialite et l'accessibilite.
+
+
+Slide - Communication d'equipe
+------------------------------
+
+Sur Elyrii, nous avions plusieurs moyens de communication selon le type
+d'information a diffuser.
+
+Discord etait notre outil principal pour la coordination quotidienne de
+l'equipe. On l'utilisait pour les reunions internes, les echanges rapides, les
+questions techniques et les decisions prises en temps reel.
+
+Nous avions aussi un bot Discord connecte a GitHub. Ce bot envoyait
+automatiquement des notifications lorsqu'une pull request, une issue ou une
+nouvelle tache etait creee. Cela permettait a toute l'equipe d'etre informee
+rapidement, sans attendre qu'une personne partage manuellement l'information.
+Pour moi, c'est une preuve forte de diffusion d'information, car les changements
+importants etaient visibles directement dans le canal de l'equipe.
+
+Microsoft Teams etait utilise pour les rendez-vous plus formels avec notre
+mentor et notre referent pedagogique. Ces rendez-vous permettaient de faire le
+point sur l'avancement, de valider les grandes etapes du projet et de s'assurer
+que nous restions alignes avec les attentes de l'ecole.
+
+GitHub servait de trace officielle du travail. Les issues permettaient de
+formaliser les missions, les bugs ou les besoins fonctionnels. Les pull requests
+permettaient de presenter les changements, de demander des retours, de suivre
+les reviews et de verifier que les tests et la CI passaient avant integration.
+
+Enfin, la documentation projet, comme le README et MkDocs, servait de support de
+diffusion asynchrone. Ce n'etait pas un outil de discussion, mais un endroit ou
+l'equipe pouvait retrouver les informations stables : installation,
+architecture, procedures CI/CD et regles de contribution.
+
+Phrase de synthese :
+Nous avions donc Discord pour l'echange rapide, le bot Discord pour les
+notifications automatiques, Teams pour le suivi mentor/pedagogie, GitHub pour la
+trace officielle, et la documentation pour les informations durables.
+
+
+Exemples a montrer sur GitHub
+-----------------------------
+
+Pour demontrer cela avec le projet, je peux montrer plusieurs elements concrets.
+
+Premier exemple : la PR #210.
+Cette pull request contient un resume detaille, les changements frontend,
+backend et CI/CD, les tests realises, les breaking changes et une checklist.
+Cela permet a un membre de l'equipe de comprendre rapidement ce qui a ete fait,
+pourquoi, et comment cela a ete valide.
+
+Lien :
+https://github.com/elyrii-epitech/Elyrii/pull/210
+
+Deuxieme exemple : la PR #206.
+Elle montre la diffusion d'un lot fonctionnel frontend, avec les validations
+locales comme le formatage, l'analyse statique et les tests Flutter.
+
+Lien :
+https://github.com/elyrii-epitech/Elyrii/pull/206
+
+Troisieme exemple : les issues GitHub.
+Les issues permettaient de transformer les besoins en missions claires.
+Par exemple :
+- #174 : Implement Mood Tracking Persistence ;
+- #178 : integration tests login -> dashboard -> mood tracking ;
+- #180 : connect Dashboard stats to /user/stats API.
+
+Ces issues montrent que les missions etaient formalisees, consultables par
+toute l'equipe et liees au travail realise dans les branches et les PR.
+
+
+Slide - RGPD et confidentialite
+-------------------------------
+
+Cette slide ne presente pas tout le RGPD de l'application. Elle explique surtout
+comment nous avons diffuse les informations dans l'equipe sans exposer de
+donnees sensibles.
+
+Discord et Teams etaient utilises pour la coordination, les reunions et le suivi
+du projet. Nous evitions d'y partager des informations sensibles comme des mots
+de passe, des tokens, des variables d'environnement ou des donnees utilisateur.
+
+GitHub etait utilise pour le suivi technique : issues, PR, code, reviews et
+CI/CD. Les informations partagees devaient rester techniques et utiles au
+projet. Les secrets etaient geres via GitHub Secrets, notamment dans les
+workflows CI/CD.
+
+Comme Elyrii est une application liee au bien-etre, il fallait etre prudent avec
+les donnees personnelles et les conversations utilisateur. Le principe applique
+etait de ne pas utiliser les outils de communication pour partager des donnees
+utilisateur reelles ou des informations confidentielles.
+
+Elements a dire pour les trois cartes :
+
+Conformite :
+- Discord et Teams utilises pour la coordination uniquement ;
+- GitHub utilise pour le suivi technique ;
+- minimisation des informations partagees.
+
+Donnees :
+- pas de donnees utilisateur reelles partagees dans les discussions ;
+- pas de tokens, mots de passe ou secrets dans Discord, Teams ou les PR ;
+- captures ou exemples anonymises si necessaire.
+
+Mesures :
+- secrets stockes via GitHub Secrets ;
+- revues de PR et CI avant integration ;
+- branches protegees ;
+- checklist ou verification pour eviter les credentials dans le depot.
+
+Phrase de synthese :
+La diffusion d'information ne devait pas se faire au detriment de la securite.
+Nous avons donc separe les informations de coordination des informations
+sensibles, et utilise les outils adaptes comme GitHub Secrets pour les variables
+confidentielles.
+
+
+Slide - Accessibilite et situations de handicap
+-----------------------------------------------
+
+Pour cette partie, l'objectif est de montrer que la communication etait
+compatible avec les besoins particuliers d'un membre de l'equipe.
+
+Nous n'avions pas forcement de situation de handicap identifiee dans l'equipe,
+mais notre organisation restait inclusive par conception.
+
+Les informations importantes n'etaient pas uniquement transmises a l'oral. Elles
+etaient aussi disponibles par ecrit dans Discord, GitHub et la documentation.
+Cela permettait a une personne absente, fatiguee, malentendante ou ayant besoin
+de plus de temps de relire les decisions et de comprendre ses missions en
+asynchrone.
+
+Discord permettait de retrouver les messages et les liens partages. GitHub
+permettait de retrouver les taches, les PR, les reviews et les checks. La
+documentation permettait de retrouver les procedures stables sans devoir
+redemander a l'equipe.
+
+Elements a dire pour les trois cartes :
+
+Amenagement equipe :
+- informations importantes reformulees a l'ecrit ;
+- possibilite de consulter les messages et decisions apres reunion ;
+- organisation compatible avec l'absence ou le travail asynchrone.
+
+Accessibilite produit :
+- Elyrii integre aussi des aspects utiles aux utilisateurs, comme des ressources
+  d'urgence, des messages d'aide et une attention particuliere au bien-etre ;
+- mais pour C39, le point principal reste l'accessibilite de la communication
+  interne.
+
+Process inclusif :
+- pas de dependance uniquement a l'oral ;
+- taches formalisees dans GitHub ;
+- PR detaillees ;
+- documentation consultable par toute l'equipe.
+
+Phrase de synthese :
+Meme sans besoin particulier identifie, notre maniere de travailler permettait a
+chaque membre de retrouver les informations importantes a son rythme, ce qui
+rendait la communication plus accessible et plus fiable.
+
+
+Conclusion generale C39
+-----------------------
+
+Pour conclure, j'ai repondu a la competence C39 en mettant en place une
+diffusion d'information adaptee a chaque contexte.
+
+Pour les echanges rapides, nous utilisions Discord. Pour les notifications
+automatiques, le bot Discord relayait les evenements GitHub comme les PR et les
+issues. Pour les points formels avec l'encadrement, nous utilisions Microsoft
+Teams. Pour la trace officielle, nous utilisions GitHub avec les issues, les PR,
+les reviews et la CI. Enfin, pour les informations durables, nous utilisions le
+README et la documentation MkDocs.
+
+Cette organisation permettait de garantir que chaque membre comprenne ses
+missions, sache ou retrouver l'information, et puisse suivre l'avancement du
+projet meme en asynchrone.
+
+La securite et la confidentialite etaient prises en compte en evitant de
+partager des secrets ou donnees utilisateur dans les canaux de discussion, et en
+utilisant GitHub Secrets pour les informations sensibles.
+
+Enfin, le fait d'avoir des traces ecrites dans Discord, GitHub et la
+documentation rendait l'organisation plus inclusive pour les personnes absentes
+ou ayant des besoins particuliers.
+
+
+Preuves a montrer le jour J
+---------------------------
+
+1. Capture Discord d'un salon equipe ou d'une reunion.
+2. Capture du bot Discord qui notifie une PR, une issue ou une tache.
+3. Capture Teams d'un rendez-vous mentor ou pedagogie.
+4. GitHub PR #210 avec resume, tests et checklist.
+5. GitHub issue #174, #178 ou #180 pour montrer une mission formalisee.
+6. GitHub Actions pour montrer les checks CI.
+7. README ou documentation MkDocs pour montrer les informations durables.
+8. GitHub Secrets ou workflow CI utilisant secrets.* pour la partie securite.
+
+
+Formule courte si le jury demande "en quoi c'est C39 ?"
+-------------------------------------------------------
+
+C'est C39 parce que je montre comment les informations etaient diffusees dans
+l'equipe, avec quels outils, comment les missions etaient comprises et tracees,
+comment nous respections la confidentialite, et comment notre organisation
+restait accessible aux personnes absentes ou ayant des besoins particuliers.

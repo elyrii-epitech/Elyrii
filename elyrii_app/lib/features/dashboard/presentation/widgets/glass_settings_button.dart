@@ -106,8 +106,9 @@ class _GlassSettingsButtonState extends State<GlassSettingsButton>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black
-                              .withValues(alpha: widget.isDark ? 0.3 : 0.1),
+                          color: Colors.black.withValues(
+                            alpha: widget.isDark ? 0.3 : 0.1,
+                          ),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -139,8 +140,10 @@ class _GlassSettingsButtonState extends State<GlassSettingsButton>
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(22),
                             color: Colors.white.withValues(
-                              alpha: (0.3 * (1 - _flashAnimation.value))
-                                  .clamp(0.0, 1.0),
+                              alpha: (0.3 * (1 - _flashAnimation.value)).clamp(
+                                0.0,
+                                1.0,
+                              ),
                             ),
                           ),
                         ),

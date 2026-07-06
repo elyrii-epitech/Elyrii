@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../../../core/services/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/liquid_glass_kit.dart';
+import '../../../routes/app_routes.dart';
+import '../../auth/presentation/providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -20,26 +23,34 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().loadSettings();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final userProvider = context.watch<UserProvider>();
+    final appSettings = userProvider.settings;
     final isDark = themeProvider.isDarkMode;
     final topPadding = MediaQuery.of(context).padding.top;
+    final notificationsEnabled =
+        appSettings?.notificationsEnabled ?? _notifications;
+    final hapticsEnabled = appSettings?.hapticsEnabled ?? _haptics;
+    final strictPrivacy = appSettings?.privacyMode == 'STRICT';
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
       body: Stack(
         children: [
           // Contenu scrollable
           CustomScrollView(
             slivers: [
               // Espace pour l'AppBar
-              SliverToBoxAdapter(
-                child: SizedBox(height: topPadding + 70),
-              ),
+              SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
               // Section Apparence
               SliverToBoxAdapter(
                 child: _buildSection(
@@ -55,8 +66,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       trailing: LiquidGlassSwitch(
                         value: isDark,
                         onChanged: (value) {
-                          themeProvider.setThemeMode(
-                            value ? ThemeMode.dark : ThemeMode.light,
+                          final mode = value ? ThemeMode.dark : ThemeMode.light;
+                          themeProvider.setThemeMode(mode);
+                          context.read<UserProvider>().updateSettings(
+                            themeMode: _themeModeToServerValue(mode),
                           );
                         },
                       ),
@@ -77,9 +90,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       leadingIcon: Icons.notifications_rounded,
                       showChevron: false,
                       trailing: LiquidGlassSwitch(
-                        value: _notifications,
+                        value: notificationsEnabled,
                         onChanged: (value) {
                           setState(() => _notifications = value);
+                          context.read<UserProvider>().updateSettings(
+                            notificationsEnabled: value,
+                          );
                         },
                       ),
                     ),
@@ -90,9 +106,12 @@ class _SettingsPageState extends State<SettingsPage> {
                       leadingIcon: Icons.vibration_rounded,
                       showChevron: false,
                       trailing: LiquidGlassSwitch(
-                        value: _haptics,
+                        value: hapticsEnabled,
                         onChanged: (value) {
                           setState(() => _haptics = value);
+                          context.read<UserProvider>().updateSettings(
+                            hapticsEnabled: value,
+                          );
                           if (value) {
                             HapticFeedback.mediumImpact();
                           }
@@ -111,28 +130,45 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     LiquidGlassListTile(
                       title: 'Profil',
-                      subtitle: 'Gérer vos informations',
+                      subtitle: 'Gerer vos informations personnelles',
                       leadingIcon: Icons.person_rounded,
                       onTap: () {
-                        // TODO: Navigate to profile
+                        Navigator.pushNamed(context, AppRoutes.editProfile);
                       },
                     ),
                     _buildDivider(isDark),
                     LiquidGlassListTile(
-                      title: 'Confidentialité',
-                      subtitle: 'Paramètres de vie privée',
+                      title: 'Confidentialité stricte',
+                      subtitle: strictPrivacy
+                          ? 'Mode strict activé'
+                          : 'Limiter au maximum les usages de données',
                       leadingIcon: Icons.lock_rounded,
+                      showChevron: false,
+                      trailing: LiquidGlassSwitch(
+                        value: strictPrivacy,
+                        onChanged: (value) {
+                          context.read<UserProvider>().updateSettings(
+                            privacyMode: value ? 'STRICT' : 'STANDARD',
+                          );
+                        },
+                      ),
                       onTap: () {
-                        // TODO: Navigate to privacy settings
+                        context.read<UserProvider>().updateSettings(
+                          privacyMode: strictPrivacy ? 'STANDARD' : 'STRICT',
+                        );
                       },
                     ),
                     _buildDivider(isDark),
                     LiquidGlassListTile(
                       title: 'Données et stockage',
-                      subtitle: 'Gérer vos données',
+                      subtitle: 'Exporter ou supprimer tes contenus',
                       leadingIcon: Icons.storage_rounded,
                       onTap: () {
-                        // TODO: Navigate to data settings
+                        _showInfoDialog(
+                          title: 'Données et stockage',
+                          message:
+                              'Prévois ici l’export du journal, la suppression de l’historique de chat, la suppression du compte et une indication claire des données conservées localement ou côté serveur.',
+                        );
                       },
                     ),
                   ],
@@ -156,7 +192,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: 'Conditions d\'utilisation',
                       leadingIcon: Icons.description_rounded,
                       onTap: () {
-                        // TODO: Open terms
+                        _showInfoDialog(
+                          title: 'Conditions d\'utilisation',
+                          message:
+                              'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+                        );
                       },
                     ),
                     _buildDivider(isDark),
@@ -164,7 +204,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: 'Politique de confidentialité',
                       leadingIcon: Icons.privacy_tip_rounded,
                       onTap: () {
-                        // TODO: Open privacy policy
+                        _showInfoDialog(
+                          title: 'Politique de confidentialité',
+                          message:
+                              'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
+                        );
                       },
                     ),
                   ],
@@ -184,7 +228,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         context: context,
                         title: 'Se déconnecter',
                         child: const Text(
-                            'Êtes-vous sûr de vouloir vous déconnecter ?'),
+                          'Êtes-vous sûr de vouloir vous déconnecter ?',
+                        ),
                         actions: [
                           LiquidGlassDialogAction(
                             label: 'Annuler',
@@ -193,9 +238,15 @@ class _SettingsPageState extends State<SettingsPage> {
                           LiquidGlassDialogAction(
                             label: 'Déconnecter',
                             isDestructive: true,
-                            onPressed: () {
+                            onPressed: () async {
                               Navigator.pop(context);
-                              // TODO: Implement logout
+                              await context.read<AuthProvider>().logout();
+                              if (context.mounted) {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  AppRoutes.login,
+                                  (route) => false,
+                                );
+                              }
                             },
                           ),
                         ],
@@ -205,9 +256,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               // Espace en bas
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
           // Bouton retour en bulle Liquid Glass + Titre
@@ -278,6 +327,17 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  String _themeModeToServerValue(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'LIGHT';
+      case ThemeMode.dark:
+        return 'DARK';
+      case ThemeMode.system:
+        return 'SYSTEM';
+    }
+  }
+
   Widget _buildDivider(bool isDark) {
     return Divider(
       height: 0.5,
@@ -287,6 +347,25 @@ class _SettingsPageState extends State<SettingsPage> {
           : Colors.black.withValues(alpha: 0.08),
     );
   }
+
+  void _showInfoDialog({required String title, required String message}) {
+    showLiquidGlassDialog(
+      context: context,
+      title: title,
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(height: 1.45),
+      ),
+      actions: [
+        LiquidGlassDialogAction(
+          label: 'Compris',
+          isDefault: true,
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+    );
+  }
 }
 
 /// Bouton retour en style bulle Liquid Glass
@@ -294,10 +373,7 @@ class _LiquidGlassBackButton extends StatefulWidget {
   final bool isDark;
   final VoidCallback onTap;
 
-  const _LiquidGlassBackButton({
-    required this.isDark,
-    required this.onTap,
-  });
+  const _LiquidGlassBackButton({required this.isDark, required this.onTap});
 
   @override
   State<_LiquidGlassBackButton> createState() => _LiquidGlassBackButtonState();
@@ -350,8 +426,9 @@ class _LiquidGlassBackButtonState extends State<_LiquidGlassBackButton> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black
-                          .withValues(alpha: widget.isDark ? 0.3 : 0.1),
+                      color: Colors.black.withValues(
+                        alpha: widget.isDark ? 0.3 : 0.1,
+                      ),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
