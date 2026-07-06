@@ -25,7 +25,7 @@ htmlcov/
 .idea/
 
 instance/
-elyrii_ai/models/
+models/
 .env
 .env.local
 
