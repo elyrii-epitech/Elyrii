@@ -59,12 +59,17 @@ services:
       - "127.0.0.1:11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-      - ../elyrii_lora:/models/elyrii_lora:ro
+      - type: bind
+        source: ../elyrii_lora
+        target: /models/elyrii_lora
+        read_only: true
+        bind:
+          create_host_path: false
     restart: unless-stopped
     networks:
       - elyrii_net
     healthcheck:
-      test: ["CMD", "ollama", "list"]
+      test: ["CMD-SHELL", "test -f /models/elyrii_lora/adapter_model.safetensors && ollama list"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -81,8 +86,18 @@ services:
       - OLLAMA_HOST=http://ollama:11434
       - AI_MODEL=${AI_MODEL:-elyrii-lora}
     volumes:
-      - ../elyrii_ai/ollama/Modelfile:/Modelfile:ro
-      - ../elyrii_lora:/models/elyrii_lora:ro
+      - type: bind
+        source: ../elyrii_ai/ollama/Modelfile
+        target: /Modelfile
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ../elyrii_lora
+        target: /models/elyrii_lora
+        read_only: true
+        bind:
+          create_host_path: false
     entrypoint:
       - sh
       - -c
