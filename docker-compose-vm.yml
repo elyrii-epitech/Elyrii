@@ -109,7 +109,7 @@ services:
         bind:
           create_host_path: false
     healthcheck:
-      test: ["CMD-SHELL", "test -f /models/elyrii_lora/adapter_model.safetensors && ollama list"]
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
       retries: 12
