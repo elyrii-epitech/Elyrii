@@ -19,6 +19,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _notifications = true;
   bool _haptics = true;
+  bool _isDeletingAccount = false;
 
   @override
   void initState() {
@@ -170,6 +171,26 @@ class _SettingsPageState extends State<SettingsPage> {
                               'Prévois ici l’export du journal, la suppression de l’historique de chat, la suppression du compte et une indication claire des données conservées localement ou côté serveur.',
                         );
                       },
+                    ),
+                    _buildDivider(isDark),
+                    LiquidGlassListTile(
+                      title: 'Supprimer mon compte',
+                      subtitle: 'Effacer définitivement ton compte Elyrii',
+                      leadingIcon: Icons.delete_forever_rounded,
+                      showChevron: !_isDeletingAccount,
+                      trailing: _isDeletingAccount
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              Icons.chevron_right,
+                              color: AppColors.error.withValues(alpha: 0.75),
+                            ),
+                      onTap: _isDeletingAccount
+                          ? null
+                          : () => _showDeleteAccountDialog(),
                     ),
                   ],
                 ),
@@ -364,6 +385,97 @@ class _SettingsPageState extends State<SettingsPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ],
+    );
+  }
+
+  Future<void> _showDeleteAccountDialog() async {
+    final passwordController = TextEditingController();
+
+    await showLiquidGlassDialog(
+      context: context,
+      barrierDismissible: false,
+      title: 'Supprimer le compte',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Cette action supprimera définitivement ton compte et tes données associées. Entre ton mot de passe pour confirmer.',
+            textAlign: TextAlign.center,
+            style: TextStyle(height: 1.4),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: passwordController,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              labelText: 'Mot de passe',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _deleteAccount(passwordController.text),
+          ),
+        ],
+      ),
+      actions: [
+        LiquidGlassDialogAction(
+          label: 'Annuler',
+          onPressed: () => Navigator.pop(context),
+        ),
+        LiquidGlassDialogAction(
+          label: 'Supprimer',
+          isDestructive: true,
+          onPressed: () => _deleteAccount(passwordController.text),
+        ),
+      ],
+    );
+
+    passwordController.dispose();
+  }
+
+  Future<void> _deleteAccount(String password) async {
+    final trimmedPassword = password.trim();
+    if (trimmedPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Entre ton mot de passe pour confirmer.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pop(context);
+    setState(() => _isDeletingAccount = true);
+
+    final userProvider = context.read<UserProvider>();
+    final authProvider = context.read<AuthProvider>();
+    final success = await userProvider.deleteAccount(password: trimmedPassword);
+
+    if (!mounted) return;
+    setState(() => _isDeletingAccount = false);
+
+    if (success) {
+      await authProvider.clearLocalSession();
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          userProvider.error ?? 'Impossible de supprimer le compte.',
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
     );
   }
 }
