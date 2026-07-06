@@ -4,7 +4,7 @@ services:
   # vLLM GPU service (optional, if you have a GPU)
   vllm-gpu:
     build:
-      context: .
+      context: ../elyrii_ai
       dockerfile: Dockerfile
     container_name: elyrii-vllm-gpu
     ports:
@@ -34,7 +34,7 @@ services:
   # Controller service
   controller:
     build:
-      context: .
+      context: ../elyrii_ai
       dockerfile: controller/ControllerDockerfile
     container_name: elyrii-controller
     ports:
@@ -81,13 +81,15 @@ services:
       - OLLAMA_HOST=http://ollama:11434
       - AI_MODEL=${AI_MODEL:-elyrii-lora}
     volumes:
-      - ./ollama/Modelfile:/Modelfile:ro
+      - ../elyrii_ai/ollama/Modelfile:/Modelfile:ro
       - ../elyrii_lora:/models/elyrii_lora:ro
     entrypoint:
       - sh
       - -c
     command:
       - |
+        test -f /Modelfile
+        test -f /models/elyrii_lora/adapter_model.safetensors
         ollama pull mistral:7b-instruct-v0.3-q4_K_M
         ollama create ${AI_MODEL:-elyrii-lora} -f /Modelfile
     restart: "no"
@@ -97,7 +99,7 @@ services:
   # AI Kafka Bridge (connects Server to Ollama via Kafka)
   ai-bridge:
     build:
-      context: .
+      context: ../elyrii_ai
       dockerfile: BridgeDockerfile
     container_name: elyrii-ai-bridge
     depends_on:
