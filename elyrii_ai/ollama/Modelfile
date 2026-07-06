@@ -1,5 +1,5 @@
 FROM mistral:7b-instruct-v0.3-q4_K_M
 
-ADAPTER /adapter/adapter_model.safetensors
+ADAPTER /adapter
 
 PARAMETER num_ctx 4096
