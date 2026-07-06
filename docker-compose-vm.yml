@@ -103,8 +103,8 @@ services:
     volumes:
       - ollama_data:/root/.ollama
       - type: bind
-        source: ./elyrii_lora/adapter_model.safetensors
-        target: /adapter_model.safetensors
+        source: ./elyrii_lora
+        target: /adapter
         read_only: true
         bind:
           create_host_path: false
@@ -134,8 +134,8 @@ services:
         bind:
           create_host_path: false
       - type: bind
-        source: ./elyrii_lora/adapter_model.safetensors
-        target: /adapter_model.safetensors
+        source: ./elyrii_lora
+        target: /adapter
         read_only: true
         bind:
           create_host_path: false
@@ -146,9 +146,14 @@ services:
       - |
         set -eu
         test -f /Modelfile || { echo "Missing /Modelfile"; exit 1; }
-        test -f /adapter_model.safetensors || {
-          echo "Missing /adapter_model.safetensors"
-          ls -la / || true
+        test -f /adapter/adapter_config.json || {
+          echo "Missing /adapter/adapter_config.json"
+          ls -la /adapter || true
+          exit 1
+        }
+        test -f /adapter/adapter_model.safetensors || {
+          echo "Missing /adapter/adapter_model.safetensors"
+          ls -la /adapter || true
           exit 1
         }
         ollama pull mistral:7b-instruct-v0.3-q4_K_M
