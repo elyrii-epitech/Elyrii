@@ -147,7 +147,6 @@ services:
     command:
       - |
         set -eu
-        test -f /Modelfile || { echo "Missing /Modelfile"; exit 1; }
         test -f /adapter/adapter_config.json || {
           echo "Missing /adapter/adapter_config.json"
           ls -la /adapter || true
@@ -158,8 +157,19 @@ services:
           ls -la /adapter || true
           exit 1
         }
+
+        rm -rf /tmp/ollama-adapter
+        mkdir -p /tmp/ollama-adapter
+        cp /adapter/adapter_config.json /tmp/ollama-adapter/adapter_config.json
+        cp /adapter/adapter_model.safetensors /tmp/ollama-adapter/model.safetensors
+        printf '%s\n' \
+          'FROM mistral:7b-instruct-v0.3-q4_K_M' \
+          'ADAPTER /tmp/ollama-adapter' \
+          'PARAMETER num_ctx 4096' \
+          > /tmp/Modelfile
+
         ollama pull mistral:7b-instruct-v0.3-q4_K_M
-        ollama create ${OLLAMA_MODEL_NAME:-elyrii-lora} -f /Modelfile
+        ollama create ${OLLAMA_MODEL_NAME:-elyrii-lora} -f /tmp/Modelfile
     restart: "no"
     networks:
       - elyrii_net
