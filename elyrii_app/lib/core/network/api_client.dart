@@ -135,12 +135,20 @@ class ApiClient {
   }
 
   /// Perform a DELETE request
-  Future<dynamic> delete(String url, {bool auth = true}) async {
+  Future<dynamic> delete(
+    String url, {
+    Map<String, dynamic>? body,
+    bool auth = true,
+  }) async {
     debugPrint('[ApiClient] DELETE $url (auth: $auth)');
     final headers = auth ? await _authHeaders() : _baseHeaders();
     try {
       final response = await _client
-          .delete(Uri.parse(url), headers: headers)
+          .delete(
+            Uri.parse(url),
+            headers: headers,
+            body: body != null ? jsonEncode(body) : null,
+          )
           .timeout(const Duration(seconds: _timeoutSeconds));
       return _handleResponse(response);
     } catch (e) {

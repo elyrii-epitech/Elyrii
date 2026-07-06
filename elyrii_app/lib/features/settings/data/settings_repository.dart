@@ -92,4 +92,11 @@ class UserRepository {
             as Map<String, dynamic>;
     return AppSettings.fromJson(response);
   }
+
+  Future<void> deleteAccount({required String password}) async {
+    await _client.delete(
+      ApiConfig.userAccountUrl,
+      body: {'password': password},
+    );
+  }
 }
