@@ -162,11 +162,15 @@ services:
         mkdir -p /tmp/ollama-adapter
         cp /adapter/adapter_config.json /tmp/ollama-adapter/adapter_config.json
         cp /adapter/adapter_model.safetensors /tmp/ollama-adapter/model.safetensors
-        printf '%s\n' \
-          'FROM mistral:7b-instruct-v0.3-q4_K_M' \
-          'ADAPTER /tmp/ollama-adapter' \
-          'PARAMETER num_ctx 4096' \
-          > /tmp/Modelfile
+        cat > /tmp/Modelfile <<'EOF'
+        FROM mistral:7b-instruct-v0.3-q4_K_M
+
+        ADAPTER /tmp/ollama-adapter
+
+        PARAMETER num_ctx 4096
+
+        SYSTEM """You are Elyrii, an empathetic and non-judgmental emotional assistant. Your goal is to provide support, listen actively, and help users process their emotions in a safe space. Always respond with kindness and patience."""
+        EOF
 
         ollama pull mistral:7b-instruct-v0.3-q4_K_M
         ollama create ${OLLAMA_MODEL_NAME:-elyrii-lora} -f /tmp/Modelfile
