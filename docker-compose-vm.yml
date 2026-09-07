@@ -1,0 +1,207 @@
+services:
+  server:
+    build:
+      context: ./elyrii_server
+      dockerfile: Dockerfile
+    container_name: server
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    environment:
+      - PORT=${PORT:-3000}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-elyrii_db}
+      - REDPANDA_HOST=redpanda
+      - REDPANDA_PORT=9092
+      - SECRET_KEY=${SECRET_KEY:-super-secret-key}
+      - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY:-super-refresh-secret-key}
+      - NODE_ENV=development
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: sh -c "sleep 5 && bun run db:push && bun run start"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:latest
+    container_name: redpanda
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    command: >
+      redpanda start
+        --overprovisioned
+        --smp 1
+        --memory 1G
+        --reserve-memory 0M
+        --check=false
+        --node-id=1
+        --kafka-addr PLAINTEXT://0.0.0.0:9092
+        --advertise-kafka-addr PLAINTEXT://redpanda:9092
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  redpanda_console:
+    image: docker.redpanda.com/redpandadata/console:latest
+    container_name: redpanda_console
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redpanda
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      REDPANDA_ADMIN_URL: http://redpanda:9644
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres_elyrii
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-elyrii_db}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./elyrii_server/init_dbs.sh:/docker-entrypoint-initdb.d/init_dbs.sh:ro
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: elyrii-ollama
+    working_dir: /adapter
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - type: bind
+        source: ./elyrii_lora
+        target: /adapter
+        read_only: true
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: elyrii-ollama-init
+    working_dir: /adapter
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    volumes:
+      - type: bind
+        source: ./elyrii_ai/ollama/Modelfile
+        target: /Modelfile
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./elyrii_lora
+        target: /adapter
+        read_only: true
+        bind:
+          create_host_path: false
+    entrypoint:
+      - sh
+      - -c
+    command:
+      - |
+        set -eu
+        test -f /adapter/adapter_config.json || {
+          echo "Missing /adapter/adapter_config.json"
+          ls -la /adapter || true
+          exit 1
+        }
+        test -f /adapter/adapter_model.safetensors || {
+          echo "Missing /adapter/adapter_model.safetensors"
+          ls -la /adapter || true
+          exit 1
+        }
+
+        rm -rf /tmp/ollama-adapter
+        mkdir -p /tmp/ollama-adapter
+        cp /adapter/adapter_config.json /tmp/ollama-adapter/adapter_config.json
+        cp /adapter/adapter_model.safetensors /tmp/ollama-adapter/model.safetensors
+        cat > /tmp/Modelfile <<'EOF'
+        FROM mistral:7b-instruct-v0.3-q4_K_M
+
+        ADAPTER /tmp/ollama-adapter
+
+        PARAMETER num_ctx 4096
+
+        SYSTEM """You are Elyrii, an empathetic and non-judgmental emotional assistant. Your goal is to provide support, listen actively, and help users process their emotions in a safe space. Always respond with kindness and patience."""
+        EOF
+
+        ollama pull mistral:7b-instruct-v0.3-q4_K_M
+        ollama create ${OLLAMA_MODEL_NAME:-elyrii-lora} -f /tmp/Modelfile
+    restart: "no"
+    networks:
+      - elyrii_net
+
+  ai-bridge:
+    build:
+      context: ./elyrii_ai
+      dockerfile: BridgeDockerfile
+    container_name: elyrii-ai-bridge
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - AI_BASE_URL=http://ollama:11434
+      - AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+networks:
+  elyrii_net:
+    name: elyrii_net
+    driver: bridge
+
+volumes:
+  redpanda_data:
+  pg_data:
+  ollama_data:
