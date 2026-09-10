@@ -1,7 +1,9 @@
 import { clientSockets } from "../../main";
 import { kafkaService } from "./chat.service";
 import ChatRepository from "../../repository/chat.repository";
-import { aiResponseTracker } from "./response-tracker.utils";
+// NOTE: unused while the blocking AI wait in chat.controller.ts is disabled.
+// Kept for easy re-enable of the request/response bridge.
+// import { aiResponseTracker } from "./response-tracker.utils";
 
 const chatRepository = new ChatRepository();
 
@@ -20,13 +22,14 @@ export async function handleAiResponse() {
         eachMessage: async ({ message }) => {
             if (!message.value) return;
             const data: { userId: string, response: string, conversationId?: string, requestId?: string } = JSON.parse(message.value.toString());
-            const { userId, response, requestId } = data;
+            const { userId, response /*, requestId*/ } = data;
             const conversationId = data.conversationId ?? "default";
 
-            // Resolve pending promise if anyone is waiting for this requestId
-            if (requestId) {
-                aiResponseTracker.resolveResponse(requestId, response);
-            }
+            // Resolve pending promise if anyone is waiting for this requestId.
+            // NOTE: disabled — chat.controller.ts no longer blocks on waitForResponse.
+            // if (requestId) {
+            //     aiResponseTracker.resolveResponse(requestId, response);
+            // }
 
             try {
                 await chatRepository.createMessage({
