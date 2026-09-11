@@ -4,10 +4,15 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../data/entities/chat_message.dart';
+import '../../data/demo_conversation.dart';
 
-/// Provider managing chatbot state with real WebSocket connection
+/// Chat state with an opt-in local demonstration mode.
 class ChatbotProvider extends ChangeNotifier {
   final SecureStorageService _storage;
+  final bool demoMode;
+  final DemoConversation _demoConversation;
+  final List<String> _demoQueue = [];
+  Timer? _demoTimer;
 
   final List<ChatMessage> _messages = [];
   bool _isMascotMinimized = false;
@@ -21,11 +26,21 @@ class ChatbotProvider extends ChangeNotifier {
   bool get isTyping => _isTyping;
   bool get isConnected => _isConnected;
 
-  ChatbotProvider({required SecureStorageService storage}) : _storage = storage;
+  ChatbotProvider({
+    required SecureStorageService storage,
+    this.demoMode = const bool.fromEnvironment('ELYRII_DEMO_CHAT'),
+    DemoConversation? demoConversation,
+  }) : _storage = storage,
+       _demoConversation = demoConversation ?? DemoConversation();
 
   /// Connect to the chat WebSocket via the gateway
   Future<void> connect() async {
     if (_isConnected) return;
+    if (demoMode) {
+      _isConnected = true;
+      notifyListeners();
+      return;
+    }
     final token = await _storage.getAccessToken();
     final userId = await _storage.getUserId();
     if ((token == null || token.isEmpty) &&
@@ -78,6 +93,12 @@ class ChatbotProvider extends ChangeNotifier {
     _messages.add(userMessage);
     _isTyping = true;
     notifyListeners();
+    if (demoMode) {
+      _isConnected = true;
+      _demoQueue.add(content.trim());
+      _scheduleDemoReply();
+      return;
+    }
     if (_socket != null && _isConnected) {
       _socket!.add(content);
     } else {
@@ -96,8 +117,29 @@ class ChatbotProvider extends ChangeNotifier {
     }
   }
 
+  void _scheduleDemoReply() {
+    if (_demoTimer != null || _demoQueue.isEmpty) return;
+    final response = _demoConversation.reply(_demoQueue.removeAt(0));
+    _demoTimer = Timer(_demoConversation.delayFor(response), () {
+      _demoTimer = null;
+      _messages.add(ChatMessage.ai(response));
+      _isTyping = _demoQueue.isNotEmpty;
+      notifyListeners();
+      _scheduleDemoReply();
+    });
+  }
+
+  void _cancelDemoReplies() {
+    _demoTimer?.cancel();
+    _demoTimer = null;
+    _demoQueue.clear();
+    _demoConversation.reset();
+    _isTyping = false;
+  }
+
   /// Disconnect from the WebSocket
   Future<void> disconnect() async {
+    _cancelDemoReplies();
     await _socket?.close();
     _socket = null;
     _isConnected = false;
@@ -117,6 +159,7 @@ class ChatbotProvider extends ChangeNotifier {
   }
 
   void clearHistory() {
+    _cancelDemoReplies();
     _messages.clear();
     _isMascotMinimized = false;
     notifyListeners();
@@ -124,7 +167,9 @@ class ChatbotProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    disconnect();
+    _cancelDemoReplies();
+    _socket?.close();
+    _socket = null;
     super.dispose();
   }
 }
