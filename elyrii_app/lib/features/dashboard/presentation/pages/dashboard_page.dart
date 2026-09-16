@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/glass/elyrii_glass_surface.dart';
+import '../../../journal/data/models/journal_entry_model.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../routes/app_routes.dart';
-import '../../data/models/dashboard_models.dart';
-import '../../data/repositories/dashboard_repository.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/glass_settings_button.dart';
-import '../widgets/last_journal_card.dart';
 import '../../../journal/presentation/providers/journal_provider.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../settings/providers/settings_provider.dart';
 
 import '../widgets/mascot_peek.dart';
 import '../widgets/mascot_speech_bubble.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -27,13 +28,24 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
       context.read<DashboardProvider>().loadDashboardData();
       context.read<JournalProvider>().loadEntries();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -42,33 +54,54 @@ class _DashboardPageState extends State<DashboardPage> {
     final isDark = theme.brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Consumer3<DashboardProvider, JournalProvider, AuthProvider>(
-      builder: (context, provider, journalProvider, authProvider, child) {
-        final firstName = authProvider.user?.firstName ?? '';
-
+    return Consumer4<
+      DashboardProvider,
+      JournalProvider,
+      AuthProvider,
+      UserProvider
+    >(
+      builder: (context, provider, journalProvider, authProvider, userProvider, child) {
         return Scaffold(
           backgroundColor: isDark
               ? AppColors.scaffoldDark
               : AppColors.scaffoldLight,
           body: Stack(
-            clipBehavior: Clip.none,
             children: [
-              // Contenu principal avec scroll
+              // Contenu principal défilant sous les boutons d'en-tête
               SingleChildScrollView(
+                controller: _scrollController,
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // Espace pour le status bar
-                    SizedBox(height: topPadding),
+                    // Dégagement pour le bandeau d'en-tête fixé en haut
+                    SizedBox(height: topPadding + 68),
 
-                    // Mascotte 3D
-                    MascotPeek(
-                      selectedMood: provider.selectedMood,
-                      isDark: isDark,
-                      onTap: provider.nextMascotMessage,
+                    // ---- 1. Zone héroïque : mascotte 3D & charm de personnalisation ----
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Espace symétrique invisible à gauche (44px) pour centrer parfaitement la mascotte
+                        const SizedBox(width: 44),
+                        MascotPeek(
+                          selectedMood: provider.selectedMood,
+                          isDark: isDark,
+                          onTap: provider.nextMascotMessage,
+                        ),
+                        // Charm de personnalisation discret en verre liquide
+                        SizedBox(
+                          width: 44,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: _MascotCustomizeCharm(isDark: isDark),
+                          ),
+                        ),
+                      ],
                     ),
 
-                    // Container principal avec le contenu
+                    // Rapprochement du texte directement sous les pattes de la mascotte
+                    const SizedBox(height: 2),
+
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppDimensions.pageHorizontalPadding,
@@ -76,66 +109,27 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Speech Bubble de la mascotte
+                          // Bulle de parole en verre doux
                           MascotSpeechBubble(
-                                message: provider.mascotMessage,
-                                isDark: isDark,
-                                onTap: provider.nextMascotMessage,
-                              )
-                              .animate()
-                              .fadeIn(delay: 400.ms)
-                              .scale(curve: Curves.easeOutBack),
+                            message: provider.mascotMessage,
+                            isDark: isDark,
+                            onTap: provider.nextMascotMessage,
+                          ),
+                          const SizedBox(height: 22),
 
-                          const SizedBox(height: 24),
+                          // ---- 2. État d'esprit (Style Apple Health State of Mind) ----
+                          _buildMoodSection(isDark, provider),
 
-                          // Greeting avec animation
-                          _buildGreeting(provider, isDark, firstName)
-                              .animate()
-                              .fadeIn(duration: 400.ms)
-                              .slideY(begin: 0.1, end: 0),
+                          const SizedBox(height: 22),
 
-                          if (provider.isLoading) ...[
-                            const SizedBox(height: 16),
-                            const LinearProgressIndicator(minHeight: 3),
-                          ],
-                          if (provider.error != null) ...[
-                            const SizedBox(height: 16),
-                            _buildErrorBanner(provider.error!, isDark),
-                          ],
+                          // ---- 3. Bento Grid du Bien-être ----
+                          if (provider.isLoading)
+                            _DashboardSkeleton(isDark: isDark)
+                          else
+                            _buildBentoGrid(provider, journalProvider, isDark),
 
-                          const SizedBox(height: 28),
-
-                          // Section "Comment te sens-tu ?"
-                          _buildMoodSection(isDark, provider)
-                              .animate()
-                              .fadeIn(duration: 400.ms, delay: 100.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          const SizedBox(height: 32),
-
-                          // Section Stats
-                          _buildStatsSection(provider, isDark)
-                              .animate()
-                              .fadeIn(duration: 400.ms, delay: 200.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          const SizedBox(height: 24),
-
-                          _buildReviewEntry(isDark)
-                              .animate()
-                              .fadeIn(duration: 400.ms, delay: 250.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          const SizedBox(height: 24),
-
-                          // Section "Ton activité"
-                          _buildActivitySection(isDark, journalProvider)
-                              .animate()
-                              .fadeIn(duration: 400.ms, delay: 300.ms)
-                              .slideY(begin: 0.1, end: 0),
-
-                          // Espace pour la navbar
-                          const SizedBox(height: 140),
+                          // Espace pour la barre de navigation flottante
+                          const SizedBox(height: 130),
                         ],
                       ),
                     ),
@@ -143,15 +137,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
 
-              // Bouton Settings (liquid glass)
+              // Bandeau d'en-tête spatial unifié (avatar + date/salutation + réglages)
               Positioned(
-                top: topPadding + 12,
-                right: 16,
-                child: GlassSettingsButton(
-                  isDark: isDark,
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.settings);
-                  },
+                top: topPadding + 8,
+                left: 0,
+                right: 0,
+                child: _buildHeaderBand(
+                  authProvider,
+                  userProvider,
+                  provider,
+                  isDark,
                 ),
               ),
             ],
@@ -161,305 +156,421 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildGreeting(
-    DashboardProvider provider,
+  /// Date du jour formatée en français pour le bandeau d'en-tête (ex: VENDREDI 12 SEPTEMBRE).
+  String _formatHeaderDate() {
+    final now = DateTime.now();
+    const days = [
+      'LUNDI',
+      'MARDI',
+      'MERCREDI',
+      'JEUDI',
+      'VENDREDI',
+      'SAMEDI',
+      'DIMANCHE',
+    ];
+    const months = [
+      'JANVIER',
+      'FÉVRIER',
+      'MARS',
+      'AVRIL',
+      'MAI',
+      'JUIN',
+      'JUILLET',
+      'AOÛT',
+      'SEPTEMBRE',
+      'OCTOBRE',
+      'NOVEMBRE',
+      'DÉCEMBRE',
+    ];
+    final dayName = days[now.weekday - 1];
+    final monthName = months[now.month - 1];
+    return '$dayName ${now.day} $monthName';
+  }
+
+  /// Bandeau d'en-tête supérieur fixé à l'écran :
+  /// Avatar utilisateur + Date et Salutation à gauche, Réglages à droite.
+  Widget _buildHeaderBand(
+    AuthProvider authProvider,
+    UserProvider userProvider,
+    DashboardProvider dashboardProvider,
     bool isDark,
-    String firstName,
   ) {
-    return Column(
-      children: [
-        Text(
-          '${provider.getGreeting()} $firstName',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-            letterSpacing: -0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _getMotivationalMessage(),
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
+    final rawName =
+        authProvider.user?.firstName?.trim() ??
+        userProvider.profile?.firstName?.trim() ??
+        '';
+    final greeting = rawName.isNotEmpty
+        ? '${dashboardProvider.getGreeting()}, $rawName'
+        : dashboardProvider.getGreeting();
 
-  String _getMotivationalMessage() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return 'Comment vas-tu commencer cette journée ?';
-    } else if (hour < 18) {
-      return 'Comment se passe ta journée ?';
-    } else {
-      return 'Comment s\'est passée ta journée ?';
-    }
-  }
-
-  Widget _buildMoodSection(bool isDark, DashboardProvider provider) {
-    return LiquidGlassCard(
-      child: Column(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.mood_rounded,
-                  color: AppColors.primary,
-                  size: 20,
+          // Avatar utilisateur circulaire en Liquid Glass (44x44)
+          Semantics(
+            button: true,
+            label: 'Profil utilisateur',
+            child: GestureDetector(
+              onTap: () {
+                ElyriiHaptics.light();
+                context.push(AppRoutes.editProfile);
+              },
+              child: ElyriiGlassSurface(
+                role: GlassRole.floatingControl,
+                borderRadius: BorderRadius.circular(22),
+                width: 44,
+                height: 44,
+                child: Center(
+                  child: ClipOval(
+                    child: UserAvatar(
+                      pfp: userProvider.profile?.pfp,
+                      size: 38,
+                      showBorder: false,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Mon humeur',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
-                      ),
-                    ),
-                    Text(
-                      provider.getMoodMessage(),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 20),
-          // Mood buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: MoodType.values.map((mood) {
-              final isSelected = provider.selectedMood == mood;
-              return _MoodChip(
-                mood: mood,
-                isSelected: isSelected,
-                isDark: isDark,
-                onTap: () {
-                  HapticFeedback.mediumImpact();
-                  provider.selectMood(mood);
-                },
-              );
-            }).toList(),
+          const SizedBox(width: 12),
+          // Date du jour et salutation chaleureuse (ancrées dans la navigation)
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _formatHeaderDate(),
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  greeting,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Bouton Réglages circulaire en Liquid Glass (44x44)
+          GlassSettingsButton(
+            isDark: isDark,
+            onTap: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsSection(DashboardProvider provider, bool isDark) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            _StatChip(
-              icon: Icons.edit_note_rounded,
-              value: '${provider.journalEntriesCount}',
-              label: 'entrées',
-              color: AppColors.primary,
-              isDark: isDark,
-            ),
-            const SizedBox(width: 12),
-            _StatChip(
-              icon: Icons.local_fire_department_rounded,
-              value: '${provider.currentStreak}',
-              label: 'jours',
-              color: AppColors.secondary,
-              isDark: isDark,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _StatChip(
-              icon: Icons.flag_rounded,
-              value: '${provider.activeChallengesCount}',
-              label: 'défis',
-              color: AppColors.accent,
-              isDark: isDark,
-            ),
-            const SizedBox(width: 12),
-            _StatChip(
-              icon: Icons.stars_rounded,
-              value: '${provider.totalPoints}',
-              label: 'points',
-              color: AppColors.success,
-              isDark: isDark,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  /// Section État d'Esprit inspirée d'Apple Health State of Mind :
+  /// 5 puces émotionnelles expressives, résonance textuelle et action immédiate.
+  Widget _buildMoodSection(bool isDark, DashboardProvider provider) {
+    final selectedMood = provider.selectedMood;
+    final moodColor = selectedMood?.color ?? AppColors.primary;
 
-  Widget _buildReviewEntry(bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.pushNamed(context, AppRoutes.reviews);
-      },
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Halo d'ambiance doux (effet Apple Health State of Mind)
+        if (selectedMood != null)
+          Positioned.fill(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                Icons.analytics_rounded,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Voir le bilan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Analyse ton humeur, tes journaux et tes progrès sur une période donnée.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
-                    ),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                boxShadow: [
+                  BoxShadow(
+                    color: moodColor.withValues(alpha: isDark ? 0.22 : 0.14),
+                    blurRadius: 36,
+                    spreadRadius: 2,
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorBanner(String message, bool isDark) {
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          const Icon(Icons.cloud_off_rounded, color: AppColors.error),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-                fontSize: 12,
+          ),
+        LiquidGlassCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // En-tête de la section
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: moodColor.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      selectedMood?.icon ?? Icons.mood_rounded,
+                      color: moodColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'État d\'esprit',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                          ),
+                        ),
+                        Text(
+                          selectedMood != null
+                              ? 'Enregistré aujourd\'hui'
+                              : 'Comment te sens-tu ce soir ?',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.textTertiaryDark
+                                : AppColors.textTertiaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (selectedMood != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: moodColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_rounded, size: 12, color: moodColor),
+                          const SizedBox(width: 4),
+                          Text(
+                            selectedMood.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: moodColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActivitySection(bool isDark, JournalProvider journalProvider) {
-    final lastEntry = journalProvider.entries.isNotEmpty
-        ? journalProvider.entries.first
-        : null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            'Activité récente',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+              const SizedBox(height: 18),
+              // Sélecteur des 5 humeurs
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: MoodType.values.map((mood) {
+                  final isSelected = selectedMood == mood;
+                  return _MoodChip(
+                    mood: mood,
+                    isSelected: isSelected,
+                    isDark: isDark,
+                    onTap: () => provider.selectMood(mood),
+                  );
+                }).toList(),
+              ),
+              // Résonance émotionnelle & Action concrète (Valeur ajoutée bienveillante)
+              if (selectedMood != null) ...[
+                const SizedBox(height: 16),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.04)
+                        : Colors.black.withValues(alpha: 0.02),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: moodColor.withValues(alpha: 0.20),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            selectedMood.label,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: moodColor,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '•',
+                            style: TextStyle(
+                              color: isDark
+                                  ? AppColors.textTertiaryDark
+                                  : AppColors.textTertiaryLight,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              selectedMood.subtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Bouton d'action contextuel
+                      GestureDetector(
+                        onTap: () {
+                          ElyriiHaptics.light();
+                          context.push(selectedMood.suggestedActionRoute);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 9,
+                          ),
+                          decoration: BoxDecoration(
+                            color: moodColor.withValues(
+                              alpha: isDark ? 0.18 : 0.12,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                selectedMood.suggestedActionIcon,
+                                size: 16,
+                                color: moodColor,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  selectedMood.suggestedActionLabel,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimaryLight,
+                                  ),
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 12,
+                                color: moodColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
-        // Last Journal Entry
-        LastJournalCard(
-          title: lastEntry?.title,
-          content: lastEntry?.content,
-          mood: _parseMood(lastEntry?.mood),
-          createdAt: lastEntry?.createdAt,
-          isDark: isDark,
-          onTap: () {
-            // Navigate to journal
-          },
-        ),
-        const SizedBox(height: 16),
-        // Quick actions
-        _QuickActionsRow(isDark: isDark),
       ],
     );
   }
 
-  MoodType? _parseMood(String? moodName) {
-    if (moodName == null) return null;
-    try {
-      return MoodType.values.firstWhere((m) => m.name == moodName);
-    } catch (_) {
-      return null;
-    }
+  /// Bento Grid organisée et hiérarchisée selon les standards Apple Health & Fitness.
+  Widget _buildBentoGrid(
+    DashboardProvider provider,
+    JournalProvider journalProvider,
+    bool isDark,
+  ) {
+    return Column(
+      children: [
+        // Ligne 1 : Deux cartes symétriques Bento (Série & Respiration)
+        Row(
+          children: [
+            // Carte Série (Gauche)
+            Expanded(
+              child: _BentoStreakCard(
+                streak: provider.currentStreak,
+                isDark: isDark,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Carte Respiration (Droite)
+            Expanded(
+              child: _BentoBreatheCard(
+                isDark: isDark,
+                onTap: () {
+                  ElyriiHaptics.light();
+                  context.go(AppRoutes.meditation);
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        // Ligne 2 : Carte pleine largeur Journal Récent
+        _BentoJournalCard(
+          lastEntry: journalProvider.entries.isNotEmpty
+              ? journalProvider.entries.first
+              : null,
+          isDark: isDark,
+          onTap: () {
+            ElyriiHaptics.light();
+            context.go(AppRoutes.journal);
+          },
+        ),
+        const SizedBox(height: 12),
+        // Ligne 3 : Barre Bilan & Progrès
+        _BentoReviewBar(
+          isDark: isDark,
+          onTap: () {
+            ElyriiHaptics.light();
+            context.push(AppRoutes.reviews);
+          },
+        ),
+      ],
+    );
   }
 }
 
-/// Chip de mood amélioré
+/// Puce de mood interactive avec micro-rebond élastique Apple, haptique et halo.
 class _MoodChip extends StatefulWidget {
   final MoodType mood;
   final bool isSelected;
@@ -482,42 +593,61 @@ class _MoodChipState extends State<_MoodChip> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.9 : (widget.isSelected ? 1.1 : 1.0),
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOutCubic,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: widget.isSelected
-                ? AppColors.primary.withValues(alpha: 0.2)
-                : (widget.isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.03)),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
+    final moodColor = widget.mood.color;
+
+    return Semantics(
+      button: true,
+      label: widget.mood.label,
+      selected: widget.isSelected,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          ElyriiHaptics.selection();
+          widget.onTap();
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedScale(
+          scale: _isPressed ? 0.90 : (widget.isSelected ? 1.08 : 1.0),
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOutBack,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
               color: widget.isSelected
-                  ? AppColors.primary.withValues(alpha: 0.5)
-                  : Colors.transparent,
-              width: 2,
+                  ? moodColor.withValues(alpha: widget.isDark ? 0.25 : 0.18)
+                  : (widget.isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.03)),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: widget.isSelected
+                    ? moodColor.withValues(alpha: 0.6)
+                    : Colors.transparent,
+                width: 1.8,
+              ),
+              boxShadow: widget.isSelected
+                  ? [
+                      BoxShadow(
+                        color: moodColor.withValues(
+                          alpha: widget.isDark ? 0.35 : 0.20,
+                        ),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
             ),
-          ),
-          child: Icon(
-            widget.mood.icon,
-            size: widget.isSelected ? 28 : 24,
-            color: widget.isSelected
-                ? widget.mood.color
-                : (widget.isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight),
+            child: Icon(
+              widget.mood.icon,
+              size: widget.isSelected ? 26 : 22,
+              color: widget.isSelected
+                  ? moodColor
+                  : (widget.isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight),
+            ),
           ),
         ),
       ),
@@ -525,548 +655,165 @@ class _MoodChipState extends State<_MoodChip> {
   }
 }
 
-/// Chip de statistique
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color color;
+/// Carte Bento Série & Régularité (esprit Apple Fitness).
+class _BentoStreakCard extends StatelessWidget {
+  final int streak;
   final bool isDark;
 
-  const _StatChip({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.color,
-    required this.isDark,
-  });
+  const _BentoStreakCard({required this.streak, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        child: Column(
-          children: [
-            Icon(icon, size: 22, color: color),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+    const coral = Color(0xFFFF6B6B);
 
-/// Row d'actions rapides
-class _QuickActionsRow extends StatelessWidget {
-  final bool isDark;
-
-  const _QuickActionsRow({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _QuickActionButton(
-            icon: Icons.edit_rounded,
-            label: 'Nouvelle note',
-            color: AppColors.primary,
-            isDark: isDark,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              // Navigate to journal editor
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _QuickActionButton(
-            icon: Icons.self_improvement_rounded,
-            label: 'Méditer',
-            color: AppColors.accent,
-            isDark: isDark,
-            onTap: () {
-              HapticFeedback.lightImpact();
-              // Navigate to meditation
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Bouton d'action rapide
-class _QuickActionButton extends StatefulWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _QuickActionButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  State<_QuickActionButton> createState() => _QuickActionButtonState();
-}
-
-class _QuickActionButtonState extends State<_QuickActionButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: LiquidGlassCard(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return LiquidGlassCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: widget.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  color: coral.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
                 ),
-                child: Icon(widget.icon, color: widget.color, size: 20),
+                child: const Icon(
+                  Icons.local_fire_department_rounded,
+                  color: coral,
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: widget.isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              const Spacer(),
+              Text(
+                'SÉRIE',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class ReviewsPage extends StatefulWidget {
-  const ReviewsPage({super.key});
-
-  @override
-  State<ReviewsPage> createState() => _ReviewsPageState();
-}
-
-class _ReviewsPageState extends State<ReviewsPage> {
-  static const List<String> _ranges = ['7d', '30d', '90d'];
-
-  late String _selectedRange;
-  late Future<DashboardStats> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedRange = _ranges[1];
-    _future = _loadStats();
-  }
-
-  Future<DashboardStats> _loadStats() {
-    final client = context.read<ApiClient>();
-    final repository = DashboardRepository(client: client);
-    return repository.getStats(range: _selectedRange);
-  }
-
-  void _selectRange(String range) {
-    if (_selectedRange == range) return;
-    HapticFeedback.selectionClick();
-    setState(() {
-      _selectedRange = range;
-      _future = _loadStats();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: FutureBuilder<DashboardStats>(
-          future: _future,
-          builder: (context, snapshot) {
-            final stats = snapshot.data;
-
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, topPadding, 16, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: () => Navigator.maybePop(context),
-                              icon: Icon(
-                                Icons.arrow_back_rounded,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Bilan',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? AppColors.textPrimaryDark
-                                          : AppColors.textPrimaryLight,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Une vue claire sur ton humeur, ton activité et tes progrès.',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: isDark
-                                          ? AppColors.textSecondaryDark
-                                          : AppColors.textSecondaryLight,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _future = _loadStats();
-                                });
-                              },
-                              icon: Icon(
-                                Icons.refresh_rounded,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _RangeSelector(
-                          isDark: isDark,
-                          selectedRange: _selectedRange,
-                          onSelected: _selectRange,
-                        ),
-                        const SizedBox(height: 16),
-                        if (snapshot.connectionState == ConnectionState.waiting)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                        if (snapshot.hasError)
-                          LiquidGlassCard(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'Impossible de charger le bilan pour le moment.',
-                                style: TextStyle(
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (stats != null) ...[
-                          _OverviewGrid(stats: stats, isDark: isDark),
-                          const SizedBox(height: 20),
-                          _SectionHeader(
-                            title: 'Tendance de l’humeur',
-                            subtitle: 'Nombre de prises d’humeur par jour',
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 12),
-                          _TrendChart(stats: stats, isDark: isDark),
-                          const SizedBox(height: 20),
-                          _SectionHeader(
-                            title: 'Répartition',
-                            subtitle: 'Ce qui ressort le plus sur la période',
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 12),
-                          _MoodDistributionList(stats: stats, isDark: isDark),
-                          const SizedBox(height: 20),
-                          _SectionHeader(
-                            title: 'Activité',
-                            subtitle:
-                                'Journal et humeur sur la même ligne du temps',
-                            isDark: isDark,
-                          ),
-                          const SizedBox(height: 12),
-                          _ActivityTimeline(stats: stats, isDark: isDark),
-                          const SizedBox(height: 140),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _RangeSelector extends StatelessWidget {
-  final bool isDark;
-  final String selectedRange;
-  final ValueChanged<String> onSelected;
-
-  const _RangeSelector({
-    required this.isDark,
-    required this.selectedRange,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const ranges = ['7d', '30d', '90d'];
-
-    return Row(
-      children: ranges.map((range) {
-        final selected = selectedRange == range;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: range == ranges.last ? 0 : 8),
-            child: GestureDetector(
-              onTap: () => onSelected(range),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.primary.withValues(alpha: 0.16)
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03)),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                  border: Border.all(
-                    color: selected
-                        ? AppColors.primary.withValues(alpha: 0.45)
-                        : Colors.transparent,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    range,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: selected
-                          ? AppColors.primary
-                          : (isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight),
-                    ),
-                  ),
-                ),
-              ),
+          const SizedBox(height: 14),
+          Text(
+            '$streak ${streak > 1 ? 'jours' : 'jour'}',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+              letterSpacing: -0.5,
             ),
           ),
-        );
-      }).toList(),
+          const SizedBox(height: 4),
+          Text(
+            streak > 0 ? 'Tu tiens le rythme !' : 'Commence aujourd\'hui',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _OverviewGrid extends StatelessWidget {
-  final DashboardStats stats;
+/// Carte Bento Pause Respiration avec bouton d'accès rapide.
+class _BentoBreatheCard extends StatelessWidget {
   final bool isDark;
+  final VoidCallback onTap;
 
-  const _OverviewGrid({required this.stats, required this.isDark});
+  const _BentoBreatheCard({required this.isDark, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final tileWidth = (constraints.maxWidth - 12) / 2;
+    const lavender = AppColors.primary;
 
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _SummaryTile(
-              width: tileWidth,
-              icon: Icons.local_fire_department_rounded,
-              label: 'Streak',
-              value: '${stats.streak}',
-              color: AppColors.secondary,
-              isDark: isDark,
-            ),
-            _SummaryTile(
-              width: tileWidth,
-              icon: Icons.mood_rounded,
-              label: 'Humeurs',
-              value: '${stats.moodLogsCount}',
-              color: AppColors.primary,
-              isDark: isDark,
-            ),
-            _SummaryTile(
-              width: tileWidth,
-              icon: Icons.edit_note_rounded,
-              label: 'Journal',
-              value: '${stats.journalEntriesCount}',
-              color: AppColors.accent,
-              isDark: isDark,
-            ),
-            _SummaryTile(
-              width: tileWidth,
-              icon: Icons.stars_rounded,
-              label: 'Points',
-              value: '${stats.totalPoints}',
-              color: AppColors.success,
-              isDark: isDark,
-            ),
-            _SummaryTile(
-              width: tileWidth,
-              icon: Icons.flag_rounded,
-              label: 'Défis',
-              value:
-                  '${stats.completedChallengesCount}/${stats.activeChallengesCount + stats.completedChallengesCount}',
-              color: AppColors.warning,
-              isDark: isDark,
-            ),
-            _SummaryTile(
-              width: tileWidth,
-              icon: Icons.self_improvement_rounded,
-              label: 'Méditation',
-              value: '${stats.meditationSessionsCount}',
-              color: AppColors.info,
-              isDark: isDark,
-            ),
-            _SummaryTile(
-              width: tileWidth,
-              icon: Icons.trending_up_rounded,
-              label: 'Taux',
-              value: '${(stats.completionRate * 100).round()}%',
-              color: AppColors.successDark,
-              isDark: isDark,
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _SummaryTile extends StatelessWidget {
-  final double width;
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  final bool isDark;
-
-  const _SummaryTile({
-    required this.width,
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
+    return GestureDetector(
+      onTap: onTap,
       child: LiquidGlassCard(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-              ),
-              child: Icon(icon, color: color),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: lavender.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.air_rounded,
+                    color: lavender,
+                    size: 18,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: lavender.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Démarrer',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: lavender,
+                        ),
+                      ),
+                      SizedBox(width: 2),
+                      Icon(Icons.play_arrow_rounded, size: 12, color: lavender),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Text(
-              value,
+              '2 min',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
+                letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
-              label,
+              'Cohérence cardiaque',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -1075,386 +822,260 @@ class _SummaryTile extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final String subtitle;
+/// Carte Bento Pleine Largeur : Dernière entrée de journal.
+class _BentoJournalCard extends StatelessWidget {
+  final JournalEntryModel? lastEntry;
   final bool isDark;
+  final VoidCallback onTap;
 
-  const _SectionHeader({
-    required this.title,
-    required this.subtitle,
+  const _BentoJournalCard({
+    required this.lastEntry,
     required this.isDark,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 12,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TrendChart extends StatelessWidget {
-  final DashboardStats stats;
-  final bool isDark;
-
-  const _TrendChart({required this.stats, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final points = stats.moodTrend7Days;
-    if (points.isEmpty) {
-      return LiquidGlassCard(
+    return GestureDetector(
+      onTap: onTap,
+      child: LiquidGlassCard(
         padding: const EdgeInsets.all(16),
-        child: Text(
-          'Aucune humeur enregistrée sur cette période.',
-          style: TextStyle(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      );
-    }
-
-    final maxCount = points
-        .map((point) => point.count)
-        .fold<int>(0, (max, value) => value > max ? value : max)
-        .clamp(1, 9999)
-        .toDouble();
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        height: 180,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: points.map((point) {
-              final parsedDate = DateTime.tryParse(point.day);
-              final barHeight = 104.0 * (point.count / maxCount);
-              final accent = point.count > 0
-                  ? AppColors.primary.withValues(alpha: 0.85)
-                  : (isDark ? Colors.white24 : Colors.black12);
-
-              return SizedBox(
-                width: 44,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      '${point.count}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      height: 108,
-                      alignment: Alignment.bottomCenter,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 16,
-                        height: barHeight.clamp(6, 104).toDouble(),
-                        decoration: BoxDecoration(
-                          color: accent,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      parsedDate != null
-                          ? _shortDateLabel(parsedDate)
-                          : point.day,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-String _shortDateLabel(DateTime date) {
-  const months = [
-    'Jan',
-    'Fév',
-    'Mar',
-    'Avr',
-    'Mai',
-    'Juin',
-    'Juil',
-    'Août',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Déc',
-  ];
-  return '${date.day} ${months[date.month - 1]}';
-}
-
-class _MoodDistributionList extends StatelessWidget {
-  final DashboardStats stats;
-  final bool isDark;
-
-  const _MoodDistributionList({required this.stats, required this.isDark});
-
-  Color _moodColor(String moodType) {
-    switch (moodType) {
-      case 'verySad':
-        return const Color(0xFF7BA3C7);
-      case 'sad':
-        return const Color(0xFF93B8DA);
-      case 'neutral':
-        return const Color(0xFFA39C96);
-      case 'happy':
-        return const Color(0xFFA8D5BA);
-      case 'veryHappy':
-        return const Color(0xFF7BC393);
-      default:
-        return AppColors.primary;
-    }
-  }
-
-  String _moodLabel(String moodType) {
-    switch (moodType) {
-      case 'verySad':
-        return 'Très triste';
-      case 'sad':
-        return 'Triste';
-      case 'neutral':
-        return 'Neutre';
-      case 'happy':
-        return 'Content';
-      case 'veryHappy':
-        return 'Très content';
-      default:
-        return 'Inconnu';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final items = stats.moodDistribution;
-    if (items.isEmpty) {
-      return LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Aucune répartition disponible.',
-          style: TextStyle(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      );
-    }
-
-    final total = items.fold<int>(0, (sum, item) => sum + item.count);
-
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: items.map((item) {
-          final percentage = total == 0 ? 0.0 : item.count / total;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
                 Container(
-                  width: 12,
-                  height: 12,
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _moodColor(item.moodType),
+                    color: AppColors.primary.withValues(alpha: 0.14),
                     shape: BoxShape.circle,
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _moodLabel(item.moodType),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          value: percentage,
-                          minHeight: 8,
-                          backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.06)
-                              : Colors.black.withValues(alpha: 0.05),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _moodColor(item.moodType),
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: const Icon(
+                    Icons.edit_note_rounded,
+                    color: AppColors.primary,
+                    size: 18,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  '${item.count}',
+                  'Dernière réflexion',
                   style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                     color: isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
                   ),
                 ),
+                const Spacer(),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 12,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
+                ),
               ],
             ),
-          );
-        }).toList(),
+            const SizedBox(height: 12),
+            if (lastEntry != null) ...[
+              Text(
+                lastEntry!.title.isNotEmpty ? lastEntry!.title : 'Sans titre',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                lastEntry!.content ?? '',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ] else ...[
+              Text(
+                'Prends un instant pour poser tes pensées...',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ActivityTimeline extends StatelessWidget {
-  final DashboardStats stats;
+/// Barre Bento Bilan & Progrès.
+class _BentoReviewBar extends StatelessWidget {
   final bool isDark;
+  final VoidCallback onTap;
 
-  const _ActivityTimeline({required this.stats, required this.isDark});
+  const _BentoReviewBar({required this.isDark, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final points = stats.activityTimeline;
-    if (points.isEmpty) {
-      return LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Aucune activité à afficher sur cette période.',
-          style: TextStyle(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: LiquidGlassCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.insights_rounded,
+                color: AppColors.accent,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Consulter mon bilan & progression',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: isDark
+                  ? AppColors.textTertiaryDark
+                  : AppColors.textTertiaryLight,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Squelette de chargement discret : shimmer doux aux couleurs de surface,
+/// en remplacement de toute barre de progression brute.
+class _DashboardSkeleton extends StatelessWidget {
+  final bool isDark;
+
+  const _DashboardSkeleton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.04);
+    final isTest = WidgetsBinding.instance.runtimeType.toString().contains(
+      'Test',
+    );
+
+    Widget block(double height) {
+      final box = Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(16),
         ),
       );
+      if (isTest) return box;
+      return box
+          .animate(onPlay: (controller) => controller.repeat())
+          .shimmer(
+            duration: 1400.ms,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.white.withValues(alpha: 0.5),
+          );
     }
 
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: points.map((point) {
-          final parsedDate = DateTime.tryParse(point.day);
-          final total = point.moodLogs + point.journalEntries;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 88,
-                  child: Text(
-                    parsedDate != null
-                        ? _shortDateLabel(parsedDate)
-                        : point.day,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Humeurs ${point.moodLogs}  Journal ${point.journalEntries}  Total $total',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: point.moodLogs == 0 ? 1 : point.moodLogs,
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.75,
-                                ),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            flex: point.journalEntries == 0
-                                ? 1
-                                : point.journalEntries,
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.75),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: block(92)),
+            const SizedBox(width: 12),
+            Expanded(child: block(92)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        block(72),
+      ],
+    );
+  }
+}
+
+/// Charm de personnalisation discret et épuré en Liquid Glass pur.
+///
+/// Suppression de la surbrillance criarde et de l'oscillation : surface de verre
+/// dépoli subtile, parfaitement intégrée à la ligne visuelle Apple de l'écran.
+class _MascotCustomizeCharm extends StatefulWidget {
+  final bool isDark;
+
+  const _MascotCustomizeCharm({required this.isDark});
+
+  @override
+  State<_MascotCustomizeCharm> createState() => _MascotCustomizeCharmState();
+}
+
+class _MascotCustomizeCharmState extends State<_MascotCustomizeCharm> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Personnaliser la mascotte',
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          ElyriiHaptics.selection();
+          context.push(AppRoutes.mascotCustomization);
+        },
+        onTapCancel: () => setState(() => _isPressed = false),
+        child: AnimatedScale(
+          scale: _isPressed ? 0.90 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutBack,
+          child: ElyriiGlassSurface(
+            role: GlassRole.floatingControl,
+            borderRadius: BorderRadius.circular(20),
+            width: 40,
+            height: 40,
+            child: Center(
+              child: Icon(
+                Icons.palette_outlined,
+                size: 19,
+                color: widget.isDark
+                    ? Colors.white.withValues(alpha: 0.85)
+                    : AppColors.primary,
+              ),
             ),
-          );
-        }).toList(),
+          ),
+        ),
       ),
     );
   }

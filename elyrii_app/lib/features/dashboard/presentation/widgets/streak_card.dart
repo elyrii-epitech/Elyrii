@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/glass_container.dart';
 
 /// Widget affichant la série de jours consécutifs avec effet glassmorphism
 class StreakCard extends StatelessWidget {
@@ -12,13 +11,19 @@ class StreakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      isDark: isDark,
-      borderRadius: AppDimensions.radiusMd,
-      intensity: GlassIntensity.medium,
+    return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingMd,
         vertical: AppDimensions.paddingSm,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF201E24) : Colors.white,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : Colors.black.withValues(alpha: 0.05),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

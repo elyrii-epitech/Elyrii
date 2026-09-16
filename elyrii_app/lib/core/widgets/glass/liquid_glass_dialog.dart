@@ -1,11 +1,9 @@
 // iOS 26 Liquid Glass Dialog
 // Part of the Liquid Glass Widget Kit
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_dimensions.dart';
+import '../../glass/elyrii_glass_surface.dart';
+import '../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Shows an iOS 26 style dialog with liquid glass effect
 Future<T?> showLiquidGlassDialog<T>({
@@ -15,7 +13,7 @@ Future<T?> showLiquidGlassDialog<T>({
   String? title,
   List<LiquidGlassDialogAction>? actions,
 }) {
-  HapticFeedback.mediumImpact();
+  ElyriiHaptics.medium();
 
   return showGeneralDialog<T>(
     context: context,
@@ -80,74 +78,53 @@ class LiquidGlassDialogContent extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 40),
         constraints: const BoxConstraints(maxWidth: 320),
-        child: ClipRRect(
+        child: ElyriiGlassSurface(
+          role: GlassRole.dialog,
           borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: AppDimensions.blurSigmaLiquidGlass,
-              sigmaY: AppDimensions.blurSigmaLiquidGlass,
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.liquidGlassBackgroundDark
-                    : AppColors.liquidGlassBackgroundLight,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.liquidGlassBorderDark
-                      : AppColors.liquidGlassBorderLight,
-                  width: 0.5,
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Title & Content
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                      child: Column(
-                        children: [
-                          if (title != null) ...[
-                            Text(
-                              title!,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                          DefaultTextStyle(
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.7)
-                                  : Colors.black.withValues(alpha: 0.6),
-                            ),
-                            textAlign: TextAlign.center,
-                            child: child,
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                  child: Column(
+                    children: [
+                      if (title != null) ...[
+                        Text(
+                          title!,
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black,
                           ),
-                        ],
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      DefaultTextStyle(
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.7)
+                              : Colors.black.withValues(alpha: 0.6),
+                        ),
+                        textAlign: TextAlign.center,
+                        child: child,
                       ),
-                    ),
-                    // Actions
-                    if (actions != null && actions!.isNotEmpty) ...[
-                      Divider(
-                        height: 0.5,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.black.withValues(alpha: 0.1),
-                      ),
-                      _buildActions(context, isDark),
                     ],
-                  ],
+                  ),
                 ),
-              ),
+                if (actions != null && actions!.isNotEmpty) ...[
+                  Divider(
+                    height: 0.5,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.black.withValues(alpha: 0.1),
+                  ),
+                  _buildActions(context, isDark),
+                ],
+              ],
             ),
           ),
         ),
@@ -209,7 +186,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        HapticFeedback.lightImpact();
+        ElyriiHaptics.light();
         action.onPressed();
       },
       child: Container(

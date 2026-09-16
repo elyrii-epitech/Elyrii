@@ -1,15 +1,16 @@
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import 'package:provider/provider.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../providers/journal_provider.dart';
 import 'glass_text_field.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Bottom sheet modal pour créer/éditer une entrée du journal
 class JournalEditorSheet extends StatefulWidget {
@@ -292,7 +293,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           // Bouton fermer
           GestureDetector(
             onTap: () async {
-              HapticFeedback.lightImpact();
+              ElyriiHaptics.light();
               final canPop = await _onWillPop();
               if (canPop && mounted) {
                 Navigator.of(context).pop();
@@ -321,7 +322,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           // Bouton ajouter/sauvegarder
           GestureDetector(
             onTap: () {
-              HapticFeedback.lightImpact();
+              ElyriiHaptics.light();
               if (_contentController.text.trim().isNotEmpty) {
                 _autoSave();
                 Navigator.of(context).pop();
@@ -344,7 +345,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           if (widget.entry != null || _createdEntryId != null)
             GestureDetector(
               onTap: () {
-                HapticFeedback.lightImpact();
+                ElyriiHaptics.light();
                 _deleteEntry();
               },
               child: Container(
@@ -369,14 +370,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     if (_isSaving) {
       return Row(
         children: [
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.primary,
-            ),
-          ),
+          const CupertinoActivityIndicator(radius: 7),
           const SizedBox(width: 8),
           Flexible(
             child: Text(

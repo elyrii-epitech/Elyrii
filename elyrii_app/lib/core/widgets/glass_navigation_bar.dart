@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:ui';
+import '../design_system/haptics/elyrii_haptics.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';
-import '../services/glass_performance_service.dart';
+import '../glass/elyrii_glass_surface.dart';
 
 /// Item de navigation pour la GlassNavigationBar
 class GlassNavItem {
@@ -48,203 +47,210 @@ class GlassNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final performanceService = GlassPerformanceService();
-    final effectiveBlurSigma = performanceService.getEffectiveBlurSigma(
-      AppDimensions.blurSigmaLiquidGlass,
-    );
-
     return Container(
       margin: margin,
       height: height,
-      child: Stack(
-        children: [
-          // Navbar glass iOS 26 Liquid Glass
-          RepaintBoundary(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(borderRadius),
-              child: effectiveBlurSigma > 0
-                  ? BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: effectiveBlurSigma,
-                        sigmaY: effectiveBlurSigma,
-                      ),
-                      child: _buildNavBarContainer(),
-                    )
-                  : _buildNavBarContainer(),
-            ),
-          ),
-          // Highlight spéculaire iOS 26 (reflet en haut) - IgnorePointer pour ne pas bloquer les clics
-          if (performanceService.showSpecularHighlight)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: borderRadius * 0.8,
-              child: IgnorePointer(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(borderRadius),
-                    topRight: Radius.circular(borderRadius),
-                  ),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.liquidGlassSpecularStrong,
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  /// Construit le container principal de la navbar
-  Widget _buildNavBarContainer() {
-    return Container(
-      decoration: BoxDecoration(
-        // iOS 26: Gradient vertical pour plus de profondeur
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [
-                  AppColors.liquidGlassBackgroundDark,
-                  AppColors.liquidGlassBackgroundDarkEnd,
-                ]
-              : [
-                  AppColors.liquidGlassBackgroundLight,
-                  AppColors.liquidGlassBackgroundLightEnd,
-                ],
-        ),
+      child: ElyriiGlassSurface(
+        role: GlassRole.navigation,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: isDark
-              ? AppColors.liquidGlassBorderDark
-              : AppColors.liquidGlassBorderLight,
-          width: 0.5, // iOS 26: bordure plus fine
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: items.map((item) {
+            return _GlassNavItemView(
+              item: item,
+              isSelected: currentIndex == item.index,
+              isDark: isDark,
+              totalItems: items.length,
+              onItemSelected: onItemSelected,
+              iconController: iconControllers[item.index],
+            );
+          }).toList(),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
-            blurRadius: 14,
-            spreadRadius: 0,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: items.map((item) {
-          return _buildNavItem(
-            item: item,
-            controller: iconControllers[item.index],
-          );
-        }).toList(),
       ),
     );
   }
+}
 
-  Widget _buildNavItem({
-    required GlassNavItem item,
-    required AnimationController controller,
-  }) {
-    final isSelected = currentIndex == item.index;
-    final isPressedItem = pressedIndex == item.index;
+/// Élément interactif de navigation avec rebond élastique et flash blanc
+/// spéculaire (effet Apple Liquid Glass).
+class _GlassNavItemView extends StatefulWidget {
+  final GlassNavItem item;
+  final bool isSelected;
+  final bool isDark;
+  final int totalItems;
+  final ValueChanged<int> onItemSelected;
+  final AnimationController iconController;
+
+  const _GlassNavItemView({
+    required this.item,
+    required this.isSelected,
+    required this.isDark,
+    required this.totalItems,
+    required this.onItemSelected,
+    required this.iconController,
+  });
+
+  @override
+  State<_GlassNavItemView> createState() => _GlassNavItemViewState();
+}
+
+class _GlassNavItemViewState extends State<_GlassNavItemView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _flashController;
+  late final Animation<double> _flashAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _flashController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _flashAnimation = CurvedAnimation(
+      parent: _flashController,
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _flashController.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails _) {
+    setState(() => _isPressed = true);
+    ElyriiHaptics.selection();
+  }
+
+  void _handleTapUp(TapUpDetails _) {
+    setState(() => _isPressed = false);
+    _flashController.forward(from: 0);
+    widget.onItemSelected(widget.item.index);
+  }
+
+  void _handleTapCancel() {
+    setState(() => _isPressed = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     const primaryColor = AppColors.primary;
 
     return Expanded(
-      child: GestureDetector(
-        onTapDown: (_) {
-          HapticFeedback.lightImpact();
-        },
-        onTapUp: (_) {
-          onItemSelected(item.index);
-        },
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            final easedValue = Curves.easeOutCubic.transform(controller.value);
-            final scale = 1.0 + (easedValue * 0.08);
+      child: Semantics(
+        button: true,
+        selected: widget.isSelected,
+        label:
+            'Onglet ${widget.item.label}, ${widget.item.index + 1} sur ${widget.totalItems}',
+        child: GestureDetector(
+          onTapDown: _handleTapDown,
+          onTapUp: _handleTapUp,
+          onTapCancel: _handleTapCancel,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedScale(
+            // Rebond élastique Apple Liquid Glass (compression 0.88 puis ressort)
+            scale: _isPressed ? 0.88 : 1.0,
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOutBack,
+            child: AnimatedBuilder(
+              animation: widget.iconController,
+              builder: (context, child) {
+                final easedValue = Curves.easeOutCubic.transform(
+                  widget.iconController.value,
+                );
+                final scale = 1.0 + (easedValue * 0.08);
 
-            return AnimatedScale(
-              scale: isPressedItem ? 0.95 : 1.0, // iOS 26: 0.95 au lieu de 0.9
-              duration: const Duration(milliseconds: 100),
-              child: AnimatedContainer(
-                duration: const Duration(
-                  milliseconds: AppDimensions.animationDurationLiquidGlass,
-                ),
-                curve: Curves.easeOutCubic, // iOS 26: easeOutCubic
-                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                decoration: BoxDecoration(
-                  // Fond gris plus visible quand sélectionné
-                  color: isSelected
-                      ? (isDark
-                            ? Colors.white.withValues(alpha: 0.12)
-                            : Colors.black.withValues(alpha: 0.08))
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Animation de translation (mouvement vers le haut)
-                    Transform.translate(
-                      offset: Offset(0, isSelected ? -2 * controller.value : 0),
-                      child: Transform.scale(
-                        scale: isSelected ? scale : 1.0,
-                        child: Icon(
-                          item.icon,
-                          // Icône en violet si sélectionné, sinon couleur adaptée au thème
-                          color: isSelected
-                              ? primaryColor
-                              : (isDark
-                                    ? AppColors.iconDefaultDark
-                                    : AppColors.iconDefaultLight),
-                          size: 20,
-                        ),
+                return AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: AppDimensions.animationDurationLiquidGlass,
+                  ),
+                  curve: Curves.easeOutCubic,
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: widget.isSelected
+                        ? (widget.isDark
+                              ? Colors.white.withValues(alpha: 0.14)
+                              : Colors.black.withValues(alpha: 0.08))
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Translation et scale de l'icône
+                          Transform.translate(
+                            offset: Offset(0, -2 * easedValue),
+                            child: Transform.scale(
+                              scale: widget.isSelected ? scale : 1.0,
+                              child: Icon(
+                                widget.item.icon,
+                                color: widget.isSelected
+                                    ? primaryColor
+                                    : (widget.isDark
+                                          ? AppColors.iconDefaultDark
+                                          : AppColors.iconDefaultLight),
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: TextStyle(
+                              fontSize: widget.isSelected ? 9.5 : 9,
+                              fontWeight: widget.isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                              color: widget.isSelected
+                                  ? primaryColor
+                                  : (widget.isDark
+                                        ? AppColors.iconDefaultDark
+                                        : AppColors.iconDefaultLight),
+                              letterSpacing: 0,
+                            ),
+                            child: Text(
+                              widget.item.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 3),
-                    // Texte avec animation fade
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: 1.0,
-                      child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: TextStyle(
-                          fontSize: isSelected ? 9.5 : 9,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          // Texte en violet si sélectionné, sinon couleur adaptée au thème
-                          color: isSelected
-                              ? primaryColor
-                              : (isDark
-                                    ? AppColors.iconDefaultDark
-                                    : AppColors.iconDefaultLight),
-                          letterSpacing: 0,
-                        ),
-                        child: Text(
-                          item.label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      // Flash blanc spéculaire au clic (effet liquid glass Apple)
+                      AnimatedBuilder(
+                        animation: _flashAnimation,
+                        builder: (context, _) {
+                          if (_flashAnimation.value <= 0 ||
+                              _flashAnimation.value >= 1) {
+                            return const SizedBox();
+                          }
+                          return Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.white.withValues(
+                                  alpha: (0.35 * (1.0 - _flashAnimation.value))
+                                      .clamp(0.0, 1.0),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );

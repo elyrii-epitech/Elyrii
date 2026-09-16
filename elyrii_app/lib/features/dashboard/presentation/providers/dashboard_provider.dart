@@ -1,7 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/config/api_config.dart';
+import '../../data/repositories/dashboard_repository.dart';
 
 /// Enum représentant les différents moods disponibles
 enum MoodType { verySad, sad, neutral, happy, veryHappy }
@@ -29,30 +30,90 @@ extension MoodTypeExtension on MoodType {
   Color get color {
     switch (this) {
       case MoodType.verySad:
-        return const Color(0xFF7BA3C7);
+        return const Color(0xFF6B7FA3); // Ardoise apaisante
       case MoodType.sad:
-        return const Color(0xFF93B8DA);
+        return const Color(0xFF7E94B3); // Bleu brumeux
       case MoodType.neutral:
-        return const Color(0xFFA39C96);
+        return const Color(0xFF8E959E); // Sauge / pierre calme
       case MoodType.happy:
-        return const Color(0xFFA8D5BA);
+        return const Color(0xFF5BA87E); // Vert clarté & sérénité
       case MoodType.veryHappy:
-        return const Color(0xFF7BC393);
+        return const Color(0xFFE5A038); // Ambre doré & rayonnement
     }
   }
 
   String get label {
     switch (this) {
       case MoodType.verySad:
-        return 'Très triste';
+        return 'Éprouvé';
       case MoodType.sad:
-        return 'Triste';
+        return 'Vulnérable';
       case MoodType.neutral:
-        return 'Neutre';
+        return 'Paisible';
       case MoodType.happy:
-        return 'Content';
+        return 'Serein';
       case MoodType.veryHappy:
-        return 'Très content';
+        return 'Rayonnant';
+    }
+  }
+
+  String get subtitle {
+    switch (this) {
+      case MoodType.verySad:
+        return 'Besoin de douceur et de repos';
+      case MoodType.sad:
+        return 'Une baisse d\'énergie passagère';
+      case MoodType.neutral:
+        return 'Calme, présent, à ton rythme';
+      case MoodType.happy:
+        return 'Une belle clarté d\'esprit';
+      case MoodType.veryHappy:
+        return 'Plein d\'élan et de gratitude';
+    }
+  }
+
+  String get suggestedActionLabel {
+    switch (this) {
+      case MoodType.verySad:
+        return '2 min de respiration apaisante';
+      case MoodType.sad:
+        return 'Déposer mes pensées dans le journal';
+      case MoodType.neutral:
+        return 'Prendre un instant de pause';
+      case MoodType.happy:
+        return 'Noter ce qui m\'a fait sourire';
+      case MoodType.veryHappy:
+        return 'Ancrer ce moment dans mon journal';
+    }
+  }
+
+  IconData get suggestedActionIcon {
+    switch (this) {
+      case MoodType.verySad:
+        return Icons.air_rounded;
+      case MoodType.sad:
+        return Icons.edit_note_rounded;
+      case MoodType.neutral:
+        return Icons.self_improvement_rounded;
+      case MoodType.happy:
+        return Icons.auto_awesome_rounded;
+      case MoodType.veryHappy:
+        return Icons.stars_rounded;
+    }
+  }
+
+  String get suggestedActionRoute {
+    switch (this) {
+      case MoodType.verySad:
+        return '/meditation';
+      case MoodType.sad:
+        return '/journal';
+      case MoodType.neutral:
+        return '/meditation';
+      case MoodType.happy:
+        return '/journal';
+      case MoodType.veryHappy:
+        return '/journal';
     }
   }
 }
@@ -101,7 +162,7 @@ extension GoalTypeExtension on GoalType {
 
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
-  final ApiClient _apiClient;
+  final DashboardRepository _repository;
   bool _isLoading = false;
   String? _error;
 
@@ -215,7 +276,12 @@ class DashboardProvider extends ChangeNotifier {
     return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
   }
 
-  DashboardProvider({required ApiClient apiClient}) : _apiClient = apiClient {
+  DashboardProvider({DashboardRepository? repository, ApiClient? apiClient})
+    : assert(
+        repository != null || apiClient != null,
+        'repository or apiClient must be provided',
+      ),
+      _repository = repository ?? DashboardRepository(client: apiClient!) {
     _initializeQuoteOfTheDay();
     _initializeDailyGoal();
     _initializeMascotMessage();
@@ -251,6 +317,8 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   Future<void> selectMood(MoodType mood) async {
+    if (_selectedMood == mood) return;
+
     _selectedMood = mood;
     _currentMascotMessageIndex = Random().nextInt(
       _moodMascotMessages[mood]!.length,
@@ -262,19 +330,27 @@ class DashboardProvider extends ChangeNotifier {
     );
     _moodHistory[today] = mood;
     _error = null;
-    notifyListeners();
+    notifyListeners(); // Mise à jour optimiste immédiate (sans flash de squelette)
 
-    try {
-      await _apiClient.post(
-        ApiConfig.logMoodUrl,
-        body: {'moodType': mood.name},
-      );
-      // Refresh stats to get updated streak from backend
-      await loadDashboardData();
-    } catch (e) {
-      _error = "Impossible d'enregistrer l'humeur: ${e.toString()}";
-      notifyListeners();
-    }
+    // Synchronisation en arrière-plan sans bloquer l'UI ni recharger l'état de chargement
+    unawaited(() async {
+      try {
+        await _repository.logMood(mood.name);
+        final data = await _repository.getDashboard();
+        final stats = data.stats;
+        _currentStreak = stats.streak;
+        _activeChallengesCount = stats.activeChallengesCount;
+        _journalEntriesCount = stats.journalEntriesCount;
+        _completedChallengesCount = stats.completedChallengesCount;
+        _totalPoints = stats.totalPoints;
+        _meditationSessionsCount = stats.meditationSessionsCount;
+        _coachSessionsCount = stats.coachSessionsCount;
+        _moodLogsCount = stats.moodLogsCount;
+        notifyListeners();
+      } catch (_) {
+        // En mode déconnecté, préserve silencieusement la saisie locale
+      }
+    }());
   }
 
   void completeGoal() {
@@ -317,16 +393,8 @@ class DashboardProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final dashboardResponse =
-          await _apiClient.get(ApiConfig.userDashboardUrl)
-              as Map<String, dynamic>;
-      final statsResponse =
-          dashboardResponse['stats'] as Map<String, dynamic>? ??
-          dashboardResponse;
-
-      final moodTypeStr =
-          dashboardResponse['latestMood'] as String? ??
-          statsResponse['latestMood'] as String?;
+      final data = await _repository.getDashboard();
+      final moodTypeStr = data.latestMood;
       if (moodTypeStr != null) {
         _selectedMood = MoodType.values.firstWhere(
           (m) => m.name == moodTypeStr,
@@ -336,23 +404,19 @@ class DashboardProvider extends ChangeNotifier {
         _selectedMood = null;
       }
 
-      _currentStreak = _readInt(statsResponse['streak']);
-      _activeChallengesCount = _readInt(statsResponse['activeChallengesCount']);
-      _journalEntriesCount = _readInt(statsResponse['journalEntriesCount']);
-      _completedChallengesCount = _readInt(
-        statsResponse['completedChallengesCount'],
-      );
-      _totalPoints = _readInt(statsResponse['totalPoints']);
-      _meditationSessionsCount = _readInt(
-        statsResponse['meditationSessionsCount'],
-      );
-      _coachSessionsCount = _readInt(statsResponse['coachSessionsCount']);
-      _moodLogsCount = _readInt(statsResponse['moodLogsCount']);
-
+      final stats = data.stats;
+      _currentStreak = stats.streak;
+      _activeChallengesCount = stats.activeChallengesCount;
+      _journalEntriesCount = stats.journalEntriesCount;
+      _completedChallengesCount = stats.completedChallengesCount;
+      _totalPoints = stats.totalPoints;
+      _meditationSessionsCount = stats.meditationSessionsCount;
+      _coachSessionsCount = stats.coachSessionsCount;
+      _moodLogsCount = stats.moodLogsCount;
       _isLoading = false;
       notifyListeners();
-    } catch (e) {
-      _error = e.toString();
+    } catch (_) {
+      // Mode silencieux : n'affiche pas d'exception socket brute sur l'accueil
       _isLoading = false;
       notifyListeners();
     }
@@ -365,12 +429,5 @@ class DashboardProvider extends ChangeNotifier {
   void setUserName(String name) {
     _userName = name;
     notifyListeners();
-  }
-
-  int _readInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
   }
 }

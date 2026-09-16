@@ -53,3 +53,9 @@ CHANGELOG.md
 **/CLAUDE.md
 
 **/key.properties
+
+# Design, Scratch & Local artifacts
+art/
+output/
+tmp/
+*.pdf

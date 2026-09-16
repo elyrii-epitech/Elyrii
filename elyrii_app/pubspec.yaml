@@ -19,8 +19,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.10.3 <4.0.0"
-  flutter: ">=3.38.4"
+  sdk: ">=3.8.0 <4.0.0"
+  flutter: ">=3.41.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -32,10 +32,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # UI
-  cupertino_icons: ^1.0.9
-  flutter_launcher_icons: ^0.14.4
-  
   # Network
   http: ^1.6.0
   http_parser: ^4.1.2
@@ -52,30 +48,20 @@ dependencies:
   # Date & Time
   intl: ^0.20.2
   
-  # Accessibilité
-  flutter_tts: ^4.2.5
-  
-  # Icons
-  iconsax: ^0.0.8
-  
   # Advanced Animations
   flutter_animate: ^4.5.2
-  shimmer: ^3.0.0
-  lottie: ^3.3.3
 
   # 3D Model Viewer
   flutter_3d_controller: ^2.3.0
   
-  # Grid Layout
-  flutter_staggered_grid_view: ^0.7.0
-  
   # UUID
   uuid: ^4.5.3
   
-  # Email validation
-  email_validator: ^3.0.0
-  google_fonts: ^8.1.0
-  characters: ^1.4.0
+  # Navigation & Routing moderne
+  go_router: ^18.0.1
+
+  # Liquid Glass optimisé (FragmentShaders GPU natifs sous Impeller)
+  liquid_glass_widgets: ^1.4.3
 
   # Image picking & cropping
   image_picker: ^1.1.2
@@ -84,6 +70,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -106,12 +93,10 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/splash_icon.png
     - assets/mascotte.png
     - assets/mascotte_eyes_closed.png
-    - assets/animations/
-    - assets/base_basic_design.glb
-    - assets/base_basic_shaded.glb
-    - assets/base_basic_shaded_v3.glb
+    - assets/elyrii_velours_animations.glb
     - assets/custom1.glb
     - assets/mascot_design_texture.png
     - assets/shaded_painted.png
@@ -123,28 +108,32 @@ flutter:
   # For details regarding adding assets from package dependencies, see
   # https://flutter.dev/to/asset-from-package
 
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
-  #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
-
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/icon_black_bg.png"
   remove_alpha_ios: true
+  adaptive_icon_background: "#141314"
+  adaptive_icon_foreground: "assets/splash_icon.png"
+  adaptive_icon_foreground_inset: 0
+  web:
+    generate: true
+    image_path: "assets/brand/icon_web.png"
+    background_color: "#141314"
+    theme_color: "#141314"
+  windows:
+    generate: true
+    icon_size: 256
+  macos:
+    generate: true

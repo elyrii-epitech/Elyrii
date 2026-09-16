@@ -1,12 +1,20 @@
 import 'dart:io';
+import 'dart:ui' show ImageFilter;
+import 'package:flutter/cupertino.dart'
+    show
+        CupertinoActivityIndicator,
+        CupertinoAlertDialog,
+        CupertinoDialogAction,
+        showCupertinoDialog;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/constants/avatar_options.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../widgets/mascot_avatar_preview.dart';
 
 /// Page de selection d'avatar proposee au tap sur l'avatar.
 ///
@@ -97,7 +105,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
       );
 
       if (cropped != null) {
-        HapticFeedback.lightImpact();
+        ElyriiHaptics.light();
         setState(() {
           _customImagePath = cropped.path;
           _customAvatarUrl = null;
@@ -107,14 +115,23 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Impossible de charger l\'image'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        // Dialogue d'alerte iOS en cas d'échec de sélection/recadrage.
+        showCupertinoDialog<void>(
+          context: context,
+          barrierDismissible: true,
+          builder: (dialogContext) => CupertinoAlertDialog(
+            title: const Text('Image indisponible'),
+            content: const Text(
+              'Impossible de charger l\'image sélectionnée. '
+              'Essaie avec une autre photo.',
             ),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }
@@ -124,7 +141,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   }
 
   void _confirm() {
-    HapticFeedback.lightImpact();
+    ElyriiHaptics.light();
     Navigator.pop(context, _resultValue);
   }
 
@@ -135,7 +152,6 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return PopScope(
       canPop: false,
@@ -147,89 +163,94 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
         backgroundColor: isDark
             ? AppColors.scaffoldDark
             : AppColors.scaffoldLight,
-        body: Stack(
-          children: [
-            CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
-
-                // Aperçu
-                SliverToBoxAdapter(child: _buildPreview(isDark)),
-
-                // Import depuis galerie
-                SliverToBoxAdapter(child: _buildImportCard(isDark)),
-
-                // Presets
-                SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 1,
-                        ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final option = kAvatarOptions[index];
-                      final isSelected =
-                          _customImagePath == null &&
-                          _customAvatarUrl == null &&
-                          _selectedId == option.id;
-                      return _PresetAvatarTile(
-                        option: option,
-                        isSelected: isSelected,
-                        isDark: isDark,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _customImagePath = null;
-                            _customAvatarUrl = null;
-                            _selectedId = option.id;
-                          });
-                        },
-                      );
-                    }, childCount: kAvatarOptions.length),
+        body: CustomScrollView(
+          slivers: [
+            // Barre de navigation iOS translucide floutée avec grand confort
+            // tactile et titre centré standard (pas de Stack bricolé).
+            SliverAppBar(
+              pinned: true,
+              centerTitle: true,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              backgroundColor: Colors.transparent,
+              leadingWidth: 64,
+              leading: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: _BackButton(isDark: isDark, onTap: _cancel),
+              ),
+              title: Text(
+                'Mon avatar',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.4,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+              flexibleSpace: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: ColoredBox(
+                    color:
+                        (isDark
+                                ? AppColors.scaffoldDark
+                                : AppColors.scaffoldLight)
+                            .withValues(alpha: 0.78),
                   ),
                 ),
-
-                // Bouton confirmer
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
-                    child: LiquidGlassButton(
-                      label: 'Choisir cet avatar',
-                      icon: Icons.check_rounded,
-                      isExpanded: true,
-                      onPressed: _confirm,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
 
-            // Top bar
-            Positioned(
-              top: topPadding + 12,
-              left: 16,
-              right: 16,
-              child: Row(
-                children: [
-                  _BackButton(isDark: isDark, onTap: _cancel),
-                  Expanded(
-                    child: Text(
-                      'Mon avatar',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(width: 44),
-                ],
+            // Aperçu fidèle (3D avec ombre de contact ou photo)
+            SliverToBoxAdapter(child: _buildPreview(isDark)),
+
+            // Import depuis galerie
+            SliverToBoxAdapter(child: _buildImportCard(isDark)),
+
+            // Presets
+            SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 1,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final option = kAvatarOptions[index];
+                  final isSelected =
+                      _customImagePath == null &&
+                      _customAvatarUrl == null &&
+                      _selectedId == option.id;
+                  return _PresetAvatarTile(
+                    option: option,
+                    isSelected: isSelected,
+                    isDark: isDark,
+                    onTap: () {
+                      ElyriiHaptics.selection();
+                      setState(() {
+                        _customImagePath = null;
+                        _customAvatarUrl = null;
+                        _selectedId = option.id;
+                      });
+                    },
+                  );
+                }, childCount: kAvatarOptions.length),
+              ),
+            ),
+
+            // Bouton confirmer
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
+                child: LiquidGlassButton(
+                  label: 'Choisir cet avatar',
+                  icon: Icons.check_rounded,
+                  isExpanded: true,
+                  onPressed: _confirm,
+                ),
               ),
             ),
           ],
@@ -239,64 +260,83 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   }
 
   Widget _buildPreview(bool isDark) {
+    final isMascot =
+        _customImagePath == null &&
+        _customAvatarUrl == null &&
+        _selectedId == kMascotAvatarId;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 24),
-        child: Column(
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.3),
-                    AppColors.secondary.withValues(alpha: 0.3),
-                  ],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark
-                        ? AppColors.surfaceDark
-                        : AppColors.surfaceLight,
-                  ),
-                  child: ClipOval(
-                    child: _customImagePath != null
-                        ? Image.file(File(_customImagePath!), fit: BoxFit.cover)
-                        : _customAvatarUrl != null
-                        ? Image.network(
-                            _customAvatarUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Image.asset(
-                              'assets/mascotte.png',
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : (_resultValue == null
-                              ? Image.asset(
-                                  'assets/mascotte.png',
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.network(
-                                  _resultValue!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Image.asset(
-                                    'assets/mascotte.png',
-                                    fit: BoxFit.cover,
-                                  ),
-                                )),
-                  ),
-                ),
-              ),
+        padding: const EdgeInsets.only(top: 12, bottom: 24),
+        child: SizedBox(
+          height: 220,
+          child: Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: isMascot
+                  ? MascotAvatarPreview(
+                      key: const ValueKey('mascot_preview_3d'),
+                      width: 200,
+                      height: 200,
+                      isDark: isDark,
+                    )
+                  : _buildCircularImagePreview(isDark),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCircularImagePreview(bool isDark) {
+    final imageUrl = _customAvatarUrl ?? _resultValue;
+
+    return Container(
+      key: const ValueKey('custom_image_preview'),
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withValues(alpha: 0.3),
+            AppColors.secondary.withValues(alpha: 0.3),
           ],
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(3),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          ),
+          child: ClipOval(
+            child: _customImagePath != null
+                ? Image.file(File(_customImagePath!), fit: BoxFit.cover)
+                : (imageUrl != null
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => ColoredBox(
+                            color: isDark
+                                ? AppColors.surfaceDark
+                                : AppColors.surfaceLight,
+                            child: Icon(
+                              Icons.person_rounded,
+                              size: 48,
+                              color: isDark
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondaryLight,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink()),
+          ),
         ),
       ),
     );
@@ -312,11 +352,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
           subtitle: 'Choisis une image depuis ta galerie',
           leadingIcon: Icons.photo_library_rounded,
           trailing: _isProcessing
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+              ? const CupertinoActivityIndicator(radius: 10)
               : null,
           onTap: _isProcessing ? null : _pickAndCropImage,
         ),
@@ -393,8 +429,17 @@ class _PresetAvatarTile extends StatelessWidget {
                   : Image.network(
                       option.url!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
-                          Image.asset('assets/mascotte.png', fit: BoxFit.cover),
+                      errorBuilder: (_, _, _) => ColoredBox(
+                        color: isDark
+                            ? AppColors.surfaceDark
+                            : AppColors.surfaceLight,
+                        child: Icon(
+                          Icons.person_rounded,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
                     ),
             ),
           ),

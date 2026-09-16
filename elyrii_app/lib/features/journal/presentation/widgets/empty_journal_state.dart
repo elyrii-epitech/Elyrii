@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Donnees d'une inspiration de journal.
 class JournalPrompt {
@@ -127,7 +127,7 @@ class EmptyJournalState extends StatelessWidget {
                 label: 'Écrire librement',
                 icon: Icons.edit_rounded,
                 onPressed: () {
-                  HapticFeedback.lightImpact();
+                  ElyriiHaptics.light();
                   onCreateFirst();
                 },
               )
@@ -229,7 +229,7 @@ class _PromptCardState extends State<_PromptCard> {
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
           setState(() => _isPressed = false);
-          HapticFeedback.lightImpact();
+          ElyriiHaptics.light();
           widget.onTap();
         },
         onTapCancel: () => setState(() => _isPressed = false),

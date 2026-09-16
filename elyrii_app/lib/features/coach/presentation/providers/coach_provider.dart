@@ -26,8 +26,12 @@ class CoachProvider extends ChangeNotifier {
   bool get hasLoadedRemote => _hasLoadedRemote;
   String? get error => _error;
 
-  CoachProvider({required ApiClient client})
-    : _repository = CoachRepository(client: client) {
+  CoachProvider({CoachRepository? repository, ApiClient? client})
+    : assert(
+        repository != null || client != null,
+        'repository or client must be provided',
+      ),
+      _repository = repository ?? CoachRepository(client: client!) {
     _loadLocalData();
   }
 

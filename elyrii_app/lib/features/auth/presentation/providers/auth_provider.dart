@@ -21,9 +21,14 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
 
   AuthProvider({
-    required ApiClient client,
+    AuthRepository? repository,
+    ApiClient? client,
     required SecureStorageService storage,
-  }) : _repository = AuthRepository(client: client),
+  }) : assert(
+         repository != null || client != null,
+         'repository or client must be provided',
+       ),
+       _repository = repository ?? AuthRepository(client: client!),
        _storage = storage;
 
   AuthStatus get status => _status;
@@ -32,25 +37,57 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.loading;
 
-  /// Check if user has a stored token on app start
-  Future<void> checkAuthStatus() async {
+  /// Offline-first session restore: storage-only, never touches the network.
+  /// A syntactically valid, non-expired token is enough to enter the app;
+  /// [revalidateSession] confirms it against the backend afterwards.
+  Future<void> restoreLocalSession() async {
     final token = await _storage.getAccessToken();
-    if (token == null || token.isEmpty || _isJwtExpired(token)) {
+    final valid = token != null && token.isNotEmpty && !_isJwtExpired(token);
+    if (!valid) {
       await _storage.clearAuthData();
+      _user = null;
       _status = AuthStatus.unauthenticated;
-      _user = null;
-      notifyListeners();
-      return;
+    } else {
+      _status = AuthStatus.authenticated;
     }
+    notifyListeners();
+  }
 
-    final hasProfile = await fetchProfile();
-    _status = hasProfile
-        ? AuthStatus.authenticated
-        : AuthStatus.unauthenticated;
-    if (!hasProfile) {
+  /// Background revalidation of the restored session.
+  /// Only a definitive rejection (401) ends the session; a network failure
+  /// keeps the optimistic session alive so offline use is not punished.
+  Future<void> revalidateSession() async {
+    if (_status != AuthStatus.authenticated) return;
+    final ok = await fetchProfile();
+    if (ok || _status != AuthStatus.authenticated) return;
+    final stillHasToken = await _storage.getAccessToken();
+    if (stillHasToken == null) {
+      // fetchProfile cleared it after a 401: the session is truly dead.
       _user = null;
-      await _storage.clearAuthData();
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
     }
+  }
+
+  /// Session démo locale (développement sans backend) : stocke un JWT
+  /// factice à longue durée de vie, marque l'onboarding comme complété et
+  /// ouvre la session. Une erreur réseau ne la casse pas ; seul un 401
+  /// réel (ou [logout]) y met fin.
+  Future<void> startDemoSession() async {
+    final exp =
+        DateTime.now().add(const Duration(days: 3650)).millisecondsSinceEpoch ~/
+        1000;
+    String b64(Object json) =>
+        base64Url.encode(utf8.encode(json.toString())).replaceAll('=', '');
+    final demoToken =
+        '${b64('{"alg":"none","typ":"JWT"}')}.'
+        '${b64('{"sub":"demo-user","exp":$exp}')}.demo';
+
+    await _storage.saveAccessToken(demoToken);
+    await _storage.saveUserId('demo-user');
+    await _storage.setProfileSetupCompleted();
+    _user = const UserModel(id: 'demo-user', email: 'demo@elyrii.local');
+    _status = AuthStatus.authenticated;
     notifyListeners();
   }
 

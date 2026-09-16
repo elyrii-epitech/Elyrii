@@ -14,8 +14,12 @@ class UserProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  UserProvider({required ApiClient client})
-    : _repository = UserRepository(client: client);
+  UserProvider({UserRepository? repository, ApiClient? client})
+    : assert(
+        repository != null || client != null,
+        'repository or client must be provided',
+      ),
+      _repository = repository ?? UserRepository(client: client!);
 
   UserProfile? get profile => _profile;
   AppSettings? get settings => _settings;

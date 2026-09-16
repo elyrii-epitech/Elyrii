@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:email_validator/email_validator.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/utils/validators.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
+import '../widgets/auth_error_banner.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
@@ -27,6 +29,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _acceptTerms = false;
+  String? _errorBanner;
+  bool _errorBannerIsSuccess = false;
   bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
@@ -41,18 +45,11 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      setState(() {
+        _errorBannerIsSuccess = false;
+        _errorBanner =
+            'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.';
+      });
       return;
     }
     final nameParts = _nameController.text.trim().split(' ');
@@ -73,32 +70,25 @@ class _RegisterPageState extends State<RegisterPage> {
       // Charger le profil pour pre-remplir l'onboarding
       await userProvider.loadProfile();
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.profileSetup);
+      context.go(AppRoutes.profileSetup);
     } else {
-      // Show success color if it's an email verification message (which means registration worked)
       final error = authProvider.error?.toLowerCase() ?? '';
       final isVerificationMessage =
           error.contains('verification required') ||
           error.contains('activate your account');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+
+      // Bannière contextuelle en haut de formulaire (pas de SnackBar).
+      setState(() {
+        _errorBannerIsSuccess = isVerificationMessage;
+        _errorBanner =
             authProvider.error ??
-                'Oops, petit souci lors de la création. Réessaie quand tu es prêt.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+            'Oops, petit souci lors de la création. Réessaie quand tu es prêt.';
+      });
 
       if (isVerificationMessage) {
-        // Optionnellement, on redirige vers la page de login après un petit délai
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            Navigator.pop(context); // Go back to login
+            Navigator.pop(context); // Retour à la connexion
           }
         });
       }
@@ -122,14 +112,12 @@ class _RegisterPageState extends State<RegisterPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Mascot (translated vertically to center the model's visual body within the 250x250 container)
-                  Transform.translate(
-                        offset: const Offset(0, 25),
-                        child: const Mascot3DViewer(
-                          config: Mascot3DConfig.authPage(),
-                          width: 250,
-                          height: 250,
-                        ),
+                  // Mascotte cadrée par la caméra (cameraTarget du config
+                  // authPage) — aucun décalage de layout.
+                  const Mascot3DViewer(
+                        config: Mascot3DConfig.authPage(),
+                        width: 250,
+                        height: 250,
                       )
                       .animate()
                       .fadeIn(duration: 600.ms)
@@ -160,6 +148,14 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
 
                   const SizedBox(height: AppDimensions.spacingXl),
+
+                  if (_errorBanner != null) ...[
+                    AuthErrorBanner(
+                      message: _errorBanner!,
+                      isSuccess: _errorBannerIsSuccess,
+                    ),
+                    const SizedBox(height: AppDimensions.spacingLg),
+                  ],
 
                   Form(
                     key: _formKey,
@@ -214,7 +210,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             if (value == null || value.isEmpty) {
                               return 'Veuillez entrer votre email';
                             }
-                            if (!EmailValidator.validate(value)) {
+                            if (!Validators.isValidEmail(value)) {
                               return 'Email invalide';
                             }
                             return null;

@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../providers/journal_provider.dart';
 import '../widgets/glass_journal_card.dart';
-import '../widgets/glass_icon_button.dart';
 import '../widgets/empty_journal_state.dart';
 import '../widgets/journal_editor_sheet.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
+/// Page principale du Journal intime suivant la philosophie Apple HIG.
+/// Utilise un grand titre rétractable iOS (`SliverAppBar.large`), des actions
+/// de navigation épurées et une grille aérée sans aucun Stack bricolé.
 class JournalPage extends StatefulWidget {
   const JournalPage({super.key});
 
@@ -36,7 +39,7 @@ class _JournalPageState extends State<JournalPage> {
   }
 
   void _showEditorSheet({JournalEntry? entry, String? initialPrompt}) {
-    HapticFeedback.lightImpact();
+    ElyriiHaptics.light();
     showLiquidGlassSheet(
       context: context,
       initialChildSize: 0.92,
@@ -58,113 +61,135 @@ class _JournalPageState extends State<JournalPage> {
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: Stack(
-        children: [
-          // Contenu principal (liste des notes)
-          Column(
+      body: Consumer<JournalProvider>(
+        builder: (context, provider, child) {
+          return Stack(
             children: [
-              Expanded(
-                child: Consumer<JournalProvider>(
-                  builder: (context, provider, child) {
-                    if (provider.entries.isEmpty) {
-                      return EmptyJournalState(
+              // Contenu principal défilant sous les boutons flottants
+              CustomScrollView(
+                scrollCacheExtent: const ScrollCacheExtent.pixels(200),
+                slivers: [
+                  // Dégagement pour passer sous les boutons flottants décrochés
+                  const SliverToBoxAdapter(child: SizedBox(height: 72)),
+
+                  // Grand titre « Journal » qui respire sans bandeau sombre
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.pageHorizontalPadding,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          'Journal',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Contenu : état vide ou liste des cartes de notes
+                  if (provider.entries.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: EmptyJournalState(
                         onCreateFirst: () => _showEditorSheet(),
                         onPromptSelected: (prompt) =>
                             _showEditorSheet(initialPrompt: prompt.title),
                         isDark: isDark,
-                      );
-                    }
+                      ),
+                    )
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimensions.pageHorizontalPadding,
+                        0,
+                        AppDimensions.pageHorizontalPadding,
+                        140, // Dégagement pour le dock flottant
+                      ),
+                      sliver: SliverList.builder(
+                        itemCount: provider.entries.length,
+                        itemBuilder: (context, index) {
+                          const int maxAnimatedItems = 8;
+                          final entry = provider.entries[index];
+                          final card = Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppDimensions.spacingLg,
+                            ),
+                            child: GlassJournalCard(
+                              entry: entry,
+                              isDark: isDark,
+                              onTap: () => _showEditorSheet(entry: entry),
+                            ),
+                          );
 
-                    return _buildJournalGrid(provider, isDark);
-                  },
+                          if (index < maxAnimatedItems) {
+                            return card
+                                .animate()
+                                .fadeIn(
+                                  duration: 350.ms,
+                                  delay: (30 * index).ms,
+                                  curve: Curves.easeOutCubic,
+                                )
+                                .slideY(
+                                  begin: 0.05,
+                                  duration: 350.ms,
+                                  delay: (30 * index).ms,
+                                  curve: Curves.easeOutCubic,
+                                );
+                          }
+
+                          return card;
+                        },
+                      ),
+                    ),
+                ],
+              ),
+
+              // Boutons flottants décrochés en verre liquide : aucun bandeau noir
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.pageHorizontalPadding,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        LiquidGlassIconButton(
+                          icon: provider.sortNewest
+                              ? Icons.arrow_downward_rounded
+                              : Icons.arrow_upward_rounded,
+                          onPressed: () {
+                            ElyriiHaptics.selection();
+                            provider.toggleSort();
+                          },
+                        ),
+                        const Spacer(),
+                        LiquidGlassIconButton(
+                          icon: Icons.add_rounded,
+                          onPressed: () => _showEditorSheet(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
-          ),
-          // AppBar flottant au-dessus avec SafeArea
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(bottom: false, child: _buildAppBar(isDark)),
-          ),
-        ],
+          );
+        },
       ),
-    );
-  }
-
-  Widget _buildAppBar(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(AppDimensions.pageHorizontalPadding),
-      child: Row(
-        children: [
-          // Bouton tri
-          Consumer<JournalProvider>(
-            builder: (context, provider, child) {
-              return GlassIconButton(
-                isDark: isDark,
-                icon: provider.sortNewest
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded,
-                onPressed: provider.toggleSort,
-              );
-            },
-          ),
-          const Spacer(),
-          // Bouton ajouter
-          GlassIconButton(
-            isDark: isDark,
-            icon: Icons.add_rounded,
-            onPressed: () => _showEditorSheet(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildJournalGrid(JournalProvider provider, bool isDark) {
-    // Limit staggered animations to first 8 items for performance
-    const int maxAnimatedItems = 8;
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.pageHorizontalPadding,
-        80, // Padding top pour passer sous l'AppBar
-        AppDimensions.pageHorizontalPadding,
-        100, // Extra padding pour le bottom
-      ),
-      cacheExtent: 200,
-      itemCount: provider.entries.length,
-      itemBuilder: (context, index) {
-        final entry = provider.entries[index];
-        final card = Padding(
-          padding: const EdgeInsets.only(bottom: AppDimensions.spacingLg),
-          child: GlassJournalCard(
-            entry: entry,
-            isDark: isDark,
-            onTap: () => _showEditorSheet(entry: entry),
-          ),
-        );
-
-        // Only animate first 8 items to prevent jank
-        if (index < maxAnimatedItems) {
-          return card
-              .animate()
-              .fadeIn(
-                duration: 350.ms,
-                delay: (30 * index).ms,
-                curve: Curves.easeOutCubic,
-              )
-              .slideY(
-                begin: 0.05,
-                duration: 350.ms,
-                delay: (30 * index).ms,
-                curve: Curves.easeOutCubic,
-              );
-        }
-
-        return card;
-      },
     );
   }
 }

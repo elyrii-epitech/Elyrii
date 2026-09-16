@@ -13,8 +13,12 @@ class GamificationProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  GamificationProvider({required ApiClient client})
-    : _repository = GamificationRepository(client: client);
+  GamificationProvider({GamificationRepository? repository, ApiClient? client})
+    : assert(
+        repository != null || client != null,
+        'repository or client must be provided',
+      ),
+      _repository = repository ?? GamificationRepository(client: client!);
 
   List<ChallengeTemplate> get availableChallenges =>
       List.unmodifiable(_availableChallenges);

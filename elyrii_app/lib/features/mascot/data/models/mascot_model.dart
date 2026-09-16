@@ -29,7 +29,7 @@ class MascotModel {
   /// Crée un modèle par défaut de la mascotte.
   factory MascotModel.defaultMascot() {
     return const MascotModel(
-      baseModelPath: 'assets/base_basic_shaded_v3.glb',
+      baseModelPath: 'assets/elyrii_velours_animations.glb',
       equippedCosmetics: [],
       animationState: 'idle',
       themeId: 'nature',
@@ -55,7 +55,8 @@ class MascotModel {
   factory MascotModel.fromJson(Map<String, dynamic> json) {
     return MascotModel(
       baseModelPath:
-          json['baseModelPath'] as String? ?? 'assets/base_basic_shaded_v3.glb',
+          json['baseModelPath'] as String? ??
+          'assets/elyrii_velours_animations.glb',
       equippedCosmetics:
           (json['equippedCosmetics'] as List<dynamic>?)
               ?.map((e) => e as String)

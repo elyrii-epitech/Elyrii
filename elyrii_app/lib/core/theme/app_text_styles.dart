@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Styles de texte de l'application Elyrii
@@ -7,8 +6,8 @@ import 'app_colors.dart';
 class AppTextStyles {
   AppTextStyles._(); // Constructeur privé
 
-  // Utilise Google Fonts Poppins comme base
-  static final TextStyle _baseStyle = GoogleFonts.poppins();
+  // Utilise la police Poppins embarquée localement
+  static const TextStyle _baseStyle = TextStyle(fontFamily: 'Poppins');
 
   // ==================== DISPLAY STYLES ====================
   // Utilisés pour les titres très larges (splash, onboarding)

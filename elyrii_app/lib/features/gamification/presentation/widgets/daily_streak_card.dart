@@ -53,8 +53,8 @@ class DailyStreakCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       streakDays > 0
-                          ? 'Vous avez partage $streakDays moments ensemble'
-                          : 'Elyrii est la quand tu en as besoin',
+                          ? 'Vous avez partagé $streakDays moments ensemble'
+                          : 'Chaque jour compte, à ton rythme',
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/constants/avatar_options.dart';
 import '../../../../routes/app_routes.dart';
@@ -87,10 +88,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _openAvatarPicker() async {
-    final result = await Navigator.pushNamed(
-      context,
+    final result = await context.push(
       AppRoutes.avatarPicker,
-      arguments: _selectedPfp,
+      extra: _selectedPfp,
     );
     // Ignorer si l'utilisateur a annule (back)
     if (result != kAvatarPickerCancelled) {
@@ -198,7 +198,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 _BackButton(
                   isDark: isDark,
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    ElyriiHaptics.light();
                     Navigator.pop(context);
                   },
                 ),

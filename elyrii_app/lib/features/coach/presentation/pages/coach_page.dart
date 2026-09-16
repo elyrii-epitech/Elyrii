@@ -1,16 +1,51 @@
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../providers/coach_provider.dart';
 import '../../data/models/coach_model.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
-class CoachPage extends StatelessWidget {
+class CoachPage extends StatefulWidget {
   const CoachPage({super.key});
+
+  @override
+  State<CoachPage> createState() => _CoachPageState();
+}
+
+class _CoachPageState extends State<CoachPage> {
+  /// Message de retour inline (succès ou échec) après une demande de
+  /// guidance, sous forme de bannière contextuelle iOS.
+  String? _feedbackMessage;
+  bool _feedbackIsSuccess = false;
+  Timer? _feedbackTimer;
+
+  @override
+  void dispose() {
+    _feedbackTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Affiche une bannière contextuelle dans le flux de la page, qui
+  /// s'efface d'elle-même après quelques secondes.
+  void _showFeedback({required bool success, required String message}) {
+    _feedbackTimer?.cancel();
+    setState(() {
+      _feedbackMessage = message;
+      _feedbackIsSuccess = success;
+    });
+    _feedbackTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) {
+        setState(() => _feedbackMessage = null);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,71 +65,103 @@ class CoachPage extends StatelessWidget {
           backgroundColor: isDark
               ? AppColors.scaffoldDark
               : AppColors.scaffoldLight,
-          body: RefreshIndicator(
-            onRefresh: provider.loadCoachData,
-            color: AppColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              child: Padding(
+          // Tire-pour-rafraîchir natif iOS, plus aucun indicateur
+          // de rafraîchissement Material.
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              CupertinoSliverRefreshControl(onRefresh: provider.loadCoachData),
+              SliverPadding(
                 padding: EdgeInsets.fromLTRB(
                   AppDimensions.pageHorizontalPadding,
                   MediaQuery.of(context).padding.top + 16,
                   AppDimensions.pageHorizontalPadding,
                   120,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(isDark),
-                    const SizedBox(height: 28),
-                    if (provider.todayAdvice != null)
-                      _buildAdviceCard(provider.todayAdvice!, isDark)
-                          .animate()
-                          .fadeIn(duration: 400.ms)
-                          .slideY(begin: 0.1, end: 0),
-                    if (provider.isCreatingSession) ...[
-                      const SizedBox(height: 16),
-                      const LinearProgressIndicator(minHeight: 3),
-                    ],
-                    if (provider.error != null) ...[
-                      const SizedBox(height: 16),
-                      _buildErrorBanner(provider.error!, isDark),
-                    ],
-                    if (provider.latestSession != null) ...[
-                      const SizedBox(height: 16),
-                      _buildLatestSessionCard(provider.latestSession!, isDark),
-                    ],
-                    const SizedBox(height: 28),
-                    _buildSectionTitle(
-                      'Recommandé pour toi',
-                      'Basé sur ta progression et ton humeur',
-                      isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    ...provider.recommendedActivities.map(
-                      (activity) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _ActivityCard(
-                          activity: activity,
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(isDark),
+                      if (_feedbackMessage != null) ...[
+                        const SizedBox(height: 16),
+                        _buildInlineBanner(
+                              icon: _feedbackIsSuccess
+                                  ? Icons.check_circle_rounded
+                                  : Icons.cloud_off_rounded,
+                              accent: _feedbackIsSuccess
+                                  ? AppColors.success
+                                  : AppColors.error,
+                              message: _feedbackMessage!,
+                              isDark: isDark,
+                            )
+                            .animate()
+                            .fadeIn(duration: 300.ms)
+                            .slideY(begin: -0.08, end: 0),
+                      ],
+                      const SizedBox(height: 28),
+                      if (provider.todayAdvice != null)
+                        _buildAdviceCard(provider.todayAdvice!, isDark)
+                            .animate()
+                            .fadeIn(duration: 400.ms)
+                            .slideY(begin: 0.1, end: 0),
+                      if (provider.isCreatingSession) ...[
+                        const SizedBox(height: 16),
+                        // Chargement d'une session : squelette shimmer discret
+                        // de la couleur de surface, aucune barre de progression.
+                        _GuidanceSkeleton(isDark: isDark),
+                      ],
+                      if (provider.error != null) ...[
+                        const SizedBox(height: 16),
+                        _buildInlineBanner(
+                          icon: Icons.cloud_off_rounded,
+                          accent: AppColors.error,
+                          message: provider.error!,
                           isDark: isDark,
-                          onTap: () => _requestGuidance(context, activity),
                         ),
+                      ],
+                      if (provider.latestSession != null) ...[
+                        const SizedBox(height: 16),
+                        _buildLatestSessionCard(
+                          provider.latestSession!,
+                          isDark,
+                        ),
+                      ],
+                      const SizedBox(height: 28),
+                      _buildSectionTitle(
+                        'Recommandé pour toi',
+                        'Basé sur ta progression et ton humeur',
+                        isDark,
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    _buildSectionTitle(
-                      'Toutes les activités',
-                      'Explore à ton rythme',
-                      isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildCategoryGrid(context, provider.allActivities, isDark),
-                  ],
+                      const SizedBox(height: 12),
+                      if (provider.recommendedActivities.isNotEmpty)
+                        _buildRecommendedGroup(
+                              context,
+                              provider.recommendedActivities,
+                              isDark,
+                            )
+                            .animate()
+                            .fadeIn(duration: 400.ms)
+                            .slideY(begin: 0.05, end: 0),
+                      const SizedBox(height: 28),
+                      _buildSectionTitle(
+                        'Toutes les activités',
+                        'Explore à ton rythme',
+                        isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildCategoryGrid(
+                        context,
+                        provider.allActivities,
+                        isDark,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         );
       },
@@ -216,6 +283,44 @@ class CoachPage extends StatelessWidget {
     );
   }
 
+  /// Conteneur groupé iOS (rayon 16) : les activités recommandées y sont
+  /// présentées en cellules adjacentes, séparées par des séparateurs insetés
+  /// alignés sur le texte — façon Réglages iOS.
+  Widget _buildRecommendedGroup(
+    BuildContext context,
+    List<CoachActivity> activities,
+    bool isDark,
+  ) {
+    final separatorColor = isDark
+        ? AppColors.dividerDark
+        : AppColors.dividerLight;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < activities.length; i++) ...[
+            _RecommendedActivityCell(
+              activity: activities[i],
+              isDark: isDark,
+              onTap: () => _requestGuidance(context, activities[i]),
+            ),
+            if (i < activities.length - 1)
+              // Séparateur inseté après l'icône (padding 14 + icône 40 + écart 12).
+              Padding(
+                padding: const EdgeInsets.only(left: 66),
+                child: Container(height: 0.5, color: separatorColor),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildCategoryGrid(
     BuildContext context,
     List<CoachActivity> activities,
@@ -281,12 +386,18 @@ class CoachPage extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorBanner(String message, bool isDark) {
+  /// Bannière d'alerte contextuelle inline, sans composant Android.
+  Widget _buildInlineBanner({
+    required IconData icon,
+    required Color accent,
+    required String message,
+    required bool isDark,
+  }) {
     return LiquidGlassCard(
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
-          const Icon(Icons.cloud_off_rounded, color: AppColors.error),
+          Icon(icon, color: accent),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -310,39 +421,77 @@ class CoachPage extends StatelessWidget {
     BuildContext context,
     CoachActivity activity,
   ) async {
-    HapticFeedback.lightImpact();
+    ElyriiHaptics.light();
     final success = await context
         .read<CoachProvider>()
         .requestGuidanceForActivity(activity);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Conseil personnalisé enregistré.'
-              : 'Impossible de générer un conseil pour le moment.',
-        ),
-      ),
+    if (!mounted) return;
+    _showFeedback(
+      success: success,
+      message: success
+          ? 'Conseil personnalisé enregistré.'
+          : 'Impossible de générer un conseil pour le moment.',
     );
   }
 }
 
-class _ActivityCard extends StatefulWidget {
+/// Squelette de chargement discret pour la création de session : shimmer
+/// doux de la couleur de surface, en remplacement de toute barre de
+/// progression brute.
+class _GuidanceSkeleton extends StatelessWidget {
+  final bool isDark;
+
+  const _GuidanceSkeleton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.04);
+
+    Widget block(double height) =>
+        Container(
+              height: height,
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            )
+            .animate(onPlay: (controller) => controller.repeat())
+            .shimmer(
+              duration: 1400.ms,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.5),
+            );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [block(18), const SizedBox(height: 12), block(64)],
+    );
+  }
+}
+
+/// Cellule d'activité recommandée dans le conteneur groupé iOS : icône
+/// squircle colorée, titre et description, pilule de durée arrondie et
+/// chevron de navigation discret à droite.
+class _RecommendedActivityCell extends StatefulWidget {
   final CoachActivity activity;
   final bool isDark;
   final VoidCallback onTap;
 
-  const _ActivityCard({
+  const _RecommendedActivityCell({
     required this.activity,
     required this.isDark,
     required this.onTap,
   });
 
   @override
-  State<_ActivityCard> createState() => _ActivityCardState();
+  State<_RecommendedActivityCell> createState() =>
+      _RecommendedActivityCellState();
 }
 
-class _ActivityCardState extends State<_ActivityCard> {
+class _RecommendedActivityCellState extends State<_RecommendedActivityCell> {
   bool _isPressed = false;
 
   @override
@@ -350,81 +499,96 @@ class _ActivityCardState extends State<_ActivityCard> {
     final color = widget.activity.category.color;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
         setState(() => _isPressed = false);
         widget.onTap();
       },
       onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.97 : 1.0,
+      // Surbrillance discrète à l'appui, façon cellule iOS groupée.
+      child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
-        child: LiquidGlassCard(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Icon(widget.activity.icon, size: 22, color: color),
-                ),
+        color: _isPressed
+            ? (widget.isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.04))
+            : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.activity.title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: widget.isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.activity.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: widget.isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+              child: Center(
+                child: Icon(widget.activity.icon, size: 20, color: color),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${widget.activity.durationMinutes} min',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: color,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.activity.title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: widget.isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.activity.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: widget.isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Badge de durée en pilule arrondie, à gauche du chevron.
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(
+                  AppDimensions.radiusCircular,
                 ),
               ),
-            ],
-          ),
+              child: Text(
+                '${widget.activity.durationMinutes} min',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: widget.isDark
+                  ? AppColors.textTertiaryDark
+                  : AppColors.textTertiaryLight,
+            ),
+          ],
         ),
       ),
     );

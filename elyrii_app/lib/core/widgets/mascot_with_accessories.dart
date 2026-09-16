@@ -1,9 +1,12 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_3d_controller/flutter_3d_controller.dart';
 import 'package:provider/provider.dart';
 import '../config/mascot_3d_config.dart';
 import '../config/mascot_themes.dart';
 import 'mascot_3d_viewer.dart';
+import '../config/mascot_animations.dart';
 import '../../features/mascot/presentation/providers/mascot_provider.dart';
 
 /// Définition de rendu d'un accessoire superposé à la mascotte 3D.
@@ -69,7 +72,11 @@ class MascotAccessoryCatalog {
 ///
 /// Lit automatiquement [MascotProvider] pour appliquer le thème (ColorMatrix)
 /// et superposer les accessoires de façon identique sur toutes les pages.
-/// Remplace les implémentations dispersées qui oubliaient les accessoires.
+///
+/// Montage progressif : le viewer du corps démarre toujours en premier ; le
+/// viewer de l'accessoire ne monte qu'après le chargement du corps (plus un
+/// court délai) pour que deux contextes WebGL ne s'initialisent jamais
+/// simultanément — principal point de jank sur iOS.
 ///
 /// Usage :
 /// ```dart
@@ -79,7 +86,7 @@ class MascotAccessoryCatalog {
 ///   height: 250,
 /// )
 /// ```
-class MascotWithAccessories extends StatelessWidget {
+class MascotWithAccessories extends StatefulWidget {
   /// Configuration du viewer 3D (caméra, rotation, interaction).
   final Mascot3DConfig config;
 
@@ -92,13 +99,38 @@ class MascotWithAccessories extends StatelessWidget {
   /// Contrôleur externe optionnel pour piloter le modèle 3D.
   final Flutter3DController? controller;
 
+  /// Animation du corps de la mascotte (voir [Mascot3DViewer.animation]).
+  final MascotAnimation? animation;
+
   const MascotWithAccessories({
     super.key,
     required this.config,
     required this.width,
     required this.height,
     this.controller,
+    this.animation,
   });
+
+  @override
+  State<MascotWithAccessories> createState() => _MascotWithAccessoriesState();
+}
+
+class _MascotWithAccessoriesState extends State<MascotWithAccessories> {
+  /// Décalage entre le chargement du corps et le montage de l'accessoire.
+  static const _accessoryMountDelay = Duration(milliseconds: 250);
+
+  bool _accessoriesMounted = false;
+
+  void _onBodyLoaded() {
+    if (_accessoriesMounted) return;
+    // Petit délai après le chargement du corps : les deux contextes WebGL
+    // ne s'initialisent jamais dans la même frame.
+    Future.delayed(_accessoryMountDelay, () {
+      if (mounted && !_accessoriesMounted) {
+        setState(() => _accessoriesMounted = true);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,61 +141,62 @@ class MascotWithAccessories extends StatelessWidget {
       (p) => p.mascot.equippedCosmetics,
     );
 
-    // Le thème n'est appliqué qu'au corps, pas aux accessoires (comportement
-    // historique : un chapeau garde ses couleurs d'origine).
-    final matrix = theme.id == 'nature' ? null : theme.colorMatrix;
-
-    final equippedRenders = cosmetics
+    // Le thème par ColorMatrix n'est appliqué que si la plateforme le supporte.
+    // Sur iOS, ColorFiltered sur un PlatformView (WKWebView) rend la texture
+    // CVPixelBuffer transparente (limitation connue du rasterizer Flutter iOS).
+    // On désactive ColorFiltered sur iOS pour que la mascotte 3D reste TOUJOURS visible.
+    final matrix = (theme.id == 'nature' || (!kIsWeb && Platform.isIOS))
+        ? null
+        : theme.colorMatrix;
+    // Un seul accessoire rendu (premier équipé dans l'ordre du catalogue) :
+    // borné à un contexte WebGL additionnel maximum en attendant un asset
+    // pré-fusionné corps+accessoire.
+    final equippedRender = cosmetics
         .map(MascotAccessoryCatalog.getById)
         .whereType<AccessoryRender>()
-        .toList();
+        .firstOrNull;
 
-    if (equippedRenders.isEmpty) {
-      return Mascot3DViewer(
-        key: const ValueKey('mascot_body'),
-        config: config,
-        width: width,
-        height: height,
-        controller: controller,
-        colorMatrix: matrix,
-      );
+    final body = Mascot3DViewer(
+      key: const ValueKey('mascot_body'),
+      config: widget.config,
+      width: widget.width,
+      height: widget.height,
+      controller: widget.controller,
+      colorMatrix: matrix,
+      animation: widget.animation,
+      onModelLoaded: _onBodyLoaded,
+    );
+
+    if (equippedRender == null || !_accessoriesMounted) {
+      return SizedBox(width: widget.width, height: widget.height, child: body);
     }
 
+    final accessorySize = widget.width * equippedRender.sizeRatio;
+
     return SizedBox(
-      width: width,
-      height: height,
+      width: widget.width,
+      height: widget.height,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          Mascot3DViewer(
-            key: const ValueKey('mascot_body'),
-            config: config,
-            width: width,
-            height: height,
-            controller: controller,
-            colorMatrix: matrix,
-          ),
-          ...equippedRenders.map((accessory) {
-            final accessorySize = width * accessory.sizeRatio;
-            return Positioned(
-              top: height * accessory.topRatio,
-              left:
-                  (width - accessorySize) / 2 +
-                  width * accessory.horizontalOffsetRatio,
-              child: Mascot3DViewer(
-                key: ValueKey('mascot_accessory_${accessory.id}'),
-                config: Mascot3DConfig(
-                  assetPath: accessory.assetPath,
-                  autoRotate: false,
-                  interactionEnabled: false,
-                  showLoadingIndicator: false,
-                ),
-                width: accessorySize,
-                height: accessorySize,
+          body,
+          Positioned(
+            top: widget.height * equippedRender.topRatio,
+            left:
+                (widget.width - accessorySize) / 2 +
+                widget.width * equippedRender.horizontalOffsetRatio,
+            child: Mascot3DViewer(
+              key: ValueKey('mascot_accessory_${equippedRender.id}'),
+              config: Mascot3DConfig(
+                assetPath: equippedRender.assetPath,
+                autoRotate: false,
+                interactionEnabled: false,
               ),
-            );
-          }),
+              width: accessorySize,
+              height: accessorySize,
+            ),
+          ),
         ],
       ),
     );

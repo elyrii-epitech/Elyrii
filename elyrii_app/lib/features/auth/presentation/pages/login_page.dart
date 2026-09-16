@@ -1,12 +1,14 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:email_validator/email_validator.dart';
+import 'package:flutter/foundation.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/utils/validators.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
+import '../widgets/auth_error_banner.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
@@ -24,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  String? _errorBanner;
   bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
@@ -42,21 +45,14 @@ class _LoginPageState extends State<LoginPage> {
     );
     if (!mounted) return;
     if (success) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      context.go(AppRoutes.home);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      // Bannière contextuelle en haut de formulaire (pas de SnackBar).
+      setState(() {
+        _errorBanner =
             authProvider.error ??
-                'Oops, petit souci de connexion. Réessaie quand tu es prêt.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+            'Oops, petit souci de connexion. Réessaie quand tu es prêt.';
+      });
     }
   }
 
@@ -80,14 +76,12 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Mascot (translated vertically to center the model's visual body within the 250x250 container)
-                      Transform.translate(
-                            offset: const Offset(0, 25),
-                            child: const Mascot3DViewer(
-                              config: Mascot3DConfig.authPage(),
-                              width: 250,
-                              height: 250,
-                            ),
+                      // Mascotte cadrée par la caméra (cameraTarget du
+                      // config authPage) — aucun décalage de layout.
+                      const Mascot3DViewer(
+                            config: Mascot3DConfig.authPage(),
+                            width: 250,
+                            height: 250,
                           )
                           .animate()
                           .fadeIn(duration: 600.ms)
@@ -110,6 +104,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
 
                       const SizedBox(height: AppDimensions.spacingXl),
+
+                      if (_errorBanner != null) ...[
+                        AuthErrorBanner(message: _errorBanner!),
+                        const SizedBox(height: AppDimensions.spacingLg),
+                      ],
 
                       Form(
                             key: _formKey,
@@ -136,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
                                     if (value == null || value.isEmpty) {
                                       return 'Veuillez entrer votre email';
                                     }
-                                    if (!EmailValidator.validate(value)) {
+                                    if (!Validators.isValidEmail(value)) {
                                       return 'Email invalide';
                                     }
                                     return null;
@@ -269,10 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.register,
-                                        );
+                                        context.push(AppRoutes.register);
                                       },
                                       style: TextButton.styleFrom(
                                         padding: EdgeInsets.zero,
@@ -294,11 +290,19 @@ class _LoginPageState extends State<LoginPage> {
 
                                 if (kDebugMode)
                                   TextButton(
-                                    onPressed: () {
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        AppRoutes.home,
-                                      );
+                                    onPressed: () async {
+                                      // Session démo locale : parcourir
+                                      // l'app sans backend (token factice,
+                                      // onboarding marqué complété).
+                                      await context
+                                          .read<AuthProvider>()
+                                          .startDemoSession();
+                                      if (!context.mounted) return;
+                                      context
+                                              .read<ValueNotifier<bool>>()
+                                              .value =
+                                          true;
+                                      context.go(AppRoutes.home);
                                     },
                                     child: Text(
                                       'Passer (Dev)',

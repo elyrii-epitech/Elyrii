@@ -1,3 +1,4 @@
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -80,17 +81,37 @@ class ChallengeAvailableCard extends StatelessWidget {
             const SizedBox(width: 12),
 
             // Bouton Commencer
+            // Bouton Commencer : capsule pleine ; démarrage en shimmer
+            // doux sans spinner Material.
             isStarting
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary,
-                    ),
-                  )
+                ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Un instant…',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .shimmer(
+                        duration: 1000.ms,
+                        color: Colors.white.withValues(alpha: 0.5),
+                      )
                 : GestureDetector(
-                    onTap: onStart,
+                    onTap: () {
+                      ElyriiHaptics.light();
+                      onStart();
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,

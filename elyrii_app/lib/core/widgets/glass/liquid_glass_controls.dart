@@ -1,13 +1,7 @@
-// iOS 26 Liquid Glass Controls (Segmented Control, Switch, Slider)
-// Part of the Liquid Glass Widget Kit
-
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
-// =============================================================================
-// LIQUID GLASS SEGMENTED CONTROL
-// =============================================================================
+import '../../design_system/haptics/elyrii_haptics.dart';
 
 class LiquidGlassSegmentedControl<T> extends StatelessWidget {
   final Map<T, String> segments;
@@ -23,82 +17,22 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final entries = segments.entries.toList(growable: false);
+    final selectedIndex = entries.indexWhere(
+      (entry) => entry.key == selectedValue,
+    );
+    assert(selectedIndex >= 0, 'selectedValue must exist in segments');
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          height: 36,
-          padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: segments.entries.map((entry) {
-              final isSelected = entry.key == selectedValue;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  onValueChanged(entry.key);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? (isDark
-                              ? Colors.white.withValues(alpha: 0.2)
-                              : Colors.white)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Center(
-                    child: Text(
-                      entry.value,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        color: isDark
-                            ? Colors.white.withValues(
-                                alpha: isSelected ? 1.0 : 0.6,
-                              )
-                            : Colors.black.withValues(
-                                alpha: isSelected ? 0.9 : 0.5,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
+    return GlassSegmentedControl(
+      segments: [for (final entry in entries) GlassSegment(label: entry.value)],
+      selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+      onSegmentSelected: (index) => onValueChanged(entries[index].key),
+      height: 36,
+      borderRadius: 10,
+      useOwnLayer: true,
     );
   }
 }
-
-// =============================================================================
-// LIQUID GLASS SWITCH
-// =============================================================================
 
 class LiquidGlassSwitch extends StatelessWidget {
   final bool value;
@@ -114,56 +48,20 @@ class LiquidGlassSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = activeColor ?? Theme.of(context).primaryColor;
-
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onChanged(!value);
+    return GlassSwitch(
+      value: value,
+      onChanged: (nextValue) {
+        ElyriiHaptics.selection();
+        onChanged(nextValue);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        width: 51,
-        height: 31,
-        padding: const EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          color: value
-              ? primaryColor
-              : (isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : Colors.black.withValues(alpha: 0.1)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: AnimatedAlign(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            width: 27,
-            height: 27,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      activeColor: activeColor ?? Theme.of(context).primaryColor,
+      width: 51,
+      height: 31,
+      useOwnLayer: true,
+      enableHaptics: false,
     );
   }
 }
-
-// =============================================================================
-// LIQUID GLASS SLIDER
-// =============================================================================
 
 class LiquidGlassSlider extends StatelessWidget {
   final double value;
@@ -183,30 +81,13 @@ class LiquidGlassSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = activeColor ?? Theme.of(context).primaryColor;
-
-    return SliderTheme(
-      data: SliderThemeData(
-        trackHeight: 4,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 14),
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
-        activeTrackColor: primaryColor,
-        inactiveTrackColor: isDark
-            ? Colors.white.withValues(alpha: 0.2)
-            : Colors.black.withValues(alpha: 0.1),
-        thumbColor: Colors.white,
-        overlayColor: primaryColor.withValues(alpha: 0.2),
-      ),
-      child: Slider(
-        value: value,
-        min: min,
-        max: max,
-        onChanged: (v) {
-          HapticFeedback.selectionClick();
-          onChanged(v);
-        },
-      ),
+    return GlassSlider(
+      value: value,
+      min: min,
+      max: max,
+      activeColor: activeColor ?? Theme.of(context).primaryColor,
+      useOwnLayer: true,
+      onChanged: onChanged,
     );
   }
 }

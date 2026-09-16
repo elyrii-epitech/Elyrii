@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
@@ -19,6 +20,15 @@ class AppTheme {
       // Couleurs principales
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundLight,
+      // Transition latérale fluide (avec retour glissé iOS) pour toutes les
+      // routes standard construites via `builder:`.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: const ColorScheme.light(
         primary: AppColors
             .primary, // #9D7FFE - Violet brillant glossy (from #8B6FF0)
@@ -243,6 +253,13 @@ class AppTheme {
           .primaryDark, // #B99CFF - Violet glossy très lumineux pour dark mode
       scaffoldBackgroundColor:
           AppColors.backgroundDark, // #1A1818 - Noir chocolat
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryDark, // #B99CFF - Violet glossy très lumineux
         primaryContainer: AppColors.primary, // #9D7FFE - Violet brillant glossy

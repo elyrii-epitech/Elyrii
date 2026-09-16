@@ -1,12 +1,9 @@
 // iOS 26 Liquid Glass Card
 // Part of the Liquid Glass Widget Kit
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../services/glass_performance_service.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_dimensions.dart';
+import '../../design_system/haptics/elyrii_haptics.dart';
+import '../../glass/elyrii_glass_surface.dart';
 
 class LiquidGlassCard extends StatelessWidget {
   final Widget child;
@@ -28,53 +25,21 @@ class LiquidGlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final performanceService = GlassPerformanceService();
-    final blurSigma = performanceService.getEffectiveBlurSigma(
-      AppDimensions.blurSigmaRegular,
-    );
-
-    final container = Container(
+    return ElyriiGlassSurface(
+      role: GlassRole.floatingControl,
+      borderRadius: BorderRadius.circular(borderRadius),
       padding: padding ?? const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color:
-            color ??
-            (isDark
-                ? AppColors.liquidGlassBackgroundDark
-                : AppColors.liquidGlassBackgroundLight),
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color:
-              borderColor ??
-              (isDark
-                  ? AppColors.liquidGlassBorderDark
-                  : AppColors.liquidGlassBorderLight),
-          width: 0.5,
-        ),
-      ),
+      glassColor: color,
+      border: borderColor == null
+          ? null
+          : Border.all(color: borderColor!, width: 0.5),
+      onTap: onTap == null
+          ? null
+          : () {
+              ElyriiHaptics.light();
+              onTap?.call();
+            },
       child: child,
     );
-
-    final Widget content = ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: blurSigma > 0
-          ? BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-              child: container,
-            )
-          : container,
-    );
-
-    if (onTap != null) {
-      return GestureDetector(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap?.call();
-        },
-        child: content,
-      );
-    }
-
-    return content;
   }
 }

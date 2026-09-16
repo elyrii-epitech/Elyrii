@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/glass_container.dart';
 
 /// Widget affichant la citation du jour avec effet glassmorphism subtil
 class QuoteCard extends StatelessWidget {
@@ -12,13 +11,19 @@ class QuoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassContainer(
-      isDark: isDark,
-      borderRadius: AppDimensions.radiusMd,
-      intensity: GlassIntensity.light,
+    return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingLg,
         vertical: AppDimensions.paddingMd,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF201E24) : Colors.white,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.10)
+              : Colors.black.withValues(alpha: 0.05),
+        ),
       ),
       child: Row(
         children: [

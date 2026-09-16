@@ -1,11 +1,9 @@
 // iOS 26 Liquid Glass Buttons
 // Part of the Liquid Glass Widget Kit
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../../services/glass_performance_service.dart';
-import '../../theme/app_dimensions.dart';
+import '../../design_system/haptics/elyrii_haptics.dart';
+import '../../glass/elyrii_glass_surface.dart';
 
 enum LiquidGlassButtonStyle { filled, tinted, plain, gray }
 
@@ -80,7 +78,7 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
       onTap: isDisabled || widget.isLoading
           ? null
           : () {
-              HapticFeedback.lightImpact();
+              ElyriiHaptics.light();
               widget.onPressed?.call();
             },
       child: AnimatedScale(
@@ -90,12 +88,12 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 150),
           opacity: _isPressed ? 0.7 : 1.0,
-          child: Container(
+          child: ElyriiGlassSurface(
+            role: GlassRole.floatingControl,
+            borderRadius: BorderRadius.circular(12),
+            width: widget.isExpanded ? double.infinity : null,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
+            glassColor: backgroundColor,
             child: widget.isExpanded
                 ? Center(child: _buildContent(textColor))
                 : _buildContent(textColor),
@@ -165,41 +163,12 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDisabled = widget.onPressed == null;
-    final blurSigma = GlassPerformanceService().getEffectiveBlurSigma(
-      AppDimensions.blurSigmaLiquidGlass,
-    );
-    final button = Container(
+    final button = ElyriiGlassSurface(
+      role: GlassRole.floatingControl,
+      borderRadius: BorderRadius.circular(widget.size / 2),
       width: widget.size,
       height: widget.size,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: isDark
-              ? [
-                  Colors.white.withValues(alpha: 0.12),
-                  Colors.white.withValues(alpha: 0.07),
-                ]
-              : [
-                  Colors.white.withValues(alpha: 0.85),
-                  Colors.white.withValues(alpha: 0.72),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(widget.size / 2),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.16)
-              : Colors.black.withValues(alpha: 0.06),
-          width: 0.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+      glassColor: widget.backgroundColor,
       child: Icon(
         widget.icon,
         size: widget.size * 0.5,
@@ -216,7 +185,7 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
       onTap: isDisabled
           ? null
           : () {
-              HapticFeedback.lightImpact();
+              ElyriiHaptics.light();
               widget.onPressed?.call();
             },
       child: AnimatedScale(
@@ -226,20 +195,7 @@ class _LiquidGlassIconButtonState extends State<LiquidGlassIconButton> {
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 150),
           opacity: _isPressed ? 0.6 : (isDisabled ? 0.4 : 1.0),
-          child: RepaintBoundary(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(widget.size / 2),
-              child: blurSigma > 0
-                  ? BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: blurSigma,
-                        sigmaY: blurSigma,
-                      ),
-                      child: button,
-                    )
-                  : button,
-            ),
-          ),
+          child: RepaintBoundary(child: button),
         ),
       ),
     );

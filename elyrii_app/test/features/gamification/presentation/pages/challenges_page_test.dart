@@ -39,8 +39,8 @@ void main() {
     // Laisser les animations flutter_animate se stabiliser
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.text('Atelier de présence'), findsOneWidget);
-    expect(find.text('Ton jardin intérieur'), findsOneWidget);
+    expect(find.text('Jardin'), findsWidgets);
+    expect(find.text('Mes Quêtes'), findsOneWidget);
     // La personnalisation de la mascotte n'est plus sur la page Jardin
     expect(find.text('Personnaliser Elyrii'), findsNothing);
   });

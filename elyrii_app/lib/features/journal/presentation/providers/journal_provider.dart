@@ -11,17 +11,22 @@ class JournalProvider extends ChangeNotifier {
   final JournalRepository _repository;
 
   List<JournalEntryModel> _entries = [];
+  List<JournalEntryModel> _sortedEntries = const [];
   bool _sortNewest = true;
   bool _isLoading = false;
   String? _error;
 
-  List<JournalEntryModel> get entries => _getSortedEntries();
+  List<JournalEntryModel> get entries => _sortedEntries;
   bool get sortNewest => _sortNewest;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  JournalProvider({required ApiClient client})
-    : _repository = JournalRepository(client: client);
+  JournalProvider({JournalRepository? repository, ApiClient? client})
+    : assert(
+        repository != null || client != null,
+        'repository or client must be provided',
+      ),
+      _repository = repository ?? JournalRepository(client: client!);
 
   /// Load entries from the backend
   Future<void> loadEntries({DateTime? startDate, DateTime? endDate}) async {
@@ -33,6 +38,7 @@ class JournalProvider extends ChangeNotifier {
         startDate: startDate,
         endDate: endDate,
       );
+      _updateSortedEntries();
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -42,14 +48,14 @@ class JournalProvider extends ChangeNotifier {
     }
   }
 
-  List<JournalEntryModel> _getSortedEntries() {
+  void _updateSortedEntries() {
     final sorted = List<JournalEntryModel>.from(_entries);
     sorted.sort(
       (a, b) => _sortNewest
           ? b.createdAt.compareTo(a.createdAt)
           : a.createdAt.compareTo(b.createdAt),
     );
-    return sorted;
+    _sortedEntries = List.unmodifiable(sorted);
   }
 
   Future<JournalEntryModel?> createEntry({
@@ -64,6 +70,7 @@ class JournalProvider extends ChangeNotifier {
         mood: mood,
       );
       _entries.add(entry);
+      _updateSortedEntries();
       notifyListeners();
       return entry;
     } catch (e) {
@@ -89,6 +96,7 @@ class JournalProvider extends ChangeNotifier {
       final index = _entries.indexWhere((e) => e.id == id);
       if (index != -1) {
         _entries[index] = updated;
+        _updateSortedEntries();
         notifyListeners();
       }
     } catch (e) {
@@ -101,6 +109,7 @@ class JournalProvider extends ChangeNotifier {
     try {
       await _repository.deleteEntry(id);
       _entries.removeWhere((e) => e.id == id);
+      _updateSortedEntries();
       notifyListeners();
     } catch (e) {
       _error = e.toString();
@@ -110,6 +119,7 @@ class JournalProvider extends ChangeNotifier {
 
   void toggleSort() {
     _sortNewest = !_sortNewest;
+    _updateSortedEntries();
     notifyListeners();
   }
 }

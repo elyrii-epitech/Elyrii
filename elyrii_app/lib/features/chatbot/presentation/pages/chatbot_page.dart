@@ -8,6 +8,7 @@ import '../widgets/mascot_widget.dart';
 import '../widgets/conversation_suggestions.dart';
 import '../widgets/emergency_resources_button.dart';
 import '../widgets/crisis_detection_banner.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 
 class ChatbotPage extends StatefulWidget {
@@ -152,7 +153,9 @@ class _ChatbotPageState extends State<ChatbotPage>
                             children: [
                               MascotWidget(
                                 isMinimized: true,
+                                isUserTyping: _hasStartedTyping,
                                 onTap: () {
+                                  ElyriiHaptics.light();
                                   _focusNode.unfocus();
                                   provider.resetMascot();
                                 },
@@ -213,9 +216,12 @@ class _ChatbotPageState extends State<ChatbotPage>
                               ),
                             ],
                           )
-                        : const Center(
-                            key: ValueKey('full'),
-                            child: MascotWidget(isMinimized: false),
+                        : Center(
+                            key: const ValueKey('full'),
+                            child: MascotWidget(
+                              isMinimized: false,
+                              isUserTyping: _hasStartedTyping,
+                            ),
                           ),
                   );
                 },

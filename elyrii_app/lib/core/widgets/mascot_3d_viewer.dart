@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_3d_controller/flutter_3d_controller.dart';
-import 'package:shimmer/shimmer.dart';
 import '../config/mascot_3d_config.dart';
+import '../config/mascot_animations.dart';
 import '../theme/app_colors.dart';
+import 'mascot_warm_placeholder.dart';
 
 /// Widget réutilisable pour afficher la mascotte 3D Elyrii.
 ///
@@ -36,6 +39,12 @@ class Mascot3DViewer extends StatefulWidget {
   /// Utilisée par le système de thèmes (voir [MascotThemes]).
   final List<double>? colorMatrix;
 
+  /// Animation à jouer maintenant. Null → [Mascot3DConfig.initialAnimation].
+  ///
+  /// Les clips `once` retournent automatiquement à idle à leur fin.
+  /// [MascotAnimations.holdPose] fige la pose courante (pauseAnimation).
+  final MascotAnimation? animation;
+
   /// Callback appelé quand le modèle est chargé avec succès.
   final VoidCallback? onModelLoaded;
 
@@ -49,6 +58,7 @@ class Mascot3DViewer extends StatefulWidget {
     this.height = 150,
     this.controller,
     this.colorMatrix,
+    this.animation,
     this.onModelLoaded,
     this.onError,
   });
@@ -59,8 +69,14 @@ class Mascot3DViewer extends StatefulWidget {
 
 class _Mascot3DViewerState extends State<Mascot3DViewer> {
   late Flutter3DController _controller;
-  bool _isLoading = true;
   bool _hasError = false;
+  bool _modelLoaded = false;
+
+  /// Passe à vrai après le délai de stabilisation post-chargement : le
+  /// modèle apparaît alors en fondu (400 ms) depuis le placeholder respirant.
+  bool _modelReady = false;
+  Timer? _onceTimer;
+  Timer? _loadTimeoutTimer;
 
   bool get _isWidgetTest {
     return WidgetsBinding.instance.runtimeType.toString().contains('Test');
@@ -70,6 +86,14 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
   void initState() {
     super.initState();
     _controller = widget.controller ?? Flutter3DController();
+    // Sécurité : si WebGL ou model-viewer tarde ou échoue à émettre onLoad,
+    // le placeholder s'efface après 3.5s pour ne jamais bloquer l'affichage.
+    _loadTimeoutTimer = Timer(const Duration(milliseconds: 3500), () {
+      if (mounted && !_modelReady) {
+        debugPrint('Mascot3DViewer: Timeout chargement -> affichage modèle');
+        setState(() => _modelReady = true);
+      }
+    });
   }
 
   @override
@@ -81,17 +105,35 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
     }
     if (widget.config.assetPath != oldWidget.config.assetPath) {
       setState(() {
-        _isLoading = true;
         _hasError = false;
+        _modelLoaded = false;
+        _modelReady = false;
       });
     }
+    if (widget.animation != oldWidget.animation && _modelLoaded) {
+      _applyAnimation(widget.animation ?? widget.config.initialAnimation);
+    }
+  }
+
+  @override
+  void dispose() {
+    _loadTimeoutTimer?.cancel();
+    _onceTimer?.cancel();
+    super.dispose();
   }
 
   void _onModelLoaded(String modelAddress) {
     if (!mounted) return;
+    _loadTimeoutTimer?.cancel();
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
+    setState(() {
+      _modelLoaded = true;
+    });
+
+    // Stabilisation post-chargement (cadrage caméra, rotation, clip initial)
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      try {
         if (widget.config.useCameraOrbit) {
           _controller.setCameraOrbit(
             widget.config.cameraOrbitTheta,
@@ -99,26 +141,54 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
             widget.config.cameraOrbitRadius,
           );
         }
+        final targetY = widget.config.cameraTargetY;
+        if (targetY != null) {
+          _controller.setCameraTarget(0, targetY, 0);
+        }
         _applyRotationConfig();
-        _playIdleAnimation();
+        _applyAnimation(widget.animation ?? widget.config.initialAnimation);
+      } catch (error) {
+        debugPrint('Mascot3DViewer: Configuration post-load ignorée: $error');
+      } finally {
+        if (mounted) {
+          setState(() => _modelReady = true);
+        }
       }
-    });
-
-    setState(() {
-      _isLoading = false;
-      _hasError = false;
     });
 
     widget.onModelLoaded?.call();
   }
 
-  /// Joue l'animation "idle" intégrée au modèle GLB en boucle.
-  /// Le modèle Elyrii embarque les animations : idle, wave, twitch, look.
-  void _playIdleAnimation() {
+  /// Joue un clip du GLB selon son mode : boucle infinie, une seule fois
+  /// (retour automatique à idle) ou gel de la pose courante.
+  void _applyAnimation(MascotAnimation animation) {
+    _onceTimer?.cancel();
+
     try {
-      _controller.playAnimation(animationName: 'idle');
+      switch (animation.mode) {
+        case MascotAnimationMode.hold:
+          _controller.pauseAnimation();
+        case MascotAnimationMode.loop:
+          _controller.playAnimation(
+            animationName: animation.clipName,
+            loopCount: 0,
+          );
+        case MascotAnimationMode.once:
+          _controller.playAnimation(
+            animationName: animation.clipName,
+            loopCount: 1,
+          );
+          // flutter_3d_controller n'expose pas l'évènement « finished » :
+          // le retour au calme est programmé sur la durée exacte du clip.
+          _onceTimer = Timer(animation.duration, () {
+            if (!mounted) return;
+            _applyAnimation(MascotAnimations.idle);
+          });
+      }
     } catch (error) {
-      debugPrint('Mascot3DViewer: Erreur lecture animation idle: $error');
+      debugPrint(
+        'Mascot3DViewer: Erreur lecture animation ${animation.clipName}: $error',
+      );
     }
   }
 
@@ -141,7 +211,6 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
     debugPrint('Mascot3DViewer: Erreur chargement modèle 3D: $error');
 
     setState(() {
-      _isLoading = false;
       _hasError = true;
     });
 
@@ -174,36 +243,40 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
     return Stack(
       alignment: Alignment.center,
       children: [
+        // Le viewer reste toujours à opacité 1.0 : sur iOS (WebKit), une vue
+        // native à opacité 0.0 suspend le rendu WebGL et bloque l'évènement
+        // onLoad de model-viewer.
         Flutter3DViewer(
           controller: _controller,
           src: widget.config.assetPath,
           activeGestureInterceptor: widget.config.interactionEnabled,
           enableTouch: widget.config.interactionEnabled,
-          progressBarColor: widget.config.showLoadingIndicator
-              ? AppColors.primary
-              : Colors.transparent,
+          progressBarColor: Colors.transparent,
           onProgress: (_) {},
           onLoad: _onModelLoaded,
           onError: _onModelError,
         ),
-        if (_isLoading && widget.config.showLoadingIndicator)
-          Positioned.fill(child: _buildLoadingShimmer()),
+        if (widget.config.showLoadingIndicator)
+          // Placeholder organique respirant superposé : il s'efface en
+          // fondu doux dès que le modèle est prêt.
+          Positioned.fill(
+            child: IgnorePointer(
+              ignoring: _modelReady,
+              child: AnimatedOpacity(
+                opacity: _modelReady ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
+                child: TickerMode(
+                  enabled: !_modelReady,
+                  child: MascotWarmPlaceholder(
+                    width: widget.width,
+                    height: widget.height,
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
-    );
-  }
-
-  /// Shimmer animé pendant le chargement du modèle 3D.
-  Widget _buildLoadingShimmer() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
-      highlightColor: isDark ? Colors.grey.shade600 : Colors.grey.shade100,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
-          shape: BoxShape.circle,
-        ),
-      ),
     );
   }
 

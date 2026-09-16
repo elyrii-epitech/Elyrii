@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
@@ -62,89 +61,80 @@ class CrisisDetectionBanner extends StatelessWidget {
   }
 
   Widget _buildBannerContent(BuildContext context, bool isDark) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-          decoration: BoxDecoration(
-            color: AppColors.warning.withValues(alpha: isDark ? 0.15 : 0.12),
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(16),
-            ),
-            border: Border.all(
-              color: AppColors.warning.withValues(alpha: isDark ? 0.3 : 0.2),
-              width: 0.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.warning.withValues(alpha: 0.06),
-                blurRadius: 12,
-                spreadRadius: 0,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Gentle icon + message
-              Icon(
-                Icons.favorite_rounded,
-                size: 28,
-                color: isDark ? AppColors.warningLight : AppColors.warningDark,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'On dirait que tu traverses un moment difficile. Tu n\'es pas seul(e).',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Emergency numbers
-              _buildPhoneRow(
-                context,
-                isDark,
-                label: 'SOS Amitié',
-                number: '09 72 39 40 50',
-              ),
-              const SizedBox(height: 8),
-              _buildPhoneRow(
-                context,
-                isDark,
-                label: 'Prévention suicide',
-                number: '3114',
-              ),
-              const SizedBox(height: 16),
-
-              // Action buttons
-              LiquidGlassButton(
-                label: 'J\'ai besoin d\'aide maintenant',
-                icon: Icons.phone_in_talk_rounded,
-                style: LiquidGlassButtonStyle.filled,
-                isExpanded: true,
-                onPressed: () => _showHelpDialog(context, isDark),
-              ),
-              const SizedBox(height: 8),
-              LiquidGlassButton(
-                label: 'Ça va, merci',
-                style: LiquidGlassButtonStyle.plain,
-                isExpanded: true,
-                onPressed: onDismiss,
-              ),
-            ],
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2218) : const Color(0xFFFFF7ED),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: isDark ? 0.35 : 0.25),
+          width: 0.8,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Gentle icon + message
+          Icon(
+            Icons.favorite_rounded,
+            size: 28,
+            color: isDark ? AppColors.warningLight : AppColors.warningDark,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'On dirait que tu traverses un moment difficile. Tu n\'es pas seul(e).',
+            style: TextStyle(
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+
+          // Emergency numbers
+          _buildPhoneRow(
+            context,
+            isDark,
+            label: 'SOS Amitié',
+            number: '09 72 39 40 50',
+          ),
+          const SizedBox(height: 8),
+          _buildPhoneRow(
+            context,
+            isDark,
+            label: 'Prévention suicide',
+            number: '3114',
+          ),
+          const SizedBox(height: 16),
+
+          // Action buttons
+          LiquidGlassButton(
+            label: 'J\'ai besoin d\'aide maintenant',
+            icon: Icons.phone_in_talk_rounded,
+            style: LiquidGlassButtonStyle.filled,
+            isExpanded: true,
+            onPressed: () => _showHelpDialog(context, isDark),
+          ),
+          const SizedBox(height: 8),
+          LiquidGlassButton(
+            label: 'Ça va, merci',
+            style: LiquidGlassButtonStyle.plain,
+            isExpanded: true,
+            onPressed: onDismiss,
+          ),
+        ],
       ),
     );
   }
