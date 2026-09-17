@@ -144,24 +144,26 @@ class MeditationCatalogView extends StatelessWidget {
                 _buildSectionHeader(
                   'Choisir une intention',
                   isDark,
-                  trailing: const Row(
+                  trailing: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Faire défiler',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                    children: List.generate(_intents.length, (i) {
+                      final isCurrent =
+                          _intents[i].type == controller.selectedBreathingType;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(left: 4),
+                        width: isCurrent ? 12 : 4,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          color: isCurrent
+                              ? AppColors.primary
+                              : (isDark
+                                    ? Colors.white.withValues(alpha: 0.20)
+                                    : Colors.black.withValues(alpha: 0.12)),
                         ),
-                      ),
-                      SizedBox(width: 4),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 13,
-                        color: AppColors.primary,
-                      ),
-                    ],
+                      );
+                    }),
                   ),
                 ),
                 const SizedBox(height: 10),
