@@ -49,22 +49,25 @@ class _MeditationPageState extends State<MeditationPage> {
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: SafeArea(
-        bottom: false,
-        child: ListenableBuilder(
-          listenable: _controller,
-          builder: (context, _) {
-            switch (_controller.sessionState) {
-              case MeditationSessionState.setup:
-                return MeditationCatalogView(controller: _controller);
-              case MeditationSessionState.running:
-              case MeditationSessionState.paused:
-                return ActiveBreathingView(controller: _controller);
-              case MeditationSessionState.finished:
-                return MeditationSummaryView(controller: _controller);
-            }
-          },
-        ),
+      body: ListenableBuilder(
+        listenable: _controller,
+        builder: (context, _) {
+          switch (_controller.sessionState) {
+            case MeditationSessionState.setup:
+              return MeditationCatalogView(controller: _controller);
+            case MeditationSessionState.running:
+            case MeditationSessionState.paused:
+              return SafeArea(
+                bottom: false,
+                child: ActiveBreathingView(controller: _controller),
+              );
+            case MeditationSessionState.finished:
+              return SafeArea(
+                bottom: false,
+                child: MeditationSummaryView(controller: _controller),
+              );
+          }
+        },
       ),
     );
   }
