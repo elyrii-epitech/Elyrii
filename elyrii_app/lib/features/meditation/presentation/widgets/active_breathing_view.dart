@@ -119,7 +119,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
 
     return Column(
       children: [
-        // ---- En-tête : badge technique + bouton quitter ----
+        // ---- En-tête : badge technique ----
         Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.pageHorizontalPadding,
@@ -151,13 +151,6 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                     ),
                   ],
                 ),
-              ),
-              const Spacer(),
-              LiquidGlassIconButton(
-                icon: Icons.close_rounded,
-                size: 40,
-                color: subtitleColor,
-                onPressed: widget.onRequestExit,
               ),
             ],
           ),
