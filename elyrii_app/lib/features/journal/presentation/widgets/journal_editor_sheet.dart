@@ -5,6 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import 'package:provider/provider.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
@@ -99,6 +101,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         mood: currentMood,
       );
       _createdEntryId = created?.id;
+      if (created != null && mounted) {
+        // Le premier enregistrement est une petite victoire : la mascotte du
+        // dashboard pourra jouer ce moment même si l'utilisateur ferme la
+        // feuille avant d'y revenir.
+        context.read<MascotProvider>().react(MascotAnimations.cozy);
+      }
     }
 
     if (!mounted) return;
@@ -115,7 +123,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       context: context,
       title: 'Modifications non sauvegardées',
       child: const Text(
-        'Voulez-vous sauvegarder vos modifications avant de fermer ?',
+        'Veux-tu sauvegarder tes modifications avant de fermer ?',
       ),
       actions: [
         LiquidGlassDialogAction(

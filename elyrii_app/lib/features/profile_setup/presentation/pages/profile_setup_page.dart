@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
@@ -229,9 +230,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             if (_currentStep > 0)
               Align(
                 alignment: Alignment.centerLeft,
-                child: LiquidGlassIconButton(
-                  icon: Icons.arrow_back_ios_new_rounded,
-                  size: 40,
+                child: ElyriiBackButton(
                   onPressed: _isSaving ? null : _previousStep,
                   color: isDark
                       ? Colors.white
@@ -289,6 +288,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                           width: 220,
                           height: 220,
                           isDark: isDark,
+                          animation: MascotAnimations.curious,
                         )
                       : Stack(
                           children: [
@@ -487,7 +487,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
-              ).copyWith(fontWeight: FontWeight.bold),
+              ).copyWith(fontWeight: FontWeight.w800),
               textAlign: TextAlign.center,
             ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
             const SizedBox(height: AppDimensions.spacingMd),

@@ -14,6 +14,8 @@ import '../providers/auth_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -31,6 +33,8 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _acceptTerms = false;
   String? _errorBanner;
   bool _errorBannerIsSuccess = false;
+  MascotAnimation _mascotAnimation = MascotAnimations.greet;
+  int _mascotTrigger = 0;
   bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
@@ -67,6 +71,10 @@ class _RegisterPageState extends State<RegisterPage> {
     );
     if (!mounted) return;
     if (success) {
+      setState(() {
+        _mascotAnimation = MascotAnimations.celebrate;
+        _mascotTrigger++;
+      });
       // Charger le profil pour pre-remplir l'onboarding
       await userProvider.loadProfile();
       if (!mounted) return;
@@ -83,8 +91,11 @@ class _RegisterPageState extends State<RegisterPage> {
         _errorBanner =
             authProvider.error ??
             'Oops, petit souci lors de la création. Réessaie quand tu es prêt.';
+        _mascotAnimation = isVerificationMessage
+            ? MascotAnimations.delight
+            : MascotAnimations.reassure;
+        _mascotTrigger++;
       });
-
       if (isVerificationMessage) {
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
@@ -114,10 +125,22 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   // Mascotte cadrée par la caméra (cameraTarget du config
                   // authPage) — aucun décalage de layout.
-                  const Mascot3DViewer(
-                        config: Mascot3DConfig.authPage(),
-                        width: 250,
-                        height: 250,
+                  GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          ElyriiHaptics.light();
+                          setState(() {
+                            _mascotAnimation = MascotAnimations.greet;
+                            _mascotTrigger++;
+                          });
+                        },
+                        child: Mascot3DViewer(
+                          config: const Mascot3DConfig.authPage(),
+                          animation: _mascotAnimation,
+                          animationTrigger: _mascotTrigger,
+                          width: 250,
+                          height: 250,
+                        ),
                       )
                       .animate()
                       .fadeIn(duration: 600.ms)
@@ -127,11 +150,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
                   Text(
                     'Créer un compte',
-                    style: AppTextStyles.headlineMedium(
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ).copyWith(fontWeight: FontWeight.bold),
+                    style:
+                        AppTextStyles.headlineMedium(
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ).copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.8,
+                        ),
                     textAlign: TextAlign.center,
                   ),
 
@@ -180,7 +207,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           textInputAction: TextInputAction.next,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre prénom';
+                              return 'Entre ton prénom';
                             }
                             if (value.length < 2) {
                               return 'Le prénom doit contenir au moins 2 caractères';
@@ -208,7 +235,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           textInputAction: TextInputAction.next,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre email';
+                              return 'Entre ton email';
                             }
                             if (!Validators.isValidEmail(value)) {
                               return 'Email invalide';
@@ -236,7 +263,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           textInputAction: TextInputAction.next,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer un mot de passe';
+                              return 'Entre ton mot de passe';
                             }
                             if (value.length < 8) {
                               return 'Le mot de passe doit contenir au moins 8 caractères';
@@ -270,7 +297,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           textInputAction: TextInputAction.done,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Veuillez confirmer votre mot de passe';
+                              return 'Confirme ton mot de passe';
                             }
                             if (value != _passwordController.text) {
                               return 'Les mots de passe ne correspondent pas';

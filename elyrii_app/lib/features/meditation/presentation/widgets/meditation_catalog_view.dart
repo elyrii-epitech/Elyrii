@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_animations.dart';
@@ -86,114 +85,128 @@ class MeditationCatalogView extends StatelessWidget {
     ),
   ];
 
-  _BreathingIntent get _currentIntent {
-    return _intents.firstWhere(
-      (i) => i.type == controller.selectedBreathingType,
-      orElse: () => _intents.first,
-    );
+  /// Intention active, ou null tant qu'aucune n'a été choisie.
+  _BreathingIntent? get _currentIntent {
+    final type = controller.selectedBreathingType;
+    if (type == null) return null;
+    for (final intent in _intents) {
+      if (intent.type == type) return intent;
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
-    final intent = _currentIntent;
+    // Abonnement au contrôleur : sans lui, un tap sur une intention ou une
+    // durée modifie l'état mais jamais l'écran (sélection figée).
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final topPadding = MediaQuery.of(context).padding.top;
+        final intent = _currentIntent;
 
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(
-        parent: BouncingScrollPhysics(),
-      ),
-      slivers: [
-        // Tirer-relâcher natif Cupertino
-        CupertinoSliverRefreshControl(
-          onRefresh: () async {
-            await Future.delayed(const Duration(milliseconds: 250));
-          },
-        ),
-
-        // 1. En-tête spatial épuré
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              AppDimensions.pageHorizontalPadding,
-              topPadding + 14,
-              AppDimensions.pageHorizontalPadding,
-              4,
+        return CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            // Tirer-relâcher natif Cupertino
+            CupertinoSliverRefreshControl(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 250));
+              },
             ),
-            child: _buildHeader(isDark),
-          ),
-        ),
 
-        // 2. Composition principale unifiée
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.pageHorizontalPadding,
-            8,
-            AppDimensions.pageHorizontalPadding,
-            120, // Dégagement pour le dock flottant
-          ),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // A. Le Cœur du Sanctuaire (Mascotte respirante + intention active)
-                _buildSanctuaryCard(intent, isDark),
-                const SizedBox(height: 18),
-
-                // B. Sélecteur d'intentions émotionnelles (Carrousel horizontal)
-                _buildSectionHeader(
-                  'Choisir une intention',
-                  isDark,
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(_intents.length, (i) {
-                      final isCurrent =
-                          _intents[i].type == controller.selectedBreathingType;
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.only(left: 4),
-                        width: isCurrent ? 12 : 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(2),
-                          color: isCurrent
-                              ? AppColors.primary
-                              : (isDark
-                                    ? Colors.white.withValues(alpha: 0.20)
-                                    : Colors.black.withValues(alpha: 0.12)),
-                        ),
-                      );
-                    }),
-                  ),
+            // 1. En-tête spatial épuré
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppDimensions.pageHorizontalPadding,
+                  topPadding + 14,
+                  AppDimensions.pageHorizontalPadding,
+                  4,
                 ),
-                const SizedBox(height: 10),
-                _buildIntentCarousel(isDark),
-                const SizedBox(height: 18),
-
-                // C. Durée de la séance
-                _buildSectionHeader('Durée de la pause', isDark),
-                const SizedBox(height: 10),
-                _buildDurationSelector(isDark),
-                const SizedBox(height: 22),
-
-                // D. Grand Bouton Héroïque de Lancement
-                LiquidGlassButton(
-                  label:
-                      'Commencer la séance (${controller.selectedDurationMinutes} min)',
-                  icon: Icons.play_arrow_rounded,
-                  style: LiquidGlassButtonStyle.filled,
-                  isExpanded: true,
-                  isLoading: controller.isStartingSession,
-                  onPressed: () {
-                    ElyriiHaptics.light();
-                    controller.startSession();
-                  },
-                ),
-              ],
+                child: _buildHeader(isDark),
+              ),
             ),
-          ),
-        ),
-      ],
+
+            // 2. Composition principale unifiée
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.pageHorizontalPadding,
+                8,
+                AppDimensions.pageHorizontalPadding,
+                120, // Dégagement pour le dock flottant
+              ),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // A. Le Cœur du Sanctuaire (Mascotte respirante + intention active)
+                    _buildSanctuaryCard(intent, isDark),
+                    const SizedBox(height: 18),
+
+                    // B. Sélecteur d'intentions émotionnelles (Carrousel horizontal)
+                    _buildSectionHeader(
+                      'Choisir une intention',
+                      isDark,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(_intents.length, (i) {
+                          final isCurrent =
+                              _intents[i].type ==
+                              controller.selectedBreathingType;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.only(left: 4),
+                            width: isCurrent ? 12 : 4,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(2),
+                              color: isCurrent
+                                  ? AppColors.primary
+                                  : (isDark
+                                        ? Colors.white.withValues(alpha: 0.20)
+                                        : Colors.black.withValues(alpha: 0.12)),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildIntentCarousel(isDark),
+                    const SizedBox(height: 18),
+
+                    // C. Durée de la séance
+                    _buildSectionHeader('Durée de la pause', isDark),
+                    const SizedBox(height: 10),
+                    _buildDurationSelector(isDark),
+                    const SizedBox(height: 22),
+
+                    // D. Grand Bouton Héroïque de Lancement
+                    LiquidGlassButton(
+                      label: controller.selectedBreathingType == null
+                          ? 'Choisis une intention'
+                          : 'Commencer la séance (${controller.selectedDurationMinutes} min)',
+                      icon: Icons.play_arrow_rounded,
+                      style: LiquidGlassButtonStyle.filled,
+                      isExpanded: true,
+                      isLoading: controller.isStartingSession,
+                      onPressed: controller.selectedBreathingType == null
+                          ? null
+                          : () {
+                              ElyriiHaptics.light();
+                              controller.startSession();
+                            },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -236,12 +249,12 @@ class MeditationCatalogView extends StatelessWidget {
           ),
         ),
       ],
-    ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.05, end: 0);
+    );
   }
 
   /// Carte Maîtresse : Sanctuaire avec la Mascotte velours qui respire calmement.
-  Widget _buildSanctuaryCard(_BreathingIntent intent, bool isDark) {
-    final type = intent.type;
+  Widget _buildSanctuaryCard(_BreathingIntent? intent, bool isDark) {
+    final color = intent?.type.color ?? AppColors.primary;
 
     return LiquidGlassCard(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
@@ -255,8 +268,8 @@ class MeditationCatalogView extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  type.color.withValues(alpha: isDark ? 0.28 : 0.18),
-                  type.color.withValues(alpha: isDark ? 0.10 : 0.05),
+                  color.withValues(alpha: isDark ? 0.28 : 0.18),
+                  color.withValues(alpha: isDark ? 0.10 : 0.05),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.65, 1.0],
@@ -268,7 +281,7 @@ class MeditationCatalogView extends StatelessWidget {
                   interactionEnabled: false,
                   autoRotate: false,
                 ),
-                animation: MascotAnimations.breathe,
+                animation: MascotAnimations.settle,
                 width: 114,
                 height: 114,
               ),
@@ -276,108 +289,145 @@ class MeditationCatalogView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Titre de l'intention et promesse bienveillante
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(intent.emoji, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              Text(
-                intent.title,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
+          // État d'accueil : aucune intention choisie
+          if (intent == null) ...[
+            Text(
+              'Choisis ton intention',
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: type.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
+            ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 34,
+              child: Center(
                 child: Text(
-                  '${type.cycleDuration}s',
+                  'Sélectionne un mode de respiration ci-dessous pour façonner ta séance.',
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: type.color,
+                    fontSize: 12,
+                    height: 1.35,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          SizedBox(
-            height: 34,
-            child: Center(
-              child: Text(
-                intent.benefit,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.35,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
             ),
-          ),
-          const SizedBox(height: 12),
-
-          // Décomposition du cycle en pilule unifiée à hauteur fixe
-          Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.black.withValues(alpha: 0.04),
-                width: 0.6,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
+          ] else ...[
+            // Titre de l'intention et promesse bienveillante
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                for (int i = 0; i < type.phases.length; i++) ...[
-                  if (i > 0)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      child: Text(
-                        '·',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: type.color.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ),
-                  Text(
-                    '${type.phases[i].label} ${type.phases[i].seconds}s',
+                Text(intent.emoji, style: const TextStyle(fontSize: 18)),
+                const SizedBox(width: 8),
+                Text(
+                  intent.title,
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: intent.type.color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '${intent.type.cycleDuration}s',
                     style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
+                      fontWeight: FontWeight.w700,
+                      color: intent.type.color,
                     ),
                   ),
-                ],
+                ),
               ],
             ),
-          ),
+            const SizedBox(height: 6),
+            SizedBox(
+              height: 34,
+              child: Center(
+                child: Text(
+                  intent.benefit,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Décomposition du cycle en pilule unifiée à hauteur fixe
+            Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.03),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.04),
+                  width: 0.6,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < intent.type.phases.length; i++) ...[
+                    if (i > 0)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Text(
+                          '·',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: intent.type.color.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ),
+                    Text(
+                      '${intent.type.phases[i].label} '
+                      '${intent.type.phases[i].seconds}s',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -461,16 +511,18 @@ class MeditationCatalogView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    intent.subtitle,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
+                  Flexible(
+                    child: Text(
+                      intent.subtitle,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

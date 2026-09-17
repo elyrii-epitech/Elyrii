@@ -35,6 +35,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
   late Animation<double> _breathScale;
   int _lastPhaseIndex = -1;
   bool _lastPaused = false;
+  bool _reducedMotion = false;
 
   @override
   void initState() {
@@ -58,40 +59,68 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
     if (oldWidget.controller != widget.controller) {
       oldWidget.controller.removeListener(_onControllerTick);
       widget.controller.addListener(_onControllerTick);
+      _lastPhaseIndex = -1;
+      _syncAnimationWithPhase();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    if (_reducedMotion != reduced) {
+      _reducedMotion = reduced;
+      _lastPhaseIndex = -1;
       _syncAnimationWithPhase();
     }
   }
 
   void _onControllerTick() {
     if (!mounted) return;
-    if (widget.controller.currentPhaseIndex != _lastPhaseIndex) {
+    if (widget.controller.currentPhaseIndex != _lastPhaseIndex ||
+        widget.controller.isPaused != _lastPaused) {
       _syncAnimationWithPhase();
-    }
-    // Repeint la mascotte : boucle breathe ↔ pose tenue en pause.
-    if (widget.controller.isPaused != _lastPaused) {
-      _lastPaused = widget.controller.isPaused;
-      setState(() {});
     }
   }
 
   void _syncAnimationWithPhase() {
-    final phase = widget.controller.currentPhase;
-    _lastPhaseIndex = widget.controller.currentPhaseIndex;
-    final duration = Duration(seconds: phase.seconds);
-
-    _breathScaleController.duration = duration;
-
-    switch (phase.action) {
-      case BreathAction.expand:
-        _breathScaleController.forward(from: 0.0);
-        break;
-      case BreathAction.contract:
-        _breathScaleController.reverse(from: 1.0);
-        break;
-      case BreathAction.hold:
-        _breathScaleController.stop();
-        break;
+    final controller = widget.controller;
+    final phase = controller.currentPhase;
+    final changed = _lastPhaseIndex != controller.currentPhaseIndex;
+    _lastPhaseIndex = controller.currentPhaseIndex;
+    _lastPaused = controller.isPaused;
+    _breathScaleController.stop();
+    if (_reducedMotion) {
+      _breathScaleController.value = .5;
+      return;
     }
+    if (changed) {
+      final elapsed = (1 - controller.phaseSecondsRemaining / phase.seconds)
+          .clamp(0.0, 1.0);
+      switch (phase.action) {
+        case BreathAction.expand:
+          _breathScaleController.value = elapsed;
+        case BreathAction.contract:
+          _breathScaleController.value = 1 - elapsed;
+        case BreathAction.hold:
+          // Retrouve aussi la bonne pose en arrivant au milieu d'une rétention.
+          final phases = controller.selectedBreathingType!.phases;
+          final previous =
+              phases[(controller.currentPhaseIndex - 1) % phases.length];
+          _breathScaleController.value = previous.action == BreathAction.expand
+              ? 1
+              : 0;
+      }
+    }
+    if (controller.isPaused || phase.action == BreathAction.hold) return;
+    final target = phase.action == BreathAction.expand ? 1.0 : 0.0;
+    _breathScaleController.animateTo(
+      target,
+      // La reprise part de la pose exacte et rejoint la prochaine transition
+      // du minuteur, même si la pause a eu lieu au milieu d'une seconde.
+      duration: Duration(seconds: controller.phaseSecondsRemaining),
+      curve: Curves.linear,
+    );
   }
 
   @override
@@ -115,7 +144,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
         : AppColors.textSecondaryLight;
     final currentPhase = widget.controller.currentPhase;
     final isPaused = widget.controller.isPaused;
-    final accent = widget.controller.selectedBreathingType.color;
+    final accent = widget.controller.selectedBreathingType!.color;
 
     return Column(
       children: [
@@ -143,7 +172,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                     Icon(currentPhase.icon, size: 14, color: accent),
                     const SizedBox(width: 6),
                     Text(
-                      widget.controller.selectedBreathingType.label,
+                      widget.controller.selectedBreathingType!.label,
                       style: AppTextStyles.labelMedium(
                         color: accent,
                         fontWeight: FontWeight.w700,
@@ -339,18 +368,14 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
             },
           ),
 
-          // Mascotte centrale : sa propre respiration (clip `breathe`)
-          // accompagne le rythme de l'exercice.
+          // La mascotte et le cercle partagent la même progression, pauses incluses.
           MascotWithAccessories(
             config: const Mascot3DConfig(
               interactionEnabled: false,
               autoRotate: false,
             ),
-            // Boucle de respiration pendant la séance ; la pause fige
-            // la pose exacte (MascotAnimationMode.hold).
-            animation: widget.controller.isPaused
-                ? MascotAnimations.holdPose
-                : MascotAnimations.breathe,
+            animation: MascotAnimations.breathe,
+            breathProgress: _breathScaleController,
             width: size * 0.52,
             height: size * 0.52,
           ),

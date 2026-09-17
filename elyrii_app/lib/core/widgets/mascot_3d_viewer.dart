@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_3d_controller/flutter_3d_controller.dart';
+import 'package:flutter/foundation.dart';
+import '../services/mascot_motion_controller.dart';
+import 'mascot_model_surface.dart';
 import '../config/mascot_3d_config.dart';
 import '../config/mascot_animations.dart';
 import '../theme/app_colors.dart';
@@ -32,7 +34,7 @@ class Mascot3DViewer extends StatefulWidget {
 
   /// Contrôleur externe optionnel pour piloter le modèle 3D.
   /// Si non fourni, un contrôleur interne est créé automatiquement.
-  final Flutter3DController? controller;
+  final MascotModelController? controller;
 
   /// Matrice de couleur optionnelle (20 valeurs) pour recolorer le modèle.
   /// Si null, aucune transformation n'est appliquée.
@@ -44,6 +46,15 @@ class Mascot3DViewer extends StatefulWidget {
   /// Les clips `once` retournent automatiquement à idle à leur fin.
   /// [MascotAnimations.holdPose] fige la pose courante (pauseAnimation).
   final MascotAnimation? animation;
+
+  /// Incrémenter pour rejouer un même geste après une nouvelle interaction.
+  final int animationTrigger;
+
+  /// Progression du souffle 0 → 1, partagée avec le cercle de guidage.
+  final ValueListenable<double>? breathProgress;
+
+  /// Faux pour les accessoires statiques sans clips natifs.
+  final bool animated;
 
   /// Callback appelé quand le modèle est chargé avec succès.
   final VoidCallback? onModelLoaded;
@@ -59,6 +70,9 @@ class Mascot3DViewer extends StatefulWidget {
     this.controller,
     this.colorMatrix,
     this.animation,
+    this.animationTrigger = 0,
+    this.breathProgress,
+    this.animated = true,
     this.onModelLoaded,
     this.onError,
   });
@@ -67,128 +81,185 @@ class Mascot3DViewer extends StatefulWidget {
   State<Mascot3DViewer> createState() => _Mascot3DViewerState();
 }
 
-class _Mascot3DViewerState extends State<Mascot3DViewer> {
-  late Flutter3DController _controller;
+class _Mascot3DViewerState extends State<Mascot3DViewer>
+    with WidgetsBindingObserver {
+  late MascotModelController _controller;
+  late MascotMotionController _motion;
   bool _hasError = false;
   bool _modelLoaded = false;
-
-  /// Passe à vrai après le délai de stabilisation post-chargement : le
-  /// modèle apparaît alors en fondu (400 ms) depuis le placeholder respirant.
   bool _modelReady = false;
-  Timer? _onceTimer;
+  bool _active = true;
+  bool _tickerEnabled = true;
+  bool _reducedMotion = false;
   Timer? _loadTimeoutTimer;
+  Timer? _stabilizeTimer;
+  final Stopwatch _seekClock = Stopwatch()..start();
+  int _lastSeek = -100;
 
-  bool get _isWidgetTest {
-    return WidgetsBinding.instance.runtimeType.toString().contains('Test');
-  }
+  bool get _isWidgetTest =>
+      WidgetsBinding.instance.runtimeType.toString().contains('Test');
+  bool get _canMove => _active && _tickerEnabled && !_reducedMotion;
 
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? Flutter3DController();
-    // Sécurité : si WebGL ou model-viewer tarde ou échoue à émettre onLoad,
-    // le placeholder s'efface après 3.5s pour ne jamais bloquer l'affichage.
-    _loadTimeoutTimer = Timer(const Duration(milliseconds: 3500), () {
-      if (mounted && !_modelReady) {
-        debugPrint('Mascot3DViewer: Timeout chargement -> affichage modèle');
-        setState(() => _modelReady = true);
+    WidgetsBinding.instance.addObserver(this);
+    _active =
+        WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    _controller = widget.controller ?? MascotModelController();
+    _createMotion();
+    widget.breathProgress?.addListener(_seekBreath);
+    _startLoadTimeout();
+  }
+
+  void _createMotion() {
+    _motion = MascotMotionController()..addListener(_playCurrent);
+    _motion.setAnimation(
+      widget.animation ?? widget.config.initialAnimation,
+      trigger: widget.animationTrigger,
+    );
+  }
+
+  void _startLoadTimeout() {
+    _loadTimeoutTimer?.cancel();
+    if (_isWidgetTest) return;
+    _loadTimeoutTimer = Timer(const Duration(seconds: 20), () {
+      if (mounted && !_modelLoaded) {
+        _onModelError('Délai de chargement dépassé');
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _tickerEnabled = TickerMode.valuesOf(context).enabled;
+    _reducedMotion = MediaQuery.disableAnimationsOf(context);
+    _syncPlayback();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _active = state == AppLifecycleState.resumed;
+    _syncPlayback();
   }
 
   @override
   void didUpdateWidget(Mascot3DViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.controller != null &&
+    if (widget.breathProgress != oldWidget.breathProgress) {
+      oldWidget.breathProgress?.removeListener(_seekBreath);
+      widget.breathProgress?.addListener(_seekBreath);
+    }
+    if (widget.config.assetPath != oldWidget.config.assetPath ||
         widget.controller != oldWidget.controller) {
-      _controller = widget.controller!;
+      _stabilizeTimer?.cancel();
+      _motion.dispose();
+      if (oldWidget.controller == null) _controller.onModelLoaded.dispose();
+      _controller = widget.controller ?? MascotModelController();
+      _modelLoaded = false;
+      _modelReady = false;
+      _hasError = false;
+      _createMotion();
+      _startLoadTimeout();
     }
-    if (widget.config.assetPath != oldWidget.config.assetPath) {
-      setState(() {
-        _hasError = false;
-        _modelLoaded = false;
-        _modelReady = false;
-      });
-    }
-    if (widget.animation != oldWidget.animation && _modelLoaded) {
-      _applyAnimation(widget.animation ?? widget.config.initialAnimation);
-    }
+    _motion.setAnimation(
+      widget.animation ?? widget.config.initialAnimation,
+      trigger: widget.animationTrigger,
+    );
+    _syncPlayback();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.breathProgress?.removeListener(_seekBreath);
     _loadTimeoutTimer?.cancel();
-    _onceTimer?.cancel();
+    _stabilizeTimer?.cancel();
+    _motion.dispose();
+    if (widget.controller == null) _controller.onModelLoaded.dispose();
     super.dispose();
   }
 
   void _onModelLoaded(String modelAddress) {
     if (!mounted) return;
+    final hadError = _hasError;
+    // Un dépassement du délai de garde n'est pas définitif : si le modèle
+    // finit par charger (démarrage à froid du webview), on quitte le
+    // fallback PNG pour le rendu 3D.
     _loadTimeoutTimer?.cancel();
-
-    setState(() {
-      _modelLoaded = true;
-    });
-
-    // Stabilisation post-chargement (cadrage caméra, rotation, clip initial)
-    Future.delayed(const Duration(milliseconds: 200), () {
+    _stabilizeTimer?.cancel();
+    _modelLoaded = true;
+    _stabilizeTimer = Timer(const Duration(milliseconds: 200), () {
       if (!mounted) return;
-      try {
-        if (widget.config.useCameraOrbit) {
-          _controller.setCameraOrbit(
-            widget.config.cameraOrbitTheta,
-            widget.config.cameraOrbitPhi,
-            widget.config.cameraOrbitRadius,
-          );
-        }
-        final targetY = widget.config.cameraTargetY;
-        if (targetY != null) {
-          _controller.setCameraTarget(0, targetY, 0);
-        }
-        _applyRotationConfig();
-        _applyAnimation(widget.animation ?? widget.config.initialAnimation);
-      } catch (error) {
-        debugPrint('Mascot3DViewer: Configuration post-load ignorée: $error');
-      } finally {
-        if (mounted) {
-          setState(() => _modelReady = true);
-        }
+      if (widget.config.useCameraOrbit) {
+        _controller.setCameraOrbit(
+          widget.config.cameraOrbitTheta,
+          widget.config.cameraOrbitPhi,
+          widget.config.cameraOrbitRadius,
+        );
       }
+      final targetY = widget.config.cameraTargetY;
+      if (targetY != null) _controller.setCameraTarget(0, targetY, 0);
+      _applyRotationConfig();
+      setState(() {
+        _hasError = false;
+        _modelReady = true;
+      });
+      if (hadError) {
+        debugPrint(
+          'Mascot3DViewer: modèle 3D chargé après le délai — retour au rendu 3D',
+        );
+      }
+      _syncPlayback();
+      _playCurrent();
+      widget.onModelLoaded?.call();
     });
-
-    widget.onModelLoaded?.call();
   }
 
-  /// Joue un clip du GLB selon son mode : boucle infinie, une seule fois
-  /// (retour automatique à idle) ou gel de la pose courante.
-  void _applyAnimation(MascotAnimation animation) {
-    _onceTimer?.cancel();
+  void _syncPlayback() {
+    if (!_modelReady || _hasError || !widget.animated) return;
+    if (widget.breathProgress != null) {
+      _motion.setPlaybackEnabled(false);
+      if (_reducedMotion) {
+        _controller.restPose();
+      } else if (_canMove) {
+        _seekBreath();
+      } else {
+        _controller.pauseAnimation();
+      }
+    } else {
+      _motion.setPlaybackEnabled(_canMove);
+      if (_reducedMotion) _controller.restPose();
+    }
+  }
 
+  void _seekBreath() {
+    if (!_modelReady || !_canMove || _hasError) return;
+    final progress = widget.breathProgress?.value;
+    if (progress == null) return;
+    final now = _seekClock.elapsedMilliseconds;
+    // Au plus 30 messages/s vers WebKit. Les extrémités restent exactes.
+    if (now - _lastSeek < 33 && progress > 0 && progress < 1) return;
+    _lastSeek = now;
+    _controller.seekBreath(progress);
+  }
+
+  void _playCurrent() {
+    if (!_modelLoaded || _hasError) return;
+    final animation = _motion.current;
     try {
-      switch (animation.mode) {
-        case MascotAnimationMode.hold:
-          _controller.pauseAnimation();
-        case MascotAnimationMode.loop:
-          _controller.playAnimation(
-            animationName: animation.clipName,
-            loopCount: 0,
-          );
-        case MascotAnimationMode.once:
-          _controller.playAnimation(
-            animationName: animation.clipName,
-            loopCount: 1,
-          );
-          // flutter_3d_controller n'expose pas l'évènement « finished » :
-          // le retour au calme est programmé sur la durée exacte du clip.
-          _onceTimer = Timer(animation.duration, () {
-            if (!mounted) return;
-            _applyAnimation(MascotAnimations.idle);
-          });
+      if (animation.mode == MascotAnimationMode.hold) {
+        _controller.pauseAnimation();
+      } else {
+        _controller.playAnimation(
+          animationName: animation.clipName,
+          loopCount: animation.mode == MascotAnimationMode.once ? 1 : 0,
+        );
       }
     } catch (error) {
-      debugPrint(
-        'Mascot3DViewer: Erreur lecture animation ${animation.clipName}: $error',
-      );
+      debugPrint('Mascot3DViewer: lecture ${animation.clipName}: $error');
     }
   }
 
@@ -208,6 +279,9 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
   void _onModelError(String error) {
     if (!mounted) return;
 
+    _loadTimeoutTimer?.cancel();
+    _stabilizeTimer?.cancel();
+    _motion.setPlaybackEnabled(false);
     debugPrint('Mascot3DViewer: Erreur chargement modèle 3D: $error');
 
     setState(() {
@@ -246,13 +320,11 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
         // Le viewer reste toujours à opacité 1.0 : sur iOS (WebKit), une vue
         // native à opacité 0.0 suspend le rendu WebGL et bloque l'évènement
         // onLoad de model-viewer.
-        Flutter3DViewer(
+        MascotModelSurface(
+          key: ValueKey((widget.config.assetPath, _controller)),
           controller: _controller,
           src: widget.config.assetPath,
-          activeGestureInterceptor: widget.config.interactionEnabled,
-          enableTouch: widget.config.interactionEnabled,
-          progressBarColor: Colors.transparent,
-          onProgress: (_) {},
+          interactive: widget.config.interactionEnabled,
           onLoad: _onModelLoaded,
           onError: _onModelError,
         ),

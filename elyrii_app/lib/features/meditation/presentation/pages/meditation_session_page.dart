@@ -1,6 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../controllers/meditation_controller.dart';
@@ -24,6 +27,8 @@ class MeditationSessionPage extends StatefulWidget {
 }
 
 class _MeditationSessionPageState extends State<MeditationSessionPage> {
+  bool _hasReactedFinished = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,6 +43,10 @@ class _MeditationSessionPageState extends State<MeditationSessionPage> {
 
   void _onControllerChanged() {
     if (!mounted) return;
+    if (widget.controller.isFinished && !_hasReactedFinished) {
+      _hasReactedFinished = true;
+      context.read<MascotProvider>().react(MascotAnimations.settle);
+    }
     // Fin ou interruption : la session redevient `setup` → retour au catalogue.
     if (widget.controller.isSetup && context.canPop()) {
       context.pop();
@@ -83,7 +92,7 @@ class _MeditationSessionPageState extends State<MeditationSessionPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = widget.controller.selectedBreathingType.color;
+    final accent = widget.controller.selectedBreathingType!.color;
     final isFinished = widget.controller.isFinished;
 
     return PopScope(

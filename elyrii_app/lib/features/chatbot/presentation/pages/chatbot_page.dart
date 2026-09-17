@@ -154,6 +154,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                               MascotWidget(
                                 isMinimized: true,
                                 isUserTyping: _hasStartedTyping,
+                                isCrisis: _showCrisisBanner,
                                 onTap: () {
                                   ElyriiHaptics.light();
                                   _focusNode.unfocus();
@@ -221,6 +222,7 @@ class _ChatbotPageState extends State<ChatbotPage>
                             child: MascotWidget(
                               isMinimized: false,
                               isUserTyping: _hasStartedTyping,
+                              isCrisis: _showCrisisBanner,
                             ),
                           ),
                   );

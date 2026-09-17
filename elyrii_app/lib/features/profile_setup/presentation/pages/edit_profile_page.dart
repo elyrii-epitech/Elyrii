@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -161,7 +162,41 @@ class _EditProfilePageState extends State<EditProfilePage> {
         children: [
           CustomScrollView(
             slivers: [
-              SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
+              // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(76, topPadding + 4, 76, 8),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Mon profil',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.8,
+                          height: 1.1,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Ce que Elyrii sait de toi.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.35,
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
               // Avatar cliquable
               SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
@@ -188,40 +223,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ],
           ),
 
-          // Top bar
+          // Flèche retour épinglée, style Accueil : pas de titre affiché,
+          // l'avatar utilisateur glisse avec le contenu.
           Positioned(
-            top: topPadding + 12,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                _BackButton(
-                  isDark: isDark,
-                  onTap: () {
-                    ElyriiHaptics.light();
-                    Navigator.pop(context);
-                  },
-                ),
-                Expanded(
-                  child: Text(
-                    'Mon profil',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 44),
-              ],
+            top: topPadding + 4,
+            left: AppDimensions.pageHorizontalPadding,
+            child: ElyriiBackButton(
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+              onPressed: () {
+                ElyriiHaptics.light();
+                Navigator.pop(context);
+              },
             ),
           ),
         ],
       ),
     );
   }
-
   // ==================== Sections ====================
 
   Widget _buildAvatarSection(bool isDark) {
@@ -269,7 +289,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
             const SizedBox(height: AppDimensions.spacingSm),
             Text(
-              'Toucher pour changer',
+              'Touche pour changer',
               style: AppTextStyles.bodySmall(
                 color: isDark
                     ? AppColors.textSecondaryDark
@@ -284,16 +304,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 10),
       child: Text(
-        title.toUpperCase(),
+        title,
         style: TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
           color: isDark
-              ? Colors.white.withValues(alpha: 0.5)
-              : Colors.black.withValues(alpha: 0.4),
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
         ),
       ),
     );
@@ -532,54 +552,6 @@ class _DropdownField extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ==================== Back Button ====================
-
-class _BackButton extends StatefulWidget {
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _BackButton({required this.isDark, required this.onTap});
-
-  @override
-  State<_BackButton> createState() => _BackButtonState();
-}
-
-class _BackButtonState extends State<_BackButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.9 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: widget.isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: widget.isDark ? Colors.white : Colors.black,
-          ),
-        ),
       ),
     );
   }

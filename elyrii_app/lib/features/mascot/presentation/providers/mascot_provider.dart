@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/config/api_config.dart';
+import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/network/api_client.dart';
 import '../../data/models/mascot_model.dart';
@@ -18,6 +19,40 @@ class MascotProvider extends ChangeNotifier {
 
   final ApiClient? _client;
   MascotModel _mascot = MascotModel.defaultMascot();
+
+  bool _hasGreeted = false;
+
+  // Réactions transversales déclenchées par les autres parcours (journal,
+  // jardin, coach…). Le widget de mascotte visible les consomme avec un
+  // compteur plutôt qu'en comparant des objets, ce qui permet de rejouer le
+  // même clip à chaque nouvel événement.
+  MascotAnimation _reaction = MascotAnimations.idle;
+  int _reactionTrigger = 0;
+  String? _lastReactionKey;
+
+  /// Le salut d'arrivée est consommé une fois pour la vie de ce provider.
+  bool takeGreeting() {
+    if (_hasGreeted) return false;
+    _hasGreeted = true;
+    return true;
+  }
+
+  MascotAnimation get reaction => _reaction;
+  int get reactionTrigger => _reactionTrigger;
+
+  /// Publie une réaction courte à afficher sur la mascotte persistante.
+  ///
+  /// [eventKey] est utile pour les notifications provenant d'un flux qui peut
+  /// émettre plusieurs fois le même état (par exemple un rafraîchissement
+  /// réseau). Les interactions directes omettent la clé pour toujours rejouer
+  /// le geste.
+  void react(MascotAnimation animation, {String? eventKey}) {
+    if (eventKey != null && eventKey == _lastReactionKey) return;
+    _lastReactionKey = eventKey;
+    _reaction = animation;
+    _reactionTrigger++;
+    notifyListeners();
+  }
 
   bool _isLoading = false;
   bool _isSyncing = false;

@@ -5,12 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/router/app_routes.dart';
+import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/gamification_provider.dart';
 import '../widgets/ai_proposal_card.dart';
 import '../widgets/badges_grid.dart';
@@ -22,7 +24,7 @@ import '../widgets/daily_streak_card.dart';
 ///
 /// Refonte Apple HIG & Liquid Glass (Septembre 2026) :
 /// - Suppression de [SliverAppBar.large] et de son vide supérieur noir.
-/// - En-tête spatial fluide avec micro-sur-titre « MON SANCTUAIRE », grand titre
+/// - En-tête spatial fluide avec micro-sur-titre « MON JARDIN », grand titre
 ///   « Jardin » et pilule de floraison interactive.
 /// - Carte Héroïque « Jardin Intérieur » affichant l'éveil botanique, le niveau,
 ///   l'XP et la série de présence.
@@ -39,6 +41,8 @@ class ChallengesPage extends StatefulWidget {
 class _ChallengesPageState extends State<ChallengesPage> {
   String? _startingChallengeId;
   String? _processingProposalId;
+  GamificationProvider? _observedGamificationProvider;
+  int _lastCompletedCount = -1;
 
   /// Segment principal : 0 = Mes Quêtes, 1 = Mes Succès.
   int _mainSegment = 0;
@@ -117,19 +121,52 @@ class _ChallengesPageState extends State<ChallengesPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GamificationProvider>().loadAll();
+      final provider = context.read<GamificationProvider>();
+      _observedGamificationProvider = provider;
+      provider.addListener(_onGamificationChanged);
+      _onGamificationChanged();
+      provider.loadAll();
     });
+  }
+
+  void _onGamificationChanged() {
+    if (!mounted || _observedGamificationProvider == null) return;
+    final completedCount =
+        _observedGamificationProvider!.completedChallenges.length;
+    if (_lastCompletedCount >= 0 && completedCount > _lastCompletedCount) {
+      // Le provider réseau peut notifier plusieurs fois pendant un refresh :
+      // le delta garantit une seule célébration par nouvelle réussite.
+      context.read<MascotProvider>().react(MascotAnimations.celebrate);
+      ElyriiHaptics.success();
+    }
+    _lastCompletedCount = completedCount;
+  }
+
+  @override
+  void dispose() {
+    _observedGamificationProvider?.removeListener(_onGamificationChanged);
+    super.dispose();
   }
 
   Future<void> _handleStart(String challengeId) async {
     setState(() => _startingChallengeId = challengeId);
-    await context.read<GamificationProvider>().startChallenge(challengeId);
+    final success = await context.read<GamificationProvider>().startChallenge(
+      challengeId,
+    );
+    if (success && mounted) {
+      context.read<MascotProvider>().react(MascotAnimations.invite);
+    }
     if (mounted) setState(() => _startingChallengeId = null);
   }
 
   Future<void> _handleAcceptProposal(String proposalId) async {
     setState(() => _processingProposalId = proposalId);
-    await context.read<GamificationProvider>().acceptChallenge(proposalId);
+    final success = await context.read<GamificationProvider>().acceptChallenge(
+      proposalId,
+    );
+    if (success && mounted) {
+      context.read<MascotProvider>().react(MascotAnimations.invite);
+    }
     if (mounted) setState(() => _processingProposalId = null);
   }
 
@@ -178,9 +215,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 AppDimensions.pageHorizontalPadding,
                 topPadding + 14,
                 AppDimensions.pageHorizontalPadding,
-                8,
+                4,
               ),
-              child: _buildHeader(isDark, stateData, level),
+              child: _buildHeader(isDark),
             ),
           ),
 
@@ -253,83 +290,45 @@ class _ChallengesPageState extends State<ChallengesPage> {
   }
 
   /// En-tête spatial sans vide noir ni coupure.
-  Widget _buildHeader(bool isDark, Map<String, dynamic> stateData, int level) {
-    return Row(
+  Widget _buildHeader(bool isDark) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'MON SANCTUAIRE',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Jardin',
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                  height: 1.1,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Cultive tes rituels doux et regarde grandir ta sérénité.',
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.35,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
-            ],
+        const Text(
+          'MON JARDIN',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: AppColors.primary,
           ),
         ),
-        const SizedBox(width: 12),
-        // Pilule botanique en verre liquide
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.25),
-              width: 0.8,
-            ),
+        const SizedBox(height: 4),
+        Text(
+          'Jardin',
+          style: TextStyle(
+            fontSize: 34,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+            height: 1.1,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                stateData['emoji'] as String,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Niv. $level',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Fais grandir tes habitudes, une graine à la fois.',
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.35,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
           ),
         ),
       ],
-    ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.05, end: 0);
+    );
   }
 
   /// Carte Héroïque du Jardin Intérieur (style Apple Health / Fitness).
@@ -597,7 +596,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.06, end: 0);
+    );
   }
 
   /// Passerelle poétique vers le Coach IA : « Le Coach sème, le Jardin fleurit ».
@@ -853,7 +852,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
 
         // Trophée de constance (volet Trophées du segment)
         Text(
-          'Constance & Rythme',
+          'Constance & rythme',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
@@ -1041,6 +1040,14 @@ class _ChallengesPageState extends State<ChallengesPage> {
 
   void _showBadgeDetails(BuildContext context, BadgeItem badge) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mascot = context.read<MascotProvider>();
+    if (badge.isUnlocked) {
+      ElyriiHaptics.success();
+      mascot.react(MascotAnimations.celebrate);
+    } else {
+      ElyriiHaptics.light();
+      mascot.react(MascotAnimations.curious);
+    }
 
     showLiquidGlassDialog(
       context: context,

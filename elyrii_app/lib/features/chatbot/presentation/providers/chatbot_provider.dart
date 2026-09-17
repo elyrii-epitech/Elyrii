@@ -61,6 +61,7 @@ class ChatbotProvider extends ChangeNotifier {
         onDone: () {
           debugPrint('[ChatbotProvider] WebSocket closed');
           _isConnected = false;
+          _isTyping = false;
           notifyListeners();
         },
       );

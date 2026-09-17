@@ -19,6 +19,8 @@ import '../../../settings/providers/settings_provider.dart';
 import '../widgets/mascot_peek.dart';
 import '../widgets/mascot_speech_bubble.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -73,8 +75,22 @@ class _DashboardPageState extends State<DashboardPage> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    // Dégagement pour le bandeau d'en-tête fixé en haut
-                    SizedBox(height: topPadding + 68),
+                    // Date et salutation : collées au contenu, elles glissent
+                    // avec lui (les boutons restent épinglés en overlay).
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        20 + 44 + 12,
+                        topPadding + 10,
+                        20 + 44 + 12,
+                        8,
+                      ),
+                      child: _buildScrollingGreeting(
+                        authProvider,
+                        userProvider,
+                        provider,
+                        isDark,
+                      ),
+                    ),
 
                     // ---- 1. Zone héroïque : mascotte 3D & charm de personnalisation ----
                     Row(
@@ -137,15 +153,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
 
-              // Bandeau d'en-tête spatial unifié (avatar + date/salutation + réglages)
+              // Boutons épinglés : avatar et réglages restent en haut pendant
+              // que le contenu (date, salutation, cartes) glisse dessous.
               Positioned(
                 top: topPadding + 8,
-                left: 0,
-                right: 0,
-                child: _buildHeaderBand(
+                left: 20,
+                right: 20,
+                child: _buildPinnedHeaderControls(
                   authProvider,
                   userProvider,
-                  provider,
                   isDark,
                 ),
               ),
@@ -187,9 +203,8 @@ class _DashboardPageState extends State<DashboardPage> {
     return '$dayName ${now.day} $monthName';
   }
 
-  /// Bandeau d'en-tête supérieur fixé à l'écran :
-  /// Avatar utilisateur + Date et Salutation à gauche, Réglages à droite.
-  Widget _buildHeaderBand(
+  /// Date du jour et salutation, dans le scroll : glissent avec le contenu.
+  Widget _buildScrollingGreeting(
     AuthProvider authProvider,
     UserProvider userProvider,
     DashboardProvider dashboardProvider,
@@ -203,82 +218,80 @@ class _DashboardPageState extends State<DashboardPage> {
         ? '${dashboardProvider.getGreeting()}, $rawName'
         : dashboardProvider.getGreeting();
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Avatar utilisateur circulaire en Liquid Glass (44x44)
-          Semantics(
-            button: true,
-            label: 'Profil utilisateur',
-            child: GestureDetector(
-              onTap: () {
-                ElyriiHaptics.light();
-                context.push(AppRoutes.editProfile);
-              },
-              child: ElyriiGlassSurface(
-                role: GlassRole.floatingControl,
-                borderRadius: BorderRadius.circular(22),
-                width: 44,
-                height: 44,
-                child: Center(
-                  child: ClipOval(
-                    child: UserAvatar(
-                      pfp: userProvider.profile?.pfp,
-                      size: 38,
-                      showBorder: false,
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _formatHeaderDate(),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: AppColors.primary,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          greeting,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            height: 1.1,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  /// Contrôles épinglés : avatar et réglages restent fixés en haut.
+  Widget _buildPinnedHeaderControls(
+    AuthProvider authProvider,
+    UserProvider userProvider,
+    bool isDark,
+  ) {
+    return Row(
+      children: [
+        // Avatar utilisateur circulaire en Liquid Glass (44x44)
+        Semantics(
+          button: true,
+          label: 'Profil utilisateur',
+          child: GestureDetector(
+            onTap: () {
+              ElyriiHaptics.light();
+              context.push(AppRoutes.editProfile);
+            },
+            child: ElyriiGlassSurface(
+              role: GlassRole.floatingControl,
+              borderRadius: BorderRadius.circular(22),
+              width: 44,
+              height: 44,
+              child: Center(
+                child: ClipOval(
+                  child: UserAvatar(
+                    pfp: userProvider.profile?.pfp,
+                    size: 38,
+                    showBorder: false,
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          // Date du jour et salutation chaleureuse (ancrées dans la navigation)
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _formatHeaderDate(),
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  greeting,
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Bouton Réglages circulaire en Liquid Glass (44x44)
-          GlassSettingsButton(
-            isDark: isDark,
-            onTap: () => context.push(AppRoutes.settings),
-          ),
-        ],
-      ),
+        ),
+        const Spacer(),
+        // Bouton Réglages circulaire en Liquid Glass (44x44)
+        GlassSettingsButton(
+          isDark: isDark,
+          onTap: () => context.push(AppRoutes.settings),
+        ),
+      ],
     );
   }
 
@@ -460,6 +473,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       GestureDetector(
                         onTap: () {
                           ElyriiHaptics.light();
+                          context.read<MascotProvider>().react(
+                            MascotAnimations.invite,
+                          );
                           context.push(selectedMood.suggestedActionRoute);
                         },
                         child: Container(
@@ -529,6 +545,17 @@ class _DashboardPageState extends State<DashboardPage> {
               child: _BentoStreakCard(
                 streak: provider.currentStreak,
                 isDark: isDark,
+                onTap: () {
+                  ElyriiHaptics.light();
+                  final mascotProvider = context.read<MascotProvider>();
+                  if (provider.currentStreak > 1) {
+                    mascotProvider.react(MascotAnimations.celebrate);
+                  } else if (provider.currentStreak == 1) {
+                    mascotProvider.react(MascotAnimations.delight);
+                  } else {
+                    mascotProvider.react(MascotAnimations.invite);
+                  }
+                },
               ),
             ),
             const SizedBox(width: 12),
@@ -538,6 +565,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 isDark: isDark,
                 onTap: () {
                   ElyriiHaptics.light();
+                  context.read<MascotProvider>().react(MascotAnimations.invite);
                   context.go(AppRoutes.meditation);
                 },
               ),
@@ -553,6 +581,11 @@ class _DashboardPageState extends State<DashboardPage> {
           isDark: isDark,
           onTap: () {
             ElyriiHaptics.light();
+            context.read<MascotProvider>().react(
+              journalProvider.entries.isNotEmpty
+                  ? MascotAnimations.cozy
+                  : MascotAnimations.invite,
+            );
             context.go(AppRoutes.journal);
           },
         ),
@@ -659,72 +692,80 @@ class _MoodChipState extends State<_MoodChip> {
 class _BentoStreakCard extends StatelessWidget {
   final int streak;
   final bool isDark;
+  final VoidCallback? onTap;
 
-  const _BentoStreakCard({required this.streak, required this.isDark});
+  const _BentoStreakCard({
+    required this.streak,
+    required this.isDark,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     const coral = Color(0xFFFF6B6B);
 
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: coral.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: onTap,
+      child: LiquidGlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: coral.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.local_fire_department_rounded,
+                    color: coral,
+                    size: 18,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.local_fire_department_rounded,
-                  color: coral,
-                  size: 18,
+                const Spacer(),
+                Text(
+                  'SÉRIE',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Text(
-                'SÉRIE',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            '$streak ${streak > 1 ? 'jours' : 'jour'}',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-              letterSpacing: -0.5,
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            streak > 0 ? 'Tu tiens le rythme !' : 'Commence aujourd\'hui',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+            const SizedBox(height: 14),
+            Text(
+              '$streak ${streak > 1 ? 'jours' : 'jour'}',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimaryLight,
+                letterSpacing: -0.5,
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              streak > 0 ? 'Tu tiens le rythme !' : 'Commence aujourd\'hui',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -861,7 +902,7 @@ class _BentoJournalCard extends StatelessWidget {
                 Text(
                   'Dernière réflexion',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: isDark
                         ? AppColors.textPrimaryDark
@@ -955,7 +996,7 @@ class _BentoReviewBar extends StatelessWidget {
               child: Text(
                 'Consulter mon bilan & progression',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: isDark
                       ? AppColors.textPrimaryDark

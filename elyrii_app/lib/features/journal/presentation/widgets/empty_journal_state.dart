@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -108,9 +107,7 @@ class EmptyJournalState extends StatelessWidget {
         const SizedBox(height: 14),
 
         // Cartes d'inspiration
-        ...prompts.asMap().entries.map((entry) {
-          final index = entry.key;
-          final prompt = entry.value;
+        ...prompts.map((prompt) {
           return _PromptCard(
                 prompt: prompt,
                 isDark: isDark,
@@ -121,18 +118,6 @@ class EmptyJournalState extends StatelessWidget {
                     onCreateFirst();
                   }
                 },
-              )
-              .animate()
-              .fadeIn(
-                duration: 350.ms,
-                delay: (40 * index).ms,
-                curve: Curves.easeOutCubic,
-              )
-              .slideY(
-                begin: 0.05,
-                duration: 350.ms,
-                delay: (40 * index).ms,
-                curve: Curves.easeOutCubic,
               );
         }),
       ],

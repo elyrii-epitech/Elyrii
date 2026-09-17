@@ -10,9 +10,8 @@ import '../../../mascot/presentation/providers/mascot_provider.dart';
 
 /// Widget d'affichage de la mascotte Elyrii dans le chatbot.
 ///
-/// Aucune pulsation artificielle : la vie du personnage vient des clips
-/// natifs du GLB — `thinking` pendant la génération de la réponse,
-/// `attentive` pendant la saisie de l'utilisateur, `idle` au repos.
+/// Réflexion pendant la génération, écoute pendant la saisie, acquiescement
+/// à la réception et présence rassurante après une déconnexion.
 /// En mode réduit, la bannière devient une pilule « Dynamic Island »
 /// compacte et flottante, centrée au-dessus de la conversation.
 class MascotWidget extends StatefulWidget {
@@ -29,12 +28,17 @@ class MascotWidget extends StatefulWidget {
   /// passe en écoute attentive (`MascotAnimations.attentive`).
   final bool isUserTyping;
 
+  /// Vrai lorsque des propos exprimant une détresse ont été détectés :
+  /// la mascotte adopte une posture de présence rassurante (`reassure`).
+  final bool isCrisis;
+
   const MascotWidget({
     super.key,
     required this.isMinimized,
     this.lottieHeight = 150,
     this.onTap,
     this.isUserTyping = false,
+    this.isCrisis = false,
   });
 
   @override
@@ -42,25 +46,90 @@ class MascotWidget extends StatefulWidget {
 }
 
 class _MascotWidgetState extends State<MascotWidget> {
+  ChatbotProvider? _chat;
+  String? _lastMessageId;
+  MascotAnimation _animation = MascotAnimations.idle;
+  int _trigger = 0;
+  bool _wasThinking = false;
+  bool _wasConnected = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final chat = context.read<ChatbotProvider>();
+    if (_chat == chat) return;
+    _chat?.removeListener(_onChatChanged);
+    _chat = chat;
+    _lastMessageId = chat.messages.lastOrNull?.id;
+    _wasThinking = chat.isTyping;
+    _wasConnected = chat.isConnected;
+    _animation = widget.isCrisis
+        ? MascotAnimations.reassure
+        : chat.isTyping
+        ? MascotAnimations.thinking
+        : widget.isUserTyping
+        ? MascotAnimations.attentive
+        : MascotAnimations.idle;
+    chat.addListener(_onChatChanged);
+  }
+
+  @override
+  void didUpdateWidget(MascotWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isUserTyping != oldWidget.isUserTyping ||
+        widget.isCrisis != oldWidget.isCrisis) {
+      _onChatChanged();
+    }
+  }
+  void _onChatChanged() {
+    if (!mounted) return;
+    final chat = _chat!;
+    final last = chat.messages.lastOrNull;
+    final replyArrived =
+        last != null && !last.isUser && last.id != _lastMessageId;
+    final disconnected =
+        (_wasConnected || _wasThinking) && !chat.isConnected && !chat.isTyping;
+    _lastMessageId = last?.id;
+    _wasThinking = chat.isTyping;
+    _wasConnected = chat.isConnected;
+    final next = widget.isCrisis
+        ? MascotAnimations.reassure
+        : chat.isTyping
+        ? MascotAnimations.thinking
+        : disconnected
+        ? MascotAnimations.reassure
+        : widget.isUserTyping
+        ? MascotAnimations.attentive
+        : replyArrived
+        ? MascotAnimations.acknowledge
+        : _animation == MascotAnimations.thinking ||
+              _animation == MascotAnimations.attentive ||
+              _animation == MascotAnimations.reassure
+        ? MascotAnimations.idle
+        : _animation;
+    if (next != _animation || replyArrived) {
+      setState(() {
+        _animation = next;
+        _trigger++;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _chat?.removeListener(_onChatChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final maxHeight = (screenHeight * 0.45).clamp(220.0, 350.0);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Réflexion pendant la génération, écoute attentive pendant la saisie,
-    // présence calme sinon — uniquement des clips du modèle 3D.
     final isBotThinking = context.select<ChatbotProvider, bool>(
       (p) => p.isTyping,
     );
-    final MascotAnimation animation;
-    if (isBotThinking) {
-      animation = MascotAnimations.thinking;
-    } else if (widget.isUserTyping) {
-      animation = MascotAnimations.attentive;
-    } else {
-      animation = MascotAnimations.idle;
-    }
+    final animation = _animation;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
@@ -121,6 +190,7 @@ class _MascotWidgetState extends State<MascotWidget> {
                     key: const ValueKey('mascot_3d_mini'),
                     config: const Mascot3DConfig.chatbotMinimized(),
                     animation: animation,
+                    animationTrigger: _trigger,
                     width: 56,
                     height: 56,
                   ),
@@ -193,6 +263,7 @@ class _MascotWidgetState extends State<MascotWidget> {
           key: const ValueKey('mascot_3d_full'),
           config: const Mascot3DConfig.chatbotFull(),
           animation: animation,
+          animationTrigger: _trigger,
           width: size,
           height: size,
         ),
@@ -241,6 +312,7 @@ class _MascotWidgetState extends State<MascotWidget> {
 class _ThemedMascot extends StatelessWidget {
   final Mascot3DConfig config;
   final MascotAnimation? animation;
+  final int animationTrigger;
   final double width;
   final double height;
 
@@ -250,6 +322,7 @@ class _ThemedMascot extends StatelessWidget {
     required this.width,
     required this.height,
     this.animation,
+    this.animationTrigger = 0,
   });
 
   @override
@@ -262,6 +335,7 @@ class _ThemedMascot extends StatelessWidget {
       width: width,
       height: height,
       animation: animation,
+      animationTrigger: animationTrigger,
     );
   }
 }

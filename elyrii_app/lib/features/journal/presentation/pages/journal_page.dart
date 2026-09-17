@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -16,7 +15,7 @@ import '../widgets/journal_editor_sheet.dart';
 ///
 /// Refonte Apple HIG & Liquid Glass (Septembre 2026) :
 /// - Suppression des boutons isolés flottant maladroitement au-dessus de la vue.
-/// - En-tête spatial fluide avec micro-sur-titre « MON REFUGE », grand titre
+/// - En-tête spatial fluide avec micro-sur-titre « MES PENSÉES », grand titre
 ///   « Journal » et boutons d'action intégrés en verre liquide.
 /// - Carte Héroïque « Espace de Réflexion » avec bento de statistiques douces
 ///   (nombre d'écrits, dernière humeur).
@@ -93,7 +92,7 @@ class _JournalPageState extends State<JournalPage> {
                     AppDimensions.pageHorizontalPadding,
                     topPadding + 14,
                     AppDimensions.pageHorizontalPadding,
-                    8,
+                    4,
                   ),
                   child: _buildHeader(provider, isDark),
                 ),
@@ -163,7 +162,7 @@ class _JournalPageState extends State<JournalPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'MON REFUGE',
+                'MES PENSÉES',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -184,9 +183,9 @@ class _JournalPageState extends State<JournalPage> {
                       : AppColors.textPrimaryLight,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
-                'Dépose tes pensées, écoute tes émotions et libère ton esprit.',
+                'Pose tes pensées, sans filtre.',
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.35,
@@ -224,7 +223,7 @@ class _JournalPageState extends State<JournalPage> {
           ],
         ),
       ],
-    ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.05, end: 0);
+    );
   }
 
   /// Carte Héroïque de l'espace d'expression intime.
@@ -425,7 +424,7 @@ class _JournalPageState extends State<JournalPage> {
           ),
         ],
       ),
-    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.06, end: 0);
+    );
   }
 
   /// Bannière d'inspiration pour stimuler l'écriture libre ou guidée.
@@ -509,7 +508,7 @@ class _JournalPageState extends State<JournalPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
           child: Text(
             'Mes réflexions (${entries.length})',
             style: TextStyle(
@@ -523,9 +522,8 @@ class _JournalPageState extends State<JournalPage> {
           ),
         ),
         ...List.generate(entries.length, (index) {
-          const int maxAnimatedItems = 8;
           final entry = entries[index];
-          final card = Padding(
+          return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: GlassJournalCard(
               entry: entry,
@@ -533,23 +531,6 @@ class _JournalPageState extends State<JournalPage> {
               onTap: () => _showEditorSheet(entry: entry),
             ),
           );
-
-          if (index < maxAnimatedItems) {
-            return card
-                .animate()
-                .fadeIn(
-                  duration: 350.ms,
-                  delay: (30 * index).ms,
-                  curve: Curves.easeOutCubic,
-                )
-                .slideY(
-                  begin: 0.05,
-                  duration: 350.ms,
-                  delay: (30 * index).ms,
-                  curve: Curves.easeOutCubic,
-                );
-          }
-          return card;
         }),
       ],
     );

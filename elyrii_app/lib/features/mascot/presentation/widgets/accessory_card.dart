@@ -10,6 +10,10 @@ class AccessoryDef {
   final String name;
   final String emoji;
 
+  /// Famille d'accessoires (ex. « Tête », « Visage ») : pilote le filtrage
+  /// de l'atelier de personnalisation quand plusieurs catégories existent.
+  final String category;
+
   /// Nombre de défis à compléter pour débloquer cet accessoire.
   final int requiredChallenges;
 
@@ -17,6 +21,7 @@ class AccessoryDef {
     required this.id,
     required this.name,
     required this.emoji,
+    this.category = 'Tête',
     this.requiredChallenges = 0,
   });
 }

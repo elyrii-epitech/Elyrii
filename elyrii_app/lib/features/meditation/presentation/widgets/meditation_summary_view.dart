@@ -53,7 +53,7 @@ class MeditationSummaryView extends StatelessWidget {
     final subtitleColor = isDark
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
-    final accent = controller.selectedBreathingType.color;
+    final accent = controller.selectedBreathingType!.color;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -76,11 +76,11 @@ class MeditationSummaryView extends StatelessWidget {
                 showLoadingIndicator: false,
               ),
               // Réaction sobre après la séance terminée, puis retour idle.
-              animation: MascotAnimations.celebrate,
+              animation: MascotAnimations.settle,
               width: 180,
               height: 180,
             ),
-          ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
+          ),
 
           const SizedBox(height: AppDimensions.spacingSm),
 

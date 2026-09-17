@@ -13,9 +13,9 @@ enum MeditationSessionState { setup, running, paused, finished }
 class MeditationController extends ChangeNotifier {
   final MeditationRepository? _repository;
 
-  // Options sélectionnées
+  // Options sélectionnées (aucune intention présélectionnée : l'utilisateur choisit)
   int _selectedDurationMinutes = 5;
-  BreathingType _selectedBreathingType = BreathingType.relaxation478;
+  BreathingType? _selectedBreathingType;
 
   // État de la session
   MeditationSessionState _sessionState = MeditationSessionState.setup;
@@ -37,7 +37,7 @@ class MeditationController extends ChangeNotifier {
 
   // Getters
   int get selectedDurationMinutes => _selectedDurationMinutes;
-  BreathingType get selectedBreathingType => _selectedBreathingType;
+  BreathingType? get selectedBreathingType => _selectedBreathingType;
   MeditationSessionState get sessionState => _sessionState;
   int get remainingSeconds => _remainingSeconds;
   int get currentPhaseIndex => _currentPhaseIndex;
@@ -53,8 +53,10 @@ class MeditationController extends ChangeNotifier {
   bool get isFinished => _sessionState == MeditationSessionState.finished;
   bool get isSetup => _sessionState == MeditationSessionState.setup;
 
+  /// Phase active. Invariant : session démarrée ⇒ type sélectionné
+  /// (garanti par la garde de [startSession]).
   BreathPhase get currentPhase =>
-      _selectedBreathingType.phases[_currentPhaseIndex];
+      _selectedBreathingType!.phases[_currentPhaseIndex];
 
   double get progressRatio {
     final total = _selectedDurationMinutes * 60;
@@ -76,11 +78,14 @@ class MeditationController extends ChangeNotifier {
   }
 
   Future<void> startSession() async {
+    final type = _selectedBreathingType;
+    if (type == null) return; // Aucune intention choisie : pas de démarrage.
+
     _sessionState = MeditationSessionState.running;
     _remainingSeconds = _selectedDurationMinutes * 60;
     _currentPhaseIndex = 0;
     _completedCycles = 0;
-    _phaseSecondsRemaining = _selectedBreathingType.phases[0].seconds;
+    _phaseSecondsRemaining = type.phases[0].seconds;
     _selectedMoodIndex = null;
     _backendError = null;
 
@@ -93,7 +98,7 @@ class MeditationController extends ChangeNotifier {
       _isStartingSession = true;
       try {
         final session = await _repository.startSession(
-          type: _selectedBreathingType.name,
+          type: type.name,
           durationMinutes: _selectedDurationMinutes,
         );
         _backendSessionId = session.id;
@@ -172,6 +177,7 @@ class MeditationController extends ChangeNotifier {
     _completedCycles = 0;
     _backendSessionId = null;
     _selectedMoodIndex = null;
+    _selectedBreathingType = null;
     notifyListeners();
   }
 
@@ -197,7 +203,7 @@ class MeditationController extends ChangeNotifier {
 
     if (_phaseSecondsRemaining <= 1) {
       // Transition vers la phase suivante
-      final phases = _selectedBreathingType.phases;
+      final phases = _selectedBreathingType!.phases;
       final nextIndex = (_currentPhaseIndex + 1) % phases.length;
 
       if (nextIndex == 0) {

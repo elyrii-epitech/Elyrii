@@ -36,7 +36,18 @@ class _MascotWarmPlaceholderState extends State<MascotWarmPlaceholder>
     _breatheController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context) ||
+        !TickerMode.valuesOf(context).enabled) {
+      _breatheController.stop();
+    } else {
+      _breatheController.repeat(reverse: true);
+    }
   }
 
   @override

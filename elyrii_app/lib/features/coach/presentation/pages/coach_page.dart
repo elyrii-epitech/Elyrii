@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/coach_provider.dart';
 import '../../data/models/coach_model.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -98,15 +100,11 @@ class _CoachPageState extends State<CoachPage> {
                               isDark: isDark,
                             )
                             .animate()
-                            .fadeIn(duration: 300.ms)
-                            .slideY(begin: -0.08, end: 0),
+                            .fadeIn(duration: 200.ms),
                       ],
                       const SizedBox(height: 28),
                       if (provider.todayAdvice != null)
-                        _buildAdviceCard(provider.todayAdvice!, isDark)
-                            .animate()
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: 0.1, end: 0),
+                        _buildAdviceCard(provider.todayAdvice!, isDark),
                       if (provider.isCreatingSession) ...[
                         const SizedBox(height: 16),
                         // Chargement d'une session : squelette shimmer discret
@@ -138,13 +136,10 @@ class _CoachPageState extends State<CoachPage> {
                       const SizedBox(height: 12),
                       if (provider.recommendedActivities.isNotEmpty)
                         _buildRecommendedGroup(
-                              context,
-                              provider.recommendedActivities,
-                              isDark,
-                            )
-                            .animate()
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: 0.05, end: 0),
+                          context,
+                          provider.recommendedActivities,
+                          isDark,
+                        ),
                       const SizedBox(height: 28),
                       _buildSectionTitle(
                         'Toutes les activités',
@@ -194,7 +189,7 @@ class _CoachPageState extends State<CoachPage> {
           ),
         ),
       ],
-    ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1);
+    );
   }
 
   Widget _buildAdviceCard(DailyAdvice advice, bool isDark) {
@@ -343,7 +338,7 @@ class _CoachPageState extends State<CoachPage> {
           activity: activity,
           isDark: isDark,
           onTap: () => _requestGuidance(context, activity),
-        ).animate().fadeIn(delay: (50 * index).ms).slideY(begin: 0.05, end: 0);
+        );
       },
     );
   }
@@ -422,10 +417,14 @@ class _CoachPageState extends State<CoachPage> {
     CoachActivity activity,
   ) async {
     ElyriiHaptics.light();
+    final mascotProvider = context.read<MascotProvider>();
     final success = await context
         .read<CoachProvider>()
         .requestGuidanceForActivity(activity);
     if (!mounted) return;
+    if (success) {
+      mascotProvider.react(MascotAnimations.acknowledge);
+    }
     _showFeedback(
       success: success,
       message: success

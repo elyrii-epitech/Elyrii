@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
@@ -53,7 +52,7 @@ class DailyStreakCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       streakDays > 0
-                          ? 'Vous avez partagé $streakDays moments ensemble'
+                          ? 'Tu as partagé $streakDays moments ensemble'
                           : 'Chaque jour compte, à ton rythme',
                       style: TextStyle(
                         fontSize: 13,
@@ -77,62 +76,55 @@ class DailyStreakCard extends StatelessWidget {
               final dayInitial = _getDayInitial(index);
 
               return Column(
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 400),
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: wasPresent
-                              ? AppColors.accent.withValues(alpha: 0.2)
-                              : isDark
-                              ? Colors.white.withValues(alpha: 0.04)
-                              : Colors.black.withValues(alpha: 0.02),
-                          shape: BoxShape.circle,
-                          border: wasPresent
-                              ? Border.all(
-                                  color: AppColors.accent.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                  width: 1.5,
-                                )
-                              : Border.all(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.06)
-                                      : Colors.black.withValues(alpha: 0.04),
-                                  width: 0.5,
-                                ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          wasPresent
-                              ? Icons.wb_sunny_rounded
-                              : Icons.cloud_rounded,
-                          size: 18,
-                          color: wasPresent
-                              ? AppColors.accent
-                              : (isDark
-                                        ? AppColors.textTertiaryDark
-                                        : AppColors.textTertiaryLight)
-                                    .withValues(alpha: 0.5),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        dayInitial,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                        ),
-                      ),
-                    ],
-                  )
-                  .animate()
-                  .fadeIn(delay: (80 * index).ms)
-                  .slideY(begin: 0.15, end: 0);
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 400),
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: wasPresent
+                          ? AppColors.accent.withValues(alpha: 0.2)
+                          : isDark
+                          ? Colors.white.withValues(alpha: 0.04)
+                          : Colors.black.withValues(alpha: 0.02),
+                      shape: BoxShape.circle,
+                      border: wasPresent
+                          ? Border.all(
+                              color: AppColors.accent.withValues(alpha: 0.4),
+                              width: 1.5,
+                            )
+                          : Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.06)
+                                  : Colors.black.withValues(alpha: 0.04),
+                              width: 0.5,
+                            ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      wasPresent ? Icons.wb_sunny_rounded : Icons.cloud_rounded,
+                      size: 18,
+                      color: wasPresent
+                          ? AppColors.accent
+                          : (isDark
+                                    ? AppColors.textTertiaryDark
+                                    : AppColors.textTertiaryLight)
+                                .withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    dayInitial,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              );
             }),
           ),
           const SizedBox(height: 20),

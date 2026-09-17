@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:flutter_3d_controller/flutter_3d_controller.dart';
+import 'mascot_model_surface.dart';
 import 'package:provider/provider.dart';
 import '../config/mascot_3d_config.dart';
 import '../config/mascot_themes.dart';
@@ -97,10 +97,12 @@ class MascotWithAccessories extends StatefulWidget {
   final double height;
 
   /// Contrôleur externe optionnel pour piloter le modèle 3D.
-  final Flutter3DController? controller;
+  final MascotModelController? controller;
 
   /// Animation du corps de la mascotte (voir [Mascot3DViewer.animation]).
   final MascotAnimation? animation;
+  final int animationTrigger;
+  final ValueListenable<double>? breathProgress;
 
   const MascotWithAccessories({
     super.key,
@@ -109,6 +111,8 @@ class MascotWithAccessories extends StatefulWidget {
     required this.height,
     this.controller,
     this.animation,
+    this.animationTrigger = 0,
+    this.breathProgress,
   });
 
   @override
@@ -164,14 +168,12 @@ class _MascotWithAccessoriesState extends State<MascotWithAccessories> {
       controller: widget.controller,
       colorMatrix: matrix,
       animation: widget.animation,
+      animationTrigger: widget.animationTrigger,
+      breathProgress: widget.breathProgress,
       onModelLoaded: _onBodyLoaded,
     );
 
-    if (equippedRender == null || !_accessoriesMounted) {
-      return SizedBox(width: widget.width, height: widget.height, child: body);
-    }
-
-    final accessorySize = widget.width * equippedRender.sizeRatio;
+    final accessorySize = widget.width * (equippedRender?.sizeRatio ?? 0);
 
     return SizedBox(
       width: widget.width,
@@ -181,22 +183,24 @@ class _MascotWithAccessoriesState extends State<MascotWithAccessories> {
         alignment: Alignment.center,
         children: [
           body,
-          Positioned(
-            top: widget.height * equippedRender.topRatio,
-            left:
-                (widget.width - accessorySize) / 2 +
-                widget.width * equippedRender.horizontalOffsetRatio,
-            child: Mascot3DViewer(
-              key: ValueKey('mascot_accessory_${equippedRender.id}'),
-              config: Mascot3DConfig(
-                assetPath: equippedRender.assetPath,
-                autoRotate: false,
-                interactionEnabled: false,
+          if (equippedRender != null && _accessoriesMounted)
+            Positioned(
+              top: widget.height * equippedRender.topRatio,
+              left:
+                  (widget.width - accessorySize) / 2 +
+                  widget.width * equippedRender.horizontalOffsetRatio,
+              child: Mascot3DViewer(
+                key: ValueKey('mascot_accessory_${equippedRender.id}'),
+                animated: false,
+                config: Mascot3DConfig(
+                  assetPath: equippedRender.assetPath,
+                  autoRotate: false,
+                  interactionEnabled: false,
+                ),
+                width: accessorySize,
+                height: accessorySize,
               ),
-              width: accessorySize,
-              height: accessorySize,
             ),
-          ),
         ],
       ),
     );

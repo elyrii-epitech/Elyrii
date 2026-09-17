@@ -20,11 +20,15 @@ void main() {
       expect(controller.isSetup, isTrue);
       expect(controller.selectedDurationMinutes, equals(5));
       expect(controller.remainingSeconds, equals(300));
-      expect(
-        controller.selectedBreathingType,
-        equals(BreathingType.relaxation478),
-      );
+      expect(controller.selectedBreathingType, isNull);
       expect(controller.completedCycles, equals(0));
+    });
+
+    test('démarrage sans intention choisie est un no-op', () async {
+      await controller.startSession();
+
+      expect(controller.isSetup, isTrue);
+      expect(controller.isRunning, isFalse);
     });
 
     test('changement de durée et de type en mode setup', () {
@@ -37,6 +41,7 @@ void main() {
     });
 
     test('démarrage de session initialise la première phase', () async {
+      controller.setBreathingType(BreathingType.relaxation478);
       await controller.startSession();
 
       expect(controller.isRunning, isTrue);
@@ -48,6 +53,7 @@ void main() {
     test(
       'transition exacte des phases (4-7-8 : inspire -> retiens -> expire)',
       () async {
+        controller.setBreathingType(BreathingType.relaxation478);
         await controller.startSession();
 
         // Phase 0 : Inspire (4 secondes)
@@ -80,6 +86,7 @@ void main() {
     );
 
     test('complétion d\'un cycle incrémente completedCycles', () async {
+      controller.setBreathingType(BreathingType.relaxation478);
       await controller.startSession();
 
       // Cycle complet 4-7-8 = 4 + 7 + 8 = 19 secondes (ticks)
@@ -92,6 +99,7 @@ void main() {
     });
 
     test('mise en pause et reprise de la session', () async {
+      controller.setBreathingType(BreathingType.relaxation478);
       await controller.startSession();
       expect(controller.isRunning, isTrue);
 
@@ -103,6 +111,7 @@ void main() {
     });
 
     test('arrêt anticipé réinitialise vers setup', () async {
+      controller.setBreathingType(BreathingType.relaxation478);
       await controller.startSession();
       await controller.stopSession(finished: false);
 
@@ -111,6 +120,7 @@ void main() {
     });
 
     test('fin de séance normale passe en finished', () async {
+      controller.setBreathingType(BreathingType.relaxation478);
       await controller.startSession();
       await controller.stopSession(finished: true);
 

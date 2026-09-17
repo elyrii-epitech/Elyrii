@@ -14,6 +14,8 @@ import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -27,6 +29,8 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   String? _errorBanner;
+  MascotAnimation _mascotAnimation = MascotAnimations.greet;
+  int _mascotTrigger = 0;
   bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
@@ -45,6 +49,10 @@ class _LoginPageState extends State<LoginPage> {
     );
     if (!mounted) return;
     if (success) {
+      setState(() {
+        _mascotAnimation = MascotAnimations.delight;
+        _mascotTrigger++;
+      });
       context.go(AppRoutes.home);
     } else {
       // Bannière contextuelle en haut de formulaire (pas de SnackBar).
@@ -52,6 +60,8 @@ class _LoginPageState extends State<LoginPage> {
         _errorBanner =
             authProvider.error ??
             'Oops, petit souci de connexion. Réessaie quand tu es prêt.';
+        _mascotAnimation = MascotAnimations.reassure;
+        _mascotTrigger++;
       });
     }
   }
@@ -78,10 +88,22 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       // Mascotte cadrée par la caméra (cameraTarget du
                       // config authPage) — aucun décalage de layout.
-                      const Mascot3DViewer(
-                            config: Mascot3DConfig.authPage(),
-                            width: 250,
-                            height: 250,
+                      GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              ElyriiHaptics.light();
+                              setState(() {
+                                _mascotAnimation = MascotAnimations.greet;
+                                _mascotTrigger++;
+                              });
+                            },
+                            child: Mascot3DViewer(
+                              config: const Mascot3DConfig.authPage(),
+                              animation: _mascotAnimation,
+                              animationTrigger: _mascotTrigger,
+                              width: 250,
+                              height: 250,
+                            ),
                           )
                           .animate()
                           .fadeIn(duration: 600.ms)
@@ -97,8 +119,8 @@ class _LoginPageState extends State<LoginPage> {
                                   ? AppColors.textPrimaryDark
                                   : AppColors.textPrimaryLight,
                             ).copyWith(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.8,
                             ),
                         textAlign: TextAlign.center,
                       ),
@@ -133,7 +155,7 @@ class _LoginPageState extends State<LoginPage> {
                                   keyboardType: TextInputType.emailAddress,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Veuillez entrer votre email';
+                                      return 'Entre ton email';
                                     }
                                     if (!Validators.isValidEmail(value)) {
                                       return 'Email invalide';
@@ -182,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                                   textInputAction: TextInputAction.done,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Veuillez entrer votre mot de passe';
+                                      return 'Entre ton mot de passe';
                                     }
                                     if (value.length < 6) {
                                       return 'Le mot de passe doit contenir au moins 6 caractères';

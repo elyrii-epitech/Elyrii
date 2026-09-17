@@ -209,6 +209,6 @@ class AiProposalCard extends StatelessWidget {
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 250.ms).slideX(begin: 0.05, end: 0);
+    );
   }
 }
