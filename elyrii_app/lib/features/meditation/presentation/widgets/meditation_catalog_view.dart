@@ -437,8 +437,13 @@ class MeditationCatalogView extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 12),
           child: GestureDetector(
             onTap: () {
-              ElyriiHaptics.selection();
-              controller.setBreathingType(type);
+              if (isSelected) {
+                ElyriiHaptics.light();
+                controller.startSession();
+              } else {
+                ElyriiHaptics.selection();
+                controller.setBreathingType(type);
+              }
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
@@ -467,81 +472,101 @@ class MeditationCatalogView extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: type.color.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(type.icon, color: type.color, size: 22),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: type.color.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(type.icon, color: type.color, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Flexible(
-                              child: Text(
-                                type.label,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    type.label,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? AppColors.textPrimaryDark
+                                          : AppColors.textPrimaryLight,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: type.color.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '${type.cycleDuration}s',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: type.color,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: type.color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '${type.cycleDuration}s',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: type.color,
-                                ),
+                            const SizedBox(height: 3),
+                            Text(
+                              type.description,
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.35,
+                                color: isDark
+                                    ? AppColors.textSecondaryDark
+                                    : AppColors.textSecondaryLight,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          type.description,
-                          style: TextStyle(
-                            fontSize: 12,
-                            height: 1.35,
-                            color: isDark
-                                ? AppColors.textSecondaryDark
-                                : AppColors.textSecondaryLight,
-                          ),
-                        ),
-                      ],
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(
+                        isSelected
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: isSelected
+                            ? type.color
+                            : (isDark ? Colors.white24 : Colors.black26),
+                        size: 22,
+                      ),
+                    ],
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(height: 14),
+                    LiquidGlassButton(
+                      label:
+                          'Démarrer (${controller.selectedDurationMinutes} min)',
+                      icon: Icons.play_arrow_rounded,
+                      style: LiquidGlassButtonStyle.filled,
+                      isExpanded: true,
+                      isLoading: controller.isStartingSession,
+                      onPressed: () {
+                        ElyriiHaptics.light();
+                        controller.startSession();
+                      },
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Icon(
-                    isSelected
-                        ? Icons.check_circle_rounded
-                        : Icons.radio_button_unchecked_rounded,
-                    color: isSelected
-                        ? type.color
-                        : (isDark ? Colors.white24 : Colors.black26),
-                    size: 22,
-                  ),
+                  ],
                 ],
               ),
             ),
