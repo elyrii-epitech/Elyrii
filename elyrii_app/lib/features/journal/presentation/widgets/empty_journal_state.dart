@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
@@ -61,144 +59,83 @@ class EmptyJournalState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Bouton principal d'écriture libre
+        LiquidGlassButton(
+          label: 'Écrire librement',
+          icon: Icons.edit_rounded,
+          onPressed: () {
+            ElyriiHaptics.light();
+            onCreateFirst();
+          },
+        ),
+        const SizedBox(height: 20),
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        AppDimensions.paddingXl,
-        AppDimensions.spacingXl,
-        AppDimensions.paddingXl,
-        bottomPadding + 120,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Mascotte / icone
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.2),
-                  AppColors.primaryLight.withValues(alpha: 0.1),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+        // Séparateur d'inspirations
+        Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.08),
               ),
-              shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.auto_stories_rounded,
-              size: 48,
-              color: AppColors.primary,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Text(
+                'Inspirations pour commencer',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
             ),
-          ).animate().fadeIn(duration: 400.ms).scale(curve: Curves.easeOutBack),
+            Expanded(
+              child: Divider(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.1)
+                    : Colors.black.withValues(alpha: 0.08),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
 
-          const SizedBox(height: AppDimensions.spacingLg),
-
-          Text(
-                'Commence ton journal',
-                style: AppTextStyles.headlineSmall(color: textColor),
-                textAlign: TextAlign.center,
-              )
-              .animate()
-              .fadeIn(duration: 400.ms, delay: 100.ms)
-              .slideY(begin: 0.1),
-
-          const SizedBox(height: AppDimensions.spacingSm),
-
-          Text(
-            'Écrire aide à clarifier tes pensées\net à mieux comprendre tes émotions.',
-            style: AppTextStyles.bodyMedium(color: subtitleColor),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 400.ms, delay: 200.ms).slideY(begin: 0.1),
-
-          const SizedBox(height: AppDimensions.spacingXl),
-
-          // Section "Ecrire librement" en premier (visible au-dessus de la navbar)
-          LiquidGlassButton(
-                label: 'Écrire librement',
-                icon: Icons.edit_rounded,
-                onPressed: () {
-                  ElyriiHaptics.light();
-                  onCreateFirst();
+        // Cartes d'inspiration
+        ...prompts.asMap().entries.map((entry) {
+          final index = entry.key;
+          final prompt = entry.value;
+          return _PromptCard(
+                prompt: prompt,
+                isDark: isDark,
+                onTap: () {
+                  if (onPromptSelected != null) {
+                    onPromptSelected!(prompt);
+                  } else {
+                    onCreateFirst();
+                  }
                 },
               )
               .animate()
-              .fadeIn(duration: 400.ms, delay: 300.ms)
-              .slideY(begin: 0.1),
-
-          const SizedBox(height: AppDimensions.spacingXxl),
-
-          // Divider
-          Row(
-            children: [
-              Expanded(
-                child: Divider(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.08),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Besoin d\'inspiration ?',
-                  style: AppTextStyles.titleSmall(
-                    color: textColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Divider(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.08),
-                ),
-              ),
-            ],
-          ).animate().fadeIn(duration: 400.ms, delay: 350.ms),
-
-          const SizedBox(height: AppDimensions.spacingMd),
-
-          // Cartes d'inspiration
-          ...prompts.asMap().entries.map((entry) {
-            final index = entry.key;
-            final prompt = entry.value;
-            return _PromptCard(
-                  prompt: prompt,
-                  isDark: isDark,
-                  onTap: () {
-                    if (onPromptSelected != null) {
-                      onPromptSelected!(prompt);
-                    } else {
-                      onCreateFirst();
-                    }
-                  },
-                )
-                .animate()
-                .fadeIn(
-                  duration: 350.ms,
-                  delay: (400 + index * 80).ms,
-                  curve: Curves.easeOutCubic,
-                )
-                .slideY(
-                  begin: 0.05,
-                  duration: 350.ms,
-                  delay: (400 + index * 80).ms,
-                  curve: Curves.easeOutCubic,
-                );
-          }),
-        ],
-      ),
+              .fadeIn(
+                duration: 350.ms,
+                delay: (40 * index).ms,
+                curve: Curves.easeOutCubic,
+              )
+              .slideY(
+                begin: 0.05,
+                duration: 350.ms,
+                delay: (40 * index).ms,
+                curve: Curves.easeOutCubic,
+              );
+        }),
+      ],
     );
   }
 }

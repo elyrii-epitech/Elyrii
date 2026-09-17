@@ -101,11 +101,12 @@ class _JournalPageState extends State<JournalPage> {
 
               // 3. Contenu principal
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
+                padding: EdgeInsets.fromLTRB(
                   AppDimensions.pageHorizontalPadding,
                   12,
                   AppDimensions.pageHorizontalPadding,
-                  130, // Dégagement pour le dock flottant du shell
+                  MediaQuery.of(context).padding.bottom +
+                      150, // Dégagement pour le dock flottant du shell
                 ),
                 sliver: SliverToBoxAdapter(
                   child: Column(
