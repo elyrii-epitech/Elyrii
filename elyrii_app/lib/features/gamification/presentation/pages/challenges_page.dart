@@ -221,14 +221,26 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   ),
                   const SizedBox(height: 18),
 
-                  // 4. Vues animées
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    switchInCurve: Curves.easeOutCubic,
-                    transitionBuilder: _fadeSlide,
-                    child: _mainSegment == 0
-                        ? _buildQuestsView(provider, isDark)
-                        : _buildSuccessesView(provider, isDark, streakDays),
+                  // 4. Vues animées fluides (taille + fondu progressif)
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      layoutBuilder: (currentChild, previousChildren) {
+                        return Stack(
+                          alignment: Alignment.topCenter,
+                          children: [...previousChildren, ?currentChild],
+                        );
+                      },
+                      transitionBuilder: _smoothFade,
+                      child: _mainSegment == 0
+                          ? _buildQuestsView(provider, isDark)
+                          : _buildSuccessesView(provider, isDark, streakDays),
+                    ),
                   ),
                 ],
               ),
@@ -681,6 +693,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
         _sectionHeader('Rituels en cours', isDark),
         if (!hasActive)
           _emptyCard(
+            key: const ValueKey('quests_empty_subview'),
             isDark: isDark,
             icon: Icons.spa_rounded,
             title: 'Aucun rituel actif aujourd\'hui',
@@ -752,13 +765,25 @@ class _ChallengesPageState extends State<ChallengesPage> {
               setState(() => _successesSubSegment = value),
         ),
         const SizedBox(height: 18),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeOutCubic,
-          transitionBuilder: _fadeSlide,
-          child: _successesSubSegment == 0
-              ? _buildBadgesView(isDark)
-              : _buildHistoryView(provider, isDark),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                alignment: Alignment.topCenter,
+                children: [...previousChildren, ?currentChild],
+              );
+            },
+            transitionBuilder: _smoothFade,
+            child: _successesSubSegment == 0
+                ? _buildBadgesView(isDark)
+                : _buildHistoryView(provider, isDark),
+          ),
         ),
       ],
     );
@@ -792,6 +817,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
   Widget _buildHistoryView(GamificationProvider provider, bool isDark) {
     if (provider.completedChallenges.isEmpty) {
       return _emptyCard(
+        key: const ValueKey('history_empty_subview'),
         isDark: isDark,
         icon: Icons.auto_stories_rounded,
         title: 'Ton herbier est encore vierge',
@@ -801,7 +827,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
     }
 
     return Column(
-      key: const ValueKey('history_subview'),
+      key: const ValueKey('history_list_subview'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ...provider.completedChallenges.map(
@@ -822,12 +848,14 @@ class _ChallengesPageState extends State<ChallengesPage> {
   // ============================================================
 
   Widget _emptyCard({
+    Key? key,
     required bool isDark,
     required IconData icon,
     required String title,
     required String subtitle,
   }) {
     return LiquidGlassCard(
+      key: key,
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
       child: Column(
         children: [
@@ -946,16 +974,10 @@ class _ChallengesPageState extends State<ChallengesPage> {
     return '${description.characters.take(maxLength)}…';
   }
 
-  Widget _fadeSlide(Widget child, Animation<double> animation) {
+  Widget _smoothFade(Widget child, Animation<double> animation) {
     return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.015),
-          end: Offset.zero,
-        ).animate(animation),
-        child: child,
-      ),
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic),
+      child: child,
     );
   }
 
