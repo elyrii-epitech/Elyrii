@@ -123,12 +123,16 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
           Icon(widget.icon, size: 20, color: textColor),
           const SizedBox(width: 8),
         ],
-        Text(
-          widget.label,
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: textColor,
+        Flexible(
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

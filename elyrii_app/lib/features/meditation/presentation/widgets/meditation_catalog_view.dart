@@ -100,20 +100,7 @@ class MeditationCatalogView extends StatelessWidget {
                 _sectionHeader('Techniques respiratoires', isDark),
                 const SizedBox(height: 10),
                 _buildBreathingTypeCards(isDark),
-                const SizedBox(height: 28),
-
-                // F. Bouton principal d'action
-                LiquidGlassButton(
-                  label: 'Commencer la séance',
-                  icon: Icons.play_arrow_rounded,
-                  style: LiquidGlassButtonStyle.filled,
-                  isExpanded: true,
-                  isLoading: controller.isStartingSession,
-                  onPressed: () {
-                    ElyriiHaptics.light();
-                    controller.startSession();
-                  },
-                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -124,75 +111,40 @@ class MeditationCatalogView extends StatelessWidget {
 
   /// En-tête spatial épuré Apple HIG.
   Widget _buildHeader(bool isDark) {
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'MON SOUFFLE',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Méditation',
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                  height: 1.1,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Respire, ralentis et reconnecte-toi à ton calme intérieur.',
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.35,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
-            ],
+        const Text(
+          'MON SOUFFLE',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: AppColors.primary,
           ),
         ),
-        const SizedBox(width: 12),
-        // Pilule de sérénité en verre liquide
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.25),
-              width: 0.8,
-            ),
+        const SizedBox(height: 4),
+        Text(
+          'Méditation',
+          style: TextStyle(
+            fontSize: 34,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.8,
+            height: 1.1,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
           ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('🌸', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 6),
-              Text(
-                'Sérénité',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Respire, ralentis et reconnecte-toi à ton calme intérieur.',
+          style: TextStyle(
+            fontSize: 14,
+            height: 1.35,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
           ),
         ),
       ],
@@ -242,7 +194,7 @@ class MeditationCatalogView extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            'Cohérence & Calme',
+                            controller.selectedBreathingType.label,
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -264,9 +216,9 @@ class MeditationCatalogView extends StatelessWidget {
                             color: AppColors.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
-                            'Présent',
-                            style: TextStyle(
+                          child: Text(
+                            '${controller.selectedBreathingType.cycleDuration}s',
+                            style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primary,
@@ -277,7 +229,7 @@ class MeditationCatalogView extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      'Synchronise ton souffle avec Elyrii pour réguler ton rythme cardiaque.',
+                      controller.selectedBreathingType.description,
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.35,
@@ -398,6 +350,20 @@ class MeditationCatalogView extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // Bouton d'action principal immédiatement accessible en haut
+          LiquidGlassButton(
+            label: 'Commencer (${controller.selectedDurationMinutes} min)',
+            icon: Icons.play_arrow_rounded,
+            style: LiquidGlassButtonStyle.filled,
+            isExpanded: true,
+            isLoading: controller.isStartingSession,
+            onPressed: () {
+              ElyriiHaptics.light();
+              controller.startSession();
+            },
           ),
         ],
       ),
