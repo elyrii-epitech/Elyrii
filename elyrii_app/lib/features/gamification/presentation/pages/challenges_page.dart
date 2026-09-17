@@ -1,31 +1,33 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../app/router/app_routes.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../providers/gamification_provider.dart';
 import '../widgets/ai_proposal_card.dart';
 import '../widgets/badges_grid.dart';
 import '../widgets/challenge_card.dart';
-import '../widgets/daily_streak_card.dart';
-import '../widgets/level_progress_header.dart';
 import '../widgets/quest_tile.dart';
 
-/// Jardin — page quêtes & réussites, refonte iOS.
+/// Jardin — Sanctuaire de progression visuelle, rituels et réussites.
 ///
-/// - Tirer-relâcher natif Cupertino ([CupertinoSliverRefreshControl]),
-///   plus aucun `RefreshIndicator` Material.
-/// - Grand titre rétractable « Jardin » façon iOS.
-/// - Hiérarchie aérée : sélecteur segmenté glissant « Mes Quêtes » /
-///   « Mes Succès », chacun avec ses sous-vues.
-/// - Chargements en skeletons shimmer discrets (aucun indicateur
-///   circulaire Material).
-/// - Ton bienveillant façon Apple Fitness : jamais culpabilisant.
+/// Refonte Apple HIG & Liquid Glass (Septembre 2026) :
+/// - Suppression de [SliverAppBar.large] et de son vide supérieur noir.
+/// - En-tête spatial fluide avec micro-sur-titre « MON SANCTUAIRE », grand titre
+///   « Jardin » et pilule de floraison interactive.
+/// - Carte Héroïque « Jardin Intérieur » affichant l'éveil botanique, le niveau,
+///   l'XP et la série de présence.
+/// - Passerelle limpide avec le Coach IA : « Le Coach sème, le Jardin fleurit ».
+/// - Deux segments clairs (« Mes Quêtes » / « Mes Succès ») avec retour haptique.
+/// - Tirer-relâcher natif Cupertino ([CupertinoSliverRefreshControl]).
 class ChallengesPage extends StatefulWidget {
   const ChallengesPage({super.key});
 
@@ -40,10 +42,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
   /// Segment principal : 0 = Mes Quêtes, 1 = Mes Succès.
   int _mainSegment = 0;
 
-  /// Sous-vue Quêtes : 0 = En cours, 1 = Suggestions.
-  int _questsSubSegment = 0;
-
-  /// Sous-vues Succès : 0 = Trophées, 1 = Badges, 2 = Historique.
+  /// Sous-segment Succès : 0 = Badges & Trophées, 1 = Historique.
   int _successesSubSegment = 0;
 
   static const List<BadgeItem> _badges = [
@@ -85,6 +84,34 @@ class _ChallengesPageState extends State<ChallengesPage> {
     ),
   ];
 
+  static const List<Map<String, dynamic>> _botanicalStates = [
+    {
+      'label': 'Éveil',
+      'emoji': '🌱',
+      'desc': 'Les premières pousses prennent racine',
+    },
+    {
+      'label': 'Épanouissement',
+      'emoji': '🌿',
+      'desc': 'Ton feuillage grandit doucement',
+    },
+    {
+      'label': 'Sérénité',
+      'emoji': '🌸',
+      'desc': 'Les fleurs de paix s\'ouvrent',
+    },
+    {
+      'label': 'Harmonie',
+      'emoji': '🦋',
+      'desc': 'La vie s\'aligne en équilibre',
+    },
+    {
+      'label': 'Lumière intérieure',
+      'emoji': '✨',
+      'desc': 'Ton sanctuaire rayonne',
+    },
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -111,55 +138,80 @@ class _ChallengesPageState extends State<ChallengesPage> {
     if (mounted) setState(() => _processingProposalId = null);
   }
 
+  Map<String, dynamic> _getBotanicalState(int level) {
+    final index = (level - 1).clamp(0, _botanicalStates.length - 1);
+    return _botanicalStates[index];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final provider = context.watch<GamificationProvider>();
     final dashboardProvider = context.watch<DashboardProvider>();
 
     final streakDays = dashboardProvider.currentStreak;
+    final completedCount = provider.completedChallenges.length;
+    final level = 1 + (completedCount ~/ 3);
+    final currentXp = (completedCount * 50) % 150;
+    const maxXp = 150;
+    final stateData = _getBotanicalState(level);
+
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
       body: CustomScrollView(
-        // Toujours déroulable pour permettre le tirer-relâcher iOS.
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
         slivers: [
-          // Tirer-relâcher natif Cupertino (remplace le RefreshIndicator
-          // Material).
+          // Tirer-relâcher natif Cupertino (aucun indicateur Material).
           CupertinoSliverRefreshControl(onRefresh: () => provider.loadAll()),
-          // Grand titre rétractable iOS : « Jardin » en grand format qui se
-          // replie en titre centré compact au défilement.
-          const SliverAppBar.large(
-            pinned: true,
-            centerTitle: true,
-            title: Text('Jardin'),
-            backgroundColor: Colors.transparent,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
+
+          // En-tête spatial fluide (remplace le SliverAppBar.large rigide).
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppDimensions.pageHorizontalPadding,
+                topPadding + 14,
+                AppDimensions.pageHorizontalPadding,
+                8,
+              ),
+              child: _buildHeader(isDark, stateData, level),
+            ),
           ),
+
+          // Contenu principal de la page.
           SliverPadding(
-            // Marge basse généreuse pour le dock flottant du shell.
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 140),
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.pageHorizontalPadding,
+              12,
+              AppDimensions.pageHorizontalPadding,
+              130, // Marge pour la barre de navigation flottante
+            ),
             sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'Cultive tes rituels, tes progrès doux et tes défis personnels.',
-                    style: AppTextStyles.bodySmall(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
-                    ).copyWith(height: 1.45),
+                  // 1. Carte Héroïque du Jardin Intérieur
+                  _buildGardenHeroCard(
+                    isDark: isDark,
+                    stateData: stateData,
+                    level: level,
+                    currentXp: currentXp,
+                    maxXp: maxXp,
+                    streakDays: streakDays,
+                    completedCount: completedCount,
                   ),
+                  const SizedBox(height: 18),
+
+                  // 2. Bannière de synergie Coach IA
+                  _buildCoachSynergyBanner(isDark),
                   const SizedBox(height: 20),
+
+                  // 3. Sélecteur segmenté principal iOS
                   _segmentedControl(
                     isDark: isDark,
                     groupValue: _mainSegment,
@@ -167,7 +219,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     onValueChanged: (value) =>
                         setState(() => _mainSegment = value),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
+
+                  // 4. Vues animées
                   AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
                     switchInCurve: Curves.easeOutCubic,
@@ -185,67 +239,421 @@ class _ChallengesPageState extends State<ChallengesPage> {
     );
   }
 
-  /// Transition douce (fondu + micro-glissement) entre sous-vues.
-  Widget _fadeSlide(Widget child, Animation<double> animation) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.015),
-          end: Offset.zero,
-        ).animate(animation),
-        child: child,
-      ),
-    );
-  }
-
-  // ============================================================
-  // Sélecteurs segmentés iOS
-  // ============================================================
-
-  /// Segmented glissant iOS plein cadre, avec retour haptique doux.
-  Widget _segmentedControl({
-    required bool isDark,
-    required int groupValue,
-    required Map<int, String> labels,
-    required ValueChanged<int> onValueChanged,
-  }) {
-    final selectedColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final unselectedColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    return SizedBox(
-      width: double.infinity,
-      child: CupertinoSlidingSegmentedControl<int>(
-        groupValue: groupValue,
-        backgroundColor: isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.05),
-        thumbColor: isDark ? const Color(0xFF3A3A3C) : Colors.white,
-        padding: const EdgeInsets.all(2),
-        children: {
-          for (final entry in labels.entries)
-            entry.key: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              child: Text(
-                entry.value,
-                style: AppTextStyles.labelMedium(
-                  color: entry.key == groupValue
-                      ? selectedColor
-                      : unselectedColor,
-                  fontWeight: FontWeight.w600,
+  /// En-tête spatial sans vide noir ni coupure.
+  Widget _buildHeader(bool isDark, Map<String, dynamic> stateData, int level) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'MON SANCTUAIRE',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: AppColors.primary,
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(
+                'Jardin',
+                style: TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.8,
+                  height: 1.1,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Cultive tes rituels doux et regarde grandir ta sérénité.',
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.35,
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Pilule botanique en verre liquide
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.25),
+              width: 0.8,
             ),
-        },
-        onValueChanged: (value) {
-          if (value == null || value == groupValue) return;
-          ElyriiHaptics.selection();
-          onValueChanged(value);
-        },
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                stateData['emoji'] as String,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Niv. $level',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.05, end: 0);
+  }
+
+  /// Carte Héroïque du Jardin Intérieur (style Apple Health / Fitness).
+  Widget _buildGardenHeroCard({
+    required bool isDark,
+    required Map<String, dynamic> stateData,
+    required int level,
+    required int currentXp,
+    required int maxXp,
+    required int streakDays,
+    required int completedCount,
+  }) {
+    final progress = (currentXp / maxXp).clamp(0.0, 1.0);
+
+    return LiquidGlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Cercle botanique en halo doux
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.25),
+                      AppColors.secondary.withValues(alpha: 0.15),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    stateData['emoji'] as String,
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          stateData['label'] as String,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Étape $level',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      stateData['desc'] as String,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Jauge de floraison / sérénité
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Floraison du sanctuaire',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                  Text(
+                    '$currentXp / $maxXp pts',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Stack(
+                  children: [
+                    Container(
+                      height: 8,
+                      width: double.infinity,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress == 0 ? 0.04 : progress,
+                      child: Container(
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.primary, AppColors.secondary],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Bento statistiques douces
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.04)
+                        : Colors.black.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.local_fire_department_rounded,
+                        color: Color(0xFFFF9500),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$streakDays ${streakDays > 1 ? "jours" : "jour"}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ),
+                            ),
+                            Text(
+                              'Série active',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isDark
+                                    ? AppColors.textTertiaryDark
+                                    : AppColors.textTertiaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.04)
+                        : Colors.black.withValues(alpha: 0.03),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.spa_rounded,
+                        color: Color(0xFF34C759),
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$completedCount ${completedCount > 1 ? "fleuris" : "fleuri"}',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ),
+                            ),
+                            Text(
+                              'Rituels clos',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isDark
+                                    ? AppColors.textTertiaryDark
+                                    : AppColors.textTertiaryLight,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.06, end: 0);
+  }
+
+  /// Passerelle poétique vers le Coach IA : « Le Coach sème, le Jardin fleurit ».
+  Widget _buildCoachSynergyBanner(bool isDark) {
+    return GestureDetector(
+      onTap: () {
+        ElyriiHaptics.light();
+        context.go(AppRoutes.coach);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.07),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.20),
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.20),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.psychology_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Semer une graine avec le Coach IA',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Besoin d\'un rituel guidé sur-mesure ? Ton coach t\'écoute.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: AppColors.primary.withValues(alpha: 0.7),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -255,98 +663,47 @@ class _ChallengesPageState extends State<ChallengesPage> {
   // ============================================================
 
   Widget _buildQuestsView(GamificationProvider provider, bool isDark) {
-    return Column(
-      key: const ValueKey('quests'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _segmentedControl(
-          isDark: isDark,
-          groupValue: _questsSubSegment,
-          labels: const {0: 'En cours', 1: 'Suggestions'},
-          onValueChanged: (value) => setState(() => _questsSubSegment = value),
-        ),
-        const SizedBox(height: 16),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeOutCubic,
-          transitionBuilder: _fadeSlide,
-          child: _questsSubSegment == 0
-              ? _buildActiveQuests(provider, isDark)
-              : _buildSuggestions(provider, isDark),
-        ),
-      ],
-    );
-  }
-
-  /// Sous-vue « En cours » : quêtes actives, ou état vide bienveillant.
-  Widget _buildActiveQuests(GamificationProvider provider, bool isDark) {
-    if (provider.isLoading && provider.activeChallenges.isEmpty) {
-      return KeyedSubtree(
-        key: const ValueKey('active-loading'),
-        child: _ChallengesSkeleton(isDark: isDark),
-      );
+    if (provider.isLoading &&
+        provider.activeChallenges.isEmpty &&
+        provider.availableChallenges.isEmpty) {
+      return _ChallengesSkeleton(isDark: isDark);
     }
 
-    if (provider.activeChallenges.isEmpty) {
-      return KeyedSubtree(
-        key: const ValueKey('active-empty'),
-        child: _emptyState(
-          isDark,
-          'Rien en cours pour le moment.\nChaque jour compte, à ton rythme.',
-          Icons.spa_rounded,
-        ),
-      );
-    }
+    final hasActive = provider.activeChallenges.isNotEmpty;
+    final hasProposals = provider.proposals.isNotEmpty;
+    final hasAvailable = provider.availableChallenges.isNotEmpty;
 
     return Column(
-      key: const ValueKey('active-list'),
+      key: const ValueKey('quests_view'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ...provider.activeChallenges.map(
-          (uc) => QuestTile(
-            title: uc.displayTitle,
-            subtitle: _shortDescription(uc.displayDescription),
-            icon: uc.displayIcon,
-            xpReward: uc.template?.rewardPoints ?? 50,
-            isCompleted: false,
-            progressFraction: uc.progressFraction,
-            progressText: uc.progressText,
+        // Rituels en cours
+        _sectionHeader('Rituels en cours', isDark),
+        if (!hasActive)
+          _emptyCard(
+            isDark: isDark,
+            icon: Icons.spa_rounded,
+            title: 'Aucun rituel actif aujourd\'hui',
+            subtitle:
+                'Choisis une graine ci-dessous pour faire grandir ton jardin, ou avance à ton propre rythme.',
+          )
+        else
+          ...provider.activeChallenges.map(
+            (uc) => QuestTile(
+              title: uc.displayTitle,
+              subtitle: _shortDescription(uc.displayDescription),
+              icon: uc.displayIcon,
+              xpReward: uc.template?.rewardPoints ?? 50,
+              isCompleted: false,
+              progressFraction: uc.progressFraction,
+              progressText: uc.progressText,
+            ),
           ),
-        ),
-      ],
-    );
-  }
+        const SizedBox(height: 24),
 
-  /// Sous-vue « Suggestions » : propositions d'Elyrii puis défis à découvrir.
-  Widget _buildSuggestions(GamificationProvider provider, bool isDark) {
-    final hasContent =
-        provider.proposals.isNotEmpty ||
-        provider.availableChallenges.isNotEmpty;
-
-    if (provider.isLoading && !hasContent) {
-      return KeyedSubtree(
-        key: const ValueKey('suggestions-loading'),
-        child: _ChallengesSkeleton(isDark: isDark, tileHeight: 96),
-      );
-    }
-
-    if (!hasContent) {
-      return KeyedSubtree(
-        key: const ValueKey('suggestions-empty'),
-        child: _emptyState(
-          isDark,
-          'Aucune suggestion pour l\'instant.\nElyrii prépare quelque chose de doux pour toi.',
-          Icons.auto_awesome_rounded,
-        ),
-      );
-    }
-
-    return Column(
-      key: const ValueKey('suggestions-list'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (provider.proposals.isNotEmpty) ...[
-          _sectionHeader('Proposées par Elyrii', isDark),
+        // Graines & Suggestions proposées par Elyrii
+        if (hasProposals) ...[
+          _sectionHeader('Graines proposées par ton Coach IA', isDark),
           ...provider.proposals.map(
             (proposal) => AiProposalCard(
               proposal: proposal,
@@ -355,11 +712,12 @@ class _ChallengesPageState extends State<ChallengesPage> {
               onReject: () => _handleRejectProposal(proposal.id),
             ),
           ),
-          if (provider.availableChallenges.isNotEmpty)
-            const SizedBox(height: 20),
+          const SizedBox(height: 24),
         ],
-        if (provider.availableChallenges.isNotEmpty) ...[
-          _sectionHeader('À découvrir', isDark),
+
+        // Rituels universels à découvrir
+        if (hasAvailable) ...[
+          _sectionHeader('À découvrir dans le sanctuaire', isDark),
           ...provider.availableChallenges.map(
             (challenge) => ChallengeAvailableCard(
               challenge: challenge,
@@ -382,78 +740,46 @@ class _ChallengesPageState extends State<ChallengesPage> {
     int streakDays,
   ) {
     return Column(
-      key: const ValueKey('successes'),
+      key: const ValueKey('successes_view'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Sous-segmenté Succès : Badges fleuris / Rituels accomplis
         _segmentedControl(
           isDark: isDark,
           groupValue: _successesSubSegment,
-          labels: const {0: 'Trophées', 1: 'Badges', 2: 'Historique'},
+          labels: const {0: 'Badges & Trophées', 1: 'Historique des fleurs'},
           onValueChanged: (value) =>
               setState(() => _successesSubSegment = value),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 18),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           switchInCurve: Curves.easeOutCubic,
           transitionBuilder: _fadeSlide,
-          child: switch (_successesSubSegment) {
-            0 => _buildTrophies(provider, isDark, streakDays),
-            1 => _buildBadges(isDark),
-            _ => _buildHistory(provider, isDark),
-          },
+          child: _successesSubSegment == 0
+              ? _buildBadgesView(isDark)
+              : _buildHistoryView(provider, isDark),
         ),
       ],
     );
   }
 
-  /// Sous-vue « Trophées » : niveau et rythme de la semaine.
-  Widget _buildTrophies(
-    GamificationProvider provider,
-    bool isDark,
-    int streakDays,
-  ) {
-    if (provider.isLoading && provider.completedChallenges.isEmpty) {
-      return KeyedSubtree(
-        key: const ValueKey('trophies-loading'),
-        child: _ChallengesSkeleton(isDark: isDark, tileHeight: 120),
-      );
-    }
-
+  Widget _buildBadgesView(bool isDark) {
     return Column(
-      key: const ValueKey('trophies'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        LevelProgressHeader(
-          level: 1 + provider.completedChallenges.length ~/ 3,
-          currentXp: provider.completedChallenges.length * 50,
-          maxXp: 150,
-          title: 'Explorateur de l\'esprit',
-        ),
-        const SizedBox(height: 12),
-        DailyStreakCard(
-          streakDays: streakDays,
-          weekHistory: List.generate(7, (i) => i < streakDays),
-        ),
-      ],
-    );
-  }
-
-  /// Sous-vue « Badges » : qualités qui grandissent, sans pression.
-  Widget _buildBadges(bool isDark) {
-    return Column(
-      key: const ValueKey('badges'),
+      key: const ValueKey('badges_subview'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         BadgesGrid(
           badges: _badges,
           onBadgeTap: (badge) => _showBadgeDetails(context, badge),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
         Text(
-          'Chaque badge grandit en toi, à ton rythme.',
+          'Chaque badge fleuri témoigne d\'un pas vers la sérénité.',
           textAlign: TextAlign.center,
-          style: AppTextStyles.labelSmall(
+          style: TextStyle(
+            fontSize: 12,
+            fontStyle: FontStyle.italic,
             color: isDark
                 ? AppColors.textTertiaryDark
                 : AppColors.textTertiaryLight,
@@ -463,28 +789,19 @@ class _ChallengesPageState extends State<ChallengesPage> {
     );
   }
 
-  /// Sous-vue « Historique » : les moments déjà vécus.
-  Widget _buildHistory(GamificationProvider provider, bool isDark) {
-    if (provider.isLoading && provider.completedChallenges.isEmpty) {
-      return KeyedSubtree(
-        key: const ValueKey('history-loading'),
-        child: _ChallengesSkeleton(isDark: isDark),
-      );
-    }
-
+  Widget _buildHistoryView(GamificationProvider provider, bool isDark) {
     if (provider.completedChallenges.isEmpty) {
-      return KeyedSubtree(
-        key: const ValueKey('history-empty'),
-        child: _emptyState(
-          isDark,
-          'Chaque vécu compte.\nTon histoire s\'écrira ici, moment après moment.',
-          Icons.auto_stories_rounded,
-        ),
+      return _emptyCard(
+        isDark: isDark,
+        icon: Icons.auto_stories_rounded,
+        title: 'Ton herbier est encore vierge',
+        subtitle:
+            'Chaque rituel mené à son terme laissera ici une trace douce de ton chemin.',
       );
     }
 
     return Column(
-      key: const ValueKey('history-list'),
+      key: const ValueKey('history_subview'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ...provider.completedChallenges.map(
@@ -501,56 +818,143 @@ class _ChallengesPageState extends State<ChallengesPage> {
   }
 
   // ============================================================
-  // Éléments communs
+  // Éléments d'UI communs & Helpers
   // ============================================================
 
-  String _shortDescription(String description) {
-    const maxLength = 40;
-    if (description.characters.length <= maxLength) return description;
-    return '${description.characters.take(maxLength)}…';
-  }
-
-  /// En-tête de section discret façon listes groupées iOS.
-  Widget _sectionHeader(String title, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 12),
-      child: Text(
-        title,
-        style: AppTextStyles.labelMedium(
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-          fontWeight: FontWeight.w600,
-        ).copyWith(letterSpacing: 0.2),
-      ),
-    );
-  }
-
-  Widget _emptyState(bool isDark, String message, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(
+  Widget _emptyCard({
+    required bool isDark,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return LiquidGlassCard(
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.05)
+                  : Colors.black.withValues(alpha: 0.04),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
               icon,
-              size: 40,
+              size: 28,
               color: isDark
                   ? AppColors.textTertiaryDark
                   : AppColors.textTertiaryLight,
             ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodySmall(
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
-              ).copyWith(height: 1.5),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
             ),
-          ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.45,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _segmentedControl({
+    required bool isDark,
+    required int groupValue,
+    required Map<int, String> labels,
+    required ValueChanged<int> onValueChanged,
+  }) {
+    final selectedColor = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    final unselectedColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
+
+    return SizedBox(
+      width: double.infinity,
+      child: CupertinoSlidingSegmentedControl<int>(
+        groupValue: groupValue,
+        backgroundColor: isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : Colors.black.withValues(alpha: 0.05),
+        thumbColor: isDark ? const Color(0xFF3A3A3C) : Colors.white,
+        padding: const EdgeInsets.all(3),
+        children: {
+          for (final entry in labels.entries)
+            entry.key: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                entry.value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: entry.key == groupValue
+                      ? selectedColor
+                      : unselectedColor,
+                ),
+              ),
+            ),
+        },
+        onValueChanged: (value) {
+          if (value == null || value == groupValue) return;
+          ElyriiHaptics.selection();
+          onValueChanged(value);
+        },
+      ),
+    );
+  }
+
+  Widget _sectionHeader(String title, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
+          color: isDark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
         ),
+      ),
+    );
+  }
+
+  String _shortDescription(String description) {
+    const maxLength = 48;
+    if (description.characters.length <= maxLength) return description;
+    return '${description.characters.take(maxLength)}…';
+  }
+
+  Widget _fadeSlide(Widget child, Animation<double> animation) {
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.015),
+          end: Offset.zero,
+        ).animate(animation),
+        child: child,
       ),
     );
   }
@@ -586,11 +990,11 @@ class _ChallengesPageState extends State<ChallengesPage> {
           const SizedBox(height: 16),
           Text(
             badge.isUnlocked
-                ? 'Tu as développé cette belle compétence.\nElle fait maintenant partie de toi.'
-                : 'Cette qualité grandit en toi,\npetit à petit, à ton rythme.',
+                ? 'Tu as développé cette belle compétence.\nElle fait maintenant partie de ton sanctuaire.'
+                : 'Cette qualité prend racine en toi,\npetit à petit, à ton rythme.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 14,
               height: 1.5,
               color: isDark
                   ? AppColors.textSecondaryDark
@@ -610,45 +1014,41 @@ class _ChallengesPageState extends State<ChallengesPage> {
   }
 }
 
-/// Squelette de chargement discret : shimmer doux aux couleurs de surface,
-/// en remplacement de tout indicateur circulaire Material.
+/// Squelette de chargement discret (shimmer doux).
 class _ChallengesSkeleton extends StatelessWidget {
   final bool isDark;
 
-  /// Hauteur de chaque tuile fantôme.
-  final double tileHeight;
-
-  const _ChallengesSkeleton({required this.isDark, this.tileHeight = 76});
+  const _ChallengesSkeleton({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    final surface = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.04);
-
-    Widget block(double height) =>
-        Container(
-              height: height,
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: BorderRadius.circular(16),
-              ),
-            )
-            .animate(onPlay: (controller) => controller.repeat())
-            .shimmer(
-              duration: 1400.ms,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.5),
-            );
+    final shimmerBase = isDark
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.03);
+    final shimmerHighlight = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.06);
 
     return Column(
-      children: [
-        for (var i = 0; i < 3; i++) ...[
-          if (i > 0) const SizedBox(height: 12),
-          block(tileHeight),
-        ],
-      ],
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: List.generate(
+        3,
+        (i) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child:
+              Container(
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: shimmerBase,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  )
+                  .animate(
+                    onPlay: (controller) => controller.repeat(reverse: true),
+                  )
+                  .shimmer(duration: 1400.ms, color: shimmerHighlight),
+        ),
+      ),
     );
   }
 }
