@@ -27,6 +27,9 @@ class BadgesGrid extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GridView.builder(
+      // Écrase le padding safe-area hérité (59 pt sous Dynamic Island) :
+      // sans cela, le viewport imbriqué l'ajoute au-dessus de la 1ʳᵉ rangée.
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
