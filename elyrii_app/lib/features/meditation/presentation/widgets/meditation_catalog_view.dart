@@ -141,7 +141,29 @@ class MeditationCatalogView extends StatelessWidget {
                 const SizedBox(height: 18),
 
                 // B. Sélecteur d'intentions émotionnelles (Carrousel horizontal)
-                _buildSectionHeader('Choisir une intention', isDark),
+                _buildSectionHeader(
+                  'Choisir une intention',
+                  isDark,
+                  trailing: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Faire défiler',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 13,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 10),
                 _buildIntentCarousel(isDark),
                 const SizedBox(height: 18),
@@ -362,7 +384,7 @@ class MeditationCatalogView extends StatelessWidget {
   /// Carrousel horizontal des intentions de respiration.
   Widget _buildIntentCarousel(bool isDark) {
     return SizedBox(
-      height: 98,
+      height: 102,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -381,7 +403,7 @@ class MeditationCatalogView extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOutCubic,
-              width: 116,
+              width: 128,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
@@ -521,19 +543,25 @@ class MeditationCatalogView extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, bool isDark) {
+  Widget _buildSectionHeader(String title, bool isDark, {Widget? trailing}) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-        ),
+      padding: const EdgeInsets.only(left: 4, right: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ),
+          ),
+          ?trailing,
+        ],
       ),
     );
   }
