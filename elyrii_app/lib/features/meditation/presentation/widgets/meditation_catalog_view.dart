@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../app/router/app_routes.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -78,11 +76,7 @@ class MeditationCatalogView extends StatelessWidget {
               children: [
                 // A. Carte Héroïque du Sanctuaire du Souffle avec Mascotte
                 _buildMeditationHeroCard(isDark),
-                const SizedBox(height: 18),
-
-                // B. Passerelle poétique vers le Jardin & Coach
-                _buildGardenSynergyBanner(context, isDark),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // C. Notice de synchronisation en cas d'erreur réseau
                 if (controller.backendError != null) ...[
@@ -368,77 +362,6 @@ class MeditationCatalogView extends StatelessWidget {
         ],
       ),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.06, end: 0);
-  }
-
-  /// Passerelle poétique vers le Jardin intérieur.
-  Widget _buildGardenSynergyBanner(BuildContext context, bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        ElyriiHaptics.light();
-        context.go(AppRoutes.challenges);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.07),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.20),
-            width: 0.8,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.20),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.yard_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Arroser ton Jardin intérieur',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Chaque respiration pleine conscience nourrit tes rituels.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: AppColors.primary.withValues(alpha: 0.7),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   /// Sélecteur de durée sous forme de segment glissant iOS.
