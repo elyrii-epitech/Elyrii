@@ -16,6 +16,7 @@ import '../widgets/ai_proposal_card.dart';
 import '../widgets/badges_grid.dart';
 import '../widgets/challenge_card.dart';
 import '../widgets/quest_tile.dart';
+import '../widgets/daily_streak_card.dart';
 
 /// Jardin — Sanctuaire de progression visuelle, rituels et réussites.
 ///
@@ -189,7 +190,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               AppDimensions.pageHorizontalPadding,
               12,
               AppDimensions.pageHorizontalPadding,
-              130, // Marge pour la barre de navigation flottante
+              110, // Marge pour la barre de navigation flottante
             ),
             sliver: SliverToBoxAdapter(
               child: Column(
@@ -764,7 +765,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
           onValueChanged: (value) =>
               setState(() => _successesSubSegment = value),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         AnimatedSize(
           duration: const Duration(milliseconds: 320),
           curve: Curves.easeOutCubic,
@@ -781,7 +782,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
             },
             transitionBuilder: _smoothFade,
             child: _successesSubSegment == 0
-                ? _buildBadgesView(isDark)
+                ? _buildBadgesView(isDark, streakDays)
                 : _buildHistoryView(provider, isDark),
           ),
         ),
@@ -789,26 +790,83 @@ class _ChallengesPageState extends State<ChallengesPage> {
     );
   }
 
-  Widget _buildBadgesView(bool isDark) {
+  Widget _buildBadgesView(bool isDark, int streakDays) {
+    final unlockedCount = _badges.where((b) => b.isUnlocked).length;
+    final totalCount = _badges.length;
+
     return Column(
       key: const ValueKey('badges_subview'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // En-tête des badges avec compteur
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Badges de sérénité',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(
+                  alpha: isDark ? 0.15 : 0.08,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$unlockedCount / $totalCount débloqués',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
         BadgesGrid(
           badges: _badges,
           onBadgeTap: (badge) => _showBadgeDetails(context, badge),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         Text(
           'Chaque badge fleuri témoigne d\'un pas vers la sérénité.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             fontStyle: FontStyle.italic,
             color: isDark
                 ? AppColors.textTertiaryDark
                 : AppColors.textTertiaryLight,
           ),
+        ),
+        const SizedBox(height: 18),
+
+        // Trophée de constance (volet Trophées du segment)
+        Text(
+          'Constance & Rythme',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.2,
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+        ),
+        const SizedBox(height: 10),
+        DailyStreakCard(
+          streakDays: streakDays,
+          weekHistory: List.generate(7, (i) => i < streakDays),
         ),
       ],
     );
