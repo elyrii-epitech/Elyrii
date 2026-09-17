@@ -11,6 +11,7 @@ import '../../features/gamification/presentation/pages/challenges_page.dart';
 import '../../features/journal/presentation/pages/journal_page.dart';
 import '../../features/mascot/presentation/pages/mascot_customization_page.dart';
 import '../../features/meditation/presentation/pages/meditation_page.dart';
+import '../../features/meditation/presentation/pages/meditation_session_page.dart';
 import '../../features/profile_setup/presentation/pages/avatar_picker_page.dart';
 import '../../features/profile_setup/presentation/pages/edit_profile_page.dart';
 import '../../features/profile_setup/presentation/pages/profile_setup_page.dart';
@@ -201,6 +202,18 @@ abstract final class AppRouter {
             key: state.pageKey,
             name: state.name,
             child: const AvatarPickerPage(),
+          ),
+        ),
+
+        // Session de méditation immersive (hors shell : aucun dock)
+        GoRoute(
+          path: AppRoutes.meditationSession,
+          pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(
+            key: state.pageKey,
+            name: state.name,
+            child: MeditationSessionPage(
+              controller: state.extra! as MeditationController,
+            ),
           ),
         ),
       ],

@@ -206,7 +206,7 @@ class MeditationSummaryView extends StatelessWidget {
             ),
           ).animate().fadeIn(duration: 400.ms, delay: 900.ms),
 
-          const SizedBox(height: 120),
+          const SizedBox(height: 40),
         ],
       ),
     );

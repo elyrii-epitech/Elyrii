@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/mascot_3d_config.dart';
@@ -13,10 +12,18 @@ import '../../domain/models/breath_phase.dart';
 import '../controllers/meditation_controller.dart';
 
 /// Vue de respiration active plein écran : cercle zen, timer discret et contrôles.
+///
+/// L'hôte ([MeditationSessionPage]) fournit [onRequestExit] pour demander une
+/// sortie confirmée : cette vue ne gère plus elle-même la boîte de dialogue.
 class ActiveBreathingView extends StatefulWidget {
   final MeditationController controller;
+  final VoidCallback onRequestExit;
 
-  const ActiveBreathingView({super.key, required this.controller});
+  const ActiveBreathingView({
+    super.key,
+    required this.controller,
+    required this.onRequestExit,
+  });
 
   @override
   State<ActiveBreathingView> createState() => _ActiveBreathingViewState();
@@ -100,41 +107,6 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  void _confirmStopSession(BuildContext context) {
-    widget.controller.pauseSession();
-    showCupertinoModalPopup<bool>(
-      context: context,
-      builder: (modalContext) => CupertinoActionSheet(
-        title: const Text('Quitter la séance ?'),
-        message: const Text(
-          'La séance en cours sera interrompue et non comptabilisée.',
-        ),
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(modalContext, true);
-            widget.controller.resumeSession();
-          },
-          child: const Text('Reprendre la séance'),
-        ),
-        actions: [
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(modalContext, false);
-              widget.controller.stopSession(finished: false);
-            },
-            child: const Text('Interrompre'),
-          ),
-        ],
-      ),
-    ).then((result) {
-      // Rejet hors boutons (tap à l'extérieur) : la séance reprend.
-      if (result == null && widget.controller.isPaused) {
-        widget.controller.resumeSession();
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -185,7 +157,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                 icon: Icons.close_rounded,
                 size: 40,
                 color: subtitleColor,
-                onPressed: () => _confirmStopSession(context),
+                onPressed: widget.onRequestExit,
               ),
             ],
           ),
@@ -213,7 +185,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final orbSize = (constraints.maxWidth * 0.72).clamp(220.0, 300.0);
+              final orbSize = (constraints.maxWidth * 0.80).clamp(260.0, 340.0);
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -277,7 +249,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
             children: [
               LiquidGlassIconButton(
                 icon: Icons.stop_rounded,
-                onPressed: () => _confirmStopSession(context),
+                onPressed: widget.onRequestExit,
                 size: 56,
                 color: isDark
                     ? AppColors.textPrimaryDark
@@ -301,7 +273,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
             ],
           ),
         ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom + 90),
+        SizedBox(height: MediaQuery.of(context).padding.bottom + 28),
       ],
     );
   }
@@ -312,26 +284,23 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
       height: size,
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
-          // Champ de respiration éthéré façon Apple Watch Breathe : aucun
-          // anneau ni bordure rigide, deux voiles de lumière qui respirent
-          // en phase avec l'exercice.
           AnimatedBuilder(
             animation: _breathScale,
             builder: (context, _) {
-              // Progression normalisée de la phase (0 = contracté, 1 = étendu).
-              final t = (_breathScale.value - 0.82) / 0.36;
-              final intensity = 0.55 + 0.45 * t;
-
+              // Halo lumineux externe dont l'intensité respire avec le souffle.
+              final intensity = Curves.easeInOut.transform(
+                _breathScale.value.clamp(0.0, 1.0),
+              );
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Halo ambiant externe.
                   Transform.scale(
-                    scale: 0.94 + t * 0.12,
+                    scale: _breathScale.value,
                     child: Container(
-                      width: size,
-                      height: size,
+                      width: size * 0.92,
+                      height: size * 0.92,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
@@ -340,11 +309,11 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                               alpha: (isDark ? 0.20 : 0.14) * intensity,
                             ),
                             accent.withValues(
-                              alpha: (isDark ? 0.08 : 0.06) * intensity,
+                              alpha: (isDark ? 0.08 : 0.05) * intensity,
                             ),
                             Colors.transparent,
                           ],
-                          stops: const [0.0, 0.55, 1.0],
+                          stops: const [0.0, 0.7, 1.0],
                         ),
                       ),
                     ),
@@ -389,8 +358,8 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
             animation: widget.controller.isPaused
                 ? MascotAnimations.holdPose
                 : MascotAnimations.breathe,
-            width: 140,
-            height: 140,
+            width: size * 0.52,
+            height: size * 0.52,
           ),
         ],
       ),

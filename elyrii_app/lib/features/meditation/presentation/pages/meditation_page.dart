@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../app/router/app_routes.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/repositories/meditation_repository.dart';
 import '../controllers/meditation_controller.dart';
-import '../widgets/active_breathing_view.dart';
 import '../widgets/meditation_catalog_view.dart';
-import '../widgets/meditation_summary_view.dart';
 
 export '../../domain/models/breath_phase.dart';
 export '../controllers/meditation_controller.dart';
 
-/// Page principale de méditation et cohérence cardiaque.
-/// Coordonne le [MeditationController] et les 3 vues modulaires :
-/// 1. [MeditationCatalogView] : Catalogue des techniques et choix de durée
-/// 2. [ActiveBreathingView] : Session active plein écran avec cercle zen
-/// 3. [MeditationSummaryView] : Synthèse, gratitude et sélecteur d'humeur
+/// Page onglet Méditation : catalogue de préparation de séance.
+///
+/// Dès que la session démarre, l'utilisateur bascule sur
+/// [MeditationSessionPage] (route hors shell, sans dock) pour une immersion
+/// totale. Cette page ne sert qu'à préparer la séance.
 class MeditationPage extends StatefulWidget {
   const MeditationPage({super.key});
 
@@ -26,6 +26,7 @@ class MeditationPage extends StatefulWidget {
 
 class _MeditationPageState extends State<MeditationPage> {
   late final MeditationController _controller;
+  bool _sessionRouteOpen = false;
 
   @override
   void initState() {
@@ -33,12 +34,25 @@ class _MeditationPageState extends State<MeditationPage> {
     final client = context.read<ApiClient>();
     final repository = MeditationRepository(client: client);
     _controller = MeditationController(repository: repository);
+    _controller.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_onControllerChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+    final running = _controller.isRunning || _controller.isPaused;
+    if (running && !_sessionRouteOpen) {
+      _sessionRouteOpen = true;
+      context.push(AppRoutes.meditationSession, extra: _controller).then((_) {
+        if (mounted) _sessionRouteOpen = false;
+      });
+    }
   }
 
   @override
@@ -49,26 +63,7 @@ class _MeditationPageState extends State<MeditationPage> {
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: ListenableBuilder(
-        listenable: _controller,
-        builder: (context, _) {
-          switch (_controller.sessionState) {
-            case MeditationSessionState.setup:
-              return MeditationCatalogView(controller: _controller);
-            case MeditationSessionState.running:
-            case MeditationSessionState.paused:
-              return SafeArea(
-                bottom: false,
-                child: ActiveBreathingView(controller: _controller),
-              );
-            case MeditationSessionState.finished:
-              return SafeArea(
-                bottom: false,
-                child: MeditationSummaryView(controller: _controller),
-              );
-          }
-        },
-      ),
+      body: MeditationCatalogView(controller: _controller),
     );
   }
 }
