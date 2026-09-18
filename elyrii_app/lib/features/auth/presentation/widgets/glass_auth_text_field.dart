@@ -105,6 +105,12 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
                   color: isDark ? Colors.white : Colors.black,
                 ).copyWith(fontWeight: FontWeight.w500),
                 decoration: InputDecoration(
+                  // Le thème global remplit les champs d'un blanc opaque
+                  // (surfaceLight/surfaceDark) : sur une carte de verre,
+                  // cela dessine des rectangles qui débordent visuellement.
+                  // Le fond du conteneur ci-dessus fournit la surface.
+                  filled: true,
+                  fillColor: Colors.transparent,
                   hintText: widget.hint,
                   hintStyle: AppTextStyles.inputHint().copyWith(
                     color: isDark

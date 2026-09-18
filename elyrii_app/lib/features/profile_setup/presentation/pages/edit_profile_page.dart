@@ -465,6 +465,10 @@ class _BioTextField extends StatelessWidget {
           color: isDark ? Colors.white : Colors.black,
         ),
         decoration: InputDecoration(
+          // Fond du conteneur = surface ; neutralise le blanc opaque
+          // du thème global qui dessine des rectangles hors carte.
+          filled: true,
+          fillColor: Colors.transparent,
           hintText: 'Raconte ce qui te rend unique...',
           hintStyle: AppTextStyles.bodyMedium(
             color: isDark
