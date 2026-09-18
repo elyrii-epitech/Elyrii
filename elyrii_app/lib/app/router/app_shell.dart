@@ -87,43 +87,49 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
 
     return Scaffold(
       extendBody: true,
+      // Chat owns keyboard avoidance so nested scaffolds do not resize twice.
+      resizeToAvoidBottomInset: currentIndex != 5,
       body: widget.navigationShell,
-      bottomNavigationBar: Container(
-        margin: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          bottom: bottomMargin,
-        ),
-        height: 64,
-        child: Row(
-          children: [
-            Expanded(
-              child: GlassNavigationBar(
-                items: _navItems,
-                currentIndex: currentIndex < 5 ? currentIndex : -1,
-                onItemSelected: _onTabSelected,
-                iconControllers: _iconControllers,
-                isDark: isDark,
-                margin: EdgeInsets.zero,
-                height: 64,
-                borderRadius: 32,
+      bottomNavigationBar:
+          currentIndex == 5 && MediaQuery.viewInsetsOf(context).bottom > 0
+          ? null
+          : Container(
+              margin: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: bottomMargin,
+              ),
+              height: 64,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GlassNavigationBar(
+                      items: _navItems,
+                      currentIndex: currentIndex < 5 ? currentIndex : -1,
+                      onItemSelected: _onTabSelected,
+                      iconControllers: _iconControllers,
+                      isDark: isDark,
+                      margin: EdgeInsets.zero,
+                      height: 64,
+                      borderRadius: 32,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  GlassBubbleButtonStateful(
+                    icon: Icons.chat_bubble_rounded,
+                    onTap: () => _onTabSelected(5),
+                    size: 64,
+                    isDark: isDark,
+                    isSelected: currentIndex == 5,
+                    tooltip: 'Chat Elyrii',
+                    // Marque vectorielle aplatie : même poids et même teinte
+                    // que les pictogrammes des autres onglets.
+                    iconAsset: 'assets/brand/logo_monochrome.png',
+                    iconAssetSize: 26,
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 10),
-            GlassBubbleButtonStateful(
-              icon: Icons.chat_bubble_rounded,
-              onTap: () => _onTabSelected(5),
-              size: 64,
-              isDark: isDark,
-              isSelected: currentIndex == 5,
-              tooltip: 'Chat Elyrii',
-              // Logo de l'app en noir & blanc, teinté comme les icônes
-              // Material pour respecter la monochrome DA de la navbar.
-              iconAsset: 'assets/brand/logo_monochrome.png',
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

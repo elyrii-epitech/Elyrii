@@ -46,7 +46,9 @@ class ChatbotProvider extends ChangeNotifier {
   /// le chat (le fil repart simplement vide).
   Future<void> _restoreHistory() async {
     try {
-      _sessions = await ChatHistoryService.loadAll();
+      // `loadAll` may legitimately return `const []` when no history exists.
+      // Keep our working collection mutable because new messages upsert into it.
+      _sessions = List<ChatSession>.of(await ChatHistoryService.loadAll());
       final latest = _sessions.firstOrNull;
       if (latest != null && latest.messages.isNotEmpty) {
         _activeSession = latest;
@@ -55,6 +57,7 @@ class ChatbotProvider extends ChangeNotifier {
         _activeSession = latest ?? ChatSession.create();
       }
     } catch (_) {
+      _sessions = <ChatSession>[];
       _activeSession = ChatSession.create();
     }
     if (!_disposed) notifyListeners();
@@ -204,7 +207,7 @@ class ChatbotProvider extends ChangeNotifier {
     await _socket?.close();
     _socket = null;
     _isConnected = false;
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   /// Efface les messages de la conversation courante (la session reste,
@@ -224,7 +227,9 @@ class ChatbotProvider extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    disconnect();
+    unawaited(_socket?.close());
+    _socket = null;
+    _isConnected = false;
     super.dispose();
   }
 }

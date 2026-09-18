@@ -16,12 +16,15 @@ Future<T?> showLiquidGlassSheet<T>({
   double maxChildSize = 0.92,
   bool isDismissible = true,
   bool enableDrag = true,
+  bool useRootNavigator = false,
+  EdgeInsetsGeometry contentPadding = const EdgeInsets.all(20),
   Color? backgroundColor,
 }) {
   ElyriiHaptics.medium();
 
   return showModalBottomSheet<T>(
     context: context,
+    useRootNavigator: useRootNavigator,
     isScrollControlled: true,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
@@ -32,6 +35,7 @@ Future<T?> showLiquidGlassSheet<T>({
       minChildSize: minChildSize,
       maxChildSize: maxChildSize,
       backgroundColor: backgroundColor,
+      contentPadding: contentPadding,
       child: child,
     ),
   );
@@ -43,6 +47,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
   final double minChildSize;
   final double maxChildSize;
   final Color? backgroundColor;
+  final EdgeInsetsGeometry contentPadding;
 
   const LiquidGlassSheetContent({
     super.key,
@@ -51,6 +56,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
     required this.minChildSize,
     required this.maxChildSize,
     this.backgroundColor,
+    this.contentPadding = const EdgeInsets.all(20),
   });
 
   @override
@@ -86,7 +92,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
                       Expanded(
                         child: SingleChildScrollView(
                           controller: scrollController,
-                          padding: const EdgeInsets.all(20),
+                          padding: contentPadding,
                           child: child,
                         ),
                       ),

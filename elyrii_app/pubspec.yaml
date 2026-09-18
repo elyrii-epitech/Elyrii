@@ -104,6 +104,7 @@ flutter:
     - assets/mascot_design_texture.png
     - assets/shaded_painted.png
     - assets/brand/logo_monochrome.png
+    - assets/brand/navbar_app_icon.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

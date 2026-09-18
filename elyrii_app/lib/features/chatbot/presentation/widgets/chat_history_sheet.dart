@@ -19,6 +19,10 @@ class ChatHistorySheet extends StatelessWidget {
   static Future<void> show(BuildContext context) {
     return showLiquidGlassSheet(
       context: context,
+      useRootNavigator: true,
+      contentPadding: EdgeInsets.only(
+        bottom: MediaQuery.paddingOf(context).bottom,
+      ),
       initialChildSize: 0.7,
       child: const ChatHistorySheet(),
     );
@@ -34,6 +38,7 @@ class ChatHistorySheet extends StatelessWidget {
         final activeId = provider.activeSessionId;
 
         return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
@@ -43,8 +48,8 @@ class ChatHistorySheet extends StatelessWidget {
                     child: Text(
                       'Historique',
                       style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
                         letterSpacing: -0.5,
                         color: isDark
                             ? AppColors.textPrimaryDark
@@ -71,27 +76,27 @@ class ChatHistorySheet extends StatelessWidget {
                 ],
               ),
             ),
-            Expanded(
-              child: sessions.isEmpty
-                  ? _buildEmptyState(isDark)
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                      itemCount: sessions.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final session = sessions[index];
-                        final isActive = session.id == activeId;
-                        return _buildSessionTile(
-                          context,
-                          provider: provider,
-                          session: session,
-                          isActive: isActive,
-                          isDark: isDark,
-                        );
-                      },
-                    ),
-            ),
+            if (sessions.isEmpty)
+              _buildEmptyState(isDark)
+            else
+              ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                itemCount: sessions.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final session = sessions[index];
+                  final isActive = session.id == activeId;
+                  return _buildSessionTile(
+                    context,
+                    provider: provider,
+                    session: session,
+                    isActive: isActive,
+                    isDark: isDark,
+                  );
+                },
+              ),
           ],
         );
       },
@@ -99,9 +104,10 @@ class ChatHistorySheet extends StatelessWidget {
   }
 
   Widget _buildEmptyState(bool isDark) {
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 56, 24, 72),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.forum_outlined,
@@ -160,7 +166,9 @@ class ChatHistorySheet extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: isActive
-                    ? Border.all(color: AppColors.primary.withValues(alpha: 0.4))
+                    ? Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                      )
                     : null,
               ),
               child: Row(
@@ -213,7 +221,8 @@ class ChatHistorySheet extends StatelessWidget {
                           : AppColors.textTertiaryLight,
                     ),
                     tooltip: 'Supprimer la conversation',
-                    onPressed: () => _confirmDelete(context, provider, session.id),
+                    onPressed: () =>
+                        _confirmDelete(context, provider, session.id),
                   ),
                 ],
               ),

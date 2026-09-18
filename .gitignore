@@ -26,6 +26,8 @@ htmlcov/
 
 instance/
 models/
+# Flutter source models must be included alongside their consumers.
+!elyrii_app/lib/features/meditation/domain/models/
 .env
 .env.local
 
