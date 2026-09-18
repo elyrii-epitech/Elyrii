@@ -67,6 +67,9 @@ dependencies:
   image_picker: ^1.1.2
   image_cropper: ^9.1.0
 
+
+  # URL & Phone launcher
+  url_launcher: ^6.3.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -100,6 +103,7 @@ flutter:
     - assets/custom1.glb
     - assets/mascot_design_texture.png
     - assets/shaded_painted.png
+    - assets/brand/logo_monochrome.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

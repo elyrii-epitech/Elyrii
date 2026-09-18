@@ -1,6 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
+
+/// Numéros d'écoute et d'urgence santé mentale (France), tapables.
+const List<({String title, String subtitle, String tel, Color color})>
+kEmergencyResources = [
+  (
+    title: '311 — Prévention suicide',
+    subtitle: 'Écoute et accompagnement, 24h/24, gratuit',
+    tel: '311',
+    color: Color(0xFFE5484D),
+  ),
+  (
+    title: 'Fil Santé Jeunes',
+    subtitle: '0 800 235 236 · gratuit, anonyme',
+    tel: '0800235236',
+    color: Color(0xFF4CAF50),
+  ),
+  (
+    title: 'SOS Amitié',
+    subtitle: '09 72 39 40 50 · écoute de jour comme de nuit',
+    tel: '0972394050',
+    color: Color(0xFF2196F3),
+  ),
+  (
+    title: 'Urgence vitale',
+    subtitle: 'Appelle le 15 (SAMU) ou le 112',
+    tel: '15',
+    color: Color(0xFFB3261E),
+  ),
+];
 
 class EmergencyResourcesButton extends StatelessWidget {
   const EmergencyResourcesButton({super.key});
@@ -126,30 +156,29 @@ class EmergencyResourcesButton extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              _buildResourceTile(
-                context,
-                icon: Icons.phone_rounded,
-                title: 'Fil Santé Jeunes',
-                subtitle: '0 800 235 236 (gratuit)',
-                color: const Color(0xFF4CAF50),
+              for (final (index, resource) in kEmergencyResources.indexed) ...[
+                _buildResourceTile(
+                  context,
+                  icon: Icons.phone_rounded,
+                  title: resource.title,
+                  subtitle: resource.subtitle,
+                  color: resource.color,
+                  tel: resource.tel,
+                ),
+                if (index < kEmergencyResources.length - 1)
+                  const SizedBox(height: 12),
+              ],
+              const SizedBox(height: 16),
+              Text(
+                'Appuyer sur un numéro lance l\'appel.',
+                style: TextStyle(
+                  color: isDark
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiaryLight,
+                  fontSize: 12,
+                ),
               ),
-              const SizedBox(height: 12),
-              _buildResourceTile(
-                context,
-                icon: Icons.phone_rounded,
-                title: 'SOS Amitié',
-                subtitle: '09 72 39 40 50',
-                color: const Color(0xFF2196F3),
-              ),
-              const SizedBox(height: 12),
-              _buildResourceTile(
-                context,
-                icon: Icons.chat_rounded,
-                title: 'En cas d\'urgence vitale',
-                subtitle: 'Appelle le 15 ou le 112',
-                color: Colors.red,
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
@@ -179,66 +208,83 @@ class EmergencyResourcesButton extends StatelessWidget {
     required String title,
     required String subtitle,
     required Color color,
+    required String tel,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.1 : 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: isDark ? 0.2 : 0.1),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
+    return Semantics(
+      button: true,
+      label: 'Appeler $title',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _callNumber(tel),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: isDark ? 0.1 : 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+                width: 1,
+              ),
             ),
-            child: Icon(icon, size: 20, color: color),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 20, color: color),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                    fontSize: 13,
-                  ),
+                Icon(
+                  Icons.call_rounded,
+                  size: 18,
+                  color: color,
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 16,
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Future<void> _callNumber(String tel) async {
+    final uri = Uri(scheme: 'tel', path: tel);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
   }
 }

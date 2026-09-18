@@ -116,7 +116,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
               size: 64,
               isDark: isDark,
               isSelected: currentIndex == 5,
-              tooltip: 'Chatbot',
+              tooltip: 'Chat Elyrii',
+              // Logo de l'app en noir & blanc, teinté comme les icônes
+              // Material pour respecter la monochrome DA de la navbar.
+              iconAsset: 'assets/brand/logo_monochrome.png',
             ),
           ],
         ),

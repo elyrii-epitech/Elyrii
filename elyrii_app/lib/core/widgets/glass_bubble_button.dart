@@ -13,6 +13,10 @@ class GlassBubbleButton extends StatelessWidget {
   final bool isDark;
   final bool isSelected;
 
+  /// Asset monochrome optionnel : affiché à la place de [icon], teinté
+  /// comme une icône Material (masque alpha) pour respecter la DA.
+  final String? iconAsset;
+
   const GlassBubbleButton({
     super.key,
     required this.icon,
@@ -21,10 +25,18 @@ class GlassBubbleButton extends StatelessWidget {
     this.size = 64,
     this.isDark = false,
     this.isSelected = false,
+    this.iconAsset,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tint =
+        iconColor ??
+        (isSelected
+            ? AppColors.primary
+            : (isDark
+                  ? AppColors.iconDefaultDark
+                  : AppColors.iconDefaultLight));
     final Widget buttonContent = ElyriiGlassSurface(
       role: GlassRole.floatingControl,
       borderRadius: BorderRadius.circular(size / 2),
@@ -34,17 +46,17 @@ class GlassBubbleButton extends StatelessWidget {
           ? AppColors.primary.withValues(alpha: isDark ? 0.24 : 0.15)
           : null,
       child: Center(
-        child: Icon(
-          icon,
-          size: 26,
-          color:
-              iconColor ??
-              (isSelected
-                  ? AppColors.primary
-                  : (isDark
-                        ? AppColors.iconDefaultDark
-                        : AppColors.iconDefaultLight)),
-        ),
+        child: iconAsset != null
+            ? ImageIcon(
+                AssetImage(iconAsset!),
+                size: 28,
+                color: tint,
+              )
+            : Icon(
+                icon,
+                size: 26,
+                color: tint,
+              ),
       ),
     );
 
@@ -67,6 +79,7 @@ class GlassBubbleButtonStateful extends StatefulWidget {
   final bool isDark;
   final bool isSelected;
   final String? tooltip;
+  final String? iconAsset;
 
   const GlassBubbleButtonStateful({
     super.key,
@@ -76,6 +89,7 @@ class GlassBubbleButtonStateful extends StatefulWidget {
     this.isDark = false,
     this.isSelected = false,
     this.tooltip,
+    this.iconAsset,
   });
 
   @override
@@ -113,6 +127,7 @@ class _GlassBubbleButtonStatefulState extends State<GlassBubbleButtonStateful> {
             isDark: widget.isDark,
             isSelected: widget.isSelected,
             iconColor: null,
+            iconAsset: widget.iconAsset,
           ),
         ),
       ),
