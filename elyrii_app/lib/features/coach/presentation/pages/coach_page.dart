@@ -8,7 +8,6 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../data/models/coach_model.dart';
-import '../../../dashboard/presentation/widgets/mascot_speech_bubble.dart';
 import '../providers/coach_provider.dart';
 import '../coach_activity_launcher.dart';
 import '../widgets/coach_activity_card.dart';
@@ -80,44 +79,23 @@ class _CoachPageState extends State<CoachPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(isDark),
-                      // ---- Zone héroïque : Elyrii parle, on écoute ----
-                      // Composition premium : la bulle vit au-dessus de la
-                      // tête (l'attache pointe vers le modèle), la mascotte
-                      // en posture d'écoute porte la scène, le besoin arrive
-                      // ensuite comme une réponse naturelle.
+                      // ---- Zone héroïque : Elyrii en posture d'écoute ----
+                      // La mascotte porte seule la scène ; le besoin arrive
+                      // juste dessous comme une réponse naturelle.
+                      const SizedBox(height: 10),
                       Center(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 10),
-                            MascotSpeechBubble(
-                              message: provider.mascotMessage,
-                              isDark: isDark,
-                              tailAtBottom: true,
-                              onTap: provider.nextMascotMessage,
-                            ).animate(key: ValueKey(provider.mascotMessage))
-                                .fadeIn(duration: 300.ms)
-                                .slideY(
-                                  begin: -0.06,
-                                  end: 0,
-                                  duration: 300.ms,
-                                  curve: Curves.easeOutCubic,
-                                ),
-                            // L'attache plonge légèrement vers la tête.
-                            const SizedBox(height: 8),
-                            CoachMascot(
-                              size: 210,
-                              onTap: provider.nextMascotMessage,
-                            )
-                                .animate()
-                                .fadeIn(duration: 450.ms, delay: 80.ms)
-                                .slideY(
-                                  begin: 0.05,
-                                  end: 0,
-                                  duration: 450.ms,
-                                  curve: Curves.easeOutCubic,
-                                ),
-                          ],
-                        ),
+                        child: CoachMascot(
+                          size: 210,
+                          onTap: provider.nextMascotMessage,
+                        )
+                            .animate()
+                            .fadeIn(duration: 450.ms, delay: 60.ms)
+                            .slideY(
+                              begin: 0.05,
+                              end: 0,
+                              duration: 450.ms,
+                              curve: Curves.easeOutCubic,
+                            ),
                       ),
 
                       // ---- Routage par besoin immédiat ----
