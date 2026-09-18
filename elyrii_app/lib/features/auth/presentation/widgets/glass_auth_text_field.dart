@@ -76,7 +76,13 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                // Fond rempli discret : chaque champ est une surface
+                // contenue (façon Réglages iOS) au lieu d'un rectangle
+                // nu posé sur la carte de verre.
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.035),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                 border: Border.all(
                   color: state.hasError
                       ? AppColors.error
@@ -111,6 +117,10 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.45)
                         : Colors.black.withValues(alpha: 0.40),
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 46,
+                    minHeight: 46,
                   ),
                   suffixIcon: widget.isPassword
                       ? IconButton(
@@ -151,7 +161,7 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
                   errorBorder: InputBorder.none,
                   focusedErrorBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingLg,
+                    horizontal: AppDimensions.paddingMd,
                     vertical: AppDimensions.paddingMd,
                   ),
                 ),

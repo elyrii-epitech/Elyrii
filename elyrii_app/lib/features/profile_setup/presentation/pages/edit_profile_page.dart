@@ -304,7 +304,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 10),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
       child: Text(
         title,
         style: TextStyle(
@@ -446,14 +446,14 @@ class _BioTextField extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.black.withValues(alpha: 0.035),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1.5,
+          width: 1,
         ),
       ),
       child: TextField(
@@ -472,7 +472,10 @@ class _BioTextField extends StatelessWidget {
                 : Colors.black.withValues(alpha: 0.4),
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(AppDimensions.paddingLg),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingMd,
+            vertical: 14,
+          ),
           counterStyle: AppTextStyles.bodySmall(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.3)
@@ -506,17 +509,17 @@ class _DropdownField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.black.withValues(alpha: 0.035),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1.5,
+          width: 1,
         ),
       ),
       child: Row(
