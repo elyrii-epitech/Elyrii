@@ -49,7 +49,7 @@ void main() {
 
       expect(find.byType(ActionChip), findsNothing);
       expect(find.byType(MascotContactShadow), findsNothing);
-      expect(find.text('Un moment avec Velours'), findsNothing);
+      expect(find.text('Un moment avec Elyrii'), findsNothing);
       // L'atelier reste complet : thèmes + accessoire.
       expect(find.text('Thèmes'), findsOneWidget);
       expect(find.text('Accessoires'), findsOneWidget);

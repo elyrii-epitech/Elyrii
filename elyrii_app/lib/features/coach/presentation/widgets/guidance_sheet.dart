@@ -8,7 +8,7 @@ import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../data/models/coach_model.dart';
 import '../providers/coach_provider.dart';
 
-/// Feuille de guidance : Velours prépare une séance pour l'activité choisie.
+/// Feuille de guidance : Elyrii prépare une séance pour l'activité choisie.
 /// Aucune bannière volante — l'attente et la réponse vivent dans la même
 /// surface, façon feuille iOS.
 class GuidanceSheet extends StatelessWidget {
@@ -119,7 +119,7 @@ class _PreparingBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Velours prépare ta séance…',
+          'Elyrii prépare ta séance…',
           style: AppTextStyles.bodySmall(
             color: isDark
                 ? AppColors.textSecondaryDark

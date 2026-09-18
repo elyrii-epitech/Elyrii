@@ -105,7 +105,7 @@ void main() {
       );
     });
 
-    test('la bulle de Velours tourne et accepte un message contextuel', () {
+    test('la bulle d\'Elyrii tourne et accepte un message contextuel', () {
       final first = provider.mascotMessage;
       provider.nextMascotMessage();
       expect(provider.mascotMessage, isNot(equals(first)));
@@ -158,14 +158,14 @@ void main() {
       );
     }
 
-    testWidgets('accueil : Velours, besoin et recommandations groupées', (
+    testWidgets('accueil : Elyrii, besoin et recommandations groupées', (
       tester,
     ) async {
       await tester.pumpWidget(createApp());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text("Velours t'accompagne"), findsOneWidget);
+      expect(find.text("Elyrii t'accompagne"), findsOneWidget);
       expect(find.text('De quoi as-tu besoin ?'), findsOneWidget);
       expect(find.byType(NeedSelector), findsOneWidget);
       // Sélection par défaut : trois cellules groupées.

@@ -17,7 +17,7 @@ import '../widgets/coach_mascot.dart';
 import '../widgets/latest_session_card.dart';
 import '../widgets/need_selector.dart';
 
-/// Page Coach : Velours accueille, demande ce dont l'utilisateur a besoin
+/// Page Coach : Elyrii accueille, demande ce dont l'utilisateur a besoin
 /// et route chaque activité vers une expérience réelle — séance de
 /// respiration immersive, journal guidé ou guidance IA.
 ///
@@ -80,18 +80,44 @@ class _CoachPageState extends State<CoachPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildHeader(isDark),
-                      // ---- Zone héroïque : Velours en posture d'écoute ----
+                      // ---- Zone héroïque : Elyrii parle, on écoute ----
+                      // Composition premium : la bulle vit au-dessus de la
+                      // tête (l'attache pointe vers le modèle), la mascotte
+                      // en posture d'écoute porte la scène, le besoin arrive
+                      // ensuite comme une réponse naturelle.
                       Center(
-                        child: CoachMascot(
-                          size: 200,
-                          onTap: provider.nextMascotMessage,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 10),
+                            MascotSpeechBubble(
+                              message: provider.mascotMessage,
+                              isDark: isDark,
+                              tailAtBottom: true,
+                              onTap: provider.nextMascotMessage,
+                            ).animate(key: ValueKey(provider.mascotMessage))
+                                .fadeIn(duration: 300.ms)
+                                .slideY(
+                                  begin: -0.06,
+                                  end: 0,
+                                  duration: 300.ms,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                            // L'attache plonge légèrement vers la tête.
+                            const SizedBox(height: 8),
+                            CoachMascot(
+                              size: 210,
+                              onTap: provider.nextMascotMessage,
+                            )
+                                .animate()
+                                .fadeIn(duration: 450.ms, delay: 80.ms)
+                                .slideY(
+                                  begin: 0.05,
+                                  end: 0,
+                                  duration: 450.ms,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      MascotSpeechBubble(
-                        message: provider.mascotMessage,
-                        isDark: isDark,
-                        onTap: provider.nextMascotMessage,
                       ),
 
                       // ---- Routage par besoin immédiat ----
@@ -160,11 +186,11 @@ class _CoachPageState extends State<CoachPage> {
         ),
         const SizedBox(height: 2),
         Text(
-          'Velours t\'accompagne',
+          'Elyrii t\'accompagne',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 32,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+            letterSpacing: -0.8,
             height: 1.1,
             color: isDark
                 ? AppColors.textPrimaryDark

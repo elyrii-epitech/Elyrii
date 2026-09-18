@@ -11,7 +11,7 @@ import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/widgets/mascot_warm_placeholder.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 
-/// Velours en posture d'écoute sur la page Coach.
+/// Elyrii en posture d'écoute sur la page Coach.
 ///
 /// Réplique le contrat tactile de `MascotPeek` (dashboard) sans la dépendance
 /// à l'humeur : tap = réaction courte + rotation du message de la bulle,
@@ -67,7 +67,7 @@ class _CoachMascotState extends State<CoachMascot> {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Velours, ton coach',
+    label: 'Elyrii, ton coach',
     hint: 'Touche pour une réaction, maintiens pour un moment de douceur',
     button: true,
     child: GestureDetector(

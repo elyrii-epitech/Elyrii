@@ -4,7 +4,7 @@ import '../../../../core/network/api_client.dart';
 import '../../data/models/coach_model.dart';
 import '../../data/repositories/coach_repository.dart';
 
-/// Messages que Velours fait défiler dans sa bulle sur la page Coach.
+/// Messages qu'Elyrii fait défiler dans sa bulle sur la page Coach.
 /// Ton chaleureux et adulte : accompagnement, jamais d'infantilisation.
 const List<String> kCoachMascotLines = [
   'Qu\'est-ce qui te ferait du bien, là, maintenant ?',
@@ -31,7 +31,7 @@ class CoachProvider extends ChangeNotifier {
   /// bulle.
   CoachNeed? _selectedNeed;
 
-  /// Message courant de la bulle de Velours : rotation manuelle au tap,
+  /// Message courant de la bulle d'Elyrii : rotation manuelle au tap,
   /// remplacement contextuel quand un besoin est sélectionné.
   String _mascotMessage = kCoachMascotLines.first;
 
@@ -63,7 +63,7 @@ class CoachProvider extends ChangeNotifier {
   }
 
   /// Sélectionne (ou désactive avec null) le besoin immédiat.
-  /// La bulle de Velours répond au contexte du besoin.
+  /// La bulle d'Elyrii répond au contexte du besoin.
   void selectNeed(CoachNeed? need) {
     if (_selectedNeed == need) return;
     _selectedNeed = need;

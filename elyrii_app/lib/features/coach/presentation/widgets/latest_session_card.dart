@@ -9,7 +9,7 @@ import '../../data/models/coach_model.dart';
 
 /// Dernier échange avec le coach IA : horodatage relatif, réponse
 /// dépliable au tap et passerelle vers la conversation continue avec
-/// Velours (chatbot).
+/// Elyrii (chatbot).
 class LatestSessionCard extends StatefulWidget {
   final CoachSession session;
   final bool isDark;
@@ -122,7 +122,7 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
           // Passerelle vers la conversation continue : le coach écrit, le
           // chatbot écoute.
           Semantics(
-            label: 'Parler à Velours',
+            label: 'Parler à Elyrii',
             button: true,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,

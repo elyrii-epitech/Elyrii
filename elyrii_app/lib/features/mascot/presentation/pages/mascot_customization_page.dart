@@ -231,7 +231,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
               ),
               const SizedBox(height: 2),
               Text(
-                'Thèmes et accessoires de Velours.',
+                'Thèmes et accessoires d\'Elyrii.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySmall(color: subtitleColor),
               ),

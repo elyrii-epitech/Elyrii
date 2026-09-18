@@ -11,7 +11,7 @@ import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/dashboard_provider.dart';
 
-/// Velours réagit avec son corps : salut, connivence au toucher, douceur au
+/// Elyrii réagit avec son corps : salut, connivence au toucher, douceur au
 /// maintien et accueil de l'humeur. Ses pieds restent posés, sans déformation
 /// du viewer ni cumul de flottements avec les mouvements du modèle.
 class MascotPeek extends StatefulWidget {
@@ -92,7 +92,7 @@ class _MascotPeekState extends State<MascotPeek> {
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Velours, ta mascotte',
+    label: 'Elyrii, ta mascotte',
     hint: 'Touche pour une réaction, maintiens pour un moment de douceur',
     button: true,
     child: GestureDetector(

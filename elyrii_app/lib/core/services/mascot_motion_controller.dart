@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../config/mascot_animations.dart';
 
-/// Orchestre les intentions de Velours sans dépendre du lecteur 3D.
+/// Orchestre les intentions d'Elyrii sans dépendre du lecteur 3D.
 ///
 /// Une intention remplace immédiatement la précédente. Les événements courts
 /// sont consommés une fois ; [trigger] permet de rejouer le même geste. Aucun
@@ -60,7 +60,7 @@ class MascotMotionController extends ChangeNotifier {
       _timer = Timer(const Duration(milliseconds: 400), () {
         _emit(MascotAnimations.thinking);
         _timer = Timer(MascotAnimations.thinking.duration * 2, () {
-          // Une attente longue ne fait pas paraître Velours impatiente.
+          // Une attente longue ne fait pas paraître Elyrii impatiente.
           _emit(MascotAnimations.idle);
         });
       });

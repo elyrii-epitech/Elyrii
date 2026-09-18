@@ -44,7 +44,7 @@ class MascotAnimation {
   int get hashCode => clipName.hashCode;
 }
 
-/// Bibliothèque native de Velours. Les noms et durées sont vérifiés contre
+/// Bibliothèque native d'Elyrii. Les noms et durées sont vérifiés contre
 /// le GLB par `scripts/mascot/check_velours_motion.py`.
 abstract final class MascotAnimations {
   /// Deux souffles discrets, regard vivant et clignements espacés.
