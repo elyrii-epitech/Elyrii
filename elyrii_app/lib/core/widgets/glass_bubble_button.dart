@@ -18,7 +18,7 @@ class GlassBubbleButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.iconColor,
-    this.size = 54,
+    this.size = 64,
     this.isDark = false,
     this.isSelected = false,
   });
@@ -36,7 +36,7 @@ class GlassBubbleButton extends StatelessWidget {
       child: Center(
         child: Icon(
           icon,
-          size: 24,
+          size: 26,
           color:
               iconColor ??
               (isSelected
@@ -72,7 +72,7 @@ class GlassBubbleButtonStateful extends StatefulWidget {
     super.key,
     required this.icon,
     required this.onTap,
-    this.size = 54,
+    this.size = 64,
     this.isDark = false,
     this.isSelected = false,
     this.tooltip,

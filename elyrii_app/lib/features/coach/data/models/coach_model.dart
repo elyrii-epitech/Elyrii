@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 enum ActivityCategory {
   meditation,
@@ -62,6 +63,84 @@ extension ActivityCategoryExtension on ActivityCategory {
   }
 }
 
+/// Besoin immédiat exprimé par l'utilisateur : c'est la clé de routage du
+/// coach. Chaque activité est étiquetée avec les besoins qu'elle sert.
+enum CoachNeed { calm, sleep, clearMind, selfCare }
+
+extension CoachNeedExtension on CoachNeed {
+  String get label {
+    switch (this) {
+      case CoachNeed.calm:
+        return 'Se calmer';
+      case CoachNeed.sleep:
+        return 'Mieux dormir';
+      case CoachNeed.clearMind:
+        return 'Vider ma tête';
+      case CoachNeed.selfCare:
+        return 'Être doux·ce';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case CoachNeed.calm:
+        return Icons.spa_rounded;
+      case CoachNeed.sleep:
+        return Icons.bedtime_rounded;
+      case CoachNeed.clearMind:
+        return Icons.bubble_chart_rounded;
+      case CoachNeed.selfCare:
+        return Icons.favorite_border_rounded;
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case CoachNeed.calm:
+        return AppColors.primary;
+      case CoachNeed.sleep:
+        return AppColors.info;
+      case CoachNeed.clearMind:
+        return AppColors.accent;
+      case CoachNeed.selfCare:
+        return AppColors.secondary;
+    }
+  }
+
+  /// Titre de la section recommandée quand ce besoin est sélectionné.
+  String get sectionTitle {
+    switch (this) {
+      case CoachNeed.calm:
+        return 'Pour t\'apaiser';
+      case CoachNeed.sleep:
+        return 'Pour t\'endormir';
+      case CoachNeed.clearMind:
+        return 'Pour vider ta tête';
+      case CoachNeed.selfCare:
+        return 'Pour prendre soin de toi';
+    }
+  }
+
+  /// Message que Velours affiche dans sa bulle quand le besoin est choisi.
+  String get bubbleMessage {
+    switch (this) {
+      case CoachNeed.calm:
+        return 'On va poser les choses, tout doucement.';
+      case CoachNeed.sleep:
+        return 'Préparons le terrain d\'un beau sommeil.';
+      case CoachNeed.clearMind:
+        return 'Libérons un peu d\'espace dans ta tête.';
+      case CoachNeed.selfCare:
+        return 'Tu as le droit d\'être doux·ce avec toi.';
+    }
+  }
+}
+
+/// Ce qui se passe concrètement quand l'utilisateur choisit l'activité :
+/// une séance de respiration native, une entrée de journal guidée, ou une
+/// guidance personnalisée générée par l'IA du coach.
+enum CoachActivityKind { breathing, journal, guidance }
+
 class CoachActivity {
   final String id;
   final String title;
@@ -71,6 +150,19 @@ class CoachActivity {
   final IconData icon;
   final bool isRecommended;
 
+  /// Expérience lancée au tap : séance native, journal guidé ou guidance IA.
+  final CoachActivityKind kind;
+
+  /// Prompt pré-remplissant le journal quand [kind] est `journal`.
+  final String? journalPrompt;
+
+  /// Identifiant de technique respiratoire quand [kind] est `breathing`
+  /// (résolu par le lanceur côté présentation).
+  final String? breathingTechnique;
+
+  /// Besoins servis par cette activité, utilisés par le routage du coach.
+  final List<CoachNeed> needs;
+
   const CoachActivity({
     required this.id,
     required this.title,
@@ -79,6 +171,10 @@ class CoachActivity {
     required this.durationMinutes,
     required this.icon,
     this.isRecommended = false,
+    this.kind = CoachActivityKind.guidance,
+    this.journalPrompt,
+    this.breathingTechnique,
+    this.needs = const [],
   });
 }
 

@@ -93,6 +93,8 @@ class CoachRepository {
       durationMinutes: 5,
       icon: Icons.accessibility_new_rounded,
       isRecommended: true,
+      kind: CoachActivityKind.guidance,
+      needs: [CoachNeed.calm],
     ),
     CoachActivity(
       id: 'gratitude-soir',
@@ -103,6 +105,9 @@ class CoachRepository {
       durationMinutes: 3,
       icon: Icons.favorite_rounded,
       isRecommended: true,
+      kind: CoachActivityKind.journal,
+      journalPrompt: 'Trois gratitudes du soir',
+      needs: [CoachNeed.sleep, CoachNeed.selfCare],
     ),
     CoachActivity(
       id: 'respiration-coherence',
@@ -111,6 +116,10 @@ class CoachRepository {
       category: ActivityCategory.breathing,
       durationMinutes: 5,
       icon: Icons.waves_rounded,
+      isRecommended: true,
+      kind: CoachActivityKind.breathing,
+      breathingTechnique: 'coherence',
+      needs: [CoachNeed.calm, CoachNeed.clearMind],
     ),
     CoachActivity(
       id: 'journal-libre',
@@ -120,6 +129,9 @@ class CoachRepository {
       category: ActivityCategory.journaling,
       durationMinutes: 10,
       icon: Icons.edit_note_rounded,
+      kind: CoachActivityKind.journal,
+      journalPrompt: 'Écriture libre',
+      needs: [CoachNeed.clearMind],
     ),
     CoachActivity(
       id: 'marche-mindful',
@@ -129,6 +141,8 @@ class CoachRepository {
       category: ActivityCategory.movement,
       durationMinutes: 10,
       icon: Icons.nature_people_rounded,
+      kind: CoachActivityKind.guidance,
+      needs: [CoachNeed.clearMind, CoachNeed.selfCare],
     ),
     CoachActivity(
       id: 'auto-compassion',
@@ -138,7 +152,9 @@ class CoachRepository {
       category: ActivityCategory.selfCompassion,
       durationMinutes: 8,
       icon: Icons.mail_outline_rounded,
-      isRecommended: true,
+      kind: CoachActivityKind.journal,
+      journalPrompt: 'Lettre de compassion à moi-même',
+      needs: [CoachNeed.selfCare],
     ),
     CoachActivity(
       id: 'muscle-relaxation',
@@ -148,6 +164,8 @@ class CoachRepository {
       category: ActivityCategory.meditation,
       durationMinutes: 7,
       icon: Icons.spa_rounded,
+      kind: CoachActivityKind.guidance,
+      needs: [CoachNeed.calm, CoachNeed.sleep],
     ),
     CoachActivity(
       id: 'respiration-478',
@@ -157,6 +175,9 @@ class CoachRepository {
       category: ActivityCategory.breathing,
       durationMinutes: 5,
       icon: Icons.self_improvement_rounded,
+      kind: CoachActivityKind.breathing,
+      breathingTechnique: 'relaxation478',
+      needs: [CoachNeed.calm, CoachNeed.sleep],
     ),
   ];
 
@@ -177,6 +198,46 @@ class CoachRepository {
 
   List<CoachActivity> getActivitiesByCategory(ActivityCategory category) {
     return _activities.where((a) => a.category == category).toList();
+  }
+
+  /// Activités servant un besoin immédiat exprimé par l'utilisateur,
+  /// dans l'ordre du catalogue.
+  List<CoachActivity> getActivitiesForNeed(CoachNeed need) {
+    return _activities.where((a) => a.needs.contains(need)).toList();
+  }
+
+  /// Guidance de substitution, en attendant que le contenu IA soit défini
+  /// côté backend. Structure de séance réelle et honnête : elle reste
+  /// utilisable telle quelle et sera remplacée par la réponse du coach.
+  String placeholderGuidanceFor(CoachActivity activity) {
+    final byId = {
+      'body-scan-5': 'Installe-toi confortablement, yeux fermés.\n\n'
+          '1. Trois grandes respirations pour poser le cadre.\n'
+          '2. Porte ton attention sur le sommet du crâne, puis descends '
+          'lentement : visage, épaules, bras, dos, jambes, pieds.\n'
+          '3. À chaque zone, remarque la tension — sans juger — et laisse-la '
+          's\'alléger à l\'expiration.\n\n'
+          'Si ta tête s\'égare, c\'est normal : reviens simplement au dernier '
+          'endroit visité.',
+      'marche-mindful': 'Sors sans destination précise.\n\n'
+          '1. Les trente premières secondes, ralentis franchement ton pas.\n'
+          '2. Sens le contact de chaque pied : talon, plante, orteils.\n'
+          '3. Ouvre l\'ouïe : trois sons, proches ou lointains.\n'
+          '4. Termine par une pause et nomme ce que tu ressens.\n\n'
+          'L\'objectif n\'est pas d\'arriver, c\'est d\'être là.',
+      'muscle-relaxation': 'Allonge-toi ou assieds-toi bien calé.\n\n'
+          '1. Mains : serre les poings 5 secondes, relâche 10 secondes.\n'
+          '2. Épaules : monte-les vers les oreilles, relâche.\n'
+          '3. Visage : grimace complète, puis détends chaque muscle.\n'
+          '4. Jambes puis pieds : même cycle serre-relâche.\n\n'
+          'À chaque relâchement, l\'expiration s\'allonge un peu plus.',
+    };
+    return byId[activity.id] ??
+        'Séance « ${activity.title} » — ${activity.durationMinutes} minutes.\n\n'
+            '1. Deux minutes pour installer le cadre et respirer.\n'
+            '2. Le cœur de la pratique, à ton rythme.\n'
+            '3. Une minute pour noter ce que tu ressens.\n\n'
+            'Le contenu personnalisé de cette séance arrive bientôt.';
   }
 
   Future<List<CoachSession>> getSessions({int limit = 20}) async {

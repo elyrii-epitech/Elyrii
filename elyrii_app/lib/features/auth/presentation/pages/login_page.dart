@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/validators.dart';
 import 'package:provider/provider.dart';
@@ -223,6 +222,26 @@ class _LoginPageState extends State<LoginPage> {
                                   onPressed: _handleLogin,
                                 ),
 
+                                const SizedBox(height: AppDimensions.spacingSm),
+                                LiquidGlassButton(
+                                  label: 'Mode Dev (Passer la connexion)',
+                                  icon: Icons.bolt_rounded,
+                                  style: LiquidGlassButtonStyle.tinted,
+                                  isExpanded: true,
+                                  onPressed: () async {
+                                    ElyriiHaptics.medium();
+                                    await context
+                                        .read<AuthProvider>()
+                                        .startDemoSession();
+                                    if (!context.mounted) return;
+                                    context
+                                            .read<ValueNotifier<bool>>()
+                                            .value =
+                                        true;
+                                    context.go(AppRoutes.home);
+                                  },
+                                ),
+
                                 const SizedBox(height: AppDimensions.spacingXl),
 
                                 // Divider
@@ -308,37 +327,6 @@ class _LoginPageState extends State<LoginPage> {
                                   ],
                                 ),
 
-                                const SizedBox(height: AppDimensions.spacingXl),
-
-                                if (kDebugMode)
-                                  TextButton(
-                                    onPressed: () async {
-                                      // Session démo locale : parcourir
-                                      // l'app sans backend (token factice,
-                                      // onboarding marqué complété).
-                                      await context
-                                          .read<AuthProvider>()
-                                          .startDemoSession();
-                                      if (!context.mounted) return;
-                                      context
-                                              .read<ValueNotifier<bool>>()
-                                              .value =
-                                          true;
-                                      context.go(AppRoutes.home);
-                                    },
-                                    child: Text(
-                                      'Passer (Dev)',
-                                      style: AppTextStyles.bodySmall(
-                                        color: isDark
-                                            ? Colors.white.withValues(
-                                                alpha: 0.3,
-                                              )
-                                            : Colors.black.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                      ),
-                                    ),
-                                  ),
                               ],
                             ),
                           )

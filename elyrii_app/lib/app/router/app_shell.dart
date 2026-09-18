@@ -81,6 +81,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIndex = widget.navigationShell.currentIndex;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    // UIKit / liquid_glass_widgets : verticalPadding = 20.0 au-dessus du Home Indicator
+    final bottomMargin = bottomInset > 0 ? 20.0 : 16.0;
 
     return Scaffold(
       extendBody: true,
@@ -89,9 +92,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
         margin: EdgeInsets.only(
           left: 16,
           right: 16,
-          bottom: MediaQuery.viewPaddingOf(context).bottom > 0 ? 12 : 20,
+          bottom: bottomMargin,
         ),
-        height: 60,
+        height: 64,
         child: Row(
           children: [
             Expanded(
@@ -102,13 +105,15 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
                 iconControllers: _iconControllers,
                 isDark: isDark,
                 margin: EdgeInsets.zero,
+                height: 64,
+                borderRadius: 32,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             GlassBubbleButtonStateful(
               icon: Icons.chat_bubble_rounded,
               onTap: () => _onTabSelected(5),
-              size: 54,
+              size: 64,
               isDark: isDark,
               isSelected: currentIndex == 5,
               tooltip: 'Chatbot',

@@ -40,9 +40,9 @@ class GlassNavigationBar extends StatelessWidget {
     this.scaleAnimation,
     this.isDark = false,
     this.pressedIndex = -1,
-    this.margin = const EdgeInsets.only(left: 16, right: 16, bottom: 24),
-    this.height = 72.0,
-    this.borderRadius = AppDimensions.radiusLiquidGlassNav, // iOS 26: 44.0
+    this.margin = const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+    this.height = 64.0,
+    this.borderRadius = AppDimensions.radiusLiquidGlassNav, // 32.0
   });
 
   @override
@@ -168,8 +168,8 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                   ),
                   curve: Curves.easeOutCubic,
                   margin: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 6,
+                    horizontal: 2,
+                    vertical: 4,
                   ),
                   decoration: BoxDecoration(
                     color: widget.isSelected
@@ -177,7 +177,7 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                               ? Colors.white.withValues(alpha: 0.14)
                               : Colors.black.withValues(alpha: 0.08))
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(28),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -197,7 +197,7 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                                     : (widget.isDark
                                           ? AppColors.iconDefaultDark
                                           : AppColors.iconDefaultLight),
-                                size: 20,
+                                size: 23,
                               ),
                             ),
                           ),
@@ -205,7 +205,7 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                           AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 200),
                             style: TextStyle(
-                              fontSize: widget.isSelected ? 9.5 : 9,
+                              fontSize: widget.isSelected ? 10.5 : 10.0,
                               fontWeight: widget.isSelected
                                   ? FontWeight.w600
                                   : FontWeight.w500,
@@ -214,7 +214,7 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                                   : (widget.isDark
                                         ? AppColors.iconDefaultDark
                                         : AppColors.iconDefaultLight),
-                              letterSpacing: 0,
+                              letterSpacing: -0.2,
                             ),
                             child: Text(
                               widget.item.label,
@@ -235,7 +235,7 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                           return Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(28),
                                 color: Colors.white.withValues(
                                   alpha: (0.35 * (1.0 - _flashAnimation.value))
                                       .clamp(0.0, 1.0),

@@ -48,6 +48,14 @@ class AuthProvider extends ChangeNotifier {
       _user = null;
       _status = AuthStatus.unauthenticated;
     } else {
+      final userId = await _storage.getUserId();
+      if (userId == 'demo-user') {
+        _user = const UserModel(
+          id: 'demo-user',
+          email: 'demo@elyrii.local',
+          firstName: 'Dorian',
+        );
+      }
       _status = AuthStatus.authenticated;
     }
     notifyListeners();
@@ -86,7 +94,11 @@ class AuthProvider extends ChangeNotifier {
     await _storage.saveAccessToken(demoToken);
     await _storage.saveUserId('demo-user');
     await _storage.setProfileSetupCompleted();
-    _user = const UserModel(id: 'demo-user', email: 'demo@elyrii.local');
+    _user = const UserModel(
+      id: 'demo-user',
+      email: 'demo@elyrii.local',
+      firstName: 'Dorian',
+    );
     _status = AuthStatus.authenticated;
     notifyListeners();
   }

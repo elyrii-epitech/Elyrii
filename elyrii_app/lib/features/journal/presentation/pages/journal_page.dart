@@ -75,28 +75,30 @@ class _JournalPageState extends State<JournalPage> {
           final entries = provider.entries;
           final hasEntries = entries.isNotEmpty;
 
-          return CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              // 1. Tirer-relâcher natif Cupertino (remplace tout refresh Material)
-              CupertinoSliverRefreshControl(
-                onRefresh: () => provider.loadEntries(),
-              ),
-
-              // 2. En-tête spatial fluide intégré (sans boutons solitaires flottants)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppDimensions.pageHorizontalPadding,
-                    topPadding + 14,
-                    AppDimensions.pageHorizontalPadding,
-                    4,
-                  ),
-                  child: _buildHeader(provider, isDark),
+          return Stack(
+            children: [
+              CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
                 ),
-              ),
+                slivers: [
+                  // 1. Tirer-relâcher natif Cupertino (remplace tout refresh Material)
+                  CupertinoSliverRefreshControl(
+                    onRefresh: () => provider.loadEntries(),
+                  ),
+
+                  // 2. En-tête spatial fluide (le titre défile avec le contenu)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppDimensions.pageHorizontalPadding,
+                        topPadding + 14,
+                        AppDimensions.pageHorizontalPadding,
+                        4,
+                      ),
+                      child: _buildHeader(isDark),
+                    ),
+                  ),
 
               // 3. Contenu principal
               SliverPadding(
@@ -145,14 +147,49 @@ class _JournalPageState extends State<JournalPage> {
                 ),
               ),
             ],
+              ),
+
+              // Boutons d'actions épinglés au scroll (tri et ajout de note restent fixes)
+              Positioned(
+                top: topPadding + 14,
+                right: AppDimensions.pageHorizontalPadding,
+                child: _buildPinnedActions(provider),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  /// En-tête spatial sans vide noir ni déconnexion visuelle.
-  Widget _buildHeader(JournalProvider provider, bool isDark) {
+  /// Boutons d'actions épinglés au scroll en verre liquide (flèche de tri et +).
+  Widget _buildPinnedActions(JournalProvider provider) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Bouton de tri (récent / ancien)
+        LiquidGlassIconButton(
+          icon: provider.sortNewest
+              ? Icons.arrow_downward_rounded
+              : Icons.arrow_upward_rounded,
+          onPressed: () {
+            ElyriiHaptics.selection();
+            provider.toggleSort();
+          },
+        ),
+        const SizedBox(width: 8),
+
+        // Bouton nouvelle note
+        LiquidGlassIconButton(
+          icon: Icons.add_rounded,
+          onPressed: () => _showEditorSheet(),
+        ),
+      ],
+    );
+  }
+
+  /// En-tête spatial sans vide noir : le titre glisse sous les boutons épinglés.
+  Widget _buildHeader(bool isDark) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -197,31 +234,8 @@ class _JournalPageState extends State<JournalPage> {
             ],
           ),
         ),
-        const SizedBox(width: 12),
-
-        // Boutons d'actions intégrés en verre liquide
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Bouton de tri (récent / ancien)
-            LiquidGlassIconButton(
-              icon: provider.sortNewest
-                  ? Icons.arrow_downward_rounded
-                  : Icons.arrow_upward_rounded,
-              onPressed: () {
-                ElyriiHaptics.selection();
-                provider.toggleSort();
-              },
-            ),
-            const SizedBox(width: 8),
-
-            // Bouton nouvelle note
-            LiquidGlassIconButton(
-              icon: Icons.add_rounded,
-              onPressed: () => _showEditorSheet(),
-            ),
-          ],
-        ),
+        // Espace réservé pour ne pas chevaucher les boutons épinglés au scroll
+        const SizedBox(width: 96 + 12),
       ],
     );
   }

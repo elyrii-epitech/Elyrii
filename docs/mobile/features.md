@@ -193,11 +193,28 @@ There is no leaderboard or reward shop in the current mobile code.
 ### Screen
 
 - `CoachPage`
+- Presentation widgets in `lib/features/coach/presentation/widgets/`:
+  - `CoachMascot` — Velours listening pose, touch reactions, consumes
+    global mascot reactions while the Coach tab is active;
+  - `NeedSelector` — immediate-need filter chips;
+  - `CoachActivityCell` / `CoachActivityCard` — grouped list cell and
+    catalog card;
+  - `GuidanceSheet` — AI guidance bottom sheet;
+  - `LatestSessionCard` — expandable last exchange with a chatbot link.
+- `coach_activity_launcher.dart` routes each activity to a real experience.
 
 ### Features
 
+- Velours hero with rotating coach lines in a speech bubble.
+- Immediate-need routing (`CoachNeed`: calm, sleep, clear mind, self-care):
+  the selected need drives the highlighted activities, the section title
+  and the mascot message.
+- Every activity maps to a real experience (`CoachActivityKind`):
+  - `breathing` → immersive `MeditationSessionPage` preset with the
+    activity technique and duration;
+  - `journal` → `JournalEditorSheet` prefilled with a guided prompt;
+  - `guidance` → `GuidanceSheet` presenting the coach session.
 - Advice of the day computed locally from the day of year.
-- Local recommended activities.
 - Local activity catalog by category:
   - meditation;
   - breathing;
@@ -205,13 +222,16 @@ There is no leaderboard or reward shop in the current mobile code.
   - gratitude;
   - movement;
   - self-compassion.
-- Animated Liquid Glass cards.
-- Haptic feedback on cards.
+- Haptic feedback on cells and cards; pull-to-refresh stays Cupertino.
 
 ### Notes
 
-The coach does not call the backend yet. `CoachRepository` is a local data
-source.
+Frontend-first: the coach session content is not defined by the backend yet.
+`CoachRepository.createSession` failures fall back to an honest local
+placeholder (marked `placeholder: true` in the session context, announced in
+the sheet); session-list failures are silent and retried by pull-to-refresh.
+When the backend defines the AI guidance, the remote response replaces the
+placeholder without UI changes.
 
 ## Meditation / Breathing
 

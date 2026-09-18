@@ -301,8 +301,8 @@ class AppDimensions {
 
   // ==================== iOS 26 LIQUID GLASS ====================
 
-  /// Border radius pour liquid glass navigation
-  static const double radiusLiquidGlassNav = 44.0;
+  /// Border radius pour liquid glass navigation (capsule hauteur 64)
+  static const double radiusLiquidGlassNav = 32.0;
 
   /// Border radius pour liquid glass sheets/modals
   static const double radiusLiquidGlassSheet = 28.0;

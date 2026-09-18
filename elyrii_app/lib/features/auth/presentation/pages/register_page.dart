@@ -368,6 +368,25 @@ class _RegisterPageState extends State<RegisterPage> {
                           onPressed: _handleRegister,
                         ),
 
+                        const SizedBox(height: AppDimensions.spacingSm),
+                        LiquidGlassButton(
+                          label: 'Mode Dev (Passer sans backend)',
+                          icon: Icons.bolt_rounded,
+                          style: LiquidGlassButtonStyle.tinted,
+                          isExpanded: true,
+                          onPressed: () async {
+                            ElyriiHaptics.medium();
+                            await context
+                                .read<AuthProvider>()
+                                .startDemoSession();
+                            if (!context.mounted) return;
+                            context
+                                    .read<ValueNotifier<bool>>()
+                                    .value =
+                                true;
+                            context.go(AppRoutes.home);
+                          },
+                        ),
                         const SizedBox(height: AppDimensions.spacingXl),
 
                         // Login Link

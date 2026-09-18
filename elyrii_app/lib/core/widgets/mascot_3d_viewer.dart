@@ -231,7 +231,11 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
       }
     } else {
       _motion.setPlaybackEnabled(_canMove);
-      if (_reducedMotion) _controller.restPose();
+      if (_reducedMotion) {
+        _controller.restPose();
+      } else if (!_canMove) {
+        _controller.pauseAnimation();
+      }
     }
   }
 
