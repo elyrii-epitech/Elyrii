@@ -40,6 +40,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   bool _hasChanges = false;
   bool _isSaving = false;
   String? _createdEntryId;
+  Future<void>? _saveInFlight;
+  bool _saveFailed = false;
+  int _revision = 0;
 
   @override
   void initState() {
@@ -63,6 +66,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   }
 
   void _onTextChanged() {
+    _revision++;
     if (!_hasChanges) {
       setState(() => _hasChanges = true);
     }
@@ -70,9 +74,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
   }
 
-  Future<void> _autoSave() async {
-    if (!_hasChanges || _contentController.text.trim().isEmpty) return;
+  Future<void> _autoSave() =>
+      _saveInFlight ??= _save().whenComplete(() => _saveInFlight = null);
 
+  Future<void> _save() async {
+    if (!_hasChanges || _contentController.text.trim().isEmpty) return;
+    final revision = _revision;
+    bool success;
     setState(() => _isSaving = true);
 
     final title = _titleController.text.trim();
@@ -81,14 +89,14 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     final currentMood = dashboardProvider.selectedMood?.name;
 
     if (widget.entry != null) {
-      await widget.provider.updateEntry(
+      success = await widget.provider.updateEntry(
         widget.entry!.id,
         title: title,
         content: content,
         mood: currentMood,
       );
     } else if (_createdEntryId != null) {
-      await widget.provider.updateEntry(
+      success = await widget.provider.updateEntry(
         _createdEntryId!,
         title: title,
         content: content,
@@ -101,6 +109,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         mood: currentMood,
       );
       _createdEntryId = created?.id;
+      success = created != null;
       if (created != null && mounted) {
         // Le premier enregistrement est une petite victoire : la mascotte du
         // dashboard pourra jouer ce moment même si l'utilisateur ferme la
@@ -111,9 +120,14 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
     if (!mounted) return;
     setState(() {
-      _hasChanges = false;
+      _hasChanges = !success || revision != _revision;
+      _saveFailed = !success;
       _isSaving = false;
     });
+    if (success && _hasChanges) {
+      _autoSaveTimer?.cancel();
+      _autoSaveTimer = Timer(const Duration(milliseconds: 500), _autoSave);
+    }
   }
 
   Future<bool> _onWillPop() async {
@@ -144,7 +158,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     );
 
     if (result == 'save') await _autoSave();
-    return result == 'save' || result == 'discard';
+    return (result == 'save' && !_hasChanges) || result == 'discard';
   }
 
   void _deleteEntry() {
@@ -405,7 +419,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              'Modifications non sauvegardées',
+              _saveFailed
+                  ? 'Échec de sauvegarde — réessaie'
+                  : 'Modifications non sauvegardées',
               style: AppTextStyles.labelSmall(
                 color: isDark
                     ? AppColors.textSecondaryDark

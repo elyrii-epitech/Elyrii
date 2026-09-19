@@ -10,7 +10,8 @@ import '../../../core/design_system/haptics/elyrii_haptics.dart';
 /// Shows an iOS 26 style bottom sheet with liquid glass effect
 Future<T?> showLiquidGlassSheet<T>({
   required BuildContext context,
-  required Widget child,
+  Widget? child,
+  Widget Function(BuildContext, ScrollController)? scrollableBuilder,
   double initialChildSize = 0.5,
   double minChildSize = 0.25,
   double maxChildSize = 0.92,
@@ -20,6 +21,7 @@ Future<T?> showLiquidGlassSheet<T>({
   EdgeInsetsGeometry contentPadding = const EdgeInsets.all(20),
   Color? backgroundColor,
 }) {
+  assert((child == null) != (scrollableBuilder == null));
   ElyriiHaptics.medium();
 
   return showModalBottomSheet<T>(
@@ -36,13 +38,15 @@ Future<T?> showLiquidGlassSheet<T>({
       maxChildSize: maxChildSize,
       backgroundColor: backgroundColor,
       contentPadding: contentPadding,
+      scrollableBuilder: scrollableBuilder,
       child: child,
     ),
   );
 }
 
 class LiquidGlassSheetContent extends StatelessWidget {
-  final Widget child;
+  final Widget? child;
+  final Widget Function(BuildContext, ScrollController)? scrollableBuilder;
   final double initialChildSize;
   final double minChildSize;
   final double maxChildSize;
@@ -51,7 +55,8 @@ class LiquidGlassSheetContent extends StatelessWidget {
 
   const LiquidGlassSheetContent({
     super.key,
-    required this.child,
+    this.child,
+    this.scrollableBuilder,
     required this.initialChildSize,
     required this.minChildSize,
     required this.maxChildSize,
@@ -90,11 +95,16 @@ class LiquidGlassSheetContent extends StatelessWidget {
                         ),
                       ),
                       Expanded(
-                        child: SingleChildScrollView(
-                          controller: scrollController,
-                          padding: contentPadding,
-                          child: child,
-                        ),
+                        child:
+                            scrollableBuilder?.call(
+                              context,
+                              scrollController,
+                            ) ??
+                            SingleChildScrollView(
+                              controller: scrollController,
+                              padding: contentPadding,
+                              child: child,
+                            ),
                       ),
                     ],
                   ),

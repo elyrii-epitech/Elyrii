@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/config/api_config.dart';
 import '../models/journal_entry_model.dart';
 
@@ -22,14 +23,18 @@ class JournalRepository {
   }
 
   /// Retrieve cached entries from local storage without network latency
-  Future<List<JournalEntryModel>> getCachedEntries() async {
+  Future<List<JournalEntryModel>> getCachedEntries({String? owner}) async {
     try {
+      owner ??= await _client.currentUserId;
+      if (owner == null || owner.isEmpty) return const [];
       final prefs = await _getPrefs();
-      final jsonStr = prefs.getString(_cacheKey);
+      final jsonStr =
+          prefs.getString('${_cacheKey}_$owner') ?? prefs.getString(_cacheKey);
       if (jsonStr == null || jsonStr.isEmpty) return const [];
       final List<dynamic> list = jsonDecode(jsonStr) as List<dynamic>;
       return list
           .map((e) => JournalEntryModel.fromJson(e as Map<String, dynamic>))
+          .where((entry) => entry.userId == owner)
           .toList();
     } catch (e) {
       debugPrint('[JournalRepository] Cache read error: $e');
@@ -37,11 +42,15 @@ class JournalRepository {
     }
   }
 
-  Future<void> _saveCache(List<JournalEntryModel> entries) async {
+  Future<void> _saveCache(
+    List<JournalEntryModel> entries,
+    String? owner,
+  ) async {
+    if (owner == null || owner.isEmpty) return;
     try {
       final prefs = await _getPrefs();
       final jsonList = entries.map((e) => e.toCacheJson()).toList();
-      await prefs.setString(_cacheKey, jsonEncode(jsonList));
+      await prefs.setString('${_cacheKey}_$owner', jsonEncode(jsonList));
     } catch (e) {
       debugPrint('[JournalRepository] Cache write error: $e');
     }
@@ -52,6 +61,7 @@ class JournalRepository {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
+    final owner = await _client.currentUserId;
     try {
       final queryParams = <String, String>{};
       if (startDate != null) {
@@ -73,15 +83,26 @@ class JournalRepository {
 
       // Mettre à jour le cache local offline
       if (startDate == null && endDate == null) {
-        unawaited(_saveCache(entries));
+        unawaited(_saveCache(entries, owner));
       }
 
       return entries;
     } catch (e) {
+      if (e is ApiException && (e.statusCode == 401 || e.statusCode == 403)) {
+        rethrow;
+      }
+      // Do not resolve a different account while this request is in flight.
+      if (owner == null || owner.isEmpty) rethrow;
       debugPrint(
         '[JournalRepository] Network failed, falling back to local cache: $e',
       );
-      final cached = await getCachedEntries();
+      final cached = (await getCachedEntries(owner: owner))
+          .where(
+            (entry) =>
+                (startDate == null || !entry.createdAt.isBefore(startDate)) &&
+                (endDate == null || !entry.createdAt.isAfter(endDate)),
+          )
+          .toList();
       if (cached.isNotEmpty) {
         return cached;
       }

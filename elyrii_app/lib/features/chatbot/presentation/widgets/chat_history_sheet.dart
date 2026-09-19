@@ -13,18 +13,17 @@ import '../providers/chatbot_provider.dart';
 /// (titre, date relative, taille du fil), reprise au tap, suppression
 /// à l'icône corbeille, et démarrage d'une nouvelle conversation.
 class ChatHistorySheet extends StatelessWidget {
-  const ChatHistorySheet({super.key});
+  const ChatHistorySheet({super.key, this.scrollController});
+  final ScrollController? scrollController;
 
   /// Ouvre la feuille au-dessus de la page chat.
   static Future<void> show(BuildContext context) {
     return showLiquidGlassSheet(
       context: context,
       useRootNavigator: true,
-      contentPadding: EdgeInsets.only(
-        bottom: MediaQuery.paddingOf(context).bottom,
-      ),
       initialChildSize: 0.7,
-      child: const ChatHistorySheet(),
+      scrollableBuilder: (context, controller) =>
+          ChatHistorySheet(scrollController: controller),
     );
   }
 
@@ -37,70 +36,127 @@ class ChatHistorySheet extends StatelessWidget {
         final sessions = provider.conversations;
         final activeId = provider.activeSessionId;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Historique',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.5,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
-                      ),
-                    ),
-                  ),
-                  if (sessions.isNotEmpty)
-                    TextButton(
-                      onPressed: () {
-                        ElyriiHaptics.medium();
-                        provider.startNewConversation();
-                        Navigator.pop(context);
-                      },
-                      child: const Text(
-                        'Nouvelle',
+        return CustomScrollView(
+          controller: scrollController,
+          slivers: [
+            if (provider.loadingSession)
+              const SliverToBoxAdapter(child: LinearProgressIndicator()),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Historique',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 20,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          letterSpacing: -0.5,
+                          color: isDark
+                              ? AppColors.textPrimaryDark
+                              : AppColors.textPrimaryLight,
                         ),
                       ),
                     ),
-                ],
+                    if (sessions.isNotEmpty)
+                      TextButton(
+                        onPressed: () {
+                          ElyriiHaptics.medium();
+                          provider.startNewConversation();
+                          Navigator.pop(context);
+                        },
+                        child: const Text(
+                          'Nouvelle',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-            if (sessions.isEmpty)
-              _buildEmptyState(isDark)
-            else
-              ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                itemCount: sessions.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final session = sessions[index];
-                  final isActive = session.id == activeId;
-                  return _buildSessionTile(
-                    context,
-                    provider: provider,
-                    session: session,
-                    isActive: isActive,
-                    isDark: isDark,
-                  );
-                },
+            if (provider.error != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(provider.error!),
+                ),
               ),
+            if (provider.hasLegacyHistory)
+              SliverToBoxAdapter(
+                child: TextButton.icon(
+                  icon: const Icon(Icons.download_rounded),
+                  label: const Text('Récupérer mon ancien historique'),
+                  onPressed: () => _importLegacy(context, provider),
+                ),
+              ),
+            if (sessions.isEmpty)
+              SliverToBoxAdapter(child: _buildEmptyState(isDark))
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                sliver: SliverList.separated(
+                  itemCount: sessions.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final session = sessions[index];
+                    final isActive = session.id == activeId;
+                    return _buildSessionTile(
+                      context,
+                      provider: provider,
+                      session: session,
+                      isActive: isActive,
+                      isDark: isDark,
+                    );
+                  },
+                ),
+              ),
+            if (provider.hasMoreSessions)
+              SliverToBoxAdapter(
+                child: TextButton(
+                  onPressed: provider.loadMoreSessions,
+                  child: const Text('Conversations précédentes'),
+                ),
+              ),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.paddingOf(context).bottom + 16,
+              ),
+            ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _importLegacy(
+    BuildContext context,
+    ChatbotProvider provider,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Récupérer cet historique ?'),
+        content: const Text(
+          'Cet ancien historique est enregistré sur cet appareil sans compte associé. Confirme qu’il t’appartient avant de l’importer dans ton compte.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Importer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) await provider.importLegacyHistory();
   }
 
   Widget _buildEmptyState(bool isDark) {
@@ -141,7 +197,7 @@ class ChatHistorySheet extends StatelessWidget {
     required bool isActive,
     required bool isDark,
   }) {
-    final title = session.messages.isEmpty
+    final title = session.messageCount == 0
         ? 'Conversation vide'
         : session.title;
     final subtitle = _relativeDate(session.updatedAt);
@@ -152,13 +208,16 @@ class ChatHistorySheet extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            ElyriiHaptics.selection();
-            provider.loadSession(session.id);
-            Navigator.pop(context);
-          },
+          onTap: provider.loadingSession
+              ? null
+              : () async {
+                  ElyriiHaptics.selection();
+                  final selected = await provider.loadSession(session.id);
+                  if (selected && context.mounted) Navigator.pop(context);
+                },
           borderRadius: BorderRadius.circular(16),
           child: ElyriiGlassSurface(
+            lightweight: true,
             role: GlassRole.dialog,
             borderRadius: BorderRadius.circular(16),
             child: Container(
@@ -201,7 +260,7 @@ class ChatHistorySheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '$subtitle · ${session.messages.length} messages',
+                          '$subtitle · ${session.messageCount} messages',
                           style: TextStyle(
                             fontSize: 12.5,
                             color: isDark

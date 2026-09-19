@@ -41,6 +41,8 @@ dependencies:
   
   # Storage Local
   shared_preferences: ^2.5.5
+  sqflite: ^2.4.4
+  visibility_detector: ^0.4.0+2
   
   # Secure Storage (for tokens, credentials)
   flutter_secure_storage: ^10.3.1
@@ -71,6 +73,7 @@ dependencies:
   # URL & Phone launcher
   url_launcher: ^6.3.1
 dev_dependencies:
+  sqflite_common_ffi: ^2.3.6
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
@@ -99,10 +102,8 @@ flutter:
     - assets/splash_icon.png
     - assets/mascotte.png
     - assets/mascotte_eyes_closed.png
-    - assets/elyrii_velours_animations.glb
-    - assets/custom1.glb
-    - assets/mascot_design_texture.png
-    - assets/shaded_painted.png
+    - assets/optimized/mascot.glb
+    - assets/optimized/mascot_graduate.glb
     - assets/brand/logo_monochrome.png
     - assets/brand/navbar_app_icon.png
 

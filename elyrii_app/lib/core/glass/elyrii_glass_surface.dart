@@ -20,6 +20,9 @@ class ElyriiGlassSurface extends StatelessWidget {
   final double? width;
   final double? height;
 
+  /// List rows already sit inside a glass sheet: avoid another offscreen layer.
+  final bool lightweight;
+
   const ElyriiGlassSurface({
     super.key,
     required this.child,
@@ -31,12 +34,14 @@ class ElyriiGlassSurface extends StatelessWidget {
     this.onTap,
     this.width,
     this.height,
+    this.lightweight = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final shouldFallback = MediaQuery.maybeOf(context)?.highContrast ?? false;
+    final shouldFallback =
+        lightweight || (MediaQuery.maybeOf(context)?.highContrast ?? false);
 
     // Opaque fallback for the platform accessibility contrast setting.
     if (shouldFallback) {

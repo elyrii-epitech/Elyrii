@@ -56,119 +56,115 @@ class _DashboardPageState extends State<DashboardPage> {
     final isDark = theme.brightness == Brightness.dark;
     final topPadding = MediaQuery.of(context).padding.top;
 
-    return Consumer4<
-      DashboardProvider,
-      JournalProvider,
-      AuthProvider,
-      UserProvider
-    >(
-      builder: (context, provider, journalProvider, authProvider, userProvider, child) {
-        return Scaffold(
-          backgroundColor: isDark
-              ? AppColors.scaffoldDark
-              : AppColors.scaffoldLight,
-          body: Stack(
-            children: [
-              // Contenu principal défilant sous les boutons d'en-tête
-              SingleChildScrollView(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
-                child: Column(
+    final provider = context.read<DashboardProvider>();
+    return Scaffold(
+      backgroundColor: isDark
+          ? AppColors.scaffoldDark
+          : AppColors.scaffoldLight,
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(76, topPadding + 10, 76, 8),
+                  child:
+                      Selector2<AuthProvider, UserProvider, (String?, String?)>(
+                        selector: (_, auth, user) =>
+                            (auth.user?.firstName, user.profile?.firstName),
+                        builder: (context, names, _) => _buildScrollingGreeting(
+                          context.read<AuthProvider>(),
+                          context.read<UserProvider>(),
+                          provider,
+                          isDark,
+                        ),
+                      ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Date et salutation : collées au contenu, elles glissent
-                    // avec lui (les boutons restent épinglés en overlay).
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        20 + 44 + 12,
-                        topPadding + 10,
-                        20 + 44 + 12,
-                        8,
-                      ),
-                      child: _buildScrollingGreeting(
-                        authProvider,
-                        userProvider,
-                        provider,
-                        isDark,
+                    const SizedBox(width: 44),
+                    Selector<DashboardProvider, MoodType?>(
+                      selector: (_, p) => p.selectedMood,
+                      builder: (_, mood, _) => MascotPeek(
+                        selectedMood: mood,
+                        isDark: isDark,
+                        onTap: provider.nextMascotMessage,
                       ),
                     ),
-
-                    // ---- 1. Zone héroïque : mascotte 3D & charm de personnalisation ----
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Espace symétrique invisible à gauche (44px) pour centrer parfaitement la mascotte
-                        const SizedBox(width: 44),
-                        MascotPeek(
-                          selectedMood: provider.selectedMood,
-                          isDark: isDark,
-                          onTap: provider.nextMascotMessage,
-                        ),
-                        // Charm de personnalisation discret en verre liquide
-                        SizedBox(
-                          width: 44,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: _MascotCustomizeCharm(isDark: isDark),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Rapprochement du texte directement sous les pattes de la mascotte
-                    const SizedBox(height: 2),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.pageHorizontalPadding,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Bulle de parole en verre doux
-                          MascotSpeechBubble(
-                            message: provider.mascotMessage,
-                            isDark: isDark,
-                            onTap: provider.nextMascotMessage,
-                          ),
-                          const SizedBox(height: 22),
-
-                          // ---- 2. État d'esprit (Style Apple Health State of Mind) ----
-                          _buildMoodSection(isDark, provider),
-
-                          const SizedBox(height: 22),
-
-                          // ---- 3. Bento Grid du Bien-être ----
-                          if (provider.isLoading)
-                            _DashboardSkeleton(isDark: isDark)
-                          else
-                            _buildBentoGrid(provider, journalProvider, isDark),
-
-                          // Espace pour la barre de navigation flottante
-                          const SizedBox(height: 130),
-                        ],
+                    SizedBox(
+                      width: 44,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: _MascotCustomizeCharm(isDark: isDark),
                       ),
                     ),
                   ],
                 ),
-              ),
-
-              // Boutons épinglés : avatar et réglages restent en haut pendant
-              // que le contenu (date, salutation, cartes) glisse dessous.
-              Positioned(
-                top: topPadding + 8,
-                left: 20,
-                right: 20,
-                child: _buildPinnedHeaderControls(
-                  authProvider,
-                  userProvider,
-                  isDark,
+                const SizedBox(height: 2),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.pageHorizontalPadding,
+                  ),
+                  child: Column(
+                    children: [
+                      Selector<DashboardProvider, String>(
+                        selector: (_, p) => p.mascotMessage,
+                        builder: (_, message, _) => MascotSpeechBubble(
+                          message: message,
+                          isDark: isDark,
+                          onTap: provider.nextMascotMessage,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Selector<DashboardProvider, MoodType?>(
+                        selector: (_, p) => p.selectedMood,
+                        builder: (_, mood, _) =>
+                            _buildMoodSection(isDark, provider),
+                      ),
+                      const SizedBox(height: 22),
+                      Selector2<
+                        DashboardProvider,
+                        JournalProvider,
+                        (bool, int, JournalEntry?)
+                      >(
+                        selector: (_, dashboard, journal) => (
+                          dashboard.isLoading,
+                          dashboard.currentStreak,
+                          journal.entries.firstOrNull,
+                        ),
+                        builder: (context, value, _) => value.$1
+                            ? _DashboardSkeleton(isDark: isDark)
+                            : _buildBentoGrid(
+                                provider,
+                                context.read<JournalProvider>(),
+                                isDark,
+                              ),
+                      ),
+                      const SizedBox(height: 130),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+          Positioned(
+            top: topPadding + 8,
+            left: 20,
+            right: 20,
+            child: Selector<UserProvider, String?>(
+              selector: (_, user) => user.profile?.pfp,
+              builder: (context, avatar, _) => _buildPinnedHeaderControls(
+                context.read<AuthProvider>(),
+                context.read<UserProvider>(),
+                isDark,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

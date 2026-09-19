@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
@@ -43,13 +44,23 @@ void main() async {
   final dashboardProvider = DashboardProvider(apiClient: apiClient);
   final coachProvider = CoachProvider(client: apiClient);
 
-  // Backend health check stays fire-and-forget.
-  unawaited(apiClient.checkHealth());
+  // Explicit diagnostic opt-in: never poll every service on a normal launch.
+  if (kDebugMode && const bool.fromEnvironment('CHECK_BACKEND_HEALTH')) {
+    unawaited(apiClient.checkHealth());
+  }
 
   // Offline-first startup: restore the session from local storage only
   // (token presence + local JWT expiry check). No network call blocks
   // runApp, so a slow or absent network can never white-screen the launch.
   await authProvider.restoreLocalSession();
+  authProvider.addListener(() {
+    if (authProvider.status == AuthStatus.unauthenticated) {
+      journalProvider.resetSession();
+    }
+    unawaited(chatbotProvider.synchronizeAccount());
+  });
+  // Restore may have removed an expired account after chat initialization.
+  unawaited(chatbotProvider.synchronizeAccount());
   final profileSetupDone = authProvider.isAuthenticated
       ? await secureStorage.isProfileSetupCompleted()
       : true;
@@ -94,14 +105,11 @@ void main() async {
   // ever blocking the first frame. Pages already self-load in initState,
   // so these calls only pre-warm data and reconcile the saved theme.
   unawaited(() async {
-    await authProvider.revalidateSession();
+    await authProvider.revalidateSession(onProfile: userProvider.acceptProfile);
     if (authProvider.isAuthenticated) {
       await Future.wait([
-        userProvider.loadProfile(),
         userProvider.loadSettings(),
         mascotProvider.loadMascot(),
-        dashboardProvider.loadDashboardData(),
-        coachProvider.loadCoachData(),
       ]);
       final savedTheme = userProvider.settings?.themeModeValue;
       if (savedTheme != null) {

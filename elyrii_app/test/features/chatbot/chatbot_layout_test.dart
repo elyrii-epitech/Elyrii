@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../support/empty_chat_history.dart';
 
 void main() {
   for (final dark in [false, true]) {
@@ -18,7 +19,10 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         addTearDown(tester.view.resetViewInsets);
-        final provider = ChatbotProvider(storage: SecureStorageService());
+        final provider = ChatbotProvider(
+          storage: SecureStorageService(),
+          history: EmptyChatHistory(),
+        );
         addTearDown(provider.dispose);
         await tester.pumpWidget(
           ChangeNotifierProvider.value(

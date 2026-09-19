@@ -29,19 +29,52 @@ class JournalProvider extends ChangeNotifier {
       _repository = repository ?? JournalRepository(client: client!);
 
   /// Load entries from the backend
-  Future<void> loadEntries({DateTime? startDate, DateTime? endDate}) async {
+  final Map<(DateTime?, DateTime?), Future<void>> _loads = {};
+  int _loadVersion = 0;
+  int _sessionVersion = 0;
+
+  /// Logout also invalidates requests still using the previous credentials.
+  void resetSession() {
+    _sessionVersion++;
+    _loadVersion++;
+    _loads.clear();
+    _entries = [];
+    _sortedEntries = const [];
+    _isLoading = false;
+    _error = null;
+    notifyListeners();
+  }
+
+  Future<void> loadEntries({DateTime? startDate, DateTime? endDate}) {
+    final key = (startDate, endDate);
+    final existing = _loads[key];
+    if (existing != null) return existing;
+    late final Future<void> request;
+    request = _loadEntries(startDate: startDate, endDate: endDate).whenComplete(
+      () {
+        if (identical(_loads[key], request)) _loads.remove(key);
+      },
+    );
+    return _loads[key] = request;
+  }
+
+  Future<void> _loadEntries({DateTime? startDate, DateTime? endDate}) async {
+    final version = ++_loadVersion;
     _isLoading = true;
     _error = null;
     notifyListeners();
     try {
-      _entries = await _repository.getEntries(
+      final entries = await _repository.getEntries(
         startDate: startDate,
         endDate: endDate,
       );
+      if (version != _loadVersion) return;
+      _entries = entries;
       _updateSortedEntries();
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      if (version != _loadVersion) return;
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
@@ -63,29 +96,34 @@ class JournalProvider extends ChangeNotifier {
     required String content,
     String? mood,
   }) async {
+    final session = _sessionVersion;
     try {
       final entry = await _repository.createEntry(
         title: title ?? 'Sans titre',
         content: content,
         mood: mood,
       );
+      if (session != _sessionVersion) return null;
       _entries.add(entry);
+      _error = null;
       _updateSortedEntries();
       notifyListeners();
       return entry;
     } catch (e) {
+      if (session != _sessionVersion) return null;
       _error = e.toString();
       notifyListeners();
       return null;
     }
   }
 
-  Future<void> updateEntry(
+  Future<bool> updateEntry(
     String id, {
     String? title,
     String? content,
     String? mood,
   }) async {
+    final session = _sessionVersion;
     try {
       final updated = await _repository.updateEntry(
         id: id,
@@ -93,25 +131,33 @@ class JournalProvider extends ChangeNotifier {
         content: content,
         mood: mood,
       );
+      if (session != _sessionVersion) return false;
       final index = _entries.indexWhere((e) => e.id == id);
+      _error = null;
       if (index != -1) {
         _entries[index] = updated;
         _updateSortedEntries();
-        notifyListeners();
       }
+      notifyListeners();
+      return true;
     } catch (e) {
+      if (session != _sessionVersion) return false;
       _error = e.toString();
       notifyListeners();
+      return false;
     }
   }
 
   Future<void> deleteEntry(String id) async {
+    final session = _sessionVersion;
     try {
       await _repository.deleteEntry(id);
+      if (session != _sessionVersion) return;
       _entries.removeWhere((e) => e.id == id);
       _updateSortedEntries();
       notifyListeners();
     } catch (e) {
+      if (session != _sessionVersion) return;
       _error = e.toString();
       notifyListeners();
     }

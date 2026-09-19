@@ -18,7 +18,7 @@ class _ElyriiLaunchState extends State<ElyriiLaunch>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1800),
+    duration: const Duration(milliseconds: 450),
   )..addStatusListener(_onStatus);
   bool _started = false;
   bool _finished = false;

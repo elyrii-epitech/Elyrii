@@ -14,6 +14,7 @@ class ApiClient {
   final SecureStorageService _storage;
 
   static const int _timeoutSeconds = 30;
+  Future<String?> get currentUserId => _storage.getUserId();
 
   ApiClient({required SecureStorageService storage, http.Client? client})
     : _storage = storage,

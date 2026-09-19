@@ -23,10 +23,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
   final _scrollController = ScrollController();
   final _focusNode = FocusNode();
   bool _hasText = false;
+  bool _submitting = false;
   bool _showCrisisBanner = false;
   bool _keyboardWasOpen = false;
   int _lastMessageCount = 0;
   String? _lastSessionId;
+  bool _loadingOlderMessages = false;
 
   @override
   void initState() {
@@ -56,13 +58,22 @@ class _ChatbotPageState extends State<ChatbotPage> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _textController.text.trim();
-    if (text.isEmpty) return;
+    final provider = context.read<ChatbotProvider>();
+    if (text.isEmpty || _submitting || provider.loadingSession) return;
     ElyriiHaptics.selection();
-    context.read<ChatbotProvider>().sendMessage(text);
-    _textController.clear();
-    _scrollToLatestMessage();
+    setState(() => _submitting = true);
+    try {
+      final accepted = await provider.sendMessage(text);
+      if (!mounted) return;
+      if (accepted && _textController.text.trim() == text) {
+        _textController.clear();
+      }
+      if (accepted) _scrollToLatestMessage();
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   void _scrollToLatestMessage() {
@@ -145,6 +156,24 @@ class _ChatbotPageState extends State<ChatbotPage> {
         child: Column(
           children: [
             _buildHeader(isDark),
+            Selector<ChatbotProvider, String?>(
+              selector: (_, provider) => provider.error,
+              builder: (_, error, _) => error == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        error,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+            ),
             Expanded(
               child: Consumer<ChatbotProvider>(
                 builder: (context, provider, _) => provider.messages.isEmpty
@@ -293,7 +322,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   Widget _buildConversation(ChatbotProvider provider, bool isDark) {
-    final itemCount = provider.messages.length + (provider.isTyping ? 1 : 0);
+    final messages = provider.messages;
+    final olderOffset = provider.hasMoreMessages ? 1 : 0;
+    final itemCount =
+        messages.length + olderOffset + (provider.isTyping ? 1 : 0);
     if (_lastMessageCount != itemCount ||
         _lastSessionId != provider.activeSessionId) {
       final followLatest =
@@ -302,7 +334,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
           _scrollController.position.extentAfter < 100;
       _lastMessageCount = itemCount;
       _lastSessionId = provider.activeSessionId;
-      if (followLatest) _scrollToLatestMessage();
+      if (followLatest && !_loadingOlderMessages) _scrollToLatestMessage();
     }
     return ListView.builder(
       controller: _scrollController,
@@ -310,14 +342,24 @@ class _ChatbotPageState extends State<ChatbotPage> {
       padding: const EdgeInsets.only(top: 16, bottom: 12),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        if (index == provider.messages.length) return const TypingIndicator();
-        final messageIndex = index;
-        final message = provider.messages[messageIndex];
+        if (olderOffset == 1 && index == 0) {
+          return TextButton(
+            onPressed: provider.loadingOlder
+                ? null
+                : () => _loadOlder(provider),
+            child: Text(
+              provider.loadingOlder ? 'Chargement…' : 'Messages précédents',
+            ),
+          );
+        }
+        final messageIndex = index - olderOffset;
+        if (messageIndex == messages.length) return const TypingIndicator();
+        final message = messages[messageIndex];
         final showDate =
             messageIndex == 0 ||
             !DateUtils.isSameDay(
               message.timestamp,
-              provider.messages[messageIndex - 1].timestamp,
+              messages[messageIndex - 1].timestamp,
             );
         return Column(
           children: [
@@ -331,6 +373,33 @@ class _ChatbotPageState extends State<ChatbotPage> {
         );
       },
     );
+  }
+
+  Future<void> _loadOlder(ChatbotProvider provider) async {
+    _loadingOlderMessages = true;
+    final before = _scrollController.hasClients
+        ? _scrollController.position.maxScrollExtent
+        : 0.0;
+    final offset = _scrollController.hasClients
+        ? _scrollController.offset
+        : 0.0;
+    final sessionId = provider.activeSessionId;
+    await provider.loadOlderMessages();
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _scrollController.hasClients &&
+          provider.activeSessionId == sessionId) {
+        final position = _scrollController.position;
+        _scrollController.jumpTo(
+          (offset + position.maxScrollExtent - before).clamp(
+            0.0,
+            position.maxScrollExtent,
+          ),
+        );
+      }
+      _loadingOlderMessages = false;
+    });
   }
 
   Widget _buildDateLabel(DateTime date, bool isDark) {
@@ -357,6 +426,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   Widget _buildComposer(bool isDark, double bottomClearance) {
+    final loadingSession = context.select<ChatbotProvider, bool>(
+      (p) => p.loadingSession,
+    );
     final foreground = isDark
         ? AppColors.textPrimaryDark
         : AppColors.textPrimaryLight;
@@ -438,7 +510,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
                 ),
                 const SizedBox(width: 6),
                 IconButton.filled(
-                  onPressed: _hasText ? _sendMessage : null,
+                  onPressed: _hasText && !_submitting && !loadingSession
+                      ? _sendMessage
+                      : null,
                   tooltip: 'Envoyer le message',
                   style: IconButton.styleFrom(
                     minimumSize: const Size(44, 44),

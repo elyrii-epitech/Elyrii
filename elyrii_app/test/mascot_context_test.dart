@@ -14,9 +14,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'support/empty_chat_history.dart';
 
 class _Chat extends ChatbotProvider {
-  _Chat() : super(storage: SecureStorageService());
+  _Chat() : super(storage: SecureStorageService(), history: EmptyChatHistory());
   bool thinking = false;
   bool connected = true;
   final replies = <ChatMessage>[];

@@ -43,7 +43,7 @@ class Mascot3DConfig {
   final double? cameraTargetY;
 
   static const MascotAnimation _defaultAnimation = MascotAnimations.idle;
-  static const String _defaultAsset = 'assets/elyrii_velours_animations.glb';
+  static const String _defaultAsset = 'assets/optimized/mascot.glb';
 
   const Mascot3DConfig({
     this.assetPath = _defaultAsset,
