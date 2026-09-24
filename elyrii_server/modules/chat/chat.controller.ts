@@ -8,6 +8,8 @@ import { authMiddleware } from "../../middleware/auth.middleware";
 import ChatRepository from "../../repository/chat.repository";
 import type { HonoEnv } from "../../utils/hono.types";
 import { aiResponseTracker } from "./response-tracker.utils";
+import { randomUUIDv7 } from "bun";
+import { chatResponse } from "./chat-protocol";
 
 
 const chatRouter = new Hono<HonoEnv>();
@@ -103,14 +105,18 @@ chatRouter.get("/ws", describeRoute({
                 const rawMessage = event.data.toString();
                 let message = rawMessage;
                 let conversationId = defaultConversationId;
+                let clientRequestId: string | undefined;
 
                 try {
-                    const parsed = JSON.parse(rawMessage) as { message?: string; conversationId?: string };
+                    const parsed = JSON.parse(rawMessage) as { message?: string; conversationId?: string; requestId?: string };
                     if (typeof parsed.message === "string" && parsed.message.trim().length > 0) {
                         message = parsed.message.trim();
                     }
                     if (typeof parsed.conversationId === "string" && parsed.conversationId.trim().length > 0) {
                         conversationId = parsed.conversationId.trim();
+                    }
+                    if (typeof parsed.requestId === "string" && parsed.requestId.length > 0 && parsed.requestId.length <= 128) {
+                        clientRequestId = parsed.requestId;
                     }
                 } catch {
                     console.log("[Chat] Parsing failed, using message as plain text");
@@ -131,13 +137,14 @@ chatRouter.get("/ws", describeRoute({
                 try {
                     console.log(`[Chat] Getting history and sending to Kafka for ${userId}...`);
                     const history = await chatRepository.getRecentMessagesForContext(userId, conversationId, 12);
-                    const requestId = await sendMessageToTopic(userId, message, { conversationId, history });
-                    
-                    console.log(`[Chat] Waiting for AI response for request ${requestId}...`);
-                    const aiResponse = await aiResponseTracker.waitForResponse(requestId);
-                    console.log(`[Chat] Received AI response for ${requestId}. Proceeding with post-AI logic...`);
-                    
-                    // Post-AI logic can go here
+                    // Server-generated Kafka keys prevent client IDs colliding across users.
+                    const requestId = randomUUIDv7();
+                    const aiResponse = await aiResponseTracker.request(requestId, () =>
+                        sendMessageToTopic(userId, message, { conversationId, history, requestId })
+                    );
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(chatResponse("reply", aiResponse, conversationId, clientRequestId));
+                    }
                 } catch (error) {
                     console.error("[Chat] Message dispatch or AI wait failed:", error);
                     try {
@@ -150,7 +157,9 @@ chatRouter.get("/ws", describeRoute({
                     } catch (_err) {
                         // Ignore persistence error
                     }
-                    ws.send("Une erreur est survenue lors de l'envoi du message.");
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(chatResponse("error", "Une erreur est survenue lors de l'envoi du message.", conversationId, clientRequestId));
+                    }
                 }
             },
         }

@@ -74,6 +74,40 @@ void main() {
   });
 
   group('JournalPage iOS HIG architecture', () {
+    testWidgets('keeps a thousand notes lazy while scrolling', (tester) async {
+      final entries = List.generate(
+        1000,
+        (index) => JournalEntryModel(
+          id: 'entry-$index',
+          userId: 'user_1',
+          title: 'Note $index',
+          content: 'Une pensée à conserver.',
+          createdAt: fixedDate.subtract(Duration(days: index)),
+          updatedAt: fixedDate,
+        ),
+      );
+      final provider = JournalProvider(
+        repository: _FakeJournalRepository(entries),
+      );
+      addTearDown(provider.dispose);
+      await tester.pumpWidget(
+        ChangeNotifierProvider.value(
+          value: provider,
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const JournalPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(GlassJournalCard).evaluate().length, lessThan(15));
+      expect(find.text('Note 999'), findsNothing);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1400));
+      await tester.pumpAndSettle();
+      expect(find.byType(GlassJournalCard).evaluate().length, lessThan(15));
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets(
       'utilise CustomScrollView sans bandeau sombre avec boutons en verre liquide et grand titre',
       (tester) async {

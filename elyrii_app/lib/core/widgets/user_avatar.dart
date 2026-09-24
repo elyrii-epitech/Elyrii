@@ -24,6 +24,7 @@ class UserAvatar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final useMascot = isMascotAvatar(pfp);
     final isLocalFile = pfp != null && isLocalAvatarPath(pfp!);
+    final decodeSize = (size * MediaQuery.devicePixelRatioOf(context)).ceil();
 
     return Container(
       width: size,
@@ -50,16 +51,25 @@ class UserAvatar extends StatelessWidget {
           ),
           child: ClipOval(
             child: useMascot
-                ? Image.asset('assets/mascotte.png', fit: BoxFit.cover)
+                ? Image.asset(
+                    'assets/mascotte.png',
+                    fit: BoxFit.cover,
+                    cacheWidth: decodeSize,
+                    cacheHeight: decodeSize,
+                  )
                 : isLocalFile
                 ? Image.file(
                     File(localAvatarFilePath(pfp!)),
+                    cacheWidth: decodeSize,
+                    cacheHeight: decodeSize,
                     fit: BoxFit.cover,
                     errorBuilder: (_, _, _) =>
                         Image.asset('assets/mascotte.png', fit: BoxFit.cover),
                   )
                 : Image.network(
                     pfp!,
+                    cacheWidth: decodeSize,
+                    cacheHeight: decodeSize,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, progress) {
                       if (progress == null) return child;

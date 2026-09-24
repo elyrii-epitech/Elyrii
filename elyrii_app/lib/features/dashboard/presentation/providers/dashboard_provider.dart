@@ -395,12 +395,12 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadDashboardData() async {
-    if (_isDemoSession?.call() == true) {
-      _applyDevStats();
-      return;
-    }
+  Future<void>? _loadInFlight;
 
+  Future<void> loadDashboardData() => _loadInFlight ??= _loadDashboardData()
+      .whenComplete(() => _loadInFlight = null);
+
+  Future<void> _loadDashboardData() async {
     _isLoading = true;
     _error = null;
     notifyListeners();

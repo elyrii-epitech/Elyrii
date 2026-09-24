@@ -26,6 +26,9 @@ htmlcov/
 
 instance/
 models/
+# Flutter source models must be included alongside their consumers.
+!elyrii_app/lib/features/meditation/domain/models/
+!elyrii_app/lib/features/mascot/data/models/
 .env
 .env.local
 
@@ -59,3 +62,19 @@ art/
 output/
 tmp/
 *.pdf
+
+# Local AI context and planning notes
+/AGENTS.md
+/GEMINI.md
+/PRODUCT.md
+/BETA_ROADMAP_ISSUES.md
+/conductor/
+
+# Local Android export
+/elyrii_server/app-release.apk
+
+# Existing local migration snapshot, unrelated to the frontend/chat changes.
+# Keep these exclusions specific; future migrations must remain reviewable.
+/elyrii_server/.drizzle/0000_soft_hercules.sql
+/elyrii_server/.drizzle/meta/0000_snapshot.json
+/elyrii_server/.drizzle/meta/_journal.json

@@ -26,6 +26,13 @@ class UserProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Reuse the authenticated profile response during startup hydration.
+  void acceptProfile(Map<String, dynamic> profile) {
+    _profile = UserProfile.fromJson(profile);
+    _error = null;
+    notifyListeners();
+  }
+
   /// Fetch the current user's profile from the backend
   Future<void> loadProfile() async {
     _isLoading = true;

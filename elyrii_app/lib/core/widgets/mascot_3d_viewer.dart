@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 import '../services/mascot_motion_controller.dart';
 import 'mascot_model_surface.dart';
 import '../config/mascot_3d_config.dart';
@@ -110,6 +111,9 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
   bool _active = true;
   bool _tickerEnabled = true;
   bool _reducedMotion = false;
+  bool _visible = true;
+  bool _released = false;
+  Timer? _releaseTimer;
   Timer? _loadTimeoutTimer;
   Timer? _stabilizeTimer;
   final Stopwatch _seekClock = Stopwatch()..start();
@@ -117,7 +121,8 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
 
   bool get _isWidgetTest =>
       WidgetsBinding.instance.runtimeType.toString().contains('Test');
-  bool get _canMove => _active && _tickerEnabled && !_reducedMotion;
+  bool get _canMove =>
+      _active && _tickerEnabled && _visible && !_reducedMotion && !_released;
 
   @override
   void initState() {
@@ -157,12 +162,14 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
     super.didChangeDependencies();
     _tickerEnabled = TickerMode.valuesOf(context).enabled;
     _reducedMotion = MediaQuery.disableAnimationsOf(context);
+    _updateRetention();
     _syncPlayback();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _active = state == AppLifecycleState.resumed;
+    _updateRetention();
     _syncPlayback();
   }
 
@@ -206,13 +213,14 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
     widget.breathProgress?.removeListener(_seekBreath);
     _loadTimeoutTimer?.cancel();
     _stabilizeTimer?.cancel();
+    _releaseTimer?.cancel();
     _motion.dispose();
     if (widget.controller == null) _controller.onModelLoaded.dispose();
     super.dispose();
   }
 
   void _onModelLoaded(String modelAddress) {
-    if (!mounted) return;
+    if (!mounted || _released) return;
     final hadError = _hasError;
     // Un dépassement du délai de garde n'est pas définitif : si le modèle
     // finit par charger (démarrage à froid du webview), on quitte le
@@ -261,6 +269,9 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
   }
 
   void _syncPlayback() {
+    _motion.setPlaybackEnabled(
+      _canMove && _modelReady && widget.breathProgress == null,
+    );
     if (!_modelReady || _hasError || !widget.animated) return;
     if (widget.breathProgress != null) {
       _motion.setPlaybackEnabled(false);
@@ -293,7 +304,12 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
   }
 
   void _playCurrent() {
-    if (!_modelLoaded || _hasError) return;
+    if (!_modelLoaded ||
+        _hasError ||
+        !_canMove ||
+        widget.breathProgress != null) {
+      return;
+    }
     final animation = _motion.current;
     try {
       if (animation.mode == MascotAnimationMode.hold) {
@@ -345,35 +361,60 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         child: SizedBox(
           width: widget.width,
           height: widget.height,
-          child: _hasError || _isWidgetTest ? _buildFallback() : _buildViewer(),
+          child: _hasError || _isWidgetTest || _released
+              ? _buildFallback()
+              : _buildViewer(),
         ),
       ),
     );
 
-    // Sur iOS, ColorFiltered autour d'un PlatformView rend la texture
-    // transparente. Sur Android, c'est le teint d'origine des Esprits.
-    final matrix = widget.colorMatrix;
-    final skipPlatformViewFilter =
-        !kIsWeb && Platform.isIOS || _hasError || _isWidgetTest;
-    if (!skipPlatformViewFilter && matrix != null && matrix.length == 20) {
-      const identity = <double>[
-        1, 0, 0, 0, 0, //
-        0, 1, 0, 0, 0, //
-        0, 0, 1, 0, 0, //
-        0, 0, 0, 1, 0, //
-      ];
-      final isIdentity = List.generate(
-        20,
-        (i) => matrix[i] == identity[i],
-      ).every((v) => v);
-      if (!isIdentity) {
-        return ColorFiltered(
-          colorFilter: ColorFilter.matrix(matrix),
-          child: child,
-        );
+    final tinted = widget.colorMatrix != null
+        ? ColorFiltered(
+            colorFilter: ColorFilter.matrix(widget.colorMatrix!),
+            child: child,
+          )
+        : child;
+    if (_isWidgetTest) return tinted;
+    return VisibilityDetector(
+      key: ValueKey(('mascot-visibility', this)),
+      onVisibilityChanged: (info) {
+        final visible = info.visibleFraction > 0;
+        if (!mounted || visible == _visible) return;
+        _visible = visible;
+        _updateRetention();
+        _syncPlayback();
+      },
+      child: tinted,
+    );
+  }
+
+  /// Keep rapid tab switches warm, but release native/WebGL resources when
+  /// a mascot stays offscreen. Pausing alone does not release its memory.
+  void _updateRetention() {
+    if (_isWidgetTest) return;
+    if (_active && _tickerEnabled && _visible) {
+      _releaseTimer?.cancel();
+      _releaseTimer = null;
+      if (_released) {
+        _released = false;
+        _hasError = false;
+        _startLoadTimeout();
+        setState(() {});
       }
+    } else {
+      _releaseTimer ??= Timer(const Duration(seconds: 15), () {
+        _releaseTimer = null;
+        if (!mounted) return;
+        _loadTimeoutTimer?.cancel();
+        _stabilizeTimer?.cancel();
+        _controller.onModelLoaded.value = false;
+        setState(() {
+          _released = true;
+          _modelLoaded = false;
+          _modelReady = false;
+        });
+      });
     }
-    return child;
   }
 
   Widget _buildViewer() {

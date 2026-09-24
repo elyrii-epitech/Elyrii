@@ -13,9 +13,11 @@ class GlassBubbleButton extends StatelessWidget {
   final bool isDark;
   final bool isSelected;
 
-  /// Asset monochrome optionnel : affiché à la place de [icon], teinté
-  /// comme une icône Material (masque alpha) pour respecter la DA.
+  /// Asset optionnel affiché à la place de [icon] et teinté comme une icône
+  /// Material. Les variations d'alpha de l'asset peuvent conserver des détails
+  /// internes tout en restant monochromes.
   final String? iconAsset;
+  final double iconAssetSize;
 
   const GlassBubbleButton({
     super.key,
@@ -26,6 +28,7 @@ class GlassBubbleButton extends StatelessWidget {
     this.isDark = false,
     this.isSelected = false,
     this.iconAsset,
+    this.iconAssetSize = 28,
   });
 
   @override
@@ -43,25 +46,24 @@ class GlassBubbleButton extends StatelessWidget {
       width: size,
       height: size,
       glassColor: isSelected
-          ? AppColors.primary.withValues(alpha: isDark ? 0.24 : 0.15)
+          ? (isDark
+                ? Colors.white.withValues(alpha: 0.14)
+                : Colors.black.withValues(alpha: 0.08))
           : null,
       child: Center(
         child: iconAsset != null
             ? ImageIcon(
                 AssetImage(iconAsset!),
-                size: 28,
+                size: iconAssetSize,
                 color: tint,
               )
-            : Icon(
-                icon,
-                size: 26,
-                color: tint,
-              ),
+            : Icon(icon, size: 26, color: tint),
       ),
     );
 
     return Semantics(
       button: true,
+      selected: isSelected,
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
@@ -80,6 +82,7 @@ class GlassBubbleButtonStateful extends StatefulWidget {
   final bool isSelected;
   final String? tooltip;
   final String? iconAsset;
+  final double iconAssetSize;
 
   const GlassBubbleButtonStateful({
     super.key,
@@ -90,6 +93,7 @@ class GlassBubbleButtonStateful extends StatefulWidget {
     this.isSelected = false,
     this.tooltip,
     this.iconAsset,
+    this.iconAssetSize = 28,
   });
 
   @override
@@ -128,6 +132,7 @@ class _GlassBubbleButtonStatefulState extends State<GlassBubbleButtonStateful> {
             isSelected: widget.isSelected,
             iconColor: null,
             iconAsset: widget.iconAsset,
+            iconAssetSize: widget.iconAssetSize,
           ),
         ),
       ),

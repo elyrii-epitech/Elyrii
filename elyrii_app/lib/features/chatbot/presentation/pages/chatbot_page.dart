@@ -1,267 +1,369 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/glass/elyrii_glass_surface.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../providers/chatbot_provider.dart';
 import '../widgets/chat_history_sheet.dart';
 import '../widgets/chat_message_bubble.dart';
 import '../widgets/conversation_suggestions.dart';
 import '../widgets/crisis_detection_banner.dart';
 import '../widgets/emergency_resources_button.dart';
-import '../widgets/mascot_widget.dart';
 import '../widgets/typing_indicator.dart';
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
-/// Page Chat : interface conversationnelle standard — en-tête présence
-/// (avatar logo, statut), fil iMessage, historique local, ressources
-/// d'urgence santé mentale toujours accessibles.
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
-
   @override
   State<ChatbotPage> createState() => _ChatbotPageState();
 }
 
-class _ChatbotPageState extends State<ChatbotPage>
-    with SingleTickerProviderStateMixin {
-  final TextEditingController _textController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
-  final FocusNode _focusNode = FocusNode();
-  bool _hasStartedTyping = false;
+class _ChatbotPageState extends State<ChatbotPage> {
+  final _textController = TextEditingController();
+  final _scrollController = ScrollController();
+  final _focusNode = FocusNode();
+  bool _hasText = false;
+  bool _submitting = false;
   bool _showCrisisBanner = false;
-  late AnimationController _inputAnimationController;
-  late Animation<double> _inputGlowAnimation;
+  bool _keyboardWasOpen = false;
+  int _lastMessageCount = 0;
+  String? _lastSessionId;
+  bool _loadingOlderMessages = false;
 
   @override
   void initState() {
     super.initState();
-
-    _inputAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _inputGlowAnimation = Tween<double>(begin: 0.3, end: 0.6).animate(
-      CurvedAnimation(
-        parent: _inputAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _textController.addListener(() {
-      final text = _textController.text;
-      if (text.isNotEmpty && !_hasStartedTyping) {
-        setState(() => _hasStartedTyping = true);
-        _inputAnimationController.repeat(reverse: true);
-      } else if (text.isEmpty && _hasStartedTyping) {
-        setState(() => _hasStartedTyping = false);
-        _inputAnimationController.stop();
-        _inputAnimationController.reset();
-      }
-
-      // Crisis keyword detection
-      final shouldShowCrisisBanner =
-          text.isNotEmpty && containsCrisisKeyword(text);
-      if (_showCrisisBanner != shouldShowCrisisBanner) {
-        setState(() => _showCrisisBanner = shouldShowCrisisBanner);
-      }
-    });
+    _textController.addListener(_handleTextChanged);
   }
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    _scrollController.dispose();
-    _focusNode.dispose();
-    _inputAnimationController.dispose();
-    super.dispose();
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (_scrollController.hasClients && mounted) {
-          _scrollController.animateTo(
-            0.0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
+  void _handleTextChanged() {
+    final text = _textController.text;
+    final hasText = text.trim().isNotEmpty;
+    final showCrisisBanner = text.isNotEmpty && containsCrisisKeyword(text);
+    if (_hasText != hasText || _showCrisisBanner != showCrisisBanner) {
+      setState(() {
+        _hasText = hasText;
+        _showCrisisBanner = showCrisisBanner;
       });
     }
   }
 
-  void _sendMessage() {
+  @override
+  void dispose() {
+    _textController
+      ..removeListener(_handleTextChanged)
+      ..dispose();
+    _scrollController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendMessage() async {
     final text = _textController.text.trim();
-    if (text.isEmpty) return;
-
-    context.read<ChatbotProvider>().sendMessage(text);
-    _textController.clear();
-    _scrollToBottom();
-
-    if (!_focusNode.hasFocus) {
-      _focusNode.requestFocus();
+    final provider = context.read<ChatbotProvider>();
+    if (text.isEmpty || _submitting || provider.loadingSession) return;
+    ElyriiHaptics.selection();
+    setState(() => _submitting = true);
+    try {
+      final accepted = await provider.sendMessage(text);
+      if (!mounted) return;
+      if (accepted && _textController.text.trim() == text) {
+        _textController.clear();
+      }
+      if (accepted) _scrollToLatestMessage();
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _scrollToLatestMessage() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients || !mounted) return;
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+      );
+    });
+  }
+
+  void _useSuggestion(String text) {
+    _textController.text = text;
+    _textController.selection = TextSelection.collapsed(offset: text.length);
+    _focusNode.requestFocus();
+  }
+
+  void _showActions() {
+    _focusNode.unfocus();
+    final provider = context.read<ChatbotProvider>();
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit_square),
+                title: const Text('Nouvelle conversation'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _textController.clear();
+                  provider.startNewConversation();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.history_rounded),
+                title: const Text('Historique des conversations'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  ChatHistorySheet.show(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    if (keyboardOpen != _keyboardWasOpen) {
+      _keyboardWasOpen = keyboardOpen;
+      if (!_scrollController.hasClients ||
+          _scrollController.position.extentAfter < 100) {
+        _scrollToLatestMessage();
+      }
+    }
+    // With extendBody, the shell supplies the actual navbar height here.
+    // Standalone, this is simply the device's home-indicator safe area.
+    final bottomClearance = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      extendBody: true,
+          ? const Color(0xFF141416)
+          : const Color(0xFFFAFAFA),
       body: SafeArea(
         bottom: false,
         child: Column(
           children: [
             _buildHeader(isDark),
+            Selector<ChatbotProvider, String?>(
+              selector: (_, provider) => provider.error,
+              builder: (_, error, _) => error == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 6,
+                      ),
+                      child: Text(
+                        error,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+            ),
             Expanded(
               child: Consumer<ChatbotProvider>(
-                builder: (context, provider, child) {
-                  if (provider.messages.isEmpty) {
-                    return _buildEmptyState(provider, isDark);
-                  }
-                  return _buildMessageList(provider);
-                },
+                builder: (context, provider, _) => provider.messages.isEmpty
+                    ? _buildWelcomeState(isDark, keyboardOpen)
+                    : _buildConversation(provider, isDark),
               ),
             ),
-            CrisisDetectionBanner(
-              visible: _showCrisisBanner,
-              onDismiss: () => setState(() => _showCrisisBanner = false),
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 780,
+                  maxHeight:
+                      (MediaQuery.sizeOf(context).height -
+                          MediaQuery.viewInsetsOf(context).bottom) *
+                      0.25,
+                ),
+                child: SingleChildScrollView(
+                  child: CrisisDetectionBanner(
+                    visible: _showCrisisBanner,
+                    onDismiss: () => setState(() => _showCrisisBanner = false),
+                  ),
+                ),
+              ),
             ),
-            _buildInputArea(isDark),
+            _buildComposer(isDark, keyboardOpen ? 8 : bottomClearance + 12),
           ],
         ),
       ),
     );
   }
 
-  /// En-tête standard de chat : avatar logo monochrome, nom + statut de
-  /// présence, accès historique et ressources d'urgence en permanence.
   Widget _buildHeader(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: (isDark ? AppColors.borderDark : AppColors.borderLight)
-                .withValues(alpha: 0.3),
-            width: 0.5,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          // Avatar : logo monochrome dans une pastille de verre.
-          ElyriiGlassSurface(
-            role: GlassRole.floatingControl,
-            borderRadius: BorderRadius.circular(22),
-            width: 44,
-            height: 44,
-            child: const Center(
-              child: ImageIcon(
-                AssetImage('assets/brand/logo_monochrome.png'),
-                size: 28,
-                color: AppColors.primary,
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 780),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              IconButton.filledTonal(
+                tooltip: 'Historique des conversations',
+                onPressed: () {
+                  _focusNode.unfocus();
+                  ChatHistorySheet.show(context);
+                },
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark
+                      ? AppColors.surfaceDark
+                      : AppColors.surfaceLight,
+                  foregroundColor: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                  minimumSize: const Size(44, 44),
+                ),
+                icon: const Icon(Icons.menu_rounded, size: 23),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+              Expanded(
+                child: Text(
                   'Elyrii',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.titleLarge(
                     color: isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
-                _PresenceIndicator(
-                  isTyping: context.select<ChatbotProvider, bool>(
-                    (p) => p.isTyping,
+              ),
+              const EmergencyResourcesButton(compact: true),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeState(bool isDark, bool keyboardOpen) {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: (constraints.maxHeight - 32).clamp(0, double.infinity),
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ImageIcon(
+                    const AssetImage('assets/brand/navbar_app_icon.png'),
+                    size: keyboardOpen ? 40 : 52,
+                    color: isDark ? AppColors.primaryDark : AppColors.primary,
                   ),
-                  isDark: isDark,
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Text(
+                    'Un moment pour toi.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 26,
+                      height: 1.2,
+                      letterSpacing: -0.8,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Qu’as-tu en tête aujourd’hui ?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.4,
+                      color: isDark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                  if (!keyboardOpen) ...[
+                    const SizedBox(height: 28),
+                    ConversationSuggestions(onSuggestionTap: _useSuggestion),
+                    const SizedBox(height: 22),
+                    Text(
+                      'Un soutien au quotidien, pas un suivi médical.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        height: 1.4,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
-          _HeaderIconButton(
-            icon: Icons.history_rounded,
-            tooltip: 'Historique des conversations',
-            isDark: isDark,
-            onTap: () {
-              ElyriiHaptics.light();
-              ChatHistorySheet.show(context);
-            },
-          ),
-          const SizedBox(width: 8),
-          const EmergencyResourcesButton(),
-        ],
+        ),
       ),
     );
   }
 
-  /// État vide : mascotte 3D d'accueil + suggestions de conversation.
-  Widget _buildEmptyState(ChatbotProvider provider, bool isDark) {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          MascotWidget(isMinimized: false, isUserTyping: _hasStartedTyping),
-          ConversationSuggestions(
-            onSuggestionTap: (text) {
-              _textController.text = text;
-              _sendMessage();
-            },
-          ),
-          SizedBox(height: MediaQuery.paddingOf(context).bottom + 100),
-        ],
-      ),
-    );
-  }
-
-  /// Fil de messages inversé (iMessage), avec séparateurs de date.
-  Widget _buildMessageList(ChatbotProvider provider) {
-    final itemCount = provider.messages.length + (provider.isTyping ? 1 : 0);
+  Widget _buildConversation(ChatbotProvider provider, bool isDark) {
+    final messages = provider.messages;
+    final olderOffset = provider.hasMoreMessages ? 1 : 0;
+    final itemCount =
+        messages.length + olderOffset + (provider.isTyping ? 1 : 0);
+    if (_lastMessageCount != itemCount ||
+        _lastSessionId != provider.activeSessionId) {
+      final followLatest =
+          _lastSessionId != provider.activeSessionId ||
+          !_scrollController.hasClients ||
+          _scrollController.position.extentAfter < 100;
+      _lastMessageCount = itemCount;
+      _lastSessionId = provider.activeSessionId;
+      if (followLatest && !_loadingOlderMessages) _scrollToLatestMessage();
+    }
     return ListView.builder(
       controller: _scrollController,
-      reverse: true,
-      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: const EdgeInsets.only(top: 16, bottom: 12),
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        if (index == 0 && provider.isTyping) {
-          return const TypingIndicator();
+        if (olderOffset == 1 && index == 0) {
+          return TextButton(
+            onPressed: provider.loadingOlder
+                ? null
+                : () => _loadOlder(provider),
+            child: Text(
+              provider.loadingOlder ? 'Chargement…' : 'Messages précédents',
+            ),
+          );
         }
-        final messageIndex = provider.isTyping ? index - 1 : index;
-        final message =
-            provider.messages[provider.messages.length - 1 - messageIndex];
-
-        // Dans la liste inversée, l'index suivant est le message plus ancien.
-        final showDateChip =
-            messageIndex == provider.messages.length - 1 ||
-            !_isSameDay(
+        final messageIndex = index - olderOffset;
+        if (messageIndex == messages.length) return const TypingIndicator();
+        final message = messages[messageIndex];
+        final showDate =
+            messageIndex == 0 ||
+            !DateUtils.isSameDay(
               message.timestamp,
-              provider
-                  .messages[provider.messages.length - 2 - messageIndex]
-                  .timestamp,
+              messages[messageIndex - 1].timestamp,
             );
-
         return Column(
           children: [
-            if (showDateChip) _buildDateChip(message.timestamp, index),
+            if (showDate) _buildDateLabel(message.timestamp, isDark),
             ChatMessageBubble(
               message: message.content,
               isUser: message.isUser,
@@ -273,281 +375,161 @@ class _ChatbotPageState extends State<ChatbotPage>
     );
   }
 
-  bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
+  Future<void> _loadOlder(ChatbotProvider provider) async {
+    _loadingOlderMessages = true;
+    final before = _scrollController.hasClients
+        ? _scrollController.position.maxScrollExtent
+        : 0.0;
+    final offset = _scrollController.hasClients
+        ? _scrollController.offset
+        : 0.0;
+    final sessionId = provider.activeSessionId;
+    await provider.loadOlderMessages();
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _scrollController.hasClients &&
+          provider.activeSessionId == sessionId) {
+        final position = _scrollController.position;
+        _scrollController.jumpTo(
+          (offset + position.maxScrollExtent - before).clamp(
+            0.0,
+            position.maxScrollExtent,
+          ),
+        );
+      }
+      _loadingOlderMessages = false;
+    });
+  }
 
-  Widget _buildDateChip(DateTime date, int animationKey) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final label = _dateChipLabel(date);
-
+  Widget _buildDateLabel(DateTime date, bool isDark) {
+    final difference = DateUtils.dateOnly(
+      DateTime.now(),
+    ).difference(DateUtils.dateOnly(date)).inDays;
+    final label = difference == 0
+        ? 'Aujourd’hui'
+        : difference == 1
+        ? 'Hier'
+        : '${date.day}/${date.month}/${date.year}';
     return Padding(
-      key: ValueKey('date_$animationKey'),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: (isDark ? Colors.white : Colors.black).withValues(
-              alpha: 0.06,
-            ),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-          ),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark
+              ? AppColors.textTertiaryDark
+              : AppColors.textSecondaryLight,
         ),
       ),
     );
   }
 
-  String _dateChipLabel(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final day = DateTime(date.year, date.month, date.day);
-    final diff = today.difference(day).inDays;
-    if (diff == 0) return 'Aujourd\'hui';
-    if (diff == 1) return 'Hier';
-    return '${day.day.toString().padLeft(2, '0')}/${day.month.toString().padLeft(2, '0')}/${day.year}';
-  }
-
-  Widget _buildInputArea(bool isDark) {
-    final navbarClearance = MediaQuery.paddingOf(context).bottom > 0
-        ? 92.0
-        : 88.0;
-    return Container(
-      margin: EdgeInsets.only(bottom: navbarClearance),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_hasStartedTyping)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: AnimatedOpacity(
-                opacity: _hasStartedTyping ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Text(
-                  'Continue, je t\'écoute...',
-                  style: TextStyle(
-                    color: AppColors.primary.withValues(alpha: 0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+  Widget _buildComposer(bool isDark, double bottomClearance) {
+    final loadingSession = context.select<ChatbotProvider, bool>(
+      (p) => p.loadingSession,
+    );
+    final foreground = isDark
+        ? AppColors.textPrimaryDark
+        : AppColors.textPrimaryLight;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 780),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(12, 8, 12, bottomClearance),
+          child: Container(
+            key: const ValueKey('chat-composer'),
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF252527) : const Color(0xFFF0F0F2),
+              borderRadius: BorderRadius.circular(29),
+              border: Border.all(
+                color: isDark
+                    ? const Color(0xFF39393C)
+                    : const Color(0xFFE2E2E6),
               ),
             ),
-          Row(
-            children: [
-              Expanded(
-                child: AnimatedBuilder(
-                  animation: _inputGlowAnimation,
-                  builder: (context, child) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.cardDark
-                            : AppColors.cardLight,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: _hasStartedTyping
-                              ? AppColors.primary.withValues(
-                                  alpha: _inputGlowAnimation.value,
-                                )
-                              : _focusNode.hasFocus
-                              ? AppColors.primary.withValues(alpha: 0.5)
-                              : (isDark
-                                        ? AppColors.borderDark
-                                        : AppColors.borderLight)
-                                    .withValues(alpha: 0.3),
-                          width: _hasStartedTyping ? 1.5 : 1,
-                        ),
-                        boxShadow: _hasStartedTyping
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(
-                                    alpha: _inputGlowAnimation.value * 0.3,
-                                  ),
-                                  blurRadius: 12,
-                                  spreadRadius: 0,
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: child,
-                    );
-                  },
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: _showActions,
+                  tooltip: 'Actions de conversation',
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(44, 44),
+                    foregroundColor: foreground,
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 28),
+                ),
+                Expanded(
                   child: TextField(
                     controller: _textController,
                     focusNode: _focusNode,
-                    maxLines: 4,
                     minLines: 1,
+                    maxLines:
+                        MediaQuery.sizeOf(context).height -
+                                MediaQuery.viewInsetsOf(context).bottom <
+                            400
+                        ? 3
+                        : 5,
                     textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.newline,
+                    cursorColor: isDark
+                        ? AppColors.primaryDark
+                        : AppColors.primary,
                     style: TextStyle(
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                      fontSize: 15,
+                      fontSize: 17,
                       height: 1.4,
+                      letterSpacing: 0,
+                      color: foreground,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Partage ce que tu ressens...',
+                      hintText: 'Message à Elyrii',
+                      hintMaxLines: 1,
                       hintStyle: TextStyle(
                         color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
+                            ? const Color(0xFFAAA9AF)
+                            : const Color(0xFF77767D),
                         fontWeight: FontWeight.w400,
-                        fontSize: 15,
+                        letterSpacing: 0,
                       ),
+                      // Override all form defaults: the pill is the only
+                      // surface and border, including while focused.
+                      filled: false,
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
-                      ),
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
                       isDense: true,
-                    ),
-                    onSubmitted: (_) => _sendMessage(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: _hasStartedTyping
-                        ? [AppColors.primary, const Color(0xFF7B5FE0)]
-                        : [
-                            AppColors.primary.withValues(alpha: 0.6),
-                            const Color(0xFF7B5FE0).withValues(alpha: 0.6),
-                          ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: _hasStartedTyping
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            spreadRadius: 0,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _sendMessage,
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.arrow_upward_rounded,
-                        color: Colors.white,
-                        size: 22,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 10,
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Point de présence dans l'en-tête : point vert « En ligne », point
-/// primaire animé « En train d'écrire… ».
-class _PresenceIndicator extends StatelessWidget {
-  final bool isTyping;
-  final bool isDark;
-
-  const _PresenceIndicator({required this.isTyping, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final dotColor = isTyping ? AppColors.primary : AppColors.success;
-    final label = isTyping ? 'En train d\'écrire…' : 'En ligne — je t\'écoute';
-
-    return Row(
-      children: [
-        if (isTyping)
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-          )
-              .animate(onPlay: (controller) => controller.repeat(reverse: true))
-              .fadeIn(duration: 500.ms)
-              .fadeOut(duration: 500.ms)
-        else
-          Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-          ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          key: ValueKey<bool>(isTyping),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Bouton d'icône circulaire discret pour les actions d'en-tête.
-class _HeaderIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _HeaderIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: SizedBox(
-            width: 44,
-            height: 44,
-            child: Icon(
-              icon,
-              size: 22,
-              color: isDark
-                  ? AppColors.iconDefaultDark
-                  : AppColors.iconDefaultLight,
+                const SizedBox(width: 6),
+                IconButton.filled(
+                  onPressed: _hasText && !_submitting && !loadingSession
+                      ? _sendMessage
+                      : null,
+                  tooltip: 'Envoyer le message',
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size(44, 44),
+                    backgroundColor: foreground,
+                    foregroundColor: isDark
+                        ? const Color(0xFF242426)
+                        : Colors.white,
+                    disabledBackgroundColor: isDark
+                        ? const Color(0xFF353537)
+                        : const Color(0xFFE1E1E5),
+                    disabledForegroundColor: isDark
+                        ? const Color(0xFF77777D)
+                        : const Color(0xFF99989F),
+                  ),
+                  icon: const Icon(Icons.arrow_upward_rounded, size: 23),
+                ),
+              ],
             ),
           ),
         ),

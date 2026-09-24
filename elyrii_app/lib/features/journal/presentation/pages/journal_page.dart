@@ -21,7 +21,7 @@ import '../widgets/journal_editor_sheet.dart';
 ///   (nombre d'écrits, dernière humeur).
 /// - Passerelle d'inspiration avec le Coach IA pour stimuler l'écriture bienveillante.
 /// - Tirer-relâcher natif Cupertino ([CupertinoSliverRefreshControl]).
-/// - Transitions douces avec [AnimatedSize] et fondu cubique ([_smoothFade]).
+/// - Cartes construites à la demande par un [SliverList].
 class JournalPage extends StatefulWidget {
   const JournalPage({super.key});
 
@@ -73,7 +73,6 @@ class _JournalPageState extends State<JournalPage> {
       body: Consumer<JournalProvider>(
         builder: (context, provider, child) {
           final entries = provider.entries;
-          final hasEntries = entries.isNotEmpty;
 
           return Stack(
             children: [
@@ -100,53 +99,8 @@ class _JournalPageState extends State<JournalPage> {
                     ),
                   ),
 
-              // 3. Contenu principal
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  AppDimensions.pageHorizontalPadding,
-                  12,
-                  AppDimensions.pageHorizontalPadding,
-                  MediaQuery.of(context).padding.bottom +
-                      150, // Dégagement pour le dock flottant du shell
-                ),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // A. Carte Héroïque du Refuge Intime
-                      _buildJournalHeroCard(entries, isDark),
-                      const SizedBox(height: 18),
-
-                      // B. Bannière d'inspiration Coach IA
-                      _buildInspirationBanner(isDark),
-                      const SizedBox(height: 24),
-
-                      // C. Liste des écrits ou État vide
-                      AnimatedSize(
-                        duration: const Duration(milliseconds: 320),
-                        curve: Curves.easeOutCubic,
-                        alignment: Alignment.topCenter,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 250),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
-                          layoutBuilder: (currentChild, previousChildren) {
-                            return Stack(
-                              alignment: Alignment.topCenter,
-                              children: [...previousChildren, ?currentChild],
-                            );
-                          },
-                          transitionBuilder: _smoothFade,
-                          child: hasEntries
-                              ? _buildEntriesList(entries, isDark)
-                              : _buildEmptyState(isDark),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+                  ..._buildContentSlivers(entries, isDark),
+                ],
               ),
 
               // Boutons d'actions épinglés au scroll (tri et ajout de note restent fixes)
@@ -515,39 +469,67 @@ class _JournalPageState extends State<JournalPage> {
     );
   }
 
-  /// Vue de la liste des entrées de journal.
-  Widget _buildEntriesList(List<JournalEntry> entries, bool isDark) {
-    return Column(
-      key: const ValueKey('journal_entries_list'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 10),
-          child: Text(
-            'Mes réflexions (${entries.length})',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+  /// Build journal cards only when they enter the viewport.
+  List<Widget> _buildContentSlivers(List<JournalEntry> entries, bool isDark) {
+    const horizontal = AppDimensions.pageHorizontalPadding;
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(horizontal, 12, horizontal, 24),
+        sliver: SliverToBoxAdapter(
+          child: Column(
+            children: [
+              _buildJournalHeroCard(entries, isDark),
+              const SizedBox(height: 18),
+              _buildInspirationBanner(isDark),
+            ],
+          ),
+        ),
+      ),
+      if (entries.isEmpty)
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: horizontal),
+          sliver: SliverToBoxAdapter(child: _buildEmptyState(isDark)),
+        )
+      else ...[
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(horizontal + 4, 0, horizontal, 10),
+          sliver: SliverToBoxAdapter(
+            child: Text(
+              'Mes réflexions (${entries.length})',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+              ),
             ),
           ),
         ),
-        ...List.generate(entries.length, (index) {
-          final entry = entries[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: GlassJournalCard(
-              entry: entry,
-              isDark: isDark,
-              onTap: () => _showEditorSheet(entry: entry),
-            ),
-          );
-        }),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: horizontal),
+          sliver: SliverList.builder(
+            key: const ValueKey('journal_entries_list'),
+            itemCount: entries.length,
+            itemBuilder: (context, index) {
+              final entry = entries[index];
+              return Padding(
+                key: ValueKey(entry.id),
+                padding: const EdgeInsets.only(bottom: 12),
+                child: GlassJournalCard(
+                  entry: entry,
+                  isDark: isDark,
+                  onTap: () => _showEditorSheet(entry: entry),
+                ),
+              );
+            },
+          ),
+        ),
       ],
-    );
+      SliverToBoxAdapter(
+        child: SizedBox(height: MediaQuery.paddingOf(context).bottom + 150),
+      ),
+    ];
   }
 
   /// Vue de l'état vide bienveillant quand aucune note n'est encore écrite.
@@ -581,12 +563,5 @@ class _JournalPageState extends State<JournalPage> {
       default:
         return '🌱';
     }
-  }
-
-  Widget _smoothFade(Widget child, Animation<double> animation) {
-    return FadeTransition(
-      opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic),
-      child: child,
-    );
   }
 }

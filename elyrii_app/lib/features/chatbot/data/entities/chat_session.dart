@@ -12,6 +12,8 @@ class ChatSession {
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<ChatMessage> messages;
+  final int? _messageCount;
+  int get messageCount => _messageCount ?? messages.length;
 
   const ChatSession({
     required this.id,
@@ -19,7 +21,8 @@ class ChatSession {
     required this.createdAt,
     required this.updatedAt,
     required this.messages,
-  });
+    int? messageCount,
+  }) : _messageCount = messageCount;
 
   factory ChatSession.create() {
     final now = DateTime.now();
@@ -36,6 +39,7 @@ class ChatSession {
     String? title,
     DateTime? updatedAt,
     List<ChatMessage>? messages,
+    int? messageCount,
   }) {
     return ChatSession(
       id: id,
@@ -43,12 +47,14 @@ class ChatSession {
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       messages: messages ?? this.messages,
+      messageCount: messageCount ?? _messageCount,
     );
   }
 
   factory ChatSession.fromJson(Map<String, dynamic> json) {
     return ChatSession(
       id: json['id'] as String,
+      messageCount: json['messageCount'] as int?,
       title: json['title'] as String? ?? 'Conversation',
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),

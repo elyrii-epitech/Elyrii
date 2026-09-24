@@ -68,10 +68,11 @@ class AuthProvider extends ChangeNotifier {
   /// Background revalidation of the restored session.
   /// Only a definitive rejection (401) ends the session; a network failure
   /// keeps the optimistic session alive so offline use is not punished.
-  Future<void> revalidateSession() async {
+  Future<void> revalidateSession({
+    void Function(Map<String, dynamic>)? onProfile,
+  }) async {
     if (_status != AuthStatus.authenticated) return;
-    if (isDemoSession) return;
-    final ok = await fetchProfile();
+    final ok = await fetchProfile(onProfile: onProfile);
     if (ok || _status != AuthStatus.authenticated) return;
     final stillHasToken = await _storage.getAccessToken();
     if (stillHasToken == null) {
@@ -105,11 +106,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Fetch full user profile from backend
-  Future<bool> fetchProfile() async {
-    if (isDemoSession) return true;
+  Future<bool> fetchProfile({
+    void Function(Map<String, dynamic>)? onProfile,
+  }) async {
     try {
       final response = await _repository.client.get(ApiConfig.userMeUrl);
       _user = UserModel.fromJson(response as Map<String, dynamic>);
+      onProfile?.call(response);
       notifyListeners();
       return true;
     } catch (e) {
@@ -225,8 +228,13 @@ class AuthProvider extends ChangeNotifier {
 
   /// Logout and clear stored tokens
   Future<void> logout() async {
-    await _repository.logout();
-    await clearLocalSession();
+    try {
+      await _repository.logout();
+    } catch (error) {
+      debugPrint('[AuthProvider] Remote logout unavailable: $error');
+    } finally {
+      await clearLocalSession();
+    }
   }
 
   Future<void> clearLocalSession() async {

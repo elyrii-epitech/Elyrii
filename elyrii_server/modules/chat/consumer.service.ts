@@ -1,4 +1,3 @@
-import { clientSockets } from "../../main";
 import { kafkaService } from "./chat.service";
 import ChatRepository from "../../repository/chat.repository";
 import { aiResponseTracker } from "./response-tracker.utils";
@@ -6,12 +5,14 @@ import { aiResponseTracker } from "./response-tracker.utils";
 const chatRepository = new ChatRepository();
 
 /**
- * Subscribes to AI responses from Kafka and forwards them to connected clients.
+ * Persists AI responses and resolves the matching controller request.
  * 
  * @remarks
  * Listens to the `elyrii.ai.responses` topic.
  * When a message is received, it parses the JSON content to find the `userId` and `response`.
- * If the user is connected via WebSocket (found in `clientSockets`), the AI response is sent to them.
+ * Only the originating controller sends the terminal WebSocket response.
+ * A result arriving after its timeout is persisted, but never broadcast to a
+ * different request or a replacement socket belonging to the same user.
  */
 export async function handleAiResponse() {
     await kafkaService.consumer.subscribe({ topic: "elyrii.ai.responses" });
@@ -37,11 +38,6 @@ export async function handleAiResponse() {
                 });
             } catch (error) {
                 console.error("Failed to persist AI chat message:", error);
-            }
-            const ws = clientSockets.get(userId);
-
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(response);
             }
         }
     });
