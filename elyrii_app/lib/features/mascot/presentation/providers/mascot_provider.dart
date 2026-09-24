@@ -7,6 +7,7 @@ import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/network/api_client.dart';
 import '../../data/models/mascot_model.dart';
+import '../../../../core/widgets/mascot_with_accessories.dart';
 
 /// Provider gérant l'état et l'interaction avec la mascotte 3D.
 ///
@@ -83,15 +84,25 @@ class MascotProvider extends ChangeNotifier {
     unawaited(_syncToBackend());
   }
 
-  /// Sélectionne ou retire un détail visuel (accessoire futur).
-  void equipCosmetic(String cosmeticId) {
+  /// Équipe ou retire un accessoire cosmétique.
+  ///
+  /// Assure l'exclusivité au sein d'une même catégorie (Habillage, Tête, Visage)
+  /// tout en autorisant le port simultané multi-catégories.
+  void equipCosmetic(String cosmeticId, {String? category}) {
     final List<String> updatedCosmetics = List.from(_mascot.equippedCosmetics);
     if (updatedCosmetics.contains(cosmeticId)) {
       updatedCosmetics.remove(cosmeticId);
     } else {
+      final targetCategory =
+          category ?? MascotAccessoryCatalog.getById(cosmeticId)?.category;
+      if (targetCategory != null) {
+        updatedCosmetics.removeWhere((id) {
+          final render = MascotAccessoryCatalog.getById(id);
+          return render != null && render.category == targetCategory;
+        });
+      }
       updatedCosmetics.add(cosmeticId);
     }
-
     _mascot = _mascot.copyWith(equippedCosmetics: updatedCosmetics);
     notifyListeners();
     _saveMascot();

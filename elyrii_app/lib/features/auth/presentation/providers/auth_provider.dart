@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import '../../../../core/config/api_config.dart';
+import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -36,6 +37,13 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.loading;
+  bool get isDemoSession => _user?.id == DevSession.userId;
+
+  UserModel get _demoUser => const UserModel(
+    id: DevSession.userId,
+    email: DevSession.email,
+    firstName: DevSession.firstName,
+  );
 
   /// Offline-first session restore: storage-only, never touches the network.
   /// A syntactically valid, non-expired token is enough to enter the app;
@@ -49,12 +57,8 @@ class AuthProvider extends ChangeNotifier {
       _status = AuthStatus.unauthenticated;
     } else {
       final userId = await _storage.getUserId();
-      if (userId == 'demo-user') {
-        _user = const UserModel(
-          id: 'demo-user',
-          email: 'demo@elyrii.local',
-          firstName: 'Dorian',
-        );
+      if (userId == DevSession.userId) {
+        _user = _demoUser;
       }
       _status = AuthStatus.authenticated;
     }
@@ -66,6 +70,7 @@ class AuthProvider extends ChangeNotifier {
   /// keeps the optimistic session alive so offline use is not punished.
   Future<void> revalidateSession() async {
     if (_status != AuthStatus.authenticated) return;
+    if (isDemoSession) return;
     final ok = await fetchProfile();
     if (ok || _status != AuthStatus.authenticated) return;
     final stillHasToken = await _storage.getAccessToken();
@@ -89,22 +94,19 @@ class AuthProvider extends ChangeNotifier {
         base64Url.encode(utf8.encode(json.toString())).replaceAll('=', '');
     final demoToken =
         '${b64('{"alg":"none","typ":"JWT"}')}.'
-        '${b64('{"sub":"demo-user","exp":$exp}')}.demo';
+        '${b64('{"sub":"${DevSession.userId}","exp":$exp}')}.demo';
 
     await _storage.saveAccessToken(demoToken);
-    await _storage.saveUserId('demo-user');
+    await _storage.saveUserId(DevSession.userId);
     await _storage.setProfileSetupCompleted();
-    _user = const UserModel(
-      id: 'demo-user',
-      email: 'demo@elyrii.local',
-      firstName: 'Dorian',
-    );
+    _user = _demoUser;
     _status = AuthStatus.authenticated;
     notifyListeners();
   }
 
   /// Fetch full user profile from backend
   Future<bool> fetchProfile() async {
+    if (isDemoSession) return true;
     try {
       final response = await _repository.client.get(ApiConfig.userMeUrl);
       _user = UserModel.fromJson(response as Map<String, dynamic>);

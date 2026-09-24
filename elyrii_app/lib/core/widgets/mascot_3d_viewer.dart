@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -40,6 +41,13 @@ class Mascot3DViewer extends StatefulWidget {
   /// Si null, aucune transformation n'est appliquée.
   /// Utilisée par le système de thèmes (voir [MascotThemes]).
   final List<double>? colorMatrix;
+  /// Nom de la variante glTF KHR_materials_variants (ex: 'Elyrii', 'Astral', 'Zen'...).
+  /// Si null, la variante par défaut du modèle est utilisée.
+  final String? variantName;
+
+  /// Teinte de pelage appliquée au PNG de secours (WebGL indisponible).
+  final Color? colorTint;
+
 
   /// Animation à jouer maintenant. Null → [Mascot3DConfig.initialAnimation].
   ///
@@ -56,8 +64,15 @@ class Mascot3DViewer extends StatefulWidget {
   /// Faux pour les accessoires statiques sans clips natifs.
   final bool animated;
 
+  /// Si vrai, affiche l'image de fallback 2D en cas d'erreur.
+  /// Faux pour les accessoires afin de ne jamais afficher la mascotte 2D sur le corps 3D.
+  final bool showFallbackImage;
+
   /// Callback appelé quand le modèle est chargé avec succès.
   final VoidCallback? onModelLoaded;
+
+  /// Identifiants des accessoires équipés visibles dans la scène 3D unifiée.
+  final List<String>? visibleAccessories;
 
   /// Callback appelé en cas d'erreur de chargement.
   final ValueChanged<String>? onError;
@@ -69,10 +84,14 @@ class Mascot3DViewer extends StatefulWidget {
     this.height = 150,
     this.controller,
     this.colorMatrix,
+    this.variantName,
+    this.colorTint,
     this.animation,
     this.animationTrigger = 0,
     this.breathProgress,
     this.animated = true,
+    this.showFallbackImage = true,
+    this.visibleAccessories,
     this.onModelLoaded,
     this.onError,
   });
@@ -124,7 +143,9 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
   void _startLoadTimeout() {
     _loadTimeoutTimer?.cancel();
     if (_isWidgetTest) return;
-    _loadTimeoutTimer = Timer(const Duration(seconds: 20), () {
+    // Sur les émulateurs et devices sous contrainte GPU (chargement WebView + shader compiling),
+    // laisser le temps au WebGL de compiler sans basculer prématurément en fallback.
+    _loadTimeoutTimer = Timer(const Duration(seconds: 90), () {
       if (mounted && !_modelLoaded) {
         _onModelError('Délai de chargement dépassé');
       }
@@ -151,6 +172,14 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
     if (widget.breathProgress != oldWidget.breathProgress) {
       oldWidget.breathProgress?.removeListener(_seekBreath);
       widget.breathProgress?.addListener(_seekBreath);
+    }
+    if (widget.variantName != oldWidget.variantName &&
+        widget.variantName != null) {
+      _controller.setVariant(widget.variantName!);
+    }
+    if (widget.visibleAccessories != oldWidget.visibleAccessories &&
+        widget.visibleAccessories != null) {
+      _controller.setVisibleAccessories(widget.visibleAccessories!);
     }
     if (widget.config.assetPath != oldWidget.config.assetPath ||
         widget.controller != oldWidget.controller) {
@@ -193,7 +222,14 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
     _modelLoaded = true;
     _stabilizeTimer = Timer(const Duration(milliseconds: 200), () {
       if (!mounted) return;
-      if (widget.config.useCameraOrbit) {
+      final orbitPercent = widget.config.cameraOrbitPercent;
+      if (orbitPercent != null) {
+        _controller.setCameraOrbitPercent(
+          widget.config.cameraOrbitTheta,
+          widget.config.cameraOrbitPhi,
+          orbitPercent,
+        );
+      } else if (widget.config.useCameraOrbit) {
         _controller.setCameraOrbit(
           widget.config.cameraOrbitTheta,
           widget.config.cameraOrbitPhi,
@@ -202,6 +238,12 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
       }
       final targetY = widget.config.cameraTargetY;
       if (targetY != null) _controller.setCameraTarget(0, targetY, 0);
+      if (widget.variantName != null) {
+        _controller.setVariant(widget.variantName!);
+      }
+      if (widget.visibleAccessories != null) {
+        _controller.setVisibleAccessories(widget.visibleAccessories!);
+      }
       _applyRotationConfig();
       setState(() {
         _hasError = false;
@@ -308,11 +350,28 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
       ),
     );
 
-    if (widget.colorMatrix != null) {
-      return ColorFiltered(
-        colorFilter: ColorFilter.matrix(widget.colorMatrix!),
-        child: child,
-      );
+    // Sur iOS, ColorFiltered autour d'un PlatformView rend la texture
+    // transparente. Sur Android, c'est le teint d'origine des Esprits.
+    final matrix = widget.colorMatrix;
+    final skipPlatformViewFilter =
+        !kIsWeb && Platform.isIOS || _hasError || _isWidgetTest;
+    if (!skipPlatformViewFilter && matrix != null && matrix.length == 20) {
+      const identity = <double>[
+        1, 0, 0, 0, 0, //
+        0, 1, 0, 0, 0, //
+        0, 0, 1, 0, 0, //
+        0, 0, 0, 1, 0, //
+      ];
+      final isIdentity = List.generate(
+        20,
+        (i) => matrix[i] == identity[i],
+      ).every((v) => v);
+      if (!isIdentity) {
+        return ColorFiltered(
+          colorFilter: ColorFilter.matrix(matrix),
+          child: child,
+        );
+      }
     }
     return child;
   }
@@ -325,10 +384,12 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         // native à opacité 0.0 suspend le rendu WebGL et bloque l'évènement
         // onLoad de model-viewer.
         MascotModelSurface(
-          key: ValueKey((widget.config.assetPath, _controller)),
+          key: ValueKey((widget.config.assetPath, widget.variantName, _controller)),
           controller: _controller,
           src: widget.config.assetPath,
           interactive: widget.config.interactionEnabled,
+          variantName: widget.variantName,
+          animated: widget.animated,
           onLoad: _onModelLoaded,
           onError: _onModelError,
         ),
@@ -358,7 +419,10 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
 
   /// Fallback sur le PNG statique si le modèle 3D ne charge pas.
   Widget _buildFallback() {
-    return Image.asset(
+    if (!widget.showFallbackImage) {
+      return const SizedBox.shrink();
+    }
+    Widget image = Image.asset(
       'assets/mascotte.png',
       width: widget.width,
       height: widget.height,
@@ -371,5 +435,33 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         );
       },
     );
+    final tint = widget.colorTint;
+    if (tint != null) {
+      image = ColorFiltered(
+        colorFilter: ColorFilter.mode(tint, BlendMode.modulate),
+        child: image,
+      );
+    } else {
+      final matrix = widget.colorMatrix;
+      if (matrix != null && matrix.length == 20) {
+        const identity = <double>[
+          1, 0, 0, 0, 0, //
+          0, 1, 0, 0, 0, //
+          0, 0, 1, 0, 0, //
+          0, 0, 0, 1, 0, //
+        ];
+        final isIdentity = List.generate(
+          20,
+          (i) => matrix[i] == identity[i],
+        ).every((v) => v);
+        if (!isIdentity) {
+          image = ColorFiltered(
+            colorFilter: ColorFilter.matrix(matrix),
+            child: image,
+          );
+        }
+      }
+    }
+    return image;
   }
 }

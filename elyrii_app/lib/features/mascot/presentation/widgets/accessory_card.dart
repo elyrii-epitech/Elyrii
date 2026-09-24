@@ -26,6 +26,78 @@ class AccessoryDef {
   });
 }
 
+/// Catalogue des cosmétiques de l'atelier mascotte et de leurs paliers.
+abstract final class MascotAccessories {
+  static const List<AccessoryDef> all = [
+    AccessoryDef(
+      id: 'scarf_cozy',
+      name: 'Écharpe Moelleuse Cocon',
+      emoji: '🧣',
+      category: 'Habillage',
+      requiredChallenges: 0,
+    ),
+    AccessoryDef(
+      id: 'bowtie_chic',
+      name: 'Nœud Papillon Célébration',
+      emoji: '🎀',
+      category: 'Habillage',
+      requiredChallenges: 2,
+    ),
+    AccessoryDef(
+      id: 'zen_necklace',
+      name: 'Collier de Perles Fines',
+      emoji: '📿',
+      category: 'Habillage',
+      requiredChallenges: 4,
+    ),
+    AccessoryDef(
+      id: 'custom1',
+      name: 'Chapeau de diplômé',
+      emoji: '🎓',
+      category: 'Tête',
+      requiredChallenges: 1,
+    ),
+    AccessoryDef(
+      id: 'crown_laurel',
+      name: 'Couronne de Laurier Zen',
+      emoji: '🌿',
+      category: 'Tête',
+      requiredChallenges: 3,
+    ),
+    AccessoryDef(
+      id: 'headphones_zen',
+      name: 'Casque Audio Gamer Pro',
+      emoji: '🎧',
+      category: 'Tête',
+      requiredChallenges: 5,
+    ),
+    AccessoryDef(
+      id: 'glasses_round',
+      name: 'Lunettes Noires Ray-Ban',
+      emoji: '🕶️',
+      category: 'Visage',
+      requiredChallenges: 2,
+    ),
+    AccessoryDef(
+      id: 'flower_mouth',
+      name: 'Étoile Céleste Scintillante',
+      emoji: '✨',
+      category: 'Visage',
+      requiredChallenges: 4,
+    ),
+  ];
+
+  static int get maxRequiredChallenges {
+    var highest = 0;
+    for (final accessory in all) {
+      if (accessory.requiredChallenges > highest) {
+        highest = accessory.requiredChallenges;
+      }
+    }
+    return highest;
+  }
+}
+
 /// Carte d'affichage d'un accessoire de mascotte (débloqué, verrouillé, équipé).
 class AccessoryCard extends StatelessWidget {
   final String name;

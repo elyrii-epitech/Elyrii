@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
-import '../widgets/accessory_card.dart';
-import '../widgets/unlock_celebration_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/config/mascot_themes.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -18,8 +17,11 @@ import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 import '../../../../core/widgets/mascot_bounce.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../providers/mascot_provider.dart';
+import '../widgets/accessory_card.dart';
+import '../widgets/unlock_celebration_dialog.dart';
 
 class MascotCustomizationPage extends StatefulWidget {
   const MascotCustomizationPage({super.key});
@@ -34,10 +36,10 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
 
   MascotAnimation _previewAnimation = MascotAnimations.idle;
   int _previewTrigger = 0;
-  String? _selectedCategory;
+  String _selectedCategory = 'Habillage';
 
-  List<String> get _accessoryCategories =>
-      _accessories.map((a) => a.category).toSet().toList();
+  static const List<String> _categoryOrder = ['Habillage', 'Tête', 'Visage'];
+  static const List<AccessoryDef> _accessories = MascotAccessories.all;
 
   void _react(MascotAnimation animation) {
     setState(() {
@@ -45,15 +47,6 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       _previewTrigger++;
     });
   }
-
-  static const List<AccessoryDef> _accessories = [
-    AccessoryDef(
-      id: 'custom1',
-      name: 'Chapeau de diplômé',
-      emoji: '🎓',
-      requiredChallenges: 1,
-    ),
-  ];
 
   @override
   void initState() {
@@ -63,15 +56,20 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       final gamification = context.read<GamificationProvider>();
       await mascotProvider.loadMascot();
       await gamification.loadAll();
-      if (mounted) _checkForNewUnlocks(gamification.completedChallenges.length);
+      if (mounted) {
+        _checkForNewUnlocks(gamification.completedChallenges.length);
+      }
     });
   }
 
-  /// Detecte les cosmétiques nouvellement debloques et affiche une popup.
+  /// Détecte les cosmétiques nouvellement débloqués et affiche une célébration.
   Future<void> _checkForNewUnlocks(int completedCount) async {
+    final auth = context.read<AuthProvider>();
+    if (auth.isDemoSession) return;
+
     final newlyUnlocked = _accessories.where((acc) {
-      final isUnlocked = completedCount >= acc.requiredChallenges;
-      return isUnlocked;
+      return acc.requiredChallenges > 0 &&
+          completedCount >= acc.requiredChallenges;
     }).toList();
     if (newlyUnlocked.isEmpty) return;
 
@@ -83,7 +81,6 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
 
     if (toCelebrate.isEmpty) return;
 
-    // Marquer comme vu immediatement
     await prefs.setStringList(
       _seenUnlocksKey,
       {...seen, ...toCelebrate.map((a) => a.id)}.toList(),
@@ -114,7 +111,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                 CustomScrollView(
                   physics: const BouncingScrollPhysics(),
                   slivers: [
-                    // Dégagement de l'en-tête épinglé (flèche + titre + reset).
+                    // Dégagement de l'en-tête épinglé
                     const SliverToBoxAdapter(
                       child: SizedBox(height: AppDimensions.spacingSm + 72),
                     ),
@@ -133,7 +130,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                               crossAxisCount: 3,
                               mainAxisSpacing: 12,
                               crossAxisSpacing: 12,
-                              childAspectRatio: 0.72,
+                              childAspectRatio: 0.92,
                             ),
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final theme = MascotThemes.all[index];
@@ -173,7 +170,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                     const SliverToBoxAdapter(child: SizedBox(height: 120)),
                   ],
                 ),
-                // En-tête épinglé sur fond opaque : ne suit pas le scroll.
+                // En-tête épinglé sur fond opaque
                 Positioned(
                   top: 0,
                   left: 0,
@@ -231,7 +228,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
               ),
               const SizedBox(height: 2),
               Text(
-                'Thèmes et accessoires d\'Elyrii.',
+                'Esprits 3D et garde-robe d’Elyrii.',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodySmall(color: subtitleColor),
               ),
@@ -248,13 +245,9 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
     );
   }
 
-  /// Aperçu plein cadre de la mascotte : éclairage d'ambiance dégradé aux
-  /// couleurs du thème courant, gestes natifs.
+  /// Aperçu central flottant avec halo d'aura, sans socle ni ombre de sol.
   Widget _buildPreview(bool isDark, MascotProvider provider) {
     final theme = provider.currentTheme;
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
     final subtitleColor = isDark
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
@@ -262,65 +255,81 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: LiquidGlassCard(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         child: Column(
           children: [
-            // Les gestes sont dans le GLB ; le viewer reste ancré au sol.
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: SizedBox(
-                height: 300,
-                width: double.infinity,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Positioned.fill(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 400),
+            // Scène 3D flottante, ancrée par un halo d'aura
+            SizedBox(
+              height: 300,
+              width: double.infinity,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: DecoratedBox(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
+                          gradient: RadialGradient(
+                            center: const Alignment(0, -0.05),
+                            radius: 0.72,
                             colors: [
                               theme.accentColor.withValues(
-                                alpha: isDark ? .12 : .08,
+                                alpha: isDark ? 0.22 : 0.14,
+                              ),
+                              theme.accentColor.withValues(
+                                alpha: isDark ? 0.06 : 0.04,
                               ),
                               Colors.transparent,
                             ],
+                            stops: const [0.0, 0.45, 1.0],
                           ),
                         ),
                       ),
                     ),
-                    MascotBounce(
-                      trigger: _previewTrigger,
-                      child: MascotWithAccessories(
-                        config: const Mascot3DConfig(),
-                        animation: _previewAnimation,
-                        animationTrigger: _previewTrigger,
-                        width: 260,
-                        height: 280,
-                      ),
+                  ),
+                  MascotBounce(
+                    trigger: _previewTrigger,
+                    child: MascotWithAccessories(
+                      config: const Mascot3DConfig(),
+                      animation: _previewAnimation,
+                      animationTrigger: _previewTrigger,
+                      width: 260,
+                      height: 280,
+                      activeCategory: _selectedCategory,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(theme.emoji, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 8),
-                Text(
-                  theme.name,
-                  style: AppTextStyles.titleMedium(
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                  ),
+            const SizedBox(height: 14),
+            // Badge de l'Esprit actif
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.accentColor.withValues(
+                  alpha: isDark ? 0.18 : 0.12,
                 ),
-              ],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: theme.accentColor.withValues(alpha: 0.40),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(theme.emoji, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 8),
+                  Text(
+                    theme.name,
+                    style: AppTextStyles.titleSmall(
+                      color: theme.accentColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               theme.description,
               style: AppTextStyles.bodySmall(color: subtitleColor),
@@ -344,7 +353,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Thèmes',
+          'Esprits d\'Elyrii',
           style: AppTextStyles.titleMedium(
             color: textColor,
             fontWeight: FontWeight.w700,
@@ -352,7 +361,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Recolore Elyrii selon ton humeur ou la saison.',
+          'Révèle l\'aura et le pelage de ton compagnon selon ton énergie intérieure.',
           style: AppTextStyles.bodySmall(color: subtitleColor),
         ),
       ],
@@ -371,7 +380,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Accessoires',
+          'Garde-robe & Tenues',
           style: AppTextStyles.titleMedium(
             color: textColor,
             fontWeight: FontWeight.w700,
@@ -379,81 +388,107 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Débloque des récompenses en relevant tes défis.',
+          'Équipe ton compagnon au fil de tes victoires et rituels quotidiens.',
           style: AppTextStyles.bodySmall(color: subtitleColor),
         ),
       ],
     );
   }
 
-  /// Atelier d'accessoires : pilules de catégories (dès que plusieurs
-  /// familles existent) puis cartes filtrées sur la catégorie active.
+  /// Atelier de garde-robe : pilules de catégories et cartes d'accessoires.
   Widget _buildAccessoriesGrid(
     bool isDark,
     MascotProvider provider,
     int completedCount,
   ) {
-    final categories = _accessoryCategories;
-    final selected =
-        _selectedCategory != null && categories.contains(_selectedCategory)
-        ? _selectedCategory!
+    const categories = _categoryOrder;
+    final selected = categories.contains(_selectedCategory)
+        ? _selectedCategory
         : categories.first;
     final accent = provider.currentTheme.accentColor;
     final visible = _accessories.where((a) => a.category == selected);
+    final equippedCosmetics = provider.mascot.equippedCosmetics;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (categories.length > 1) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final category in categories)
-                GestureDetector(
-                  onTap: () {
-                    ElyriiHaptics.selection();
-                    setState(() => _selectedCategory = category);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: category == selected
-                          ? accent.withValues(alpha: isDark ? 0.22 : 0.14)
-                          : (isDark
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final category in categories)
+              Builder(
+                builder: (context) {
+                  final isCurrent = category == selected;
+                  final countEquipped = _accessories
+                      .where(
+                        (a) =>
+                            a.category == category &&
+                            equippedCosmetics.contains(a.id),
+                      )
+                      .length;
+
+                  return GestureDetector(
+                    onTap: () {
+                      ElyriiHaptics.selection();
+                      setState(() => _selectedCategory = category);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? accent.withValues(alpha: isDark ? 0.22 : 0.14)
+                            : (isDark
                                 ? Colors.white.withValues(alpha: 0.06)
                                 : Colors.black.withValues(alpha: 0.04)),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: category == selected
-                            ? accent.withValues(alpha: 0.5)
-                            : (isDark
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isCurrent
+                              ? accent.withValues(alpha: 0.5)
+                              : (isDark
                                   ? Colors.white.withValues(alpha: 0.08)
                                   : Colors.black.withValues(alpha: 0.06)),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            category,
+                            style: AppTextStyles.labelMedium(
+                              color: isCurrent
+                                  ? accent
+                                  : (isDark
+                                      ? AppColors.textSecondaryDark
+                                      : AppColors.textSecondaryLight),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (countEquipped > 0) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isCurrent ? accent : AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    child: Text(
-                      category,
-                      style: AppTextStyles.labelMedium(
-                        color: category == selected
-                            ? accent
-                            : (isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 14),
-        ],
+                  );
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 14),
         for (final acc in visible)
           Padding(
             padding: const EdgeInsets.only(bottom: 14),
@@ -482,7 +517,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       accentColor: provider.currentTheme.accentColor,
       onTap: () {
         ElyriiHaptics.selection();
-        provider.equipCosmetic(acc.id);
+        provider.equipCosmetic(acc.id, category: acc.category);
         _react(isEquipped ? MascotAnimations.settle : MascotAnimations.proud);
       },
       onLockedTap: () => _showLockedDialog(isDark, acc),
@@ -502,7 +537,9 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         onEquip: () {
           Navigator.pop(context);
           ElyriiHaptics.selection();
-          context.read<MascotProvider>().equipCosmetic(acc.id);
+          context
+              .read<MascotProvider>()
+              .equipCosmetic(acc.id, category: acc.category);
           _react(MascotAnimations.proud);
         },
       ),
@@ -535,7 +572,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Termine au moins ${acc.requiredChallenges} défi dans ton atelier '
+            'Termine au moins ${acc.requiredChallenges} défis dans ton atelier '
             'de présence pour débloquer le « ${acc.name} » et le porter '
             'fièrement.',
             textAlign: TextAlign.center,
@@ -585,19 +622,19 @@ class _ThemeCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: LiquidGlassCard(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         color: isSelected
-            ? theme.accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
+            ? theme.accentColor.withValues(alpha: isDark ? 0.18 : 0.12)
             : null,
         borderColor: isSelected
-            ? theme.accentColor.withValues(alpha: 0.45)
+            ? theme.accentColor.withValues(alpha: 0.55)
             : null,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
@@ -610,16 +647,16 @@ class _ThemeCard extends StatelessWidget {
                 ),
                 border: Border.all(
                   color: isSelected
-                      ? theme.accentColor.withValues(alpha: 0.6)
+                      ? theme.accentColor.withValues(alpha: 0.7)
                       : Colors.transparent,
                   width: 2,
                 ),
               ),
               child: Center(
-                child: Text(theme.emoji, style: const TextStyle(fontSize: 24)),
+                child: Text(theme.emoji, style: const TextStyle(fontSize: 20)),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               theme.name,
               style: AppTextStyles.labelMedium(
@@ -628,8 +665,9 @@ class _ThemeCard extends StatelessWidget {
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 180),
               child: isSelected
@@ -642,7 +680,7 @@ class _ThemeCard extends StatelessWidget {
                         color: theme.accentColor,
                       ),
                     )
-                  : const SizedBox.shrink(key: ValueKey('idle')),
+                  : const SizedBox(key: ValueKey('idle'), height: 6),
             ),
           ],
         ),

@@ -90,6 +90,65 @@ class MascotModelController extends Flutter3DController {
       '});',
     );
   }
+
+  void setVariant(String variantName) {
+    _command('m.variantName = ${jsonEncode(variantName)};');
+  }
+
+  /// Orbite avec distance en % du cadrage auto model-viewer (ex. 105).
+  void setCameraOrbitPercent(double theta, double phi, double percent) {
+    final orbit = '${theta}deg ${phi}deg ${percent}%';
+    _command('m.cameraOrbit = ${jsonEncode(orbit)};');
+  }
+
+  /// Active ou désactive les accessoires 3D en ajustant leur scale dans la scène.
+  void setVisibleAccessories(List<String> visibleAccessoryIds) {
+    final idsJson = jsonEncode(visibleAccessoryIds);
+    _command(
+      'm.updateComplete.then(function(){'
+      'var scene = null;'
+      'var symbols = Object.getOwnPropertySymbols(m);'
+      'for (var i = 0; i < symbols.length; i++) {'
+      '  var desc = symbols[i].toString();'
+      '  if (desc.indexOf("scene") !== -1) {'
+      '    scene = m[symbols[i]];'
+      '    break;'
+      '  }'
+      '}'
+      'if (!scene && m.model) {'
+      '  for (var j = 0; j < symbols.length; j++) {'
+      '    var d = symbols[j].toString();'
+      '    if (d.indexOf("model") !== -1) {'
+      '      var mObj = m[symbols[j]];'
+      '      if (mObj && mObj.scene) scene = mObj.scene;'
+      '      break;'
+      '    }'
+      '  }'
+      '}'
+      'if (!scene) return;'
+      'var active = new Set($idsJson);'
+      'var scales = {'
+      '  "scarf_cozy": [0.85, 0.85, 0.85],'
+      '  "bowtie_chic": [0.72, 0.72, 0.72],'
+      '  "zen_necklace": [0.88, 0.88, 0.88],'
+      '  "custom1": [0.90, 0.90, 0.90],'
+      '  "crown_laurel": [0.85, 0.85, 0.85],'
+      '  "headphones_zen": [1.0, 1.0, 1.0],'
+      '  "glasses_round": [1.0, 1.0, 1.0],'
+      '  "flower_mouth": [1.0, 1.0, 1.0]'
+      '};'
+      'scene.traverse(function(obj){'
+      '  if (obj.name && obj.name.indexOf("acc_") === 0) {'
+      '    var accId = obj.name.replace("acc_", "");'
+      '    var isAct = active.has(accId);'
+      '    obj.visible = isAct;'
+      '    var targetScale = isAct ? (scales[accId] || [1, 1, 1]) : [0.0001, 0.0001, 0.0001];'
+      '    obj.scale.set(targetScale[0], targetScale[1], targetScale[2]);'
+      '  }'
+      '});'
+      '});'
+    );
+  }
 }
 
 class MascotModelSurface extends StatefulWidget {
@@ -99,6 +158,8 @@ class MascotModelSurface extends StatefulWidget {
     required this.controller,
     required this.onLoad,
     required this.onError,
+    this.variantName,
+    this.animated = true,
     this.interactive = false,
   });
 
@@ -106,6 +167,8 @@ class MascotModelSurface extends StatefulWidget {
   final MascotModelController controller;
   final ValueChanged<String> onLoad;
   final ValueChanged<String> onError;
+  final String? variantName;
+  final bool animated;
   final bool interactive;
 
   @override
@@ -133,8 +196,9 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
     activeGestureInterceptor: widget.interactive,
     interactionPrompt: InteractionPrompt.none,
     animationCrossfadeDuration: 320,
-    animationName: 'idle',
-    autoPlay: true,
+    animationName: widget.animated ? 'idle' : null,
+    variantName: widget.variantName,
+    autoPlay: widget.animated,
     autoRotate: false,
     ar: false,
     disableTap: true,

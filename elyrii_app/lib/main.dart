@@ -37,10 +37,16 @@ void main() async {
   final authProvider = AuthProvider(client: apiClient, storage: secureStorage);
   final journalProvider = JournalProvider(client: apiClient);
   final chatbotProvider = ChatbotProvider(storage: secureStorage);
-  final gamificationProvider = GamificationProvider(client: apiClient);
+  final gamificationProvider = GamificationProvider(
+    client: apiClient,
+    isDemoSession: () => authProvider.isDemoSession,
+  );
   final userProvider = UserProvider(client: apiClient);
   final mascotProvider = MascotProvider(client: apiClient);
-  final dashboardProvider = DashboardProvider(apiClient: apiClient);
+  final dashboardProvider = DashboardProvider(
+    apiClient: apiClient,
+    isDemoSession: () => authProvider.isDemoSession,
+  );
   final coachProvider = CoachProvider(client: apiClient);
 
   // Backend health check stays fire-and-forget.

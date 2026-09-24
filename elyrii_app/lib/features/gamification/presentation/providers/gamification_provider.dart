@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
+import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../data/models/gamification_models.dart';
 import '../../data/repositories/gamification_repository.dart';
 
 class GamificationProvider extends ChangeNotifier {
   final GamificationRepository _repository;
+  final bool Function()? _isDemoSession;
 
   List<ChallengeTemplate> _availableChallenges = [];
   List<UserChallenge> _activeChallenges = [];
@@ -13,12 +15,16 @@ class GamificationProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  GamificationProvider({GamificationRepository? repository, ApiClient? client})
-    : assert(
-        repository != null || client != null,
-        'repository or client must be provided',
-      ),
-      _repository = repository ?? GamificationRepository(client: client!);
+  GamificationProvider({
+    GamificationRepository? repository,
+    ApiClient? client,
+    bool Function()? isDemoSession,
+  }) : assert(
+         repository != null || client != null,
+         'repository or client must be provided',
+       ),
+       _repository = repository ?? GamificationRepository(client: client!),
+       _isDemoSession = isDemoSession;
 
   List<ChallengeTemplate> get availableChallenges =>
       List.unmodifiable(_availableChallenges);
@@ -32,6 +38,11 @@ class GamificationProvider extends ChangeNotifier {
 
   /// Charge toutes les données en parallèle
   Future<void> loadAll() async {
+    if (_isDemoSession?.call() == true) {
+      applyDevProgress();
+      return;
+    }
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -55,8 +66,46 @@ class GamificationProvider extends ChangeNotifier {
     }
   }
 
+  /// Progression locale du Mode Dev : tous les accessoires + niveau Jardin 5.
+  @visibleForTesting
+  void applyDevProgress() {
+    final now = DateTime.now();
+    _completedChallenges = List.generate(DevSession.completedChallengeCount, (
+      index,
+    ) {
+      final id = 'demo-challenge-${index + 1}';
+      return UserChallenge(
+        id: 'demo-completed-${index + 1}',
+        userId: DevSession.userId,
+        challengeId: id,
+        status: 'COMPLETED',
+        progress: const {'current': 1, 'target': 1},
+        createdAt: now,
+        updatedAt: now,
+        completedAt: now,
+        template: ChallengeTemplate(
+          id: id,
+          title: 'Rituel démo ${index + 1}',
+          description: 'Progression locale du Mode Dev',
+          source: 'SYSTEM',
+          rewardPoints: 50,
+          aggregator: 'COUNT',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    });
+    _availableChallenges = const [];
+    _activeChallenges = const [];
+    _proposals = const [];
+    _isLoading = false;
+    _error = null;
+    notifyListeners();
+  }
+
   /// Démarre un défi SYSTEM et le déplace dans la liste active
   Future<bool> startChallenge(String challengeId) async {
+    if (_isDemoSession?.call() == true) return true;
     try {
       await _repository.startChallenge(challengeId);
       await loadAll(); // Refresh everything to get updated streak and lists
@@ -71,6 +120,7 @@ class GamificationProvider extends ChangeNotifier {
 
   /// Accepte une proposition IA et la déplace dans la liste active
   Future<bool> acceptChallenge(String challengeId) async {
+    if (_isDemoSession?.call() == true) return true;
     try {
       await _repository.acceptChallenge(challengeId);
       await loadAll(); // Refresh everything
@@ -84,6 +134,7 @@ class GamificationProvider extends ChangeNotifier {
 
   /// Rejette une proposition IA
   Future<bool> rejectChallenge(String challengeId) async {
+    if (_isDemoSession?.call() == true) return true;
     try {
       await _repository.rejectChallenge(challengeId);
       _proposals.removeWhere((c) => c.id == challengeId);
@@ -97,6 +148,10 @@ class GamificationProvider extends ChangeNotifier {
   }
 
   Future<void> loadActive() async {
+    if (_isDemoSession?.call() == true) {
+      applyDevProgress();
+      return;
+    }
     try {
       _activeChallenges = await _repository.getActiveChallenges();
       notifyListeners();

@@ -42,6 +42,10 @@ class Mascot3DConfig {
   /// corps visuel du modèle sans décalage de disposition. Null = auto.
   final double? cameraTargetY;
 
+  /// Distance d'orbite en % du cadrage auto model-viewer (ex. 105).
+  /// Prioritaire sur [cameraOrbitRadius] en mètres. Null = ignoré.
+  final double? cameraOrbitPercent;
+
   static const MascotAnimation _defaultAnimation = MascotAnimations.idle;
   static const String _defaultAsset = 'assets/elyrii_velours_animations.glb';
 
@@ -57,6 +61,7 @@ class Mascot3DConfig {
     this.showLoadingIndicator = true,
     this.useCameraOrbit = false,
     this.cameraTargetY,
+    this.cameraOrbitPercent,
   });
 
   const Mascot3DConfig.authPage()
@@ -73,7 +78,8 @@ class Mascot3DConfig {
       useCameraOrbit = false,
       // Cible posée sur le corps de l'ourson : la mascotte est centrée
       // par la caméra, sans Transform.translate de rattrapage.
-      cameraTargetY = 0.35;
+      cameraTargetY = 0.35,
+      cameraOrbitPercent = null;
 
   /// Configuration pour le chatbot en mode plein écran.
   const Mascot3DConfig.chatbotFull()
@@ -88,7 +94,8 @@ class Mascot3DConfig {
       interactionEnabled = false, // Désactiver les interactions tactiles
       showLoadingIndicator = true,
       useCameraOrbit = false,
-      cameraTargetY = null;
+      cameraTargetY = null,
+      cameraOrbitPercent = null;
 
   /// Configuration pour le chatbot en mode minimisé (banner).
   /// Animation idle intégrée au modèle, pas d'interaction tactile.
@@ -104,7 +111,8 @@ class Mascot3DConfig {
       interactionEnabled = false,
       showLoadingIndicator = false,
       useCameraOrbit = false,
-      cameraTargetY = null;
+      cameraTargetY = null,
+      cameraOrbitPercent = null;
 
   /// Crée une copie de cette configuration avec les champs modifiés.
   /// Utile pour la personnalisation future (changer le modèle, la caméra, etc.)
@@ -120,6 +128,7 @@ class Mascot3DConfig {
     bool? showLoadingIndicator,
     bool? useCameraOrbit,
     double? cameraTargetY,
+    double? cameraOrbitPercent,
   }) {
     return Mascot3DConfig(
       assetPath: assetPath ?? this.assetPath,
@@ -133,6 +142,7 @@ class Mascot3DConfig {
       showLoadingIndicator: showLoadingIndicator ?? this.showLoadingIndicator,
       useCameraOrbit: useCameraOrbit ?? this.useCameraOrbit,
       cameraTargetY: cameraTargetY ?? this.cameraTargetY,
+      cameraOrbitPercent: cameraOrbitPercent ?? this.cameraOrbitPercent,
     );
   }
 }

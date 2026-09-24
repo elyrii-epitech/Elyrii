@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../data/repositories/dashboard_repository.dart';
 
@@ -163,6 +164,7 @@ extension GoalTypeExtension on GoalType {
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
   final DashboardRepository _repository;
+  final bool Function()? _isDemoSession;
   bool _isLoading = false;
   String? _error;
 
@@ -276,12 +278,16 @@ class DashboardProvider extends ChangeNotifier {
     return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
   }
 
-  DashboardProvider({DashboardRepository? repository, ApiClient? apiClient})
-    : assert(
-        repository != null || apiClient != null,
-        'repository or apiClient must be provided',
-      ),
-      _repository = repository ?? DashboardRepository(client: apiClient!) {
+  DashboardProvider({
+    DashboardRepository? repository,
+    ApiClient? apiClient,
+    bool Function()? isDemoSession,
+  }) : assert(
+         repository != null || apiClient != null,
+         'repository or apiClient must be provided',
+       ),
+       _repository = repository ?? DashboardRepository(client: apiClient!),
+       _isDemoSession = isDemoSession {
     _initializeQuoteOfTheDay();
     _initializeDailyGoal();
     _initializeMascotMessage();
@@ -331,6 +337,8 @@ class DashboardProvider extends ChangeNotifier {
     _moodHistory[today] = mood;
     _error = null;
     notifyListeners(); // Mise à jour optimiste immédiate (sans flash de squelette)
+
+    if (_isDemoSession?.call() == true) return;
 
     // Synchronisation en arrière-plan sans bloquer l'UI ni recharger l'état de chargement
     unawaited(() async {
@@ -388,6 +396,11 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   Future<void> loadDashboardData() async {
+    if (_isDemoSession?.call() == true) {
+      _applyDevStats();
+      return;
+    }
+
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -420,6 +433,16 @@ class DashboardProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _applyDevStats() {
+    _currentStreak = DevSession.streakDays;
+    _completedChallengesCount = DevSession.completedChallengeCount;
+    _totalPoints = DevSession.totalPoints;
+    _activeChallengesCount = 0;
+    _isLoading = false;
+    _error = null;
+    notifyListeners();
   }
 
   Future<void> refresh() async {
