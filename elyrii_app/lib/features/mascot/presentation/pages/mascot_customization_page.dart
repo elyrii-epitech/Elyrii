@@ -144,7 +144,6 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                               ElyriiHaptics.selection();
                               if (provider.mascot.themeId != theme.id) {
                                 provider.setTheme(theme.id);
-                                _react(MascotAnimations.proud);
                               }
                             },
                           );
@@ -428,11 +427,14 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                       )
                       .length;
 
-                  return GestureDetector(
-                    onTap: () {
-                      ElyriiHaptics.selection();
-                      setState(() => _selectedCategory = category);
-                    },
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        ElyriiHaptics.selection();
+                        setState(() => _selectedCategory = category);
+                      },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       curve: Curves.easeOutCubic,
@@ -483,6 +485,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                         ],
                       ),
                     ),
+                    ),
                   );
                 },
               ),
@@ -518,7 +521,6 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       onTap: () {
         ElyriiHaptics.selection();
         provider.equipCosmetic(acc.id, category: acc.category);
-        _react(isEquipped ? MascotAnimations.settle : MascotAnimations.proud);
       },
       onLockedTap: () => _showLockedDialog(isDark, acc),
     );

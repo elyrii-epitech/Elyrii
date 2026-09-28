@@ -36,6 +36,16 @@ class GamificationProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Réinitialise l'état local lors de la déconnexion
+  void resetSession() {
+    _availableChallenges = const [];
+    _activeChallenges = const [];
+    _completedChallenges = const [];
+    _proposals = const [];
+    _error = null;
+    notifyListeners();
+  }
+
   /// Charge toutes les données en parallèle
   Future<void> loadAll() async {
     if (_isDemoSession?.call() == true) {

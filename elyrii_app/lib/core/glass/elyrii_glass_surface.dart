@@ -121,7 +121,11 @@ class ElyriiGlassSurface extends StatelessWidget {
     Widget content = RepaintBoundary(child: glass);
 
     if (onTap != null) {
-      content = GestureDetector(onTap: onTap, child: content);
+      content = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: content,
+      );
     }
     return content;
   }

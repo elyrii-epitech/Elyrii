@@ -66,22 +66,22 @@ abstract final class MascotAccessories {
     ),
     AccessoryDef(
       id: 'headphones_zen',
-      name: 'Casque Audio Gamer Pro',
-      emoji: '🎧',
+      name: 'Couronne Royale Dorée',
+      emoji: '👑',
       category: 'Tête',
       requiredChallenges: 5,
     ),
     AccessoryDef(
       id: 'glasses_round',
-      name: 'Lunettes Noires Ray-Ban',
-      emoji: '🕶️',
+      name: 'Lunettes Rondes Dorées',
+      emoji: '👓',
       category: 'Visage',
       requiredChallenges: 2,
     ),
     AccessoryDef(
       id: 'flower_mouth',
-      name: 'Étoile Céleste Scintillante',
-      emoji: '✨',
+      name: 'Marguerite Dorée Délicate',
+      emoji: '🌼',
       category: 'Visage',
       requiredChallenges: 4,
     ),
@@ -141,9 +141,8 @@ class AccessoryCard extends StatelessWidget {
         ? (completedChallenges / requiredChallenges).clamp(0.0, 1.0)
         : 1.0;
 
-    return GestureDetector(
+    return LiquidGlassCard(
       onTap: isLocked ? onLockedTap : onTap,
-      child: LiquidGlassCard(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         color: isEquipped
             ? accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
@@ -224,8 +223,7 @@ class AccessoryCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildEmojiCircle(Color tertiaryColor) {

@@ -68,7 +68,7 @@ class Mascot3DConfig {
     : assetPath = _defaultAsset,
       initialAnimation = _defaultAnimation,
       cameraOrbitTheta = 0,
-      cameraOrbitPhi = 60,
+      cameraOrbitPhi = 75,
       cameraOrbitRadius =
           14.0, // Valeur par défaut (ignorée car useCameraOrbit = false)
       autoRotate = false,
@@ -76,10 +76,8 @@ class Mascot3DConfig {
       interactionEnabled = false,
       showLoadingIndicator = true,
       useCameraOrbit = false,
-      // Cible posée sur le corps de l'ourson : la mascotte est centrée
-      // par la caméra, sans Transform.translate de rattrapage.
-      cameraTargetY = 0.35,
-      cameraOrbitPercent = null;
+      cameraTargetY = 0.50,
+      cameraOrbitPercent = 140;
 
   /// Configuration pour le chatbot en mode plein écran.
   const Mascot3DConfig.chatbotFull()

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -48,6 +47,8 @@ class Mascot3DViewer extends StatefulWidget {
 
   /// Teinte de pelage appliquée au PNG de secours (WebGL indisponible).
   final Color? colorTint;
+  /// Palette de couleurs du thème [pelage, oreilles, regard].
+  final List<Color>? paletteColors;
 
 
   /// Animation à jouer maintenant. Null → [Mascot3DConfig.initialAnimation].
@@ -87,6 +88,7 @@ class Mascot3DViewer extends StatefulWidget {
     this.colorMatrix,
     this.variantName,
     this.colorTint,
+    this.paletteColors,
     this.animation,
     this.animationTrigger = 0,
     this.breathProgress,
@@ -150,7 +152,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
     if (_isWidgetTest) return;
     // Sur les émulateurs et devices sous contrainte GPU (chargement WebView + shader compiling),
     // laisser le temps au WebGL de compiler sans basculer prématurément en fallback.
-    _loadTimeoutTimer = Timer(const Duration(seconds: 90), () {
+    _loadTimeoutTimer = Timer(const Duration(seconds: 60), () {
       if (mounted && !_modelLoaded) {
         _onModelError('Délai de chargement dépassé');
       }
@@ -184,9 +186,12 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         widget.variantName != null) {
       _controller.setVariant(widget.variantName!);
     }
-    if (widget.visibleAccessories != oldWidget.visibleAccessories &&
-        widget.visibleAccessories != null) {
-      _controller.setVisibleAccessories(widget.visibleAccessories!);
+    if (widget.visibleAccessories != oldWidget.visibleAccessories) {
+      _controller.setVisibleAccessories(widget.visibleAccessories ?? const []);
+    }
+    if (widget.colorMatrix != oldWidget.colorMatrix ||
+        widget.paletteColors != oldWidget.paletteColors) {
+      _controller.setThemeColors(widget.paletteColors, widget.colorMatrix);
     }
     if (widget.config.assetPath != oldWidget.config.assetPath ||
         widget.controller != oldWidget.controller) {
@@ -249,9 +254,8 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
       if (widget.variantName != null) {
         _controller.setVariant(widget.variantName!);
       }
-      if (widget.visibleAccessories != null) {
-        _controller.setVisibleAccessories(widget.visibleAccessories!);
-      }
+      _controller.setVisibleAccessories(widget.visibleAccessories ?? const []);
+      _controller.setThemeColors(widget.paletteColors, widget.colorMatrix);
       _applyRotationConfig();
       setState(() {
         _hasError = false;
@@ -418,6 +422,15 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
   }
 
   Widget _buildViewer() {
+    final orbit = widget.config.cameraOrbitPercent != null
+        ? '${widget.config.cameraOrbitTheta}deg ${widget.config.cameraOrbitPhi}deg ${widget.config.cameraOrbitPercent}%'
+        : widget.config.useCameraOrbit
+            ? '${widget.config.cameraOrbitTheta}deg ${widget.config.cameraOrbitPhi}deg ${widget.config.cameraOrbitRadius}m'
+            : null;
+    final target = widget.config.cameraTargetY != null
+        ? '0m ${widget.config.cameraTargetY}m 0m'
+        : null;
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -425,9 +438,11 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         // native à opacité 0.0 suspend le rendu WebGL et bloque l'évènement
         // onLoad de model-viewer.
         MascotModelSurface(
-          key: ValueKey((widget.config.assetPath, widget.variantName, _controller)),
+          key: ValueKey((widget.config.assetPath, _controller)),
           controller: _controller,
           src: widget.config.assetPath,
+          cameraOrbit: orbit,
+          cameraTarget: target,
           interactive: widget.config.interactionEnabled,
           variantName: widget.variantName,
           animated: widget.animated,
@@ -435,8 +450,6 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
           onError: _onModelError,
         ),
         if (widget.config.showLoadingIndicator)
-          // Placeholder organique respirant superposé : il s'efface en
-          // fondu doux dès que le modèle est prêt.
           Positioned.fill(
             child: IgnorePointer(
               ignoring: _modelReady,
@@ -476,32 +489,34 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         );
       },
     );
-    final tint = widget.colorTint;
-    if (tint != null) {
+    final matrix = widget.colorMatrix;
+    if (matrix != null && matrix.length == 20) {
+      const identity = <double>[
+        1, 0, 0, 0, 0, //
+        0, 1, 0, 0, 0, //
+        0, 0, 1, 0, 0, //
+        0, 0, 0, 1, 0, //
+      ];
+      final isIdentity = List.generate(
+        20,
+        (i) => (matrix[i] - identity[i]).abs() < 0.001,
+      ).every((v) => v);
+      if (!isIdentity) {
+        image = ColorFiltered(
+          colorFilter: ColorFilter.matrix(matrix),
+          child: image,
+        );
+      } else if (widget.colorTint != null) {
+        image = ColorFiltered(
+          colorFilter: ColorFilter.mode(widget.colorTint!, BlendMode.modulate),
+          child: image,
+        );
+      }
+    } else if (widget.colorTint != null) {
       image = ColorFiltered(
-        colorFilter: ColorFilter.mode(tint, BlendMode.modulate),
+        colorFilter: ColorFilter.mode(widget.colorTint!, BlendMode.modulate),
         child: image,
       );
-    } else {
-      final matrix = widget.colorMatrix;
-      if (matrix != null && matrix.length == 20) {
-        const identity = <double>[
-          1, 0, 0, 0, 0, //
-          0, 1, 0, 0, 0, //
-          0, 0, 1, 0, 0, //
-          0, 0, 0, 1, 0, //
-        ];
-        final isIdentity = List.generate(
-          20,
-          (i) => matrix[i] == identity[i],
-        ).every((v) => v);
-        if (!isIdentity) {
-          image = ColorFiltered(
-            colorFilter: ColorFilter.matrix(matrix),
-            child: image,
-          );
-        }
-      }
     }
     return image;
   }

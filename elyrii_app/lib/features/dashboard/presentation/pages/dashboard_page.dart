@@ -1078,39 +1078,27 @@ class _MascotCustomizeCharm extends StatefulWidget {
 }
 
 class _MascotCustomizeCharmState extends State<_MascotCustomizeCharm> {
-  bool _isPressed = false;
-
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
       label: 'Personnaliser la mascotte',
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
+      child: ElyriiGlassSurface(
+        role: GlassRole.floatingControl,
+        borderRadius: BorderRadius.circular(22),
+        width: 44,
+        height: 44,
+        onTap: () {
           ElyriiHaptics.selection();
           context.push(AppRoutes.mascotCustomization);
         },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedScale(
-          scale: _isPressed ? 0.90 : 1.0,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOutBack,
-          child: ElyriiGlassSurface(
-            role: GlassRole.floatingControl,
-            borderRadius: BorderRadius.circular(20),
-            width: 40,
-            height: 40,
-            child: Center(
-              child: Icon(
-                Icons.palette_outlined,
-                size: 19,
-                color: widget.isDark
-                    ? Colors.white.withValues(alpha: 0.85)
-                    : AppColors.primary,
-              ),
-            ),
+        child: Center(
+          child: Icon(
+            Icons.palette_outlined,
+            size: 20,
+            color: widget.isDark
+                ? Colors.white.withValues(alpha: 0.85)
+                : AppColors.primary,
           ),
         ),
       ),

@@ -35,7 +35,9 @@ class MascotModelController extends Flutter3DController {
         'var version=m.veloursVersion=(m.veloursVersion||0)+1;'
         '$cleanOp'
         '})();';
-    _source!.executeCustomJsCodeWithResult(js);
+    try {
+      _source!.executeCustomJsCodeWithResult(js);
+    } catch (_) {}
   }
 
   @override
@@ -95,59 +97,119 @@ class MascotModelController extends Flutter3DController {
     _command('m.variantName = ${jsonEncode(variantName)};');
   }
 
+  /// Applique les teintes du thème aux matériaux PBR 3D et via le filtre de couleur CSS
+  void setThemeColors(List<Color>? paletteColors, List<double>? matrix) {
+    final hasMatrix = matrix != null && matrix.length == 20;
+    const identity = <double>[
+      1, 0, 0, 0, 0,
+      0, 1, 0, 0, 0,
+      0, 0, 1, 0, 0,
+      0, 0, 0, 1, 0,
+    ];
+    final isIdentity = !hasMatrix || List.generate(
+      20,
+      (i) => (matrix[i] - identity[i]).abs() < 0.001,
+    ).every((v) => v);
+
+
+    String pbrJs = '';
+    if (isIdentity) {
+      pbrJs = '''
+        if (m.model && m.model.materials) {
+          var mats = m.model.materials;
+          if (mats.length > 0 && mats[0].pbrMetallicRoughness) mats[0].pbrMetallicRoughness.setBaseColorFactor([1.0, 1.0, 1.0, 1.0]);
+          if (mats.length > 1 && mats[1].pbrMetallicRoughness) mats[1].pbrMetallicRoughness.setBaseColorFactor([1.0, 1.0, 1.0, 1.0]);
+          if (mats.length > 2 && mats[2].pbrMetallicRoughness) mats[2].pbrMetallicRoughness.setBaseColorFactor([1.0, 1.0, 1.0, 1.0]);
+          if (mats.length > 3 && mats[3].pbrMetallicRoughness) mats[3].pbrMetallicRoughness.setBaseColorFactor([0.888, 0.631, 0.392, 1.0]);
+        }
+      ''';
+    } else if (paletteColors != null && paletteColors.isNotEmpty) {
+      final fur = paletteColors[0];
+      final ears = paletteColors.length > 1 ? paletteColors[1] : fur;
+      final r0 = (fur.r).toStringAsFixed(3);
+      final g0 = (fur.g).toStringAsFixed(3);
+      final b0 = (fur.b).toStringAsFixed(3);
+      final r1 = (ears.r).toStringAsFixed(3);
+      final g1 = (ears.g).toStringAsFixed(3);
+      final b1 = (ears.b).toStringAsFixed(3);
+      pbrJs = '''
+        if (m.model && m.model.materials) {
+          var mats = m.model.materials;
+          if (mats.length > 0 && mats[0].pbrMetallicRoughness) mats[0].pbrMetallicRoughness.setBaseColorFactor([1.0, 1.0, 1.0, 1.0]);
+          if (mats.length > 1 && mats[1].pbrMetallicRoughness) mats[1].pbrMetallicRoughness.setBaseColorFactor([$r0, $g0, $b0, 1.0]);
+          if (mats.length > 2 && mats[2].pbrMetallicRoughness) mats[2].pbrMetallicRoughness.setBaseColorFactor([$r1, $g1, $b1, 1.0]);
+          if (mats.length > 3 && mats[3].pbrMetallicRoughness) mats[3].pbrMetallicRoughness.setBaseColorFactor([$r0, $g0, $b0, 1.0]);
+        }
+      ''';
+    }
+
+    final js = '''
+      m.updateComplete.then(function(){
+        $pbrJs
+      });
+    ''';
+    _command(js);
+  }
+
+  /// Applique un filtre de couleur CSS (feColorMatrix) directement sur le canvas 3D WebGL
+  void setColorMatrix(List<double>? matrix) => setThemeColors(null, matrix);
+
   /// Orbite avec distance en % du cadrage auto model-viewer (ex. 105).
   void setCameraOrbitPercent(double theta, double phi, double percent) {
-    final orbit = '${theta}deg ${phi}deg ${percent}%';
+    final orbit = '${theta}deg ${phi}deg $percent%';
     _command('m.cameraOrbit = ${jsonEncode(orbit)};');
   }
 
   /// Active ou désactive les accessoires 3D en ajustant leur scale dans la scène.
   void setVisibleAccessories(List<String> visibleAccessoryIds) {
     final idsJson = jsonEncode(visibleAccessoryIds);
-    _command(
-      'm.updateComplete.then(function(){'
-      'var scene = null;'
-      'var symbols = Object.getOwnPropertySymbols(m);'
-      'for (var i = 0; i < symbols.length; i++) {'
-      '  var desc = symbols[i].toString();'
-      '  if (desc.indexOf("scene") !== -1) {'
-      '    scene = m[symbols[i]];'
-      '    break;'
-      '  }'
-      '}'
-      'if (!scene && m.model) {'
-      '  for (var j = 0; j < symbols.length; j++) {'
-      '    var d = symbols[j].toString();'
-      '    if (d.indexOf("model") !== -1) {'
-      '      var mObj = m[symbols[j]];'
-      '      if (mObj && mObj.scene) scene = mObj.scene;'
-      '      break;'
-      '    }'
-      '  }'
-      '}'
-      'if (!scene) return;'
-      'var active = new Set($idsJson);'
-      'var scales = {'
-      '  "scarf_cozy": [0.85, 0.85, 0.85],'
-      '  "bowtie_chic": [0.72, 0.72, 0.72],'
-      '  "zen_necklace": [0.88, 0.88, 0.88],'
-      '  "custom1": [0.90, 0.90, 0.90],'
-      '  "crown_laurel": [0.85, 0.85, 0.85],'
-      '  "headphones_zen": [1.0, 1.0, 1.0],'
-      '  "glasses_round": [1.0, 1.0, 1.0],'
-      '  "flower_mouth": [1.0, 1.0, 1.0]'
-      '};'
-      'scene.traverse(function(obj){'
-      '  if (obj.name && obj.name.indexOf("acc_") === 0) {'
-      '    var accId = obj.name.replace("acc_", "");'
-      '    var isAct = active.has(accId);'
-      '    obj.visible = isAct;'
-      '    var targetScale = isAct ? (scales[accId] || [1, 1, 1]) : [0.0001, 0.0001, 0.0001];'
-      '    obj.scale.set(targetScale[0], targetScale[1], targetScale[2]);'
-      '  }'
-      '});'
-      '});'
-    );
+    _command('''
+      function applyAcc(m) {
+        var scene = m._cachedScene;
+        if (!scene) {
+          var symbols = Object.getOwnPropertySymbols(m);
+          for (var i = 0; i < symbols.length; i++) {
+            if (symbols[i].toString().indexOf("scene") !== -1) {
+              scene = m[symbols[i]];
+              break;
+            }
+          }
+          if (!scene && m.model) {
+            for (var j = 0; j < symbols.length; j++) {
+              if (symbols[j].toString().indexOf("model") !== -1) {
+                var mObj = m[symbols[j]];
+                if (mObj && mObj.scene) scene = mObj.scene;
+                break;
+              }
+            }
+          }
+          if (scene) m._cachedScene = scene;
+        }
+        if (!scene) return;
+        var active = new Set($idsJson);
+        var scales = {
+          "scarf_cozy": [1.0, 1.0, 1.0],
+          "bowtie_chic": [1.0, 1.0, 1.0],
+          "zen_necklace": [1.0, 1.0, 1.0],
+          "custom1": [1.0, 1.0, 1.0],
+          "crown_laurel": [1.0, 1.0, 1.0],
+          "headphones_zen": [1.0, 1.0, 1.0],
+          "glasses_round": [1.0, 1.0, 1.0],
+          "flower_mouth": [1.0, 1.0, 1.0]
+        };
+        scene.traverse(function(obj){
+          if (obj.name && obj.name.indexOf("acc_") === 0) {
+            var accId = obj.name.replace("acc_", "");
+            var isAct = active.has(accId);
+            obj.visible = isAct;
+            var targetScale = isAct ? (scales[accId] || [1, 1, 1]) : [0.0001, 0.0001, 0.0001];
+            obj.scale.set(targetScale[0], targetScale[1], targetScale[2]);
+          }
+        });
+      }
+      applyAcc(m);
+      m.updateComplete.then(function(){ applyAcc(m); });
+    ''');
   }
 }
 
@@ -159,6 +221,8 @@ class MascotModelSurface extends StatefulWidget {
     required this.onLoad,
     required this.onError,
     this.variantName,
+    this.cameraOrbit,
+    this.cameraTarget,
     this.animated = true,
     this.interactive = false,
   });
@@ -168,6 +232,8 @@ class MascotModelSurface extends StatefulWidget {
   final ValueChanged<String> onLoad;
   final ValueChanged<String> onError;
   final String? variantName;
+  final String? cameraOrbit;
+  final String? cameraTarget;
   final bool animated;
   final bool interactive;
 
@@ -198,8 +264,9 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
     animationCrossfadeDuration: 320,
     animationName: widget.animated ? 'idle' : null,
     variantName: widget.variantName,
+    cameraOrbit: widget.cameraOrbit,
+    cameraTarget: widget.cameraTarget,
     autoPlay: widget.animated,
-    autoRotate: false,
     ar: false,
     disableTap: true,
     debugLogging: false,

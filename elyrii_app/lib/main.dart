@@ -59,9 +59,30 @@ void main() async {
   // (token presence + local JWT expiry check). No network call blocks
   // runApp, so a slow or absent network can never white-screen the launch.
   await authProvider.restoreLocalSession();
-  authProvider.addListener(() {
+  if (authProvider.isAuthenticated) {
+    final userId = authProvider.user?.id ?? await secureStorage.getUserId();
+    unawaited(mascotProvider.onUserChanged(
+      userId: userId,
+      isDemo: authProvider.isDemoSession,
+    ));
+    unawaited(gamificationProvider.loadAll());
+  } else {
+    mascotProvider.resetSession();
+    gamificationProvider.resetSession();
+  }
+
+  authProvider.addListener(() async {
     if (authProvider.status == AuthStatus.unauthenticated) {
       journalProvider.resetSession();
+      mascotProvider.resetSession();
+      gamificationProvider.resetSession();
+    } else if (authProvider.status == AuthStatus.authenticated) {
+      final userId = authProvider.user?.id ?? await secureStorage.getUserId();
+      unawaited(mascotProvider.onUserChanged(
+        userId: userId,
+        isDemo: authProvider.isDemoSession,
+      ));
+      unawaited(gamificationProvider.loadAll());
     }
     unawaited(chatbotProvider.synchronizeAccount());
   });

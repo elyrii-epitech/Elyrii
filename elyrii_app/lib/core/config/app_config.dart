@@ -12,7 +12,7 @@ class AppConfig {
 
   static const int _gatewayPort = int.fromEnvironment(
     'ELYRII_API_PORT',
-    defaultValue: 3001,
+    defaultValue: 3000,
   );
   static const String _gatewayUrlOverride = String.fromEnvironment(
     'ELYRII_API_URL',

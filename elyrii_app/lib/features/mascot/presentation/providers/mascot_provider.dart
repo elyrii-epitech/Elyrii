@@ -15,8 +15,20 @@ import '../../../../core/widgets/mascot_with_accessories.dart';
 /// (recoloration via ColorFilter) et préparer le terrain pour les
 /// accessoires futurs et le contrôle des animations.
 class MascotProvider extends ChangeNotifier {
-  static const String _storageKey = 'elyrii_mascot_customization';
-  static const String _themeKey = 'elyrii_mascot_theme';
+  String? _userId;
+  bool _isDemo = false;
+
+  String get _storageKey => _isDemo
+      ? 'elyrii_mascot_customization_demo'
+      : _userId != null
+          ? 'elyrii_mascot_customization_$_userId'
+          : 'elyrii_mascot_customization_guest';
+
+  String get _themeKey => _isDemo
+      ? 'elyrii_mascot_theme_demo'
+      : _userId != null
+          ? 'elyrii_mascot_theme_$_userId'
+          : 'elyrii_mascot_theme_guest';
 
   final ApiClient? _client;
   MascotModel _mascot = MascotModel.defaultMascot();
@@ -59,8 +71,28 @@ class MascotProvider extends ChangeNotifier {
   bool _isSyncing = false;
   String? _error;
 
-  MascotProvider({ApiClient? client}) : _client = client {
-    _loadSavedMascot();
+  MascotProvider({ApiClient? client}) : _client = client;
+
+  /// Met à jour l'utilisateur actif et charge sa mascotte dédiée.
+  Future<void> onUserChanged({String? userId, bool isDemo = false}) async {
+    _userId = userId;
+    _isDemo = isDemo;
+    if (userId == null && !isDemo) {
+      resetSession();
+      return;
+    }
+    await loadMascot();
+  }
+
+  /// Réinitialise la session mascotte à zéro lors de la déconnexion.
+  void resetSession() {
+    _userId = null;
+    _isDemo = false;
+    _mascot = MascotModel.defaultMascot();
+    _error = null;
+    _hasGreeted = false;
+    _reaction = MascotAnimations.idle;
+    notifyListeners();
   }
 
   MascotModel get mascot => _mascot;
@@ -125,8 +157,7 @@ class MascotProvider extends ChangeNotifier {
     notifyListeners();
 
     await _loadSavedMascot();
-
-    if (_client == null) {
+    if (_client == null || _isDemo || _userId == null) {
       _isLoading = false;
       notifyListeners();
       return;
@@ -139,7 +170,7 @@ class MascotProvider extends ChangeNotifier {
       await _saveMascot();
       await _saveTheme(_mascot.themeId);
     } catch (e) {
-      _error = 'Impossible de charger la mascotte depuis le serveur: $e';
+      debugPrint('[MascotProvider] Échec synchronisation distante: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -188,8 +219,7 @@ class MascotProvider extends ChangeNotifier {
   }
 
   Future<void> _syncToBackend() async {
-    if (_client == null) return;
-
+    if (_client == null || _isDemo || _userId == null) return;
     _isSyncing = true;
     _error = null;
     notifyListeners();

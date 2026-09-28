@@ -59,7 +59,7 @@ services:
     image: docker.redpanda.com/redpandadata/console:latest
     container_name: redpanda_console
     ports:
-      - "8080:8080"
+      - "8085:8080"
     depends_on:
       - redpanda
     environment:

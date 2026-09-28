@@ -106,15 +106,15 @@ void main() {
 
         expect(find.text('Chapeau de diplômé'), findsOneWidget);
         expect(find.text('Couronne de Laurier Zen'), findsOneWidget);
-        expect(find.text('Casque Audio Gamer Pro'), findsOneWidget);
+        expect(find.text('Couronne Royale Dorée'), findsOneWidget);
         expect(find.text('Écharpe Moelleuse Cocon'), findsNothing);
 
         // Bascule vers la catégorie Visage
         await tester.tap(find.text('Visage'));
         await tester.pump(const Duration(milliseconds: 200));
 
-        expect(find.text('Lunettes Noires Ray-Ban'), findsOneWidget);
-        expect(find.text('Étoile Céleste Scintillante'), findsOneWidget);
+        expect(find.text('Lunettes Rondes Dorées'), findsOneWidget);
+        expect(find.text('Marguerite Dorée Délicate'), findsOneWidget);
       },
     );
 
@@ -170,7 +170,7 @@ void main() {
         await tester.tap(find.text('Tête'));
         await tester.pump(const Duration(milliseconds: 200));
 
-        await tester.tap(find.text('Casque Audio Gamer Pro'));
+        await tester.tap(find.text('Couronne Royale Dorée'));
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(
