@@ -24,7 +24,7 @@ export async function handleAiResponse() {
             const { userId, response, requestId } = data;
             const conversationId = data.conversationId ?? "default";
 
-            // Resolve pending promise if anyone is waiting for this requestId
+            // Resolve pending promise if anyone is waiting for this requestId.
             if (requestId) {
                 aiResponseTracker.resolveResponse(requestId, response);
             }

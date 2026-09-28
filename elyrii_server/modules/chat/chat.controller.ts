@@ -154,7 +154,7 @@ chatRouter.get("/ws", describeRoute({
                             role: "system",
                             message: "Message dispatch failed",
                         });
-                    } catch (_err) {
+                    } catch {
                         // Ignore persistence error
                     }
                     if (ws.readyState === WebSocket.OPEN) {
@@ -162,7 +162,7 @@ chatRouter.get("/ws", describeRoute({
                     }
                 }
             },
-        }
+        };
     } catch (error) {
         console.error("[Chat] Fatal error during WebSocket upgrade:", error);
         return {
