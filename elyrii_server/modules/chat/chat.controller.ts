@@ -7,7 +7,9 @@ import { resolveWsIdentity } from "../../utils/ws-auth.utils";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import ChatRepository from "../../repository/chat.repository";
 import type { HonoEnv } from "../../utils/hono.types";
-import { aiResponseTracker } from "./response-tracker.utils";
+// NOTE: unused while the blocking AI wait is disabled (delivery is fully
+// asynchronous via consumer.service.ts). Kept for easy re-enable.
+// import { aiResponseTracker } from "./response-tracker.utils";
 
 
 const chatRouter = new Hono<HonoEnv>();
@@ -132,24 +134,21 @@ chatRouter.get("/ws", describeRoute({
                     console.log(`[Chat] Getting history and sending to Kafka for ${userId}...`);
                     const history = await chatRepository.getRecentMessagesForContext(userId, conversationId, 12);
                     const requestId = await sendMessageToTopic(userId, message, { conversationId, history });
-                    
-                    console.log(`[Chat] Waiting for AI response for request ${requestId}...`);
-                    const aiResponse = await aiResponseTracker.waitForResponse(requestId);
-                    console.log(`[Chat] Received AI response for ${requestId}. Proceeding with post-AI logic...`);
-                    
-                    // Post-AI logic can go here
+
+                    console.log(`[Chat] Message dispatched to Kafka (request ${requestId}). Response will arrive asynchronously via the AI consumer.`);
+
+                    // NOTE: The blocking request/response bridge is disabled.
+                    // The AI response is delivered asynchronously by consumer.service.ts,
+                    // which persists it and pushes it to the user's socket whenever it
+                    // arrives on the `elyrii.ai.responses` topic (no timeout).
+                    //
+                    // console.log(`[Chat] Waiting for AI response for request ${requestId}...`);
+                    // const aiResponse = await aiResponseTracker.waitForResponse(requestId);
+                    // console.log(`[Chat] Received AI response for ${requestId}. Proceeding with post-AI logic...`);
+                    //
+                    // // Post-AI logic can go here
                 } catch (error) {
-                    console.error("[Chat] Message dispatch or AI wait failed:", error);
-                    try {
-                        await chatRepository.createMessage({
-                            userId,
-                            conversationId,
-                            role: "system",
-                            message: "Message dispatch failed",
-                        });
-                    } catch (_err) {
-                        // Ignore persistence error
-                    }
+                    console.error("[Chat] Message dispatch failed:", error);
                     ws.send("Une erreur est survenue lors de l'envoi du message.");
                 }
             },

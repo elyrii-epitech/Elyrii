@@ -70,9 +70,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    container_name: postgres_elyrii
     ports:
-      - "5433:5432"
+      - "5432:5432"
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -95,6 +94,7 @@ services:
 volumes:
   redpanda_data:
   pg_data:
+    name: elyrii_pg_data
 
 networks:
   elyrii_net:
