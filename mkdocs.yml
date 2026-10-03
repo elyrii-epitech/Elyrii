@@ -27,6 +27,7 @@ nav:
       - Generated Docs: mobile/api/index.md
   - Server:
       - Overview: server/index.md
+      - Database: server/database.md
       - Generated Docs: server/api/index.md
   - AI:
       - Overview: ai/index.md

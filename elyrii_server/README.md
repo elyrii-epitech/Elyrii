@@ -68,11 +68,17 @@ bun run dev
 
 ### Database Management
 
-The project uses **Drizzle ORM**. To push schema changes to the database:
+The project uses **Drizzle ORM** with checked-in PostgreSQL migrations:
 
 ```bash
-bun run db:push
+bun run db:migrate
 ```
+
+Containers use PostgreSQL 16 with pgvector and apply migrations before starting
+the server. For existing databases previously created with `db:push`, follow the
+[database upgrade guide](../docs/server/database.md) before starting the new stack.
+The guide also describes the three context layers and database-only setup.
+
 
 ## Deployment
 
