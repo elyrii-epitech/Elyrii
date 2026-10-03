@@ -29,7 +29,9 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
   @override
   Widget build(BuildContext context) {
     final color = widget.activity.category.color;
-    final launchesExperience = widget.activity.kind != CoachActivityKind.guidance;
+    final ink = AppColors.readableAccent(color, isDark: widget.isDark);
+    final launchesExperience =
+        widget.activity.kind != CoachActivityKind.guidance;
 
     return Semantics(
       label: widget.activity.title,
@@ -61,11 +63,7 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(
-                        child: Icon(
-                          widget.activity.icon,
-                          size: 18,
-                          color: color,
-                        ),
+                        child: Icon(widget.activity.icon, size: 18, color: ink),
                       ),
                     ),
                     const Spacer(),
@@ -85,7 +83,7 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                             Icon(
                               Icons.play_arrow_rounded,
                               size: 11,
-                              color: color,
+                              color: ink,
                             ),
                             const SizedBox(width: 2),
                           ],
@@ -94,7 +92,7 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: color,
+                              color: ink,
                             ),
                           ),
                         ],
@@ -112,22 +110,16 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Expanded(
-                  child: Text(
-                    widget.activity.description,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: widget.isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
-                      height: 1.4,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  widget.activity.description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: widget.isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight,
+                    height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -141,10 +133,8 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: color,
+                          color: ink,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

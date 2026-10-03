@@ -92,10 +92,7 @@ class _CoachMascotState extends State<CoachMascot> {
       return SizedBox(
         width: widget.size,
         height: widget.size,
-        child: MascotWarmPlaceholder(
-          width: widget.size,
-          height: widget.size,
-        ),
+        child: MascotWarmPlaceholder(width: widget.size, height: widget.size),
       );
     }
     final globalReactionPending =

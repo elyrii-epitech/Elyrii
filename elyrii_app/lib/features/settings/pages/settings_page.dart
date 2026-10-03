@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart'
         CupertinoTextField,
         showCupertinoDialog;
 import 'package:flutter/material.dart';
+import '../../../core/widgets/elyrii_page_header.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -14,7 +15,6 @@ import '../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../core/services/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_dimensions.dart';
 import '../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
@@ -46,7 +46,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final userProvider = context.watch<UserProvider>();
     final appSettings = userProvider.settings;
     final isDark = themeProvider.isDarkMode;
-    final topPadding = MediaQuery.of(context).padding.top;
     final notificationsEnabled =
         appSettings?.notificationsEnabled ?? _notifications;
     final hapticsEnabled = appSettings?.hapticsEnabled ?? _haptics;
@@ -57,302 +56,257 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: Stack(
-        children: [
-          // Contenu : glisse sous la flèche épinglée, sans titre affiché.
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(76, topPadding + 4, 76, 8),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Paramètres',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
-                          height: 1.1,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Ajuste Elyrii à ton rythme.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.35,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Section Apparence
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  context,
-                  title: 'Apparence',
-                  isDark: isDark,
-                  children: [
-                    _SettingsCell(
-                      title: 'Mode sombre',
-                      subtitle: 'Activer le thème sombre',
-                      icon: Icons.dark_mode_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: null,
-                      trailing: CupertinoSwitch(
-                        value: isDark,
-                        activeTrackColor: AppColors.primary,
-                        onChanged: (value) {
-                          final mode = value ? ThemeMode.dark : ThemeMode.light;
-                          themeProvider.setThemeMode(mode);
-                          context.read<UserProvider>().updateSettings(
-                            themeMode: _themeModeToServerValue(mode),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Section Notifications
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  context,
-                  title: 'Notifications',
-                  isDark: isDark,
-                  children: [
-                    _SettingsCell(
-                      title: 'Notifications push',
-                      subtitle: 'Rappels et mises à jour',
-                      icon: Icons.notifications_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: null,
-                      trailing: CupertinoSwitch(
-                        value: notificationsEnabled,
-                        activeTrackColor: AppColors.primary,
-                        onChanged: (value) {
-                          setState(() => _notifications = value);
-                          context.read<UserProvider>().updateSettings(
-                            notificationsEnabled: value,
-                          );
-                        },
-                      ),
-                    ),
-                    _buildDivider(isDark),
-                    _SettingsCell(
-                      title: 'Retour haptique',
-                      subtitle: 'Vibrations lors des interactions',
-                      icon: Icons.vibration_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: null,
-                      trailing: CupertinoSwitch(
-                        value: hapticsEnabled,
-                        activeTrackColor: AppColors.primary,
-                        onChanged: (value) {
-                          setState(() => _haptics = value);
-                          ElyriiHaptics.setEnabled(value);
-                          context.read<UserProvider>().updateSettings(
-                            hapticsEnabled: value,
-                          );
-                          if (value) {
-                            ElyriiHaptics.medium();
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Section Compte
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  context,
-                  title: 'Compte',
-                  isDark: isDark,
-                  children: [
-                    _SettingsCell(
-                      title: 'Profil',
-                      subtitle: 'Gère tes informations',
-                      icon: Icons.person_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: () {
-                        context.push(AppRoutes.editProfile);
-                      },
-                    ),
-                    _buildDivider(isDark),
-                    _SettingsCell(
-                      title: 'Confidentialité stricte',
-                      subtitle: strictPrivacy
-                          ? 'Mode strict activé'
-                          : 'Limite les usages de tes données',
-                      icon: Icons.lock_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: () {
+      body: ElyriiPageFrame(
+        header: const ElyriiPageHeader(
+          title: 'Paramètres',
+          subtitle: 'Ajuste Elyrii à ton rythme.',
+          leading: ElyriiBackButton(),
+        ),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
+
+            // Section Apparence
+            SliverToBoxAdapter(
+              child: _buildSection(
+                context,
+                title: 'Apparence',
+                isDark: isDark,
+                children: [
+                  _SettingsCell(
+                    title: 'Mode sombre',
+                    subtitle: 'Activer le thème sombre',
+                    icon: Icons.dark_mode_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: null,
+                    trailing: CupertinoSwitch(
+                      value: isDark,
+                      activeTrackColor: AppColors.primary,
+                      onChanged: (value) {
+                        final mode = value ? ThemeMode.dark : ThemeMode.light;
+                        themeProvider.setThemeMode(mode);
                         context.read<UserProvider>().updateSettings(
-                          privacyMode: strictPrivacy ? 'STANDARD' : 'STRICT',
-                        );
-                      },
-                      trailing: CupertinoSwitch(
-                        value: strictPrivacy,
-                        activeTrackColor: AppColors.primary,
-                        onChanged: (value) {
-                          context.read<UserProvider>().updateSettings(
-                            privacyMode: value ? 'STRICT' : 'STANDARD',
-                          );
-                        },
-                      ),
-                    ),
-                    _buildDivider(isDark),
-                    _SettingsCell(
-                      title: 'Données et stockage',
-                      subtitle: 'Exporte ou supprime tes contenus',
-                      icon: Icons.storage_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: () {
-                        _showInfoDialog(
-                          title: 'Données et stockage',
-                          message:
-                              'Tes entrées de journal, tes humeurs et tes conversations sont synchronisées avec ton compte sur nos serveurs. Tes préférences (thème, effets visuels, vibrations) et ta session restent stockées localement sur ton appareil. Pour effacer définitivement l’ensemble de tes données, utilise « Supprimer mon compte » ci-dessous.',
+                          themeMode: _themeModeToServerValue(mode),
                         );
                       },
                     ),
-                    _buildDivider(isDark),
-                    _SettingsCell(
-                      title: 'Supprimer mon compte',
-                      subtitle: 'Suppression définitive du compte',
-                      icon: Icons.delete_forever_rounded,
-                      iconColor: AppColors.error,
-                      isDestructive: true,
-                      onTap: _isDeletingAccount
-                          ? null
-                          : () => _showDeleteAccountDialog(),
-                      trailing: _isDeletingAccount
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CupertinoActivityIndicator(radius: 10),
-                            )
-                          : Icon(
-                              Icons.chevron_right_rounded,
-                              size: 20,
-                              color: AppColors.error.withValues(alpha: 0.75),
-                            ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // Section À propos
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  context,
-                  title: 'À propos',
-                  isDark: isDark,
-                  children: [
-                    const _SettingsCell(
-                      title: 'Version',
-                      subtitle: '1.0.0 (Build 1)',
-                      icon: Icons.info_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: null,
-                    ),
-                    _buildDivider(isDark),
-                    _SettingsCell(
-                      title: 'Conditions d\'utilisation',
-                      icon: Icons.description_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: () {
-                        _showInfoDialog(
-                          title: 'Conditions d\'utilisation',
-                          message:
-                              'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+            ),
+            // Section Notifications
+            SliverToBoxAdapter(
+              child: _buildSection(
+                context,
+                title: 'Notifications',
+                isDark: isDark,
+                children: [
+                  _SettingsCell(
+                    title: 'Notifications push',
+                    subtitle: 'Rappels et mises à jour',
+                    icon: Icons.notifications_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: null,
+                    trailing: CupertinoSwitch(
+                      value: notificationsEnabled,
+                      activeTrackColor: AppColors.primary,
+                      onChanged: (value) {
+                        setState(() => _notifications = value);
+                        context.read<UserProvider>().updateSettings(
+                          notificationsEnabled: value,
                         );
                       },
                     ),
-                    _buildDivider(isDark),
-                    _SettingsCell(
-                      title: 'Politique de confidentialité',
-                      icon: Icons.privacy_tip_rounded,
-                      iconColor: AppColors.primary,
-                      onTap: () {
-                        _showInfoDialog(
-                          title: 'Politique de confidentialité',
-                          message:
-                              'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
+                  ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Retour haptique',
+                    subtitle: 'Vibrations lors des interactions',
+                    icon: Icons.vibration_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: null,
+                    trailing: CupertinoSwitch(
+                      value: hapticsEnabled,
+                      activeTrackColor: AppColors.primary,
+                      onChanged: (value) {
+                        setState(() => _haptics = value);
+                        ElyriiHaptics.setEnabled(value);
+                        context.read<UserProvider>().updateSettings(
+                          hapticsEnabled: value,
                         );
+                        if (value) {
+                          ElyriiHaptics.medium();
+                        }
                       },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // Section Déconnexion
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: LiquidGlassButton(
-                    label: 'Se déconnecter',
-                    icon: Icons.logout_rounded,
-                    style: LiquidGlassButtonStyle.gray,
-                    isExpanded: true,
-                    onPressed: () {
-                      showLiquidGlassDialog(
-                        context: context,
-                        title: 'Se déconnecter',
-                        child: const Text(
-                          'Es-tu sûr de vouloir te déconnecter ?',
-                        ),
-                        actions: [
-                          LiquidGlassDialogAction(
-                            label: 'Annuler',
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                          LiquidGlassDialogAction(
-                            label: 'Déconnecter',
-                            isDestructive: true,
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              await context.read<AuthProvider>().logout();
-                              if (context.mounted) {
-                                context.go(AppRoutes.login);
-                              }
-                            },
-                          ),
-                        ],
+            ),
+            // Section Compte
+            SliverToBoxAdapter(
+              child: _buildSection(
+                context,
+                title: 'Compte',
+                isDark: isDark,
+                children: [
+                  _SettingsCell(
+                    title: 'Profil',
+                    subtitle: 'Gère tes informations',
+                    icon: Icons.person_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: () {
+                      context.push(AppRoutes.editProfile);
+                    },
+                  ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Confidentialité stricte',
+                    subtitle: strictPrivacy
+                        ? 'Mode strict activé'
+                        : 'Limite les usages de tes données',
+                    icon: Icons.lock_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: () {
+                      context.read<UserProvider>().updateSettings(
+                        privacyMode: strictPrivacy ? 'STANDARD' : 'STRICT',
+                      );
+                    },
+                    trailing: CupertinoSwitch(
+                      value: strictPrivacy,
+                      activeTrackColor: AppColors.primary,
+                      onChanged: (value) {
+                        context.read<UserProvider>().updateSettings(
+                          privacyMode: value ? 'STRICT' : 'STANDARD',
+                        );
+                      },
+                    ),
+                  ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Données et stockage',
+                    subtitle: 'Exporte ou supprime tes contenus',
+                    icon: Icons.storage_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: () {
+                      _showInfoDialog(
+                        title: 'Données et stockage',
+                        message:
+                            'Tes entrées de journal, tes humeurs et tes conversations sont synchronisées avec ton compte sur nos serveurs. Tes préférences (thème, effets visuels, vibrations) et ta session restent stockées localement sur ton appareil. Pour effacer définitivement l’ensemble de tes données, utilise « Supprimer mon compte » ci-dessous.',
                       );
                     },
                   ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Supprimer mon compte',
+                    subtitle: 'Suppression définitive du compte',
+                    icon: Icons.delete_forever_rounded,
+                    iconColor: AppColors.error,
+                    isDestructive: true,
+                    onTap: _isDeletingAccount
+                        ? null
+                        : () => _showDeleteAccountDialog(),
+                    trailing: _isDeletingAccount
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CupertinoActivityIndicator(radius: 10),
+                          )
+                        : Icon(
+                            Icons.chevron_right_rounded,
+                            size: 20,
+                            color: AppColors.error.withValues(alpha: 0.75),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            // Section À propos
+            SliverToBoxAdapter(
+              child: _buildSection(
+                context,
+                title: 'À propos',
+                isDark: isDark,
+                children: [
+                  const _SettingsCell(
+                    title: 'Version',
+                    subtitle: '1.0.0 (Build 1)',
+                    icon: Icons.info_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: null,
+                  ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Conditions d\'utilisation',
+                    icon: Icons.description_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: () {
+                      _showInfoDialog(
+                        title: 'Conditions d\'utilisation',
+                        message:
+                            'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+                      );
+                    },
+                  ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Politique de confidentialité',
+                    icon: Icons.privacy_tip_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: () {
+                      _showInfoDialog(
+                        title: 'Politique de confidentialité',
+                        message:
+                            'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            // Section Déconnexion
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: LiquidGlassButton(
+                  label: 'Se déconnecter',
+                  icon: Icons.logout_rounded,
+                  style: LiquidGlassButtonStyle.gray,
+                  isExpanded: true,
+                  onPressed: () {
+                    showLiquidGlassDialog(
+                      context: context,
+                      title: 'Se déconnecter',
+                      child: const Text(
+                        'Es-tu sûr de vouloir te déconnecter ?',
+                      ),
+                      actions: [
+                        LiquidGlassDialogAction(
+                          label: 'Annuler',
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        LiquidGlassDialogAction(
+                          label: 'Déconnecter',
+                          isDestructive: true,
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            await context.read<AuthProvider>().logout();
+                            if (context.mounted) {
+                              context.go(AppRoutes.login);
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
-              // Espace en bas
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
-          ),
-          // Flèche retour épinglée, style Accueil : pas de titre affiché.
-          Positioned(
-            top: topPadding + 4,
-            left: AppDimensions.pageHorizontalPadding,
-            child: ElyriiBackButton(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-              onPressed: () {
-                ElyriiHaptics.light();
-                Navigator.pop(context);
-              },
             ),
-          ),
-        ],
+            // Espace en bas
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
+        ),
       ),
     );
   }
@@ -638,8 +592,6 @@ class _SettingsCellState extends State<_SettingsCell> {
                 children: [
                   Text(
                     widget.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -651,8 +603,6 @@ class _SettingsCellState extends State<_SettingsCell> {
                     const SizedBox(height: 2),
                     Text(
                       widget.subtitle!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.3,

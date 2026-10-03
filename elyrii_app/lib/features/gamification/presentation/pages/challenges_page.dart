@@ -294,21 +294,21 @@ class _ChallengesPageState extends State<ChallengesPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'MON JARDIN',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: AppColors.primary,
+            color: isDark ? AppColors.primaryDark : AppColors.primary,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'Jardin',
           style: TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
             height: 1.1,
             color: isDark
@@ -435,8 +435,11 @@ class _ChallengesPageState extends State<ChallengesPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 4,
+
                 children: [
                   Text(
                     'Floraison du sanctuaire',

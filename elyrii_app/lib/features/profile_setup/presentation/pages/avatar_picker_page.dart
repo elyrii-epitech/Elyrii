@@ -6,10 +6,10 @@ import 'package:flutter/cupertino.dart'
         CupertinoDialogAction,
         showCupertinoDialog;
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
@@ -154,7 +154,6 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return PopScope(
       canPop: false,
@@ -166,133 +165,70 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
         backgroundColor: isDark
             ? AppColors.scaffoldDark
             : AppColors.scaffoldLight,
-        body: Stack(
-          children: [
-            CustomScrollView(
-              slivers: [
-                // Dégagement de l'en-tête épinglé (flèche + titre + sous-titre).
-                SliverToBoxAdapter(child: SizedBox(height: topPadding + 72)),
+        body: ElyriiPageFrame(
+          header: ElyriiPageHeader(
+            title: 'Mon avatar',
+            subtitle: 'Choisis ton visage.',
+            leading: ElyriiBackButton(onPressed: _cancel),
+          ),
+          child: CustomScrollView(
+            slivers: [
+              // Dégagement de l'en-tête épinglé (flèche + titre + sous-titre).
 
-                // Aperçu fidèle (3D avec ombre de contact ou photo)
-                SliverToBoxAdapter(child: _buildPreview(isDark)),
+              // Aperçu fidèle (3D avec ombre de contact ou photo)
+              SliverToBoxAdapter(child: _buildPreview(isDark)),
 
-                // Import depuis galerie
-                SliverToBoxAdapter(child: _buildImportCard(isDark)),
+              // Import depuis galerie
+              SliverToBoxAdapter(child: _buildImportCard(isDark)),
 
-                // Presets
-                SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 1,
-                        ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final option = kAvatarOptions[index];
-                      final isSelected =
-                          _customImagePath == null &&
-                          _customAvatarUrl == null &&
-                          _selectedId == option.id;
-                      return _PresetAvatarTile(
-                        option: option,
-                        isSelected: isSelected,
-                        isDark: isDark,
-                        onTap: () {
-                          ElyriiHaptics.selection();
-                          setState(() {
-                            _customImagePath = null;
-                            _customAvatarUrl = null;
-                            _selectedId = option.id;
-                          });
-                        },
-                      );
-                    }, childCount: kAvatarOptions.length),
+              // Presets
+              SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1,
                   ),
-                ),
-
-                // Bouton confirmer
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
-                    child: LiquidGlassButton(
-                      label: 'Choisir cet avatar',
-                      icon: Icons.check_rounded,
-                      isExpanded: true,
-                      onPressed: _confirm,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // En-tête épinglé sur fond opaque : ne suit pas le scroll.
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                color: isDark
-                    ? AppColors.scaffoldDark
-                    : AppColors.scaffoldLight,
-                padding: EdgeInsets.fromLTRB(
-                  AppDimensions.pageHorizontalPadding,
-                  topPadding + 4,
-                  AppDimensions.pageHorizontalPadding,
-                  8,
-                ),
-                child: Row(
-                  children: [
-                    ElyriiBackButton(
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                      onPressed: () {
-                        ElyriiHaptics.light();
-                        _cancel();
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final option = kAvatarOptions[index];
+                    final isSelected =
+                        _customImagePath == null &&
+                        _customAvatarUrl == null &&
+                        _selectedId == option.id;
+                    return _PresetAvatarTile(
+                      option: option,
+                      isSelected: isSelected,
+                      isDark: isDark,
+                      onTap: () {
+                        ElyriiHaptics.selection();
+                        setState(() {
+                          _customImagePath = null;
+                          _customAvatarUrl = null;
+                          _selectedId = option.id;
+                        });
                       },
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Mon avatar',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.8,
-                              height: 1.1,
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Choisis ton visage.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.35,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Contrepoids de la flèche : le texte reste centré.
-                    const SizedBox(width: 44),
-                  ],
+                    );
+                  }, childCount: kAvatarOptions.length),
                 ),
               ),
-            ),
-          ],
+
+              // Bouton confirmer
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
+                  child: LiquidGlassButton(
+                    label: 'Choisir cet avatar',
+                    icon: Icons.check_rounded,
+                    isExpanded: true,
+                    onPressed: _confirm,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

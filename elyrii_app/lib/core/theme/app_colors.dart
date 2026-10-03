@@ -9,7 +9,7 @@ class AppColors {
 
   /// Couleur principale de l'application.
   /// Lavande apaisée, utilisée comme accent plutôt que comme ambiance dominante.
-  static const Color primary = Color(0xFF7E6AD8);
+  static const Color primary = Color(0xFF6752BC);
   static const Color primaryLight = Color(0xFFEDE8FF); // Lavande très pâle
   static const Color primaryDark = Color(
     0xFFA99AF0,
@@ -52,14 +52,14 @@ class AppColors {
 
   /// Light Theme: Tons chauds et apaisants
   static const Color backgroundLight = Color(
-    0xFFFAF8F5,
+    0xFFE8E8EB,
   ); // Beige très clair chaleureux
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color cardLight = Color(0xFFF5F2EF); // Crème doux
 
   static const Color textPrimaryLight = Color(0xFF3D3A38);
-  static const Color textSecondaryLight = Color(0xFF766F6A);
-  static const Color textTertiaryLight = Color(0xFFA39C96);
+  static const Color textSecondaryLight = Color(0xFF675F5B);
+  static const Color textTertiaryLight = Color(0xFF6E6660);
 
   static const Color dividerLight = Color(0xFFE8E3DD);
   static const Color borderLight = Color(0xFFD9D2CC);
@@ -68,7 +68,7 @@ class AppColors {
   // ==================== COULEURS NEUTRES - DARK MODE ====================
 
   /// Dark Theme: Tons sombres chauds et confortables
-  static const Color backgroundDark = Color(0xFF1A1818); // Noir chocolat
+  static const Color backgroundDark = Color(0xFF171719);
   static const Color surfaceDark = Color(0xFF2A2627); // Brun très foncé
   static const Color cardDark = Color(0xFF352F31); // Brun foncé
 
@@ -153,4 +153,23 @@ class AppColors {
 
   /// Overlay pour les modals/dialogs
   static const Color scrim = Color(0x80000000);
+
+  /// Preserve pastel hues in decoration while keeping text readable.
+  static Color readableAccent(Color color, {required bool isDark}) {
+    final background = isDark ? scaffoldDark : scaffoldLight;
+    final luminance = background.computeLuminance();
+    var hsl = HSLColor.fromColor(color);
+    if (!isDark) hsl = hsl.withSaturation(hsl.saturation.clamp(0.0, 0.5));
+    for (var i = 0; i < 40; i++) {
+      final foreground = hsl.toColor().computeLuminance();
+      final ratio = foreground > luminance
+          ? (foreground + 0.05) / (luminance + 0.05)
+          : (luminance + 0.05) / (foreground + 0.05);
+      if (ratio >= 4.5) return hsl.toColor();
+      hsl = hsl.withLightness(
+        (hsl.lightness + (isDark ? 0.025 : -0.025)).clamp(0.0, 1.0),
+      );
+    }
+    return isDark ? textPrimaryDark : textPrimaryLight;
+  }
 }

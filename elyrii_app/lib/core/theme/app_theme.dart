@@ -15,6 +15,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Poppins',
       brightness: Brightness.light,
 
       // Couleurs principales
@@ -30,8 +31,7 @@ class AppTheme {
         },
       ),
       colorScheme: const ColorScheme.light(
-        primary: AppColors
-            .primary, // #9D7FFE - Violet brillant glossy (from #8B6FF0)
+        primary: AppColors.primary,
         primaryContainer:
             AppColors.primaryLight, // #EBE3FF - Lavande glossy très pâle
         secondary: AppColors.secondary, // #FFB5A8 - Pêche doux
@@ -246,6 +246,7 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Poppins',
       brightness: Brightness.dark,
 
       // Couleurs principales
@@ -270,7 +271,7 @@ class AppTheme {
         error: AppColors.error,
         errorContainer: AppColors.errorDark,
         surface: AppColors.surfaceDark, // #2A2627 - Brun très foncé
-        onPrimary: AppColors.textPrimaryDark,
+        onPrimary: AppColors.backgroundDark,
         onSecondary: AppColors.textPrimaryDark,
         onTertiary: AppColors.textPrimaryDark,
         onError: Colors.white,

@@ -175,7 +175,7 @@ class MeditationCatalogView extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    _buildIntentCarousel(isDark),
+                    _buildIntentCarousel(context, isDark),
                     const SizedBox(height: 18),
 
                     // C. Durée de la séance
@@ -215,21 +215,21 @@ class MeditationCatalogView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'MON SOUFFLE',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: AppColors.primary,
+            color: isDark ? AppColors.primaryDark : AppColors.primary,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'Méditation',
           style: TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w800,
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
             height: 1.1,
             color: isDark
@@ -295,49 +295,43 @@ class MeditationCatalogView extends StatelessWidget {
               'Choisis ton intention',
               style: TextStyle(
                 fontSize: 19,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w600,
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
               ),
             ),
             const SizedBox(height: 6),
-            SizedBox(
-              height: 34,
-              child: Center(
-                child: Text(
-                  'Sélectionne un mode de respiration ci-dessous pour façonner ta séance.',
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.35,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
-                ),
+            Text(
+              'Sélectionne un mode de respiration ci-dessous pour façonner ta séance.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
               ),
             ),
           ] else ...[
             // Titre de l'intention et promesse bienveillante
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
                 Text(intent.emoji, style: const TextStyle(fontSize: 18)),
-                const SizedBox(width: 8),
                 Text(
                   intent.title,
                   style: TextStyle(
                     fontSize: 19,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
                   ),
                 ),
-                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 7,
@@ -352,37 +346,32 @@ class MeditationCatalogView extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: intent.type.color,
+                      color: AppColors.readableAccent(
+                        intent.type.color,
+                        isDark: isDark,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            SizedBox(
-              height: 34,
-              child: Center(
-                child: Text(
-                  intent.benefit,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.35,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
-                ),
+            Text(
+              intent.benefit,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.35,
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
               ),
             ),
             const SizedBox(height: 12),
 
-            // Décomposition du cycle en pilule unifiée à hauteur fixe
+            // Les phases peuvent revenir à la ligne avec un texte agrandi.
             Container(
-              height: 32,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.05)
@@ -395,9 +384,10 @@ class MeditationCatalogView extends StatelessWidget {
                   width: 0.6,
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: 4,
                 children: [
                   for (int i = 0; i < intent.type.phases.length; i++) ...[
                     if (i > 0)
@@ -434,9 +424,10 @@ class MeditationCatalogView extends StatelessWidget {
   }
 
   /// Carrousel horizontal des intentions de respiration.
-  Widget _buildIntentCarousel(bool isDark) {
+  Widget _buildIntentCarousel(BuildContext context, bool isDark) {
+    final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 3.0);
     return SizedBox(
-      height: 102,
+      height: 102 * textScale,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -455,7 +446,7 @@ class MeditationCatalogView extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOutCubic,
-              width: 128,
+              width: 128 * textScale,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
@@ -511,17 +502,13 @@ class MeditationCatalogView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Flexible(
-                    child: Text(
-                      intent.subtitle,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    intent.subtitle,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
                     ),
                   ),
                 ],
@@ -555,8 +542,9 @@ class MeditationCatalogView extends StatelessWidget {
           for (final d in _durations)
             d: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+
                 children: [
                   Text(
                     '$d min',
@@ -568,13 +556,13 @@ class MeditationCatalogView extends StatelessWidget {
                           : unselectedColor,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(height: 2),
                   Text(
                     d == 5
-                        ? '• Rapide'
+                        ? 'Rapide'
                         : d == 10
-                        ? '• Idéal'
-                        : '• Profond',
+                        ? 'Idéal'
+                        : 'Profond',
                     style: TextStyle(
                       fontSize: 10,
                       color: d == controller.selectedDurationMinutes

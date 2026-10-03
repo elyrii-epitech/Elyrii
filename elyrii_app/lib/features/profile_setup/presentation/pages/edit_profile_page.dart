@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/profile_option_labels.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
@@ -152,93 +153,45 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(76, topPadding + 4, 76, 8),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Mon profil',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
-                          height: 1.1,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Ce que Elyrii sait de toi.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.35,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                        ),
-                      ),
-                    ],
-                  ),
+      body: ElyriiPageFrame(
+        header: const ElyriiPageHeader(
+          title: 'Mon profil',
+          subtitle: 'Ce qu’Elyrii sait de toi.',
+          leading: ElyriiBackButton(),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
+
+            // Avatar cliquable
+            SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
+
+            // Identite
+            SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
+
+            // Bien-etre
+            SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
+
+            // Save
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+                child: LiquidGlassButton(
+                  label: 'Enregistrer',
+                  icon: Icons.check_rounded,
+                  isLoading: _isSaving,
+                  isExpanded: true,
+                  onPressed: _isSaving ? null : _saveProfile,
                 ),
               ),
-
-              // Avatar cliquable
-              SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
-
-              // Identite
-              SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
-
-              // Bien-etre
-              SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
-
-              // Save
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-                  child: LiquidGlassButton(
-                    label: 'Enregistrer',
-                    icon: Icons.check_rounded,
-                    isLoading: _isSaving,
-                    isExpanded: true,
-                    onPressed: _isSaving ? null : _saveProfile,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Flèche retour épinglée, style Accueil : pas de titre affiché,
-          // l'avatar utilisateur glisse avec le contenu.
-          Positioned(
-            top: topPadding + 4,
-            left: AppDimensions.pageHorizontalPadding,
-            child: ElyriiBackButton(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-              onPressed: () {
-                ElyriiHaptics.light();
-                Navigator.pop(context);
-              },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -331,7 +284,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildLabel('Prenom *', isDark),
+                _buildLabel('Prénom *', isDark),
                 const SizedBox(height: AppDimensions.spacingXs),
                 GlassAuthTextField(
                   controller: _firstNameController,
@@ -405,11 +358,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   onChanged: (v) => setState(() => _selectedGender = v),
                 ),
                 const SizedBox(height: AppDimensions.spacingMd),
-                _buildLabel('Ton objectif bien-etre', isDark),
+                _buildLabel('Ton objectif bien-être', isDark),
                 const SizedBox(height: AppDimensions.spacingXs),
                 _DropdownField(
                   value: _selectedWellnessGoal,
-                  hint: 'Qu\'est-ce qui t\'amene ici ?',
+                  hint: 'Qu\'est-ce qui t\'amène ici ?',
                   icon: Icons.spa_rounded,
                   items: _wellnessGoals,
                   isDark: isDark,
@@ -547,7 +500,7 @@ class _DropdownField extends StatelessWidget {
                   return DropdownMenuItem(
                     value: item,
                     child: Text(
-                      item,
+                      profileOptionLabel(item),
                       style: AppTextStyles.bodyMedium(
                         color: isDark ? Colors.white : Colors.black,
                       ),

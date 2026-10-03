@@ -156,7 +156,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
                         ).copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                           letterSpacing: -0.8,
                         ),
                     textAlign: TextAlign.center,
@@ -370,7 +370,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                         const SizedBox(height: AppDimensions.spacingSm),
                         LiquidGlassButton(
-                          label: 'Mode Dev (Passer sans backend)',
+                          label: 'Découvrir Elyrii',
                           icon: Icons.bolt_rounded,
                           style: LiquidGlassButtonStyle.tinted,
                           isExpanded: true,
@@ -380,10 +380,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 .read<AuthProvider>()
                                 .startDemoSession();
                             if (!context.mounted) return;
-                            context
-                                    .read<ValueNotifier<bool>>()
-                                    .value =
-                                true;
+                            context.read<ValueNotifier<bool>>().value = true;
                             context.go(AppRoutes.home);
                           },
                         ),

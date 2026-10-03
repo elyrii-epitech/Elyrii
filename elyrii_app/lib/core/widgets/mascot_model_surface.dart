@@ -13,6 +13,8 @@ import 'package:flutter_3d_controller/src/data/datasources/i_flutter_3d_datasour
 import 'package:flutter_3d_controller/src/data/repositories/flutter_3d_repository.dart';
 import 'package:flutter_3d_controller/src/utils/utils.dart';
 
+import 'launch_scope.dart';
+
 /// Commandes atomiques : attendre updateComplete avant de jouer/chercher évite
 /// que model-viewer réinitialise le temps, la pause ou le nombre de répétitions.
 class MascotModelController extends Flutter3DController {
@@ -125,36 +127,43 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
   }
 
   @override
-  Widget build(BuildContext context) => ModelViewer(
-    id: _id,
-    src: widget.src,
-    relatedJs: _utils.injectedJS(_id, 'flutter-3d-controller'),
-    cameraControls: widget.interactive,
-    activeGestureInterceptor: widget.interactive,
-    interactionPrompt: InteractionPrompt.none,
-    animationCrossfadeDuration: 320,
-    animationName: 'idle',
-    autoPlay: true,
-    autoRotate: false,
-    ar: false,
-    disableTap: true,
-    debugLogging: false,
-    progressBarColor: Colors.transparent,
-    onWebViewCreated: kIsWeb
-        ? null
-        : (webView) {
-            widget.controller._attach(
-              _id,
-              IFlutter3DDatasource(_id, webView, widget.interactive),
-            );
-          },
-    onLoad: (address) {
-      widget.controller.onModelLoaded.value = true;
-      widget.onLoad(address);
-    },
-    onError: (error) {
-      widget.controller.onModelLoaded.value = false;
-      widget.onError(error);
-    },
-  );
+  Widget build(BuildContext context) {
+    // Native WebViews / web platform views do not reliably blend with a
+    // Flutter opacity overlay. Do not create the surface until the splash
+    // has fully faded; the Flutter placeholder covers loading afterwards.
+    if (LaunchScope.isRevealingOf(context)) return const SizedBox.shrink();
+
+    return ModelViewer(
+      id: _id,
+      src: widget.src,
+      relatedJs: _utils.injectedJS(_id, 'flutter-3d-controller'),
+      cameraControls: widget.interactive,
+      activeGestureInterceptor: widget.interactive,
+      interactionPrompt: InteractionPrompt.none,
+      animationCrossfadeDuration: 320,
+      animationName: 'idle',
+      autoPlay: true,
+      autoRotate: false,
+      ar: false,
+      disableTap: true,
+      debugLogging: false,
+      progressBarColor: Colors.transparent,
+      onWebViewCreated: kIsWeb
+          ? null
+          : (webView) {
+              widget.controller._attach(
+                _id,
+                IFlutter3DDatasource(_id, webView, widget.interactive),
+              );
+            },
+      onLoad: (address) {
+        widget.controller.onModelLoaded.value = true;
+        widget.onLoad(address);
+      },
+      onError: (error) {
+        widget.controller.onModelLoaded.value = false;
+        widget.onError(error);
+      },
+    );
+  }
 }

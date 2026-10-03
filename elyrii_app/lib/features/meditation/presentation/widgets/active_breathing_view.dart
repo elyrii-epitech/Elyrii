@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -145,6 +146,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
     final currentPhase = widget.controller.currentPhase;
     final isPaused = widget.controller.isPaused;
     final accent = widget.controller.selectedBreathingType!.color;
+    final ink = AppColors.readableAccent(accent, isDark: isDark);
 
     return Column(
       children: [
@@ -174,7 +176,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                     Text(
                       widget.controller.selectedBreathingType!.label,
                       style: AppTextStyles.labelMedium(
-                        color: accent,
+                        color: ink,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -207,7 +209,16 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final orbSize = (constraints.maxWidth * 0.80).clamp(260.0, 340.0);
+              final scaler = MediaQuery.textScalerOf(context);
+              final labelsHeight =
+                  scaler.scale(28) * 1.29 + scaler.scale(16) * 1.5 + 34;
+              final orbSize = math.max(
+                0.0,
+                math.min(
+                  math.min(constraints.maxWidth * 0.8, 340.0),
+                  constraints.maxHeight - labelsHeight,
+                ),
+              );
               return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -217,7 +228,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                   Text(
                     isPaused ? 'En pause' : currentPhase.label,
                     style: AppTextStyles.headlineMedium(
-                      color: accent,
+                      color: ink,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -246,7 +257,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                 icon: Icons.refresh_rounded,
                 value: '${widget.controller.completedCycles}',
                 label: 'cycles',
-                color: accent,
+                color: ink,
               ),
               _buildStatPill(
                 isDark,
@@ -289,7 +300,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                 child: Icon(
                   isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                   size: 36,
-                  color: accent,
+                  color: ink,
                 ),
               ),
             ],

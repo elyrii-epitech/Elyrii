@@ -54,7 +54,6 @@ class _CoachPageState extends State<CoachPage> {
 
     return Consumer<CoachProvider>(
       builder: (context, provider, _) {
-
         return Scaffold(
           backgroundColor: isDark
               ? AppColors.scaffoldDark
@@ -84,18 +83,19 @@ class _CoachPageState extends State<CoachPage> {
                       // juste dessous comme une réponse naturelle.
                       const SizedBox(height: 10),
                       Center(
-                        child: CoachMascot(
-                          size: 210,
-                          onTap: provider.nextMascotMessage,
-                        )
-                            .animate()
-                            .fadeIn(duration: 450.ms, delay: 60.ms)
-                            .slideY(
-                              begin: 0.05,
-                              end: 0,
-                              duration: 450.ms,
-                              curve: Curves.easeOutCubic,
-                            ),
+                        child:
+                            CoachMascot(
+                                  size: 210,
+                                  onTap: provider.nextMascotMessage,
+                                )
+                                .animate()
+                                .fadeIn(duration: 450.ms, delay: 60.ms)
+                                .slideY(
+                                  begin: 0.05,
+                                  end: 0,
+                                  duration: 450.ms,
+                                  curve: Curves.easeOutCubic,
+                                ),
                       ),
 
                       // ---- Routage par besoin immédiat ----
@@ -137,7 +137,11 @@ class _CoachPageState extends State<CoachPage> {
                         isDark,
                       ),
                       const SizedBox(height: 12),
-                      _buildCategoryGrid(context, provider.allActivities, isDark),
+                      _buildCategoryGrid(
+                        context,
+                        provider.allActivities,
+                        isDark,
+                      ),
                     ],
                   ),
                 ),
@@ -153,13 +157,13 @@ class _CoachPageState extends State<CoachPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'MON COACH',
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: AppColors.primary,
+            color: isDark ? AppColors.primaryDark : AppColors.primary,
           ),
         ),
         const SizedBox(height: 2),
@@ -167,7 +171,7 @@ class _CoachPageState extends State<CoachPage> {
           'Elyrii t\'accompagne',
           style: TextStyle(
             fontSize: 32,
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w600,
             letterSpacing: -0.8,
             height: 1.1,
             color: isDark
@@ -250,12 +254,22 @@ class _CoachPageState extends State<CoachPage> {
             children: [
               for (var i = 0; i < activities.length; i++) ...[
                 CoachActivityCell(
-                  activity: activities[i],
-                  isDark: isDark,
-                  onTap: () => launchCoachActivity(context, activities[i]),
-                ).animate(key: ValueKey('${selectedNeed?.name}-${activities[i].id}'))
+                      activity: activities[i],
+                      isDark: isDark,
+                      onTap: () => launchCoachActivity(context, activities[i]),
+                    )
+                    .animate(
+                      key: ValueKey(
+                        '${selectedNeed?.name}-${activities[i].id}',
+                      ),
+                    )
                     .fadeIn(duration: 220.ms, delay: (i * 45).ms)
-                    .slideY(begin: 0.06, end: 0, duration: 220.ms, delay: (i * 45).ms),
+                    .slideY(
+                      begin: 0.06,
+                      end: 0,
+                      duration: 220.ms,
+                      delay: (i * 45).ms,
+                    ),
                 if (i < activities.length - 1)
                   // Séparateur inseté après l'icône (padding 14 + icône 40 + écart 12).
                   Padding(
@@ -333,23 +347,29 @@ class _CoachPageState extends State<CoachPage> {
     List<CoachActivity> activities,
     bool isDark,
   ) {
-    return GridView.builder(
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: activities.length,
-      itemBuilder: (context, index) {
-        final activity = activities[index];
-        return CoachActivityCard(
-          activity: activity,
-          isDark: isDark,
-          onTap: () => launchCoachActivity(context, activity),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns =
+            constraints.maxWidth >= 340 &&
+                MediaQuery.textScalerOf(context).scale(1) <= 1.2
+            ? 2
+            : 1;
+        final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: activities
+              .map(
+                (activity) => SizedBox(
+                  width: width,
+                  child: CoachActivityCard(
+                    activity: activity,
+                    isDark: isDark,
+                    onTap: () => launchCoachActivity(context, activity),
+                  ),
+                ),
+              )
+              .toList(),
         );
       },
     );

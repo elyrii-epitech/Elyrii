@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart'
         CupertinoDialogAction,
         showCupertinoDialog;
 import 'package:flutter/material.dart';
+import '../../../../core/constants/profile_option_labels.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -398,7 +399,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppDimensions.spacingXl),
 
-          _buildLabel('Prenom', isDark),
+          _buildLabel('Prénom', isDark),
           const SizedBox(height: AppDimensions.spacingXs),
           GlassAuthTextField(
             controller: _firstNameController,
@@ -431,7 +432,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppDimensions.spacingMd),
 
-          _buildLabel('Ton objectif bien-etre', isDark),
+          _buildLabel('Ton objectif bien-être', isDark),
           const SizedBox(height: AppDimensions.spacingXs),
           _GoalSelector(
             value: _selectedWellnessGoal,
@@ -446,64 +447,63 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   // ---- Step 2 : Bienvenue ----
 
   Widget _buildWelcomeStep(bool isDark) {
-    return Center(
+    return SingleChildScrollView(
       key: const ValueKey(2),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLg,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // La mascotte accueille l'utilisateur en 3D (salut bienveillant)
-            // ou montre l'avatar choisi s'il s'agit d'une image.
-            if (isMascotAvatar(_selectedPfp))
-              MascotAvatarPreview(
-                    width: 220,
-                    height: 220,
-                    isDark: isDark,
-                    animation: MascotAnimations.greet,
-                  )
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .scale(
-                    begin: const Offset(0.7, 0.7),
-                    end: const Offset(1, 1),
-                    curve: Curves.easeOutBack,
-                  )
-            else
-              UserAvatar(pfp: _selectedPfp, size: 120)
-                  .animate()
-                  .fadeIn(duration: 500.ms)
-                  .scale(
-                    begin: const Offset(0.7, 0.7),
-                    end: const Offset(1, 1),
-                    curve: Curves.easeOutBack,
-                  ),
-            const SizedBox(height: AppDimensions.spacingXl),
-            Text(
-              'Ton espace est pret',
-              style: AppTextStyles.headlineMedium(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ).copyWith(fontWeight: FontWeight.w800),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
-            const SizedBox(height: AppDimensions.spacingMd),
-            Text(
-              'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
-              'explore a ton rythme et n\'oublie pas : chaque petit pas '
-              'compte vers ton bien-etre.',
-              style: AppTextStyles.bodyMedium(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ).copyWith(height: 1.6),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
-          ],
-        ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingLg,
+        vertical: 16,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // La mascotte accueille l'utilisateur en 3D (salut bienveillant)
+          // ou montre l'avatar choisi s'il s'agit d'une image.
+          if (isMascotAvatar(_selectedPfp))
+            MascotAvatarPreview(
+                  width: 220,
+                  height: 220,
+                  isDark: isDark,
+                  animation: MascotAnimations.greet,
+                )
+                .animate()
+                .fadeIn(duration: 500.ms)
+                .scale(
+                  begin: const Offset(0.7, 0.7),
+                  end: const Offset(1, 1),
+                  curve: Curves.easeOutBack,
+                )
+          else
+            UserAvatar(pfp: _selectedPfp, size: 120)
+                .animate()
+                .fadeIn(duration: 500.ms)
+                .scale(
+                  begin: const Offset(0.7, 0.7),
+                  end: const Offset(1, 1),
+                  curve: Curves.easeOutBack,
+                ),
+          const SizedBox(height: AppDimensions.spacingXl),
+          Text(
+            'Ton espace est prêt',
+            style: AppTextStyles.headlineMedium(
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ).copyWith(fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+          const SizedBox(height: AppDimensions.spacingMd),
+          Text(
+            'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
+            'explore à ton rythme et n\'oublie pas : chaque petit pas '
+            'compte vers ton bien-être.',
+            style: AppTextStyles.bodyMedium(
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ).copyWith(height: 1.6),
+            textAlign: TextAlign.center,
+          ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
+        ],
       ),
     );
   }
@@ -635,11 +635,13 @@ class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
           Icon(widget.icon, size: 20, color: textColor),
           const SizedBox(width: 8),
         ],
-        Text(
-          widget.label,
-          style: AppTextStyles.bodyLarge(
-            color: textColor,
-          ).copyWith(fontWeight: FontWeight.w700),
+        Flexible(
+          child: Text(
+            widget.label,
+            style: AppTextStyles.bodyLarge(
+              color: textColor,
+            ).copyWith(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
@@ -690,7 +692,7 @@ class _GoalSelector extends StatelessWidget {
               ),
             ),
             child: Text(
-              goal,
+              profileOptionLabel(goal),
               style: AppTextStyles.bodyMedium(
                 color: isSelected
                     ? Colors.white

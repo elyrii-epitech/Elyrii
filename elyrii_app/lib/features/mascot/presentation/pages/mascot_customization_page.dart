@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../widgets/accessory_card.dart';
@@ -9,7 +10,6 @@ import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
@@ -104,147 +104,80 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: SafeArea(
-        bottom: false,
-        child: Consumer2<MascotProvider, GamificationProvider>(
-          builder: (context, provider, gamification, _) {
-            final completedCount = gamification.completedChallenges.length;
-            return Stack(
-              children: [
-                CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // Dégagement de l'en-tête épinglé (flèche + titre + reset).
-                    const SliverToBoxAdapter(
-                      child: SizedBox(height: AppDimensions.spacingSm + 72),
-                    ),
-                    SliverToBoxAdapter(child: _buildPreview(isDark, provider)),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                        child: _buildSectionTitle(isDark),
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 0.72,
-                            ),
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final theme = MascotThemes.all[index];
-                          final isSelected =
-                              provider.mascot.themeId == theme.id;
-                          return _ThemeCard(
-                            theme: theme,
-                            isSelected: isSelected,
-                            isDark: isDark,
-                            onTap: () {
-                              ElyriiHaptics.selection();
-                              if (provider.mascot.themeId != theme.id) {
-                                provider.setTheme(theme.id);
-                                _react(MascotAnimations.proud);
-                              }
-                            },
-                          );
-                        }, childCount: MascotThemes.all.length),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
-                        child: _buildAccessoriesTitle(isDark),
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      sliver: SliverToBoxAdapter(
-                        child: _buildAccessoriesGrid(
-                          isDark,
-                          provider,
-                          completedCount,
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 120)),
-                  ],
-                ),
-                // En-tête épinglé sur fond opaque : ne suit pas le scroll.
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    color: isDark
-                        ? AppColors.scaffoldDark
-                        : AppColors.scaffoldLight,
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimensions.pageHorizontalPadding,
-                      AppDimensions.spacingSm,
-                      AppDimensions.pageHorizontalPadding,
-                      8,
-                    ),
-                    child: _buildHeader(context, isDark, provider),
+      body: Consumer2<MascotProvider, GamificationProvider>(
+        builder: (context, provider, gamification, _) {
+          final completedCount = gamification.completedChallenges.length;
+          return ElyriiPageFrame(
+            header: ElyriiPageHeader(
+              title: 'Personnalisation',
+              subtitle: 'Thèmes et accessoires d’Elyrii.',
+              leading: const ElyriiBackButton(),
+              trailing: LiquidGlassIconButton(
+                icon: Icons.restart_alt_rounded,
+                size: 44,
+                onPressed: provider.resetToDefault,
+              ),
+            ),
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: _buildPreview(isDark, provider)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+                    child: _buildSectionTitle(isDark),
                   ),
                 ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(
-    BuildContext context,
-    bool isDark,
-    MascotProvider provider,
-  ) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    return Row(
-      children: [
-        ElyriiBackButton(color: textColor),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            children: [
-              Text(
-                'Personnalisation',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                  height: 1.1,
-                  color: textColor,
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      mainAxisExtent:
+                          142 * MediaQuery.textScalerOf(context).scale(1),
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final theme = MascotThemes.all[index];
+                      final isSelected = provider.mascot.themeId == theme.id;
+                      return _ThemeCard(
+                        theme: theme,
+                        isSelected: isSelected,
+                        isDark: isDark,
+                        onTap: () {
+                          ElyriiHaptics.selection();
+                          if (provider.mascot.themeId != theme.id) {
+                            provider.setTheme(theme.id);
+                            _react(MascotAnimations.proud);
+                          }
+                        },
+                      );
+                    }, childCount: MascotThemes.all.length),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Thèmes et accessoires d\'Elyrii.',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.bodySmall(color: subtitleColor),
-              ),
-            ],
-          ),
-        ),
-        LiquidGlassIconButton(
-          icon: Icons.restart_alt_rounded,
-          size: 44,
-          color: subtitleColor,
-          onPressed: provider.resetToDefault,
-        ),
-      ],
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
+                    child: _buildAccessoriesTitle(isDark),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverToBoxAdapter(
+                    child: _buildAccessoriesGrid(
+                      isDark,
+                      provider,
+                      completedCount,
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 120)),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -623,11 +556,16 @@ class _ThemeCard extends StatelessWidget {
             Text(
               theme.name,
               style: AppTextStyles.labelMedium(
-                color: isSelected ? theme.accentColor : textColor,
+                color: isSelected
+                    ? AppColors.readableAccent(
+                        theme.accentColor,
+                        isDark: isDark,
+                      )
+                    : textColor,
                 fontWeight: FontWeight.w700,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             AnimatedSwitcher(

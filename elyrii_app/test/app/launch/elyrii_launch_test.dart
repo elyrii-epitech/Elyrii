@@ -1,4 +1,6 @@
 import 'package:elyrii_app/app/launch/elyrii_launch.dart';
+import 'package:elyrii_app/core/widgets/launch_scope.dart';
+import 'package:elyrii_app/core/widgets/mascot_model_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -33,7 +35,7 @@ void main() {
     expect(taps, 0);
 
     await decodeMark(tester);
-    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump(const Duration(milliseconds: 3200));
     expect(find.byType(ElyriiLaunchScene), findsNothing);
     expect(mounts, 1);
     await tester.tap(find.byType(TextButton));
@@ -45,6 +47,102 @@ void main() {
     expect(mounts, 1);
     expect(find.byType(ElyriiLaunchScene), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('holds readable text before a gradual fade into the page', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ElyriiLaunch(
+          child: Builder(
+            builder: (context) =>
+                Text(LaunchScope.isRevealingOf(context) ? 'Waiting' : 'Ready'),
+          ),
+        ),
+      ),
+    );
+    await decodeMark(tester);
+
+    double overlayOpacity() => tester
+        .widget<Opacity>(
+          find.ancestor(
+            of: find.byType(ElyriiLaunchScene),
+            matching: find.byType(Opacity),
+          ),
+        )
+        .opacity;
+
+    await tester.pump(const Duration(milliseconds: 800));
+    expect(overlayOpacity(), 1);
+    expect(
+      tester
+          .widget<Opacity>(
+            find
+                .ancestor(
+                  of: find.text('elyrii'),
+                  matching: find.byType(Opacity),
+                )
+                .first,
+          )
+          .opacity,
+      1,
+    );
+    expect(find.text('Un instant pour toi.'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 1300));
+    expect(overlayOpacity(), 1);
+    expect(find.text('Waiting'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 480));
+    expect(overlayOpacity(), closeTo(0.5, 0.02));
+    expect(find.text('Waiting'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(ElyriiLaunchScene), findsNothing);
+    expect(find.text('Ready'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('does not create the mascot platform view during the fade', (
+    tester,
+  ) async {
+    final controller = MascotModelController();
+    addTearDown(controller.onModelLoaded.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ElyriiLaunch(
+          child: MascotModelSurface(
+            src: 'assets/optimized/mascot.glb',
+            controller: controller,
+            onLoad: (_) => fail('The model must not load under the splash'),
+            onError: (_) =>
+                fail('The renderer must not start under the splash'),
+          ),
+        ),
+      ),
+    );
+    await decodeMark(tester);
+    await tester.pump(const Duration(milliseconds: 2580));
+
+    // This tests the real surface, bypassing Mascot3DViewer's test fallback.
+    expect(find.byType(ElyriiLaunchScene), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(MascotModelSurface),
+        matching: find.byWidgetPredicate(
+          (widget) => widget.runtimeType.toString() == 'ModelViewer',
+        ),
+      ),
+      findsNothing,
+    );
+    expect(controller.onModelLoaded.value, isFalse);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets('reduced motion enters the page without waiting for the reveal', (

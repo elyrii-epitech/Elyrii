@@ -3,7 +3,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// A short brand reveal over the live router, independent of network readiness.
+import '../../core/widgets/launch_scope.dart';
+
+/// A readable brand reveal over the live router, independent of network readiness.
 /// Keeping the routed child in the same slot preserves navigation and page state.
 class ElyriiLaunch extends StatefulWidget {
   const ElyriiLaunch({super.key, required this.child});
@@ -18,7 +20,8 @@ class _ElyriiLaunchState extends State<ElyriiLaunch>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 450),
+    // Reveal the text in 750 ms, hold it, then fade into the app over 840 ms.
+    duration: const Duration(milliseconds: 3000),
   )..addStatusListener(_onStatus);
   bool _started = false;
   bool _finished = false;
@@ -90,11 +93,14 @@ class _ElyriiLaunchState extends State<ElyriiLaunch>
     return Stack(
       fit: StackFit.expand,
       children: [
-        ExcludeFocus(
-          excluding: !_finished,
-          child: ExcludeSemantics(
+        LaunchScope(
+          isRevealing: !_finished,
+          child: ExcludeFocus(
             excluding: !_finished,
-            child: IgnorePointer(ignoring: !_finished, child: widget.child),
+            child: ExcludeSemantics(
+              excluding: !_finished,
+              child: IgnorePointer(ignoring: !_finished, child: widget.child),
+            ),
           ),
         ),
         if (!_finished)
@@ -132,7 +138,7 @@ class ElyriiLaunchScene extends StatelessWidget {
   Widget build(BuildContext context) {
     final reveal = const Interval(
       0.04,
-      0.5,
+      0.25,
       curve: Curves.easeOutCubic,
     ).transform(progress);
     final breath = math.sin(progress * math.pi);

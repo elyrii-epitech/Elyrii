@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart'
     show CupertinoSlidingSegmentedControl, CupertinoSliverRefreshControl;
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -64,7 +65,6 @@ class _ReviewsPageState extends State<ReviewsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: isDark
@@ -80,93 +80,78 @@ class _ReviewsPageState extends State<ReviewsPage> {
               snapshot.connectionState == ConnectionState.waiting &&
               data == null;
 
-          return Stack(
-            children: [
-              CustomScrollView(
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                slivers: [
-                  // Dégagement de l'en-tête épinglé (flèche + titre + sous-titre).
-                  SliverToBoxAdapter(child: SizedBox(height: topPadding + 72)),
-                  CupertinoSliverRefreshControl(onRefresh: _reload),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                    sliver: SliverList(
-                      delegate: SliverChildListDelegate([
-                        _RangeSelector(
-                          isDark: isDark,
-                          selectedRange: _selectedRange,
-                          onSelected: _selectRange,
-                        ),
-                        const SizedBox(height: 20),
-                        if (isWaiting)
-                          _ReviewsSkeleton(isDark: isDark)
-                        else if (snapshot.hasError)
-                          LiquidGlassCard(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'Impossible de charger le bilan pour le moment.',
-                                style: TextStyle(
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ),
+          return ElyriiPageFrame(
+            header: ElyriiPageHeader(
+              title: 'Bilan',
+              subtitle: 'Ta semaine, en un coup d’œil.',
+              leading: ElyriiBackButton(
+                onPressed: () => Navigator.maybePop(context),
+              ),
+            ),
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              slivers: [
+                // Dégagement de l'en-tête épinglé (flèche + titre + sous-titre).
+                CupertinoSliverRefreshControl(onRefresh: _reload),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _RangeSelector(
+                        isDark: isDark,
+                        selectedRange: _selectedRange,
+                        onSelected: _selectRange,
+                      ),
+                      const SizedBox(height: 20),
+                      if (isWaiting)
+                        _ReviewsSkeleton(isDark: isDark)
+                      else if (snapshot.hasError)
+                        LiquidGlassCard(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              'Impossible de charger le bilan pour le moment.',
+                              style: TextStyle(
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
                               ),
                             ),
-                          )
-                        else if (data != null) ...[
-                          _OverviewGrid(stats: data, isDark: isDark),
-                          const SizedBox(height: 20),
-                          _SectionHeader(
-                            title: 'Tendance de l’humeur',
-                            subtitle: 'Nombre de prises d’humeur par jour',
-                            isDark: isDark,
                           ),
-                          _TrendChart(stats: data, isDark: isDark),
-                          const SizedBox(height: 20),
-                          _SectionHeader(
-                            title: 'Répartition',
-                            subtitle: 'Ce qui ressort le plus sur la période',
-                            isDark: isDark,
-                          ),
-                          _MoodDistributionList(stats: data, isDark: isDark),
-                          const SizedBox(height: 20),
-                          _SectionHeader(
-                            title: 'Activité',
-                            subtitle:
-                                'Journal et humeur sur la même ligne du temps',
-                            isDark: isDark,
-                          ),
-                          _ActivityTimeline(stats: data, isDark: isDark),
-                          const SizedBox(height: 140),
-                        ],
-                      ]),
-                    ),
+                        )
+                      else if (data != null) ...[
+                        _OverviewGrid(stats: data, isDark: isDark),
+                        const SizedBox(height: 20),
+                        _SectionHeader(
+                          title: 'Tendance de l’humeur',
+                          subtitle: 'Nombre de prises d’humeur par jour',
+                          isDark: isDark,
+                        ),
+                        _TrendChart(stats: data, isDark: isDark),
+                        const SizedBox(height: 20),
+                        _SectionHeader(
+                          title: 'Répartition',
+                          subtitle: 'Ce qui ressort le plus sur la période',
+                          isDark: isDark,
+                        ),
+                        _MoodDistributionList(stats: data, isDark: isDark),
+                        const SizedBox(height: 20),
+                        _SectionHeader(
+                          title: 'Activité',
+                          subtitle:
+                              'Journal et humeur sur la même ligne du temps',
+                          isDark: isDark,
+                        ),
+                        _ActivityTimeline(stats: data, isDark: isDark),
+                        const SizedBox(height: 140),
+                      ],
+                    ]),
                   ),
-                ],
-              ),
-              // En-tête épinglé sur fond opaque : ne suit pas le scroll,
-              // le contenu disparaît derrière.
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  color: isDark
-                      ? AppColors.scaffoldDark
-                      : AppColors.scaffoldLight,
-                  padding: EdgeInsets.fromLTRB(
-                    AppDimensions.pageHorizontalPadding,
-                    topPadding + 4,
-                    AppDimensions.pageHorizontalPadding,
-                    8,
-                  ),
-                  child: _buildHeader(context, isDark),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -175,55 +160,6 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
   /// En-tête épinglé : retour glass, titre et sous-titre centrés sur la
   /// flèche — ne suivent pas le scroll.
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    return Row(
-      children: [
-        ElyriiBackButton(
-          color: isDark
-              ? AppColors.textPrimaryDark
-              : AppColors.textPrimaryLight,
-          onPressed: () {
-            ElyriiHaptics.light();
-            Navigator.maybePop(context);
-          },
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            children: [
-              Text(
-                'Bilan',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.8,
-                  height: 1.1,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Ta semaine, en un coup d’œil.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.35,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Contrepoids de la flèche : le texte reste centré à l’écran.
-        const SizedBox(width: 44),
-      ],
-    );
-  }
 }
 
 /// Sélecteur de période façon iOS : segmented control coulissant natif.
@@ -382,7 +318,7 @@ class _OverviewGrid extends StatelessWidget {
             _SummaryTile(
               width: tileWidth,
               icon: Icons.local_fire_department_rounded,
-              label: 'Streak',
+              label: 'Série',
               value: '${stats.streak}',
               color: AppColors.secondary,
               isDark: isDark,

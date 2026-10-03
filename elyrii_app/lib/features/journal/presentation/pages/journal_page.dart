@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -64,7 +65,6 @@ class _JournalPageState extends State<JournalPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: isDark
@@ -74,42 +74,22 @@ class _JournalPageState extends State<JournalPage> {
         builder: (context, provider, child) {
           final entries = provider.entries;
 
-          return Stack(
-            children: [
-              CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
+          return ElyriiPageFrame(
+            header: _buildHeader(isDark, provider),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
+                // 1. Tirer-relâcher natif Cupertino (remplace tout refresh Material)
+                CupertinoSliverRefreshControl(
+                  onRefresh: () => provider.loadEntries(),
                 ),
-                slivers: [
-                  // 1. Tirer-relâcher natif Cupertino (remplace tout refresh Material)
-                  CupertinoSliverRefreshControl(
-                    onRefresh: () => provider.loadEntries(),
-                  ),
 
-                  // 2. En-tête spatial fluide (le titre défile avec le contenu)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        AppDimensions.pageHorizontalPadding,
-                        topPadding + 14,
-                        AppDimensions.pageHorizontalPadding,
-                        4,
-                      ),
-                      child: _buildHeader(isDark),
-                    ),
-                  ),
-
-                  ..._buildContentSlivers(entries, isDark),
-                ],
-              ),
-
-              // Boutons d'actions épinglés au scroll (tri et ajout de note restent fixes)
-              Positioned(
-                top: topPadding + 14,
-                right: AppDimensions.pageHorizontalPadding,
-                child: _buildPinnedActions(provider),
-              ),
-            ],
+                // 2. En-tête spatial fluide (le titre défile avec le contenu)
+                ..._buildContentSlivers(entries, isDark),
+              ],
+            ),
           );
         },
       ),
@@ -143,30 +123,30 @@ class _JournalPageState extends State<JournalPage> {
   }
 
   /// En-tête spatial sans vide noir : le titre glisse sous les boutons épinglés.
-  Widget _buildHeader(bool isDark) {
+  Widget _buildHeader(bool isDark, JournalProvider provider) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Colonne titre & sur-titre
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'MES PENSÉES',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
-                  color: AppColors.primary,
+                  color: isDark ? AppColors.primaryDark : AppColors.primary,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Journal',
                 style: TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: -0.8,
                   height: 1.1,
                   color: isDark
@@ -188,8 +168,8 @@ class _JournalPageState extends State<JournalPage> {
             ],
           ),
         ),
-        // Espace réservé pour ne pas chevaucher les boutons épinglés au scroll
-        const SizedBox(width: 96 + 12),
+        // Actions alignées à côté du titre dans l’en-tête épinglé.
+        _buildPinnedActions(provider),
       ],
     );
   }
@@ -238,7 +218,10 @@ class _JournalPageState extends State<JournalPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           'Refuge de l\'esprit',
@@ -250,7 +233,7 @@ class _JournalPageState extends State<JournalPage> {
                                 : AppColors.textPrimaryLight,
                           ),
                         ),
-                        const SizedBox(width: 6),
+
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,

@@ -53,7 +53,10 @@ class MeditationSummaryView extends StatelessWidget {
     final subtitleColor = isDark
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
-    final accent = controller.selectedBreathingType!.color;
+    final accent = AppColors.readableAccent(
+      controller.selectedBreathingType!.color,
+      isDark: isDark,
+    );
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -124,8 +127,11 @@ class MeditationSummaryView extends StatelessWidget {
           const SizedBox(height: AppDimensions.spacingLg),
 
           // Sélecteur d'humeur
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            alignment: WrapAlignment.center,
+
             children: _moods.asMap().entries.map((entry) {
               final index = entry.key;
               final mood = entry.value;

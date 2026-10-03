@@ -136,7 +136,9 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = AppColors.primary;
+    final primaryColor = widget.isDark
+        ? AppColors.primaryDark
+        : AppColors.primary;
 
     return Expanded(
       child: Semantics(
@@ -205,6 +207,7 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                           AnimatedDefaultTextStyle(
                             duration: const Duration(milliseconds: 200),
                             style: TextStyle(
+                              fontFamily: 'Poppins',
                               fontSize: widget.isSelected ? 10.5 : 10.0,
                               fontWeight: widget.isSelected
                                   ? FontWeight.w600
@@ -216,10 +219,9 @@ class _GlassNavItemViewState extends State<_GlassNavItemView>
                                         : AppColors.iconDefaultLight),
                               letterSpacing: -0.2,
                             ),
-                            child: Text(
-                              widget.item.label,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(widget.item.label, maxLines: 1),
                             ),
                           ),
                         ],

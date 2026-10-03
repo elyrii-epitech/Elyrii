@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
 
-/// Palette sémantique unifiée Elyrii (WCAG 2.2 AA conforme).
+/// Palette sémantique unifiée Elyrii.
 /// Inspirée des principes de clarté Apple : rôles fonctionnels plutôt que noms d'apparence.
 abstract final class ElyriiColors {
   // Teintes fondamentales (Lavande apaisante, Pêche chaleureuse, Menthe douce)
-  static const Color brandPrimary = Color(0xFF7E6AD8);
+  static const Color brandPrimary = AppColors.primary;
   static const Color brandSecondary = Color(0xFFFFB5A8);
   static const Color brandAccent = Color(0xFFA8D5BA);
 
   // Arrière-plans Scaffolds
-  static const Color backgroundLight = Color(0xFFFBF9F7); // Écru chaud reposant
-  static const Color backgroundDark = Color(
-    0xFF141314,
-  ); // Noir chocolat profond
+  static const Color backgroundLight =
+      AppColors.backgroundLight; // Écru chaud reposant
+  static const Color backgroundDark =
+      AppColors.backgroundDark; // Noir chocolat profond
 
   // Surfaces de contenu (Cartes, Conteneurs)
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceDark = Color(0xFF201E20);
+  static const Color surfaceLight = AppColors.surfaceLight;
+  static const Color surfaceDark = AppColors.surfaceDark;
 
   // Verre Translucide (Liquid Glass fonctionnel)
   static const Color glassLight = Color(0xD9FFFFFF); // 85% blanc pur
@@ -26,13 +27,13 @@ abstract final class ElyriiColors {
   ); // Bordure subtile 30%
   static const Color glassBorderDark = Color(0x26FFFFFF); // Bordure subtile 15%
 
-  // Typographie & Contrastes (WCAG AA validé)
-  static const Color textPrimaryLight = Color(0xFF1F1D1C);
-  static const Color textPrimaryDark = Color(0xFFF7F5F3);
-  static const Color textSecondaryLight = Color(0xFF6B6562);
-  static const Color textSecondaryDark = Color(0xFFA8A29E);
-  static const Color textTertiaryLight = Color(0xFF9E9793);
-  static const Color textTertiaryDark = Color(0xFF736D69);
+  // Typographie & Contrastes
+  static const Color textPrimaryLight = AppColors.textPrimaryLight;
+  static const Color textPrimaryDark = AppColors.textPrimaryDark;
+  static const Color textSecondaryLight = AppColors.textSecondaryLight;
+  static const Color textSecondaryDark = AppColors.textSecondaryDark;
+  static const Color textTertiaryLight = AppColors.textTertiaryLight;
+  static const Color textTertiaryDark = AppColors.textTertiaryDark;
 
   // États sémantiques
   static const Color positive = Color(0xFF4E9A68);

@@ -107,13 +107,13 @@ class _PreparingBody extends StatelessWidget {
         : Colors.black.withValues(alpha: 0.04);
 
     Widget block(double height, {double? width}) => Container(
-          height: height,
-          width: width,
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-        );
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,15 +132,15 @@ class _PreparingBody extends StatelessWidget {
           final widths = [null, 320.0, 220.0];
           return Padding(
             padding: EdgeInsets.only(bottom: i < 2 ? 10 : 0),
-            child: block(14, width: widths[i]).animate(
-              onPlay: (controller) => controller.repeat(),
-            ).shimmer(
-              duration: 1400.ms,
-              delay: (i * 160).ms,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.5),
-            ),
+            child: block(14, width: widths[i])
+                .animate(onPlay: (controller) => controller.repeat())
+                .shimmer(
+                  duration: 1400.ms,
+                  delay: (i * 160).ms,
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.white.withValues(alpha: 0.5),
+                ),
           );
         }),
       ],

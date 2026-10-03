@@ -118,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ? AppColors.textPrimaryDark
                                   : AppColors.textPrimaryLight,
                             ).copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w600,
                               letterSpacing: -0.8,
                             ),
                         textAlign: TextAlign.center,
@@ -178,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                                       ).copyWith(fontWeight: FontWeight.w600),
                                     ),
                                     TextButton(
-                                      onPressed: () {},
+                                      onPressed: null,
                                       style: TextButton.styleFrom(
                                         padding: EdgeInsets.zero,
                                         minimumSize: Size.zero,
@@ -188,7 +188,9 @@ class _LoginPageState extends State<LoginPage> {
                                       child: Text(
                                         'Mot de passe oublié ?',
                                         style: AppTextStyles.bodySmall(
-                                          color: AppColors.primary,
+                                          color: isDark
+                                              ? AppColors.textTertiaryDark
+                                              : AppColors.textTertiaryLight,
                                         ),
                                       ),
                                     ),
@@ -224,7 +226,7 @@ class _LoginPageState extends State<LoginPage> {
 
                                 const SizedBox(height: AppDimensions.spacingSm),
                                 LiquidGlassButton(
-                                  label: 'Mode Dev (Passer la connexion)',
+                                  label: 'Découvrir Elyrii',
                                   icon: Icons.bolt_rounded,
                                   style: LiquidGlassButtonStyle.tinted,
                                   isExpanded: true,
@@ -234,9 +236,7 @@ class _LoginPageState extends State<LoginPage> {
                                         .read<AuthProvider>()
                                         .startDemoSession();
                                     if (!context.mounted) return;
-                                    context
-                                            .read<ValueNotifier<bool>>()
-                                            .value =
+                                    context.read<ValueNotifier<bool>>().value =
                                         true;
                                     context.go(AppRoutes.home);
                                   },
@@ -326,7 +326,6 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ],
                                 ),
-
                               ],
                             ),
                           )

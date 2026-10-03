@@ -30,7 +30,9 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
   @override
   Widget build(BuildContext context) {
     final color = widget.activity.category.color;
-    final launchesExperience = widget.activity.kind != CoachActivityKind.guidance;
+    final ink = AppColors.readableAccent(color, isDark: widget.isDark);
+    final launchesExperience =
+        widget.activity.kind != CoachActivityKind.guidance;
 
     return Semantics(
       label: widget.activity.title,
@@ -81,8 +83,6 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                             ? AppColors.textPrimaryDark
                             : AppColors.textPrimaryLight,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -94,8 +94,6 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                             : AppColors.textTertiaryLight,
                         height: 1.4,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -103,7 +101,10 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
               const SizedBox(width: 8),
               // Badge de durée en pilule arrondie, à gauche du glyphe.
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(
@@ -115,7 +116,7 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: color,
+                    color: ink,
                   ),
                 ),
               ),
@@ -126,7 +127,7 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                     : Icons.chevron_right_rounded,
                 size: launchesExperience ? 22 : 18,
                 color: launchesExperience
-                    ? color
+                    ? ink
                     : (widget.isDark
                           ? AppColors.textTertiaryDark
                           : AppColors.textTertiaryLight),

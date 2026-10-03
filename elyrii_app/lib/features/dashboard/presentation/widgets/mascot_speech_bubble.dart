@@ -109,10 +109,7 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
             // Bulle principale — verre doux à deux ombres (ambiante +
             // contact), la hiérarchie d'une surface matérielle premium.
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               constraints: const BoxConstraints(maxWidth: 300, minHeight: 44),
               decoration: BoxDecoration(
                 gradient: LinearGradient(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -54,116 +55,91 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     final provider = context.read<DashboardProvider>();
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.fromLTRB(76, topPadding + 10, 76, 8),
-                  child:
-                      Selector2<AuthProvider, UserProvider, (String?, String?)>(
-                        selector: (_, auth, user) =>
-                            (auth.user?.firstName, user.profile?.firstName),
-                        builder: (context, names, _) => _buildScrollingGreeting(
-                          context.read<AuthProvider>(),
-                          context.read<UserProvider>(),
-                          provider,
-                          isDark,
-                        ),
-                      ),
+      body: ElyriiPageFrame(
+        header: _buildPinnedHeaderControls(
+          context.read<AuthProvider>(),
+          context.read<UserProvider>(),
+          isDark,
+        ),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 44),
+                  Selector<DashboardProvider, MoodType?>(
+                    selector: (_, p) => p.selectedMood,
+                    builder: (_, mood, _) => MascotPeek(
+                      selectedMood: mood,
+                      isDark: isDark,
+                      onTap: provider.nextMascotMessage,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 44,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: _MascotCustomizeCharm(isDark: isDark),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.pageHorizontalPadding,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
                   children: [
-                    const SizedBox(width: 44),
-                    Selector<DashboardProvider, MoodType?>(
-                      selector: (_, p) => p.selectedMood,
-                      builder: (_, mood, _) => MascotPeek(
-                        selectedMood: mood,
+                    Selector<DashboardProvider, String>(
+                      selector: (_, p) => p.mascotMessage,
+                      builder: (_, message, _) => MascotSpeechBubble(
+                        message: message,
                         isDark: isDark,
                         onTap: provider.nextMascotMessage,
                       ),
                     ),
-                    SizedBox(
-                      width: 44,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: _MascotCustomizeCharm(isDark: isDark),
-                      ),
+                    const SizedBox(height: 22),
+                    Selector<DashboardProvider, MoodType?>(
+                      selector: (_, p) => p.selectedMood,
+                      builder: (_, mood, _) =>
+                          _buildMoodSection(isDark, provider),
                     ),
+                    const SizedBox(height: 22),
+                    Selector2<
+                      DashboardProvider,
+                      JournalProvider,
+                      (bool, int, JournalEntry?)
+                    >(
+                      selector: (_, dashboard, journal) => (
+                        dashboard.isLoading,
+                        dashboard.currentStreak,
+                        journal.entries.firstOrNull,
+                      ),
+                      builder: (context, value, _) => value.$1
+                          ? _DashboardSkeleton(isDark: isDark)
+                          : _buildBentoGrid(
+                              provider,
+                              context.read<JournalProvider>(),
+                              isDark,
+                            ),
+                    ),
+                    const SizedBox(height: 130),
                   ],
                 ),
-                const SizedBox(height: 2),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.pageHorizontalPadding,
-                  ),
-                  child: Column(
-                    children: [
-                      Selector<DashboardProvider, String>(
-                        selector: (_, p) => p.mascotMessage,
-                        builder: (_, message, _) => MascotSpeechBubble(
-                          message: message,
-                          isDark: isDark,
-                          onTap: provider.nextMascotMessage,
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      Selector<DashboardProvider, MoodType?>(
-                        selector: (_, p) => p.selectedMood,
-                        builder: (_, mood, _) =>
-                            _buildMoodSection(isDark, provider),
-                      ),
-                      const SizedBox(height: 22),
-                      Selector2<
-                        DashboardProvider,
-                        JournalProvider,
-                        (bool, int, JournalEntry?)
-                      >(
-                        selector: (_, dashboard, journal) => (
-                          dashboard.isLoading,
-                          dashboard.currentStreak,
-                          journal.entries.firstOrNull,
-                        ),
-                        builder: (context, value, _) => value.$1
-                            ? _DashboardSkeleton(isDark: isDark)
-                            : _buildBentoGrid(
-                                provider,
-                                context.read<JournalProvider>(),
-                                isDark,
-                              ),
-                      ),
-                      const SizedBox(height: 130),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            top: topPadding + 8,
-            left: 20,
-            right: 20,
-            child: Selector<UserProvider, String?>(
-              selector: (_, user) => user.profile?.pfp,
-              builder: (context, avatar, _) => _buildPinnedHeaderControls(
-                context.read<AuthProvider>(),
-                context.read<UserProvider>(),
-                isDark,
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -199,7 +175,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return '$dayName ${now.day} $monthName';
   }
 
-  /// Date du jour et salutation, dans le scroll : glissent avec le contenu.
+  /// Date et salutation, épinglées entre les boutons de l’en-tête.
   Widget _buildScrollingGreeting(
     AuthProvider authProvider,
     UserProvider userProvider,
@@ -219,11 +195,11 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         Text(
           _formatHeaderDate(),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: AppColors.primary,
+            color: isDark ? AppColors.primaryDark : AppColors.primary,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -232,15 +208,15 @@ class _DashboardPageState extends State<DashboardPage> {
         Text(
           greeting,
           style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
             letterSpacing: -0.5,
             height: 1.1,
             color: isDark
                 ? AppColors.textPrimaryDark
                 : AppColors.textPrimaryLight,
           ),
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
       ],
@@ -281,7 +257,16 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildScrollingGreeting(
+            authProvider,
+            userProvider,
+            context.read<DashboardProvider>(),
+            isDark,
+          ),
+        ),
+        const SizedBox(width: 8),
         // Bouton Réglages circulaire en Liquid Glass (44x44)
         GlassSettingsButton(
           isDark: isDark,
@@ -402,11 +387,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: MoodType.values.map((mood) {
                   final isSelected = selectedMood == mood;
-                  return _MoodChip(
-                    mood: mood,
-                    isSelected: isSelected,
-                    isDark: isDark,
-                    onTap: () => provider.selectMood(mood),
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: _MoodChip(
+                        mood: mood,
+                        isSelected: isSelected,
+                        isDark: isDark,
+                        onTap: () => provider.selectMood(mood),
+                      ),
+                    ),
                   );
                 }).toList(),
               ),
@@ -458,8 +448,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                     ? AppColors.textSecondaryDark
                                     : AppColors.textSecondaryLight,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -642,7 +630,7 @@ class _MoodChipState extends State<_MoodChip> {
           curve: Curves.easeOutBack,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? moodColor.withValues(alpha: widget.isDark ? 0.25 : 0.18)
@@ -785,7 +773,11 @@ class _BentoBreatheCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              runSpacing: 6,
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -799,7 +791,7 @@ class _BentoBreatheCard extends StatelessWidget {
                     size: 18,
                   ),
                 ),
-                const Spacer(),
+
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,

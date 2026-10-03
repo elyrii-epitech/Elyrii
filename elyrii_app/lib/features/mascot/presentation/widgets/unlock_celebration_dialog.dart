@@ -121,7 +121,7 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                             color: isDark
                                                 ? AppColors.successDark
                                                 : AppColors.successDark,
-                                            fontWeight: FontWeight.w800,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -180,7 +180,7 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                     acc.name,
                                     style: AppTextStyles.headlineSmall(
                                       color: titleColor,
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                     textAlign: TextAlign.center,
                                   )

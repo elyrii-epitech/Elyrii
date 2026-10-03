@@ -46,7 +46,7 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
         backgroundColor = isDisabled
             ? primaryColor.withValues(alpha: 0.3)
             : primaryColor;
-        textColor = Colors.white;
+        textColor = Theme.of(context).colorScheme.onPrimary;
         break;
       case LiquidGlassButtonStyle.tinted:
         backgroundColor = primaryColor.withValues(alpha: 0.15);
@@ -131,8 +131,7 @@ class _LiquidGlassButtonState extends State<LiquidGlassButton> {
               fontWeight: FontWeight.w600,
               color: textColor,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
           ),
         ),
       ],

@@ -42,6 +42,7 @@ class ConversationSuggestions extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               minimumSize: const Size(0, 44),
               textStyle: const TextStyle(
+                fontFamily: 'Poppins',
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
