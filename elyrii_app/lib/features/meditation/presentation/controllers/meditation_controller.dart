@@ -20,7 +20,7 @@ class MeditationController extends ChangeNotifier {
   MeditationExercise? _selectedExercise;
 
   static const minDurationMinutes = 1;
-  static const maxDurationMinutes = 180;
+  static const maxDurationMinutes = 23 * 60 + 59;
 
   // État de la session
   MeditationSessionState _sessionState = MeditationSessionState.setup;
@@ -47,6 +47,18 @@ class MeditationController extends ChangeNotifier {
 
   // Getters
   int get selectedDurationMinutes => _selectedDurationMinutes;
+  Duration get selectedDuration => Duration(minutes: _selectedDurationMinutes);
+  String get selectedDurationLabel => formatDuration(selectedDuration);
+
+  /// A compact duration label shared by setup, the picker and the summary.
+  static String formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    if (hours == 0) return '$minutes min';
+    if (minutes == 0) return '$hours h';
+    return '$hours h $minutes min';
+  }
+
   MeditationExercise? get selectedExercise => _selectedExercise;
   BreathingType? get selectedBreathingType => _selectedExercise?.breathingType;
   bool get isGuidedPractice =>
@@ -56,6 +68,16 @@ class MeditationController extends ChangeNotifier {
       _completedCycles >= 4;
   MeditationSessionState get sessionState => _sessionState;
   int get remainingSeconds => _remainingSeconds;
+  String get formattedRemainingTime => formatCountdown(_remainingSeconds);
+
+  static String formatCountdown(int totalSeconds) {
+    final hours = totalSeconds ~/ Duration.secondsPerHour;
+    final minutes = (totalSeconds ~/ Duration.secondsPerMinute).remainder(60);
+    final seconds = totalSeconds.remainder(60).toString().padLeft(2, '0');
+    if (hours == 0) return '${minutes.toString().padLeft(2, '0')}:$seconds';
+    return '$hours:${minutes.toString().padLeft(2, '0')}:$seconds';
+  }
+
   int get currentPhaseIndex => _currentPhaseIndex;
   int get phaseSecondsRemaining =>
       isBreathingRecovery ? _remainingSeconds : _phaseSecondsRemaining;
@@ -97,6 +119,14 @@ class MeditationController extends ChangeNotifier {
     final total = _selectedDurationMinutes * 60;
     if (total == 0) return 0.0;
     return (1.0 - (_remainingSeconds / total)).clamp(0.0, 1.0);
+  }
+
+  void setSessionDuration(Duration duration) {
+    if (_sessionState != MeditationSessionState.setup) return;
+    if (duration.inMicroseconds % Duration.microsecondsPerMinute != 0) {
+      throw ArgumentError.value(duration, 'duration', 'Choose whole minutes.');
+    }
+    setDuration(duration.inMinutes);
   }
 
   void setDuration(int minutes) {

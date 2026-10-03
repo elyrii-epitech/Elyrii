@@ -96,10 +96,11 @@ qu'une ancienne promesse ne la relance. Vérifier cet adapter lors d'une mise à
 jour du package. Après 12 secondes de chargement sans succès, le PNG de secours
 prend le relais.
 
-Les accessoires utilisent encore un viewer séparé et un ancrage à l'écran ;
-ils ne sont pas skinnés sur l'os de la tête. Leur viewer reste statique et
-l'ajout d'un accessoire ne remonte plus le viewer du corps. L'ancrage rigide des
-accessoires et la recoloration sur iOS restent des limites du rendu existant.
+Les accessoires partagent une scène avec le corps et suivent les contrôles
+animés de la tête ou du buste. Les variantes de matériaux changent la tenue
+sans recharger la scène. Le catalogue, la progression et la reconstruction
+sont décrits dans [la garde-robe de Velours](mascot-accessories.md).
+La recoloration sur iOS garde les limitations du rendu existant.
 
 ## Reconstruire et vérifier
 

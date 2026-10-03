@@ -1,111 +1,169 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+
+import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../controllers/meditation_controller.dart';
 
+/// A native countdown wheel: every minute is available, without duration presets.
 class MeditationDurationSheet extends StatefulWidget {
-  const MeditationDurationSheet({super.key, required this.initialMinutes});
-  final int initialMinutes;
+  const MeditationDurationSheet({super.key, required this.initialDuration});
+
+  final Duration initialDuration;
+
   @override
   State<MeditationDurationSheet> createState() =>
       _MeditationDurationSheetState();
 }
 
 class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
-  final _form = GlobalKey<FormState>();
-  late final _minutes = TextEditingController(text: '${widget.initialMinutes}');
-  @override
-  void dispose() {
-    _minutes.dispose();
-    super.dispose();
-  }
+  late Duration _duration = widget.initialDuration;
+
+  bool get _canChoose =>
+      _duration.inMinutes >= MeditationController.minDurationMinutes;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = isDark
         ? AppColors.textPrimaryDark
         : AppColors.textPrimaryLight;
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+    final secondaryColor = isDark
+        ? AppColors.textSecondaryDark
+        : AppColors.textSecondaryLight;
+    final accent = isDark ? AppColors.primaryDark : AppColors.primary;
+
+    return ElyriiGlassSurface(
+      role: GlassRole.modalSheet,
+      borderRadius: BorderRadius.circular(32),
+      glassColor: MediaQuery.highContrastOf(context)
+          ? null
+          : isDark
+          ? const Color(0xFF28232F).withValues(alpha: 0.78)
+          : const Color(0xFFF8F6FF).withValues(alpha: 0.76),
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _form,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Ta durée',
-                        style: AppTextStyles.titleLarge(color: color),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ExcludeSemantics(
+                child: Container(
+                  width: 34,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: secondaryColor.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Durée',
+                      style: AppTextStyles.titleLarge(
+                        color: textColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    IconButton(
-                      tooltip: 'Fermer',
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
+                  ),
+                  IconButton(
+                    key: const Key('meditation-duration-close'),
+                    tooltip: 'Fermer',
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close_rounded, color: secondaryColor),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Un moment à ton rythme.',
+                  style: AppTextStyles.bodyMedium(color: secondaryColor),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Semantics(
+                label: 'Durée de la séance',
+                value: MeditationController.formatDuration(_duration),
+                child: CupertinoTheme(
+                  data: CupertinoThemeData(
+                    brightness: theme.brightness,
+                    primaryColor: accent,
+                    textTheme: CupertinoTextThemeData(
+                      pickerTextStyle: TextStyle(
+                        fontFamily: 'CupertinoSystemText',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w400,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        color: textColor,
+                      ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Choisis entre 1 et 180 minutes, selon le temps que tu veux prendre.',
-                  style: AppTextStyles.bodyMedium(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                  ),
+                  child: Localizations.override(
+                    context: context,
+                    locale: const Locale('fr'),
+                    delegates: const [GlobalCupertinoLocalizations.delegate],
+                    child: CupertinoTimerPicker(
+                      key: const Key('meditation-duration-wheel'),
+                      mode: CupertinoTimerPickerMode.hm,
+                      initialTimerDuration: widget.initialDuration,
+                      backgroundColor: Colors.transparent,
+                      onTimerDurationChanged: (duration) {
+                        setState(() => _duration = duration);
+                      },
+                      selectionOverlayBuilder:
+                          (
+                            context, {
+                            required selectedIndex,
+                            required columnCount,
+                          }) {
+                            return CupertinoPickerDefaultSelectionOverlay(
+                              background: accent.withValues(alpha: 0.08),
+                              capStartEdge: selectedIndex == 0,
+                              capEndEdge: selectedIndex == columnCount - 1,
+                            );
+                          },
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  key: const Key('meditation-custom-minutes'),
-                  controller: _minutes,
-                  autofocus: true,
-                  keyboardType: TextInputType.number,
-                  textInputAction: TextInputAction.done,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(3),
-                  ],
-                  decoration: const InputDecoration(labelText: 'Minutes'),
-                  validator: (value) {
-                    final n = int.tryParse(value ?? '');
-                    if (n == null ||
-                        n < MeditationController.minDurationMinutes ||
-                        n > MeditationController.maxDurationMinutes) {
-                      return 'Entre un nombre de 1 à 180.';
-                    }
-                    return null;
-                  },
-                  onFieldSubmitted: (_) => _choose(),
+              ),
+              const SizedBox(height: 4),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _canChoose
+                      ? MeditationController.formatDuration(_duration)
+                      : 'Choisis au moins une minute.',
+                  key: const Key('meditation-duration-value'),
+                  style: AppTextStyles.bodyMedium(color: secondaryColor),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: LiquidGlassButton(
-                    label: 'Choisir cette durée',
-                    onPressed: _choose,
-                  ),
+              ),
+              const SizedBox(height: 24),
+              Semantics(
+                button: true,
+                enabled: _canChoose,
+                child: LiquidGlassButton(
+                  key: const Key('meditation-duration-confirm'),
+                  label: 'Choisir cette durée',
+                  isExpanded: true,
+                  onPressed: _canChoose
+                      ? () => Navigator.pop<Duration>(context, _duration)
+                      : null,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
-  }
-
-  void _choose() {
-    if (_form.currentState!.validate()) {
-      Navigator.pop(context, int.parse(_minutes.text));
-    }
   }
 }

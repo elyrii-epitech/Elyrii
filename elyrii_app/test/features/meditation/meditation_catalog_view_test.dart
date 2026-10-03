@@ -6,6 +6,7 @@ import 'package:elyrii_app/features/meditation/presentation/controllers/meditati
 import 'package:elyrii_app/features/meditation/presentation/widgets/meditation_catalog_view.dart';
 import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:elyrii_app/app/router/app_shell.dart';
 import 'package:elyrii_app/core/widgets/glass_navigation_bar.dart';
@@ -146,9 +147,7 @@ void main() {
         size: const Size(320, 568),
         textScale: 1.5,
       );
-      final benefit = find.text(
-        'Respiration ou guidage écrit, selon ton envie.',
-      );
+      final benefit = find.text('Un moment pour toi.');
       final paragraph = tester.renderObject<RenderParagraph>(benefit);
       final painter = TextPainter(
         text: paragraph.text,
@@ -174,9 +173,11 @@ void main() {
 
       expect(controller.selectedBreathingType, isNull);
       expect(controller.selectedExercise, isNull);
-      expect(find.text('À ton rythme'), findsOneWidget);
-      expect(find.text('Choisis un exercice'), findsOneWidget);
+      expect(find.text('À ton rythme.'), findsOneWidget);
+      expect(find.text('Choisis un exercice'), findsNothing);
+      expect(find.text('Commencer'), findsOneWidget);
       expect(_cta(tester).onPressed, isNull);
+      expect(_cta(tester).style, LiquidGlassButtonStyle.gray);
     });
 
     testWidgets(
@@ -190,48 +191,127 @@ void main() {
 
         expect(controller.selectedBreathingType, BreathingType.carree);
         expect(_cta(tester).label, 'Commencer · 5 min');
+        expect(_cta(tester).style, LiquidGlassButtonStyle.filled);
         expect(_cta(tester).onPressed, isNotNull);
       },
     );
 
-    testWidgets('un tap sur une durée met à jour la durée affichée', (
+    testWidgets('la page retire les informations et les durées prédéfinies', (
       tester,
     ) async {
       await _pumpCatalog(tester, controller);
-
-      await tester.ensureVisible(find.text('Focus'));
-      await tester.tap(find.text('Focus'));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.ensureVisible(find.text('10 min'));
-      await tester.tap(find.text('10 min'));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(controller.selectedDurationMinutes, 10);
-      expect(_cta(tester).label, 'Commencer · 10 min');
-      expect(_cta(tester).onPressed, isNotNull);
+      expect(find.byIcon(Icons.info_outline_rounded), findsNothing);
+      expect(find.text('Guide et références'), findsNothing);
+      expect(find.text('Conseils et références'), findsNothing);
+      final filters = tester.widgetList<ChoiceChip>(find.byType(ChoiceChip));
+      expect(filters.map((chip) => (chip.label as Text).data), [
+        'Tout',
+        'Respiration',
+        'Présence',
+        'Corps',
+        'Bienveillance',
+      ]);
+      expect(find.text('Durée libre'), findsOneWidget);
     });
 
-    testWidgets('durée personnalisée à la minute et validation du champ', (
+    testWidgets('durée et pratique annoncées une fois et activables', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await _pumpCatalog(tester, controller);
+        final duration = find.bySemanticsLabel('Durée libre');
+        expect(duration, findsOneWidget);
+        final durationNode = tester.getSemantics(duration);
+        final durationData = durationNode.getSemanticsData();
+        expect(durationData.label, 'Durée libre');
+        expect(durationData.value, '5 min');
+        expect(durationData.hasAction(SemanticsAction.tap), isTrue);
+
+        durationNode.owner!.performAction(durationNode.id, SemanticsAction.tap);
+        await tester.pumpAndSettle();
+        final wheel = tester.widget<CupertinoTimerPicker>(
+          find.byKey(const Key('meditation-duration-wheel')),
+        );
+        wheel.onTimerDurationChanged(const Duration(minutes: 7));
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('meditation-duration-confirm')));
+        await tester.pumpAndSettle();
+        final updatedDuration = tester
+            .getSemantics(duration)
+            .getSemanticsData();
+        expect(updatedDuration.label, 'Durée libre');
+        expect(updatedDuration.value, '7 min');
+
+        final exercise = MeditationExercises.all.first;
+        final label = '${exercise.title}. ${exercise.subtitle}';
+        final card = find.bySemanticsLabel(label);
+        expect(card, findsOneWidget);
+        final cardNode = tester.getSemantics(card);
+        expect(cardNode.getSemanticsData().label, label);
+        expect(
+          cardNode.getSemanticsData().hasAction(SemanticsAction.tap),
+          isTrue,
+        );
+        cardNode.owner!.performAction(cardNode.id, SemanticsAction.tap);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(controller.selectedExercise, exercise);
+        expect(tester.getSemantics(card).getSemanticsData().label, label);
+        expect(_cta(tester).onPressed, isNotNull);
+        expect(tester.takeException(), isNull);
+      } finally {
+        semantics.dispose();
+      }
+    });
+
+    testWidgets('une durée libre se propage au catalogue et au lancement', (
       tester,
     ) async {
       await _pumpCatalog(tester, controller);
+      await tester.ensureVisible(find.text('Focus'));
+      await tester.tap(find.text('Focus'));
+      await tester.pump();
       await tester.ensureVisible(
         find.byKey(const Key('meditation-custom-duration')),
       );
       await tester.tap(find.byKey(const Key('meditation-custom-duration')));
       await tester.pumpAndSettle();
-      final field = find.byKey(const Key('meditation-custom-minutes'));
-      await tester.enterText(field, '0');
-      await tester.tap(find.text('Choisir cette durée'));
+      final wheel = tester.widget<CupertinoTimerPicker>(
+        find.byKey(const Key('meditation-duration-wheel')),
+      );
+      wheel.onTimerDurationChanged(const Duration(hours: 1, minutes: 13));
       await tester.pump();
-      expect(find.text('Entre un nombre de 1 à 180.'), findsOneWidget);
-      expect(controller.selectedDurationMinutes, 5);
-      await tester.enterText(field, '7');
-      await tester.tap(find.text('Choisir cette durée'));
+      await tester.tap(find.byKey(const Key('meditation-duration-confirm')));
       await tester.pumpAndSettle();
-      expect(controller.selectedDurationMinutes, 7);
-      expect(controller.remainingSeconds, 420);
-      expect(find.text('7 min · Modifier la durée'), findsOneWidget);
+
+      expect(controller.selectedDurationMinutes, 73);
+      expect(controller.remainingSeconds, 4380);
+      expect(find.text('1 h 13 min'), findsOneWidget);
+      expect(_cta(tester).label, 'Commencer · 1 h 13 min');
+      expect(_cta(tester).onPressed, isNotNull);
+      expect(controller.selectedExercise?.id, 'carree');
+    });
+
+    testWidgets('fermer les roues conserve la durée et la pratique', (
+      tester,
+    ) async {
+      controller.setSessionDuration(const Duration(minutes: 7));
+      controller.setExercise(MeditationExercises.all.first);
+      final selected = controller.selectedExercise;
+      await _pumpCatalog(tester, controller);
+      await tester.tap(find.byKey(const Key('meditation-custom-duration')));
+      await tester.pumpAndSettle();
+      tester
+          .widget<CupertinoTimerPicker>(
+            find.byKey(const Key('meditation-duration-wheel')),
+          )
+          .onTimerDurationChanged(const Duration(hours: 4, minutes: 2));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('meditation-duration-close')));
+      await tester.pumpAndSettle();
+      expect(controller.selectedDuration, const Duration(minutes: 7));
+      expect(controller.selectedExercise, selected);
+      expect(find.text('7 min'), findsOneWidget);
     });
 
     testWidgets('le filtre Corps propose une vraie pratique guidée', (
@@ -251,35 +331,29 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-      'durée personnalisée accessible avec clavier et texte agrandi',
-      (tester) async {
-        await _pumpCatalog(
-          tester,
-          controller,
-          size: const Size(320, 568),
-          textScale: 1.5,
-        );
-        await tester.scrollUntilVisible(
-          find.byKey(const Key('meditation-custom-duration')),
-          120,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const Key('meditation-custom-duration')));
-        await tester.pumpAndSettle();
-        tester.view.viewInsets = const FakeViewPadding(bottom: 280);
-        await tester.pump();
-        await tester.enterText(
-          find.byKey(const Key('meditation-custom-minutes')),
-          '45',
-        );
-        await tester.ensureVisible(find.text('Choisir cette durée'));
-        await tester.tap(find.text('Choisir cette durée'));
-        await tester.pumpAndSettle();
-        expect(controller.selectedDurationMinutes, 45);
-        expect(tester.takeException(), isNull);
-      },
-    );
+    testWidgets('changer de filtre conserve une durée libre et la sélection', (
+      tester,
+    ) async {
+      controller.setSessionDuration(const Duration(hours: 23, minutes: 59));
+      controller.setExercise(MeditationExercises.all.first);
+      final selected = controller.selectedExercise;
+      await _pumpCatalog(
+        tester,
+        controller,
+        size: const Size(320, 568),
+        textScale: 1.5,
+      );
+      await tester.scrollUntilVisible(
+        find.text('Corps').hitTestable(),
+        100,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Corps'));
+      await tester.pump();
+      expect(controller.selectedExercise, selected);
+      expect(controller.selectedDurationMinutes, 1439);
+      expect(_cta(tester).label, 'Commencer · 23 h 59 min');
+      expect(tester.takeException(), isNull);
+    });
   });
 }

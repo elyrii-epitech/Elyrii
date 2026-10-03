@@ -1,18 +1,20 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/network/api_client.dart';
+import '../../data/models/mascot_accessory.dart';
 import '../../data/models/mascot_model.dart';
 
 /// Provider gérant l'état et l'interaction avec la mascotte 3D.
 ///
 /// Permet de contrôler le modèle 3D globalement, gérer les thèmes visuels
-/// (recoloration via ColorFilter) et préparer le terrain pour les
-/// accessoires futurs et le contrôle des animations.
+/// (recoloration via ColorFilter), les pièces 3D de sa garde-robe et les
+/// animations.
 class MascotProvider extends ChangeNotifier {
   static const String _storageKey = 'elyrii_mascot_customization';
   static const String _themeKey = 'elyrii_mascot_theme';
@@ -83,19 +85,30 @@ class MascotProvider extends ChangeNotifier {
     unawaited(_syncToBackend());
   }
 
-  /// Sélectionne ou retire un détail visuel (accessoire futur).
-  void equipCosmetic(String cosmeticId) {
-    final List<String> updatedCosmetics = List.from(_mascot.equippedCosmetics);
-    if (updatedCosmetics.contains(cosmeticId)) {
-      updatedCosmetics.remove(cosmeticId);
-    } else {
-      updatedCosmetics.add(cosmeticId);
-    }
+  /// Équipe une pièce connue et débloquée, en remplaçant la précédente.
+  /// Retoucher la pièce portée la retire ; une célébration peut demander
+  /// une sélection idempotente avec [toggleIfEquipped] à false.
+  /// La vérification est faite ici, même si l'interface affiche un verrou.
+  bool equipCosmetic(
+    String cosmeticId, {
+    required int completedChallenges,
+    bool toggleIfEquipped = true,
+  }) {
+    final accessory = MascotAccessories.byId(cosmeticId);
+    if (accessory == null) return false;
+    final isEquipped = _mascot.equippedCosmetics.contains(cosmeticId);
+    if (isEquipped && !toggleIfEquipped) return false;
+    if (!isEquipped && !accessory.isUnlocked(completedChallenges)) return false;
 
-    _mascot = _mascot.copyWith(equippedCosmetics: updatedCosmetics);
+    _mascot = _mascot.copyWith(
+      equippedCosmetics: isEquipped
+          ? const []
+          : List<String>.unmodifiable([cosmeticId]),
+    );
     notifyListeners();
-    _saveMascot();
+    unawaited(_saveMascot());
     unawaited(_syncToBackend());
+    return true;
   }
 
   /// Réinitialise l'état de la mascotte par défaut
@@ -146,7 +159,11 @@ class MascotProvider extends ChangeNotifier {
 
       final rawCosmetics = prefs.getStringList(_storageKey);
       if (rawCosmetics != null) {
-        _mascot = _mascot.copyWith(equippedCosmetics: rawCosmetics);
+        final cosmetics = MascotAccessories.sanitizeSelection(rawCosmetics);
+        _mascot = _mascot.copyWith(equippedCosmetics: cosmetics);
+        if (!listEquals(rawCosmetics, cosmetics)) {
+          await prefs.setStringList(_storageKey, cosmetics);
+        }
       }
 
       notifyListeners();
@@ -217,7 +234,9 @@ class MascotProvider extends ChangeNotifier {
 
     return _mascot.copyWith(
       themeId: themeId,
-      equippedCosmetics: cosmetics.map((item) => item.toString()).toList(),
+      equippedCosmetics: MascotAccessories.sanitizeSelection(
+        cosmetics.whereType<String>(),
+      ),
     );
   }
 

@@ -19,6 +19,7 @@ import '../../../../core/widgets/mascot_bounce.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
+import '../../data/models/mascot_accessory.dart';
 import '../providers/mascot_provider.dart';
 
 class MascotCustomizationPage extends StatefulWidget {
@@ -34,10 +35,12 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
 
   MascotAnimation _previewAnimation = MascotAnimations.idle;
   int _previewTrigger = 0;
-  String? _selectedCategory;
+  String _selectedCategory = 'Tous';
 
-  List<String> get _accessoryCategories =>
-      _accessories.map((a) => a.category).toSet().toList();
+  List<String> get _accessoryCategories => [
+    'Tous',
+    ..._accessories.map((a) => a.category).toSet(),
+  ];
 
   void _react(MascotAnimation animation) {
     setState(() {
@@ -46,36 +49,32 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
     });
   }
 
-  static const List<AccessoryDef> _accessories = [
-    AccessoryDef(
-      id: 'custom1',
-      name: 'Chapeau de diplômé',
-      emoji: '🎓',
-      requiredChallenges: 1,
-    ),
-  ];
+  static const _accessories = MascotAccessories.all;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       final mascotProvider = context.read<MascotProvider>();
       final gamification = context.read<GamificationProvider>();
       await mascotProvider.loadMascot();
+      if (!mounted) return;
       await gamification.loadAll();
-      if (mounted) _checkForNewUnlocks(gamification.completedChallenges.length);
+      if (!mounted) return;
+      await _checkForNewUnlocks(gamification.completedChallenges.length);
     });
   }
 
   /// Detecte les cosmétiques nouvellement debloques et affiche une popup.
   Future<void> _checkForNewUnlocks(int completedCount) async {
-    final newlyUnlocked = _accessories.where((acc) {
-      final isUnlocked = completedCount >= acc.requiredChallenges;
-      return isUnlocked;
-    }).toList();
+    final newlyUnlocked = _accessories
+        .where((acc) => acc.isUnlocked(completedCount))
+        .toList();
     if (newlyUnlocked.isEmpty) return;
 
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     final seen = prefs.getStringList(_seenUnlocksKey) ?? const <String>[];
     final toCelebrate = newlyUnlocked
         .where((acc) => !seen.contains(acc.id))
@@ -91,9 +90,13 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
 
     if (!mounted) return;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    for (final acc in toCelebrate) {
-      await _showUnlockCelebration(isDark, acc);
-    }
+    // Un retour après plusieurs défis ne doit pas empiler les dialogues.
+    // La dernière pièce présente le nouveau palier ; toutes restent visibles.
+    await _showUnlockCelebration(
+      isDark,
+      toCelebrate.last,
+      unlockedCount: toCelebrate.length,
+    );
   }
 
   @override
@@ -259,6 +262,16 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
               style: AppTextStyles.bodySmall(color: subtitleColor),
               textAlign: TextAlign.center,
             ),
+            if (provider.mascot.equippedCosmetics.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                MascotAccessories.byId(
+                      provider.mascot.equippedCosmetics.first,
+                    )?.name ??
+                    '',
+                style: AppTextStyles.labelMedium(color: theme.accentColor),
+              ),
+            ],
           ],
         ),
       ),
@@ -312,75 +325,83 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         ),
         const SizedBox(height: 4),
         Text(
-          'Débloque des récompenses en relevant tes défis.',
+          'Débloque des pièces 3D en relevant tes défis. '
+          'Une pièce à la fois, au fil de tes progrès.',
           style: AppTextStyles.bodySmall(color: subtitleColor),
         ),
       ],
     );
   }
 
-  /// Atelier d'accessoires : pilules de catégories (dès que plusieurs
-  /// familles existent) puis cartes filtrées sur la catégorie active.
+  /// Atelier d'accessoires : filtres accessibles et garde-robe progressive.
   Widget _buildAccessoriesGrid(
     bool isDark,
     MascotProvider provider,
     int completedCount,
   ) {
     final categories = _accessoryCategories;
-    final selected =
-        _selectedCategory != null && categories.contains(_selectedCategory)
-        ? _selectedCategory!
-        : categories.first;
+    final selected = categories.contains(_selectedCategory)
+        ? _selectedCategory
+        : 'Tous';
     final accent = provider.currentTheme.accentColor;
-    final visible = _accessories.where((a) => a.category == selected);
+    final visible = _accessories.where(
+      (a) => selected == 'Tous' || a.category == selected,
+    );
+    final unlockedCount = _accessories
+        .where(
+          (a) =>
+              a.isUnlocked(completedCount) ||
+              provider.mascot.equippedCosmetics.contains(a.id),
+        )
+        .length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          '$unlockedCount / ${_accessories.length} '
+          '${unlockedCount == 1 ? 'accessoire débloqué' : 'accessoires débloqués'}',
+          style: AppTextStyles.labelMedium(
+            color: isDark
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondaryLight,
+          ),
+        ),
+        const SizedBox(height: 12),
         if (categories.length > 1) ...[
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
               for (final category in categories)
-                GestureDetector(
-                  onTap: () {
+                ChoiceChip(
+                  label: Text(category),
+                  selected: category == selected,
+                  onSelected: (_) {
                     ElyriiHaptics.selection();
                     setState(() => _selectedCategory = category);
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: category == selected
-                          ? accent.withValues(alpha: isDark ? 0.22 : 0.14)
-                          : (isDark
-                                ? Colors.white.withValues(alpha: 0.06)
-                                : Colors.black.withValues(alpha: 0.04)),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: category == selected
-                            ? accent.withValues(alpha: 0.5)
-                            : (isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : Colors.black.withValues(alpha: 0.06)),
-                      ),
-                    ),
-                    child: Text(
-                      category,
-                      style: AppTextStyles.labelMedium(
-                        color: category == selected
-                            ? accent
-                            : (isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  selectedColor: accent.withValues(alpha: isDark ? 0.22 : 0.14),
+                  backgroundColor: isDark
+                      ? Colors.white.withValues(alpha: 0.06)
+                      : Colors.black.withValues(alpha: 0.04),
+                  labelStyle: AppTextStyles.labelMedium(
+                    color: category == selected
+                        ? accent
+                        : (isDark
+                              ? AppColors.textSecondaryDark
+                              : AppColors.textSecondaryLight),
+                    fontWeight: FontWeight.w700,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  side: BorderSide(
+                    color: category == selected
+                        ? accent.withValues(alpha: 0.5)
+                        : (isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.06)),
                   ),
                 ),
             ],
@@ -397,15 +418,17 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
   }
 
   Widget _buildAccessoryCard(
-    AccessoryDef acc,
+    MascotAccessory acc,
     bool isDark,
     MascotProvider provider,
     int completedCount,
   ) {
     final isEquipped = provider.mascot.equippedCosmetics.contains(acc.id);
-    final isLocked = completedCount < acc.requiredChallenges;
+    // Une pièce sauvegardée reste retirable pendant le chargement des défis.
+    final isLocked = !isEquipped && !acc.isUnlocked(completedCount);
     return AccessoryCard(
       name: acc.name,
+      description: acc.description,
       emoji: acc.emoji,
       isEquipped: isEquipped,
       isLocked: isLocked,
@@ -415,14 +438,25 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       accentColor: provider.currentTheme.accentColor,
       onTap: () {
         ElyriiHaptics.selection();
-        provider.equipCosmetic(acc.id);
-        _react(isEquipped ? MascotAnimations.settle : MascotAnimations.proud);
+        if (provider.equipCosmetic(
+          acc.id,
+          completedChallenges: context
+              .read<GamificationProvider>()
+              .completedChallenges
+              .length,
+        )) {
+          _react(isEquipped ? MascotAnimations.settle : MascotAnimations.proud);
+        }
       },
-      onLockedTap: () => _showLockedDialog(isDark, acc),
+      onLockedTap: () => _showLockedDialog(isDark, acc, completedCount),
     );
   }
 
-  Future<void> _showUnlockCelebration(bool isDark, AccessoryDef acc) async {
+  Future<void> _showUnlockCelebration(
+    bool isDark,
+    MascotAccessory acc, {
+    int unlockedCount = 1,
+  }) async {
     ElyriiHaptics.success();
     _react(MascotAnimations.celebrate);
     await showDialog<void>(
@@ -431,18 +465,26 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
       barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (context) => UnlockCelebrationDialog(
         accessory: acc,
+        unlockedCount: unlockedCount,
         isDark: isDark,
         onEquip: () {
           Navigator.pop(context);
           ElyriiHaptics.selection();
-          context.read<MascotProvider>().equipCosmetic(acc.id);
+          context.read<MascotProvider>().equipCosmetic(
+            acc.id,
+            completedChallenges: context
+                .read<GamificationProvider>()
+                .completedChallenges
+                .length,
+            toggleIfEquipped: false,
+          );
           _react(MascotAnimations.proud);
         },
       ),
     );
   }
 
-  void _showLockedDialog(bool isDark, AccessoryDef acc) {
+  void _showLockedDialog(bool isDark, MascotAccessory acc, int completedCount) {
     _react(MascotAnimations.curious);
     final bodyColor = isDark
         ? AppColors.textSecondaryDark
@@ -468,9 +510,10 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Termine au moins ${acc.requiredChallenges} défi dans ton atelier '
-            'de présence pour débloquer le « ${acc.name} » et le porter '
-            'fièrement.',
+            'Encore ${acc.remainingChallenges(completedCount)} '
+            '${acc.remainingChallenges(completedCount) == 1 ? 'défi' : 'défis'} '
+            'à terminer pour débloquer « ${acc.name} ». '
+            'Ce palier se débloque après ${acc.unlockLabel}.',
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyMedium(
               color: bodyColor,

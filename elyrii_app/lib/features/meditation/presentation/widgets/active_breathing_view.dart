@@ -132,12 +132,6 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
     super.dispose();
   }
 
-  String _formatTime(int totalSeconds) {
-    final minutes = totalSeconds ~/ 60;
-    final seconds = totalSeconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -257,7 +251,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
               _buildStatPill(
                 isDark,
                 icon: Icons.timer_outlined,
-                value: _formatTime(widget.controller.remainingSeconds),
+                value: widget.controller.formattedRemainingTime,
                 label: 'restant',
                 color: isDark ? AppColors.primaryDark : AppColors.primary,
               ),

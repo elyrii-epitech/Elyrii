@@ -30,11 +30,6 @@ class ActiveGuidedMeditationView extends StatelessWidget {
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
     final ink = AppColors.readableAccent(exercise.color, isDark: isDark);
-    final minutes = controller.remainingSeconds ~/ 60;
-    final seconds = (controller.remainingSeconds % 60).toString().padLeft(
-      2,
-      '0',
-    );
     return Column(
       children: [
         Padding(
@@ -43,7 +38,7 @@ class ActiveGuidedMeditationView extends StatelessWidget {
             title: exercise.title,
             subtitle: controller.isPaused
                 ? 'En pause'
-                : '$minutes:$seconds restantes',
+                : '${controller.formattedRemainingTime} restantes',
             leading: Semantics(
               label: 'Interrompre la séance',
               button: true,

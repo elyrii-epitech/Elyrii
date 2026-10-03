@@ -84,6 +84,8 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     // UIKit / liquid_glass_widgets : verticalPadding = 20.0 au-dessus du Home Indicator
     final bottomMargin = bottomInset > 0 ? 20.0 : 16.0;
+    // Keep every tab at least 44 points wide on a 320-point screen.
+    final compactDock = MediaQuery.sizeOf(context).width < 360;
 
     return Scaffold(
       extendBody: true,
@@ -114,11 +116,11 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
                       borderRadius: 32,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: compactDock ? 8 : 10),
                   GlassBubbleButtonStateful(
                     icon: Icons.chat_bubble_rounded,
                     onTap: () => _onTabSelected(5),
-                    size: 64,
+                    size: compactDock ? 56 : 64,
                     isDark: isDark,
                     isSelected: currentIndex == 5,
                     tooltip: 'Chat Elyrii',

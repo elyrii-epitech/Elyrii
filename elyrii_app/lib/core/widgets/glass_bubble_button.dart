@@ -12,6 +12,7 @@ class GlassBubbleButton extends StatelessWidget {
   final double size;
   final bool isDark;
   final bool isSelected;
+  final String? tooltip;
 
   /// Asset optionnel affiché à la place de [icon] et teinté comme une icône
   /// Material. Les variations d'alpha de l'asset peuvent conserver des détails
@@ -27,16 +28,19 @@ class GlassBubbleButton extends StatelessWidget {
     this.size = 64,
     this.isDark = false,
     this.isSelected = false,
+    this.tooltip,
     this.iconAsset,
     this.iconAssetSize = 28,
   });
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final tint =
         iconColor ??
         (isSelected
-            ? AppColors.primary
+            ? (isDark ? AppColors.primaryDark : AppColors.primary)
             : (isDark
                   ? AppColors.iconDefaultDark
                   : AppColors.iconDefaultLight));
@@ -45,10 +49,12 @@ class GlassBubbleButton extends StatelessWidget {
       borderRadius: BorderRadius.circular(size / 2),
       width: size,
       height: size,
-      glassColor: isSelected
-          ? (isDark
-                ? Colors.white.withValues(alpha: 0.14)
-                : Colors.black.withValues(alpha: 0.08))
+      // The bubble shares the navigation material instead of remaining filled.
+      glassColor: media.highContrast
+          ? null
+          : scheme.surface.withValues(alpha: isDark ? 0.20 : 0.16),
+      border: isSelected
+          ? Border.all(color: tint.withValues(alpha: 0.5), width: 1)
           : null,
       child: Center(
         child: iconAsset != null
@@ -61,14 +67,13 @@ class GlassBubbleButton extends StatelessWidget {
       ),
     );
 
-    return Semantics(
-      button: true,
+    return _GlassBubbleInteraction(
+      onTap: onTap,
       selected: isSelected,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: buttonContent,
-      ),
+      label: tooltip,
+      reduceMotion: media.disableAnimations,
+      focusColor: tint,
+      child: buttonContent,
     );
   }
 }
@@ -102,40 +107,108 @@ class GlassBubbleButtonStateful extends StatefulWidget {
 }
 
 class _GlassBubbleButtonStatefulState extends State<GlassBubbleButtonStateful> {
+  @override
+  Widget build(BuildContext context) {
+    return GlassBubbleButton(
+      icon: widget.icon,
+      onTap: widget.onTap,
+      size: widget.size,
+      isDark: widget.isDark,
+      isSelected: widget.isSelected,
+      tooltip: widget.tooltip,
+      iconAsset: widget.iconAsset,
+      iconAssetSize: widget.iconAssetSize,
+    );
+  }
+}
+
+/// One interaction target for touch, keyboard and assistive technologies.
+class _GlassBubbleInteraction extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final bool selected;
+  final String? label;
+  final bool reduceMotion;
+  final Color focusColor;
+
+  const _GlassBubbleInteraction({
+    required this.child,
+    required this.onTap,
+    required this.selected,
+    required this.label,
+    required this.reduceMotion,
+    required this.focusColor,
+  });
+
+  @override
+  State<_GlassBubbleInteraction> createState() =>
+      _GlassBubbleInteractionState();
+}
+
+class _GlassBubbleInteractionState extends State<_GlassBubbleInteraction> {
   bool _isPressed = false;
+  bool _showFocus = false;
+
+  void _activate() {
+    ElyriiHaptics.light();
+    widget.onTap();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
+    Widget control = Semantics(
+      container: true,
+      excludeSemantics: true,
       button: true,
-      label: widget.tooltip,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTapDown: (_) {
-          setState(() => _isPressed = true);
-          ElyriiHaptics.light();
+      selected: widget.selected,
+      label: widget.label,
+      onTap: _activate,
+      child: FocusableActionDetector(
+        mouseCursor: SystemMouseCursors.click,
+        onShowFocusHighlight: (value) => setState(() => _showFocus = value),
+        actions: <Type, Action<Intent>>{
+          ActivateIntent: CallbackAction<ActivateIntent>(
+            onInvoke: (_) {
+              _activate();
+              return null;
+            },
+          ),
+          ButtonActivateIntent: CallbackAction<ButtonActivateIntent>(
+            onInvoke: (_) {
+              _activate();
+              return null;
+            },
+          ),
         },
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          widget.onTap();
-        },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedScale(
-          scale: _isPressed ? 0.95 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOutCubic,
-          child: GlassBubbleButton(
-            icon: widget.icon,
-            onTap: widget.onTap,
-            size: widget.size,
-            isDark: widget.isDark,
-            isSelected: widget.isSelected,
-            iconColor: null,
-            iconAsset: widget.iconAsset,
-            iconAssetSize: widget.iconAssetSize,
+        child: GestureDetector(
+          excludeFromSemantics: true,
+          behavior: HitTestBehavior.opaque,
+          onTap: _activate,
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) => setState(() => _isPressed = false),
+          onTapCancel: () => setState(() => _isPressed = false),
+          child: AnimatedScale(
+            scale: _isPressed && !widget.reduceMotion ? 0.96 : 1.0,
+            duration: widget.reduceMotion
+                ? Duration.zero
+                : const Duration(milliseconds: 100),
+            curve: Curves.easeOutCubic,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: _showFocus
+                    ? Border.all(color: widget.focusColor, width: 2)
+                    : null,
+              ),
+              child: widget.child,
+            ),
           ),
         ),
       ),
     );
+    if (widget.label != null) {
+      control = Tooltip(message: widget.label!, child: control);
+    }
+    return control;
   }
 }

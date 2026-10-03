@@ -11,7 +11,7 @@ export type MeditationProgram = {
 };
 
 export const MIN_MEDITATION_DURATION = 1;
-export const MAX_MEDITATION_DURATION = 180;
+export const MAX_MEDITATION_DURATION = 23 * 60 + 59;
 
 // durationMinutes is a suggested starting point, not an enforced duration.
 function program(id: string, title: string, description: string, guidanceMode: "breathing" | "written", tags: string[], durationMinutes = 5): MeditationProgram {

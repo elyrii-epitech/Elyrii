@@ -31,6 +31,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # Network
   http: ^1.6.0
@@ -103,7 +105,7 @@ flutter:
     - assets/mascotte.png
     - assets/mascotte_eyes_closed.png
     - assets/optimized/mascot.glb
-    - assets/optimized/mascot_graduate.glb
+    - assets/optimized/mascot_wardrobe.glb
     - assets/brand/logo_monochrome.png
     - assets/brand/navbar_app_icon.png
 

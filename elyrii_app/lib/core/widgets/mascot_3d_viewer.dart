@@ -57,6 +57,9 @@ class Mascot3DViewer extends StatefulWidget {
   /// Faux pour les accessoires statiques sans clips natifs.
   final bool animated;
 
+  /// Accessory variant inside the shared rigged wardrobe GLB. Null removes it.
+  final String? accessoryVariant;
+
   /// Callback appelé quand le modèle est chargé avec succès.
   final VoidCallback? onModelLoaded;
 
@@ -74,6 +77,7 @@ class Mascot3DViewer extends StatefulWidget {
     this.animationTrigger = 0,
     this.breathProgress,
     this.animated = true,
+    this.accessoryVariant,
     this.onModelLoaded,
     this.onError,
   });
@@ -386,6 +390,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
           key: ValueKey((widget.config.assetPath, _controller)),
           controller: _controller,
           src: widget.config.assetPath,
+          accessoryVariant: widget.accessoryVariant,
           interactive: widget.config.interactionEnabled,
           onLoad: _onModelLoaded,
           onError: _onModelError,

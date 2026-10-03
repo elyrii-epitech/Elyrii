@@ -8,9 +8,10 @@ import '../config/mascot_themes.dart';
 import 'mascot_3d_viewer.dart';
 import '../config/mascot_animations.dart';
 import '../../features/mascot/presentation/providers/mascot_provider.dart';
+import '../../features/mascot/data/models/mascot_accessory.dart';
 
-/// A single scene/WebView for the body and its equipped accessory.
-/// The accessory is attached to the animated head in the generated glTF.
+/// One rigged scene for the bear and its wardrobe. Material variants switch
+/// accessories while the same head/chest controls continue to animate.
 class MascotWithAccessories extends StatelessWidget {
   final Mascot3DConfig config;
   final double width;
@@ -36,17 +37,20 @@ class MascotWithAccessories extends StatelessWidget {
     final theme = context.select<MascotProvider, MascotTheme>(
       (p) => p.currentTheme,
     );
-    final graduate = context.select<MascotProvider, bool>(
-      (p) => p.mascot.equippedCosmetics.contains('custom1'),
+    final accessory = context.select<MascotProvider, String?>(
+      (p) => MascotAccessories.sanitizeSelection(
+        p.mascot.equippedCosmetics,
+      ).firstOrNull,
     );
     final matrix = (theme.id == 'nature' || (!kIsWeb && Platform.isIOS))
         ? null
         : theme.colorMatrix;
     return Mascot3DViewer(
       key: const ValueKey('mascot_body'),
-      config: graduate
-          ? config.copyWith(assetPath: 'assets/optimized/mascot_graduate.glb')
-          : config,
+      config: config.copyWith(
+        assetPath: 'assets/optimized/mascot_wardrobe.glb',
+      ),
+      accessoryVariant: accessory,
       width: width,
       height: height,
       controller: controller,

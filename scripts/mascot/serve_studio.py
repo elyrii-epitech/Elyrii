@@ -21,6 +21,8 @@ class Handler(SimpleHTTPRequestHandler):
             '/velours.glb': ROOT/'elyrii_app/assets/elyrii_velours_animations.glb',
             '/model-viewer.min.js': ENGINE,
             '/': Path(__file__).parent/'studio.html',
+            '/wardrobe': Path(__file__).parent/'wardrobe.html',
+            '/wardrobe.glb': ROOT/'elyrii_app/assets/optimized/mascot_wardrobe.glb',
         }.get(route)
         if resource:
             data = resource.read_bytes()

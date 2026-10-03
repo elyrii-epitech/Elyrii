@@ -1,0 +1,247 @@
+{
+  "schemaVersion": 1,
+  "coordinateSpace": "gltf-global-y-up-front-positive-z",
+  "source": "assets/elyrii_velours_animations.glb",
+  "accessories": [
+    {
+      "id": "beret",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/beret.glb",
+      "labelFr": "Béret sauge",
+      "descriptionFr": "Un petit béret incliné entre les oreilles, avec son bouton crème.",
+      "triangles": 748,
+      "bounds": {
+        "min": [
+          -0.285,
+          1.691,
+          -0.29
+        ],
+        "max": [
+          0.285,
+          1.92,
+          0.22
+        ]
+      }
+    },
+    {
+      "id": "beanie",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/beanie.glb",
+      "labelFr": "Bonnet douillet",
+      "descriptionFr": "Un bonnet lavande à revers doux et pompon crème.",
+      "triangles": 1424,
+      "bounds": {
+        "min": [
+          -0.294,
+          1.677,
+          -0.319847
+        ],
+        "max": [
+          0.294,
+          2.062,
+          0.209847
+        ]
+      }
+    },
+    {
+      "id": "flower_crown",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/flower_crown.glb",
+      "labelFr": "Couronne de fleurs",
+      "descriptionFr": "Cinq fleurs crème et rose sur une fine tige de sauge.",
+      "triangles": 1976,
+      "bounds": {
+        "min": [
+          -0.443804,
+          1.486744,
+          0.114926
+        ],
+        "max": [
+          0.443779,
+          1.64,
+          0.395497
+        ]
+      }
+    },
+    {
+      "id": "star_crown",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/star_crown.glb",
+      "labelFr": "Couronne d’étoiles",
+      "descriptionFr": "Trois étoiles arrondies sur un bandeau doré discret.",
+      "triangles": 1232,
+      "bounds": {
+        "min": [
+          -0.410784,
+          1.501101,
+          0.126718
+        ],
+        "max": [
+          0.41065,
+          1.710734,
+          0.383176
+        ]
+      }
+    },
+    {
+      "id": "moon_pin",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/moon_pin.glb",
+      "labelFr": "Broche lunaire",
+      "descriptionFr": "Une lune dorée et une petite étoile posées sur la tempe.",
+      "triangles": 880,
+      "bounds": {
+        "min": [
+          -0.487,
+          1.395176,
+          0.242241
+        ],
+        "max": [
+          -0.271367,
+          1.562606,
+          0.325114
+        ]
+      }
+    },
+    {
+      "id": "round_glasses",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/round_glasses.glb",
+      "labelFr": "Lunettes rondes",
+      "descriptionFr": "Des montures rondes couleur prune qui laissent le regard libre.",
+      "triangles": 900,
+      "bounds": {
+        "min": [
+          -0.513968,
+          1.009,
+          -0.100724
+        ],
+        "max": [
+          0.513968,
+          1.433,
+          0.573344
+        ]
+      }
+    },
+    {
+      "id": "headphones",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/headphones.glb",
+      "labelFr": "Casque pastel",
+      "descriptionFr": "Des coussinets lavande, un arceau crème et deux touches dorées.",
+      "triangles": 1650,
+      "bounds": {
+        "min": [
+          -0.641413,
+          1.161,
+          -0.262608
+        ],
+        "max": [
+          0.641413,
+          1.776,
+          0.072117
+        ]
+      }
+    },
+    {
+      "id": "sleep_mask",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/sleep_mask.glb",
+      "labelFr": "Masque de repos",
+      "descriptionFr": "Un masque lavande avec deux paupières brodées pour le repos.",
+      "triangles": 1752,
+      "bounds": {
+        "min": [
+          -0.556179,
+          1.027,
+          -0.558588
+        ],
+        "max": [
+          0.556179,
+          1.415,
+          0.58133
+        ]
+      }
+    },
+    {
+      "id": "cozy_scarf",
+      "parent": "CTRL_chest",
+      "asset": "assets/accessories/cozy_scarf.glb",
+      "labelFr": "Écharpe cocon",
+      "descriptionFr": "Une écharpe rose tendre avec deux pans et de petites franges.",
+      "triangles": 1240,
+      "bounds": {
+        "min": [
+          -0.318,
+          0.365772,
+          -0.371105
+        ],
+        "max": [
+          0.318,
+          0.771,
+          0.335105
+        ]
+      }
+    },
+    {
+      "id": "bow_tie",
+      "parent": "CTRL_chest",
+      "asset": "assets/accessories/bow_tie.glb",
+      "labelFr": "Nœud papillon",
+      "descriptionFr": "Un nœud prune aux ailes rondes, posé juste sous le menton.",
+      "triangles": 816,
+      "bounds": {
+        "min": [
+          -0.259,
+          0.643644,
+          -0.320392
+        ],
+        "max": [
+          0.259,
+          0.767908,
+          0.36
+        ]
+      }
+    },
+    {
+      "id": "leaf_pendant",
+      "parent": "CTRL_chest",
+      "asset": "assets/accessories/leaf_pendant.glb",
+      "labelFr": "Pendentif feuille",
+      "descriptionFr": "Une feuille de sauge et sa nervure dorée, sur un cordon crème.",
+      "triangles": 332,
+      "bounds": {
+        "min": [
+          -0.256759,
+          0.485967,
+          -0.032181
+        ],
+        "max": [
+          0.256759,
+          0.722619,
+          0.339804
+        ]
+      }
+    },
+    {
+      "id": "mini_backpack",
+      "parent": "CTRL_chest",
+      "asset": "assets/accessories/mini_backpack.glb",
+      "labelFr": "Petit sac à dos",
+      "descriptionFr": "Un petit sac sauge à rabat crème, poche et bretelles roses.",
+      "triangles": 1356,
+      "bounds": {
+        "min": [
+          -0.248879,
+          0.297,
+          -0.4865
+        ],
+        "max": [
+          0.248879,
+          0.75,
+          0.2295
+        ]
+      }
+    }
+  ]
+}

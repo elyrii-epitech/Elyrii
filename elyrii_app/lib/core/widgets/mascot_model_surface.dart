@@ -92,6 +92,18 @@ class MascotModelController extends Flutter3DController {
       '});',
     );
   }
+
+  /// Public model-viewer material variants select a fitted accessory without
+  /// reloading the GLB or interrupting its current gesture.
+  void setAccessoryVariant(String? accessoryId) {
+    if (!onModelLoaded.value || _source == null) return;
+    _source!.executeCustomJsCodeWithResult(
+      '(function(){'
+      'var m=document.getElementById(${jsonEncode(_id)});'
+      'if(m)m.variantName=${jsonEncode(accessoryId)};'
+      '})();',
+    );
+  }
 }
 
 class MascotModelSurface extends StatefulWidget {
@@ -102,6 +114,7 @@ class MascotModelSurface extends StatefulWidget {
     required this.onLoad,
     required this.onError,
     this.interactive = false,
+    this.accessoryVariant,
   });
 
   final String src;
@@ -109,6 +122,7 @@ class MascotModelSurface extends StatefulWidget {
   final ValueChanged<String> onLoad;
   final ValueChanged<String> onError;
   final bool interactive;
+  final String? accessoryVariant;
 
   @override
   State<MascotModelSurface> createState() => _MascotModelSurfaceState();
@@ -127,6 +141,14 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
   }
 
   @override
+  void didUpdateWidget(MascotModelSurface oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.accessoryVariant != oldWidget.accessoryVariant) {
+      widget.controller.setAccessoryVariant(widget.accessoryVariant);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Native WebViews / web platform views do not reliably blend with a
     // Flutter opacity overlay. Do not create the surface until the splash
@@ -136,6 +158,7 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
     return ModelViewer(
       id: _id,
       src: widget.src,
+      variantName: widget.accessoryVariant,
       relatedJs: _utils.injectedJS(_id, 'flutter-3d-controller'),
       cameraControls: widget.interactive,
       activeGestureInterceptor: widget.interactive,
@@ -158,6 +181,7 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
             },
       onLoad: (address) {
         widget.controller.onModelLoaded.value = true;
+        widget.controller.setAccessoryVariant(widget.accessoryVariant);
         widget.onLoad(address);
       },
       onError: (error) {

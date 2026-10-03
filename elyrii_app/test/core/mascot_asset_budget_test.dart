@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  for (final name in ['mascot', 'mascot_graduate']) {
+  for (final name in ['mascot']) {
     test('$name keeps the rig and all clips within the geometry budget', () {
       final bytes = File('assets/optimized/$name.glb').readAsBytesSync();
       final header = ByteData.sublistView(bytes);
@@ -43,14 +43,6 @@ void main() {
         ]),
       );
       expect(data['skins'], hasLength(2));
-      if (name == 'mascot_graduate') {
-        final nodes = data['nodes'] as List;
-        final head = nodes.firstWhere((n) => n['name'] == 'CTRL_head');
-        expect(
-          (head['children'] as List).map((i) => nodes[i]['name']),
-          contains('Accessory_custom1'),
-        );
-      }
     });
   }
 }

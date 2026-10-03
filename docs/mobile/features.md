@@ -294,14 +294,16 @@ are not persisted yet.
   - Cosmic;
   - Ocean.
 - Theme persistence in `SharedPreferences`.
-- Current accessory:
-  - `custom1.glb`, displayed as a graduation hat.
+- Twelve fitted 3D accessories unlocked by completed challenges, with category
+  filters, saved selection and attachments following the head or chest.
+- One equipped piece at a time, selected through a material variant in the
+  shared wardrobe GLB. See [the wardrobe catalog](mascot-accessories.md).
 - Reset to `nature` theme and no accessory.
 
 ### Main Assets
 
-- `assets/base_basic_shaded_v3.glb`
-- `assets/custom1.glb`
+- `assets/optimized/mascot.glb`
+- `assets/optimized/mascot_wardrobe.glb`
 - `assets/mascotte.png`
 - `assets/mascotte_eyes_closed.png`
 - `assets/animations/breath.json`

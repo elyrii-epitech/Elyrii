@@ -4,31 +4,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
-/// Définition d'un accessoire cosmétique de la mascotte.
-class AccessoryDef {
-  final String id;
-  final String name;
-  final String emoji;
-
-  /// Famille d'accessoires (ex. « Tête », « Visage ») : pilote le filtrage
-  /// de l'atelier de personnalisation quand plusieurs catégories existent.
-  final String category;
-
-  /// Nombre de défis à compléter pour débloquer cet accessoire.
-  final int requiredChallenges;
-
-  const AccessoryDef({
-    required this.id,
-    required this.name,
-    required this.emoji,
-    this.category = 'Tête',
-    this.requiredChallenges = 0,
-  });
-}
-
 /// Carte d'affichage d'un accessoire de mascotte (débloqué, verrouillé, équipé).
 class AccessoryCard extends StatelessWidget {
   final String name;
+  final String description;
   final String emoji;
   final bool isEquipped;
   final bool isLocked;
@@ -42,6 +21,7 @@ class AccessoryCard extends StatelessWidget {
   const AccessoryCard({
     super.key,
     required this.name,
+    required this.description,
     required this.emoji,
     required this.isEquipped,
     required this.isLocked,
@@ -68,89 +48,110 @@ class AccessoryCard extends StatelessWidget {
     final progress = requiredChallenges > 0
         ? (completedChallenges / requiredChallenges).clamp(0.0, 1.0)
         : 1.0;
+    final remaining = (requiredChallenges - completedChallenges).clamp(
+      0,
+      requiredChallenges,
+    );
+    final remainingLabel =
+        'Encore $remaining ${remaining == 1 ? 'défi' : 'défis'} pour débloquer';
+    final actionLabel = isLocked
+        ? remainingLabel
+        : (isEquipped ? 'Touche pour retirer' : 'Touche pour équiper');
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      selected: isEquipped,
+      label: '$name. $description. $actionLabel.',
       onTap: isLocked ? onLockedTap : onTap,
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        color: isEquipped
-            ? accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
-            : null,
-        borderColor: isEquipped ? accentColor.withValues(alpha: 0.45) : null,
-        child: Row(
-          children: [
-            _buildEmojiCircle(tertiaryColor),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          onTap: isLocked ? onLockedTap : onTap,
+          child: LiquidGlassCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            color: isEquipped
+                ? accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
+                : null,
+            borderColor: isEquipped
+                ? accentColor.withValues(alpha: 0.45)
+                : null,
+            child: Row(
+              children: [
+                _buildEmojiCircle(tertiaryColor),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: AppTextStyles.titleSmall(
-                            color: isLocked
-                                ? textColor
-                                : (isEquipped ? accentColor : textColor),
-                            fontWeight: FontWeight.w700,
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            name,
+                            style: AppTextStyles.titleSmall(
+                              color: isLocked
+                                  ? textColor
+                                  : (isEquipped ? accentColor : textColor),
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          _buildStatusPill(),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      _buildStatusPill(),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  if (isLocked) ...[
-                    Text(
-                      'Termine $requiredChallenges défi pour débloquer',
-                      style: AppTextStyles.labelSmall(color: tertiaryColor),
-                    ),
-                    const SizedBox(height: 10),
-                    // Progression arrondie façon iOS : piste fine et
-                    // remplissage aux couleurs du thème, sans widget
-                    // Material.
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        height: 6,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.06),
-                        child: FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: progress,
+                      const SizedBox(height: 6),
+                      Text(
+                        description,
+                        style: AppTextStyles.bodySmall(color: subtitleColor),
+                      ),
+                      const SizedBox(height: 8),
+                      if (isLocked) ...[
+                        Text(
+                          remainingLabel,
+                          style: AppTextStyles.labelSmall(color: tertiaryColor),
+                        ),
+                        const SizedBox(height: 10),
+                        // Progression arrondie façon iOS : piste fine et
+                        // remplissage aux couleurs du thème, sans widget
+                        // Material.
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
                           child: Container(
-                            color: accentColor.withValues(
-                              alpha: isDark ? 0.9 : 0.8,
+                            height: 6,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.06),
+                            child: FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: progress,
+                              child: Container(
+                                color: accentColor.withValues(
+                                  alpha: isDark ? 0.9 : 0.8,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$completedChallenges / $requiredChallenges défi',
-                      style: AppTextStyles.labelSmall(
-                        color: tertiaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ] else
-                    Text(
-                      isEquipped
-                          ? 'Touche pour retirer'
-                          : 'Touche pour équiper',
-                      style: AppTextStyles.labelSmall(color: subtitleColor),
-                    ),
-                ],
-              ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${completedChallenges.clamp(0, requiredChallenges)} / '
+                          '$requiredChallenges ${requiredChallenges == 1 ? 'défi terminé' : 'défis terminés'}',
+                          style: AppTextStyles.labelSmall(
+                            color: tertiaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ] else
+                        Text(
+                          actionLabel,
+                          style: AppTextStyles.labelSmall(color: subtitleColor),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -276,11 +277,13 @@ class AccessoryCard extends StatelessWidget {
         children: [
           Icon(icon, size: 11, color: color),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: AppTextStyles.labelSmall(
-              color: color,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            child: Text(
+              label,
+              style: AppTextStyles.labelSmall(
+                color: color,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],

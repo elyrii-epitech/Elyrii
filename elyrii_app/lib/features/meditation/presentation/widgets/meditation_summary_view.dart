@@ -254,22 +254,26 @@ class MeditationSummaryView extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatColumn(
-            '${controller.selectedDurationMinutes} min',
-            'Temps total',
-            accent,
-            isDark,
+          Expanded(
+            child: _buildStatColumn(
+              controller.selectedDurationLabel,
+              'Temps total',
+              accent,
+              isDark,
+            ),
           ),
           Container(
             width: 1,
             height: 36,
             color: isDark ? Colors.white12 : Colors.black12,
           ),
-          _buildStatColumn(
-            '${controller.isGuidedPractice ? controller.selectedExercise!.steps.length : controller.completedCycles}',
-            controller.isGuidedPractice ? 'Étapes' : 'Cycles complets',
-            isDark ? AppColors.primaryDark : AppColors.primary,
-            isDark,
+          Expanded(
+            child: _buildStatColumn(
+              '${controller.isGuidedPractice ? controller.selectedExercise!.steps.length : controller.completedCycles}',
+              controller.isGuidedPractice ? 'Étapes' : 'Cycles complets',
+              isDark ? AppColors.primaryDark : AppColors.primary,
+              isDark,
+            ),
           ),
         ],
       ),
@@ -286,6 +290,7 @@ class MeditationSummaryView extends StatelessWidget {
       children: [
         Text(
           value,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
@@ -295,6 +300,7 @@ class MeditationSummaryView extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           label,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,
             color: isDark

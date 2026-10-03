@@ -1,25 +1,26 @@
-# Performance du frontend — 19 septembre 2026
+# Performance du frontend
 
 ## Changements mesurables
 
-Mesures sur les fichiers GLB et leur géométrie, pas sur le framerate :
+Mesures sur les fichiers GLB et leur géométrie, pas sur le framerate.
+La garde-robe a été actualisée le 3 octobre 2026 :
 
 | Scène | Avant | Après |
 | --- | ---: | ---: |
 | Corps seul | 153 200 triangles | 62 404 triangles |
-| Corps + chapeau | 234 104 triangles | 71 076 triangles |
-| Viewers natifs pour corps + chapeau | 2 | 1 |
+| Garde-robe, géométries masquées comprises | — | 76 522 triangles |
+| Corps équipé d'une pièce de la garde-robe | — | moins de 65 000 triangles |
+| Viewers natifs pour corps + accessoire | — | 1 |
 | Fichier corps | 5 687 376 octets | 3 294 916 octets |
-| Corps + chapeau chargé | 7 548 116 octets, deux fichiers | 3 484 360 octets, un fichier |
+| Garde-robe chargée | — | 3 637 176 octets, un fichier |
 
-Le modèle complet contient **69,6 % de triangles en moins**, avec les 16 clips
-d’animation et les deux skins conservés. Le chapeau est attaché au nœud animé
-de la tête. Les sources d’origine ne sont pas supprimées.
+Le corps contient **59,3 % de triangles en moins**, avec les 16 clips
+d’animation et les deux skins conservés. Les douze accessoires suivent les
+contrôles animés de la tête ou du buste.
 
-Le bundle déclare maintenant deux variantes optimisées, sans les deux textures
-PNG autonomes inutilisées : 6 779 276 octets contre 12 359 611 pour cet ensemble
-d’assets, soit environ **5,58 Mo retirés**. Ce n’est pas une mesure de la taille
-finale de l’IPA. Les textures embarquées dans les GLB n’ont pas été réduites :
+Le bundle déclare le corps optimisé et la garde-robe : 6 932 092 octets pour ces
+deux fichiers. Ce n’est pas une mesure de la taille finale de l’IPA.
+Les textures embarquées dans les GLB n’ont pas été réduites :
 aucun gain de mémoire GPU lié aux textures n’est revendiqué.
 
 ## Comportements modifiés
@@ -34,7 +35,7 @@ aucun gain de mémoire GPU lié aux textures n’est revendiqué.
 - Dashboard : abonnements ciblés aux parties d’état affichées.
 - Mascotte : pause hors écran, prise en compte du cycle de vie et des animations
   réduites, destruction du viewer après 15 secondes hors écran puis recréation
-  au retour. Un seul rendu WebGL pour la variante avec chapeau.
+  au retour. Un seul rendu WebGL pour le corps et son accessoire.
 - Avatars : décodage dimensionné à la taille logique × densité de pixels.
 - Démarrage : diagnostics réseau désactivés par défaut, suppression du double
   GET de profil et des préchargements dashboard/coach redondants ; introduction
@@ -53,9 +54,11 @@ npm run build
 
 Versions d’outillage verrouillées dans `package-lock.json`. Les fichiers
 générés vont dans `assets/optimized/`. Le test `mascot_asset_budget_test.dart`
-vérifie les budgets de géométrie/taille, les clips et l’attache du chapeau.
+vérifie les budgets du corps et ses clips. Le test
+`mascot_wardrobe_asset_test.dart` vérifie les douze variantes, leurs ancrages et
+les budgets de la garde-robe.
 
-## Validation et limites
+## Validation du 19 septembre 2026 et limites
 
 Validation locale avec Flutter 3.47.4 / Dart 3.13.3 : **aucune alerte d’analyse,
 100 tests réussis, compilation iOS simulateur debug réussie**. La suite teste
@@ -65,7 +68,7 @@ le journal, sauvegarde qui échoue et saisie pendant sauvegarde. Les tests UI
 couvrent également les thèmes, le clavier et les ressources d’urgence.
 
 Vérification sur un vrai **simulateur iPhone 17 Pro / iOS 26.4**, observé via
-IOS Simulator Browser : dashboard/mascotte avec chapeau, navigation vers le
+IOS Simulator Browser : dashboard/mascotte avec accessoire, navigation vers le
 journal et défilement d’un jeu de 300 notes fictives, puis chat, historique et
 feuille d’urgence. Une conversation de test a été enregistrée et retrouvée
 après redémarrage Dart de l’application. Le serveur de test ne fournit pas
@@ -74,7 +77,7 @@ viennent d’un serveur local de test : ce n’est pas une
 validation du backend de production ni du service IA.
 
 Le retour au dashboard après plus de 15 secondes dans le chat a également
-été vérifié : la mascotte 3D et son chapeau sont à nouveau visibles.
+été vérifié : la mascotte 3D et son accessoire sont à nouveau visibles.
 
 La compilation signale encore que `flutter_inappwebview_ios` ne prend pas en
 charge Swift Package Manager et utilise l’intégration compatible actuelle.
