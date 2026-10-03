@@ -10,3 +10,4 @@ export * from "./oauth.table";
 export * from "./reward.table";
 export * from "./email-verification.table";
 export * from "./notification.table";
+export * from "./context.table";

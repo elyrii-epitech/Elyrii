@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { userTable } from "./user.table";
 
 export const chatMessagesTable = pgTable("chat_messages", {
@@ -9,6 +9,10 @@ export const chatMessagesTable = pgTable("chat_messages", {
     message: text("message").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
+    // Composite keys keep context provenance within its owning user/conversation.
+    unique("chat_messages_user_id_id_unique").on(table.userId, table.id),
+    unique("chat_messages_user_conversation_id_unique").on(table.userId, table.conversationId, table.id),
+    index("chat_messages_context_history_idx").on(table.userId, table.conversationId, table.createdAt),
     index("chat_messages_user_id_idx").on(table.userId),
     index("chat_messages_conversation_id_idx").on(table.conversationId),
     index("chat_messages_created_at_idx").on(table.createdAt),
