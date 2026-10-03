@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../domain/models/breath_phase.dart';
 import '../controllers/meditation_controller.dart';
@@ -91,7 +92,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
     _lastPhaseIndex = controller.currentPhaseIndex;
     _lastPaused = controller.isPaused;
     _breathScaleController.stop();
-    if (_reducedMotion) {
+    if (_reducedMotion || controller.isBreathingRecovery) {
       _breathScaleController.value = .5;
       return;
     }
@@ -150,40 +151,32 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
 
     return Column(
       children: [
-        // ---- En-tête : badge technique ----
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.pageHorizontalPadding,
-            vertical: AppDimensions.spacingSm,
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: accent.withValues(alpha: 0.35)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(currentPhase.icon, size: 14, color: accent),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.controller.selectedBreathingType!.label,
-                      style: AppTextStyles.labelMedium(
-                        color: ink,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: ElyriiPageHeader(
+            title: widget.controller.selectedExercise!.title,
+            subtitle: 'Respiration guidée',
+            leading: Semantics(
+              label: 'Interrompre la séance',
+              button: true,
+              child: LiquidGlassIconButton(
+                icon: Icons.close_rounded,
+                onPressed: widget.onRequestExit,
+                size: 44,
               ),
-            ],
+            ),
+            trailing: Semantics(
+              label: isPaused ? 'Reprendre la séance' : 'Mettre en pause',
+              button: true,
+              child: LiquidGlassIconButton(
+                icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                onPressed: isPaused
+                    ? widget.controller.resumeSession
+                    : widget.controller.pauseSession,
+                color: ink,
+                size: 44,
+              ),
+            ),
           ),
         ),
 
@@ -234,7 +227,9 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${widget.controller.phaseSecondsRemaining} s',
+                    widget.controller.isBreathingRecovery
+                        ? 'À ton rythme'
+                        : '${widget.controller.phaseSecondsRemaining} s',
                     style: AppTextStyles.titleMedium(color: subtitleColor),
                   ),
                   const Spacer(flex: 1),
@@ -264,7 +259,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                 icon: Icons.timer_outlined,
                 value: _formatTime(widget.controller.remainingSeconds),
                 label: 'restant',
-                color: AppColors.primary,
+                color: isDark ? AppColors.primaryDark : AppColors.primary,
               ),
             ],
           ),
@@ -272,40 +267,6 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
 
         const SizedBox(height: AppDimensions.spacingLg),
 
-        // Contrôles d'action (Stop + Play/Pause)
-        Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacingXl,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              LiquidGlassIconButton(
-                icon: Icons.stop_rounded,
-                onPressed: widget.onRequestExit,
-                size: 56,
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ),
-              const SizedBox(width: AppDimensions.spacingLg),
-              LiquidGlassCard(
-                onTap: isPaused
-                    ? widget.controller.resumeSession
-                    : widget.controller.pauseSession,
-                borderRadius: 40,
-                padding: const EdgeInsets.all(20),
-                color: accent.withValues(alpha: 0.22),
-                borderColor: accent.withValues(alpha: 0.5),
-                child: Icon(
-                  isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                  size: 36,
-                  color: ink,
-                ),
-              ),
-            ],
-          ),
-        ),
         SizedBox(height: MediaQuery.of(context).padding.bottom + 28),
       ],
     );

@@ -54,7 +54,7 @@ class MeditationSummaryView extends StatelessWidget {
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
     final accent = AppColors.readableAccent(
-      controller.selectedBreathingType!.color,
+      controller.selectedExercise!.color,
       isDark: isDark,
     );
 
@@ -113,6 +113,15 @@ class MeditationSummaryView extends StatelessWidget {
               .slideY(begin: 0.15, end: 0),
 
           const SizedBox(height: AppDimensions.spacingXxl),
+
+          if (controller.backendError != null) ...[
+            Text(
+              controller.backendError!,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall(color: subtitleColor),
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Question humeur après séance
           Text(
@@ -257,9 +266,9 @@ class MeditationSummaryView extends StatelessWidget {
             color: isDark ? Colors.white12 : Colors.black12,
           ),
           _buildStatColumn(
-            '${controller.completedCycles}',
-            'Cycles complets',
-            AppColors.primary,
+            '${controller.isGuidedPractice ? controller.selectedExercise!.steps.length : controller.completedCycles}',
+            controller.isGuidedPractice ? 'Étapes' : 'Cycles complets',
+            isDark ? AppColors.primaryDark : AppColors.primary,
             isDark,
           ),
         ],

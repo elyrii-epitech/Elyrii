@@ -8,9 +8,10 @@ import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../controllers/meditation_controller.dart';
 import '../widgets/active_breathing_view.dart';
+import '../widgets/active_guided_meditation_view.dart';
 import '../widgets/meditation_summary_view.dart';
 
-/// Page immersive plein écran pour une session de respiration en cours.
+/// Page immersive pour une respiration ou une pratique à guidage écrit.
 ///
 /// Hors du shell de navigation : aucun dock, aucune distraction.
 /// - Fond radial teinté par la technique active (ambiance apaisante).
@@ -28,6 +29,7 @@ class MeditationSessionPage extends StatefulWidget {
 
 class _MeditationSessionPageState extends State<MeditationSessionPage> {
   bool _hasReactedFinished = false;
+  late final _exercise = widget.controller.selectedExercise!;
 
   @override
   void initState() {
@@ -92,7 +94,7 @@ class _MeditationSessionPageState extends State<MeditationSessionPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = widget.controller.selectedBreathingType!.color;
+    final accent = _exercise.color;
     final isFinished = widget.controller.isFinished;
 
     return PopScope(
@@ -124,8 +126,15 @@ class _MeditationSessionPageState extends State<MeditationSessionPage> {
             child: ListenableBuilder(
               listenable: widget.controller,
               builder: (context, _) {
+                if (widget.controller.isSetup) return const SizedBox.shrink();
                 if (widget.controller.isFinished) {
                   return MeditationSummaryView(controller: widget.controller);
+                }
+                if (widget.controller.isGuidedPractice) {
+                  return ActiveGuidedMeditationView(
+                    controller: widget.controller,
+                    onRequestExit: _confirmExit,
+                  );
                 }
                 return ActiveBreathingView(
                   controller: widget.controller,

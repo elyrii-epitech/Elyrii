@@ -21,6 +21,7 @@ nav:
       - Architecture: mobile/architecture.md
       - Dependencies: mobile/dependencies.md
       - Features: mobile/features.md
+      - Meditation: mobile/meditation.md
       - Design System: mobile/design.md
       - CI/CD: mobile/ci-cd.md
       - Development: mobile/development.md

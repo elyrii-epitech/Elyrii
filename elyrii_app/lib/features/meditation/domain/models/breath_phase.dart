@@ -25,8 +25,7 @@ class BreathPhase {
 
 /// Breathing exercise types available in the meditation page.
 ///
-/// Chaque technique est reconnue dans le domaine du bien-être et de la
-/// psychologie physiologique. Les durées sont exprimées en secondes.
+/// Les rythmes sont des repères pour le guidage, exprimés en secondes.
 enum BreathingType {
   /// 4-7-8 breathing (Dr. Andrew Weil) : inspire 4s, retiens 7s, expire 8s.
   relaxation478(
@@ -36,7 +35,7 @@ enum BreathingType {
       BreathPhase(7, 'Retiens', BreathAction.hold),
       BreathPhase(8, 'Expire', BreathAction.contract),
     ],
-    'Apaisante et profonde, idéale avant le sommeil.',
+    'Quatre cycles guidés, puis un retour au souffle naturel.',
     'Dr. Andrew Weil',
     Icons.nights_stay_rounded,
     Color(0xFF7E6AD8),
@@ -52,7 +51,7 @@ enum BreathingType {
       BreathPhase(4, 'Retiens', BreathAction.hold),
     ],
     'Équilibrante, utilisée pour la concentration.',
-    'Navy SEALs',
+    'Respiration rythmée avec rétentions',
     Icons.crop_square_rounded,
     Color(0xFFA8D5BA),
   ),
@@ -64,22 +63,21 @@ enum BreathingType {
       BreathPhase(5, 'Inspire', BreathAction.expand),
       BreathPhase(5, 'Expire', BreathAction.contract),
     ],
-    'Équilibre le système nerveux et le rythme cardiaque.',
-    '5 bpm · David Servan-Schreiber',
+    'Un rythme régulier de six respirations par minute.',
+    '6 respirations/min · rythme 5–5',
     Icons.favorite_rounded,
     Color(0xFFFFB5A8),
   ),
 
-  /// Respiration diaphragmatique (ventrale) : 4-2-6.
+  /// Repère ventral 4–6, sans rétention.
   diaphragmatique(
     'Respiration diaphragmatique',
     [
       BreathPhase(4, 'Inspire', BreathAction.expand),
-      BreathPhase(2, 'Retiens', BreathAction.hold),
       BreathPhase(6, 'Expire', BreathAction.contract),
     ],
-    'Ventrale et relaxante, détend le dos et le ventre.',
-    'Respiration profonde du ventre',
+    'Observe le mouvement du ventre, sans forcer le souffle.',
+    'Respiration ventrale · repère 4–6',
     Icons.air_rounded,
     Color(0xFF93B8DA),
   ),
@@ -91,10 +89,34 @@ enum BreathingType {
       BreathPhase(6, 'Inspire', BreathAction.expand),
       BreathPhase(6, 'Expire', BreathAction.contract),
     ],
-    'Respiration océanique du yoga, ancre et réchauffe.',
-    'Pranayama · Yoga',
+    'Un souffle doux et sonore, inspiré du yoga.',
+    'Pranayama · repère 6–6',
     Icons.waves_rounded,
     Color(0xFFFDD876),
+  ),
+
+  facile(
+    'Respiration douce',
+    [
+      BreathPhase(3, 'Inspire', BreathAction.expand),
+      BreathPhase(3, 'Expire', BreathAction.contract),
+    ],
+    'Un repère court pour découvrir le guidage, sans rétention.',
+    'Adaptation douce · rythme 3–3',
+    Icons.spa_rounded,
+    Color(0xFFA8D5BA),
+  ),
+
+  expirationLongue(
+    'Expiration prolongée',
+    [
+      BreathPhase(4, 'Inspire', BreathAction.expand),
+      BreathPhase(6, 'Expire', BreathAction.contract),
+    ],
+    'Laisse un peu plus de place à l’expiration, sans forcer.',
+    'Repère 4–6 · sans rétention',
+    Icons.air_rounded,
+    Color(0xFF93B8DA),
   );
 
   const BreathingType(
