@@ -113,6 +113,7 @@ Future<bool> _requestGuidance(
   }
   return success;
 }
+
 Future<void> _launchGuidance(
   BuildContext context,
   CoachActivity activity,

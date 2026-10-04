@@ -81,6 +81,7 @@ class _MascotWidgetState extends State<MascotWidget> {
       _onChatChanged();
     }
   }
+
   void _onChatChanged() {
     if (!mounted) return;
     final chat = _chat!;

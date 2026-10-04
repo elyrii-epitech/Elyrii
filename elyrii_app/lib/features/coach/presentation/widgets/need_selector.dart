@@ -96,9 +96,7 @@ class _NeedChipState extends State<_NeedChip> {
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? color.withValues(alpha: 0.16)
-                  : (widget.isDark
-                        ? AppColors.cardDark
-                        : AppColors.cardLight),
+                  : (widget.isDark ? AppColors.cardDark : AppColors.cardLight),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 width: 1,

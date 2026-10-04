@@ -109,16 +109,16 @@ class EmptyJournalState extends StatelessWidget {
         // Cartes d'inspiration
         ...prompts.map((prompt) {
           return _PromptCard(
-                prompt: prompt,
-                isDark: isDark,
-                onTap: () {
-                  if (onPromptSelected != null) {
-                    onPromptSelected!(prompt);
-                  } else {
-                    onCreateFirst();
-                  }
-                },
-              );
+            prompt: prompt,
+            isDark: isDark,
+            onTap: () {
+              if (onPromptSelected != null) {
+                onPromptSelected!(prompt);
+              } else {
+                onCreateFirst();
+              }
+            },
+          );
         }),
       ],
     );

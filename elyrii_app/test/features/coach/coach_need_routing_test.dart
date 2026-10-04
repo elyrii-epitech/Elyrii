@@ -49,9 +49,9 @@ void main() {
     });
 
     test('les techniques respiratoires référencées existent nativement', () {
-      final breathingActivities = repository
-          .getAllActivities()
-          .where((a) => a.kind == CoachActivityKind.breathing);
+      final breathingActivities = repository.getAllActivities().where(
+        (a) => a.kind == CoachActivityKind.breathing,
+      );
 
       for (final activity in breathingActivities) {
         final technique = activity.breathingTechnique;
@@ -66,9 +66,9 @@ void main() {
     });
 
     test('les activités journal ont toutes un prompt guidé', () {
-      final journalActivities = repository
-          .getAllActivities()
-          .where((a) => a.kind == CoachActivityKind.journal);
+      final journalActivities = repository.getAllActivities().where(
+        (a) => a.kind == CoachActivityKind.journal,
+      );
 
       expect(journalActivities, isNotEmpty);
       for (final activity in journalActivities) {
@@ -114,22 +114,24 @@ void main() {
       expect(provider.mascotMessage, contains('je reste là'));
     });
 
-    test('sans backend, la guidance retombe sur un placeholder honnête', (
-      ) async {
-      final bodyScan = repository.getAllActivities().firstWhere(
-        (a) => a.id == 'body-scan-5',
-      );
+    test(
+      'sans backend, la guidance retombe sur un placeholder honnête',
+      () async {
+        final bodyScan = repository.getAllActivities().firstWhere(
+          (a) => a.id == 'body-scan-5',
+        );
 
-      final success = await provider.requestGuidanceForActivity(bodyScan);
-      expect(success, isTrue);
-      expect(provider.isCreatingSession, isFalse);
+        final success = await provider.requestGuidanceForActivity(bodyScan);
+        expect(success, isTrue);
+        expect(provider.isCreatingSession, isFalse);
 
-      final session = provider.latestSession;
-      expect(session, isNotNull);
-      expect(session!.response, isNotEmpty);
-      expect(session.context['placeholder'], isTrue);
-      expect(session.context['activityId'], equals('body-scan-5'));
-    });
+        final session = provider.latestSession;
+        expect(session, isNotNull);
+        expect(session!.response, isNotEmpty);
+        expect(session.context['placeholder'], isTrue);
+        expect(session.context['activityId'], equals('body-scan-5'));
+      },
+    );
   });
 
   group('CoachPage — parcours utile et immersif', () {

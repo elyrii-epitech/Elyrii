@@ -211,7 +211,8 @@ class CoachRepository {
   /// utilisable telle quelle et sera remplacée par la réponse du coach.
   String placeholderGuidanceFor(CoachActivity activity) {
     final byId = {
-      'body-scan-5': 'Installe-toi confortablement, yeux fermés.\n\n'
+      'body-scan-5':
+          'Installe-toi confortablement, yeux fermés.\n\n'
           '1. Trois grandes respirations pour poser le cadre.\n'
           '2. Porte ton attention sur le sommet du crâne, puis descends '
           'lentement : visage, épaules, bras, dos, jambes, pieds.\n'
@@ -219,13 +220,15 @@ class CoachRepository {
           's\'alléger à l\'expiration.\n\n'
           'Si ta tête s\'égare, c\'est normal : reviens simplement au dernier '
           'endroit visité.',
-      'marche-mindful': 'Sors sans destination précise.\n\n'
+      'marche-mindful':
+          'Sors sans destination précise.\n\n'
           '1. Les trente premières secondes, ralentis franchement ton pas.\n'
           '2. Sens le contact de chaque pied : talon, plante, orteils.\n'
           '3. Ouvre l\'ouïe : trois sons, proches ou lointains.\n'
           '4. Termine par une pause et nomme ce que tu ressens.\n\n'
           'L\'objectif n\'est pas d\'arriver, c\'est d\'être là.',
-      'muscle-relaxation': 'Allonge-toi ou assieds-toi bien calé.\n\n'
+      'muscle-relaxation':
+          'Allonge-toi ou assieds-toi bien calé.\n\n'
           '1. Mains : serre les poings 5 secondes, relâche 10 secondes.\n'
           '2. Épaules : monte-les vers les oreilles, relâche.\n'
           '3. Visage : grimace complète, puis détends chaque muscle.\n'

@@ -94,7 +94,9 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
                   color: subtitleColor,
                 ).copyWith(height: 1.5),
                 maxLines: _expanded ? null : 5,
-                overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                overflow: _expanded
+                    ? TextOverflow.visible
+                    : TextOverflow.ellipsis,
               ),
             ),
           ),
