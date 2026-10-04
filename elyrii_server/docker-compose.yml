@@ -8,11 +8,11 @@ services:
       - "${PORT:-3000}:${PORT:-3000}"
     environment:
         - PORT=${PORT:-3000}
-        - DB_USER=${DB_USER}
-        - DB_PASSWORD=${DB_PASSWORD}
+        - DB_USER=${DB_USER:-postgres}
+        - DB_PASSWORD=${DB_PASSWORD:-postgres}
         - DB_HOST=postgres
         - DB_PORT=5432
-        - DB_NAME=${DB_NAME}
+        - DB_NAME=${DB_NAME:-elyrii_db}
         - REDPANDA_HOST=${REDPANDA_HOST:-redpanda}
         - REDPANDA_PORT=${REDPANDA_PORT:-9092}
         - SECRET_KEY=${SECRET_KEY:-super-secret-key}
@@ -23,9 +23,9 @@ services:
     depends_on:
         redpanda:
             condition: service_healthy
-        postgres:
-            condition: service_healthy
-    command: sh -c "sleep 5 && bun run db:push && bun run start"
+        db-migrate:
+            condition: service_completed_successfully
+    command: ["bun", "run", "start"]
 
 
   redpanda:
@@ -68,28 +68,43 @@ services:
     networks:
       - elyrii_net
 
-  postgres:
-    image: postgres:16-alpine
-    ports:
-      - "5432:5432"
+  db-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: db-migrations
     environment:
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=${DB_NAME}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-elyrii_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - elyrii_net
+
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg16-bookworm
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-elyrii_db}
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./init_dbs.sh:/docker-entrypoint-initdb.d/init_dbs.sh
+      - ./init_dbs.sh:/docker-entrypoint-initdb.d/init_dbs.sh:ro
     networks:
       - elyrii_net
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
-    depends_on:
-      redpanda:
-        condition: service_healthy
 
 volumes:
   redpanda_data:

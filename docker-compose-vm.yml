@@ -21,9 +21,9 @@ services:
     depends_on:
       redpanda:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
-    command: sh -c "sleep 5 && bun run db:push && bun run start"
+      db-migrate:
+        condition: service_completed_successfully
+    command: ["bun", "run", "start"]
     restart: unless-stopped
     networks:
       - elyrii_net
@@ -70,8 +70,26 @@ services:
     networks:
       - elyrii_net
 
+  db-migrate:
+    build:
+      context: ./elyrii_server
+      dockerfile: Dockerfile
+      target: db-migrations
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-elyrii_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - elyrii_net
+
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:0.8.6-pg16-bookworm
     container_name: postgres_elyrii
     environment:
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -80,11 +98,8 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./elyrii_server/init_dbs.sh:/docker-entrypoint-initdb.d/init_dbs.sh:ro
-    depends_on:
-      redpanda:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 10s
       timeout: 5s
       retries: 5
