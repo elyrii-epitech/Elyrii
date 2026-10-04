@@ -51,6 +51,59 @@ and exclude inactive/expired memories. Content changes require re-embedding.
 There is no ANN index yet; a future model-specific migration can add one when its
 dimension and distance metric are known. See the [pgvector documentation](https://github.com/pgvector/pgvector).
 
+## Application storage API
+
+`ContextRepository` in `elyrii_server/repository/context.repository.ts` is bound to
+one trusted user ID at construction. Callers must obtain this ID from verified
+authentication or a validated internal job, never from a model candidate. A UUID
+alone is not authentication. The database and `ContextPolicy` can be injected for
+tests. This API is not yet wired into chat, inference, or HTTP routes.
+
+The strict candidate contracts in `modules/context/context.candidates.ts` define
+facts/preferences (`kind`, `key`, JSON `value`) and memories (`kind: memory`,
+readable `content`, `retention`). Both require `origin` and a source message ID.
+The repository checks that the source belongs to its user and has role `user`;
+assistant statements cannot become user facts. Unknown fields such as `userId`,
+`status`, or candidate-supplied record IDs are rejected. Wire timestamps are ISO
+8601 strings with an explicit offset; validation converts them to UTC instants.
+
+| Operation | Behavior |
+| --- | --- |
+| `createFact`, `replaceFact(expectedId, candidate)` | Create or atomically supersede the active fact for the same key. User-row locking serializes concurrent writes; stale expected IDs fail. |
+| `createMemory`, `correctMemory(id, candidate)` | Store a memory or supersede it with a new ID, deleting the old embeddings in the same transaction. |
+| `listEligibleFacts`, `listEligibleMemories` | Return only the user's active records whose validity has begun and not ended, excluding expired memories. Results are bounded (default 100, maximum 200). |
+| `getFact`, `getMemory` | Owner-scoped inspection, including superseded/deleted records; these are not eligibility-filtered retrieval methods. Foreign or missing IDs return null. |
+| `putSummary`, `getSummary` | Store/read a summary for exactly one user/conversation, validating its boundary message. |
+| `getRecentMessages` | Return a bounded chronological slice ordered by `(created_at, id)`, including stable UUID ordering for timestamp ties. |
+| `putEmbedding`, `getEmbeddings` | Access vectors through the owning eligible memory, validate model/dimensions, and serialize writes against corrections using the memory row lock. |
+
+Memory corrections use a new ID rather than changing the content under an
+existing vector. Late embedding writes to a superseded ID are rejected. Fact and
+memory history remains available for inspection but is excluded from eligible
+reads. Invalid corrections roll back without losing the previous active record
+or its vectors. Direct SQL writes must preserve these invariants themselves.
+
+`ContextPolicy` uses an injectable clock, sampled once per eligible read or after
+acquiring write locks. Validity is `valid_from <= now < valid_until`, and retention
+is `now < expires_at`; null end times are unbounded. The short-term retention
+configuration is in milliseconds and defaults to **48 hours**, bounded by **1 hour
+and 7 days** from persistence time. Callers can inject different validated bounds.
+Missing/null short-term expiry receives the default; supplied expiry outside the
+bounds is rejected rather than silently changed. Long-term expiry defaults to
+null, but an explicit expiry must be in the future. Event time is independent and
+never used to extend validity or retention.
+
+Summary generation, stale-summary job detection/coverage tracking, semantic
+ranking, cleanup, and forget/replay suppression remain in the subsequent issues.
+The current summary upsert is a storage primitive, not a concurrent summarizer.
+Likewise, stored expiry metadata does not automatically delete rows.
+
+The isolated database test runner below now also executes repository and policy
+tests. Ordinary `bun test` runs policy tests and skips database integration unless
+`CONTEXT_DB_TEST=1` is explicitly set. Prefer the Docker runner so tests never use
+an application database. The tests cover owner/source isolation, exact temporal
+boundaries, rollback, concurrent correction, vector invalidation, and message ties.
+
 ## Containers and fresh databases
 
 All three PostgreSQL Compose definitions use

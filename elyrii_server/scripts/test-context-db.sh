@@ -4,7 +4,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 container="elyrii-context-test-$$"
 image="elyrii-context-migrations-test"
-trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+cleanup() {
+    local result=$?
+    if [ "$result" -ne 0 ]; then docker logs "$container" 2>&1 || true; fi
+    docker rm -f "$container" >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
 docker build --target db-migrations -t "$image" .
 docker run -d --name "$container" --tmpfs /var/lib/postgresql/data \
     -e POSTGRES_USER=context_test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=fresh \
@@ -33,6 +38,12 @@ psql_test() {
 }
 run fresh bun run db:migrate
 run fresh bun run db:migrate
+# Reuse the image's locked dependencies; mount only application source under test.
+docker run --rm --network "container:$container" -e DB_HOST=127.0.0.1 \
+    -e DB_USER=context_test -e DB_PASSWORD=test -e DB_NAME=fresh -e CONTEXT_DB_TEST=1 \
+    -v "$PWD/repository:/app/repository:ro" -v "$PWD/modules/context:/app/modules/context:ro" \
+    -v "$PWD/config:/app/config:ro" "$image" \
+    bun test modules/context repository/context.repository.test.ts
 psql_test fresh < scripts/test-context-schema.sql
 
 psql_test fresh -c 'CREATE DATABASE upgraded'
