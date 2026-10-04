@@ -3,16 +3,20 @@ import 'package:flutter/material.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
-import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
+import '../../../../core/widgets/glass/liquid_glass_card.dart';
+import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../domain/models/meditation_exercise.dart';
 import '../../domain/models/meditation_exercises.dart';
 import '../controllers/meditation_controller.dart';
 import 'meditation_duration_sheet.dart';
+import 'meditation_library_sheet.dart';
+import 'meditation_practice_card.dart';
 
 class MeditationCatalogView extends StatefulWidget {
   const MeditationCatalogView({super.key, required this.controller});
@@ -24,8 +28,60 @@ class MeditationCatalogView extends StatefulWidget {
 }
 
 class _MeditationCatalogViewState extends State<MeditationCatalogView> {
-  MeditationCategory? _category;
+  static const _featuredIds = [
+    'facile',
+    'carree',
+    'mindful-breathing',
+    'body-scan',
+  ];
+
   MeditationController get controller => widget.controller;
+
+  late (MeditationExercise?, int) _selection;
+
+  (MeditationExercise?, int) get _currentSelection =>
+      (controller.selectedExercise, controller.selectedDurationMinutes);
+
+  @override
+  void initState() {
+    super.initState();
+    _selection = _currentSelection;
+    controller.addListener(_refreshSelection);
+  }
+
+  @override
+  void didUpdateWidget(MeditationCatalogView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller == controller) return;
+    oldWidget.controller.removeListener(_refreshSelection);
+    _selection = _currentSelection;
+    controller.addListener(_refreshSelection);
+  }
+
+  @override
+  void dispose() {
+    controller.removeListener(_refreshSelection);
+    super.dispose();
+  }
+
+  void _refreshSelection() {
+    final selection = _currentSelection;
+    // The session clock must not rebuild the hidden catalogue or its glass.
+    if (selection == _selection) return;
+    setState(() => _selection = selection);
+  }
+
+  List<MeditationExercise> _featured(MeditationExercise? selected) {
+    final exercises = [
+      for (final id in _featuredIds)
+        MeditationExercises.all.firstWhere((exercise) => exercise.id == id),
+    ];
+    if (selected != null &&
+        !exercises.any((exercise) => exercise.id == selected.id)) {
+      exercises[0] = selected;
+    }
+    return exercises;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,385 +92,245 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
     final secondary = isDark
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) {
-        final selected = controller.selectedExercise;
-        final exercises = MeditationExercises.all
-            .where((e) => _category == null || e.category == _category)
-            .toList();
-        return ElyriiPageFrame(
-          header: Row(
+    final accent = isDark ? AppColors.primaryDark : AppColors.primary;
+    return ElyriiPageFrame(
+      // Keep the title painted when the glass start control updates.
+      header: RepaintBoundary(child: _header(text, accent)),
+      child: ListView(
+        key: const Key('meditation-catalog-scroll'),
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          AppDimensions.pageHorizontalPadding,
+          8,
+          AppDimensions.pageHorizontalPadding,
+          MediaQuery.paddingOf(context).bottom + 24,
+        ),
+        children: [
+          _sessionCard(text, secondary, accent),
+          const SizedBox(height: 20),
+          Row(
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TON ESPACE',
-                      style: AppTextStyles.labelSmall(
-                        color: isDark
-                            ? AppColors.primaryDark
-                            : AppColors.primary,
-                      ).copyWith(letterSpacing: 1.2),
-                    ),
-                    const SizedBox(height: 2),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Méditation',
-                        style: AppTextStyles.headlineLarge(color: text),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  key: const Key('meditation-catalog-scroll'),
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    _welcome(text, secondary),
-                    const SizedBox(height: 24),
-                    _durationControl(text, secondary, isDark),
-                    const SizedBox(height: 28),
-                    Text(
-                      'Choisis ta pratique',
-                      style: AppTextStyles.titleMedium(
-                        color: text,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _filter('Tout', null, isDark),
-                        for (final category in MeditationCategory.values)
-                          _filter(category.label, category, isDark),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final columns =
-                            constraints.maxWidth >= 340 &&
-                                MediaQuery.textScalerOf(context).scale(1) <= 1.2
-                            ? 2
-                            : 1;
-                        final width =
-                            (constraints.maxWidth - 12 * (columns - 1)) /
-                            columns;
-                        return Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            for (final exercise in exercises)
-                              SizedBox(
-                                width: width,
-                                child: _exerciseCard(
-                                  exercise,
-                                  selected?.id == exercise.id,
-                                  text,
-                                  secondary,
-                                  isDark,
-                                  compact: columns == 1,
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-                  child: Semantics(
-                    button: true,
-                    enabled: selected != null,
-                    child: LiquidGlassButton(
-                      key: const Key('meditation-start'),
-                      isExpanded: true,
-                      // iOS keeps the primary action visible while it is
-                      // unavailable, but lets the material recede instead
-                      // of tinting a disabled control with the accent.
-                      style: selected == null
-                          ? LiquidGlassButtonStyle.gray
-                          : LiquidGlassButtonStyle.filled,
-                      label: selected == null
-                          ? 'Commencer'
-                          : 'Commencer · ${controller.selectedDurationLabel}',
-                      icon: Icons.play_arrow_rounded,
-                      onPressed: selected == null
-                          ? null
-                          : controller.startSession,
-                    ),
+                child: Text(
+                  'Pratiques',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: text,
                   ),
                 ),
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _welcome(Color text, Color secondary) {
-    final compact =
-        MediaQuery.sizeOf(context).width < 360 ||
-        MediaQuery.textScalerOf(context).scale(1) > 1.2;
-    final mascotWidth = compact ? 64.0 : 108.0;
-    final mascotHeight = compact ? 76.0 : 116.0;
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'À ton rythme.',
-                style: compact
-                    ? AppTextStyles.titleMedium(
-                        color: text,
-                        fontWeight: FontWeight.w600,
-                      )
-                    : AppTextStyles.headlineSmall(
-                        color: text,
-                        fontWeight: FontWeight.w600,
-                      ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                compact
-                    ? 'Un moment pour toi.'
-                    : 'Un souffle. Une pause.\nUn moment pour toi.',
-                style: compact
-                    ? AppTextStyles.bodySmall(color: secondary)
-                    : AppTextStyles.bodyMedium(color: secondary),
+              TextButton(
+                key: const Key('meditation-browse'),
+                onPressed: _choosePractice,
+                style: TextButton.styleFrom(
+                  foregroundColor: accent,
+                  minimumSize: const Size(0, 44),
+                  visualDensity: VisualDensity.standard,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  textStyle: AppTextStyles.labelMedium(
+                    fontWeight: FontWeight.w600,
+                  ).copyWith(fontSize: 13),
+                ),
+                child: const Text('Tout voir'),
               ),
             ],
           ),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: mascotWidth,
-          height: mascotHeight,
-          child: ExcludeSemantics(
-            child: MascotWithAccessories(
-              config: const Mascot3DConfig(
-                interactionEnabled: false,
-                autoRotate: false,
-                showLoadingIndicator: false,
-              ),
-              animation: MascotAnimations.settle,
-              width: mascotWidth,
-              height: mascotHeight,
-            ),
+          const SizedBox(height: 12),
+          MeditationPracticeGrid(
+            key: const Key('meditation-featured'),
+            exercises: _featured(controller.selectedExercise),
+            selectedId: controller.selectedExercise?.id,
+            onSelect: controller.setExercise,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _durationControl(Color text, Color secondary, bool isDark) {
-    final accent = isDark ? AppColors.primaryDark : AppColors.primary;
-    final highContrast = MediaQuery.highContrastOf(context);
-    final radius = BorderRadius.circular(24);
-    return Semantics(
-      button: true,
-      excludeSemantics: true,
-      onTap: _chooseDuration,
-      label: 'Durée libre',
-      value: controller.selectedDurationLabel,
-      child: ElyriiGlassSurface(
-        role: GlassRole.floatingControl,
-        borderRadius: radius,
-        glassColor: highContrast
-            ? null
-            : (isDark ? const Color(0xFF25282D) : Colors.white).withValues(
-                alpha: isDark ? 0.30 : 0.38,
-              ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            key: const Key('meditation-custom-duration'),
-            borderRadius: radius,
-            onTap: _chooseDuration,
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Row(
-                children: [
-                  Icon(Icons.timer_outlined, color: accent, size: 26),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Durée libre',
-                          style: AppTextStyles.bodySmall(color: secondary),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          controller.selectedDurationLabel,
-                          style: AppTextStyles.titleLarge(
-                            color: text,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(Icons.unfold_more_rounded, color: secondary, size: 22),
-                ],
-              ),
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _filter(String label, MeditationCategory? category, bool isDark) {
-    final selected = _category == category;
-    final accent = isDark ? AppColors.primaryDark : AppColors.primary;
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) {
-        ElyriiHaptics.selection();
-        setState(() => _category = category);
-      },
-      showCheckmark: false,
-      labelStyle: AppTextStyles.labelMedium(
-        color: selected
-            ? accent
-            : (isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight),
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-      ),
-      backgroundColor: Colors.transparent,
-      selectedColor: accent.withValues(alpha: isDark ? 0.15 : 0.10),
-      side: BorderSide(
-        color: selected ? accent.withValues(alpha: 0.22) : Colors.transparent,
-      ),
-      shape: const StadiumBorder(),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-    );
-  }
-
-  Widget _exerciseCard(
-    MeditationExercise exercise,
-    bool selected,
-    Color text,
-    Color secondary,
-    bool isDark, {
-    required bool compact,
-  }) {
-    final ink = AppColors.readableAccent(exercise.color, isDark: isDark);
-    final highContrast = MediaQuery.highContrastOf(context);
-    final radius = BorderRadius.circular(22);
-    final icon = Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: exercise.color.withValues(alpha: isDark ? 0.18 : 0.20),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Icon(exercise.icon, color: ink, size: 22),
-    );
-    final copy = Column(
+  Widget _header(Color text, Color accent) {
+    final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          exercise.title,
-          style: AppTextStyles.titleSmall(
-            color: text,
-            fontWeight: FontWeight.w600,
+          'TON ESPACE',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: accent,
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          exercise.subtitle,
-          style: AppTextStyles.bodySmall(color: secondary),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Méditation',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.8,
+              height: 1.1,
+              color: text,
+            ),
+          ),
         ),
       ],
     );
-    final check = Icon(
-      selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-      color: selected ? ink : secondary.withValues(alpha: 0.40),
-      size: 20,
-    );
-    void selectExercise() {
-      ElyriiHaptics.selection();
-      controller.setExercise(exercise);
+    final start = _startAction(text);
+    if (MediaQuery.textScalerOf(context).scale(1) > 1.2) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          title,
+          const SizedBox(height: 8),
+          Align(alignment: Alignment.centerRight, child: start),
+        ],
+      );
     }
+    return Row(
+      children: [
+        Expanded(child: title),
+        const SizedBox(width: 12),
+        start,
+      ],
+    );
+  }
 
-    return Semantics(
-      excludeSemantics: true,
-      onTap: selectExercise,
-      selected: selected,
-      button: true,
-      label: '${exercise.title}. ${exercise.subtitle}',
-      child: Material(
-        color: selected
-            ? Color.alphaBlend(
-                exercise.color.withValues(alpha: isDark ? 0.18 : 0.14),
-                isDark ? const Color(0xFF262B29) : const Color(0xFFF8FAF7),
-              )
-            : (isDark ? const Color(0xFF262B29) : Colors.white).withValues(
-                alpha: highContrast ? 1 : 0.72,
+  Widget _sessionCard(Color text, Color secondary, Color accent) {
+    return LiquidGlassCard(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  controller.selectedExercise?.title ?? 'Choisis ta pratique',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: text,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _durationControl(text, secondary, accent),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          const ExcludeSemantics(child: _MeditationMascot()),
+        ],
+      ),
+    );
+  }
+
+  Widget _durationControl(Color text, Color secondary, Color accent) =>
+      Semantics(
+        button: true,
+        excludeSemantics: true,
+        onTap: _chooseDuration,
+        label: 'Durée libre',
+        container: true,
+        value: controller.selectedDurationLabel,
+        child: TextButton(
+          key: const Key('meditation-custom-duration'),
+          onPressed: _chooseDuration,
+          style: TextButton.styleFrom(
+            foregroundColor: text,
+            minimumSize: const Size(0, 44),
+            visualDensity: VisualDensity.standard,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            alignment: Alignment.centerLeft,
+            shape: const StadiumBorder(),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.timer_outlined, color: accent, size: 18),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  controller.selectedDurationLabel,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: text,
+                  ),
+                ),
               ),
-        shape: RoundedRectangleBorder(
-          borderRadius: radius,
-          side: BorderSide(
-            color: selected
-                ? ink.withValues(alpha: 0.55)
-                : text.withValues(alpha: highContrast ? 0.4 : 0.04),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: secondary,
+                size: 16,
+              ),
+            ],
           ),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: selectExercise,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: compact
-                ? Row(
-                    children: [
-                      icon,
-                      const SizedBox(width: 12),
-                      Expanded(child: copy),
-                      const SizedBox(width: 8),
-                      check,
-                    ],
-                  )
-                : ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 116),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [icon, const Spacer(), check]),
-                        const SizedBox(height: 14),
-                        copy,
-                      ],
-                    ),
-                  ),
+      );
+
+  Widget _startAction(Color text) {
+    final selected = controller.selectedExercise;
+    final onPressed = selected == null ? null : controller.startSession;
+    final label = selected == null
+        ? 'Commencer, choisis une pratique'
+        : 'Commencer ${selected.title}, ${controller.selectedDurationLabel}';
+
+    return Tooltip(
+      message: label,
+      excludeFromSemantics: true,
+      child: Semantics(
+        key: const Key('meditation-start'),
+        container: true,
+        button: true,
+        enabled: selected != null,
+        excludeSemantics: true,
+        label: label,
+        onTap: onPressed,
+        child: GestureDetector(
+          onTap: onPressed,
+          behavior: HitTestBehavior.opaque,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Commencer',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: selected == null ? text.withValues(alpha: 0.4) : text,
+                ),
+              ),
+              const SizedBox(width: 8),
+              LiquidGlassIconButton(
+                icon: Icons.play_arrow_rounded,
+                onPressed: onPressed,
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _choosePractice() async {
+    final exercise = await showLiquidGlassSheet<MeditationExercise>(
+      context: context,
+      useRootNavigator: true,
+      initialChildSize: 0.88,
+      minChildSize: 0.5,
+      maxChildSize: 0.94,
+      contentPadding: EdgeInsets.zero,
+      scrollableBuilder: (context, scrollController) => MeditationLibrarySheet(
+        scrollController: scrollController,
+        selectedExercise: controller.selectedExercise,
+      ),
+    );
+    if (exercise != null && mounted) controller.setExercise(exercise);
   }
 
   Future<void> _chooseDuration() async {
@@ -429,5 +345,28 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
           MeditationDurationSheet(initialDuration: controller.selectedDuration),
     );
     if (duration != null && mounted) controller.setSessionDuration(duration);
+  }
+}
+
+/// Keep the 3D surface stable when the selected practice or duration changes.
+class _MeditationMascot extends StatelessWidget {
+  const _MeditationMascot();
+
+  @override
+  Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.sizeOf(context).width < 360 ||
+        MediaQuery.textScalerOf(context).scale(1) > 1.2;
+    final size = compact ? 64.0 : 92.0;
+    return MascotWithAccessories(
+      config: const Mascot3DConfig(
+        interactionEnabled: false,
+        autoRotate: false,
+        showLoadingIndicator: false,
+      ),
+      animation: MascotAnimations.settle,
+      width: size,
+      height: size + 12,
+    );
   }
 }
