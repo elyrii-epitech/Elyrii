@@ -18,7 +18,7 @@ class Mascot3DConfig {
   /// Position de la caméra : angle phi (rotation verticale en degrés)
   final double cameraOrbitPhi;
 
-  /// Position de la caméra : distance (rayon)
+  /// Camera distance as a percentage of model-viewer's automatic framing.
   final double cameraOrbitRadius;
 
   /// Active/désactive la rotation automatique du modèle
@@ -27,8 +27,7 @@ class Mascot3DConfig {
   /// Vitesse de la rotation automatique (degrés/seconde)
   final double autoRotateSpeed;
 
-  /// Conservé pour compatibilité, mais la mascotte Elyrii reste non
-  /// manipulable par l'utilisateur dans le viewer.
+  /// Allows orbiting in the studio; other mascot contexts remain passive.
   final bool interactionEnabled;
 
   /// Afficher la barre de progression pendant le chargement

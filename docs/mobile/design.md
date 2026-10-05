@@ -1,7 +1,7 @@
 # Elyrii Mobile Design System
 
 The Elyrii mobile design system is based on Material 3, a soft color palette,
-Poppins through Google Fonts, and reusable Liquid Glass components.
+locally bundled Poppins, and reusable Liquid Glass components.
 
 ## Reference Files
 
@@ -57,7 +57,7 @@ themeMode: themeProvider.themeMode,
 
 ### Primary Colors
 
-- Primary: `#7E6AD8`
+- Primary: `#6752BC`
 - Primary light: `#EDE8FF`
 - Primary dark: `#A99AF0`
 - Secondary: `#FFB5A8`
@@ -72,7 +72,7 @@ themeMode: themeProvider.themeMode,
 
 ### Backgrounds
 
-- Light background: `#FAF8F5`
+- Light background: `#E8E8EB`
 - Light scaffold: `#E8E8EB`
 - Dark background: `#1A1818`
 - Dark scaffold: `#171719`
@@ -91,7 +91,7 @@ themeMode: themeProvider.themeMode,
 `AppTextStyles` uses Poppins:
 
 ```dart
-static final TextStyle _baseStyle = GoogleFonts.poppins();
+static const TextStyle _baseStyle = TextStyle(fontFamily: 'Poppins');
 ```
 
 Available levels:
@@ -224,7 +224,8 @@ Capabilities:
 - `idle` animation on load;
 - optional auto-rotation;
 - touch interactions disabled by default;
-- recoloring through a color matrix.
+- independent material colors and Velours, Satin or Porcelain finishes;
+- one accessory per head, face, neck and back slot without reloading the scene.
 
 Configurations:
 - `Mascot3DConfig.authPage()`
@@ -232,15 +233,30 @@ Configurations:
 - `Mascot3DConfig.chatbotMinimized()`
 
 Themes:
-- Nature;
-- Halloween;
-- Panda;
-- Noel;
-- Cosmic;
-- Ocean.
+- Elyrii Originel;
+- Astral;
+- Esprit Zen;
+- Sakura Céleste;
+- Automne Cuivré;
+- Panda Mystique;
+- Noël;
+- Océan.
 
-Themes recolor the same GLB through `ColorFilter.matrix`; they do not load a new
-model.
+Themes provide material palettes for the same GLB. Custom colors preserve the
+painted face and eye highlights, with independent fur, details, ears/cheeks,
+eyes and accessory colors. The personalization studio keeps a draft with
+undo and explicit save, a persistent preview, and a challenge-based collection
+with temporary reward try-on and 15 pieces. Saved looks and progress are scoped
+to the account; the local demo is isolated. See [the studio specification](mascot-accessories.md)
+for rendering, persistence and reward details.
+
+The studio shares the page frame and header, circular back/undo controls,
+Liquid Glass buttons, segmented controls, cards and reward sheet with the rest
+of Elyrii. Its backgrounds and type hierarchy come from `AppColors` and
+`AppTextStyles`; the mascot palette only colors the preview halo. Palette and
+accessory cards use the same glass material and selection border as meditation
+practice cards. Save/try-on actions keep keyboard activation, accessible labels
+and disabled/loading states. Enlarged text reduces the palette grid columns.
 
 ## Animations
 

@@ -11,6 +11,11 @@ class DashboardRepository {
 
   final ApiClient _client;
   SharedPreferences? _prefs;
+  String _storageScope = 'guest';
+
+  void onUserChanged({String? userId, bool isDemo = false}) {
+    _storageScope = isDemo ? 'demo' : userId ?? 'guest';
+  }
 
   DashboardRepository({required ApiClient client, SharedPreferences? prefs})
     : _client = client,
@@ -20,10 +25,10 @@ class DashboardRepository {
     return _prefs ??= await SharedPreferences.getInstance();
   }
 
-  Future<DashboardData?> getCachedDashboard() async {
+  Future<DashboardData?> getCachedDashboard({String? scope}) async {
     try {
       final prefs = await _getPrefs();
-      final jsonStr = prefs.getString(_cacheKey);
+      final jsonStr = prefs.getString('${_cacheKey}_${scope ?? _storageScope}');
       if (jsonStr == null || jsonStr.isEmpty) return null;
       final map = jsonDecode(jsonStr) as Map<String, dynamic>;
       return DashboardData.fromJson(map);
@@ -34,6 +39,7 @@ class DashboardRepository {
   }
 
   Future<DashboardData> getDashboard({String range = '30d'}) async {
+    final scope = _storageScope;
     try {
       final response =
           (await _client.get(
@@ -46,7 +52,7 @@ class DashboardRepository {
       unawaited(
         _getPrefs()
             .then((prefs) {
-              prefs.setString(_cacheKey, jsonEncode(response));
+              prefs.setString('${_cacheKey}_$scope', jsonEncode(response));
             })
             .catchError((_) {}),
       );
@@ -56,7 +62,7 @@ class DashboardRepository {
       debugPrint(
         '[DashboardRepository] Network failed, falling back to local cache: $e',
       );
-      final cached = await getCachedDashboard();
+      final cached = await getCachedDashboard(scope: scope);
       if (cached != null) {
         return cached;
       }

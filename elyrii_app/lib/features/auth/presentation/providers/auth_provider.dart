@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import '../../../../core/config/api_config.dart';
+import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -19,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.initial;
   UserModel? _user;
   String? _error;
+  int _sessionRevision = 0;
 
   AuthProvider({
     AuthRepository? repository,
@@ -36,11 +38,14 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.loading;
+  bool get isDemoSession => isAuthenticated && _user?.id == DevSession.userId;
 
   /// Offline-first session restore: storage-only, never touches the network.
   /// A syntactically valid, non-expired token is enough to enter the app;
   /// [revalidateSession] confirms it against the backend afterwards.
   Future<void> restoreLocalSession() async {
+    _sessionRevision++;
+    _user = null;
     final token = await _storage.getAccessToken();
     final valid = token != null && token.isNotEmpty && !_isJwtExpired(token);
     if (!valid) {
@@ -49,11 +54,11 @@ class AuthProvider extends ChangeNotifier {
       _status = AuthStatus.unauthenticated;
     } else {
       final userId = await _storage.getUserId();
-      if (userId == 'demo-user') {
+      if (userId == DevSession.userId) {
         _user = const UserModel(
-          id: 'demo-user',
-          email: 'demo@elyrii.local',
-          firstName: 'Dorian',
+          id: DevSession.userId,
+          email: DevSession.email,
+          firstName: DevSession.firstName,
         );
       }
       _status = AuthStatus.authenticated;
@@ -67,10 +72,16 @@ class AuthProvider extends ChangeNotifier {
   Future<void> revalidateSession({
     void Function(Map<String, dynamic>)? onProfile,
   }) async {
-    if (_status != AuthStatus.authenticated) return;
+    if (_status != AuthStatus.authenticated || isDemoSession) return;
+    final session = _sessionRevision;
     final ok = await fetchProfile(onProfile: onProfile);
-    if (ok || _status != AuthStatus.authenticated) return;
+    if (ok ||
+        session != _sessionRevision ||
+        _status != AuthStatus.authenticated) {
+      return;
+    }
     final stillHasToken = await _storage.getAccessToken();
+    if (session != _sessionRevision) return;
     if (stillHasToken == null) {
       // fetchProfile cleared it after a 401: the session is truly dead.
       _user = null;
@@ -81,9 +92,11 @@ class AuthProvider extends ChangeNotifier {
 
   /// Session démo locale (développement sans backend) : stocke un JWT
   /// factice à longue durée de vie, marque l'onboarding comme complété et
-  /// ouvre la session. Une erreur réseau ne la casse pas ; seul un 401
-  /// réel (ou [logout]) y met fin.
+  /// ouvre la session. Les données de démonstration restent locales.
   Future<void> startDemoSession() async {
+    _sessionRevision++;
+    _status = AuthStatus.loading;
+    notifyListeners();
     final exp =
         DateTime.now().add(const Duration(days: 3650)).millisecondsSinceEpoch ~/
         1000;
@@ -94,12 +107,12 @@ class AuthProvider extends ChangeNotifier {
         '${b64('{"sub":"demo-user","exp":$exp}')}.demo';
 
     await _storage.saveAccessToken(demoToken);
-    await _storage.saveUserId('demo-user');
+    await _storage.saveUserId(DevSession.userId);
     await _storage.setProfileSetupCompleted();
     _user = const UserModel(
-      id: 'demo-user',
-      email: 'demo@elyrii.local',
-      firstName: 'Dorian',
+      id: DevSession.userId,
+      email: DevSession.email,
+      firstName: DevSession.firstName,
     );
     _status = AuthStatus.authenticated;
     notifyListeners();
@@ -109,13 +122,20 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> fetchProfile({
     void Function(Map<String, dynamic>)? onProfile,
   }) async {
+    if (isDemoSession) {
+      onProfile?.call(_user!.toJson());
+      return true;
+    }
+    final session = _sessionRevision;
     try {
       final response = await _repository.client.get(ApiConfig.userMeUrl);
+      if (session != _sessionRevision) return false;
       _user = UserModel.fromJson(response as Map<String, dynamic>);
       onProfile?.call(response);
       notifyListeners();
       return true;
     } catch (e) {
+      if (session != _sessionRevision) return false;
       debugPrint('[AuthProvider] Failed to fetch profile: $e');
       if (e is ApiException && e.statusCode == 401) {
         await _storage.clearAuthData();
@@ -145,6 +165,7 @@ class AuthProvider extends ChangeNotifier {
 
   /// Login with email and password
   Future<bool> login({required String email, required String password}) async {
+    _sessionRevision++;
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
@@ -179,6 +200,7 @@ class AuthProvider extends ChangeNotifier {
     required String lastName,
     int? age,
   }) async {
+    _sessionRevision++;
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
@@ -229,7 +251,7 @@ class AuthProvider extends ChangeNotifier {
   /// Logout and clear stored tokens
   Future<void> logout() async {
     try {
-      await _repository.logout();
+      if (!isDemoSession) await _repository.logout();
     } catch (error) {
       debugPrint('[AuthProvider] Remote logout unavailable: $error');
     } finally {
@@ -238,11 +260,12 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> clearLocalSession() async {
-    await _storage.clearAuthData();
+    _sessionRevision++;
     _user = null;
     _status = AuthStatus.unauthenticated;
     _error = null;
     notifyListeners();
+    await _storage.clearAuthData();
   }
 
   /// Clear any displayed error

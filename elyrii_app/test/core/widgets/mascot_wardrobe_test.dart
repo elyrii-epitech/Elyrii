@@ -38,13 +38,13 @@ void main() {
 
     provider.equipCosmetic('cozy_scarf', completedChallenges: 36);
     await tester.pump();
-    expect(viewer().accessoryVariant, 'cozy_scarf');
+    expect(viewer().accessoryVariant, 'round_glasses+cozy_scarf');
     expect(viewer().config.assetPath, 'assets/optimized/mascot_wardrobe.glb');
     expect(tester.state(find.byType(Mascot3DViewer)), same(sceneState));
 
     provider.equipCosmetic('cozy_scarf', completedChallenges: 36);
     await tester.pump();
-    expect(viewer().accessoryVariant, isNull);
+    expect(viewer().accessoryVariant, 'round_glasses');
     await tester.pumpWidget(const SizedBox());
     provider.dispose();
   });

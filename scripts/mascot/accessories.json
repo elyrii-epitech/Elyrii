@@ -21,7 +21,8 @@
           1.92,
           0.22
         ]
-      }
+      },
+      "category": "Tête"
     },
     {
       "id": "beanie",
@@ -41,7 +42,8 @@
           2.062,
           0.209847
         ]
-      }
+      },
+      "category": "Tête"
     },
     {
       "id": "flower_crown",
@@ -61,7 +63,8 @@
           1.64,
           0.395497
         ]
-      }
+      },
+      "category": "Tête"
     },
     {
       "id": "star_crown",
@@ -81,7 +84,8 @@
           1.710734,
           0.383176
         ]
-      }
+      },
+      "category": "Tête"
     },
     {
       "id": "moon_pin",
@@ -101,7 +105,8 @@
           1.562606,
           0.325114
         ]
-      }
+      },
+      "category": "Tête"
     },
     {
       "id": "round_glasses",
@@ -121,7 +126,8 @@
           1.433,
           0.573344
         ]
-      }
+      },
+      "category": "Visage"
     },
     {
       "id": "headphones",
@@ -141,7 +147,8 @@
           1.776,
           0.072117
         ]
-      }
+      },
+      "category": "Visage"
     },
     {
       "id": "sleep_mask",
@@ -161,7 +168,8 @@
           1.415,
           0.58133
         ]
-      }
+      },
+      "category": "Visage"
     },
     {
       "id": "cozy_scarf",
@@ -181,7 +189,8 @@
           0.771,
           0.335105
         ]
-      }
+      },
+      "category": "Cou"
     },
     {
       "id": "bow_tie",
@@ -201,7 +210,8 @@
           0.767908,
           0.36
         ]
-      }
+      },
+      "category": "Cou"
     },
     {
       "id": "leaf_pendant",
@@ -221,7 +231,8 @@
           0.722619,
           0.339804
         ]
-      }
+      },
+      "category": "Cou"
     },
     {
       "id": "mini_backpack",
@@ -241,7 +252,50 @@
           0.75,
           0.2295
         ]
-      }
+      },
+      "category": "Dos"
+    },
+    {
+      "id": "graduate_cap",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/graduate_cap.glb",
+      "labelFr": "Chapeau de diplômé",
+      "descriptionFr": "Coiffe bleu nuit et pompon doré.",
+      "category": "Tête",
+      "controlLocalTranslation": [
+        0,
+        0.86,
+        -0.02
+      ],
+      "source": "Lucas Debize, 37bd94d"
+    },
+    {
+      "id": "laurel_crown",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/laurel_crown.glb",
+      "labelFr": "Couronne de laurier",
+      "descriptionFr": "Feuilles sculptées et olives dorées.",
+      "category": "Tête",
+      "controlLocalTranslation": [
+        0,
+        0.65,
+        0.05
+      ],
+      "source": "Lucas Debize, 37bd94d"
+    },
+    {
+      "id": "cheek_sparkle",
+      "parent": "CTRL_head",
+      "asset": "assets/accessories/cheek_sparkle.glb",
+      "labelFr": "Éclat céleste",
+      "descriptionFr": "Un éclat lumineux sur la joue.",
+      "category": "Visage",
+      "controlLocalTranslation": [
+        0,
+        0,
+        0
+      ],
+      "source": "Lucas Debize, 37bd94d"
     }
   ]
 }

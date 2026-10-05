@@ -8,6 +8,7 @@ import type { HonoEnv } from "../../utils/hono.types";
 import QuestLogic from "../quest/quest.logic";
 import AuthRepository from "../../repository/auth.repository";
 import QuestRepository from "../../repository/quest.repository";
+import { updateMascotValidation } from "./mascot.validation";
 
 const updateSettingsValidation = z.object({
     themeMode: z.enum(["LIGHT", "DARK", "SYSTEM"]).optional(),
@@ -15,19 +16,6 @@ const updateSettingsValidation = z.object({
     hapticsEnabled: z.boolean().optional(),
     privacyMode: z.enum(["STANDARD", "STRICT"]).optional(),
     language: z.string().min(2).max(12).optional(),
-});
-
-const updateMascotValidation = z.object({
-    appearance: z.string().min(1).max(50).optional(),
-    themeId: z.string().min(1).max(50).optional(),
-    equippedCosmetics: z.array(z.string().min(1).max(80)).max(20).optional(),
-    personality: z.object({
-        tone: z.enum(["supportive", "neutral", "energetic", "calm"]).optional(),
-        energy: z.enum(["low", "balanced", "high"]).optional(),
-        humor: z.enum(["none", "light", "playful"]).optional(),
-        themeId: z.string().min(1).max(50).optional(),
-        equippedCosmetics: z.array(z.string().min(1).max(80)).max(20).optional(),
-    }).partial().optional(),
 });
 
 const changePasswordValidation = z.object({

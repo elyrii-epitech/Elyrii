@@ -9,6 +9,7 @@ import '../config/mascot_3d_config.dart';
 import '../config/mascot_animations.dart';
 import '../theme/app_colors.dart';
 import 'mascot_warm_placeholder.dart';
+import '../../features/mascot/data/models/mascot_appearance.dart';
 
 /// Widget réutilisable pour afficher la mascotte 3D Elyrii.
 ///
@@ -39,7 +40,8 @@ class Mascot3DViewer extends StatefulWidget {
 
   /// Matrice de couleur optionnelle (20 valeurs) pour recolorer le modèle.
   /// Si null, aucune transformation n'est appliquée.
-  /// Utilisée par le système de thèmes (voir [MascotThemes]).
+  /// Conservée pour les consommateurs historiques ; l'atelier utilise
+  /// [appearance] pour recolorer les matériaux.
   final List<double>? colorMatrix;
 
   /// Animation à jouer maintenant. Null → [Mascot3DConfig.initialAnimation].
@@ -59,6 +61,7 @@ class Mascot3DViewer extends StatefulWidget {
 
   /// Accessory variant inside the shared rigged wardrobe GLB. Null removes it.
   final String? accessoryVariant;
+  final MascotAppearance appearance;
 
   /// Callback appelé quand le modèle est chargé avec succès.
   final VoidCallback? onModelLoaded;
@@ -78,6 +81,7 @@ class Mascot3DViewer extends StatefulWidget {
     this.breathProgress,
     this.animated = true,
     this.accessoryVariant,
+    this.appearance = const MascotAppearance(),
     this.onModelLoaded,
     this.onError,
   });
@@ -180,6 +184,17 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
       trigger: widget.animationTrigger,
     );
     _syncPlayback();
+    if (_modelReady &&
+        (oldWidget.config.cameraOrbitTheta != widget.config.cameraOrbitTheta ||
+            oldWidget.config.cameraOrbitPhi != widget.config.cameraOrbitPhi ||
+            oldWidget.config.cameraOrbitRadius !=
+                widget.config.cameraOrbitRadius)) {
+      _controller.setCameraOrbit(
+        widget.config.cameraOrbitTheta,
+        widget.config.cameraOrbitPhi,
+        widget.config.cameraOrbitRadius,
+      );
+    }
   }
 
   @override
@@ -391,6 +406,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
           controller: _controller,
           src: widget.config.assetPath,
           accessoryVariant: widget.accessoryVariant,
+          appearance: widget.appearance,
           interactive: widget.config.interactionEnabled,
           onLoad: _onModelLoaded,
           onError: _onModelError,

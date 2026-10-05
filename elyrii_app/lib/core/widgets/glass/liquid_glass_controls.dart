@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../design_system/haptics/elyrii_haptics.dart';
+import '../../theme/app_text_styles.dart';
 
 class LiquidGlassSegmentedControl<T> extends StatelessWidget {
   final Map<T, String> segments;
   final T selectedValue;
   final ValueChanged<T> onValueChanged;
+  final double height;
 
   const LiquidGlassSegmentedControl({
     super.key,
     required this.segments,
     required this.selectedValue,
     required this.onValueChanged,
+    this.height = 36,
   });
 
   @override
@@ -27,8 +30,15 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
       segments: [for (final entry in entries) GlassSegment(label: entry.value)],
       selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
       onSegmentSelected: (index) => onValueChanged(entries[index].key),
-      height: 36,
+      height: height,
       borderRadius: 10,
+      selectedTextStyle: AppTextStyles.labelMedium(
+        color: Theme.of(context).colorScheme.onSurface,
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedTextStyle: AppTextStyles.labelMedium(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       useOwnLayer: true,
     );
   }

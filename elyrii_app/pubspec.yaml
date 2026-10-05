@@ -106,6 +106,7 @@ flutter:
     - assets/mascotte_eyes_closed.png
     - assets/optimized/mascot.glb
     - assets/optimized/mascot_wardrobe.glb
+    - assets/accessory_portraits/
     - assets/brand/logo_monochrome.png
     - assets/brand/navbar_app_icon.png
 

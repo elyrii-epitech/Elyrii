@@ -1,5 +1,4 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb, ValueListenable;
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'mascot_model_surface.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +8,8 @@ import 'mascot_3d_viewer.dart';
 import '../config/mascot_animations.dart';
 import '../../features/mascot/presentation/providers/mascot_provider.dart';
 import '../../features/mascot/data/models/mascot_accessory.dart';
+import '../../features/mascot/data/models/mascot_model.dart';
+import '../../features/mascot/data/models/mascot_appearance.dart';
 
 /// One rigged scene for the bear and its wardrobe. Material variants switch
 /// accessories while the same head/chest controls continue to animate.
@@ -20,6 +21,7 @@ class MascotWithAccessories extends StatelessWidget {
   final MascotAnimation? animation;
   final int animationTrigger;
   final ValueListenable<double>? breathProgress;
+  final MascotModel? mascot;
 
   const MascotWithAccessories({
     super.key,
@@ -30,31 +32,30 @@ class MascotWithAccessories extends StatelessWidget {
     this.animation,
     this.animationTrigger = 0,
     this.breathProgress,
+    this.mascot,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = context.select<MascotProvider, MascotTheme>(
-      (p) => p.currentTheme,
+    final model =
+        mascot ?? context.select<MascotProvider, MascotModel>((p) => p.mascot);
+    final appearance = MascotAppearance(
+      colors: Map.unmodifiable({
+        ...MascotThemes.colorsFor(model.themeId),
+        ...model.appearance.colors,
+      }),
+      finish: model.appearance.finish,
     );
-    final accessory = context.select<MascotProvider, String?>(
-      (p) => MascotAccessories.sanitizeSelection(
-        p.mascot.equippedCosmetics,
-      ).firstOrNull,
-    );
-    final matrix = (theme.id == 'nature' || (!kIsWeb && Platform.isIOS))
-        ? null
-        : theme.colorMatrix;
     return Mascot3DViewer(
       key: const ValueKey('mascot_body'),
       config: config.copyWith(
         assetPath: 'assets/optimized/mascot_wardrobe.glb',
       ),
-      accessoryVariant: accessory,
+      accessoryVariant: MascotAccessories.variantFor(model.equippedCosmetics),
       width: width,
       height: height,
       controller: controller,
-      colorMatrix: matrix,
+      appearance: appearance,
       animation: animation,
       animationTrigger: animationTrigger,
       breathProgress: breathProgress,

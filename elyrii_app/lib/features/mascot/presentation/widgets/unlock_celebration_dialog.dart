@@ -38,7 +38,17 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
     _shimmerCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
-    )..repeat();
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _shimmerCtrl.stop();
+    } else if (!_shimmerCtrl.isAnimating) {
+      _shimmerCtrl.repeat();
+    }
   }
 
   @override
@@ -50,6 +60,7 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final acc = widget.accessory;
     final celebrationMessage = widget.unlockedCount > 1
         ? '${widget.unlockedCount} nouveaux accessoires rejoignent ta garde-robe ! '
@@ -141,12 +152,15 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                         ],
                                       ),
                                     )
-                                    .animate()
+                                    .animate(
+                                      autoPlay: !reduceMotion,
+                                      value: reduceMotion ? 1 : null,
+                                    )
                                     .fadeIn(delay: 200.ms)
                                     .slideY(begin: -0.3),
                                 const SizedBox(height: 24),
 
-                                // Halo + emoji de l'accessoire
+                                // Portrait fidèle à la pièce disponible dans l'atelier.
                                 Stack(
                                   alignment: Alignment.center,
                                   children: [
@@ -175,11 +189,17 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                         ),
                                       ),
                                     ),
-                                    Text(
-                                          acc.emoji,
-                                          style: const TextStyle(fontSize: 56),
+                                    Image.asset(
+                                          'assets/accessory_portraits/${acc.id}.png',
+                                          width: 110,
+                                          height: 130,
+                                          fit: BoxFit.contain,
+                                          excludeFromSemantics: true,
                                         )
-                                        .animate()
+                                        .animate(
+                                          autoPlay: !reduceMotion,
+                                          value: reduceMotion ? 1 : null,
+                                        )
                                         .fadeIn(duration: 500.ms)
                                         .scale(
                                           begin: const Offset(0.3, 0.3),
@@ -199,7 +219,10 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                       ),
                                       textAlign: TextAlign.center,
                                     )
-                                    .animate()
+                                    .animate(
+                                      autoPlay: !reduceMotion,
+                                      value: reduceMotion ? 1 : null,
+                                    )
                                     .fadeIn(delay: 300.ms)
                                     .slideY(begin: 0.15),
                                 const SizedBox(height: 10),
@@ -210,7 +233,10 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                       ).copyWith(height: 1.55),
                                       textAlign: TextAlign.center,
                                     )
-                                    .animate()
+                                    .animate(
+                                      autoPlay: !reduceMotion,
+                                      value: reduceMotion ? 1 : null,
+                                    )
                                     .fadeIn(delay: 450.ms)
                                     .slideY(begin: 0.15),
                                 const SizedBox(height: 28),
@@ -222,66 +248,77 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                       isExpanded: true,
                                       onPressed: widget.onEquip,
                                     )
-                                    .animate()
+                                    .animate(
+                                      autoPlay: !reduceMotion,
+                                      value: reduceMotion ? 1 : null,
+                                    )
                                     .fadeIn(delay: 600.ms)
                                     .slideY(begin: 0.2),
                                 const SizedBox(height: 10),
                                 TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text(
-                                    'Plus tard',
-                                    style: AppTextStyles.bodyMedium(
-                                      color: bodyColor,
-                                    ),
-                                  ),
-                                ).animate().fadeIn(delay: 700.ms),
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text(
+                                        'Plus tard',
+                                        style: AppTextStyles.bodyMedium(
+                                          color: bodyColor,
+                                        ),
+                                      ),
+                                    )
+                                    .animate(
+                                      autoPlay: !reduceMotion,
+                                      value: reduceMotion ? 1 : null,
+                                    )
+                                    .fadeIn(delay: 700.ms),
                               ],
                             ),
                           ),
 
                           // Particules confettis
-                          ...List.generate(16, (i) {
-                            final angle =
-                                (i / 16) * math.pi * 2 +
-                                _shimmerCtrl.value * 0.8;
-                            final radius =
-                                80.0 +
-                                30.0 *
-                                    (0.5 +
-                                        0.5 *
-                                            math.sin(
-                                              _shimmerCtrl.value * 2 * math.pi +
-                                                  i,
-                                            ));
-                            final dx = radius * math.cos(angle);
-                            final dy = radius * math.sin(angle);
-                            return Positioned(
-                              left: 150 + dx,
-                              top: 80 + dy,
-                              child:
-                                  Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              confettiColors[i %
-                                                  confettiColors.length],
-                                          shape: i % 2 == 0
-                                              ? BoxShape.circle
-                                              : BoxShape.rectangle,
-                                          borderRadius: i % 2 == 0
-                                              ? null
-                                              : BorderRadius.circular(1),
+                          if (!reduceMotion)
+                            ...List.generate(16, (i) {
+                              final angle =
+                                  (i / 16) * math.pi * 2 +
+                                  _shimmerCtrl.value * 0.8;
+                              final radius =
+                                  80.0 +
+                                  30.0 *
+                                      (0.5 +
+                                          0.5 *
+                                              math.sin(
+                                                _shimmerCtrl.value *
+                                                        2 *
+                                                        math.pi +
+                                                    i,
+                                              ));
+                              final dx = radius * math.cos(angle);
+                              final dy = radius * math.sin(angle);
+                              return Positioned(
+                                left: 150 + dx,
+                                top: 80 + dy,
+                                child:
+                                    Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                confettiColors[i %
+                                                    confettiColors.length],
+                                            shape: i % 2 == 0
+                                                ? BoxShape.circle
+                                                : BoxShape.rectangle,
+                                            borderRadius: i % 2 == 0
+                                                ? null
+                                                : BorderRadius.circular(1),
+                                          ),
+                                        )
+                                        .animate(onPlay: (c) => c.repeat())
+                                        .fadeIn(delay: (i * 60).ms)
+                                        .scale(
+                                          begin: const Offset(0.5, 0.5),
+                                          end: const Offset(1, 1),
                                         ),
-                                      )
-                                      .animate(onPlay: (c) => c.repeat())
-                                      .fadeIn(delay: (i * 60).ms)
-                                      .scale(
-                                        begin: const Offset(0.5, 0.5),
-                                        end: const Offset(1, 1),
-                                      ),
-                            );
-                          }),
+                              );
+                            }),
                         ],
                       );
                     },

@@ -29,10 +29,12 @@ void main() {
       final accessors = document['accessors'] as List;
       final variants =
           document['extensions']['KHR_materials_variants']['variants'] as List;
-      expect(MascotAccessories.all, hasLength(12));
-      expect(variants, hasLength(12));
+      expect(MascotAccessories.all, hasLength(15));
+      expect(variants, hasLength(319));
       expect(
-        variants.map((variant) => variant['name']),
+        variants
+            .where((variant) => !(variant['name'] as String).contains('+'))
+            .map((variant) => variant['name']),
         unorderedEquals(MascotAccessories.all.map((accessory) => accessory.id)),
       );
       expect(document['skins'], hasLength((base['skins'] as List).length));
@@ -55,6 +57,7 @@ void main() {
             ),
       );
       var accessoryTriangles = 0;
+      final trianglesByPiece = <String, int>{};
       for (final accessory in MascotAccessories.all) {
         final attachmentIndex = nodes.indexWhere(
           (node) => node['name'] == 'Accessory_${accessory.id}',
@@ -83,7 +86,13 @@ void main() {
                   primitive['extensions']['KHR_materials_variants']['mappings']
                       as List;
               expect(mappings, hasLength(1));
-              expect(mappings.single['variants'], [variantIndex]);
+              expect(mappings.single['variants'], contains(variantIndex));
+              for (final index in mappings.single['variants'] as List) {
+                expect(
+                  (variants[index]['name'] as String).split('+'),
+                  contains(accessory.id),
+                );
+              }
               expect(mappings.single['material'], isNot(primitive['material']));
             }
           }
@@ -96,12 +105,27 @@ void main() {
         expect(triangles, greaterThan(0), reason: accessory.id);
         expect(
           baseTriangles + triangles,
-          lessThan(65000),
+          lessThan(70000),
           reason: accessory.id,
         );
         accessoryTriangles += triangles;
+        trianglesByPiece[accessory.id] = triangles;
       }
-      expect(baseTriangles + accessoryTriangles, lessThan(80000));
+      for (final variant in variants) {
+        final ids = (variant['name'] as String).split('+');
+        expect(
+          baseTriangles +
+              ids.fold<int>(0, (sum, id) => sum + trianglesByPiece[id]!),
+          lessThan(70000),
+          reason: variant['name'] as String,
+        );
+        expect(
+          ids.map((id) => MascotAccessories.byId(id)!.category).toSet(),
+          hasLength(ids.length),
+        );
+        expect(MascotAccessories.variantFor(ids), variant['name']);
+      }
+      expect(baseTriangles + accessoryTriangles, lessThan(85000));
       expect(File(path).lengthSync(), lessThan(4000000));
     },
   );

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'mascot_appearance.dart';
 
 /// Modèle de données représentant l'état et la configuration de la mascotte.
 ///
@@ -19,11 +20,14 @@ class MascotModel {
   /// Voir [MascotThemes] pour le catalogue complet.
   final String themeId;
 
+  final MascotAppearance appearance;
+
   const MascotModel({
     required this.baseModelPath,
     this.equippedCosmetics = const [],
     this.animationState = 'idle',
     this.themeId = 'nature',
+    this.appearance = const MascotAppearance(),
   });
 
   /// Crée un modèle par défaut de la mascotte.
@@ -42,12 +46,14 @@ class MascotModel {
     List<String>? equippedCosmetics,
     String? animationState,
     String? themeId,
+    MascotAppearance? appearance,
   }) {
     return MascotModel(
       baseModelPath: baseModelPath ?? this.baseModelPath,
       equippedCosmetics: equippedCosmetics ?? this.equippedCosmetics,
       animationState: animationState ?? this.animationState,
       themeId: themeId ?? this.themeId,
+      appearance: appearance ?? this.appearance,
     );
   }
 
@@ -63,6 +69,9 @@ class MascotModel {
           const [],
       animationState: json['animationState'] as String? ?? 'idle',
       themeId: json['themeId'] as String? ?? 'nature',
+      appearance: MascotAppearance.fromJson(
+        Map<String, dynamic>.from(json['customization'] as Map? ?? const {}),
+      ),
     );
   }
 
@@ -73,6 +82,7 @@ class MascotModel {
       'equippedCosmetics': equippedCosmetics,
       'animationState': animationState,
       'themeId': themeId,
+      'customization': appearance.toJson(),
     };
   }
 
@@ -84,7 +94,8 @@ class MascotModel {
           baseModelPath == other.baseModelPath &&
           listEquals(equippedCosmetics, other.equippedCosmetics) &&
           animationState == other.animationState &&
-          themeId == other.themeId;
+          themeId == other.themeId &&
+          appearance == other.appearance;
 
   @override
   int get hashCode => Object.hash(
@@ -92,6 +103,7 @@ class MascotModel {
     Object.hashAll(equippedCosmetics),
     animationState,
     themeId,
+    appearance,
   );
 
   @override

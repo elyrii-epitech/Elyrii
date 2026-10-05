@@ -38,10 +38,16 @@ void main() async {
   final authProvider = AuthProvider(client: apiClient, storage: secureStorage);
   final journalProvider = JournalProvider(client: apiClient);
   final chatbotProvider = ChatbotProvider(storage: secureStorage);
-  final gamificationProvider = GamificationProvider(client: apiClient);
+  final gamificationProvider = GamificationProvider(
+    client: apiClient,
+    isDemoSession: () => authProvider.isDemoSession,
+  );
   final userProvider = UserProvider(client: apiClient);
   final mascotProvider = MascotProvider(client: apiClient);
-  final dashboardProvider = DashboardProvider(apiClient: apiClient);
+  final dashboardProvider = DashboardProvider(
+    apiClient: apiClient,
+    isDemoSession: () => authProvider.isDemoSession,
+  );
   final coachProvider = CoachProvider(client: apiClient);
 
   // Explicit diagnostic opt-in: never poll every service on a normal launch.
@@ -53,7 +59,38 @@ void main() async {
   // (token presence + local JWT expiry check). No network call blocks
   // runApp, so a slow or absent network can never white-screen the launch.
   await authProvider.restoreLocalSession();
+  String? activeStudioSession;
+  var accountBindingRevision = 0;
+  Future<void> synchronizeStudioAccount({bool migrateLegacy = false}) async {
+    final revision = ++accountBindingRevision;
+    final authenticated = authProvider.isAuthenticated;
+    final userId = authenticated
+        ? authProvider.user?.id ?? await secureStorage.getUserId()
+        : null;
+    if (revision != accountBindingRevision) return;
+    final isDemo = authProvider.isDemoSession;
+    final session = isDemo ? 'demo' : userId ?? 'guest';
+    if (session == activeStudioSession) return;
+    activeStudioSession = session;
+    gamificationProvider.onUserChanged(userId: userId, isDemo: isDemo);
+    dashboardProvider.onUserChanged(userId: userId, isDemo: isDemo);
+    unawaited(
+      mascotProvider.onUserChanged(
+        userId: userId,
+        isDemo: isDemo,
+        migrateLegacy: migrateLegacy,
+      ),
+    );
+    if (authenticated && userId != null) {
+      unawaited(gamificationProvider.loadAll());
+    }
+  }
+
+  // Bind the local cache before the first frame. Network hydration stays
+  // asynchronous; an account switch immediately invalidates old requests.
+  await synchronizeStudioAccount(migrateLegacy: true);
   authProvider.addListener(() {
+    unawaited(synchronizeStudioAccount());
     if (authProvider.status == AuthStatus.unauthenticated) {
       journalProvider.resetSession();
     }
@@ -107,6 +144,14 @@ void main() async {
   unawaited(() async {
     await authProvider.revalidateSession(onProfile: userProvider.acceptProfile);
     if (authProvider.isAuthenticated) {
+      await synchronizeStudioAccount();
+      if (authProvider.isDemoSession) {
+        await Future.wait([
+          mascotProvider.loadMascot(),
+          dashboardProvider.loadDashboardData(),
+        ]);
+        return;
+      }
       await Future.wait([
         userProvider.loadSettings(),
         mascotProvider.loadMascot(),

@@ -15,6 +15,7 @@ class ElyriiBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LiquidGlassIconButton(
+      tooltip: 'Retour',
       icon: Icons.arrow_back_ios_new_rounded,
       size: 44,
       color: color,

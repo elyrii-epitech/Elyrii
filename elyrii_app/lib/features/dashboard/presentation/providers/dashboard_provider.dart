@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math';
+import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../data/repositories/dashboard_repository.dart';
 
@@ -163,6 +164,21 @@ extension GoalTypeExtension on GoalType {
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
   final DashboardRepository _repository;
+  final bool Function()? _isDemoSession;
+  int _sessionRevision = 0;
+  bool _disposed = false;
+
+  bool get _isDemo => _isDemoSession?.call() == true;
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   bool _isLoading = false;
   String? _error;
 
@@ -276,15 +292,54 @@ class DashboardProvider extends ChangeNotifier {
     return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
   }
 
-  DashboardProvider({DashboardRepository? repository, ApiClient? apiClient})
-    : assert(
-        repository != null || apiClient != null,
-        'repository or apiClient must be provided',
-      ),
-      _repository = repository ?? DashboardRepository(client: apiClient!) {
+  DashboardProvider({
+    DashboardRepository? repository,
+    ApiClient? apiClient,
+    bool Function()? isDemoSession,
+  }) : assert(
+         repository != null || apiClient != null,
+         'repository or apiClient must be provided',
+       ),
+       _repository = repository ?? DashboardRepository(client: apiClient!),
+       _isDemoSession = isDemoSession {
     _initializeQuoteOfTheDay();
     _initializeDailyGoal();
     _initializeMascotMessage();
+  }
+
+  void resetSession() {
+    _sessionRevision++;
+    _loadInFlight = null;
+    _selectedMood = null;
+    _moodHistory.clear();
+    _currentStreak = 0;
+    _activeChallengesCount = 0;
+    _journalEntriesCount = 0;
+    _completedChallengesCount = 0;
+    _totalPoints = 0;
+    _meditationSessionsCount = 0;
+    _coachSessionsCount = 0;
+    _moodLogsCount = 0;
+    _goalCompleted = false;
+    _userName = '';
+    _isLoading = false;
+    _error = null;
+    _notify();
+  }
+
+  void onUserChanged({String? userId, bool isDemo = false}) {
+    resetSession();
+    _repository.onUserChanged(userId: userId, isDemo: isDemo);
+  }
+
+  void _applyDevStats() {
+    _currentStreak = DevSession.streakDays;
+    _completedChallengesCount = DevSession.completedChallengeCount;
+    _totalPoints = DevSession.totalPoints;
+    _userName = DevSession.firstName;
+    _isLoading = false;
+    _error = null;
+    _notify();
   }
 
   void _initializeQuoteOfTheDay() {
@@ -313,7 +368,7 @@ class DashboardProvider extends ChangeNotifier {
       _currentMascotMessageIndex =
           (_currentMascotMessageIndex + 1) % _mascotMessages.length;
     }
-    notifyListeners();
+    _notify();
   }
 
   Future<void> selectMood(MoodType mood) async {
@@ -330,13 +385,17 @@ class DashboardProvider extends ChangeNotifier {
     );
     _moodHistory[today] = mood;
     _error = null;
-    notifyListeners(); // Mise à jour optimiste immédiate (sans flash de squelette)
+    _notify(); // Mise à jour optimiste immédiate (sans flash de squelette)
+    if (_isDemo) return;
+    final session = _sessionRevision;
 
     // Synchronisation en arrière-plan sans bloquer l'UI ni recharger l'état de chargement
     unawaited(() async {
       try {
         await _repository.logMood(mood.name);
+        if (session != _sessionRevision) return;
         final data = await _repository.getDashboard();
+        if (session != _sessionRevision) return;
         final stats = data.stats;
         _currentStreak = stats.streak;
         _activeChallengesCount = stats.activeChallengesCount;
@@ -346,7 +405,7 @@ class DashboardProvider extends ChangeNotifier {
         _meditationSessionsCount = stats.meditationSessionsCount;
         _coachSessionsCount = stats.coachSessionsCount;
         _moodLogsCount = stats.moodLogsCount;
-        notifyListeners();
+        _notify();
       } catch (_) {
         // En mode déconnecté, préserve silencieusement la saisie locale
       }
@@ -355,7 +414,7 @@ class DashboardProvider extends ChangeNotifier {
 
   void completeGoal() {
     _goalCompleted = true;
-    notifyListeners();
+    _notify();
   }
 
   String getGreeting() {
@@ -389,16 +448,29 @@ class DashboardProvider extends ChangeNotifier {
 
   Future<void>? _loadInFlight;
 
-  Future<void> loadDashboardData() => _loadInFlight ??= _loadDashboardData()
-      .whenComplete(() => _loadInFlight = null);
+  Future<void> loadDashboardData() {
+    if (_loadInFlight != null) return _loadInFlight!;
+    late final Future<void> future;
+    future = _loadDashboardData().whenComplete(() {
+      if (identical(_loadInFlight, future)) _loadInFlight = null;
+    });
+    _loadInFlight = future;
+    return future;
+  }
 
   Future<void> _loadDashboardData() async {
+    if (_isDemo) {
+      _applyDevStats();
+      return;
+    }
+    final session = _sessionRevision;
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notify();
 
     try {
       final data = await _repository.getDashboard();
+      if (session != _sessionRevision) return;
       final moodTypeStr = data.latestMood;
       if (moodTypeStr != null) {
         _selectedMood = MoodType.values.firstWhere(
@@ -419,11 +491,12 @@ class DashboardProvider extends ChangeNotifier {
       _coachSessionsCount = stats.coachSessionsCount;
       _moodLogsCount = stats.moodLogsCount;
       _isLoading = false;
-      notifyListeners();
+      _notify();
     } catch (_) {
+      if (session != _sessionRevision) return;
       // Mode silencieux : n'affiche pas d'exception socket brute sur l'accueil
       _isLoading = false;
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -433,6 +506,6 @@ class DashboardProvider extends ChangeNotifier {
 
   void setUserName(String name) {
     _userName = name;
-    notifyListeners();
+    _notify();
   }
 }

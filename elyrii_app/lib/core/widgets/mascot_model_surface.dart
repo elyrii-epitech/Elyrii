@@ -14,6 +14,8 @@ import 'package:flutter_3d_controller/src/data/repositories/flutter_3d_repositor
 import 'package:flutter_3d_controller/src/utils/utils.dart';
 
 import 'launch_scope.dart';
+import '../../features/mascot/data/models/mascot_appearance.dart';
+import 'mascot_material_script.dart';
 
 /// Commandes atomiques : attendre updateComplete avant de jouer/chercher évite
 /// que model-viewer réinitialise le temps, la pause ou le nombre de répétitions.
@@ -33,9 +35,10 @@ class MascotModelController extends Flutter3DController {
     final js =
         '(function(){'
         'var m=document.getElementById(${jsonEncode(_id)});'
-        'if(!m)return;'
+        'if(!m)return [];'
         'var version=m.veloursVersion=(m.veloursVersion||0)+1;'
         '$cleanOp'
+        'return [];'
         '})();';
     _source!.executeCustomJsCodeWithResult(js);
   }
@@ -100,10 +103,86 @@ class MascotModelController extends Flutter3DController {
     _source!.executeCustomJsCodeWithResult(
       '(function(){'
       'var m=document.getElementById(${jsonEncode(_id)});'
-      'if(m)m.variantName=${jsonEncode(accessoryId)};'
+      'if(m)m.variantName=${jsonEncode(accessoryId)};return [];'
       '})();',
     );
   }
+
+  void setAppearance(MascotAppearance appearance) {
+    if (!onModelLoaded.value || _source == null) return;
+    _source!.executeCustomJsCodeWithResult(
+      '(function(){'
+      'var m=document.getElementById(${jsonEncode(_id)});'
+      'if(!m)return [];'
+      'var appearance=${jsonEncode(appearance.toJson())};'
+      'm.elyriiAppearance=appearance;'
+      'm.elyriiApplyAppearance=function(){'
+      'var appearance=m.elyriiAppearance;'
+      'var revision=m.elyriiAppearanceRevision=(m.elyriiAppearanceRevision||0)+1;'
+      'm.updateComplete.then(async function(){'
+      'if(m.elyriiAppearanceRevision!==revision)return;'
+      '$mascotMaterialScript'
+      '}).catch(function(error){console.error("Elyrii appearance",error);});'
+      '};'
+      'if(!m.elyriiVariantListener){'
+      'm.elyriiVariantListener=true;'
+      'm.addEventListener("variant-applied",function(){m.elyriiApplyAppearance();});'
+      '}'
+      'if(!m.elyriiAppearanceTimer){'
+      'm.elyriiAppearanceTimer=setTimeout(function(){'
+      'm.elyriiAppearanceTimer=null;m.elyriiApplyAppearance();'
+      '},60);'
+      '}'
+      'return [];'
+      '})();',
+    );
+  }
+
+  void _sceneCommand(String operation) {
+    if (!onModelLoaded.value || _source == null) return;
+    _source!.executeCustomJsCodeWithResult(
+      '(function(){var m=document.getElementById(${jsonEncode(_id)});'
+      'if(m){$operation}return [];})();',
+    );
+  }
+
+  /// Keep the editor sharp when the renderer adapts to a slower device.
+  /// Restore its previous global floor when the studio leaves the screen.
+  void setStudioRenderQuality(bool enabled) => _sceneCommand(
+    enabled
+        ? 'if(m.elyriiPreviousRenderScale===undefined){'
+              'var scale=m.constructor.minimumRenderScale;'
+              'm.elyriiPreviousRenderScale=typeof scale==="number"?scale:0.25;'
+              '}'
+              'if(m.elyriiPreviousRenderScale!==undefined){'
+              'm.constructor.minimumRenderScale=Math.max(0.75,m.elyriiPreviousRenderScale);'
+              '}'
+        : 'if(m.elyriiPreviousRenderScale!==undefined){'
+              'm.constructor.minimumRenderScale=m.elyriiPreviousRenderScale;'
+              'delete m.elyriiPreviousRenderScale;'
+              '}',
+  );
+
+  @override
+  void setCameraOrbit(double theta, double phi, double radius) => _sceneCommand(
+    'm.cameraOrbit=${jsonEncode('${theta}deg ${phi}deg $radius%')};',
+  );
+
+  @override
+  void setCameraTarget(double x, double y, double z) =>
+      _sceneCommand('m.cameraTarget=${jsonEncode('${x}m ${y}m ${z}m')};');
+
+  @override
+  void startRotation({int rotationSpeed = 10}) => _sceneCommand(
+    'm.autoRotate=true;m.rotationPerSecond=${jsonEncode('${rotationSpeed}deg')};',
+  );
+
+  @override
+  void pauseRotation() => _sceneCommand('m.autoRotate=false;');
+
+  @override
+  void stopRotation() =>
+      _sceneCommand('m.autoRotate=false;m.resetTurntableRotation(0);');
 }
 
 class MascotModelSurface extends StatefulWidget {
@@ -115,6 +194,7 @@ class MascotModelSurface extends StatefulWidget {
     required this.onError,
     this.interactive = false,
     this.accessoryVariant,
+    this.appearance = const MascotAppearance(),
   });
 
   final String src;
@@ -123,6 +203,7 @@ class MascotModelSurface extends StatefulWidget {
   final ValueChanged<String> onError;
   final bool interactive;
   final String? accessoryVariant;
+  final MascotAppearance appearance;
 
   @override
   State<MascotModelSurface> createState() => _MascotModelSurfaceState();
@@ -146,6 +227,25 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
     if (widget.accessoryVariant != oldWidget.accessoryVariant) {
       widget.controller.setAccessoryVariant(widget.accessoryVariant);
     }
+    if (widget.appearance != oldWidget.appearance ||
+        widget.accessoryVariant != oldWidget.accessoryVariant) {
+      widget.controller.setAppearance(widget.appearance);
+    }
+    if (widget.interactive != oldWidget.interactive) {
+      widget.controller.setStudioRenderQuality(widget.interactive);
+    }
+  }
+
+  @override
+  void deactivate() {
+    widget.controller.setStudioRenderQuality(false);
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    widget.controller.setStudioRenderQuality(widget.interactive);
   }
 
   @override
@@ -157,10 +257,16 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
 
     return ModelViewer(
       id: _id,
-      src: widget.src,
+      // Flutter places asset keys under an additional assets/ directory on
+      // web. Native ModelViewer resolves the original bundle key itself.
+      src: kIsWeb && widget.src.startsWith('assets/')
+          ? 'assets/${widget.src}'
+          : widget.src,
       variantName: widget.accessoryVariant,
       relatedJs: _utils.injectedJS(_id, 'flutter-3d-controller'),
       cameraControls: widget.interactive,
+      disablePan: true,
+      disableZoom: true,
       activeGestureInterceptor: widget.interactive,
       interactionPrompt: InteractionPrompt.none,
       animationCrossfadeDuration: 320,
@@ -181,7 +287,9 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
             },
       onLoad: (address) {
         widget.controller.onModelLoaded.value = true;
+        widget.controller.setStudioRenderQuality(widget.interactive);
         widget.controller.setAccessoryVariant(widget.accessoryVariant);
+        widget.controller.setAppearance(widget.appearance);
         widget.onLoad(address);
       },
       onError: (error) {

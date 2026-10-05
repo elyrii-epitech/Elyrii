@@ -439,6 +439,9 @@ def main():
         ('lavender_dark',(.46,.37,.57),0.,.85),('gold',(.73,.55,.25),.28,.56)]:
         PALETTE[name]=material('Velours accessory '+name,color,metal,roughness)
     OUT.mkdir(parents=True,exist_ok=True)
+    imported=[]
+    if META.exists():
+        imported=[entry for entry in json.loads(META.read_text())['accessories'] if 'controlLocalTranslation' in entry]
     records=[];all_sets={}
     for accessory_id,parent,label,description in CATALOG:
         CURRENT.clear()
@@ -447,11 +450,12 @@ def main():
         for obj in objects:
             obj['accessory']=accessory_id;obj['attachmentControl']=parent
         triangles,bounds=export(accessory_id,objects)
-        records.append({'id':accessory_id,'parent':parent,'asset':'assets/accessories/'+accessory_id+'.glb','labelFr':label,'descriptionFr':description,'triangles':triangles,'bounds':bounds})
+        category='Dos' if accessory_id=='mini_backpack' else 'Cou' if parent=='CTRL_chest' else 'Visage' if accessory_id in ['round_glasses','headphones','sleep_mask'] else 'Tête'
+        records.append({'id':accessory_id,'parent':parent,'asset':'assets/accessories/'+accessory_id+'.glb','labelFr':label,'descriptionFr':description,'triangles':triangles,'bounds':bounds,'category':category})
         all_sets[accessory_id]=objects
         for obj in objects:obj.hide_render=True
         print(accessory_id,triangles,bounds)
-    META.write_text(json.dumps({'schemaVersion':1,'coordinateSpace':'gltf-global-y-up-front-positive-z','source':'assets/elyrii_velours_animations.glb','accessories':records},ensure_ascii=False,indent=2)+'\n')
+    META.write_text(json.dumps({'schemaVersion':1,'coordinateSpace':'gltf-global-y-up-front-positive-z','source':'assets/elyrii_velours_animations.glb','accessories':records+imported},ensure_ascii=False,indent=2)+'\n')
     if preview:
         PREVIEWS.mkdir(parents=True,exist_ok=True)
         front_camera,back_camera=preview_scene()

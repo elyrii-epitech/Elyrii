@@ -1,6 +1,10 @@
 import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
+import 'package:elyrii_app/core/theme/app_theme.dart';
+import 'package:elyrii_app/core/widgets/glass/liquid_glass_button.dart';
 import 'package:elyrii_app/core/widgets/mascot_contact_shadow.dart';
+import 'package:elyrii_app/core/widgets/mascot_3d_viewer.dart';
+import 'package:elyrii_app/features/mascot/presentation/widgets/mascot_studio_preview.dart';
 import 'package:elyrii_app/features/gamification/data/models/gamification_models.dart';
 import 'package:elyrii_app/features/gamification/data/repositories/gamification_repository.dart';
 import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
@@ -46,6 +50,9 @@ Future<MascotProvider> _pumpPage(
   List<String> savedCosmetics = const [],
   Size surfaceSize = const Size(800, 2000),
   double textScale = 1,
+  bool dark = false,
+  bool highContrast = false,
+  bool reducedMotion = false,
 }) async {
   SharedPreferences.setMockInitialValues({
     'elyrii_mascot_customization': savedCosmetics,
@@ -73,10 +80,13 @@ Future<MascotProvider> _pumpPage(
         ),
       ],
       child: MaterialApp(
+        theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+            highContrast: highContrast,
+            disableAnimations: reducedMotion,
+          ),
           child: child!,
         ),
         home: const MascotCustomizationPage(),
@@ -89,168 +99,302 @@ Future<MascotProvider> _pumpPage(
   return mascotProvider;
 }
 
+MascotStudioPreview _preview(WidgetTester tester) =>
+    tester.widget(find.byType(MascotStudioPreview));
+
+Future<void> _save(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey('save_mascot_look')));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
 void main() {
-  group('MascotCustomizationPage', () {
-    testWidgets('aperçu sans CTA d\'animation ni ombre de contact', (
+  group('Atelier Elyrii', () {
+    testWidgets('les filtres équipés gardent leur nom accessible', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await _pumpPage(
+          tester,
+          completedCount: 12,
+          savedCosmetics: ['graduate_cap', 'cheek_sparkle'],
+        );
+        await tester.tap(find.text('Collection'));
+        await tester.pump();
+        for (final category in ['Tête', 'Visage']) {
+          final chip = find.widgetWithText(ChoiceChip, category);
+          expect(tester.getSemantics(chip).label, category);
+        }
+      } finally {
+        semantics.dispose();
+      }
+    });
+
+    testWidgets('aperçu persistant et paliers réels', (tester) async {
+      await _pumpPage(tester, completedCount: 3);
+      expect(find.text('Atelier Elyrii'), findsOneWidget);
+      expect(find.text('Style'), findsOneWidget);
+      expect(find.text('Couleurs'), findsOneWidget);
+      expect(find.text('Collection'), findsOneWidget);
+      expect(find.byType(MascotContactShadow), findsNothing);
+      expect(find.text('4 / 15'), findsOneWidget);
+      expect(find.text('Éclat céleste'), findsOneWidget);
+      expect(find.text('Encore 1 défi à ton rythme'), findsOneWidget);
+      final scene = tester.state(find.byType(Mascot3DViewer));
+      await tester.tap(find.text('Collection'));
+      await tester.pump();
+      await tester.ensureVisible(find.text('Petit sac à dos'));
+      expect(find.byType(MascotStudioPreview).hitTestable(), findsOneWidget);
+      expect(tester.state(find.byType(Mascot3DViewer)), same(scene));
+    });
+
+    testWidgets('un thème est essayé, annulé puis enregistré explicitement', (
+      tester,
+    ) async {
+      final provider = await _pumpPage(tester);
+      await tester.tap(find.text('Automne Cuivré'));
+      await tester.pump();
+      expect(_preview(tester).mascot.themeId, 'halloween');
+      expect(provider.mascot.themeId, 'nature');
+      await tester.tap(find.byTooltip('Annuler la dernière modification'));
+      await tester.pump();
+      expect(_preview(tester).mascot.themeId, 'nature');
+      await tester.tap(find.text('Astral'));
+      await tester.pump();
+      await _save(tester);
+      expect(provider.mascot.themeId, 'cosmic');
+      expect(find.text('Ton look est enregistré'), findsOneWidget);
+    });
+
+    testWidgets('couleurs arbitraires indépendantes et saisie invalide', (
+      tester,
+    ) async {
+      final provider = await _pumpPage(tester);
+      await tester.tap(find.text('Couleurs'));
+      await tester.pump();
+      final hex = find.byKey(const ValueKey('mascot_hex_color'));
+      await tester.ensureVisible(hex);
+      await tester.enterText(hex, '12ab9f');
+      await tester.tap(find.byTooltip('Appliquer la couleur'));
+      await tester.pump();
+      expect(_preview(tester).mascot.appearance.colors['body'], '#12AB9F');
+      await tester.ensureVisible(find.text('Yeux'));
+      await tester.tap(find.text('Yeux'));
+      await tester.pump();
+      await tester.ensureVisible(hex);
+      await tester.enterText(hex, 'ZZ0000');
+      await tester.tap(find.byTooltip('Appliquer la couleur'));
+      await tester.pump();
+      expect(
+        find.text('Saisis 6 caractères, par exemple B8A3DC.'),
+        findsOneWidget,
+      );
+      expect(_preview(tester).mascot.appearance.colors['eyes'], isNull);
+      await tester.enterText(hex, '3B3549');
+      await tester.tap(find.byTooltip('Appliquer la couleur'));
+      await tester.pump();
+      await _save(tester);
+      expect(provider.mascot.appearance.colors, {
+        'body': '#12AB9F',
+        'eyes': '#3B3549',
+      });
+      final restored = MascotProvider();
+      await restored.loadMascot();
+      expect(restored.mascot.appearance, provider.mascot.appearance);
+      restored.dispose();
+    });
+
+    testWidgets('un glissement de couleur s’annule en une seule action', (
       tester,
     ) async {
       await _pumpPage(tester);
-
-      expect(find.byType(ActionChip), findsNothing);
-      expect(find.byType(MascotContactShadow), findsNothing);
-      expect(find.text('Un moment avec Elyrii'), findsNothing);
-      // L'atelier conserve les thèmes et les douze pièces 3D créées.
-      expect(find.text('Thèmes'), findsOneWidget);
-      expect(find.text('Accessoires'), findsOneWidget);
-      expect(find.text('Chapeau de diplômé'), findsNothing);
-      for (final accessory in MascotAccessories.all) {
-        expect(find.text(accessory.name), findsOneWidget);
-        expect(find.text(accessory.description), findsOneWidget);
-      }
-      expect(find.text('0 / 12 accessoires débloqués'), findsOneWidget);
-    });
-
-    testWidgets('sélectionner un thème met à jour la mascotte', (tester) async {
-      final mascotProvider = await _pumpPage(tester);
-      final defaultThemeId = mascotProvider.mascot.themeId;
-
-      await tester.tap(find.text('Halloween'));
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(mascotProvider.mascot.themeId, isNot(defaultThemeId));
-      expect(mascotProvider.mascot.themeId, 'halloween');
+      await tester.tap(find.text('Couleurs'));
+      await tester.pump();
+      await tester.drag(find.byType(Slider).first, const Offset(180, 0));
+      await tester.pump();
+      expect(_preview(tester).mascot.appearance.colors['body'], isNotNull);
+      await tester.tap(find.byTooltip('Annuler la dernière modification'));
+      await tester.pump();
+      expect(_preview(tester).mascot.appearance.colors, isEmpty);
     });
 
     testWidgets(
-      'les filtres accessibles affichent toutes les familles et reviennent à Tous',
+      'une tenue combine quatre zones et remplace seulement sa zone',
       (tester) async {
-        await _pumpPage(tester);
-        expect(find.byType(ChoiceChip), findsNWidgets(5));
-        expect(
-          tester
-              .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Tous'))
-              .selected,
-          isTrue,
-        );
-        await tester.scrollUntilVisible(find.text('Cou'), 200);
-        await tester.tap(find.text('Cou'));
+        final provider = await _pumpPage(tester, completedCount: 36);
+        await tester.tap(find.text('Collection'));
         await tester.pump();
-        expect(find.text('Écharpe cocon'), findsOneWidget);
-        expect(find.text('Lunettes rondes'), findsNothing);
-        expect(find.text('Béret sauge'), findsNothing);
-        await tester.tap(find.text('Tous'));
-        await tester.pump();
-        expect(find.text('Lunettes rondes'), findsOneWidget);
-        expect(find.text('Béret sauge'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'une pièce débloquée remplace la précédente et peut être retirée',
-      (tester) async {
-        final provider = await _pumpPage(tester, completedCount: 3);
-        await tester.ensureVisible(find.text('Béret sauge'));
-        await tester.tap(find.text('Béret sauge'));
-        await tester.pump();
-        expect(provider.mascot.equippedCosmetics, ['beret']);
-
+        for (final name in [
+          'Béret sauge',
+          'Lunettes rondes',
+          'Écharpe cocon',
+          'Petit sac à dos',
+        ]) {
+          await tester.ensureVisible(find.text(name));
+          await tester.tap(find.text(name));
+          await tester.pump();
+        }
+        expect(_preview(tester).mascot.equippedCosmetics, [
+          'beret',
+          'round_glasses',
+          'cozy_scarf',
+          'mini_backpack',
+        ]);
+        expect(provider.mascot.equippedCosmetics, isEmpty);
         await tester.ensureVisible(find.text('Bonnet douillet'));
         await tester.tap(find.text('Bonnet douillet'));
         await tester.pump();
-        expect(provider.mascot.equippedCosmetics, ['beanie']);
-
-        // Le titre de l'aperçu reprend aussi la pièce portée.
-        await tester.tap(find.text('Bonnet douillet').last);
-        await tester.pump();
-        expect(provider.mascot.equippedCosmetics, isEmpty);
+        expect(_preview(tester).mascot.equippedCosmetics, [
+          'beanie',
+          'round_glasses',
+          'cozy_scarf',
+          'mini_backpack',
+        ]);
+        await _save(tester);
+        expect(provider.mascot.equippedCosmetics, [
+          'beanie',
+          'round_glasses',
+          'cozy_scarf',
+          'mini_backpack',
+        ]);
       },
     );
 
-    testWidgets('un verrou explique le défi restant sans équiper la pièce', (
-      tester,
-    ) async {
-      final provider = await _pumpPage(tester, completedCount: 2);
-      await tester.ensureVisible(find.text('Bonnet douillet'));
-      await tester.tap(find.text('Bonnet douillet'));
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(provider.mascot.equippedCosmetics, isEmpty);
+    testWidgets(
+      'une récompense verrouillée peut être essayée sans être sauvegardée',
+      (tester) async {
+        final provider = await _pumpPage(tester, completedCount: 2);
+        await tester.tap(find.text('Collection'));
+        await tester.pump();
+        await tester.ensureVisible(find.text('Bonnet douillet').last);
+        await tester.tap(find.text('Bonnet douillet').last);
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Encore 1 défi à terminer · 3 défis terminés'),
+          findsOneWidget,
+        );
+        await tester.ensureVisible(find.text('Essayer sur ma mascotte'));
+        await tester.tap(find.text('Essayer sur ma mascotte'));
+        await tester.pumpAndSettle();
+        expect(_preview(tester).mascot.equippedCosmetics, ['beanie']);
+        expect(provider.mascot.equippedCosmetics, isEmpty);
+        expect(
+          tester
+              .widget<LiquidGlassButton>(
+                find.byKey(const ValueKey('save_mascot_look')),
+              )
+              .onPressed,
+          isNull,
+        );
+        await tester.tap(find.byTooltip('Terminer l’essai'));
+        await tester.pump();
+        expect(_preview(tester).mascot.equippedCosmetics, isEmpty);
+      },
+    );
+
+    testWidgets('filtres de famille et de disponibilité', (tester) async {
+      await _pumpPage(tester, completedCount: 3);
+      await tester.tap(find.text('Collection'));
+      await tester.pump();
+      await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Cou'));
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Cou'));
+      await tester.pump();
+      expect(find.text('Écharpe cocon'), findsOneWidget);
+      expect(find.text('Lunettes rondes'), findsNothing);
+      await tester.tap(find.text('Disponibles'));
+      await tester.pump();
+      expect(find.text('Écharpe cocon'), findsNothing);
       expect(
-        find.text(
-          'Encore 1 défi à terminer pour débloquer « Bonnet douillet ». Ce palier se débloque après 3 défis terminés.',
-        ),
+        find.textContaining('Tes premières pièces t’attendent.'),
         findsOneWidget,
       );
+      await tester.tap(find.text('Tous'));
+      await tester.pump();
+      expect(find.text('Béret sauge'), findsOneWidget);
+      expect(find.text('Bonnet douillet'), findsOneWidget);
     });
 
     testWidgets(
-      'une pièce restaurée reste retirable avant le chargement des progrès',
+      'une pièce restaurée reste retirable sans progression chargée',
       (tester) async {
         final provider = await _pumpPage(tester, savedCosmetics: ['beret']);
-        expect(find.text('Équipé'), findsOneWidget);
-        expect(find.text('1 / 12 accessoire débloqué'), findsOneWidget);
-        await tester.ensureVisible(find.text('Béret sauge').last);
-        await tester.tap(find.text('Béret sauge').last);
+        await tester.tap(find.text('Collection'));
         await tester.pump();
-        expect(provider.mascot.equippedCosmetics, isEmpty);
-        expect(find.text('0 / 12 accessoires débloqués'), findsOneWidget);
-
-        await Scrollable.ensureVisible(
-          tester.element(find.text('Béret sauge')),
-          alignment: 0.5,
-        );
-        await tester.pump();
+        await tester.ensureVisible(find.text('Béret sauge'));
         await tester.tap(find.text('Béret sauge'));
-        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pump();
+        await _save(tester);
         expect(provider.mascot.equippedCosmetics, isEmpty);
-        expect(find.text('Encore un petit effort…'), findsOneWidget);
       },
     );
 
-    testWidgets('plusieurs nouveaux paliers donnent une célébration groupée', (
-      tester,
-    ) async {
-      final provider = await _pumpPage(
-        tester,
-        completedCount: 5,
-        seenUnlocks: false,
-      );
-      await tester.pump(const Duration(seconds: 1));
-      expect(find.byType(UnlockCelebrationDialog), findsOneWidget);
-      final dialog = tester.widget<UnlockCelebrationDialog>(
-        find.byType(UnlockCelebrationDialog),
-      );
-      expect(dialog.unlockedCount, 3);
-      expect(dialog.accessory.id, 'flower_crown');
-      await tester.tap(find.text('L\'équiper maintenant'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      expect(provider.mascot.equippedCosmetics, ['flower_crown']);
-      expect(find.byType(UnlockCelebrationDialog), findsNothing);
-    });
-
     testWidgets(
-      'la garde-robe et la célébration tiennent sur un écran étroit avec texte agrandi',
+      'les nouveaux paliers se célèbrent ensemble et équipent un brouillon',
       (tester) async {
+        final provider = await _pumpPage(
+          tester,
+          completedCount: 5,
+          seenUnlocks: false,
+        );
+        await tester.pump(const Duration(seconds: 1));
+        final dialog = tester.widget<UnlockCelebrationDialog>(
+          find.byType(UnlockCelebrationDialog),
+        );
+        expect(dialog.unlockedCount, 6);
+        await tester.tap(find.text('L\'équiper maintenant'));
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(_preview(tester).mascot.equippedCosmetics, ['flower_crown']);
+        expect(provider.mascot.equippedCosmetics, isEmpty);
+        await _save(tester);
+        expect(provider.mascot.equippedCosmetics, ['flower_crown']);
+      },
+    );
+
+    for (final dark in [false, true]) {
+      testWidgets('récompenses lisibles sans animation, dark=$dark', (
+        tester,
+      ) async {
         await _pumpPage(
           tester,
           completedCount: 5,
           seenUnlocks: false,
-          surfaceSize: const Size(320, 700),
-          textScale: 1.4,
+          surfaceSize: const Size(320, 568),
+          textScale: 1.5,
+          dark: dark,
+          reducedMotion: true,
         );
-        await tester.pump(const Duration(seconds: 1));
+        await tester.pumpAndSettle();
+        expect(find.byType(UnlockCelebrationDialog), findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.ensureVisible(find.text('Plus tard'));
         await tester.tap(find.text('Plus tard'));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 400));
-        await tester.scrollUntilVisible(find.text('Cou').hitTestable(), 200);
-        await tester.pump();
-        await tester.tap(find.text('Cou'));
-        await tester.pump();
-        expect(find.text('Écharpe cocon'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-      },
-    );
+        await tester.pumpAndSettle();
+        expect(find.byType(UnlockCelebrationDialog), findsNothing);
+      });
+
+      testWidgets(
+        'écran compact, texte agrandi et contraste élevé, dark=$dark',
+        (tester) async {
+          await _pumpPage(
+            tester,
+            completedCount: 5,
+            surfaceSize: const Size(320, 568),
+            textScale: 1.5,
+            dark: dark,
+            highContrast: true,
+            reducedMotion: true,
+          );
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.text('Collection'));
+          await tester.pump();
+          await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Cou'));
+          await tester.tap(find.widgetWithText(ChoiceChip, 'Cou'));
+          await tester.pump();
+          expect(find.text('Écharpe cocon'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
   });
 }

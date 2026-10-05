@@ -35,11 +35,10 @@
   <title>Elyrii</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- model-viewer: required by flutter_3d_controller for .glb rendering on web -->
+  <!-- Use the bundled renderer, matching the native viewer and working offline. -->
   <script
     type="module"
-    crossorigin="anonymous"
-    src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js">
+    src="assets/packages/flutter_3d_controller/assets/model_viewer.min.js">
   </script>
 </head>
 <body>
