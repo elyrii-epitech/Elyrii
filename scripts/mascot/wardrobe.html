@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La garde-robe d’Elyrii</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f7f3ed;color:#50334b;font:16px system-ui,sans-serif}main{max-width:1180px;margin:0 auto;padding:36px 24px}h1{font-size:clamp(30px,5vw,48px);letter-spacing:-.04em;margin:8px 0 12px}p{color:#806b78;line-height:1.6}.eyebrow{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:#98778a}.layout{display:grid;grid-template-columns:1.15fr 1fr;gap:24px;margin-top:26px}.stage{background:#fffdfa;border:1px solid #e8dce2;border-radius:28px;align-self:start;position:sticky;top:20px;overflow:hidden}model-viewer{width:100%;height:510px;background:radial-gradient(ellipse at 50% 45%,#f4e7e2,transparent 70%)}.controls{padding:16px 20px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid #eee4e8}.library{display:grid;grid-template-columns:1fr 1fr;gap:10px}button{font:inherit;color:inherit;background:#fffdfa;border:1px solid #e2d3dc;border-radius:18px;padding:15px;cursor:pointer;text-align:left}button:hover{background:#f1e6ec}button[aria-pressed=true]{background:#e7eee4;border-color:#91ab89}.piece strong{display:block;margin:6px 0}.piece small{display:block;font-size:12px;line-height:1.5;color:#897280}.piece .emoji{font-size:25px}.controls button{padding:9px 12px;border-radius:12px;font-size:13px}#caption{padding:0 22px 18px;margin:0;font-size:14px}#status{font-size:12px;color:#8b7686}a{color:#80566f}@media(max-width:760px){.layout{grid-template-columns:1fr}.stage{position:static}model-viewer{height:410px}main{padding:24px 16px}}
+</style>
+<main>
+  <div class="eyebrow">Elyrii · atelier de la mascotte</div>
+  <h1>Une touche de douceur.</h1>
+  <p>12 nouvelles pièces en 3D, dessinées pour Velours. Choisis une pièce et tourne autour de l’ourson pour observer ses détails.</p>
+  <div class="layout">
+    <section class="stage" aria-label="Aperçu 3D">
+      <model-viewer id="bear" src="/wardrobe.glb" camera-controls camera-orbit="0deg 80deg 110%" interaction-prompt="none" animation-name="idle" autoplay alt="Velours, ourson crème avec son accessoire sélectionné"></model-viewer>
+      <p id="caption">Velours, tout simplement.</p>
+      <div class="controls">
+        <button id="bare">Sans accessoire</button>
+        <button id="front">Face</button>
+        <button id="side">Trois quarts</button>
+        <button id="back">Dos</button>
+        <button id="motion" aria-pressed="true">Animation</button>
+      </div>
+    </section>
+    <section class="library" id="pieces" aria-label="Les accessoires"></section>
+  </div>
+  <p id="status" role="status">Chargement de la garde-robe…</p>
+  <p><a href="/">Consulter les gestes de Velours</a></p>
+</main>
+<script type="module">
+import '/model-viewer.min.js';
+const pieces=[
+ ['beret','🎨','Béret sauge',2],
+ ['beanie','🧶','Bonnet douillet',3],['flower_crown','🌸','Couronne de fleurs',5],
+ ['star_crown','⭐','Couronne d’étoiles',7],['moon_pin','🌙','Broche lunaire',9],
+ ['round_glasses','👓','Lunettes rondes',12],['headphones','🎧','Casque pastel',15],
+ ['sleep_mask','💤','Masque de repos',18],['cozy_scarf','🧣','Écharpe cocon',22],
+ ['bow_tie','🎀','Nœud papillon',26],['leaf_pendant','🍃','Pendentif feuille',30],
+ ['mini_backpack','🎒','Petit sac à dos',36],
+];
+const bear=document.querySelector('#bear'),library=document.querySelector('#pieces');
+let selected=null;
+function select(piece){
+ selected=piece?.[0]??null;
+ bear.variantName=selected;
+ for(const button of library.children)button.setAttribute('aria-pressed',String(button.dataset.id===selected));
+ document.querySelector('#caption').textContent=piece?piece[2]+' · '+piece[3]+' '+(piece[3]===1?'défi terminé':'défis terminés'):'Velours, tout simplement.';
+ bear.cameraOrbit=selected==='mini_backpack'?'150deg 80deg 110%':'0deg 80deg 110%';
+}
+for(const piece of pieces){
+ const button=document.createElement('button');button.className='piece';button.dataset.id=piece[0];button.setAttribute('aria-pressed','false');
+ button.innerHTML='<span class="emoji" aria-hidden="true">'+piece[1]+'</span><strong>'+piece[2]+'</strong><small>'+piece[3]+' '+(piece[3]===1?'défi terminé':'défis terminés')+'</small>';
+ button.addEventListener('click',()=>select(piece));library.append(button);
+}
+document.querySelector('#bare').onclick=()=>select(null);
+document.querySelector('#front').onclick=()=>bear.cameraOrbit='0deg 80deg 110%';
+document.querySelector('#side').onclick=()=>bear.cameraOrbit='40deg 80deg 110%';
+document.querySelector('#back').onclick=()=>bear.cameraOrbit='180deg 80deg 110%';
+document.querySelector('#motion').onclick=function(){const play=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',String(play));play?bear.play():bear.pause();};
+bear.addEventListener('load',()=>document.querySelector('#status').textContent=bear.availableVariants.length+' pièces disponibles · un seul modèle animé.');
+bear.addEventListener('error',()=>document.querySelector('#status').textContent='Le modèle n’a pas pu être chargé. Reconstruis la garde-robe avec npm run build:wardrobe.');
+</script>
+</html>

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 class QuestTile extends StatelessWidget {
   final String title;
@@ -38,7 +38,7 @@ class QuestTile extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           if (onTap != null) {
-            HapticFeedback.lightImpact();
+            ElyriiHaptics.light();
             onTap!();
           }
         },
@@ -149,18 +149,32 @@ class QuestTile extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: progressFraction,
-                                  minHeight: 4,
-                                  backgroundColor: isDark
+                              child: Container(
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: isDark
                                       ? Colors.white.withValues(alpha: 0.08)
                                       : Colors.black.withValues(alpha: 0.06),
-                                  valueColor:
-                                      const AlwaysStoppedAnimation<Color>(
-                                        AppColors.primary,
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FractionallySizedBox(
+                                      widthFactor: (progressFraction ?? 0.0)
+                                          .clamp(0.0, 1.0),
+                                      child: Container(
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                        ),
                                       ),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

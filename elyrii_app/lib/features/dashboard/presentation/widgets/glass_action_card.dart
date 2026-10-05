@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:ui';
-import 'package:iconsax/iconsax.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/glass/elyrii_glass_surface.dart';
 
 /// Widget carte d'action avec effet glassmorphism
 class GlassActionCard extends StatefulWidget {
@@ -39,7 +38,7 @@ class _GlassActionCardState extends State<GlassActionCard> {
       child: GestureDetector(
         onTapDown: (_) {
           setState(() => _isPressed = true);
-          HapticFeedback.lightImpact();
+          ElyriiHaptics.light();
         },
         onTapUp: (_) {
           setState(() => _isPressed = false);
@@ -50,99 +49,59 @@ class _GlassActionCardState extends State<GlassActionCard> {
           scale: _isPressed ? 0.95 : 1.0,
           duration: const Duration(milliseconds: 100),
           curve: Curves.easeInOut,
-          child: RepaintBoundary(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          child: ElyriiGlassSurface(
+            role: GlassRole.floatingControl,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            padding: const EdgeInsets.all(AppDimensions.paddingMd),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Icône dans un cercle
+                Container(
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: widget.isDark
-                          ? [
-                              Colors.white.withValues(alpha: 0.1),
-                              Colors.white.withValues(alpha: 0.05),
-                            ]
-                          : [
-                              Colors.white.withValues(alpha: 0.85),
-                              Colors.white.withValues(alpha: 0.6),
-                            ],
+                      colors: [
+                        accentColor.withValues(alpha: 0.2),
+                        accentColor.withValues(alpha: 0.1),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                    shape: BoxShape.circle,
                     border: Border.all(
-                      color: widget.isDark
-                          ? Colors.white.withValues(alpha: 0.12)
-                          : Colors.white.withValues(alpha: 0.6),
-                      width: 1.5,
+                      color: accentColor.withValues(alpha: 0.3),
+                      width: 1,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentColor.withValues(alpha: 0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Icône dans un cercle
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              accentColor.withValues(alpha: 0.2),
-                              accentColor.withValues(alpha: 0.1),
-                            ],
-                          ),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: accentColor.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Icon(widget.icon, color: accentColor, size: 24),
-                      ),
-                      const SizedBox(height: AppDimensions.spacingMd),
-                      // Titre
-                      Text(
-                        widget.title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: widget.isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.spacingXxs),
-                      // Sous-titre
-                      Text(
-                        widget.subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: widget.isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                        ),
-                      ),
-                    ],
+                  child: Icon(widget.icon, color: accentColor, size: 24),
+                ),
+                const SizedBox(height: AppDimensions.spacingMd),
+                // Titre
+                Text(
+                  widget.title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: widget.isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
                   ),
                 ),
-              ),
+                const SizedBox(height: AppDimensions.spacingXxs),
+                // Sous-titre
+                Text(
+                  widget.subtitle,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: widget.isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -169,7 +128,7 @@ class ActionCardsRow extends StatelessWidget {
     return Row(
       children: [
         GlassActionCard(
-          icon: Iconsax.book_1,
+          icon: Icons.menu_book_rounded,
           title: 'Écrire',
           subtitle: 'dans ton journal',
           onTap: onJournalTap,
@@ -178,7 +137,7 @@ class ActionCardsRow extends StatelessWidget {
         ),
         const SizedBox(width: AppDimensions.spacingMd),
         GlassActionCard(
-          icon: Iconsax.message,
+          icon: Icons.chat_bubble_rounded,
           title: 'Parler',
           subtitle: 'à Elyrii',
           onTap: onChatTap,

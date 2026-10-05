@@ -1,20 +1,25 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:ui';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
-/// Widget de bulle de dialogue avec effet glassmorphism et animation de typing
+/// Widget de bulle de dialogue avec effet glassmorphism et animation de typing.
+///
+/// [tailAtBottom] place l'attache sous la bulle (bulle au-dessus de la
+/// mascotte, composition « elle parle ») ; par défaut l'attache est en haut
+/// (bulle sous la mascotte, composition dashboard).
 class MascotSpeechBubble extends StatefulWidget {
   final String message;
   final bool isDark;
   final VoidCallback? onTap;
+  final bool tailAtBottom;
 
   const MascotSpeechBubble({
     super.key,
     required this.message,
     this.isDark = false,
     this.onTap,
+    this.tailAtBottom = false,
   });
 
   @override
@@ -24,10 +29,10 @@ class MascotSpeechBubble extends StatefulWidget {
 class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
     with SingleTickerProviderStateMixin {
   late AnimationController _typingController;
+  Timer? _typingTimer;
   String _displayedText = '';
   int _charIndex = 0;
   bool _isTypingComplete = false;
-
   @override
   void initState() {
     super.initState();
@@ -54,36 +59,45 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
   }
 
   void _startTypingAnimation() {
+    _typingTimer?.cancel();
     if (_charIndex < widget.message.characters.length) {
-      Future.delayed(Duration(milliseconds: 30 + (_charIndex % 3) * 10), () {
-        if (mounted && _charIndex < widget.message.characters.length) {
-          setState(() {
-            _displayedText = widget.message.characters
-                .take(_charIndex + 1)
-                .toString();
-            _charIndex++;
-          });
-          _startTypingAnimation();
-        } else if (mounted) {
-          setState(() {
-            _isTypingComplete = true;
-          });
-        }
-      });
+      _typingTimer = Timer(
+        Duration(milliseconds: 30 + (_charIndex % 3) * 10),
+        () {
+          if (mounted && _charIndex < widget.message.characters.length) {
+            setState(() {
+              _displayedText = widget.message.characters
+                  .take(_charIndex + 1)
+                  .toString();
+              _charIndex++;
+            });
+            _startTypingAnimation();
+          } else if (mounted) {
+            setState(() {
+              _isTypingComplete = true;
+            });
+          }
+        },
+      );
     }
   }
 
   @override
   void dispose() {
+    _typingTimer?.cancel();
     _typingController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final tailColor = widget.isDark
+        ? AppColors.primary.withValues(alpha: 0.25)
+        : Colors.white.withValues(alpha: 0.9);
+
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        ElyriiHaptics.light();
         widget.onTap?.call();
       },
       child: AnimatedOpacity(
@@ -92,88 +106,87 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Bulle principale
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingMd,
-                    vertical: AppDimensions.paddingSm,
-                  ),
-                  constraints: const BoxConstraints(
-                    maxWidth: 280,
-                    minHeight: 40,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: widget.isDark
-                          ? [
-                              AppColors.primary.withValues(alpha: 0.25),
-                              AppColors.primary.withValues(alpha: 0.15),
-                            ]
-                          : [
-                              Colors.white.withValues(alpha: 0.9),
-                              AppColors.primaryLight.withValues(alpha: 0.7),
-                            ],
-                    ),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                    border: Border.all(
-                      color: widget.isDark
-                          ? AppColors.primary.withValues(alpha: 0.3)
-                          : AppColors.primary.withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          _displayedText,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: widget.isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                            height: 1.3,
-                          ),
-                        ),
-                      ),
-                      // Curseur clignotant pendant le typing
-                      if (!_isTypingComplete)
-                        _TypingCursor(isDark: widget.isDark),
-                    ],
-                  ),
+            // Bulle principale — verre doux à deux ombres (ambiante +
+            // contact), la hiérarchie d'une surface matérielle premium.
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              constraints: const BoxConstraints(maxWidth: 300, minHeight: 44),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: widget.isDark
+                      ? [
+                          AppColors.primary.withValues(alpha: 0.25),
+                          AppColors.primary.withValues(alpha: 0.15),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.92),
+                          AppColors.primaryLight.withValues(alpha: 0.7),
+                        ],
                 ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: widget.isDark
+                      ? AppColors.primary.withValues(alpha: 0.28)
+                      : Colors.white.withValues(alpha: 0.65),
+                  width: 1,
+                ),
+                boxShadow: [
+                  // Ombre ambiante large et douce
+                  BoxShadow(
+                    color: widget.isDark
+                        ? Colors.black.withValues(alpha: 0.22)
+                        : AppColors.primary.withValues(alpha: 0.10),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                  // Ombre de contact serrée, juste sous le bord
+                  BoxShadow(
+                    color: widget.isDark
+                        ? Colors.black.withValues(alpha: 0.16)
+                        : Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      _displayedText,
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.1,
+                        color: widget.isDark
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimaryLight,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                  // Curseur clignotant pendant le typing
+                  if (!_isTypingComplete) _TypingCursor(isDark: widget.isDark),
+                ],
               ),
             ),
-            // Petite flèche/triangle pointant vers le haut (vers la mascotte)
+            // Petite attache arrondie vers la mascotte — douce, sans
+            // pointe triangulaire agressive.
             Positioned(
-              top: -8,
+              top: widget.tailAtBottom ? null : -6,
+              bottom: widget.tailAtBottom ? -6 : null,
               left: 0,
               right: 0,
               child: Center(
-                child: CustomPaint(
-                  size: const Size(16, 10),
-                  painter: _BubbleArrowPainter(
-                    color: widget.isDark
-                        ? AppColors.primary.withValues(alpha: 0.25)
-                        : Colors.white.withValues(alpha: 0.9),
-                    borderColor: widget.isDark
-                        ? AppColors.primary.withValues(alpha: 0.3)
-                        : AppColors.primary.withValues(alpha: 0.2),
+                child: Container(
+                  width: 16,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: tailColor,
+                    borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
@@ -238,36 +251,4 @@ class _TypingCursorState extends State<_TypingCursor>
       },
     );
   }
-}
-
-/// Painter pour dessiner la flèche de la bulle
-class _BubbleArrowPainter extends CustomPainter {
-  final Color color;
-  final Color borderColor;
-
-  _BubbleArrowPainter({required this.color, required this.borderColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final borderPaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final path = Path()
-      ..moveTo(0, size.height)
-      ..lineTo(size.width / 2, 0)
-      ..lineTo(size.width, size.height)
-      ..close();
-
-    canvas.drawPath(path, paint);
-    canvas.drawPath(path, borderPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

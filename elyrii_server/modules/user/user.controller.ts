@@ -1,30 +1,21 @@
 import { createFactory } from "hono/factory";
 import { sValidator } from "@hono/standard-validator";
 import { z } from "zod";
+import { mkdir } from "node:fs/promises";
 import UserRepository from "../../repository/user.repository";
 import { updateProfileValidation } from "../../utils/zod.valid";
 import type { HonoEnv } from "../../utils/hono.types";
 import QuestLogic from "../quest/quest.logic";
 import AuthRepository from "../../repository/auth.repository";
 import QuestRepository from "../../repository/quest.repository";
+import { updateMascotValidation } from "./mascot.validation";
 
 const updateSettingsValidation = z.object({
     themeMode: z.enum(["LIGHT", "DARK", "SYSTEM"]).optional(),
     notificationsEnabled: z.boolean().optional(),
+    hapticsEnabled: z.boolean().optional(),
     privacyMode: z.enum(["STANDARD", "STRICT"]).optional(),
-});
-
-const updateMascotValidation = z.object({
-    appearance: z.string().min(1).max(50).optional(),
-    themeId: z.string().min(1).max(50).optional(),
-    equippedCosmetics: z.array(z.string().min(1).max(80)).max(20).optional(),
-    personality: z.object({
-        tone: z.enum(["supportive", "neutral", "energetic", "calm"]).optional(),
-        energy: z.enum(["low", "balanced", "high"]).optional(),
-        humor: z.enum(["none", "light", "playful"]).optional(),
-        themeId: z.string().min(1).max(50).optional(),
-        equippedCosmetics: z.array(z.string().min(1).max(80)).max(20).optional(),
-    }).partial().optional(),
+    language: z.string().min(2).max(12).optional(),
 });
 
 const changePasswordValidation = z.object({
@@ -35,6 +26,15 @@ const changePasswordValidation = z.object({
 const deleteAccountValidation = z.object({
     password: z.string().min(6),
 });
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+const AVATAR_UPLOAD_DIR = Bun.env.AVATAR_UPLOAD_DIR ?? "./uploads/avatars";
+const AVATAR_CONTENT_TYPES: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+};
 
 function parseStatsRange(range?: string): number {
     if (!range) return 7;
@@ -48,6 +48,18 @@ function parseStatsRange(range?: string): number {
         return Math.min(parsed, 365);
     }
     return 7;
+}
+
+function publicBaseUrl(ctx: { req: { header: (name: string) => string | undefined } }) {
+    const configured = Bun.env.PUBLIC_URL?.replace(/\/+$/, "");
+    if (configured) return configured;
+
+    const host =
+        ctx.req.header("x-forwarded-host") ??
+        ctx.req.header("host") ??
+        "localhost:3000";
+    const proto = ctx.req.header("x-forwarded-proto") ?? "http";
+    return `${proto}://${host}`;
 }
 
 class UserController {
@@ -90,6 +102,42 @@ class UserController {
             }
         }
     );
+
+    readonly uploadAvatar = this.factory.createHandlers(async (ctx) => {
+        const { userId } = ctx.get("user");
+
+        try {
+            const body = await ctx.req.parseBody();
+            const avatar = body.avatar;
+            if (!(avatar instanceof File)) {
+                return ctx.json({ error: "Avatar file is required" }, 400);
+            }
+
+            const extension = AVATAR_CONTENT_TYPES[avatar.type];
+            if (!extension) {
+                return ctx.json({ error: "Unsupported avatar file type" }, 400);
+            }
+            if (avatar.size > MAX_AVATAR_BYTES) {
+                return ctx.json({ error: "Avatar file is too large" }, 413);
+            }
+
+            await mkdir(AVATAR_UPLOAD_DIR, { recursive: true });
+            const filename = `${userId}-${crypto.randomUUID()}.${extension}`;
+            const filePath = `${AVATAR_UPLOAD_DIR}/${filename}`;
+            await Bun.write(filePath, avatar);
+
+            const pfp = `${publicBaseUrl(ctx)}/uploads/avatars/${filename}`;
+            const updated = await this.userRepository.updateUser(userId, { pfp });
+            if (!updated) {
+                return ctx.json({ error: "User not found" }, 404);
+            }
+
+            return ctx.json({ pfp, user: updated }, 201);
+        } catch (error) {
+            console.error("uploadAvatar error:", error);
+            return ctx.json({ error: "Failed to upload avatar" }, 500);
+        }
+    });
 
     readonly logMood = this.factory.createHandlers(
         sValidator("json", z.object({ moodType: z.string() })),

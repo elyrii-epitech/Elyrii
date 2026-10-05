@@ -1,22 +1,36 @@
-import 'dart:math' as math;
-import 'dart:ui';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../core/config/mascot_3d_config.dart';
-import '../../../../core/config/mascot_themes.dart';
+
+import '../../../../core/config/mascot_animations.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
+import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
+import '../../../../core/widgets/glass/liquid_glass_controls.dart';
+import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
-import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
+import '../../data/models/mascot_accessory.dart';
+import '../../data/models/mascot_model.dart';
 import '../providers/mascot_provider.dart';
+import '../widgets/mascot_collection_panel.dart';
+import '../widgets/mascot_color_editor.dart';
+import '../widgets/mascot_studio_preview.dart';
+import '../widgets/mascot_style_editor.dart';
+import '../widgets/unlock_celebration_dialog.dart';
+
+enum _StudioTab { style, colors, collection }
+
+enum _ExitChoice { discard, save }
 
 class MascotCustomizationPage extends StatefulWidget {
   const MascotCustomizationPage({super.key});
@@ -27,1096 +41,636 @@ class MascotCustomizationPage extends StatefulWidget {
 }
 
 class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
-  static const String _seenUnlocksKey = 'elyrii_seen_cosmetic_unlocks';
+  String get _seenUnlocksKey =>
+      'elyrii_seen_cosmetic_unlocks_${context.read<MascotProvider>().storageScope}';
+  final _history = <MascotModel>[];
+  final _editorScroll = ScrollController();
+  MascotModel _draft = MascotModel.defaultMascot();
+  MascotAccessory? _tryOn;
+  _StudioTab _tab = _StudioTab.style;
+  MascotAnimation _animation = MascotAnimations.idle;
+  int _trigger = 0;
+  double _angle = 0;
+  bool _loaded = false;
+  bool _saving = false;
+  bool _allowExit = false;
+  bool _failedSave = false;
+  MascotModel? _colorGestureStart;
+  bool _colorGestureRecorded = false;
+  int? _loadedSession;
 
-  static const List<_AccessoryDef> _accessories = [
-    _AccessoryDef(
-      id: 'custom1',
-      name: 'Chapeau de diplômé',
-      emoji: '🎓',
-      requiredChallenges: 1,
-    ),
-  ];
+  bool get _dirty =>
+      _loaded &&
+      _loadedSession == context.read<MascotProvider>().sessionRevision &&
+      _draft != context.read<MascotProvider>().mascot;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final mascotProvider = context.read<MascotProvider>();
-      final gamification = context.read<GamificationProvider>();
-      await mascotProvider.loadMascot();
-      await gamification.loadAll();
-      if (mounted) _checkForNewUnlocks(gamification.completedChallenges.length);
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_load()));
   }
 
-  /// Detecte les cosmétiques nouvellement debloques et affiche une popup.
-  Future<void> _checkForNewUnlocks(int completedCount) async {
-    final newlyUnlocked = _accessories.where((acc) {
-      final isUnlocked = completedCount >= acc.requiredChallenges;
-      return isUnlocked;
-    }).toList();
-    if (newlyUnlocked.isEmpty) return;
-
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getStringList(_seenUnlocksKey) ?? const <String>[];
-    final toCelebrate = newlyUnlocked
-        .where((acc) => !seen.contains(acc.id))
-        .toList();
-
-    if (toCelebrate.isEmpty) return;
-
-    // Marquer comme vu immediatement
-    await prefs.setStringList(
-      _seenUnlocksKey,
-      {...seen, ...toCelebrate.map((a) => a.id)}.toList(),
-    );
-
-    if (!mounted) return;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    for (final acc in toCelebrate) {
-      await _showUnlockCelebration(isDark, acc);
+  Future<void> _load() async {
+    final mascot = context.read<MascotProvider>();
+    final progress = context.read<GamificationProvider>();
+    final session = mascot.sessionRevision;
+    await Future.wait([mascot.loadMascot(), progress.loadAll()]);
+    if (!mounted || mascot.sessionRevision != session) return;
+    setState(() {
+      _draft = mascot.mascot;
+      _loaded = true;
+      _loadedSession = session;
+    });
+    if (progress.error == null) {
+      await _celebrateNewRewards(progress.completedChallenges.length);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
+  void dispose() {
+    _editorScroll.dispose();
+    super.dispose();
+  }
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: SafeArea(
-        bottom: false,
-        child: Consumer2<MascotProvider, GamificationProvider>(
-          builder: (context, provider, gamification, _) {
-            final completedCount = gamification.completedChallenges.length;
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      AppDimensions.pageHorizontalPadding,
-                      topPadding > 0 ? AppDimensions.spacingSm : 0,
-                      AppDimensions.pageHorizontalPadding,
-                      AppDimensions.spacingMd,
-                    ),
-                    child: _buildHeader(context, isDark, provider),
-                  ),
-                ),
-                SliverToBoxAdapter(child: _buildPreview(isDark, provider)),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                    child: _buildSectionTitle(isDark),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.72,
-                        ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final theme = MascotThemes.all[index];
-                      final isSelected = provider.mascot.themeId == theme.id;
-                      return _ThemeCard(
-                        theme: theme,
-                        isSelected: isSelected,
-                        isDark: isDark,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          provider.setTheme(theme.id);
-                        },
-                      );
-                    }, childCount: MascotThemes.all.length),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 8),
-                    child: _buildAccessoriesTitle(isDark),
-                  ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  sliver: SliverToBoxAdapter(
-                    child: _buildAccessoriesGrid(
-                      isDark,
-                      provider,
-                      completedCount,
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
-              ],
-            );
-          },
-        ),
+  void _edit(MascotModel next, {bool react = true}) {
+    if (next == _draft || _saving || !_loaded) return;
+    if (react) ElyriiHaptics.selection();
+    setState(() {
+      if (_colorGestureStart == null || !_colorGestureRecorded) {
+        if (_history.length == 30) _history.removeAt(0);
+        _history.add(_draft);
+        _colorGestureRecorded = _colorGestureStart != null;
+      }
+      _draft = next;
+      _failedSave = false;
+      _tryOn = null;
+      if (react) {
+        _animation = MascotAnimations.proud;
+        _trigger++;
+      }
+    });
+  }
+
+  void _beginColorEdit() {
+    _colorGestureStart = _draft;
+    _colorGestureRecorded = false;
+  }
+
+  void _endColorEdit() {
+    setState(() {
+      if (_colorGestureRecorded && _draft == _colorGestureStart) {
+        _history.removeLast();
+      }
+      _colorGestureStart = null;
+      _colorGestureRecorded = false;
+    });
+  }
+
+  void _undo() {
+    if (_history.isEmpty || _saving) return;
+    ElyriiHaptics.selection();
+    setState(() {
+      _draft = _history.removeLast();
+      _tryOn = null;
+    });
+  }
+
+  void _selectAccessory(MascotAccessory piece) {
+    final progress = context.read<GamificationProvider>();
+    final saved = context.read<MascotProvider>().mascot.equippedCosmetics;
+    if (!piece.isUnlocked(progress.completedChallenges.length) &&
+        !saved.contains(piece.id)) {
+      _showReward(piece);
+      return;
+    }
+    final equipped = _draft.equippedCosmetics.contains(piece.id);
+    final ids = _draft.equippedCosmetics
+        .where((id) => MascotAccessories.byId(id)?.category != piece.category)
+        .toList();
+    if (!equipped) ids.add(piece.id);
+    _edit(
+      _draft.copyWith(
+        equippedCosmetics: MascotAccessories.sanitizeSelection(ids),
       ),
     );
+    if (!equipped && piece.category == 'Dos') setState(() => _angle = 180);
   }
 
-  Widget _buildHeader(
-    BuildContext context,
-    bool isDark,
-    MascotProvider provider,
-  ) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+  void _startTryOn(MascotAccessory piece) {
+    ElyriiHaptics.selection();
+    setState(() {
+      _tryOn = piece;
+      _angle = piece.category == 'Dos' ? 180 : 0;
+    });
+  }
 
-    return Row(
-      children: [
-        LiquidGlassIconButton(
-          icon: Icons.arrow_back_ios_new_rounded,
-          size: 44,
-          color: textColor,
-          onPressed: () => Navigator.pop(context),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Elyrii',
-                style: AppTextStyles.headlineSmall(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                'Choisis son thème visuel',
-                style: AppTextStyles.bodySmall(color: subtitleColor),
-              ),
-            ],
+  MascotModel get _preview {
+    if (_loadedSession != context.read<MascotProvider>().sessionRevision) {
+      return context.read<MascotProvider>().mascot;
+    }
+    if (_tryOn == null) return _draft;
+    return _draft.copyWith(
+      equippedCosmetics: MascotAccessories.sanitizeSelection([
+        ..._draft.equippedCosmetics,
+        _tryOn!.id,
+      ]),
+    );
+  }
+
+  Future<bool> _save() async {
+    if (!_loaded || _saving) return false;
+    setState(() => _saving = true);
+    final provider = context.read<MascotProvider>();
+    final saved = await provider.saveCustomization(
+      _draft,
+      expectedSessionRevision: _loadedSession,
+      completedChallenges: context
+          .read<GamificationProvider>()
+          .completedChallenges
+          .length,
+    );
+    if (!mounted) return saved;
+    setState(() {
+      _saving = false;
+      _failedSave = !saved;
+      if (saved) {
+        _draft = provider.mascot;
+        _history.clear();
+        _tryOn = null;
+        _animation = MascotAnimations.celebrate;
+        _trigger++;
+      }
+    });
+    if (saved) ElyriiHaptics.success();
+    return saved;
+  }
+
+  Future<void> _exit({bool challenges = false}) async {
+    if (_saving) return;
+    if (_dirty) {
+      final choice = await showLiquidGlassDialog<_ExitChoice>(
+        context: context,
+        title: 'Garder ce look ?',
+        child: Text(
+          'Tes essais ne sont pas encore enregistrés. Tu peux revenir à l’atelier ou enregistrer ton look avant de partir.',
+          style: AppTextStyles.bodyMedium(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        LiquidGlassIconButton(
-          icon: Icons.restart_alt_rounded,
-          size: 44,
-          color: subtitleColor,
-          onPressed: provider.resetToDefault,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPreview(bool isDark, MascotProvider provider) {
-    final theme = provider.currentTheme;
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-        color: isDark
-            ? AppColors.liquidGlassBackgroundDark
-            : AppColors.liquidGlassBackgroundLight,
-        child: Column(
-          children: [
-            SizedBox(
-              height: 240,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 190,
-                    height: 190,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: theme.accentColor.withValues(
-                        alpha: isDark ? 0.10 : 0.08,
-                      ),
-                    ),
-                  ),
-                  const MascotWithAccessories(
-                    config: Mascot3DConfig(
-                      autoRotate: false,
-                      interactionEnabled: false,
-                      showLoadingIndicator: true,
-                    ),
-                    width: 210,
-                    height: 220,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(theme.emoji, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 8),
-                Text(
-                  theme.name,
-                  style: AppTextStyles.titleMedium(
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              theme.description,
-              style: AppTextStyles.bodySmall(color: subtitleColor),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(bool isDark) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Thèmes',
-          style: AppTextStyles.titleMedium(
-            color: textColor,
-            fontWeight: FontWeight.w700,
+        actions: [
+          LiquidGlassDialogAction(
+            label: 'Continuer',
+            onPressed: () => Navigator.pop(context),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Recolore Elyrii selon ton humeur ou la saison.',
-          style: AppTextStyles.bodySmall(color: subtitleColor),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccessoriesTitle(bool isDark) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Accessoires',
-          style: AppTextStyles.titleMedium(
-            color: textColor,
-            fontWeight: FontWeight.w700,
+          LiquidGlassDialogAction(
+            label: 'Quitter sans enregistrer',
+            onPressed: () => Navigator.pop(context, _ExitChoice.discard),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Débloque des récompenses en relevant tes défis.',
-          style: AppTextStyles.bodySmall(color: subtitleColor),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccessoriesGrid(
-    bool isDark,
-    MascotProvider provider,
-    int completedCount,
-  ) {
-    return Column(
-      children: _accessories.map((acc) {
-        final isEquipped = provider.mascot.equippedCosmetics.contains(acc.id);
-        final isLocked = completedCount < acc.requiredChallenges;
-        final theme = provider.currentTheme;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: _AccessoryCard(
-            name: acc.name,
-            emoji: acc.emoji,
-            isEquipped: isEquipped,
-            isLocked: isLocked,
-            requiredChallenges: acc.requiredChallenges,
-            completedChallenges: completedCount,
-            isDark: isDark,
-            accentColor: theme.accentColor,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              provider.equipCosmetic(acc.id);
-            },
-            onLockedTap: () => _showLockedDialog(isDark, acc),
+          LiquidGlassDialogAction(
+            label: 'Enregistrer',
+            isDefault: true,
+            onPressed: () => Navigator.pop(context, _ExitChoice.save),
           ),
-        );
-      }).toList(),
-    );
+        ],
+      );
+      if (choice == null) return;
+      if (choice == _ExitChoice.save && !await _save()) return;
+    }
+    if (!mounted) return;
+    setState(() => _allowExit = true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final router = GoRouter.maybeOf(context);
+    if (challenges) {
+      router?.go(AppRoutes.challenges);
+    } else if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      router?.go(AppRoutes.home);
+    }
   }
 
-  Future<void> _showUnlockCelebration(bool isDark, _AccessoryDef acc) async {
-    HapticFeedback.heavyImpact();
+  Future<void> _celebrateNewRewards(int count) async {
+    final provider = context.read<MascotProvider>();
+    final session = provider.sessionRevision;
+    final scope = provider.storageScope;
+    final seenKey = _seenUnlocksKey;
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted || session != provider.sessionRevision) return;
+    final seen =
+        prefs.getStringList(seenKey) ??
+        (scope == 'guest' &&
+                prefs.getString('elyrii_mascot_legacy_owner') == null
+            ? prefs.getStringList('elyrii_seen_cosmetic_unlocks')
+            : null) ??
+        const <String>[];
+    final seenIds = seen
+        .map((id) => MascotAccessories.byId(id)?.id ?? id)
+        .toSet();
+    final rewards = MascotAccessories.progression
+        .where(
+          (piece) => piece.isUnlocked(count) && !seenIds.contains(piece.id),
+        )
+        .toList();
+    if (rewards.isEmpty) return;
+    await prefs.setStringList(
+      seenKey,
+      {...seen, ...rewards.map((piece) => piece.id)}.toList(),
+    );
+    if (!mounted || session != provider.sessionRevision) return;
     await showDialog<void>(
       context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
-      builder: (context) => _UnlockCelebrationDialog(
-        accessory: acc,
-        isDark: isDark,
+      barrierColor: Colors.black.withValues(alpha: 0.3),
+      builder: (dialogContext) => UnlockCelebrationDialog(
+        accessory: rewards.last,
+        unlockedCount: rewards.length,
+        isDark: Theme.of(context).brightness == Brightness.dark,
         onEquip: () {
-          Navigator.pop(context);
-          HapticFeedback.selectionClick();
-          context.read<MascotProvider>().equipCosmetic(acc.id);
+          Navigator.pop(dialogContext);
+          if (session != provider.sessionRevision) return;
+          _selectAccessory(rewards.last);
         },
       ),
     );
   }
 
-  void _showLockedDialog(bool isDark, _AccessoryDef acc) {
-    final bodyColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    showLiquidGlassDialog(
+  Future<void> _showReward(MascotAccessory piece) async {
+    final progress = context.read<GamificationProvider>();
+    final count = progress.completedChallenges.length;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    await showLiquidGlassSheet<void>(
       context: context,
-      title: 'Encore un petit effort…',
+      initialChildSize: 0.68,
+      minChildSize: 0.4,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.primary.withValues(alpha: isDark ? 0.16 : 0.12),
-            ),
-            child: const Icon(
-              Icons.lock_rounded,
-              size: 28,
-              color: AppColors.primary,
+          Image.asset(
+            'assets/accessory_portraits/${piece.id}.png',
+            height: 160,
+            excludeFromSemantics: true,
+          ),
+          Text(
+            piece.name,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.titleLarge(
+              color: dark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacingXs),
           Text(
-            'Termine au moins ${acc.requiredChallenges} défi dans ton atelier '
-            'de présence pour débloquer le « ${acc.name} » et le porter '
-            'fièrement.',
+            piece.description,
             textAlign: TextAlign.center,
             style: AppTextStyles.bodyMedium(
-              color: bodyColor,
-            ).copyWith(height: 1.5),
-          ),
-        ],
-      ),
-      actions: [
-        LiquidGlassDialogAction(
-          label: 'Plus tard',
-          onPressed: () => Navigator.pop(context),
-        ),
-        LiquidGlassDialogAction(
-          label: 'Voir mes défis',
-          isDefault: true,
-          onPressed: () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, AppRoutes.challenges);
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _ThemeCard extends StatelessWidget {
-  final MascotTheme theme;
-  final bool isSelected;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _ThemeCard({
-    required this.theme,
-    required this.isSelected,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        color: isSelected
-            ? theme.accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
-            : null,
-        borderColor: isSelected
-            ? theme.accentColor.withValues(alpha: 0.45)
-            : null,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    theme.accentColor.withValues(alpha: 0.35),
-                    theme.accentColor.withValues(alpha: 0.10),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.7, 1.0],
-                ),
-                border: Border.all(
-                  color: isSelected
-                      ? theme.accentColor.withValues(alpha: 0.6)
-                      : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-              child: Center(
-                child: Text(theme.emoji, style: const TextStyle(fontSize: 24)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              theme.name,
-              style: AppTextStyles.labelMedium(
-                color: isSelected ? theme.accentColor : textColor,
-                fontWeight: FontWeight.w700,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 6),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: isSelected
-                  ? Container(
-                      key: const ValueKey('selected'),
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: theme.accentColor,
-                      ),
-                    )
-                  : const SizedBox.shrink(key: ValueKey('idle')),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Pop-up celebrative affichee lors du deblocage d'un cosmétique.
-class _UnlockCelebrationDialog extends StatefulWidget {
-  final _AccessoryDef accessory;
-  final bool isDark;
-  final VoidCallback onEquip;
-
-  const _UnlockCelebrationDialog({
-    required this.accessory,
-    required this.isDark,
-    required this.onEquip,
-  });
-
-  @override
-  State<_UnlockCelebrationDialog> createState() =>
-      _UnlockCelebrationDialogState();
-}
-
-class _UnlockCelebrationDialogState extends State<_UnlockCelebrationDialog>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _shimmerCtrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmerCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _shimmerCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = widget.isDark;
-    final acc = widget.accessory;
-    final titleColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final bodyColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    // Couleurs des particules "confettis"
-    const confettiColors = [
-      AppColors.primary,
-      AppColors.secondary,
-      AppColors.accent,
-      AppColors.xpBar,
-      AppColors.success,
-    ];
-
-    return GestureDetector(
-      onTap: () => Navigator.pop(context),
-      child: Material(
-        color: Colors.transparent,
-        child: Center(
-          child: GestureDetector(
-            onTap: () {},
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 32),
-              constraints: const BoxConstraints(maxWidth: 340),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: AppDimensions.blurSigmaLiquidGlass,
-                    sigmaY: AppDimensions.blurSigmaLiquidGlass,
-                  ),
-                  child: AnimatedBuilder(
-                    animation: _shimmerCtrl,
-                    builder: (context, _) {
-                      return Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          // Carte principale
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(28),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: isDark
-                                    ? [
-                                        AppColors.liquidGlassBackgroundDark,
-                                        AppColors.liquidGlassBackgroundDarkEnd,
-                                      ]
-                                    : [
-                                        AppColors.liquidGlassBackgroundLight,
-                                        AppColors.liquidGlassBackgroundLightEnd,
-                                      ],
-                              ),
-                              border: Border.all(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.35,
-                                ),
-                                width: 1,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(
-                                    alpha: isDark ? 0.18 : 0.12,
-                                  ),
-                                  blurRadius: 40,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Badge "Nouveau"
-                                Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.success.withValues(
-                                          alpha: isDark ? 0.18 : 0.14,
-                                        ),
-                                        borderRadius: BorderRadius.circular(
-                                          999,
-                                        ),
-                                        border: Border.all(
-                                          color: AppColors.success.withValues(
-                                            alpha: 0.4,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.workspace_premium_rounded,
-                                            size: 14,
-                                            color: AppColors.success,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            'RÉCOMPENSE DÉBLOQUÉE',
-                                            style: AppTextStyles.labelSmall(
-                                              color: isDark
-                                                  ? AppColors.successDark
-                                                  : AppColors.successDark,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                    .animate()
-                                    .fadeIn(delay: 200.ms)
-                                    .slideY(begin: -0.3),
-                                const SizedBox(height: 24),
-
-                                // Halo + emoji de l'accessoire
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    // Halo pulsant
-                                    AnimatedBuilder(
-                                      animation: _shimmerCtrl,
-                                      builder: (context, _) {
-                                        return Container(
-                                          width: 110,
-                                          height: 110,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            gradient: RadialGradient(
-                                              colors: [
-                                                AppColors.primary.withValues(
-                                                  alpha:
-                                                      0.25 +
-                                                      0.15 *
-                                                          (0.5 +
-                                                              0.5 *
-                                                                  _shimmerCtrl
-                                                                      .value),
-                                                ),
-                                                AppColors.accent.withValues(
-                                                  alpha: 0.08,
-                                                ),
-                                                Colors.transparent,
-                                              ],
-                                              stops: const [0.0, 0.6, 1.0],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    Text(
-                                          acc.emoji,
-                                          style: const TextStyle(fontSize: 56),
-                                        )
-                                        .animate()
-                                        .fadeIn(duration: 500.ms)
-                                        .scale(
-                                          begin: const Offset(0.3, 0.3),
-                                          end: const Offset(1, 1),
-                                          curve: Curves.elasticOut,
-                                          delay: 100.ms,
-                                        ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-
-                                Text(
-                                      acc.name,
-                                      style: AppTextStyles.headlineSmall(
-                                        color: titleColor,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    )
-                                    .animate()
-                                    .fadeIn(delay: 300.ms)
-                                    .slideY(begin: 0.15),
-                                const SizedBox(height: 10),
-                                Text(
-                                      'Bravo ! Tu as relevé un défi avec courage. '
-                                      'Cette récompense est maintenant tienne, '
-                                      'équipe-la fièrement !',
-                                      style: AppTextStyles.bodyMedium(
-                                        color: bodyColor,
-                                      ).copyWith(height: 1.55),
-                                      textAlign: TextAlign.center,
-                                    )
-                                    .animate()
-                                    .fadeIn(delay: 450.ms)
-                                    .slideY(begin: 0.15),
-                                const SizedBox(height: 28),
-
-                                // Bouton equiper
-                                LiquidGlassButton(
-                                      label: 'L\'équiper maintenant',
-                                      icon: Icons.check_rounded,
-                                      isExpanded: true,
-                                      onPressed: widget.onEquip,
-                                    )
-                                    .animate()
-                                    .fadeIn(delay: 600.ms)
-                                    .slideY(begin: 0.2),
-                                const SizedBox(height: 10),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text(
-                                    'Plus tard',
-                                    style: AppTextStyles.bodyMedium(
-                                      color: bodyColor,
-                                    ),
-                                  ),
-                                ).animate().fadeIn(delay: 700.ms),
-                              ],
-                            ),
-                          ),
-
-                          // Particules "confettis"
-                          ...List.generate(16, (i) {
-                            final angle =
-                                (i / 16) * math.pi * 2 +
-                                _shimmerCtrl.value * 0.8;
-                            final radius =
-                                80.0 +
-                                30.0 *
-                                    (0.5 +
-                                        0.5 *
-                                            math.sin(
-                                              _shimmerCtrl.value * 2 * math.pi +
-                                                  i,
-                                            ));
-                            final dx = radius * math.cos(angle);
-                            final dy = radius * math.sin(angle);
-                            return Positioned(
-                              left: 150 + dx,
-                              top: 80 + dy,
-                              child:
-                                  Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              confettiColors[i %
-                                                  confettiColors.length],
-                                          shape: i % 2 == 0
-                                              ? BoxShape.circle
-                                              : BoxShape.rectangle,
-                                          borderRadius: i % 2 == 0
-                                              ? null
-                                              : BorderRadius.circular(1),
-                                        ),
-                                      )
-                                      .animate(onPlay: (c) => c.repeat())
-                                      .fadeIn(delay: (i * 60).ms)
-                                      .scale(
-                                        begin: const Offset(0.5, 0.5),
-                                        end: const Offset(1, 1),
-                                      ),
-                            );
-                          }),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
+              color: dark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AccessoryDef {
-  final String id;
-  final String name;
-  final String emoji;
-
-  /// Nombre de défis à compléter pour débloquer cet accessoire.
-  final int requiredChallenges;
-
-  const _AccessoryDef({
-    required this.id,
-    required this.name,
-    required this.emoji,
-    this.requiredChallenges = 0,
-  });
-}
-
-class _AccessoryCard extends StatelessWidget {
-  final String name;
-  final String emoji;
-  final bool isEquipped;
-  final bool isLocked;
-  final int requiredChallenges;
-  final int completedChallenges;
-  final bool isDark;
-  final Color accentColor;
-  final VoidCallback onTap;
-  final VoidCallback onLockedTap;
-
-  const _AccessoryCard({
-    required this.name,
-    required this.emoji,
-    required this.isEquipped,
-    required this.isLocked,
-    required this.requiredChallenges,
-    required this.completedChallenges,
-    required this.isDark,
-    required this.accentColor,
-    required this.onTap,
-    required this.onLockedTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-    final tertiaryColor = isDark
-        ? AppColors.textTertiaryDark
-        : AppColors.textTertiaryLight;
-
-    final progress = requiredChallenges > 0
-        ? (completedChallenges / requiredChallenges).clamp(0.0, 1.0)
-        : 1.0;
-
-    return GestureDetector(
-      onTap: isLocked ? onLockedTap : onTap,
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        color: isEquipped
-            ? accentColor.withValues(alpha: isDark ? 0.16 : 0.12)
-            : null,
-        borderColor: isEquipped ? accentColor.withValues(alpha: 0.45) : null,
-        child: Row(
-          children: [
-            _buildEmojiCircle(tertiaryColor),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          name,
-                          style: AppTextStyles.titleSmall(
-                            color: isLocked
-                                ? textColor
-                                : (isEquipped ? accentColor : textColor),
-                            fontWeight: FontWeight.w700,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildStatusPill(),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  if (isLocked) ...[
-                    Text(
-                      'Termine $requiredChallenges défi pour débloquer',
-                      style: AppTextStyles.labelSmall(color: tertiaryColor),
-                    ),
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        backgroundColor: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.06),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary.withValues(
-                            alpha: isDark ? 0.9 : 0.8,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$completedChallenges / $requiredChallenges défi',
-                      style: AppTextStyles.labelSmall(
-                        color: tertiaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ] else
-                    Text(
-                      isEquipped
-                          ? 'Touche pour retirer'
-                          : 'Touche pour équiper',
-                      style: AppTextStyles.labelSmall(color: subtitleColor),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmojiCircle(Color tertiaryColor) {
-    if (isLocked) {
-      return Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.03),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.05),
-          ),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Opacity(
-              opacity: 0.25,
-              child: Text(emoji, style: const TextStyle(fontSize: 26)),
-            ),
-            Positioned(
-              right: -2,
-              bottom: -2,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isDark ? AppColors.surfaceDark : AppColors.cardLight,
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.borderDark
-                        : AppColors.borderLight,
-                    width: 0.5,
-                  ),
-                ),
-                child: Icon(Icons.lock_rounded, size: 12, color: tertiaryColor),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            accentColor.withValues(alpha: 0.30),
-            accentColor.withValues(alpha: 0.08),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.7, 1.0],
-        ),
-        border: Border.all(
-          color: isEquipped
-              ? accentColor.withValues(alpha: 0.6)
-              : Colors.transparent,
-          width: 1.5,
-        ),
-      ),
-      child: Center(child: Text(emoji, style: const TextStyle(fontSize: 26))),
-    );
-  }
-
-  Widget _buildStatusPill() {
-    if (isLocked) {
-      return _pill(
-        label: 'Verrouillé',
-        icon: Icons.lock_rounded,
-        color: isDark
-            ? AppColors.textTertiaryDark
-            : AppColors.textTertiaryLight,
-        filled: false,
-      );
-    }
-    if (isEquipped) {
-      return _pill(
-        label: 'Équipé',
-        icon: Icons.check_circle_rounded,
-        color: accentColor,
-        filled: true,
-      );
-    }
-    return _pill(
-      label: 'Débloqué',
-      icon: Icons.workspace_premium_rounded,
-      color: isDark ? AppColors.accentDark : AppColors.successDark,
-      filled: true,
-    );
-  }
-
-  Widget _pill({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required bool filled,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: filled
-            ? color.withValues(alpha: isDark ? 0.18 : 0.14)
-            : (isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.03)),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: filled ? 0.4 : 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: color),
-          const SizedBox(width: 4),
+          const SizedBox(height: AppDimensions.spacingMd),
           Text(
-            label,
-            style: AppTextStyles.labelSmall(
-              color: color,
-              fontWeight: FontWeight.w700,
+            progress.error == null
+                ? 'Encore ${piece.remainingChallenges(count)} ${piece.remainingChallenges(count) == 1 ? 'défi' : 'défis'} à terminer · ${piece.unlockLabel}'
+                : 'À débloquer après ${piece.unlockLabel}',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall(
+              color: dark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
             ),
+          ),
+          const SizedBox(height: AppDimensions.spacingLg),
+          LiquidGlassButton(
+            label: 'Essayer sur ma mascotte',
+            icon: Icons.visibility_outlined,
+            isExpanded: true,
+            onPressed: () {
+              Navigator.pop(context);
+              _startTryOn(piece);
+            },
+          ),
+          const SizedBox(height: AppDimensions.spacingXs),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _exit(challenges: true);
+            },
+            child: const Text('Voir mes défis'),
           ),
         ],
       ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final accent = dark ? AppColors.primaryDark : AppColors.primary;
+    return ChipTheme(
+      data: ChipTheme.of(context).copyWith(
+        backgroundColor: Colors.transparent,
+        selectedColor: accent.withValues(alpha: 0.10),
+        secondarySelectedColor: accent.withValues(alpha: 0.10),
+        surfaceTintColor: Colors.transparent,
+        showCheckmark: false,
+        labelStyle: AppTextStyles.labelMedium(
+          color: dark
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
+        ),
+        secondaryLabelStyle: AppTextStyles.labelMedium(
+          color: accent,
+          fontWeight: FontWeight.w600,
+        ),
+        side: WidgetStateBorderSide.resolveWith(
+          (states) => BorderSide(
+            color: states.contains(WidgetState.selected)
+                ? accent.withValues(alpha: 0.22)
+                : Colors.transparent,
+          ),
+        ),
+        shape: const StadiumBorder(),
+      ),
+      child: Consumer2<MascotProvider, GamificationProvider>(
+        builder: (context, provider, progress, _) => PopScope(
+          canPop: !_dirty || _allowExit,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) unawaited(_exit());
+          },
+          child: Scaffold(
+            backgroundColor: dark
+                ? AppColors.scaffoldDark
+                : AppColors.scaffoldLight,
+            body: ElyriiPageFrame(
+              header: ElyriiPageHeader(
+                title: 'Atelier Elyrii',
+                subtitle: 'Un compagnon, à ton image.',
+                leading: ElyriiBackButton(onPressed: () => _exit()),
+                trailing: LiquidGlassIconButton(
+                  tooltip: 'Annuler la dernière modification',
+                  onPressed: _history.isEmpty || _saving ? null : _undo,
+                  icon: Icons.undo_rounded,
+                ),
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth >= 900;
+                  final compact = constraints.maxHeight < 450;
+                  final hidePreview = !wide && constraints.maxHeight < 240;
+                  final previewHeight = wide
+                      ? (constraints.maxHeight - 115).clamp(80.0, 560.0)
+                      : compact
+                      ? (constraints.maxHeight * 0.20).clamp(40.0, 90.0)
+                      : (constraints.maxHeight * 0.30).clamp(110.0, 230.0);
+                  final preview = MascotStudioPreview(
+                    mascot: _preview,
+                    height: previewHeight,
+                    angle: _angle,
+                    onAngleChanged: (angle) => setState(() => _angle = angle),
+                    animation: _animation,
+                    animationTrigger: _trigger,
+                    tryOn: _tryOn,
+                    onEndTryOn: () => setState(() => _tryOn = null),
+                    compact: compact,
+                  );
+                  final editor = Column(
+                    children: [
+                      _tabBar(),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _editorScroll,
+                          padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
+                          child: IgnorePointer(
+                            ignoring: !_loaded || _saving,
+                            child: _editor(provider, progress, dark),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimensions.pageHorizontalPadding,
+                      0,
+                      AppDimensions.pageHorizontalPadding,
+                      0,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1160),
+                        child: wide
+                            ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: preview),
+                                  const SizedBox(width: 28),
+                                  Expanded(child: editor),
+                                ],
+                              )
+                            : Column(
+                                children: [
+                                  Offstage(
+                                    offstage: hidePreview,
+                                    child: preview,
+                                  ),
+                                  SizedBox(
+                                    height: hidePreview
+                                        ? 0
+                                        : compact
+                                        ? 8
+                                        : 16,
+                                  ),
+                                  Expanded(child: editor),
+                                ],
+                              ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            bottomNavigationBar: _saveBar(provider, dark),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tabBar() => LiquidGlassSegmentedControl<_StudioTab>(
+    segments: const {
+      _StudioTab.style: 'Style',
+      _StudioTab.colors: 'Couleurs',
+      _StudioTab.collection: 'Collection',
+    },
+    selectedValue: _tab,
+    height: AppDimensions.buttonHeight,
+    onValueChanged: (tab) {
+      ElyriiHaptics.selection();
+      setState(() => _tab = tab);
+      if (_editorScroll.hasClients) _editorScroll.jumpTo(0);
+    },
+  );
+
+  Widget _editor(
+    MascotProvider provider,
+    GamificationProvider progress,
+    bool dark,
+  ) {
+    final progressCard = _loaded && progress.error == null
+        ? MascotProgressCard(
+            completedCount: progress.completedChallenges.length,
+            savedSelection: provider.mascot.equippedCosmetics,
+            onChallenges: () => _exit(challenges: true),
+            onTryNext: _startTryOn,
+          )
+        : LiquidGlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  !_loaded
+                      ? 'Ta collection se prépare…'
+                      : 'Progression indisponible',
+                  style: AppTextStyles.titleSmall(
+                    color: dark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                  ),
+                ),
+                if (_loaded) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Tes couleurs et ton look restent disponibles. Recharge tes défis pour retrouver tes paliers.',
+                    style: AppTextStyles.bodyMedium(
+                      color: dark
+                          ? AppColors.textSecondaryDark
+                          : AppColors.textSecondaryLight,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await progress.loadAll();
+                      if (mounted && progress.error == null) {
+                        await _celebrateNewRewards(
+                          progress.completedChallenges.length,
+                        );
+                      }
+                    },
+                    child: const Text('Recharger les défis'),
+                  ),
+                ],
+              ],
+            ),
+          );
+    return switch (_tab) {
+      _StudioTab.style => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          MascotStyleEditor(mascot: _draft, onChanged: _edit),
+          const SizedBox(height: 28),
+          progressCard,
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: () => _edit(MascotModel.defaultMascot()),
+            icon: const Icon(Icons.restart_alt_rounded, size: 18),
+            label: const Text('Revenir au look d’origine'),
+          ),
+        ],
+      ),
+      _StudioTab.colors => MascotColorEditor(
+        mascot: _draft,
+        onChanged: (next) => _edit(next, react: false),
+        onEditStart: _beginColorEdit,
+        onEditEnd: _endColorEdit,
+      ),
+      _StudioTab.collection => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          progressCard,
+          const SizedBox(height: 28),
+          MascotCollectionPanel(
+            selection: _draft.equippedCosmetics,
+            savedSelection: provider.mascot.equippedCosmetics,
+            completedCount: progress.completedChallenges.length,
+            onSelect: _selectAccessory,
+            tryOnId: _tryOn?.id,
+          ),
+        ],
+      ),
+    };
+  }
+
+  Widget _saveBar(MascotProvider provider, bool dark) => SafeArea(
+    top: false,
+    child: Container(
+      decoration: BoxDecoration(
+        color: dark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+        border: Border(
+          top: BorderSide(
+            color: dark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1160),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _failedSave && provider.error != null
+                      ? provider.error!
+                      : !_loaded
+                      ? 'Chargement de ton look…'
+                      : _saving
+                      ? 'Enregistrement…'
+                      : _dirty
+                      ? 'Tes essais restent privés jusqu’à l’enregistrement'
+                      : provider.isSyncing
+                      ? 'Look enregistré · synchronisation…'
+                      : provider.error != null
+                      ? 'Look disponible sur cet appareil'
+                      : 'Ton look est enregistré',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.labelSmall(
+                    color: dark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+              ),
+              if (provider.error != null && _loaded && !_dirty)
+                TextButton(
+                  onPressed: provider.retrySync,
+                  child: const Text('Réessayer la synchronisation'),
+                ),
+              const SizedBox(height: 8),
+              LiquidGlassButton(
+                key: const ValueKey('save_mascot_look'),
+                label: _saving
+                    ? 'Enregistrement…'
+                    : _dirty
+                    ? 'Enregistrer mon look'
+                    : 'Look enregistré',
+                icon: _dirty
+                    ? Icons.check_rounded
+                    : Icons.check_circle_outline_rounded,
+                isExpanded: true,
+                isLoading: _saving,
+                onPressed: _loaded && _dirty && !_saving ? _save : null,
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }

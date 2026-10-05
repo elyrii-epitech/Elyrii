@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 
 import '../theme/app_colors.dart';
@@ -67,10 +68,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 ElevatedButton(
                   onPressed: () {
                     if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        AppRoutes.login,
-                        (route) => false,
-                      );
+                      context.go(AppRoutes.login);
                     }
                   },
                   style: ElevatedButton.styleFrom(

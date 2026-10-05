@@ -1,16 +1,52 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
-import '../providers/coach_provider.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../data/models/coach_model.dart';
+import '../providers/coach_provider.dart';
+import '../coach_activity_launcher.dart';
+import '../widgets/coach_activity_card.dart';
+import '../widgets/coach_activity_cell.dart';
+import '../widgets/coach_mascot.dart';
+import '../widgets/latest_session_card.dart';
+import '../widgets/need_selector.dart';
 
-class CoachPage extends StatelessWidget {
+/// Page Coach : Elyrii accueille, demande ce dont l'utilisateur a besoin
+/// et route chaque activité vers une expérience réelle — séance de
+/// respiration immersive, journal guidé ou guidance IA.
+///
+/// Composition (philosophie Apple : contenu d'abord, chrome discret) :
+/// 1. En-tête spatial + mascotte 3D en posture d'écoute et bulle de parole.
+/// 2. Sélection du besoin immédiat qui pilote les recommandations.
+/// 3. Conseils groupés iOS, conseil du jour, dernier échange IA.
+/// 4. Catalogue exploratoire complet.
+class CoachPage extends StatefulWidget {
   const CoachPage({super.key});
+
+  @override
+  State<CoachPage> createState() => _CoachPageState();
+}
+
+class _CoachPageState extends State<CoachPage> {
+  bool _initialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<CoachProvider>().loadCoachData();
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,83 +54,99 @@ class CoachPage extends StatelessWidget {
 
     return Consumer<CoachProvider>(
       builder: (context, provider, _) {
-        if (!provider.hasLoadedRemote && !provider.isLoading) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              context.read<CoachProvider>().loadCoachData();
-            }
-          });
-        }
-
         return Scaffold(
           backgroundColor: isDark
               ? AppColors.scaffoldDark
               : AppColors.scaffoldLight,
-          body: RefreshIndicator(
-            onRefresh: provider.loadCoachData,
-            color: AppColors.primary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              child: Padding(
+          // Tire-pour-rafraîchir natif iOS, plus aucun indicateur
+          // de rafraîchissement Material.
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              CupertinoSliverRefreshControl(onRefresh: provider.loadCoachData),
+              SliverPadding(
                 padding: EdgeInsets.fromLTRB(
                   AppDimensions.pageHorizontalPadding,
                   MediaQuery.of(context).padding.top + 16,
                   AppDimensions.pageHorizontalPadding,
-                  120,
+                  130,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(isDark),
-                    const SizedBox(height: 28),
-                    if (provider.todayAdvice != null)
-                      _buildAdviceCard(provider.todayAdvice!, isDark)
-                          .animate()
-                          .fadeIn(duration: 400.ms)
-                          .slideY(begin: 0.1, end: 0),
-                    if (provider.isCreatingSession) ...[
-                      const SizedBox(height: 16),
-                      const LinearProgressIndicator(minHeight: 3),
-                    ],
-                    if (provider.error != null) ...[
-                      const SizedBox(height: 16),
-                      _buildErrorBanner(provider.error!, isDark),
-                    ],
-                    if (provider.latestSession != null) ...[
-                      const SizedBox(height: 16),
-                      _buildLatestSessionCard(provider.latestSession!, isDark),
-                    ],
-                    const SizedBox(height: 28),
-                    _buildSectionTitle(
-                      'Recommandé pour toi',
-                      'Basé sur ta progression et ton humeur',
-                      isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    ...provider.recommendedActivities.map(
-                      (activity) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _ActivityCard(
-                          activity: activity,
-                          isDark: isDark,
-                          onTap: () => _requestGuidance(context, activity),
-                        ),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(isDark),
+                      // ---- Zone héroïque : Elyrii en posture d'écoute ----
+                      // La mascotte porte seule la scène ; le besoin arrive
+                      // juste dessous comme une réponse naturelle.
+                      const SizedBox(height: 10),
+                      Center(
+                        child:
+                            CoachMascot(
+                                  size: 210,
+                                  onTap: provider.nextMascotMessage,
+                                )
+                                .animate()
+                                .fadeIn(duration: 450.ms, delay: 60.ms)
+                                .slideY(
+                                  begin: 0.05,
+                                  end: 0,
+                                  duration: 450.ms,
+                                  curve: Curves.easeOutCubic,
+                                ),
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    _buildSectionTitle(
-                      'Toutes les activités',
-                      'Explore à ton rythme',
-                      isDark,
-                    ),
-                    const SizedBox(height: 12),
-                    _buildCategoryGrid(context, provider.allActivities, isDark),
-                  ],
+
+                      // ---- Routage par besoin immédiat ----
+                      const SizedBox(height: 30),
+                      _buildSectionTitle(
+                        'De quoi as-tu besoin ?',
+                        'Dis-le-moi, je m\'occupe du reste.',
+                        isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      NeedSelector(
+                        needs: CoachNeed.values,
+                        selected: provider.selectedNeed,
+                        onSelect: provider.selectNeed,
+                      ),
+                      const SizedBox(height: 24),
+                      _buildHighlightedActivities(provider, isDark),
+
+                      // ---- Conseil du jour ----
+                      if (provider.todayAdvice != null) ...[
+                        const SizedBox(height: 30),
+                        _buildAdviceCard(provider.todayAdvice!, isDark),
+                      ],
+
+                      // ---- Dernier échange avec le coach IA ----
+                      if (provider.latestSession != null) ...[
+                        const SizedBox(height: 16),
+                        LatestSessionCard(
+                          session: provider.latestSession!,
+                          isDark: isDark,
+                        ),
+                      ],
+
+                      // ---- Catalogue exploratoire ----
+                      const SizedBox(height: 30),
+                      _buildSectionTitle(
+                        'Toutes les activités',
+                        'Explore à ton rythme',
+                        isDark,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildCategoryGrid(
+                        context,
+                        provider.allActivities,
+                        isDark,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
         );
       },
@@ -106,11 +158,22 @@ class CoachPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Mon Coach',
+          'MON COACH',
           style: TextStyle(
-            fontSize: 28,
+            fontSize: 12,
             fontWeight: FontWeight.w700,
-            letterSpacing: -0.5,
+            letterSpacing: 1.2,
+            color: isDark ? AppColors.primaryDark : AppColors.primary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Elyrii t\'accompagne',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.8,
+            height: 1.1,
             color: isDark
                 ? AppColors.textPrimaryDark
                 : AppColors.textPrimaryLight,
@@ -127,7 +190,98 @@ class CoachPage extends StatelessWidget {
           ),
         ),
       ],
-    ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.1);
+    );
+  }
+
+  Widget _buildSectionTitle(String title, String subtitle, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: isDark
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimaryLight,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: TextStyle(
+            fontSize: 13,
+            color: isDark
+                ? AppColors.textTertiaryDark
+                : AppColors.textTertiaryLight,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Conteneur groupé iOS (rayon 16) des activités mises en avant : cellules
+  /// adjacentes séparées par des séparateurs insetés alignés sur le texte —
+  /// façon Réglages iOS. Le titre suit le besoin sélectionné.
+  Widget _buildHighlightedActivities(CoachProvider provider, bool isDark) {
+    final activities = provider.highlightedActivities;
+    if (activities.isEmpty) return const SizedBox.shrink();
+
+    final separatorColor = isDark
+        ? AppColors.dividerDark
+        : AppColors.dividerLight;
+    final selectedNeed = provider.selectedNeed;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(
+          selectedNeed?.sectionTitle ?? 'Recommandé pour toi',
+          selectedNeed != null
+              ? 'Choisi pour ce moment précis'
+              : 'Trois façons simples de commencer',
+          isDark,
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : AppColors.cardLight,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (var i = 0; i < activities.length; i++) ...[
+                CoachActivityCell(
+                      activity: activities[i],
+                      isDark: isDark,
+                      onTap: () => launchCoachActivity(context, activities[i]),
+                    )
+                    .animate(
+                      key: ValueKey(
+                        '${selectedNeed?.name}-${activities[i].id}',
+                      ),
+                    )
+                    .fadeIn(duration: 220.ms, delay: (i * 45).ms)
+                    .slideY(
+                      begin: 0.06,
+                      end: 0,
+                      duration: 220.ms,
+                      delay: (i * 45).ms,
+                    ),
+                if (i < activities.length - 1)
+                  // Séparateur inseté après l'icône (padding 14 + icône 40 + écart 12).
+                  Padding(
+                    padding: const EdgeInsets.only(left: 66),
+                    child: Container(height: 0.5, color: separatorColor),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildAdviceCard(DailyAdvice advice, bool isDark) {
@@ -188,367 +342,36 @@ class CoachPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title, String subtitle, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: TextStyle(
-            fontSize: 13,
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildCategoryGrid(
     BuildContext context,
     List<CoachActivity> activities,
     bool isDark,
   ) {
-    return GridView.builder(
-      padding: EdgeInsets.zero,
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: activities.length,
-      itemBuilder: (context, index) {
-        final activity = activities[index];
-        return _ActivityGridCard(
-          activity: activity,
-          isDark: isDark,
-          onTap: () => _requestGuidance(context, activity),
-        ).animate().fadeIn(delay: (50 * index).ms).slideY(begin: 0.05, end: 0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns =
+            constraints.maxWidth >= 340 &&
+                MediaQuery.textScalerOf(context).scale(1) <= 1.2
+            ? 2
+            : 1;
+        final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: activities
+              .map(
+                (activity) => SizedBox(
+                  width: width,
+                  child: CoachActivityCard(
+                    activity: activity,
+                    isDark: isDark,
+                    onTap: () => launchCoachActivity(context, activity),
+                  ),
+                ),
+              )
+              .toList(),
+        );
       },
-    );
-  }
-
-  Widget _buildLatestSessionCard(CoachSession session, bool isDark) {
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.auto_awesome_rounded, color: AppColors.accent),
-              const SizedBox(width: 8),
-              Text(
-                'Guidance personnalisée',
-                style: AppTextStyles.titleSmall(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            session.response,
-            style: AppTextStyles.bodySmall(
-              color: subtitleColor,
-            ).copyWith(height: 1.45),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorBanner(String message, bool isDark) {
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        children: [
-          const Icon(Icons.cloud_off_rounded, color: AppColors.error),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _requestGuidance(
-    BuildContext context,
-    CoachActivity activity,
-  ) async {
-    HapticFeedback.lightImpact();
-    final success = await context
-        .read<CoachProvider>()
-        .requestGuidanceForActivity(activity);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Conseil personnalisé enregistré.'
-              : 'Impossible de générer un conseil pour le moment.',
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivityCard extends StatefulWidget {
-  final CoachActivity activity;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _ActivityCard({
-    required this.activity,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  State<_ActivityCard> createState() => _ActivityCardState();
-}
-
-class _ActivityCardState extends State<_ActivityCard> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = widget.activity.category.color;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: LiquidGlassCard(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Icon(widget.activity.icon, size: 22, color: color),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.activity.title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: widget.isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.activity.description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: widget.isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${widget.activity.durationMinutes} min',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActivityGridCard extends StatefulWidget {
-  final CoachActivity activity;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _ActivityGridCard({
-    required this.activity,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  State<_ActivityGridCard> createState() => _ActivityGridCardState();
-}
-
-class _ActivityGridCardState extends State<_ActivityGridCard> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = widget.activity.category.color;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: LiquidGlassCard(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Icon(widget.activity.icon, size: 18, color: color),
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${widget.activity.durationMinutes} min',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                widget.activity.title,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: widget.isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: Text(
-                  widget.activity.description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: widget.isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Icon(widget.activity.category.icon, size: 12, color: color),
-                  const SizedBox(width: 4),
-                  Text(
-                    widget.activity.category.label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -1,14 +1,4 @@
-/// User profile model matching the backend user service response
-///
-/// ┌─────────────────────────────────────────────────────────────────────┐
-/// │ BACKEND TEAM: Les champs [bio], [gender], [pronouns], [wellnessGoal]│
-/// │ et [timezone] sont nouveaux. Ils doivent etre ajoutes a:            │
-/// │   1. La table `users` (migration Drizzle)                           │
-/// │   2. Le schema zod `updateProfileValidation` (utils/zod.valid.ts)   │
-/// │   3. Le select/return du `UserRepository.getUserById` et            │
-/// │      `updateUser`                                                   │
-/// │ Tous sont optionnels (nullable).                                    │
-/// └─────────────────────────────────────────────────────────────────────┘
+/// User profile model matching the backend user service response.
 class UserProfile {
   final String id;
   final String email;

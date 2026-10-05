@@ -4,7 +4,8 @@ import { sValidator } from "@hono/standard-validator";
 import { z } from "zod";
 import type { HonoEnv } from "../../utils/hono.types";
 import MeditationRepository from "../../repository/meditation.repository";
-import { getMeditationProgramById, MEDITATION_PROGRAMS } from "./meditation.catalog";
+import { MEDITATION_PROGRAMS } from "./meditation.catalog";
+import { startMeditationSchema } from "./meditation.validation";
 import UserRepository from "../../repository/user.repository";
 
 class MeditationController {
@@ -50,23 +51,10 @@ class MeditationController {
                 400: { description: "Invalid payload" },
             },
         }),
-        sValidator("json", z.object({
-            type: z.string().min(1),
-            durationMinutes: z.number().int().positive().max(180),
-            moodBefore: z.string().optional(),
-        })),
+        sValidator("json", startMeditationSchema),
         async (ctx) => {
             const userId = ctx.get("user").userId;
             const body = ctx.req.valid("json");
-            const program = getMeditationProgramById(body.type);
-
-            if (!program) {
-                return ctx.json({ error: "Unknown meditation program type" }, 400);
-            }
-            if (body.durationMinutes !== program.durationMinutes) {
-                return ctx.json({ error: "Duration does not match selected meditation program" }, 400);
-            }
-
             const session = await this.meditationRepository.startSession({
                 userId,
                 type: body.type,

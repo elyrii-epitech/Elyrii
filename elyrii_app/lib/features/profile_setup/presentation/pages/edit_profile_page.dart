@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../../core/constants/profile_option_labels.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/constants/avatar_options.dart';
 import '../../../../routes/app_routes.dart';
@@ -87,10 +90,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _openAvatarPicker() async {
-    final result = await Navigator.pushNamed(
-      context,
+    final result = await context.push(
       AppRoutes.avatarPicker,
-      arguments: _selectedPfp,
+      extra: _selectedPfp,
     );
     // Ignorer si l'utilisateur a annule (back)
     if (result != kAvatarPickerCancelled) {
@@ -101,12 +103,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Future<void> _saveProfile() async {
     setState(() => _isSaving = true);
     final userProvider = context.read<UserProvider>();
+    final previousPfp = userProvider.profile?.pfp;
+    final clearPfp = _selectedPfp == null && previousPfp != null;
 
-    // ┌──────────────────────────────────────────────────────────────────┐
-    // │ BACKEND TEAM: Voir annotations dans data/settings_repository.dart│
-    // │ pour le champ pfp (null = mascotte, path local = upload requis).  │
-    // │ Les champs bio/gender/pronouns/wellnessGoal sont nouveaux.       │
-    // └──────────────────────────────────────────────────────────────────┘
     final success = await userProvider.updateProfile(
       firstName: _firstNameController.text.trim().isNotEmpty
           ? _firstNameController.text.trim()
@@ -116,13 +115,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           : null,
       age: int.tryParse(_ageController.text.trim()),
       pfp: _selectedPfp,
-      bio: _bioController.text.trim().isNotEmpty
-          ? _bioController.text.trim()
-          : null,
+      clearPfp: clearPfp,
+      bio: _bioController.text.trim(),
       gender: _selectedGender,
-      pronouns: _pronounsController.text.trim().isNotEmpty
-          ? _pronounsController.text.trim()
-          : null,
+      pronouns: _pronounsController.text.trim(),
       wellnessGoal: _selectedWellnessGoal,
     );
     if (!mounted) return;
@@ -157,77 +153,48 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
+      body: ElyriiPageFrame(
+        header: const ElyriiPageHeader(
+          title: 'Mon profil',
+          subtitle: 'Ce qu’Elyrii sait de toi.',
+          leading: ElyriiBackButton(),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
 
-              // Avatar cliquable
-              SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
+            // Avatar cliquable
+            SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
 
-              // Identite
-              SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
+            // Identite
+            SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
 
-              // Bien-etre
-              SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
+            // Bien-etre
+            SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
 
-              // Save
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-                  child: LiquidGlassButton(
-                    label: 'Enregistrer',
-                    icon: Icons.check_rounded,
-                    isLoading: _isSaving,
-                    isExpanded: true,
-                    onPressed: _isSaving ? null : _saveProfile,
-                  ),
+            // Save
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+                child: LiquidGlassButton(
+                  label: 'Enregistrer',
+                  icon: Icons.check_rounded,
+                  isLoading: _isSaving,
+                  isExpanded: true,
+                  onPressed: _isSaving ? null : _saveProfile,
                 ),
               ),
-            ],
-          ),
-
-          // Top bar
-          Positioned(
-            top: topPadding + 12,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                _BackButton(
-                  isDark: isDark,
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                  },
-                ),
-                Expanded(
-                  child: Text(
-                    'Mon profil',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 44),
-              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-
   // ==================== Sections ====================
 
   Widget _buildAvatarSection(bool isDark) {
@@ -275,7 +242,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
             const SizedBox(height: AppDimensions.spacingSm),
             Text(
-              'Toucher pour changer',
+              'Touche pour changer',
               style: AppTextStyles.bodySmall(
                 color: isDark
                     ? AppColors.textSecondaryDark
@@ -290,16 +257,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildSectionHeader(String title, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
       child: Text(
-        title.toUpperCase(),
+        title,
         style: TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.2,
           color: isDark
-              ? Colors.white.withValues(alpha: 0.5)
-              : Colors.black.withValues(alpha: 0.4),
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondaryLight,
         ),
       ),
     );
@@ -317,7 +284,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildLabel('Prenom *', isDark),
+                _buildLabel('Prénom *', isDark),
                 const SizedBox(height: AppDimensions.spacingXs),
                 GlassAuthTextField(
                   controller: _firstNameController,
@@ -391,11 +358,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   onChanged: (v) => setState(() => _selectedGender = v),
                 ),
                 const SizedBox(height: AppDimensions.spacingMd),
-                _buildLabel('Ton objectif bien-etre', isDark),
+                _buildLabel('Ton objectif bien-être', isDark),
                 const SizedBox(height: AppDimensions.spacingXs),
                 _DropdownField(
                   value: _selectedWellnessGoal,
-                  hint: 'Qu\'est-ce qui t\'amene ici ?',
+                  hint: 'Qu\'est-ce qui t\'amène ici ?',
                   icon: Icons.spa_rounded,
                   items: _wellnessGoals,
                   isDark: isDark,
@@ -432,14 +399,14 @@ class _BioTextField extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.black.withValues(alpha: 0.035),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1.5,
+          width: 1,
         ),
       ),
       child: TextField(
@@ -451,6 +418,10 @@ class _BioTextField extends StatelessWidget {
           color: isDark ? Colors.white : Colors.black,
         ),
         decoration: InputDecoration(
+          // Fond du conteneur = surface ; neutralise le blanc opaque
+          // du thème global qui dessine des rectangles hors carte.
+          filled: true,
+          fillColor: Colors.transparent,
           hintText: 'Raconte ce qui te rend unique...',
           hintStyle: AppTextStyles.bodyMedium(
             color: isDark
@@ -458,7 +429,10 @@ class _BioTextField extends StatelessWidget {
                 : Colors.black.withValues(alpha: 0.4),
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(AppDimensions.paddingLg),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingMd,
+            vertical: 14,
+          ),
           counterStyle: AppTextStyles.bodySmall(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.3)
@@ -492,17 +466,17 @@ class _DropdownField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingLg),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.03)
-            : Colors.black.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ? Colors.white.withValues(alpha: 0.06)
+            : Colors.black.withValues(alpha: 0.035),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1.5,
+          width: 1,
         ),
       ),
       child: Row(
@@ -526,7 +500,7 @@ class _DropdownField extends StatelessWidget {
                   return DropdownMenuItem(
                     value: item,
                     child: Text(
-                      item,
+                      profileOptionLabel(item),
                       style: AppTextStyles.bodyMedium(
                         color: isDark ? Colors.white : Colors.black,
                       ),
@@ -538,54 +512,6 @@ class _DropdownField extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ==================== Back Button ====================
-
-class _BackButton extends StatefulWidget {
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _BackButton({required this.isDark, required this.onTap});
-
-  @override
-  State<_BackButton> createState() => _BackButtonState();
-}
-
-class _BackButtonState extends State<_BackButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.9 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: widget.isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: widget.isDark ? Colors.white : Colors.black,
-          ),
-        ),
       ),
     );
   }

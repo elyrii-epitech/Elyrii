@@ -1,6 +1,8 @@
 import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/mascot_model.dart';
+import '../models/mascot_accessory.dart';
+import '../models/mascot_appearance.dart';
 
 class MascotRepository {
   final ApiClient _client;
@@ -21,7 +23,10 @@ class MascotRepository {
                 'appearance': mascot.themeId,
                 'themeId': mascot.themeId,
                 'equippedCosmetics': mascot.equippedCosmetics,
-                'personality': {'equippedCosmetics': mascot.equippedCosmetics},
+                'personality': {
+                  'equippedCosmetics': mascot.equippedCosmetics,
+                  'customization': mascot.appearance.toJson(),
+                },
               },
             )
             as Map<String, dynamic>;
@@ -43,7 +48,14 @@ class MascotRepository {
 
     return MascotModel.defaultMascot().copyWith(
       themeId: rawTheme == 'default' ? 'nature' : rawTheme,
-      equippedCosmetics: cosmetics.map((item) => item.toString()).toList(),
+      equippedCosmetics: MascotAccessories.sanitizeSelection(
+        cosmetics.whereType<String>(),
+      ),
+      appearance: MascotAppearance.fromJson(
+        Map<String, dynamic>.from(
+          personality['customization'] as Map? ?? const {},
+        ),
+      ),
     );
   }
 }

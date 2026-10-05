@@ -1,0 +1,98 @@
+{
+  "idle": {
+    "label": "Présence",
+    "duration": 12.0,
+    "mode": "loop",
+    "description": "Deux souffles discrets, regard vivant et clignements espacés."
+  },
+  "greet": {
+    "label": "Bonjour !",
+    "duration": 3.2,
+    "mode": "once",
+    "description": "Anticipation, patte relevée, deux salutations du poignet."
+  },
+  "attentive": {
+    "label": "Je t’écoute",
+    "duration": 6.4,
+    "mode": "loop",
+    "description": "Inclinaison, légère avancée et petit acquiescement."
+  },
+  "thinking": {
+    "label": "Je réfléchis",
+    "duration": 4.4,
+    "mode": "loop",
+    "description": "Regard en biais, oreille en retard, retour vers toi."
+  },
+  "celebrate": {
+    "label": "Bravo !",
+    "duration": 3.4,
+    "mode": "once",
+    "description": "Les deux pattes s’ouvrent avec un petit rebond du buste."
+  },
+  "breathe": {
+    "label": "Respirons",
+    "duration": 2.0,
+    "mode": "loop",
+    "description": "Pose pilotée par la progression réelle de la respiration."
+  },
+  "curious": {
+    "label": "Tiens, tiens…",
+    "duration": 7.2,
+    "mode": "once",
+    "description": "Regard à gauche puis à droite, tête penchée et oreille curieuse."
+  },
+  "cozy": {
+    "label": "Bien installé",
+    "duration": 8.0,
+    "mode": "once",
+    "description": "Long clignement paisible et relâchement des épaules."
+  },
+  "acknowledge": {
+    "label": "Je suis là",
+    "duration": 2.6,
+    "mode": "once",
+    "description": "Un signe de tête posé après une réponse ou une humeur partagée."
+  },
+  "reassure": {
+    "label": "À ton rythme",
+    "duration": 4.8,
+    "mode": "once",
+    "description": "La tête s’approche, une patte s’ouvre doucement pour accueillir."
+  },
+  "delight": {
+    "label": "Petit bonheur",
+    "duration": 3.6,
+    "mode": "once",
+    "description": "Deux accents de joie contenus, pattes ouvertes et yeux plissés."
+  },
+  "nuzzle": {
+    "label": "Un peu de douceur",
+    "duration": 4.0,
+    "mode": "once",
+    "description": "Se penche vers toi, ferme les yeux et se redresse doucement."
+  },
+  "proud": {
+    "label": "Ça me va ?",
+    "duration": 3.8,
+    "mode": "once",
+    "description": "Buste redressé, petit regard de chaque côté et salut du poignet."
+  },
+  "stretch": {
+    "label": "Petite pause",
+    "duration": 5.6,
+    "mode": "once",
+    "description": "Étirement asymétrique des pattes, yeux mi-clos, relâchement."
+  },
+  "settle": {
+    "label": "Tout doucement",
+    "duration": 5.2,
+    "mode": "once",
+    "description": "Une longue expiration et un léger signe de tête après la séance."
+  },
+  "invite": {
+    "label": "On y va ?",
+    "duration": 3.4,
+    "mode": "once",
+    "description": "Une patte invite à avancer, suivie d’un acquiescement."
+  }
+}

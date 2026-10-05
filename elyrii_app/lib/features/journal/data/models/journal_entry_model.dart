@@ -36,6 +36,16 @@ class JournalEntryModel {
     'mood': mood,
   };
 
+  Map<String, dynamic> toCacheJson() => {
+    'id': id,
+    'userId': userId,
+    'title': title,
+    'content': content,
+    'mood': mood,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
+
   static DateTime _parseDate(dynamic value) {
     if (value == null) return DateTime.now();
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();

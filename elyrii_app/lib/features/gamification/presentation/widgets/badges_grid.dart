@@ -27,13 +27,16 @@ class BadgesGrid extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GridView.builder(
+      // Écrase le padding safe-area hérité (59 pt sous Dynamic Island) :
+      // sans cela, le viewport imbriqué l'ajoute au-dessus de la 1ʳᵉ rangée.
+      padding: EdgeInsets.zero,
       physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.9,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.02,
       ),
       itemCount: badges.length,
       itemBuilder: (context, index) {
@@ -44,7 +47,7 @@ class BadgesGrid extends StatelessWidget {
           child: Opacity(
             opacity: badge.isUnlocked ? 1.0 : 0.35,
             child: LiquidGlassCard(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               color: badge.isUnlocked
                   ? AppColors.primary.withValues(alpha: isDark ? 0.1 : 0.05)
                   : null,
@@ -52,8 +55,8 @@ class BadgesGrid extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: badge.isUnlocked
@@ -71,10 +74,10 @@ class BadgesGrid extends StatelessWidget {
                           : (isDark
                                 ? AppColors.textTertiaryDark
                                 : AppColors.textTertiaryLight),
-                      size: 22,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 5),
                   Text(
                     badge.title,
                     textAlign: TextAlign.center,

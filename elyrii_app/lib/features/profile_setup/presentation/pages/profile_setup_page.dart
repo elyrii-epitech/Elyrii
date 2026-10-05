@@ -1,21 +1,30 @@
-import 'dart:ui';
-
+import 'package:flutter/cupertino.dart'
+    show
+        CupertinoActivityIndicator,
+        CupertinoAlertDialog,
+        CupertinoDialogAction,
+        showCupertinoDialog;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../../core/constants/profile_option_labels.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/glass/elyrii_glass_surface.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/constants/avatar_options.dart';
-import '../../../../core/services/glass_performance_service.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../auth/presentation/widgets/glass_auth_text_field.dart';
 import '../../../settings/providers/settings_provider.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../widgets/mascot_avatar_preview.dart';
 
 /// Page d'onboarding proposee juste apres la creation de compte.
 ///
@@ -30,6 +39,8 @@ class ProfileSetupPage extends StatefulWidget {
 }
 
 class _ProfileSetupPageState extends State<ProfileSetupPage> {
+  /// Navigation paginée fluide entre les trois étapes (swipe + boutons).
+  final PageController _pageController = PageController();
   int _currentStep = 0;
   bool _isSaving = false;
 
@@ -65,6 +76,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   @override
   void dispose() {
+    _pageController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _ageController.dispose();
@@ -73,10 +85,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   }
 
   Future<void> _openAvatarPicker() async {
-    final result = await Navigator.pushNamed(
-      context,
+    final result = await context.push(
       AppRoutes.avatarPicker,
-      arguments: _selectedPfp,
+      extra: _selectedPfp,
     );
     // Ignorer si l'utilisateur a annule (back)
     if (result != kAvatarPickerCancelled) {
@@ -89,14 +100,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
     final userProvider = context.read<UserProvider>();
     final storage = context.read<SecureStorageService>();
+    final previousPfp = userProvider.profile?.pfp;
+    final clearPfp = _selectedPfp == null && previousPfp != null;
 
-    // ┌──────────────────────────────────────────────────────────────────┐
-    // │ BACKEND TEAM: Sauvegarde du profil via PUT /user/me              │
-    // │ Voir annotations detaillees dans data/settings_repository.dart.  │
-    // │ [pfp] = null => mascotte | path local => upload requis.          │
-    // │ Nouveaux champs: bio, wellnessGoal (support backend necessaire). │
-    // └──────────────────────────────────────────────────────────────────┘
-    await userProvider.updateProfile(
+    final success = await userProvider.updateProfile(
       firstName: _firstNameController.text.trim().isNotEmpty
           ? _firstNameController.text.trim()
           : null,
@@ -105,42 +112,67 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           : null,
       age: int.tryParse(_ageController.text.trim()),
       pfp: _selectedPfp,
-      bio: _bioController.text.trim().isNotEmpty
-          ? _bioController.text.trim()
-          : null,
+      clearPfp: clearPfp,
+      bio: _bioController.text.trim(),
       wellnessGoal: _selectedWellnessGoal,
     );
-
-    await storage.setProfileSetupCompleted();
 
     if (!mounted) return;
     setState(() => _isSaving = false);
 
-    Navigator.pushNamedAndRemoveUntil(
-      context,
-      AppRoutes.home,
-      (route) => false,
-    );
+    if (!success) {
+      // Erreur bloquante : dialogue natif iOS plutôt que SnackBar Android.
+      showCupertinoDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (dialogContext) => CupertinoAlertDialog(
+          title: const Text('Enregistrement impossible'),
+          content: Text(userProvider.error ?? 'Une erreur est survenue'),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    await storage.setProfileSetupCompleted();
+
+    if (!mounted) return;
+    // Notifier le routeur que l'onboarding est terminé (levée du guard).
+    context.read<ValueNotifier<bool>>().value = true;
+    context.go(AppRoutes.home);
   }
 
   void _nextStep() {
-    HapticFeedback.lightImpact();
+    ElyriiHaptics.light();
     if (_currentStep < 2) {
-      setState(() => _currentStep++);
+      // Transition paginée douce (même courbe que le geste de swipe).
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
     } else {
       _finish();
     }
   }
 
   void _skipStep() {
-    HapticFeedback.lightImpact();
+    ElyriiHaptics.light();
     _nextStep();
   }
 
   void _previousStep() {
     if (_currentStep == 0 || _isSaving) return;
-    HapticFeedback.lightImpact();
-    setState(() => _currentStep--);
+    ElyriiHaptics.light();
+    _pageController.previousPage(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   @override
@@ -162,21 +194,20 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             children: [
               _buildProgressHeader(isDark),
               Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0.05, 0),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _buildStepContent(isDark),
+                // Navigation paginée iOS : swipe horizontal entre les étapes,
+                // transitions glissées douces pilotées par le même contrôleur
+                // que les boutons Continuer / retour.
+                child: PageView(
+                  controller: _pageController,
+                  physics: _isSaving
+                      ? const NeverScrollableScrollPhysics()
+                      : const PageScrollPhysics(),
+                  onPageChanged: (page) => setState(() => _currentStep = page),
+                  children: [
+                    _buildAvatarStep(isDark),
+                    _buildIdentityStep(isDark),
+                    _buildWelcomeStep(isDark),
+                  ],
                 ),
               ),
               _buildFooter(isDark),
@@ -200,9 +231,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             if (_currentStep > 0)
               Align(
                 alignment: Alignment.centerLeft,
-                child: LiquidGlassIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  size: 40,
+                child: ElyriiBackButton(
                   onPressed: _isSaving ? null : _previousStep,
                   color: isDark
                       ? Colors.white
@@ -237,19 +266,6 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   // ==================== Steps ====================
 
-  Widget _buildStepContent(bool isDark) {
-    switch (_currentStep) {
-      case 0:
-        return _buildAvatarStep(isDark);
-      case 1:
-        return _buildIdentityStep(isDark);
-      case 2:
-        return _buildWelcomeStep(isDark);
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
   // ---- Step 0 : Avatar ----
 
   Widget _buildAvatarStep(bool isDark) {
@@ -263,37 +279,46 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Avatar cliquable
+            // Aperçu cliquable : mascotte 3D fidèle avec ombre de contact
+            // par défaut, avatar choisi (image) sinon.
             GestureDetector(
+                  behavior: HitTestBehavior.opaque,
                   onTap: _openAvatarPicker,
-                  child: Stack(
-                    children: [
-                      UserAvatar(pfp: _selectedPfp, size: 120),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primary,
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.surfaceDark
-                                  : Colors.white,
-                              width: 2.5,
+                  child: isMascotAvatar(_selectedPfp)
+                      ? MascotAvatarPreview(
+                          width: 220,
+                          height: 220,
+                          isDark: isDark,
+                          animation: MascotAnimations.curious,
+                        )
+                      : Stack(
+                          children: [
+                            UserAvatar(pfp: _selectedPfp, size: 120),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.primary,
+                                  border: Border.all(
+                                    color: isDark
+                                        ? AppColors.surfaceDark
+                                        : Colors.white,
+                                    width: 2.5,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 18,
-                            color: Colors.white,
-                          ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 )
                 .animate()
                 .fadeIn(duration: 400.ms)
@@ -374,7 +399,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppDimensions.spacingXl),
 
-          _buildLabel('Prenom', isDark),
+          _buildLabel('Prénom', isDark),
           const SizedBox(height: AppDimensions.spacingXs),
           GlassAuthTextField(
             controller: _firstNameController,
@@ -407,7 +432,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           ),
           const SizedBox(height: AppDimensions.spacingMd),
 
-          _buildLabel('Ton objectif bien-etre', isDark),
+          _buildLabel('Ton objectif bien-être', isDark),
           const SizedBox(height: AppDimensions.spacingXs),
           _GoalSelector(
             value: _selectedWellnessGoal,
@@ -422,15 +447,32 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   // ---- Step 2 : Bienvenue ----
 
   Widget _buildWelcomeStep(bool isDark) {
-    return Center(
+    return SingleChildScrollView(
       key: const ValueKey(2),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLg,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingLg,
+        vertical: 16,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // La mascotte accueille l'utilisateur en 3D (salut bienveillant)
+          // ou montre l'avatar choisi s'il s'agit d'une image.
+          if (isMascotAvatar(_selectedPfp))
+            MascotAvatarPreview(
+                  width: 220,
+                  height: 220,
+                  isDark: isDark,
+                  animation: MascotAnimations.greet,
+                )
+                .animate()
+                .fadeIn(duration: 500.ms)
+                .scale(
+                  begin: const Offset(0.7, 0.7),
+                  end: const Offset(1, 1),
+                  curve: Curves.easeOutBack,
+                )
+          else
             UserAvatar(pfp: _selectedPfp, size: 120)
                 .animate()
                 .fadeIn(duration: 500.ms)
@@ -439,30 +481,29 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   end: const Offset(1, 1),
                   curve: Curves.easeOutBack,
                 ),
-            const SizedBox(height: AppDimensions.spacingXl),
-            Text(
-              'Ton espace est pret',
-              style: AppTextStyles.headlineMedium(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ).copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
-            const SizedBox(height: AppDimensions.spacingMd),
-            Text(
-              'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
-              'explore a ton rythme et n\'oublie pas : chaque petit pas '
-              'compte vers ton bien-etre.',
-              style: AppTextStyles.bodyMedium(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ).copyWith(height: 1.6),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
-          ],
-        ),
+          const SizedBox(height: AppDimensions.spacingXl),
+          Text(
+            'Ton espace est prêt',
+            style: AppTextStyles.headlineMedium(
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ).copyWith(fontWeight: FontWeight.w600),
+            textAlign: TextAlign.center,
+          ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+          const SizedBox(height: AppDimensions.spacingMd),
+          Text(
+            'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
+            'explore à ton rythme et n\'oublie pas : chaque petit pas '
+            'compte vers ton bien-être.',
+            style: AppTextStyles.bodyMedium(
+              color: isDark
+                  ? AppColors.textSecondaryDark
+                  : AppColors.textSecondaryLight,
+            ).copyWith(height: 1.6),
+            textAlign: TextAlign.center,
+          ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
+        ],
       ),
     );
   }
@@ -535,53 +576,24 @@ class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDisabled = widget.onPressed == null || widget.isLoading;
-    final blurSigma = GlassPerformanceService().getEffectiveBlurSigma(
-      AppDimensions.blurSigmaLiquidGlass,
-    );
     final radius = BorderRadius.circular(AppDimensions.radiusLiquidGlassButton);
     const primary = AppColors.primary;
     final textColor = widget.isPrimary
         ? (isDark ? Colors.white : primary.withValues(alpha: 0.92))
         : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight);
 
-    final button = Container(
-      width: widget.isExpanded ? double.infinity : null,
+    final button = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-      decoration: BoxDecoration(
+      child: ElyriiGlassSurface(
+        role: GlassRole.floatingControl,
         borderRadius: radius,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: widget.isPrimary
-              ? [
-                  primary.withValues(alpha: isDark ? 0.30 : 0.18),
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.58),
-                  primary.withValues(alpha: isDark ? 0.18 : 0.10),
-                ]
-              : [
-                  Colors.white.withValues(alpha: isDark ? 0.10 : 0.50),
-                  Colors.white.withValues(alpha: isDark ? 0.05 : 0.26),
-                ],
-        ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.42),
-          width: 0.6,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: isDark ? 0.04 : 0.35),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        width: widget.isExpanded ? double.infinity : null,
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        glassColor: widget.isPrimary
+            ? primary.withValues(alpha: isDark ? 0.30 : 0.18)
+            : null,
+        child: Center(child: _buildContent(textColor)),
       ),
-      child: Center(child: _buildContent(textColor)),
     );
 
     return Semantics(
@@ -602,20 +614,7 @@ class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 150),
             opacity: isDisabled ? 0.55 : (_isPressed ? 0.78 : 1),
-            child: RepaintBoundary(
-              child: ClipRRect(
-                borderRadius: radius,
-                child: blurSigma > 0
-                    ? BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: blurSigma,
-                          sigmaY: blurSigma,
-                        ),
-                        child: button,
-                      )
-                    : button,
-              ),
-            ),
+            child: button,
           ),
         ),
       ),
@@ -624,14 +623,8 @@ class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
 
   Widget _buildContent(Color textColor) {
     if (widget.isLoading) {
-      return SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation(textColor),
-        ),
-      );
+      // Indicateur d'activité natif Apple (pas de spinner Material).
+      return CupertinoActivityIndicator(radius: 10, color: textColor);
     }
 
     return Row(
@@ -642,11 +635,13 @@ class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
           Icon(widget.icon, size: 20, color: textColor),
           const SizedBox(width: 8),
         ],
-        Text(
-          widget.label,
-          style: AppTextStyles.bodyLarge(
-            color: textColor,
-          ).copyWith(fontWeight: FontWeight.w700),
+        Flexible(
+          child: Text(
+            widget.label,
+            style: AppTextStyles.bodyLarge(
+              color: textColor,
+            ).copyWith(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
@@ -675,7 +670,7 @@ class _GoalSelector extends StatelessWidget {
         final isSelected = value == goal;
         return GestureDetector(
           onTap: () {
-            HapticFeedback.selectionClick();
+            ElyriiHaptics.selection();
             onChanged(isSelected ? null : goal);
           },
           child: AnimatedContainer(
@@ -697,7 +692,7 @@ class _GoalSelector extends StatelessWidget {
               ),
             ),
             child: Text(
-              goal,
+              profileOptionLabel(goal),
               style: AppTextStyles.bodyMedium(
                 color: isSelected
                     ? Colors.white

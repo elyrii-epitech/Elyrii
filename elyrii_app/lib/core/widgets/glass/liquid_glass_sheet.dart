@@ -1,28 +1,32 @@
 // iOS 26 Liquid Glass Sheet
 // Part of the Liquid Glass Widget Kit
 
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../theme/app_colors.dart';
+import '../../glass/elyrii_glass_surface.dart';
 import '../../theme/app_dimensions.dart';
+import '../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Shows an iOS 26 style bottom sheet with liquid glass effect
 Future<T?> showLiquidGlassSheet<T>({
   required BuildContext context,
-  required Widget child,
+  Widget? child,
+  Widget Function(BuildContext, ScrollController)? scrollableBuilder,
   double initialChildSize = 0.5,
   double minChildSize = 0.25,
   double maxChildSize = 0.92,
   bool isDismissible = true,
   bool enableDrag = true,
+  bool useRootNavigator = false,
+  EdgeInsetsGeometry contentPadding = const EdgeInsets.all(20),
   Color? backgroundColor,
 }) {
-  HapticFeedback.mediumImpact();
+  assert((child == null) != (scrollableBuilder == null));
+  ElyriiHaptics.medium();
 
   return showModalBottomSheet<T>(
     context: context,
+    useRootNavigator: useRootNavigator,
     isScrollControlled: true,
     isDismissible: isDismissible,
     enableDrag: enableDrag,
@@ -33,25 +37,31 @@ Future<T?> showLiquidGlassSheet<T>({
       minChildSize: minChildSize,
       maxChildSize: maxChildSize,
       backgroundColor: backgroundColor,
+      contentPadding: contentPadding,
+      scrollableBuilder: scrollableBuilder,
       child: child,
     ),
   );
 }
 
 class LiquidGlassSheetContent extends StatelessWidget {
-  final Widget child;
+  final Widget? child;
+  final Widget Function(BuildContext, ScrollController)? scrollableBuilder;
   final double initialChildSize;
   final double minChildSize;
   final double maxChildSize;
   final Color? backgroundColor;
+  final EdgeInsetsGeometry contentPadding;
 
   const LiquidGlassSheetContent({
     super.key,
-    required this.child,
+    this.child,
+    this.scrollableBuilder,
     required this.initialChildSize,
     required this.minChildSize,
     required this.maxChildSize,
     this.backgroundColor,
+    this.contentPadding = const EdgeInsets.all(20),
   });
 
   @override
@@ -63,92 +73,42 @@ class LiquidGlassSheetContent extends StatelessWidget {
           minChildSize: minChildSize,
           maxChildSize: maxChildSize,
           builder: (context, scrollController) {
-            return ClipRRect(
+            return ElyriiGlassSurface(
+              role: GlassRole.modalSheet,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppDimensions.radiusLiquidGlassSheet),
               ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: AppDimensions.blurSigmaLiquidGlass,
-                  sigmaY: AppDimensions.blurSigmaLiquidGlass,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color:
-                        backgroundColor ??
-                        (isDark
-                            ? AppColors.liquidGlassBackgroundDark
-                            : AppColors.liquidGlassBackgroundLight),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(
-                        AppDimensions.radiusLiquidGlassSheet,
-                      ),
-                    ),
-                    border: Border(
-                      top: BorderSide(
-                        color: isDark
-                            ? AppColors.liquidGlassBorderDark
-                            : AppColors.liquidGlassBorderLight,
-                        width: 0.5,
-                      ),
-                    ),
-                  ),
-                  child: Stack(
+              glassColor: backgroundColor,
+              child: Stack(
+                children: [
+                  Column(
                     children: [
-                      // Specular highlight
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 80,
-                        child: IgnorePointer(
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  AppColors.liquidGlassSpecularLight,
-                                  Colors.transparent,
-                                ],
-                              ),
-                              borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(
-                                  AppDimensions.radiusLiquidGlassSheet,
-                                ),
-                              ),
-                            ),
-                          ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        width: 36,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.3)
+                              : Colors.black.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(2.5),
                         ),
                       ),
-                      // Content
-                      Column(
-                        children: [
-                          // Drag handle
-                          Container(
-                            margin: const EdgeInsets.only(top: 8),
-                            width: 36,
-                            height: 5,
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.3)
-                                  : Colors.black.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(2.5),
-                            ),
-                          ),
-                          // Child content
-                          Expanded(
-                            child: SingleChildScrollView(
+                      Expanded(
+                        child:
+                            scrollableBuilder?.call(
+                              context,
+                              scrollController,
+                            ) ??
+                            SingleChildScrollView(
                               controller: scrollController,
-                              padding: const EdgeInsets.all(20),
+                              padding: contentPadding,
                               child: child,
                             ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             );
           },

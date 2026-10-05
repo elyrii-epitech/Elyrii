@@ -17,7 +17,12 @@ export const updateProfileValidation = z.object({
     firstName: z.string().min(1).optional(),
     lastName: z.string().min(1).optional(),
     age: z.number().min(0).max(150).optional(),
-    pfp: z.string().url().optional(),
+    pfp: z.string().url().nullable().optional(),
+    bio: z.string().max(500).nullable().optional(),
+    gender: z.string().max(80).nullable().optional(),
+    pronouns: z.string().max(80).nullable().optional(),
+    wellnessGoal: z.string().max(120).nullable().optional(),
+    timezone: z.string().max(80).nullable().optional(),
 });
 
 

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exception.dart';
 import '../data/settings_repository.dart';
 import '../models/app_settings.dart';
 import '../models/user_profile.dart';
@@ -13,13 +14,24 @@ class UserProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  UserProvider({required ApiClient client})
-    : _repository = UserRepository(client: client);
+  UserProvider({UserRepository? repository, ApiClient? client})
+    : assert(
+        repository != null || client != null,
+        'repository or client must be provided',
+      ),
+      _repository = repository ?? UserRepository(client: client!);
 
   UserProfile? get profile => _profile;
   AppSettings? get settings => _settings;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  /// Reuse the authenticated profile response during startup hydration.
+  void acceptProfile(Map<String, dynamic> profile) {
+    _profile = UserProfile.fromJson(profile);
+    _error = null;
+    notifyListeners();
+  }
 
   /// Fetch the current user's profile from the backend
   Future<void> loadProfile() async {
@@ -28,6 +40,10 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _profile = await _repository.getMe();
+      _isLoading = false;
+      notifyListeners();
+    } on ApiException catch (e) {
+      _error = e.message;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -45,6 +61,10 @@ class UserProvider extends ChangeNotifier {
       _settings = await _repository.getSettings();
       _isLoading = false;
       notifyListeners();
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -55,14 +75,18 @@ class UserProvider extends ChangeNotifier {
   Future<bool> updateSettings({
     String? themeMode,
     bool? notificationsEnabled,
+    bool? hapticsEnabled,
     String? privacyMode,
+    String? language,
   }) async {
     final previous = _settings;
     if (previous != null) {
       _settings = previous.copyWith(
         themeMode: themeMode,
         notificationsEnabled: notificationsEnabled,
+        hapticsEnabled: hapticsEnabled,
         privacyMode: privacyMode,
+        language: language,
       );
       notifyListeners();
     }
@@ -71,7 +95,9 @@ class UserProvider extends ChangeNotifier {
       _settings = await _repository.updateSettings(
         themeMode: themeMode,
         notificationsEnabled: notificationsEnabled,
+        hapticsEnabled: hapticsEnabled,
         privacyMode: privacyMode,
+        language: language,
       );
       _error = null;
       notifyListeners();
@@ -84,20 +110,13 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Update the user's profile
-  ///
-  /// ┌──────────────────────────────────────────────────────────────────┐
-  // │ BACKEND TEAM: [pfp] = null signifie "mascotte". Voir              │
-  // │ l'annotation dans data/settings_repository.dart -> [updateMe]     │
-  // │ pour le probleme de non-effacement de l'ancienne URL.             │
-  // │ Les nouveaux champs (bio, gender, pronouns, wellnessGoal,         │
-  // │ timezone) necessitent un support backend.                         │
-  // └──────────────────────────────────────────────────────────────────┘
+  /// Update the user's profile.
   Future<bool> updateProfile({
     String? firstName,
     String? lastName,
     int? age,
     String? pfp,
+    bool clearPfp = false,
     String? bio,
     String? gender,
     String? pronouns,
@@ -110,6 +129,7 @@ class UserProvider extends ChangeNotifier {
         lastName: lastName,
         age: age,
         pfp: pfp,
+        clearPfp: clearPfp,
         bio: bio,
         gender: gender,
         pronouns: pronouns,
@@ -118,8 +138,38 @@ class UserProvider extends ChangeNotifier {
       );
       notifyListeners();
       return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
     } catch (e) {
       _error = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteAccount({required String password}) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteAccount(password: password);
+      _profile = null;
+      _settings = null;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
       notifyListeners();
       return false;
     }

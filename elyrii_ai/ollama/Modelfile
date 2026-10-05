@@ -1,0 +1,5 @@
+FROM mistral:7b-instruct-v0.3-q4_K_M
+
+ADAPTER /models/elyrii_lora
+
+PARAMETER num_ctx 4096

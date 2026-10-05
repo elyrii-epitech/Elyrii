@@ -1,3 +1,5 @@
+import 'mascot_animations.dart';
+
 /// Configuration immutable pour le viewer 3D de la mascotte Elyrii.
 ///
 /// Fournit des configurations prédéfinies pour chaque contexte d'utilisation
@@ -7,13 +9,16 @@ class Mascot3DConfig {
   /// Chemin vers le fichier .glb du modèle 3D
   final String assetPath;
 
+  /// Animation jouée dès que le modèle est chargé (idle par défaut).
+  final MascotAnimation initialAnimation;
+
   /// Position de la caméra : angle theta (rotation horizontale en degrés)
   final double cameraOrbitTheta;
 
   /// Position de la caméra : angle phi (rotation verticale en degrés)
   final double cameraOrbitPhi;
 
-  /// Position de la caméra : distance (rayon)
+  /// Camera distance as a percentage of model-viewer's automatic framing.
   final double cameraOrbitRadius;
 
   /// Active/désactive la rotation automatique du modèle
@@ -22,8 +27,7 @@ class Mascot3DConfig {
   /// Vitesse de la rotation automatique (degrés/seconde)
   final double autoRotateSpeed;
 
-  /// Conservé pour compatibilité, mais la mascotte Elyrii reste non
-  /// manipulable par l'utilisateur dans le viewer.
+  /// Allows orbiting in the studio; other mascot contexts remain passive.
   final bool interactionEnabled;
 
   /// Afficher la barre de progression pendant le chargement
@@ -33,8 +37,16 @@ class Mascot3DConfig {
   /// Si faux, utilise l'auto-cadrage par défaut de model-viewer (pas d'effet de zoom arrière).
   final bool useCameraOrbit;
 
+  /// Cible verticale de la caméra (mètres, axe Y du glTF) pour cadrer le
+  /// corps visuel du modèle sans décalage de disposition. Null = auto.
+  final double? cameraTargetY;
+
+  static const MascotAnimation _defaultAnimation = MascotAnimations.idle;
+  static const String _defaultAsset = 'assets/optimized/mascot.glb';
+
   const Mascot3DConfig({
-    this.assetPath = 'assets/base_basic_shaded_v3.glb',
+    this.assetPath = _defaultAsset,
+    this.initialAnimation = _defaultAnimation,
     this.cameraOrbitTheta = 0,
     this.cameraOrbitPhi = 75,
     this.cameraOrbitRadius = 5.0,
@@ -43,12 +55,12 @@ class Mascot3DConfig {
     this.interactionEnabled = false,
     this.showLoadingIndicator = true,
     this.useCameraOrbit = false,
+    this.cameraTargetY,
   });
 
-  /// Configuration pour les pages d'authentification (login/register).
-  /// Animation idle intégrée au modèle, pas d'interaction tactile.
   const Mascot3DConfig.authPage()
-    : assetPath = 'assets/base_basic_shaded_v3.glb',
+    : assetPath = _defaultAsset,
+      initialAnimation = _defaultAnimation,
       cameraOrbitTheta = 0,
       cameraOrbitPhi = 60,
       cameraOrbitRadius =
@@ -56,13 +68,16 @@ class Mascot3DConfig {
       autoRotate = false,
       autoRotateSpeed = 15,
       interactionEnabled = false,
-      showLoadingIndicator = false,
-      useCameraOrbit = false;
+      showLoadingIndicator = true,
+      useCameraOrbit = false,
+      // Cible posée sur le corps de l'ourson : la mascotte est centrée
+      // par la caméra, sans Transform.translate de rattrapage.
+      cameraTargetY = 0.35;
 
   /// Configuration pour le chatbot en mode plein écran.
-  /// Animation idle intégrée au modèle, sans interaction tactile.
   const Mascot3DConfig.chatbotFull()
-    : assetPath = 'assets/base_basic_shaded_v3.glb',
+    : assetPath = _defaultAsset,
+      initialAnimation = _defaultAnimation,
       cameraOrbitTheta = 0,
       cameraOrbitPhi = 75,
       cameraOrbitRadius =
@@ -71,12 +86,14 @@ class Mascot3DConfig {
       autoRotateSpeed = 20,
       interactionEnabled = false, // Désactiver les interactions tactiles
       showLoadingIndicator = true,
-      useCameraOrbit = false;
+      useCameraOrbit = false,
+      cameraTargetY = null;
 
   /// Configuration pour le chatbot en mode minimisé (banner).
   /// Animation idle intégrée au modèle, pas d'interaction tactile.
   const Mascot3DConfig.chatbotMinimized()
-    : assetPath = 'assets/base_basic_shaded_v3.glb',
+    : assetPath = _defaultAsset,
+      initialAnimation = _defaultAnimation,
       cameraOrbitTheta = 0,
       cameraOrbitPhi = 75,
       cameraOrbitRadius =
@@ -85,12 +102,14 @@ class Mascot3DConfig {
       autoRotateSpeed = 10,
       interactionEnabled = false,
       showLoadingIndicator = false,
-      useCameraOrbit = false;
+      useCameraOrbit = false,
+      cameraTargetY = null;
 
   /// Crée une copie de cette configuration avec les champs modifiés.
   /// Utile pour la personnalisation future (changer le modèle, la caméra, etc.)
   Mascot3DConfig copyWith({
     String? assetPath,
+    MascotAnimation? initialAnimation,
     double? cameraOrbitTheta,
     double? cameraOrbitPhi,
     double? cameraOrbitRadius,
@@ -99,9 +118,11 @@ class Mascot3DConfig {
     bool? interactionEnabled,
     bool? showLoadingIndicator,
     bool? useCameraOrbit,
+    double? cameraTargetY,
   }) {
     return Mascot3DConfig(
       assetPath: assetPath ?? this.assetPath,
+      initialAnimation: initialAnimation ?? this.initialAnimation,
       cameraOrbitTheta: cameraOrbitTheta ?? this.cameraOrbitTheta,
       cameraOrbitPhi: cameraOrbitPhi ?? this.cameraOrbitPhi,
       cameraOrbitRadius: cameraOrbitRadius ?? this.cameraOrbitRadius,
@@ -110,6 +131,7 @@ class Mascot3DConfig {
       interactionEnabled: interactionEnabled ?? this.interactionEnabled,
       showLoadingIndicator: showLoadingIndicator ?? this.showLoadingIndicator,
       useCameraOrbit: useCameraOrbit ?? this.useCameraOrbit,
+      cameraTargetY: cameraTargetY ?? this.cameraTargetY,
     );
   }
 }

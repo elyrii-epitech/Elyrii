@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../routes/app_routes.dart';
 import '../../../../core/config/mascot_3d_config.dart';
-import '../../../../core/config/mascot_themes.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../../core/widgets/mascot_bounce.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/dashboard_provider.dart';
 
-/// Widget mascotte avec effet "peek" (dépasse du haut de l'écran).
-///
-/// Affiche le modèle 3D Elyrii dans un halo circulaire doux, avec
-/// animation de flottement subtil et réaction au tap et au mood.
+/// Elyrii réagit avec son corps : salut, connivence au toucher, douceur au
+/// maintien et accueil de l'humeur. Ses pieds restent posés, sans déformation
+/// du viewer ni cumul de flottements avec les mouvements du modèle.
 class MascotPeek extends StatefulWidget {
   final MoodType? selectedMood;
   final VoidCallback? onTap;
@@ -28,144 +30,118 @@ class MascotPeek extends StatefulWidget {
   State<MascotPeek> createState() => _MascotPeekState();
 }
 
-class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
-  late AnimationController _floatController;
-  late AnimationController _reactionController;
-  late Animation<double> _floatAnimation;
-  late Animation<double> _reactionAnimation;
+class _MascotPeekState extends State<MascotPeek> {
+  MascotAnimation _animation = MascotAnimations.idle;
+  int _trigger = 0;
+  int _bounceTrigger = 0;
+  int _tapCount = 0;
+  final Stopwatch _clock = Stopwatch()..start();
+  int _lastTouch = -4000;
+  bool _arrived = false;
 
   @override
-  void initState() {
-    super.initState();
-
-    // Animation de flottement subtil
-    _floatController = AnimationController(
-      duration: const Duration(milliseconds: 3000),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _floatAnimation = Tween<double>(begin: 0, end: 6).animate(
-      CurvedAnimation(parent: _floatController, curve: Curves.easeInOutSine),
-    );
-
-    // Animation de réaction au tap / au mood
-    _reactionController = AnimationController(
-      duration: const Duration(milliseconds: 500),
-      vsync: this,
-    );
-
-    _reactionAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
-      CurvedAnimation(parent: _reactionController, curve: Curves.elasticOut),
-    );
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_arrived) {
+      _arrived = true;
+      _animation = context.read<MascotProvider>().takeGreeting()
+          ? MascotAnimations.greet
+          : MascotAnimations.idle;
+    }
   }
 
   @override
   void didUpdateWidget(MascotPeek oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Réaction quand le mood change
     if (widget.selectedMood != oldWidget.selectedMood &&
         widget.selectedMood != null) {
-      _reactionController.forward().then((_) {
-        _reactionController.reverse();
-      });
+      final reaction = switch (widget.selectedMood!) {
+        MoodType.verySad || MoodType.sad => MascotAnimations.reassure,
+        MoodType.happy || MoodType.veryHappy => MascotAnimations.delight,
+        MoodType.neutral => MascotAnimations.acknowledge,
+      };
+      _react(reaction);
+    }
+  }
+
+  void _react(MascotAnimation animation) {
+    setState(() {
+      _animation = animation;
+      _trigger++;
+      _bounceTrigger++;
+    });
+  }
+
+  void _touch({bool cuddle = false}) {
+    if (!cuddle) widget.onTap?.call();
+    // Le texte reste utilisable, même lorsque le geste se termine.
+    if (_clock.elapsedMilliseconds - _lastTouch < 1400) return;
+    _lastTouch = _clock.elapsedMilliseconds;
+    ElyriiHaptics.light();
+    if (cuddle) {
+      _react(MascotAnimations.nuzzle);
+    } else {
+      const reactions = [
+        MascotAnimations.acknowledge,
+        MascotAnimations.delight,
+        MascotAnimations.curious,
+      ];
+      _react(reactions[_tapCount++ % reactions.length]);
     }
   }
 
   @override
-  void dispose() {
-    _floatController.dispose();
-    _reactionController.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context) => Semantics(
+    label: 'Elyrii, ta mascotte',
+    hint: 'Touche pour une réaction, maintiens pour un moment de douceur',
+    button: true,
+    child: GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _touch,
+      onLongPress: () => _touch(cuddle: true),
+      child: _buildMascot(context),
+    ),
+  );
 
-  void _triggerReaction() {
-    _reactionController.forward().then((_) {
-      _reactionController.reverse();
-    });
-  }
+  Widget _buildMascot(BuildContext context) {
+    final provider = context.watch<MascotProvider>();
+    final router = GoRouter.maybeOf(context);
+    final dashboardVisible =
+        router == null ||
+        router.routerDelegate.currentConfiguration.uri.path == AppRoutes.home;
+    final globalReactionPending =
+        dashboardVisible &&
+        TickerMode.valuesOf(context).enabled &&
+        provider.reactionTrigger > _lastGlobalTrigger;
+    final animation = globalReactionPending ? provider.reaction : _animation;
+    final trigger = globalReactionPending ? provider.reactionTrigger : _trigger;
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        widget.onTap?.call();
-        _triggerReaction();
-      },
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_floatAnimation, _reactionAnimation]),
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, _floatAnimation.value),
-            child: Transform.scale(
-              scale: _reactionAnimation.value,
-              child: child,
-            ),
-          );
-        },
-        child: _buildMascotHalo(),
+    if (globalReactionPending) {
+      // Consommer après le build permet de répondre aux événements reçus
+      // pendant qu'un autre onglet était affiché, sans setState dans build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && provider.reactionTrigger > _lastGlobalTrigger) {
+          setState(() {
+            _lastGlobalTrigger = provider.reactionTrigger;
+            _animation = provider.reaction;
+            _trigger = provider.reactionTrigger;
+            _bounceTrigger++;
+          });
+        }
+      });
+    }
+
+    return MascotBounce(
+      trigger: _bounceTrigger,
+      child: MascotWithAccessories(
+        config: const Mascot3DConfig(),
+        animation: animation,
+        animationTrigger: trigger,
+        width: 220,
+        height: 220,
       ),
     );
   }
 
-  /// Halo circulaire doux contenant la mascotte 3D.
-  Widget _buildMascotHalo() {
-    final theme = context.select<MascotProvider, MascotTheme>(
-      (p) => p.currentTheme,
-    );
-    final haloColor = theme.accentColor;
-
-    return Container(
-      width: 132,
-      height: 132,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            haloColor.withValues(alpha: 0.22),
-            haloColor.withValues(alpha: 0.08),
-            Colors.transparent,
-          ],
-          stops: const [0.0, 0.6, 1.0],
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 104,
-            height: 104,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: widget.isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.55),
-              border: Border.all(
-                color: Colors.white.withValues(
-                  alpha: widget.isDark ? 0.16 : 0.7,
-                ),
-                width: 1.2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
-                  blurRadius: 24,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-          ),
-          const MascotWithAccessories(
-            config: Mascot3DConfig(
-              autoRotate: false,
-              interactionEnabled: false,
-              showLoadingIndicator: false,
-            ),
-            width: 118,
-            height: 118,
-          ),
-        ],
-      ),
-    );
-  }
+  int _lastGlobalTrigger = 0;
 }

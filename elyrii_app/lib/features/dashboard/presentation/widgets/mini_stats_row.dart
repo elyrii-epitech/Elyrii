@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/glass_container.dart';
 
 /// Widget affichant une mini statistique
 class MiniStatCard extends StatelessWidget {
@@ -23,13 +22,19 @@ class MiniStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: GlassContainer(
-        isDark: isDark,
-        borderRadius: AppDimensions.radiusMd,
-        intensity: GlassIntensity.medium,
+      child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingSm,
           vertical: AppDimensions.paddingMd,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF201E24) : Colors.white,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.10)
+                : Colors.black.withValues(alpha: 0.05),
+          ),
         ),
         child: Column(
           children: [

@@ -24,11 +24,9 @@ class ApiConfig {
   static String journalEntryUrl(String id) => '$_baseUrl/journal/$id';
 
   // ==================== Chat (WebSocket) ====================
-  static String chatWsUrl({String? userId, String? token}) {
+  static String chatWsUrl({String? userId}) {
     final params = <String, String>{};
-    if (token != null && token.isNotEmpty) {
-      params['token'] = token;
-    } else if (userId != null && userId.isNotEmpty) {
+    if (userId != null && userId.isNotEmpty) {
       params['userId'] = userId;
     }
 
@@ -57,6 +55,8 @@ class ApiConfig {
   static String get userStatsUrl => '$_baseUrl/user/stats';
   static String get userSettingsUrl => '$_baseUrl/user/settings';
   static String get userMascotUrl => '$_baseUrl/user/mascot';
+  static String get userAvatarUrl => '$_baseUrl/user/avatar';
+  static String get userAccountUrl => '$_baseUrl/user/account';
   static String get logMoodUrl => '$_baseUrl/user/mood';
   static String get latestMoodUrl => '$_baseUrl/user/mood/latest';
 

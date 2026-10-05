@@ -1,15 +1,18 @@
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import 'package:provider/provider.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../providers/journal_provider.dart';
 import 'glass_text_field.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Bottom sheet modal pour créer/éditer une entrée du journal
 class JournalEditorSheet extends StatefulWidget {
@@ -37,6 +40,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   bool _hasChanges = false;
   bool _isSaving = false;
   String? _createdEntryId;
+  Future<void>? _saveInFlight;
+  bool _saveFailed = false;
+  int _revision = 0;
 
   @override
   void initState() {
@@ -60,6 +66,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   }
 
   void _onTextChanged() {
+    _revision++;
     if (!_hasChanges) {
       setState(() => _hasChanges = true);
     }
@@ -67,9 +74,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
   }
 
-  Future<void> _autoSave() async {
-    if (!_hasChanges || _contentController.text.trim().isEmpty) return;
+  Future<void> _autoSave() =>
+      _saveInFlight ??= _save().whenComplete(() => _saveInFlight = null);
 
+  Future<void> _save() async {
+    if (!_hasChanges || _contentController.text.trim().isEmpty) return;
+    final revision = _revision;
+    bool success;
     setState(() => _isSaving = true);
 
     final title = _titleController.text.trim();
@@ -78,14 +89,14 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     final currentMood = dashboardProvider.selectedMood?.name;
 
     if (widget.entry != null) {
-      await widget.provider.updateEntry(
+      success = await widget.provider.updateEntry(
         widget.entry!.id,
         title: title,
         content: content,
         mood: currentMood,
       );
     } else if (_createdEntryId != null) {
-      await widget.provider.updateEntry(
+      success = await widget.provider.updateEntry(
         _createdEntryId!,
         title: title,
         content: content,
@@ -98,13 +109,25 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         mood: currentMood,
       );
       _createdEntryId = created?.id;
+      success = created != null;
+      if (created != null && mounted) {
+        // Le premier enregistrement est une petite victoire : la mascotte du
+        // dashboard pourra jouer ce moment même si l'utilisateur ferme la
+        // feuille avant d'y revenir.
+        context.read<MascotProvider>().react(MascotAnimations.cozy);
+      }
     }
 
     if (!mounted) return;
     setState(() {
-      _hasChanges = false;
+      _hasChanges = !success || revision != _revision;
+      _saveFailed = !success;
       _isSaving = false;
     });
+    if (success && _hasChanges) {
+      _autoSaveTimer?.cancel();
+      _autoSaveTimer = Timer(const Duration(milliseconds: 500), _autoSave);
+    }
   }
 
   Future<bool> _onWillPop() async {
@@ -114,7 +137,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       context: context,
       title: 'Modifications non sauvegardées',
       child: const Text(
-        'Voulez-vous sauvegarder vos modifications avant de fermer ?',
+        'Veux-tu sauvegarder tes modifications avant de fermer ?',
       ),
       actions: [
         LiquidGlassDialogAction(
@@ -135,7 +158,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     );
 
     if (result == 'save') await _autoSave();
-    return result == 'save' || result == 'discard';
+    return (result == 'save' && !_hasChanges) || result == 'discard';
   }
 
   void _deleteEntry() {
@@ -292,7 +315,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           // Bouton fermer
           GestureDetector(
             onTap: () async {
-              HapticFeedback.lightImpact();
+              ElyriiHaptics.light();
               final canPop = await _onWillPop();
               if (canPop && mounted) {
                 Navigator.of(context).pop();
@@ -321,7 +344,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           // Bouton ajouter/sauvegarder
           GestureDetector(
             onTap: () {
-              HapticFeedback.lightImpact();
+              ElyriiHaptics.light();
               if (_contentController.text.trim().isNotEmpty) {
                 _autoSave();
                 Navigator.of(context).pop();
@@ -344,7 +367,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           if (widget.entry != null || _createdEntryId != null)
             GestureDetector(
               onTap: () {
-                HapticFeedback.lightImpact();
+                ElyriiHaptics.light();
                 _deleteEntry();
               },
               child: Container(
@@ -369,14 +392,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     if (_isSaving) {
       return Row(
         children: [
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.primary,
-            ),
-          ),
+          const CupertinoActivityIndicator(radius: 7),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -403,7 +419,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              'Modifications non sauvegardées',
+              _saveFailed
+                  ? 'Échec de sauvegarde — réessaie'
+                  : 'Modifications non sauvegardées',
               style: AppTextStyles.labelSmall(
                 color: isDark
                     ? AppColors.textSecondaryDark

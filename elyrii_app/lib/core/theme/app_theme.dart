@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
@@ -14,14 +15,23 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Poppins',
       brightness: Brightness.light,
 
       // Couleurs principales
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.backgroundLight,
+      // Transition latérale fluide (avec retour glissé iOS) pour toutes les
+      // routes standard construites via `builder:`.
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: const ColorScheme.light(
-        primary: AppColors
-            .primary, // #9D7FFE - Violet brillant glossy (from #8B6FF0)
+        primary: AppColors.primary,
         primaryContainer:
             AppColors.primaryLight, // #EBE3FF - Lavande glossy très pâle
         secondary: AppColors.secondary, // #FFB5A8 - Pêche doux
@@ -236,6 +246,7 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: 'Poppins',
       brightness: Brightness.dark,
 
       // Couleurs principales
@@ -243,6 +254,13 @@ class AppTheme {
           .primaryDark, // #B99CFF - Violet glossy très lumineux pour dark mode
       scaffoldBackgroundColor:
           AppColors.backgroundDark, // #1A1818 - Noir chocolat
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       colorScheme: const ColorScheme.dark(
         primary: AppColors.primaryDark, // #B99CFF - Violet glossy très lumineux
         primaryContainer: AppColors.primary, // #9D7FFE - Violet brillant glossy
@@ -253,7 +271,7 @@ class AppTheme {
         error: AppColors.error,
         errorContainer: AppColors.errorDark,
         surface: AppColors.surfaceDark, // #2A2627 - Brun très foncé
-        onPrimary: AppColors.textPrimaryDark,
+        onPrimary: AppColors.backgroundDark,
         onSecondary: AppColors.textPrimaryDark,
         onTertiary: AppColors.textPrimaryDark,
         onError: Colors.white,
@@ -321,7 +339,7 @@ class AppTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: AppColors.primaryDark,
           textStyle: AppTextStyles.button(),
         ),
       ),

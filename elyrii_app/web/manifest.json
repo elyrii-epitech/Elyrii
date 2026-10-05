@@ -1,11 +1,11 @@
 {
-    "name": "elyrii_app",
-    "short_name": "elyrii_app",
+    "name": "Elyrii",
+    "short_name": "Elyrii",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#141314",
+    "theme_color": "#141314",
+    "description": "Elyrii, ton compagnon au quotidien. Un instant pour toi.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

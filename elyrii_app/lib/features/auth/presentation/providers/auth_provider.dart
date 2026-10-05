@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import '../../../../core/config/api_config.dart';
+import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/services/secure_storage_service.dart';
@@ -17,11 +20,17 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.initial;
   UserModel? _user;
   String? _error;
+  int _sessionRevision = 0;
 
   AuthProvider({
-    required ApiClient client,
+    AuthRepository? repository,
+    ApiClient? client,
     required SecureStorageService storage,
-  }) : _repository = AuthRepository(client: client),
+  }) : assert(
+         repository != null || client != null,
+         'repository or client must be provided',
+       ),
+       _repository = repository ?? AuthRepository(client: client!),
        _storage = storage;
 
   AuthStatus get status => _status;
@@ -29,37 +38,134 @@ class AuthProvider extends ChangeNotifier {
   String? get error => _error;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.loading;
+  bool get isDemoSession => isAuthenticated && _user?.id == DevSession.userId;
 
-  /// Check if user has a stored token on app start
-  Future<void> checkAuthStatus() async {
-    final hasToken = await _storage.hasAccessToken();
-    if (hasToken) {
-      _status = AuthStatus.authenticated;
-      await fetchProfile();
-    } else {
+  /// Offline-first session restore: storage-only, never touches the network.
+  /// A syntactically valid, non-expired token is enough to enter the app;
+  /// [revalidateSession] confirms it against the backend afterwards.
+  Future<void> restoreLocalSession() async {
+    _sessionRevision++;
+    _user = null;
+    final token = await _storage.getAccessToken();
+    final valid = token != null && token.isNotEmpty && !_isJwtExpired(token);
+    if (!valid) {
+      await _storage.clearAuthData();
+      _user = null;
       _status = AuthStatus.unauthenticated;
+    } else {
+      final userId = await _storage.getUserId();
+      if (userId == DevSession.userId) {
+        _user = const UserModel(
+          id: DevSession.userId,
+          email: DevSession.email,
+          firstName: DevSession.firstName,
+        );
+      }
+      _status = AuthStatus.authenticated;
     }
     notifyListeners();
   }
 
+  /// Background revalidation of the restored session.
+  /// Only a definitive rejection (401) ends the session; a network failure
+  /// keeps the optimistic session alive so offline use is not punished.
+  Future<void> revalidateSession({
+    void Function(Map<String, dynamic>)? onProfile,
+  }) async {
+    if (_status != AuthStatus.authenticated || isDemoSession) return;
+    final session = _sessionRevision;
+    final ok = await fetchProfile(onProfile: onProfile);
+    if (ok ||
+        session != _sessionRevision ||
+        _status != AuthStatus.authenticated) {
+      return;
+    }
+    final stillHasToken = await _storage.getAccessToken();
+    if (session != _sessionRevision) return;
+    if (stillHasToken == null) {
+      // fetchProfile cleared it after a 401: the session is truly dead.
+      _user = null;
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+    }
+  }
+
+  /// Session démo locale (développement sans backend) : stocke un JWT
+  /// factice à longue durée de vie, marque l'onboarding comme complété et
+  /// ouvre la session. Les données de démonstration restent locales.
+  Future<void> startDemoSession() async {
+    _sessionRevision++;
+    _status = AuthStatus.loading;
+    notifyListeners();
+    final exp =
+        DateTime.now().add(const Duration(days: 3650)).millisecondsSinceEpoch ~/
+        1000;
+    String b64(Object json) =>
+        base64Url.encode(utf8.encode(json.toString())).replaceAll('=', '');
+    final demoToken =
+        '${b64('{"alg":"none","typ":"JWT"}')}.'
+        '${b64('{"sub":"demo-user","exp":$exp}')}.demo';
+
+    await _storage.saveAccessToken(demoToken);
+    await _storage.saveUserId(DevSession.userId);
+    await _storage.setProfileSetupCompleted();
+    _user = const UserModel(
+      id: DevSession.userId,
+      email: DevSession.email,
+      firstName: DevSession.firstName,
+    );
+    _status = AuthStatus.authenticated;
+    notifyListeners();
+  }
+
   /// Fetch full user profile from backend
-  Future<void> fetchProfile() async {
+  Future<bool> fetchProfile({
+    void Function(Map<String, dynamic>)? onProfile,
+  }) async {
+    if (isDemoSession) {
+      onProfile?.call(_user!.toJson());
+      return true;
+    }
+    final session = _sessionRevision;
     try {
       final response = await _repository.client.get(ApiConfig.userMeUrl);
+      if (session != _sessionRevision) return false;
       _user = UserModel.fromJson(response as Map<String, dynamic>);
+      onProfile?.call(response);
       notifyListeners();
+      return true;
     } catch (e) {
+      if (session != _sessionRevision) return false;
       debugPrint('[AuthProvider] Failed to fetch profile: $e');
-      // If we have a userId but fetch fails, keep the minimal user
-      final userId = await _storage.getUserId();
-      if (_user == null && userId != null) {
-        _user = UserModel(id: userId, email: '');
+      if (e is ApiException && e.statusCode == 401) {
+        await _storage.clearAuthData();
+        _user = null;
       }
+      return false;
+    }
+  }
+
+  bool _isJwtExpired(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return true;
+      final payload = utf8.decode(
+        base64Url.decode(base64Url.normalize(parts[1])),
+      );
+      final json = jsonDecode(payload) as Map<String, dynamic>;
+      final exp = json['exp'];
+      if (exp is! num) return true;
+      final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+      return exp <= now;
+    } catch (e) {
+      debugPrint('[AuthProvider] Invalid stored token: $e');
+      return true;
     }
   }
 
   /// Login with email and password
   Future<bool> login({required String email, required String password}) async {
+    _sessionRevision++;
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
@@ -94,6 +200,7 @@ class AuthProvider extends ChangeNotifier {
     required String lastName,
     int? age,
   }) async {
+    _sessionRevision++;
     _status = AuthStatus.loading;
     _error = null;
     notifyListeners();
@@ -143,12 +250,22 @@ class AuthProvider extends ChangeNotifier {
 
   /// Logout and clear stored tokens
   Future<void> logout() async {
-    await _repository.logout();
-    await _storage.clearAuthData();
+    try {
+      if (!isDemoSession) await _repository.logout();
+    } catch (error) {
+      debugPrint('[AuthProvider] Remote logout unavailable: $error');
+    } finally {
+      await clearLocalSession();
+    }
+  }
+
+  Future<void> clearLocalSession() async {
+    _sessionRevision++;
     _user = null;
     _status = AuthStatus.unauthenticated;
     _error = null;
     notifyListeners();
+    await _storage.clearAuthData();
   }
 
   /// Clear any displayed error

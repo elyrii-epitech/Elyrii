@@ -13,8 +13,8 @@ services:
         - DB_HOST=postgres
         - DB_PORT=5432
         - DB_NAME=${DB_NAME}
-        - REDPANDA_HOST=${REDPANDA_HOST}
-        - REDPANDA_PORT=${REDPANDA_PORT}
+        - REDPANDA_HOST=${REDPANDA_HOST:-redpanda}
+        - REDPANDA_PORT=${REDPANDA_PORT:-9092}
         - SECRET_KEY=${SECRET_KEY:-super-secret-key}
         - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY:-super-refresh-secret-key}
         - NODE_ENV=development

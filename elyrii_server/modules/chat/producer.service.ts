@@ -18,9 +18,10 @@ export async function sendMessageToTopic(
   options?: {
     conversationId?: string;
     history?: Array<{ role: string; message: string }>;
+    requestId?: string;
   }
 ): Promise<string> {
-  const requestId = randomUUIDv7();
+  const requestId = options?.requestId ?? randomUUIDv7();
 
   await kafkaService.producer.send({
     compression: CompressionTypes.GZIP,

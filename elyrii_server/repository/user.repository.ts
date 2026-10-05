@@ -24,6 +24,11 @@ class UserRepository {
                     emailVerified: userTable.emailVerified,
                     age: userTable.age,
                     pfp: userTable.pfp,
+                    bio: userTable.bio,
+                    gender: userTable.gender,
+                    pronouns: userTable.pronouns,
+                    wellnessGoal: userTable.wellnessGoal,
+                    timezone: userTable.timezone,
                     createdAt: userTable.createdAt,
                     updatedAt: userTable.updatedAt,
                 })
@@ -56,6 +61,11 @@ class UserRepository {
                     emailVerified: userTable.emailVerified,
                     age: userTable.age,
                     pfp: userTable.pfp,
+                    bio: userTable.bio,
+                    gender: userTable.gender,
+                    pronouns: userTable.pronouns,
+                    wellnessGoal: userTable.wellnessGoal,
+                    timezone: userTable.timezone,
                     createdAt: userTable.createdAt,
                     updatedAt: userTable.updatedAt,
                 })

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../providers/dashboard_provider.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../core/glass/elyrii_glass_surface.dart';
 
 /// Widget de sélection d'humeur avec effet glassmorphism
 class GlassMoodSelector extends StatelessWidget {
@@ -39,7 +39,7 @@ class GlassMoodSelector extends StatelessWidget {
                   isSelected: isSelected,
                   isDark: isDark,
                   onTap: () {
-                    HapticFeedback.mediumImpact();
+                    ElyriiHaptics.medium();
                     provider.selectMood(mood);
                   },
                 );
@@ -121,69 +121,23 @@ class _MoodButtonState extends State<_MoodButton>
             child: child,
           );
         },
-        child: ClipRRect(
+        child: ElyriiGlassSurface(
+          role: GlassRole.floatingControl,
           borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: widget.isSelected
-                      ? [
-                          AppColors.primary.withValues(alpha: 0.8),
-                          AppColors.primaryDark.withValues(alpha: 0.6),
-                        ]
-                      : widget.isDark
-                      ? [
-                          Colors.white.withValues(alpha: 0.12),
-                          Colors.white.withValues(alpha: 0.06),
-                        ]
-                      : [
-                          Colors.white.withValues(alpha: 0.8),
-                          Colors.white.withValues(alpha: 0.5),
-                        ],
-                ),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                border: Border.all(
-                  color: widget.isSelected
-                      ? AppColors.primary.withValues(alpha: 0.5)
-                      : widget.isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.6),
-                  width: widget.isSelected ? 2 : 1,
-                ),
-                boxShadow: widget.isSelected
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
-                          blurRadius: 16,
-                          spreadRadius: 2,
-                        ),
-                      ]
-                    : [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-              ),
-              child: Center(
-                child: Icon(
-                  widget.mood.icon,
-                  size: widget.isSelected ? 28 : 24,
-                  color: widget.isSelected
-                      ? Colors.white
-                      : (widget.isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight),
-                ),
-              ),
+          width: 56,
+          height: 56,
+          glassColor: widget.isSelected
+              ? AppColors.primary.withValues(alpha: 0.8)
+              : null,
+          child: Center(
+            child: Icon(
+              widget.mood.icon,
+              size: widget.isSelected ? 28 : 24,
+              color: widget.isSelected
+                  ? Colors.white
+                  : (widget.isDark
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiaryLight),
             ),
           ),
         ),

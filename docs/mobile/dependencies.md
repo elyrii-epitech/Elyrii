@@ -93,10 +93,8 @@ Viewer and controller for GLB 3D models.
 - mascot customization.
 
 **Current GLB assets:**
-- `assets/base_basic_design.glb`
-- `assets/base_basic_shaded.glb`
-- `assets/base_basic_shaded_v3.glb`
-- `assets/custom1.glb`
+- `assets/optimized/mascot.glb`
+- `assets/optimized/mascot_wardrobe.glb`
 
 ### Network
 
@@ -221,10 +219,8 @@ flutter:
     - assets/mascotte.png
     - assets/mascotte_eyes_closed.png
     - assets/animations/
-    - assets/base_basic_design.glb
-    - assets/base_basic_shaded.glb
-    - assets/base_basic_shaded_v3.glb
-    - assets/custom1.glb
+    - assets/optimized/mascot.glb
+    - assets/optimized/mascot_wardrobe.glb
     - assets/mascot_design_texture.png
     - assets/shaded_painted.png
 ```

@@ -21,7 +21,7 @@ export async function resolveWsIdentity(
 ): Promise<WsIdentity | null> {
     const tokenRepository = new TokenRepository();
     const parsedUrl = new URL(requestUrl, "http://localhost");
-    const token = extractBearerToken(authorizationHeader) || parsedUrl.searchParams.get("token");
+    const token = extractBearerToken(authorizationHeader);
     if (token) {
         const payload = await JwtUtils.verifyAccessToken(token);
         if (payload?.userId) {

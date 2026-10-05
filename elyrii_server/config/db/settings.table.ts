@@ -6,7 +6,9 @@ export const userSettingsTable = pgTable("user_settings", {
     userId: uuid("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
     themeMode: text("theme_mode").notNull().default("SYSTEM"), // LIGHT | DARK | SYSTEM
     notificationsEnabled: boolean("notifications_enabled").notNull().default(true),
+    hapticsEnabled: boolean("haptics_enabled").notNull().default(true),
     privacyMode: text("privacy_mode").notNull().default("STANDARD"), // STANDARD | STRICT
+    language: text("language").notNull().default("fr"),
     mascotAppearance: text("mascot_appearance").notNull().default("default"),
     mascotPersonality: jsonb("mascot_personality").notNull().default({
         tone: "supportive",

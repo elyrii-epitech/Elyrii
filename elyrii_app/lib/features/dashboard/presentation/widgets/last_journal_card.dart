@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:ui';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
@@ -57,7 +56,7 @@ class _LastJournalCardState extends State<LastJournalCard> {
       onTapDown: (_) {
         if (hasEntry) {
           setState(() => _isPressed = true);
-          HapticFeedback.lightImpact();
+          ElyriiHaptics.light();
         }
       },
       onTapUp: (_) {
@@ -69,45 +68,39 @@ class _LastJournalCardState extends State<LastJournalCard> {
         scale: _isPressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 100),
         child: RepaintBoundary(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: widget.isDark
-                        ? [
-                            Colors.white.withValues(alpha: 0.1),
-                            Colors.white.withValues(alpha: 0.05),
-                          ]
-                        : [
-                            Colors.white.withValues(alpha: 0.85),
-                            Colors.white.withValues(alpha: 0.6),
-                          ],
-                  ),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                  border: Border.all(
-                    color: widget.isDark
-                        ? Colors.white.withValues(alpha: 0.12)
-                        : Colors.white.withValues(alpha: 0.6),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: hasEntry ? _buildEntryContent() : _buildEmptyState(),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppDimensions.paddingMd),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: widget.isDark
+                    ? [
+                        Colors.white.withValues(alpha: 0.1),
+                        Colors.white.withValues(alpha: 0.05),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.85),
+                        Colors.white.withValues(alpha: 0.6),
+                      ],
               ),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              border: Border.all(
+                color: widget.isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.white.withValues(alpha: 0.6),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
+            child: hasEntry ? _buildEntryContent() : _buildEmptyState(),
           ),
         ),
       ),

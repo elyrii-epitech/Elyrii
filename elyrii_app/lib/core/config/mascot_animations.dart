@@ -1,87 +1,204 @@
-import 'dart:math';
+import 'package:flutter/foundation.dart';
 
+/// Mode de lecture d'un clip de la mascotte.
+enum MascotAnimationMode {
+  /// Joué en boucle tant que l'état persiste (idle, attentive, thinking).
+  loop,
+
+  /// Joué une seule fois puis retour automatique au calme (greet, celebrate).
+  once,
+
+  /// Fige le modèle dans sa pose courante sans changer de clip (pauses).
+  hold,
+}
+
+/// Clip d'animation embarqué dans `assets/elyrii_velours_animations.glb`.
+///
+/// Courbes reproductibles : `scripts/mascot/build_velours_motion.py`.
+@immutable
 class MascotAnimation {
-  final String id;
-  final String assetPath;
-  final int durationSeconds;
-  final bool loop;
-  final int weight;
-  final bool playOnOpen;
-  final bool playOnInactivity;
+  /// Nom exact de l'animation dans le GLB (sensible à la casse).
+  final String clipName;
+
+  /// Libellé lisible (usage debug/telemetry).
+  final String label;
+
+  final MascotAnimationMode mode;
+
+  /// Durée exacte du clip, utilisée pour programmer le retour au calme
+  /// des clips `once` (flutter_3d_controller n'expose pas d'évènement fin).
+  final Duration duration;
 
   const MascotAnimation({
-    required this.id,
-    required this.assetPath,
-    this.durationSeconds = 3,
-    this.loop = false,
-    this.weight = 1,
-    this.playOnOpen = false,
-    this.playOnInactivity = false,
+    required this.clipName,
+    required this.label,
+    required this.mode,
+    required this.duration,
   });
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MascotAnimation &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
+      other is MascotAnimation && other.clipName == clipName;
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => clipName.hashCode;
 }
 
-class MascotAnimations {
-  MascotAnimations._();
-
-  static const MascotAnimation idle = MascotAnimation(
-    id: 'breath',
-    assetPath: 'assets/animations/breath.json',
-    loop: true,
+/// Bibliothèque native d'Elyrii. Les noms et durées sont vérifiés contre
+/// le GLB par `scripts/mascot/check_velours_motion.py`.
+abstract final class MascotAnimations {
+  /// Deux souffles discrets, regard vivant et clignements espacés.
+  static const idle = MascotAnimation(
+    clipName: 'idle',
+    label: "Présence",
+    mode: MascotAnimationMode.loop,
+    duration: Duration(milliseconds: 12000),
   );
 
-  static const MascotAnimation coucou = MascotAnimation(
-    id: 'coucou',
-    assetPath: 'assets/animations/Coucou.json',
-    durationSeconds: 3,
-    loop: false,
-    weight: 1,
-    playOnOpen: true,
-    playOnInactivity: true,
+  /// Anticipation, patte relevée, deux salutations du poignet.
+  static const greet = MascotAnimation(
+    clipName: 'greet',
+    label: "Bonjour !",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 3200),
   );
 
-  static const List<MascotAnimation> specialAnimations = [coucou];
+  /// Inclinaison, légère avancée et petit acquiescement.
+  static const attentive = MascotAnimation(
+    clipName: 'attentive',
+    label: "Je t’écoute",
+    mode: MascotAnimationMode.loop,
+    duration: Duration(milliseconds: 6400),
+  );
 
-  static List<MascotAnimation> get openingAnimations =>
-      specialAnimations.where((a) => a.playOnOpen).toList();
+  /// Regard en biais, oreille en retard, retour vers toi.
+  static const thinking = MascotAnimation(
+    clipName: 'thinking',
+    label: "Je réfléchis",
+    mode: MascotAnimationMode.loop,
+    duration: Duration(milliseconds: 4400),
+  );
 
-  static List<MascotAnimation> get inactivityAnimations =>
-      specialAnimations.where((a) => a.playOnInactivity).toList();
+  /// Les deux pattes s’ouvrent avec un petit rebond du buste.
+  static const celebrate = MascotAnimation(
+    clipName: 'celebrate',
+    label: "Bravo !",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 3400),
+  );
 
-  static MascotAnimation? selectWeightedRandom(
-    List<MascotAnimation> animations,
-  ) {
-    if (animations.isEmpty) return null;
+  /// Pose pilotée par la progression réelle de la respiration.
+  static const breathe = MascotAnimation(
+    clipName: 'breathe',
+    label: "Respirons",
+    mode: MascotAnimationMode.loop,
+    duration: Duration(milliseconds: 2000),
+  );
 
-    final totalWeight = animations.fold<int>(0, (sum, a) => sum + a.weight);
-    final random = Random();
-    var randomValue = random.nextInt(totalWeight);
+  /// Regard à gauche puis à droite, tête penchée et oreille curieuse.
+  static const curious = MascotAnimation(
+    clipName: 'curious',
+    label: "Tiens, tiens…",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 7200),
+  );
 
-    for (final animation in animations) {
-      randomValue -= animation.weight;
-      if (randomValue < 0) {
-        return animation;
-      }
-    }
+  /// Long clignement paisible et relâchement des épaules.
+  static const cozy = MascotAnimation(
+    clipName: 'cozy',
+    label: "Bien installé",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 8000),
+  );
 
-    return animations.first;
-  }
+  /// Un signe de tête posé après une réponse ou une humeur partagée.
+  static const acknowledge = MascotAnimation(
+    clipName: 'acknowledge',
+    label: "Je suis là",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 2600),
+  );
 
-  static MascotAnimation? getById(String id) {
-    if (id == idle.id) return idle;
-    try {
-      return specialAnimations.firstWhere((a) => a.id == id);
-    } catch (_) {
-      return null;
-    }
-  }
+  /// La tête s’approche, une patte s’ouvre doucement pour accueillir.
+  static const reassure = MascotAnimation(
+    clipName: 'reassure',
+    label: "À ton rythme",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 4800),
+  );
+
+  /// Deux accents de joie contenus, pattes ouvertes et yeux plissés.
+  static const delight = MascotAnimation(
+    clipName: 'delight',
+    label: "Petit bonheur",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 3600),
+  );
+
+  /// Se penche vers toi, ferme les yeux et se redresse doucement.
+  static const nuzzle = MascotAnimation(
+    clipName: 'nuzzle',
+    label: "Un peu de douceur",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 4000),
+  );
+
+  /// Buste redressé, petit regard de chaque côté et salut du poignet.
+  static const proud = MascotAnimation(
+    clipName: 'proud',
+    label: "Ça me va ?",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 3800),
+  );
+
+  /// Étirement asymétrique des pattes, yeux mi-clos, relâchement.
+  static const stretch = MascotAnimation(
+    clipName: 'stretch',
+    label: "Petite pause",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 5600),
+  );
+
+  /// Une longue expiration et un léger signe de tête après la séance.
+  static const settle = MascotAnimation(
+    clipName: 'settle',
+    label: "Tout doucement",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 5200),
+  );
+
+  /// Une patte invite à avancer, suivie d’un acquiescement.
+  static const invite = MascotAnimation(
+    clipName: 'invite',
+    label: "On y va ?",
+    mode: MascotAnimationMode.once,
+    duration: Duration(milliseconds: 3400),
+  );
+
+  /// Conserve la pose courante pendant une pause.
+  static const holdPose = MascotAnimation(
+    clipName: '',
+    label: 'Pose tenue',
+    mode: MascotAnimationMode.hold,
+    duration: Duration.zero,
+  );
+
+  static const all = <MascotAnimation>[
+    idle,
+    greet,
+    attentive,
+    thinking,
+    celebrate,
+    breathe,
+    curious,
+    cozy,
+    acknowledge,
+    reassure,
+    delight,
+    nuzzle,
+    proud,
+    stretch,
+    settle,
+    invite,
+  ];
 }

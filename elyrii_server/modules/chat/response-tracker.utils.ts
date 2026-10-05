@@ -1,19 +1,28 @@
 import { EventEmitter } from "node:events";
 
-class ResponseTracker extends EventEmitter {
-    async waitForResponse(requestId: string, timeout = 30000): Promise<string> {
+export class ResponseTracker extends EventEmitter {
+    // Register before publishing: a fast worker may respond before send() resolves.
+    request(requestId: string, dispatch: () => Promise<unknown>, timeout = 30000): Promise<string> {
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
+            const cleanup = () => {
+                clearTimeout(timer);
                 this.removeListener(requestId, handler);
+            };
+            const timer = setTimeout(() => {
+                cleanup();
                 reject(new Error(`Timeout waiting for AI response (${requestId})`));
             }, timeout);
 
             const handler = (response: string) => {
-                clearTimeout(timer);
+                cleanup();
                 resolve(response);
             };
 
             this.once(requestId, handler);
+            Promise.resolve().then(dispatch).catch((error) => {
+                cleanup();
+                reject(error);
+            });
         });
     }
 

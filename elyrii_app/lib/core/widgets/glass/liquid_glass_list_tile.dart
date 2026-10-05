@@ -2,7 +2,8 @@
 // Part of the Liquid Glass Widget Kit
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../glass/elyrii_glass_surface.dart';
 
 // =============================================================================
 // LIQUID GLASS LIST TILE
@@ -49,7 +50,7 @@ class _LiquidGlassListTileState extends State<LiquidGlassListTile> {
           : null,
       onTap: widget.onTap != null
           ? () {
-              HapticFeedback.lightImpact();
+              ElyriiHaptics.light();
               widget.onTap?.call();
             }
           : null,
@@ -150,29 +151,14 @@ class LiquidGlassChip extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        HapticFeedback.lightImpact();
+        ElyriiHaptics.light();
         onTap();
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
+      child: ElyriiGlassSurface(
+        role: GlassRole.floatingControl,
+        borderRadius: BorderRadius.circular(20),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? primaryColor
-              : (isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.06)),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? primaryColor
-                : (isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.black.withValues(alpha: 0.1)),
-            width: 0.5,
-          ),
-        ),
+        glassColor: isSelected ? primaryColor : null,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

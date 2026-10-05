@@ -1,17 +1,20 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:email_validator/email_validator.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/utils/validators.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
+import '../widgets/auth_error_banner.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../../../../core/config/mascot_animations.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,6 +27,9 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  String? _errorBanner;
+  MascotAnimation _mascotAnimation = MascotAnimations.greet;
+  int _mascotTrigger = 0;
   bool get _isLoading => context.read<AuthProvider>().isLoading;
 
   @override
@@ -42,21 +48,20 @@ class _LoginPageState extends State<LoginPage> {
     );
     if (!mounted) return;
     if (success) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      setState(() {
+        _mascotAnimation = MascotAnimations.delight;
+        _mascotTrigger++;
+      });
+      context.go(AppRoutes.home);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
+      // Bannière contextuelle en haut de formulaire (pas de SnackBar).
+      setState(() {
+        _errorBanner =
             authProvider.error ??
-                'Oops, petit souci de connexion. Réessaie quand tu es prêt.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+            'Oops, petit souci de connexion. Réessaie quand tu es prêt.';
+        _mascotAnimation = MascotAnimations.reassure;
+        _mascotTrigger++;
+      });
     }
   }
 
@@ -80,11 +85,21 @@ class _LoginPageState extends State<LoginPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Mascot (translated vertically to center the model's visual body within the 250x250 container)
-                      Transform.translate(
-                            offset: const Offset(0, 25),
-                            child: const Mascot3DViewer(
-                              config: Mascot3DConfig.authPage(),
+                      // Mascotte cadrée par la caméra (cameraTarget du
+                      // config authPage) — aucun décalage de layout.
+                      GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              ElyriiHaptics.light();
+                              setState(() {
+                                _mascotAnimation = MascotAnimations.greet;
+                                _mascotTrigger++;
+                              });
+                            },
+                            child: Mascot3DViewer(
+                              config: const Mascot3DConfig.authPage(),
+                              animation: _mascotAnimation,
+                              animationTrigger: _mascotTrigger,
                               width: 250,
                               height: 250,
                             ),
@@ -103,13 +118,18 @@ class _LoginPageState extends State<LoginPage> {
                                   ? AppColors.textPrimaryDark
                                   : AppColors.textPrimaryLight,
                             ).copyWith(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.8,
                             ),
                         textAlign: TextAlign.center,
                       ),
 
                       const SizedBox(height: AppDimensions.spacingXl),
+
+                      if (_errorBanner != null) ...[
+                        AuthErrorBanner(message: _errorBanner!),
+                        const SizedBox(height: AppDimensions.spacingLg),
+                      ],
 
                       Form(
                             key: _formKey,
@@ -134,9 +154,9 @@ class _LoginPageState extends State<LoginPage> {
                                   keyboardType: TextInputType.emailAddress,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Veuillez entrer votre email';
+                                      return 'Entre ton email';
                                     }
-                                    if (!EmailValidator.validate(value)) {
+                                    if (!Validators.isValidEmail(value)) {
                                       return 'Email invalide';
                                     }
                                     return null;
@@ -158,7 +178,7 @@ class _LoginPageState extends State<LoginPage> {
                                       ).copyWith(fontWeight: FontWeight.w600),
                                     ),
                                     TextButton(
-                                      onPressed: () {},
+                                      onPressed: null,
                                       style: TextButton.styleFrom(
                                         padding: EdgeInsets.zero,
                                         minimumSize: Size.zero,
@@ -168,7 +188,9 @@ class _LoginPageState extends State<LoginPage> {
                                       child: Text(
                                         'Mot de passe oublié ?',
                                         style: AppTextStyles.bodySmall(
-                                          color: AppColors.primary,
+                                          color: isDark
+                                              ? AppColors.textTertiaryDark
+                                              : AppColors.textTertiaryLight,
                                         ),
                                       ),
                                     ),
@@ -183,7 +205,7 @@ class _LoginPageState extends State<LoginPage> {
                                   textInputAction: TextInputAction.done,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Veuillez entrer votre mot de passe';
+                                      return 'Entre ton mot de passe';
                                     }
                                     if (value.length < 6) {
                                       return 'Le mot de passe doit contenir au moins 6 caractères';
@@ -200,6 +222,24 @@ class _LoginPageState extends State<LoginPage> {
                                   isLoading: _isLoading,
                                   isExpanded: true,
                                   onPressed: _handleLogin,
+                                ),
+
+                                const SizedBox(height: AppDimensions.spacingSm),
+                                LiquidGlassButton(
+                                  label: 'Découvrir Elyrii',
+                                  icon: Icons.bolt_rounded,
+                                  style: LiquidGlassButtonStyle.tinted,
+                                  isExpanded: true,
+                                  onPressed: () async {
+                                    ElyriiHaptics.medium();
+                                    await context
+                                        .read<AuthProvider>()
+                                        .startDemoSession();
+                                    if (!context.mounted) return;
+                                    context.read<ValueNotifier<bool>>().value =
+                                        true;
+                                    context.go(AppRoutes.home);
+                                  },
                                 ),
 
                                 const SizedBox(height: AppDimensions.spacingXl),
@@ -241,15 +281,13 @@ class _LoginPageState extends State<LoginPage> {
 
                                 // Social Buttons (Stacked)
                                 _buildSocialButtonFull(
-                                  'Continuer avec Google',
-                                  'assets/google_logo.png', // Placeholder icon
+                                  'Google bientôt disponible',
                                   Icons.g_mobiledata,
                                   isDark,
                                 ),
                                 const SizedBox(height: AppDimensions.spacingMd),
                                 _buildSocialButtonFull(
-                                  'Continuer avec Apple',
-                                  'assets/apple_logo.png', // Placeholder icon
+                                  'Apple bientôt disponible',
                                   Icons.apple,
                                   isDark,
                                 ),
@@ -271,10 +309,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                     TextButton(
                                       onPressed: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.register,
-                                        );
+                                        context.push(AppRoutes.register);
                                       },
                                       style: TextButton.styleFrom(
                                         padding: EdgeInsets.zero,
@@ -291,30 +326,6 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   ],
                                 ),
-
-                                const SizedBox(height: AppDimensions.spacingXl),
-
-                                if (kDebugMode)
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        AppRoutes.home,
-                                      );
-                                    },
-                                    child: Text(
-                                      'Passer (Dev)',
-                                      style: AppTextStyles.bodySmall(
-                                        color: isDark
-                                            ? Colors.white.withValues(
-                                                alpha: 0.3,
-                                              )
-                                            : Colors.black.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                      ),
-                                    ),
-                                  ),
                               ],
                             ),
                           )
@@ -334,12 +345,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget _buildSocialButtonFull(
     String text,
-    String assetPath,
     IconData fallbackIcon,
     bool isDark,
   ) {
     return LiquidGlassCard(
-      onTap: () {},
       padding: EdgeInsets.zero,
       color: isDark
           ? Colors.white.withValues(alpha: 0.05)
