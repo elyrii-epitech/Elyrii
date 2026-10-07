@@ -21,19 +21,20 @@ Future<void> waitFor(
 }
 
 Future<void> tapVisible(WidgetTester tester, Finder target) async {
+  final description = target.describeMatch(Plurality.many);
   await waitFor(
     tester,
     () => target.evaluate().isNotEmpty,
-    description: '$target to appear',
+    description: '$description to appear',
   );
-  await tester.ensureVisible(target);
+  await tester.ensureVisible(target.first);
   await tester.pump();
   await waitFor(
     tester,
     () => target.hitTestable().evaluate().isNotEmpty,
-    description: '$target to accept taps',
+    description: '$description to accept taps',
   );
-  await tester.tap(target.hitTestable());
+  await tester.tap(target.hitTestable().first);
   await tester.pump();
 }
 
