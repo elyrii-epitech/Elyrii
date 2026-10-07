@@ -39,13 +39,15 @@ Future<void> tapVisible(WidgetTester tester, Finder target) async {
 /// Uses the real bootstrap and demo button, including the launch overlay and
 /// scrolling needed to reach the button on smaller native screens.
 Future<void> startDemoApp(WidgetTester tester) async {
+  bool launchFinished() => find
+      .byType(LaunchScope)
+      .evaluate()
+      .any((element) => !(element.widget as LaunchScope).isRevealing);
+
   app.main();
   await waitFor(
     tester,
-    () => find
-        .byType(LaunchScope)
-        .evaluate()
-        .any((element) => !(element.widget as LaunchScope).isRevealing),
+    launchFinished,
     description: 'native bootstrap and launch reveal',
   );
   if (find.byType(DashboardPage).evaluate().isEmpty) {
@@ -53,7 +55,7 @@ Future<void> startDemoApp(WidgetTester tester) async {
   }
   await waitFor(
     tester,
-    () => find.byType(DashboardPage).evaluate().isNotEmpty,
-    description: 'the demo dashboard',
+    () => find.byType(DashboardPage).evaluate().isNotEmpty && launchFinished(),
+    description: 'the interactive demo dashboard',
   );
 }

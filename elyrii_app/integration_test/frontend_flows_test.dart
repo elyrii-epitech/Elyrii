@@ -100,6 +100,12 @@ void main() {
           message.content,
         );
         await history.deleteOwner(owner);
+        await history.close();
+        history = ChatHistoryService(
+          factory: factory,
+          path: path,
+          cipher: cipher,
+        );
         expect(await history.sessions(owner), isEmpty);
         expect(await history.messages(owner, session.id), isEmpty);
       } finally {
