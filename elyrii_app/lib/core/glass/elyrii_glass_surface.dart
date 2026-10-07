@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+
 import '../design_system/colors/elyrii_colors.dart';
+import '../widgets/accessible_action.dart';
 import 'glass_role.dart';
 
 export 'glass_role.dart';
@@ -40,8 +42,11 @@ class ElyriiGlassSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final shouldFallback =
-        lightweight || (MediaQuery.maybeOf(context)?.highContrast ?? false);
+    final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
+    final surface = isDark
+        ? ElyriiColors.surfaceDark
+        : ElyriiColors.surfaceLight;
+    final shouldFallback = lightweight || highContrast;
 
     // Opaque fallback for the platform accessibility contrast setting.
     if (shouldFallback) {
@@ -50,9 +55,12 @@ class ElyriiGlassSurface extends StatelessWidget {
         height: height,
         padding: padding,
         decoration: BoxDecoration(
-          color:
-              glassColor ??
-              (isDark ? ElyriiColors.surfaceDark : ElyriiColors.surfaceLight),
+          color: highContrast
+              ? Color.alphaBlend(
+                  glassColor ?? surface,
+                  surface,
+                ).withValues(alpha: 1)
+              : glassColor ?? surface,
           borderRadius: borderRadius,
           border:
               border ??
@@ -67,7 +75,12 @@ class ElyriiGlassSurface extends StatelessWidget {
       );
 
       if (onTap != null) {
-        content = GestureDetector(onTap: onTap, child: content);
+        content = AccessibleAction(
+          label: null,
+          onPressed: onTap,
+          borderRadius: borderRadius,
+          child: content,
+        );
       }
       return content;
     }
@@ -121,7 +134,12 @@ class ElyriiGlassSurface extends StatelessWidget {
     Widget content = RepaintBoundary(child: glass);
 
     if (onTap != null) {
-      content = GestureDetector(onTap: onTap, child: content);
+      content = AccessibleAction(
+        label: null,
+        onPressed: onTap,
+        borderRadius: borderRadius,
+        child: content,
+      );
     }
     return content;
   }

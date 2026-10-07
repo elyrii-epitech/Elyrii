@@ -1,3 +1,5 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -175,7 +177,10 @@ class AiProposalCard extends StatelessWidget {
                               ),
                             ),
                           )
-                          .animate(onPlay: (c) => c.repeat())
+                          .animateRespectingMotion(
+                            context,
+                            onPlay: (c) => c.repeat(),
+                          )
                           .shimmer(
                             duration: 1000.ms,
                             color: Colors.white.withValues(alpha: 0.5),

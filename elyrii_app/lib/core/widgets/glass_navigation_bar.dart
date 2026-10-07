@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../design_system/haptics/elyrii_haptics.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';

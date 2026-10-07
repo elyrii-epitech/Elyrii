@@ -1,4 +1,7 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -311,7 +314,10 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                                 : BorderRadius.circular(1),
                                           ),
                                         )
-                                        .animate(onPlay: (c) => c.repeat())
+                                        .animateRespectingMotion(
+                                          context,
+                                          onPlay: (c) => c.repeat(),
+                                        )
                                         .fadeIn(delay: (i * 60).ms)
                                         .scale(
                                           begin: const Offset(0.5, 0.5),

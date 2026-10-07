@@ -1,55 +1,121 @@
+# Preserve the name consumed by the existing documentation workflow_run hook.
 name: Flutter Style, Test & Docs
-
 on:
   push:
-    branches: [ main, dev ]
+    branches: [main, dev, frontend]
+    paths: ['elyrii_app/**', 'docs/mobile/**', '.github/actions/setup-flutter/**', '.github/workflows/flutter-check-and-docs.yml']
   pull_request:
-    branches: [ main, dev ]
-
+    branches: [main, dev, frontend]
+    paths: ['elyrii_app/**', 'docs/mobile/**', '.github/actions/setup-flutter/**', '.github/workflows/flutter-check-and-docs.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  check:
+  quality:
+    name: Frontend quality
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: elyrii_app
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-flutter
+      - run: dart format --output=none --set-exit-if-changed lib test tool integration_test test_driver
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub --coverage
+      - uses: actions/upload-artifact@v4
         with:
-          flutter-version: '3.47.4'
-          channel: 'stable'
-
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
+          name: frontend-coverage
+          path: elyrii_app/coverage/lcov.info
+  mobile:
+    name: Frontend ${{ matrix.target }} technical build
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: android
+            os: ubuntu-latest
+            command: flutter build apk --debug --no-pub --dart-define=ELYRII_ENV=development
+            artifact: elyrii_app/build/app/outputs/flutter-apk/app-debug.apk
+          - target: ios-simulator
+            os: macos-latest
+            command: flutter build ios --simulator --debug --no-pub --dart-define=ELYRII_ENV=development
+            artifact: elyrii_app/build/ios/iphonesimulator
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: elyrii_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-flutter
+      - if: matrix.target == 'android'
+        uses: actions/setup-java@v4
         with:
-          path: |
-            ~/.pub-cache
-            elyrii_app/.dart_tool
-          key: ${{ runner.os }}-flutter-${{ hashFiles('elyrii_app/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Check formatting
-        run: dart format --set-exit-if-changed .
-
-      - name: Static analysis
-        run: flutter analyze
-
-      - name: Run unit tests
-        run: flutter test
-
-      - name: Generate documentation
-        run: flutter pub global activate dartdoc && flutter pub global run dartdoc
-
-      - name: Upload documentation artifact
-        uses: actions/upload-artifact@v4
+          distribution: temurin
+          java-version: '17'
+      - run: ${{ matrix.command }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-${{ matrix.target }}-development-debug
+          path: ${{ matrix.artifact }}
+  android-smoke:
+    name: Frontend Android integration
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-flutter
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_6
+          working-directory: elyrii_app
+          script: flutter test integration_test/frontend_flows_test.dart -d emulator-5554 --no-pub --dart-define=ELYRII_ENV=development
+  ios-smoke:
+    name: Frontend iOS integration
+    needs: quality
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: elyrii_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-flutter
+      - name: Select an available iPhone simulator
+        run: |
+          ELYRII_SIMULATOR_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; data=json.load(sys.stdin); phones=[d for runtime,devices in data["devices"].items() if "iOS" in runtime for d in devices if d.get("isAvailable") and d["name"].startswith("iPhone")]; phones.sort(key=lambda d: d["state"] != "Booted"); print(phones[0]["udid"] if phones else sys.exit("No available iPhone simulator"))')
+          echo "ELYRII_SIMULATOR_ID=$ELYRII_SIMULATOR_ID" >> "$GITHUB_ENV"
+          if ! xcrun simctl list devices booted | grep -q "$ELYRII_SIMULATOR_ID"; then
+            xcrun simctl boot "$ELYRII_SIMULATOR_ID"
+          fi
+          xcrun simctl bootstatus "$ELYRII_SIMULATOR_ID" -b
+      - name: Bootstrap, native persistence and navigation
+        run: flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development
+  dartdoc:
+    name: Frontend API documentation
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-flutter
+      - run: dart doc --output doc/api
+        working-directory: elyrii_app
+      - uses: actions/upload-artifact@v4
         with:
           name: dartdoc-html
-          path: elyrii_app/doc/api/
+          path: elyrii_app/doc/api

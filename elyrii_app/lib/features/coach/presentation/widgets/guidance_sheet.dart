@@ -1,3 +1,5 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -133,7 +135,10 @@ class _PreparingBody extends StatelessWidget {
           return Padding(
             padding: EdgeInsets.only(bottom: i < 2 ? 10 : 0),
             child: block(14, width: widths[i])
-                .animate(onPlay: (controller) => controller.repeat())
+                .animateRespectingMotion(
+                  context,
+                  onPlay: (controller) => controller.repeat(),
+                )
                 .shimmer(
                   duration: 1400.ms,
                   delay: (i * 160).ms,

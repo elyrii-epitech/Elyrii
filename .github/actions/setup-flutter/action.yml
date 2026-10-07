@@ -1,0 +1,18 @@
+name: Set up the pinned frontend SDK
+description: Use the same Flutter version and locked dependencies locally and in CI.
+runs:
+  using: composite
+  steps:
+    - id: sdk
+      shell: bash
+      run: |
+        version=$(python3 -c 'import json; print(json.load(open("elyrii_app/.fvmrc"))["flutter"])')
+        printf 'version=%s\n' "$version" >> "$GITHUB_OUTPUT"
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ steps.sdk.outputs.version }}
+        channel: stable
+        cache: true
+    - shell: bash
+      working-directory: elyrii_app
+      run: flutter pub get --enforce-lockfile

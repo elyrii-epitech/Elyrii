@@ -30,9 +30,8 @@ void main() {
       expect(target, findsOneWidget);
       await tester.tap(target);
       expect(calls, 1);
-      Focus.of(
-        tester.element(find.text('Enregistrer mon look')),
-      ).requestFocus();
+      Focus.of(tester.element(find.text('Enregistrer mon look')))
+          .requestFocus();
       await tester.pump();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.sendKeyEvent(LogicalKeyboardKey.space);

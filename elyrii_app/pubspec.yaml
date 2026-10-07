@@ -1,5 +1,5 @@
 name: elyrii_app
-description: "A new Flutter project."
+description: "Compagnon de bien-être Elyrii."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -19,8 +19,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.8.0 <4.0.0"
-  flutter: ">=3.41.0"
+  sdk: ">=3.13.3 <4.0.0"
+  flutter: ">=3.47.4"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -33,9 +33,12 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  cupertino_icons: ^1.0.8
 
   # Network
   http: ^1.6.0
+  cross_file: ^0.3.5+2
+  cryptography: ^2.9.0
   http_parser: ^4.1.2
   
   # State Management
@@ -43,7 +46,9 @@ dependencies:
   
   # Storage Local
   shared_preferences: ^2.5.5
+  path: ^1.9.1
   sqflite: ^2.4.4
+  sqflite_common: ^2.5.13
   visibility_detector: ^0.4.0+2
   
   # Secure Storage (for tokens, credentials)
@@ -76,6 +81,8 @@ dependencies:
   url_launcher: ^6.3.1
 dev_dependencies:
   sqflite_common_ffi: ^2.3.6
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
@@ -92,6 +99,7 @@ dev_dependencies:
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
+  image: ^4.8.0
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -136,13 +144,3 @@ flutter_launcher_icons:
   adaptive_icon_background: "#141314"
   adaptive_icon_foreground: "assets/splash_icon.png"
   adaptive_icon_foreground_inset: 0
-  web:
-    generate: true
-    image_path: "assets/brand/icon_web.png"
-    background_color: "#141314"
-    theme_color: "#141314"
-  windows:
-    generate: true
-    icon_size: 256
-  macos:
-    generate: true

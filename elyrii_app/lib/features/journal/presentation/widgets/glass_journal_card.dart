@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../providers/journal_provider.dart';
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../core/widgets/accessible_action.dart';
 
 /// Carte d'entrée de journal selon les spécifications Apple HIG.
 /// Affiche la date localisée en français (gris tertiaire), une pastille subtile
 /// pour l'humeur associée, et un aperçu hiérarchisé du texte avec troncature élégante.
-class GlassJournalCard extends StatefulWidget {
+class GlassJournalCard extends StatelessWidget {
   final JournalEntry entry;
   final VoidCallback onTap;
   final bool isDark;
@@ -20,13 +21,6 @@ class GlassJournalCard extends StatefulWidget {
     required this.onTap,
     this.isDark = false,
   });
-
-  @override
-  State<GlassJournalCard> createState() => _GlassJournalCardState();
-}
-
-class _GlassJournalCardState extends State<GlassJournalCard> {
-  bool _isPressed = false;
 
   /// Formatage de la date en français (ex : 'mar. 3 sept.') avec repli
   /// déterministe hors ligne si les symboles intl ne sont pas chargés.
@@ -57,110 +51,94 @@ class _GlassJournalCardState extends State<GlassJournalCard> {
 
   @override
   Widget build(BuildContext context) {
-    final entry = widget.entry;
     final timeStr =
         '${entry.createdAt.hour.toString().padLeft(2, '0')}:${entry.createdAt.minute.toString().padLeft(2, '0')}';
     final moodInfo = _getMoodInfo(entry.mood);
 
-    return GestureDetector(
-      onTapDown: (_) {
-        setState(() => _isPressed = true);
-        ElyriiHaptics.light();
-      },
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.98 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          decoration: BoxDecoration(
-            color: widget.isDark ? const Color(0xFF201E24) : Colors.white,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-            border: Border.all(
-              color: widget.isDark
-                  ? Colors.white.withValues(alpha: 0.10)
-                  : const Color(0xFFE0D4FF).withValues(alpha: 0.45),
-              width: 1.0,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(
-                  alpha: widget.isDark ? 0.22 : 0.04,
-                ),
-                blurRadius: 14,
-                spreadRadius: 0,
-                offset: const Offset(0, 3),
-              ),
-            ],
+    return AccessibleAction(
+      label: 'Ouvrir la note ${entry.title}, ${_formatDate(entry.createdAt)}',
+      onPressed: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF201E24) : Colors.white,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.10)
+                : const Color(0xFFE0D4FF).withValues(alpha: 0.45),
+            width: 1.0,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimensions.paddingMd),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // En-tête : Date (format FR) + Heure en gris tertiaire et Pastille d'humeur
-                Row(
-                  children: [
-                    Text(
-                      _formatDate(entry.createdAt),
-                      style: AppTextStyles.labelSmall(
-                        color: widget.isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      ' · $timeStr',
-                      style: AppTextStyles.labelSmall(
-                        color: widget.isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (moodInfo != null)
-                      _buildMoodBadge(moodInfo, widget.isDark),
-                  ],
-                ),
-
-                // Titre hiérarchisé (si renseigné)
-                if (entry.title.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    entry.title,
-                    style: AppTextStyles.titleMedium(
-                      color: widget.isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-
-                // Aperçu du contenu (2-3 lignes avec troncature élégante)
-                if ((entry.content ?? '').trim().isNotEmpty) ...[
-                  SizedBox(height: entry.title.isNotEmpty ? 6 : 8),
-                  Text(
-                    entry.content!.trim(),
-                    style: AppTextStyles.bodyMedium(
-                      color: widget.isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
-                    ).copyWith(height: 1.45),
-                    maxLines: entry.title.isNotEmpty ? 2 : 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.04),
+              blurRadius: 14,
+              spreadRadius: 0,
+              offset: const Offset(0, 3),
             ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // En-tête : Date (format FR) + Heure en gris tertiaire et Pastille d'humeur
+              Row(
+                children: [
+                  Text(
+                    _formatDate(entry.createdAt),
+                    style: AppTextStyles.labelSmall(
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    ' · $timeStr',
+                    style: AppTextStyles.labelSmall(
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (moodInfo != null) _buildMoodBadge(moodInfo, isDark),
+                ],
+              ),
+
+              // Titre hiérarchisé (si renseigné)
+              if (entry.title.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  entry.title,
+                  style: AppTextStyles.titleMedium(
+                    color: isDark
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimaryLight,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+
+              // Aperçu du contenu (2-3 lignes avec troncature élégante)
+              if ((entry.content ?? '').trim().isNotEmpty) ...[
+                SizedBox(height: entry.title.isNotEmpty ? 6 : 8),
+                Text(
+                  entry.content!.trim(),
+                  style: AppTextStyles.bodyMedium(
+                    color: isDark
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondaryLight,
+                  ).copyWith(height: 1.45),
+                  maxLines: entry.title.isNotEmpty ? 2 : 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
           ),
         ),
       ),

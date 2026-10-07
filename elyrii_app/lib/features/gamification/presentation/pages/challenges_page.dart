@@ -1,3 +1,5 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -14,10 +16,8 @@ import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/gamification_provider.dart';
-import '../widgets/ai_proposal_card.dart';
+import '../widgets/challenge_sections.dart';
 import '../widgets/badges_grid.dart';
-import '../widgets/challenge_card.dart';
-import '../widgets/quest_tile.dart';
 import '../widgets/daily_streak_card.dart';
 
 /// Jardin — Sanctuaire de progression visuelle, rituels et réussites.
@@ -89,38 +89,27 @@ class _ChallengesPageState extends State<ChallengesPage> {
     ),
   ];
 
-  static const List<Map<String, dynamic>> _botanicalStates = [
-    {
-      'label': 'Éveil',
-      'emoji': '🌱',
-      'desc': 'Les premières pousses prennent racine',
-    },
-    {
-      'label': 'Épanouissement',
-      'emoji': '🌿',
-      'desc': 'Ton feuillage grandit doucement',
-    },
-    {
-      'label': 'Sérénité',
-      'emoji': '🌸',
-      'desc': 'Les fleurs de paix s\'ouvrent',
-    },
-    {
-      'label': 'Harmonie',
-      'emoji': '🦋',
-      'desc': 'La vie s\'aligne en équilibre',
-    },
-    {
-      'label': 'Lumière intérieure',
-      'emoji': '✨',
-      'desc': 'Ton sanctuaire rayonne',
-    },
+  static const _botanicalStates = <({String label, String emoji, String desc})>[
+    (
+      label: 'Éveil',
+      emoji: '🌱',
+      desc: 'Les premières pousses prennent racine',
+    ),
+    (
+      label: 'Épanouissement',
+      emoji: '🌿',
+      desc: 'Ton feuillage grandit doucement',
+    ),
+    (label: 'Sérénité', emoji: '🌸', desc: 'Les fleurs de paix s’ouvrent'),
+    (label: 'Harmonie', emoji: '🦋', desc: 'La vie s’aligne en équilibre'),
+    (label: 'Lumière intérieure', emoji: '✨', desc: 'Ton sanctuaire rayonne'),
   ];
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final provider = context.read<GamificationProvider>();
       _observedGamificationProvider = provider;
       provider.addListener(_onGamificationChanged);
@@ -176,7 +165,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
     if (mounted) setState(() => _processingProposalId = null);
   }
 
-  Map<String, dynamic> _getBotanicalState(int level) {
+  ({String label, String emoji, String desc}) _getBotanicalState(int level) {
     final index = (level - 1).clamp(0, _botanicalStates.length - 1);
     return _botanicalStates[index];
   }
@@ -227,7 +216,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               AppDimensions.pageHorizontalPadding,
               12,
               AppDimensions.pageHorizontalPadding,
-              110, // Marge pour la barre de navigation flottante
+              0,
             ),
             sliver: SliverToBoxAdapter(
               child: Column(
@@ -258,32 +247,69 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         setState(() => _mainSegment = value),
                   ),
                   const SizedBox(height: 18),
-
-                  // 4. Vues animées fluides (taille + fondu progressif)
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.topCenter,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 250),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      layoutBuilder: (currentChild, previousChildren) {
-                        return Stack(
-                          alignment: Alignment.topCenter,
-                          children: [...previousChildren, ?currentChild],
-                        );
-                      },
-                      transitionBuilder: _smoothFade,
-                      child: _mainSegment == 0
-                          ? _buildQuestsView(provider, isDark)
-                          : _buildSuccessesView(provider, isDark, streakDays),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
+          if (provider.error != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    provider.error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.pageHorizontalPadding,
+            ),
+            sliver: _mainSegment == 0
+                ? provider.isLoading &&
+                          provider.activeChallenges.isEmpty &&
+                          provider.availableChallenges.isEmpty
+                      ? SliverToBoxAdapter(
+                          child: _ChallengesSkeleton(isDark: isDark),
+                        )
+                      : ChallengeQuestsSliver(
+                          provider: provider,
+                          startingId: _startingChallengeId,
+                          processingId: _processingProposalId,
+                          onStart: _handleStart,
+                          onAccept: _handleAcceptProposal,
+                          onReject: _handleRejectProposal,
+                        )
+                : SliverMainAxisGroup(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: _segmentedControl(
+                          isDark: isDark,
+                          groupValue: _successesSubSegment,
+                          labels: const {
+                            0: 'Badges & Trophées',
+                            1: 'Historique des fleurs',
+                          },
+                          onValueChanged: (value) =>
+                              setState(() => _successesSubSegment = value),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                      if (_successesSubSegment == 0)
+                        SliverToBoxAdapter(
+                          child: _buildBadgesView(isDark, streakDays),
+                        )
+                      else
+                        ChallengeHistorySliver(provider: provider),
+                    ],
+                  ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
     );
@@ -334,7 +360,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
   /// Carte Héroïque du Jardin Intérieur (style Apple Health / Fitness).
   Widget _buildGardenHeroCard({
     required bool isDark,
-    required Map<String, dynamic> stateData,
+    required ({String label, String emoji, String desc}) stateData,
     required int level,
     required int currentXp,
     required int maxXp,
@@ -371,7 +397,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 ),
                 child: Center(
                   child: Text(
-                    stateData['emoji'] as String,
+                    stateData.emoji,
                     style: const TextStyle(fontSize: 26),
                   ),
                 ),
@@ -384,7 +410,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     Row(
                       children: [
                         Text(
-                          stateData['label'] as String,
+                          stateData.label,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -416,7 +442,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      stateData['desc'] as String,
+                      stateData.desc,
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
@@ -677,121 +703,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
   // Vue « Mes Quêtes »
   // ============================================================
 
-  Widget _buildQuestsView(GamificationProvider provider, bool isDark) {
-    if (provider.isLoading &&
-        provider.activeChallenges.isEmpty &&
-        provider.availableChallenges.isEmpty) {
-      return _ChallengesSkeleton(isDark: isDark);
-    }
-
-    final hasActive = provider.activeChallenges.isNotEmpty;
-    final hasProposals = provider.proposals.isNotEmpty;
-    final hasAvailable = provider.availableChallenges.isNotEmpty;
-
-    return Column(
-      key: const ValueKey('quests_view'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Rituels en cours
-        _sectionHeader('Rituels en cours', isDark),
-        if (!hasActive)
-          _emptyCard(
-            key: const ValueKey('quests_empty_subview'),
-            isDark: isDark,
-            icon: Icons.spa_rounded,
-            title: 'Aucun rituel actif aujourd\'hui',
-            subtitle:
-                'Choisis une graine ci-dessous pour faire grandir ton jardin, ou avance à ton propre rythme.',
-          )
-        else
-          ...provider.activeChallenges.map(
-            (uc) => QuestTile(
-              title: uc.displayTitle,
-              subtitle: _shortDescription(uc.displayDescription),
-              icon: uc.displayIcon,
-              xpReward: uc.template?.rewardPoints ?? 50,
-              isCompleted: false,
-              progressFraction: uc.progressFraction,
-              progressText: uc.progressText,
-            ),
-          ),
-        const SizedBox(height: 24),
-
-        // Graines & Suggestions proposées par Elyrii
-        if (hasProposals) ...[
-          _sectionHeader('Graines proposées par ton Coach IA', isDark),
-          ...provider.proposals.map(
-            (proposal) => AiProposalCard(
-              proposal: proposal,
-              isProcessing: _processingProposalId == proposal.id,
-              onAccept: () => _handleAcceptProposal(proposal.id),
-              onReject: () => _handleRejectProposal(proposal.id),
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
-
-        // Rituels universels à découvrir
-        if (hasAvailable) ...[
-          _sectionHeader('À découvrir dans le sanctuaire', isDark),
-          ...provider.availableChallenges.map(
-            (challenge) => ChallengeAvailableCard(
-              challenge: challenge,
-              isStarting: _startingChallengeId == challenge.id,
-              onStart: () => _handleStart(challenge.id),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  // ============================================================
-  // Vue « Mes Succès »
-  // ============================================================
-
-  Widget _buildSuccessesView(
-    GamificationProvider provider,
-    bool isDark,
-    int streakDays,
-  ) {
-    return Column(
-      key: const ValueKey('successes_view'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Sous-segmenté Succès : Badges fleuris / Rituels accomplis
-        _segmentedControl(
-          isDark: isDark,
-          groupValue: _successesSubSegment,
-          labels: const {0: 'Badges & Trophées', 1: 'Historique des fleurs'},
-          onValueChanged: (value) =>
-              setState(() => _successesSubSegment = value),
-        ),
-        const SizedBox(height: 12),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            layoutBuilder: (currentChild, previousChildren) {
-              return Stack(
-                alignment: Alignment.topCenter,
-                children: [...previousChildren, ?currentChild],
-              );
-            },
-            transitionBuilder: _smoothFade,
-            child: _successesSubSegment == 0
-                ? _buildBadgesView(isDark, streakDays)
-                : _buildHistoryView(provider, isDark),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBadgesView(bool isDark, int streakDays) {
     final unlockedCount = _badges.where((b) => b.isUnlocked).length;
     final totalCount = _badges.length;
@@ -874,96 +785,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
     );
   }
 
-  Widget _buildHistoryView(GamificationProvider provider, bool isDark) {
-    if (provider.completedChallenges.isEmpty) {
-      return _emptyCard(
-        key: const ValueKey('history_empty_subview'),
-        isDark: isDark,
-        icon: Icons.auto_stories_rounded,
-        title: 'Ton herbier est encore vierge',
-        subtitle:
-            'Chaque rituel mené à son terme laissera ici une trace douce de ton chemin.',
-      );
-    }
-
-    return Column(
-      key: const ValueKey('history_list_subview'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ...provider.completedChallenges.map(
-          (uc) => QuestTile(
-            title: uc.displayTitle,
-            subtitle: _shortDescription(uc.displayDescription),
-            icon: uc.displayIcon,
-            xpReward: uc.template?.rewardPoints ?? 50,
-            isCompleted: true,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ============================================================
-  // Éléments d'UI communs & Helpers
-  // ============================================================
-
-  Widget _emptyCard({
-    Key? key,
-    required bool isDark,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return LiquidGlassCard(
-      key: key,
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.05)
-                  : Colors.black.withValues(alpha: 0.04),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              size: 28,
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.45,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _segmentedControl({
     required bool isDark,
     required int groupValue,
@@ -1008,36 +829,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
           onValueChanged(value);
         },
       ),
-    );
-  }
-
-  Widget _sectionHeader(String title, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 10),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-        ),
-      ),
-    );
-  }
-
-  String _shortDescription(String description) {
-    const maxLength = 48;
-    if (description.characters.length <= maxLength) return description;
-    return '${description.characters.take(maxLength)}…';
-  }
-
-  Widget _smoothFade(Widget child, Animation<double> animation) {
-    return FadeTransition(
-      opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic),
-      child: child,
     );
   }
 
@@ -1133,7 +924,8 @@ class _ChallengesSkeleton extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   )
-                  .animate(
+                  .animateRespectingMotion(
+                    context,
                     onPlay: (controller) => controller.repeat(reverse: true),
                   )
                   .shimmer(duration: 1400.ms, color: shimmerHighlight),

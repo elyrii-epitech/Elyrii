@@ -1,3 +1,4 @@
+import '../../../../core/network/json_response.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/config/api_config.dart';
 import '../models/gamification_models.dart';
@@ -6,16 +7,11 @@ import '../models/gamification_models.dart';
 class GamificationRepository {
   final ApiClient _client;
 
-  GamificationRepository({required ApiClient client}) : _client = client;
+  GamificationRepository({required this._client});
 
   /// Parse a list response into UserChallenge objects
   List<UserChallenge> _parseList(dynamic response) {
-    final List<dynamic> data = response is List
-        ? response
-        : (response['data'] ?? []);
-    return data
-        .map((e) => UserChallenge.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return decodeListResponse(response, UserChallenge.fromJson);
   }
 
   /// Fetch active challenges for the authenticated user
@@ -38,45 +34,46 @@ class GamificationRepository {
 
   /// Accept a proposed challenge
   Future<UserChallenge> acceptChallenge(String challengeId) async {
-    final response =
-        await _client.post(ApiConfig.acceptChallengeUrl(challengeId))
-            as Map<String, dynamic>;
-    return UserChallenge.fromJson(response);
+    final response = await _client.post(
+      ApiConfig.acceptChallengeUrl(challengeId),
+    );
+    return decodeResponse(response, UserChallenge.fromJson);
   }
 
   /// Reject a proposed challenge
   Future<UserChallenge> rejectChallenge(String challengeId) async {
-    final response =
-        await _client.post(ApiConfig.rejectChallengeUrl(challengeId))
-            as Map<String, dynamic>;
-    return UserChallenge.fromJson(response);
+    final response = await _client.post(
+      ApiConfig.rejectChallengeUrl(challengeId),
+    );
+    return decodeResponse(response, UserChallenge.fromJson);
   }
 
   /// Fetch SYSTEM challenges not yet started by the user
   Future<List<ChallengeTemplate>> getAvailableChallenges() async {
     final response = await _client.get(ApiConfig.availableChallengesUrl);
-    final List<dynamic> data = response is List
-        ? response
-        : (response['data'] ?? []);
-    return data
-        .map((e) => ChallengeTemplate.fromJson(e as Map<String, dynamic>))
-        .toList();
+    return decodeListResponse(response, ChallengeTemplate.fromJson);
   }
 
   /// Start a SYSTEM challenge (assigns it as ACTIVE)
   Future<UserChallenge> startChallenge(String challengeId) async {
-    final response =
-        await _client.post(ApiConfig.startChallengeUrl(challengeId))
-            as Map<String, dynamic>;
+    final response = await _client.post(
+      ApiConfig.startChallengeUrl(challengeId),
+    );
+    return decodeResponse(response, _startedChallenge);
+  }
+
+  UserChallenge _startedChallenge(Map<String, dynamic> response) {
     // Backend returns { challenge, userChallenge }
     if (response['userChallenge'] is Map<String, dynamic>) {
-      final uc = UserChallenge.fromJson(
-        response['userChallenge'] as Map<String, dynamic>,
+      final uc = decodeResponse(
+        response['userChallenge'],
+        UserChallenge.fromJson,
       );
       // Attach the template from the response
       if (response['challenge'] is Map<String, dynamic>) {
-        final tpl = ChallengeTemplate.fromJson(
-          response['challenge'] as Map<String, dynamic>,
+        final tpl = decodeResponse(
+          response['challenge'],
+          ChallengeTemplate.fromJson,
         );
         return UserChallenge(
           id: uc.id,
@@ -92,6 +89,6 @@ class GamificationRepository {
       }
       return uc;
     }
-    return UserChallenge.fromJson(response);
+    return decodeResponse(response, UserChallenge.fromJson);
   }
 }

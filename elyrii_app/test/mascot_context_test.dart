@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'support/empty_chat_history.dart';
 
 class _Chat extends ChatbotProvider {
@@ -203,7 +204,10 @@ void main() {
         tester.view.physicalSize = const Size(500, 1000);
         tester.view.devicePixelRatio = 1;
         final mascot = MascotProvider();
-        final controller = MeditationController()..setBreathingType(type);
+        final epoch = tester.binding.clock.now();
+        final controller = MeditationController(
+          elapsed: () => tester.binding.clock.now().difference(epoch),
+        )..setBreathingType(type);
         await controller.startSession();
         await tester.pumpWidget(
           wrap(

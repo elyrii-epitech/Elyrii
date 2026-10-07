@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -41,9 +42,11 @@ class MeditationController extends ChangeNotifier {
   _SessionRegistration? _registration;
 
   Timer? _timer;
+  final Stopwatch _clock = Stopwatch();
+  final Duration Function()? _elapsed;
+  int _clockSeconds = 0;
 
-  MeditationController({MeditationRepository? repository})
-    : _repository = repository;
+  MeditationController({this._repository, this._elapsed});
 
   // Getters
   int get selectedDurationMinutes => _selectedDurationMinutes;
@@ -208,7 +211,10 @@ class MeditationController extends ChangeNotifier {
 
   void pauseSession() {
     if (_sessionState != MeditationSessionState.running) return;
+    synchronizeClock();
+    if (!isRunning) return;
     _timer?.cancel();
+    _clock.stop();
     _sessionState = MeditationSessionState.paused;
     ElyriiHaptics.light();
     notifyListeners();
@@ -224,6 +230,7 @@ class MeditationController extends ChangeNotifier {
 
   Future<void> stopSession({bool finished = false}) async {
     _timer?.cancel();
+    _clock.stop();
     final previousSessionId = _backendSessionId;
 
     if (finished) {
@@ -298,52 +305,75 @@ class MeditationController extends ChangeNotifier {
 
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      tick();
-    });
+    _clock
+      ..reset()
+      ..start();
+    _clockSeconds = _elapsed?.call().inSeconds ?? 0;
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => synchronizeClock(),
+    );
   }
 
-  /// Exécute un pas de temps (1 seconde) dans l'exercice.
-  /// Méthode publique pour permettre un test unitaire déterministe sans attendre l'horloge système.
-  void tick() {
-    if (_sessionState != MeditationSessionState.running) return;
+  /// Read monotonic elapsed time; delayed callbacks never extend a session.
+  /// Backgrounding pauses the session through the page lifecycle observer.
+  @visibleForTesting
+  void synchronizeClock() {
+    if (!isRunning || _disposed) return;
+    final seconds = (_elapsed?.call() ?? _clock.elapsed).inSeconds;
+    final delta = seconds - _clockSeconds;
+    if (delta <= 0) return;
+    _clockSeconds = seconds;
+    _advance(delta);
+  }
 
-    _remainingSeconds--;
+  /// Explicit one-second step for deterministic domain tests.
+  @visibleForTesting
+  void tick() => _advance(1);
 
-    if (selectedBreathingType != null &&
-        !isBreathingRecovery &&
-        _phaseSecondsRemaining <= 1) {
-      // Transition vers la phase suivante
-      final phases = selectedBreathingType!.phases;
-      final nextIndex = (_currentPhaseIndex + 1) % phases.length;
-
-      if (nextIndex == 0) {
-        _completedCycles++;
+  void _advance(int seconds) {
+    if (!isRunning || _disposed) return;
+    final steps = seconds.clamp(0, _remainingSeconds);
+    var changedPhase = false;
+    for (var i = 0; i < steps; i++) {
+      _remainingSeconds--;
+      if (selectedBreathingType != null && !isBreathingRecovery) {
+        if (_phaseSecondsRemaining <= 1) {
+          final phases = selectedBreathingType!.phases;
+          final next = (_currentPhaseIndex + 1) % phases.length;
+          if (next == 0) _completedCycles++;
+          _currentPhaseIndex = isBreathingRecovery ? -1 : next;
+          _phaseSecondsRemaining = isBreathingRecovery
+              ? 0
+              : phases[next].seconds;
+          changedPhase = true;
+        } else {
+          _phaseSecondsRemaining--;
+        }
       }
-
-      _currentPhaseIndex = isBreathingRecovery ? -1 : nextIndex;
-      _phaseSecondsRemaining = isBreathingRecovery
-          ? 0
-          : phases[nextIndex].seconds;
-
-      // Vibration haptique à chaque transition de phase
-      ElyriiHaptics.light();
-    } else if (selectedBreathingType != null && !isBreathingRecovery) {
-      _phaseSecondsRemaining--;
     }
-
+    if (changedPhase) ElyriiHaptics.light();
     if (_remainingSeconds == 0) {
-      stopSession(finished: true);
-      return;
+      unawaited(stopSession(finished: true));
+    } else if (steps > 0) {
+      notifyListeners();
     }
-
-    notifyListeners();
   }
 
   @override
   void dispose() {
     _disposed = true;
+    _generation++;
     _timer?.cancel();
+    _clock.stop();
+    final id = _backendSessionId;
+    if (!isFinished && id != null && _repository != null) {
+      unawaited(
+        _repository
+            .cancelSession(id)
+            .then<void>((_) {}, onError: (Object _) {}),
+      );
+    }
     super.dispose();
   }
 }

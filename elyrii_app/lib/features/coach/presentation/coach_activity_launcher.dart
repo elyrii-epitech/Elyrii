@@ -79,10 +79,11 @@ Future<void> _launchBreathing(
   // continue en arrière-plan) : la séance est déjà vivante quand la route
   // immersive apparaît.
   unawaited(controller.startSession());
-  await context.push(AppRoutes.meditationSession, extra: controller);
-
-  // Le coach est propriétaire du cycle de vie du contrôleur qu'il crée.
-  if (context.mounted) controller.dispose();
+  try {
+    await context.push(AppRoutes.meditationSession, extra: controller);
+  } finally {
+    controller.dispose();
+  }
 }
 
 void _launchJournal(BuildContext context, CoachActivity activity) {

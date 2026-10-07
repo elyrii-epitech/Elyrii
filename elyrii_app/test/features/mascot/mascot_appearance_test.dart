@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
 import 'package:elyrii_app/features/mascot/data/models/mascot_appearance.dart';
@@ -80,8 +81,8 @@ void main() {
           'cozy_scarf',
           'mini_backpack',
         ],
-        appearance: const MascotAppearance(
-          colors: {
+        appearance: MascotAppearance(
+          colors: const {
             'body': '#B8A3DC',
             'details': '#FFFFFF',
             'ears': '#F2CE94',
@@ -108,25 +109,22 @@ void main() {
     },
   );
 
-  test(
-    'un brouillon contenant une récompense verrouillée ne modifie pas le look enregistré',
-    () async {
-      final client = _Client();
-      final provider = MascotProvider(client: client, userId: 'user');
-      await provider.loadMascot();
-      final saved = provider.mascot;
-      expect(
-        await provider.saveCustomization(
-          saved.copyWith(equippedCosmetics: ['mini_backpack']),
-          completedChallenges: 2,
-        ),
-        isFalse,
-      );
-      expect(provider.mascot, saved);
-      expect(client.updates, isEmpty);
-      provider.dispose();
-    },
-  );
+  test('un brouillon contenant une récompense verrouillée ne modifie pas le look enregistré', () async {
+    final client = _Client();
+    final provider = MascotProvider(client: client, userId: 'user');
+    await provider.loadMascot();
+    final saved = provider.mascot;
+    expect(
+      await provider.saveCustomization(
+        saved.copyWith(equippedCosmetics: ['mini_backpack']),
+        completedChallenges: 2,
+      ),
+      isFalse,
+    );
+    expect(provider.mascot, saved);
+    expect(client.updates, isEmpty);
+    provider.dispose();
+  });
 
   test(
     'un look hors ligne survit à un ancien état serveur puis se synchronise',
@@ -135,7 +133,7 @@ void main() {
       final provider = MascotProvider(client: client, userId: 'user');
       await provider.loadMascot();
       final look = provider.mascot.copyWith(
-        appearance: const MascotAppearance(colors: {'body': '#12AB9F'}),
+        appearance: MascotAppearance(colors: const {'body': '#12AB9F'}),
       );
       expect(
         await provider.saveCustomization(look, completedChallenges: 0),
@@ -172,12 +170,12 @@ void main() {
       final provider = MascotProvider(client: client, userId: 'user');
       await provider.loadMascot();
       final first = provider.mascot.copyWith(
-        appearance: const MascotAppearance(colors: {'body': '#B8A3DC'}),
+        appearance: MascotAppearance(colors: const {'body': '#B8A3DC'}),
       );
       await provider.saveCustomization(first, completedChallenges: 0);
       await Future<void>.delayed(Duration.zero);
       final latest = first.copyWith(
-        appearance: const MascotAppearance(colors: {'body': '#91C5BD'}),
+        appearance: MascotAppearance(colors: const {'body': '#91C5BD'}),
       );
       await provider.saveCustomization(latest, completedChallenges: 0);
       expect(client.updates, hasLength(1));

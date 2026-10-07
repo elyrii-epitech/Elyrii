@@ -1,5 +1,7 @@
-import 'dart:io';
+import 'local_avatar_image.dart';
+
 import 'package:flutter/material.dart';
+
 import '../theme/app_colors.dart';
 import '../constants/avatar_options.dart';
 
@@ -58,13 +60,9 @@ class UserAvatar extends StatelessWidget {
                     cacheHeight: decodeSize,
                   )
                 : isLocalFile
-                ? Image.file(
-                    File(localAvatarFilePath(pfp!)),
-                    cacheWidth: decodeSize,
-                    cacheHeight: decodeSize,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) =>
-                        Image.asset('assets/mascotte.png', fit: BoxFit.cover),
+                ? LocalAvatarImage(
+                    path: localAvatarFilePath(pfp!),
+                    decodeSize: decodeSize,
                   )
                 : Image.network(
                     pfp!,

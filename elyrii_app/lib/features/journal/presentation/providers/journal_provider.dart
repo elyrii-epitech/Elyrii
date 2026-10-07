@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+
 import '../../../../core/network/api_client.dart';
 import '../../data/models/journal_entry_model.dart';
 import '../../data/repositories/journal_repository.dart';
@@ -9,6 +12,7 @@ typedef JournalEntry = JournalEntryModel;
 /// Provider pour gérer l'état du journal
 class JournalProvider extends ChangeNotifier {
   final JournalRepository _repository;
+  final bool _ownsRepository;
 
   List<JournalEntryModel> _entries = [];
   List<JournalEntryModel> _sortedEntries = const [];
@@ -26,12 +30,51 @@ class JournalProvider extends ChangeNotifier {
         repository != null || client != null,
         'repository or client must be provided',
       ),
-      _repository = repository ?? JournalRepository(client: client!);
+      _repository = repository ?? JournalRepository(client: client!),
+      _ownsRepository = repository == null;
 
   /// Load entries from the backend
   final Map<(DateTime?, DateTime?), Future<void>> _loads = {};
   int _loadVersion = 0;
   int _sessionVersion = 0;
+  String? _owner;
+  String? get owner => _owner;
+  bool _disposed = false;
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  void onUserChanged(String? owner) {
+    _owner = owner;
+    resetSession();
+  }
+
+  Future<Map<String, dynamic>?> readDraft(String key) async {
+    final owner = _owner ?? await _repository.currentOwner;
+    return owner == null ? null : _repository.store.readDraft(owner, key);
+  }
+
+  Future<void> saveDraft(String key, Map<String, dynamic> value) async {
+    final revision = _sessionVersion;
+    final owner = _owner ?? await _repository.currentOwner;
+    if (owner == null || _disposed || revision != _sessionVersion) return;
+    await _repository.store.saveDraft(owner, key, value);
+  }
+
+  Future<void> deleteDraft(String key) async {
+    final owner = _owner ?? await _repository.currentOwner;
+    if (owner != null) await _repository.store.deleteDraft(owner, key);
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _sessionVersion++;
+    _loadVersion++;
+    if (_ownsRepository) unawaited(_repository.store.close());
+    super.dispose();
+  }
 
   /// Logout also invalidates requests still using the previous credentials.
   void resetSession() {
@@ -64,10 +107,24 @@ class JournalProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      final entries = await _repository.getEntries(
+      final pending = _repository.getEntries(
         startDate: startDate,
         endDate: endDate,
       );
+      pending.ignore();
+      final cached = await _repository.getCachedEntries();
+      if (version != _loadVersion) return;
+      _entries = cached
+          .where(
+            (entry) =>
+                (startDate == null || !entry.createdAt.isBefore(startDate)) &&
+                (endDate == null || !entry.createdAt.isAfter(endDate)),
+          )
+          .toList();
+      _updateSortedEntries();
+      if (cached.isNotEmpty) _isLoading = false;
+      notifyListeners();
+      final entries = await pending;
       if (version != _loadVersion) return;
       _entries = entries;
       _updateSortedEntries();
@@ -148,18 +205,21 @@ class JournalProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteEntry(String id) async {
+  Future<bool> deleteEntry(String id) async {
     final session = _sessionVersion;
     try {
       await _repository.deleteEntry(id);
-      if (session != _sessionVersion) return;
+      if (session != _sessionVersion) return false;
+      _error = null;
       _entries.removeWhere((e) => e.id == id);
       _updateSortedEntries();
       notifyListeners();
+      return true;
     } catch (e) {
-      if (session != _sessionVersion) return;
+      if (session != _sessionVersion) return false;
       _error = e.toString();
       notifyListeners();
+      return false;
     }
   }
 

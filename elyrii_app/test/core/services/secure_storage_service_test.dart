@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
 
@@ -11,6 +12,7 @@ void main() {
     setUp(() {
       // Mock basic implementation for testing
       FlutterSecureStorage.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({});
       service = SecureStorageService();
     });
 

@@ -22,7 +22,8 @@ Widget _createTestApp({required Widget child}) {
         create: (_) => AuthProvider(client: client, storage: storage),
       ),
       ChangeNotifierProvider(
-        create: (_) => DashboardProvider(apiClient: client),
+        create: (_) =>
+            DashboardProvider(apiClient: client, isDemoSession: () => true),
       ),
       ChangeNotifierProvider(create: (_) => JournalProvider(client: client)),
       ChangeNotifierProvider(

@@ -1,8 +1,11 @@
+import '../diagnostics/app_diagnostics.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+
 import '../services/mascot_motion_controller.dart';
 import 'mascot_model_surface.dart';
 import '../config/mascot_3d_config.dart';
@@ -81,7 +84,7 @@ class Mascot3DViewer extends StatefulWidget {
     this.breathProgress,
     this.animated = true,
     this.accessoryVariant,
-    this.appearance = const MascotAppearance(),
+    this.appearance = MascotAppearance.defaults,
     this.onModelLoaded,
     this.onError,
   });
@@ -298,7 +301,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         );
       }
     } catch (error) {
-      debugPrint('Mascot3DViewer: lecture ${animation.clipName}: $error');
+      AppDiagnostics.record('mascot_animation_failed', error);
     }
   }
 
@@ -311,7 +314,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         _controller.stopRotation();
       }
     } catch (error) {
-      debugPrint('Mascot3DViewer: Erreur configuration rotation: $error');
+      AppDiagnostics.record('mascot_rotation_failed', error);
     }
   }
 
@@ -321,7 +324,10 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
     _loadTimeoutTimer?.cancel();
     _stabilizeTimer?.cancel();
     _motion.setPlaybackEnabled(false);
-    debugPrint('Mascot3DViewer: Erreur chargement modèle 3D: $error');
+    AppDiagnostics.record(
+      'mascot_model_failed',
+      StateError('model unavailable'),
+    );
 
     setState(() {
       _hasError = true;

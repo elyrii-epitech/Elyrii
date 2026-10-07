@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:elyrii_app/core/network/api_exception.dart';
+
 import 'package:elyrii_app/core/config/dev_session.dart';
 import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
@@ -22,7 +24,13 @@ class _Client extends ApiClient {
     bool auth = true,
     Map<String, String>? queryParams,
   }) async {
-    if (offline) throw StateError('offline');
+    if (offline) {
+      throw const ApiException(
+        statusCode: 0,
+        message: 'offline',
+        kind: ApiFailureKind.offline,
+      );
+    }
     return {
       'stats': {'completedChallengesCount': 4, 'totalPoints': 200},
     };
@@ -84,52 +92,46 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  test(
-    'la démo débloque la collection localement et un vrai compte garde sa progression',
-    () async {
-      final repository = _Challenges();
-      final provider = GamificationProvider(repository: repository);
-      addTearDown(provider.dispose);
-      provider.onUserChanged(userId: DevSession.userId, isDemo: true);
-      await provider.loadAll();
-      expect(
-        provider.completedChallenges,
-        hasLength(DevSession.completedChallengeCount),
-      );
-      expect(
-        MascotAccessories.all.every(
-          (piece) => piece.isUnlocked(provider.completedChallenges.length),
-        ),
-        isTrue,
-      );
-      expect(repository.calls, 0);
-      provider.onUserChanged(userId: 'bob');
-      await provider.loadAll();
-      expect(provider.completedChallenges, isEmpty);
-      expect(repository.calls, 4);
-    },
-  );
+  test('la démo débloque la collection localement et un vrai compte garde sa progression', () async {
+    final repository = _Challenges();
+    final provider = GamificationProvider(repository: repository);
+    addTearDown(provider.dispose);
+    provider.onUserChanged(userId: DevSession.userId, isDemo: true);
+    await provider.loadAll();
+    expect(
+      provider.completedChallenges,
+      hasLength(DevSession.completedChallengeCount),
+    );
+    expect(
+      MascotAccessories.all.every(
+        (piece) => piece.isUnlocked(provider.completedChallenges.length),
+      ),
+      isTrue,
+    );
+    expect(repository.calls, 0);
+    provider.onUserChanged(userId: 'bob');
+    await provider.loadAll();
+    expect(provider.completedChallenges, isEmpty);
+    expect(repository.calls, 4);
+  });
 
-  test(
-    'une réponse de défis ancienne ne remplace pas la progression du nouveau compte',
-    () async {
-      final stale = Completer<List<UserChallenge>>();
-      final repository = _Challenges()..completed = stale.future;
-      final provider = GamificationProvider(repository: repository);
-      addTearDown(provider.dispose);
-      provider.onUserChanged(userId: 'alice');
-      final loading = provider.loadAll();
-      provider.onUserChanged(userId: DevSession.userId, isDemo: true);
-      await provider.loadAll();
-      stale.complete([]);
-      await loading;
-      expect(
-        provider.completedChallenges,
-        hasLength(DevSession.completedChallengeCount),
-      );
-      expect(provider.isLoading, isFalse);
-    },
-  );
+  test('une réponse de défis ancienne ne remplace pas la progression du nouveau compte', () async {
+    final stale = Completer<List<UserChallenge>>();
+    final repository = _Challenges()..completed = stale.future;
+    final provider = GamificationProvider(repository: repository);
+    addTearDown(provider.dispose);
+    provider.onUserChanged(userId: 'alice');
+    final loading = provider.loadAll();
+    provider.onUserChanged(userId: DevSession.userId, isDemo: true);
+    await provider.loadAll();
+    stale.complete([]);
+    await loading;
+    expect(
+      provider.completedChallenges,
+      hasLength(DevSession.completedChallengeCount),
+    );
+    expect(provider.isLoading, isFalse);
+  });
 
   test(
     'le dashboard de démonstration reste local, cohérent et réinitialisable',
@@ -202,7 +204,7 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     client.offline = true;
     repository.onUserChanged(userId: 'bob');
-    expect(repository.getDashboard(), throwsStateError);
+    expect(repository.getDashboard(), throwsA(isA<ApiException>()));
     repository.onUserChanged(userId: 'alice');
     expect((await repository.getDashboard()).stats.completedChallengesCount, 4);
   });

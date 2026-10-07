@@ -1,6 +1,6 @@
 # Architecture du client Elyrii
 
-État du code : 19 septembre 2026. Client Flutter organisé par fonctionnalité,
+État du code : 6 octobre 2026. Client Flutter organisé par fonctionnalité,
 avec Provider pour l’état et l’injection, GoRouter pour la navigation, et un
 client HTTP partagé vers la gateway.
 
@@ -9,12 +9,15 @@ client HTTP partagé vers la gateway.
 ```text
 elyrii_app/lib/
   app/
+    app_dependencies.dart  # composition et durée de vie des services
     launch/                # introduction courte et démarrage
     router/                # GoRouter, guards, shell persistant, transitions
   core/
     config/                # URLs, configuration de la mascotte
     network/               # ApiClient, ApiException
     services/              # stockage sécurisé, thème, animation
+    storage/               # SQLite par plateforme, chiffrement du contenu
+    diagnostics/           # événements bornés sans contenu privé
     theme/                 # charte graphique
     glass/ et widgets/     # composants partagés, surfaces, rendu 3D
   features/
@@ -28,15 +31,16 @@ timeout. Le chat utilise un WebSocket authentifié vers la gateway.
 
 ## Démarrage et navigation
 
-1. `main.dart` initialise la configuration, le thème et Liquid Glass.
-2. Un seul `SecureStorageService` et un seul `ApiClient` sont partagés.
-3. La session est restaurée depuis le stockage local : présence et expiration
-   du JWT. Cette vérification n’attend pas le réseau.
-4. `runApp` installe les providers globaux et `MyApp`.
-5. La revalidation récupère `/user/me` en arrière-plan. Sa réponse hydrate aussi
-   `UserProvider`, sans refaire ce GET. Réglages et mascotte suivent.
-6. Dashboard, journal et coach chargent leurs données depuis leurs pages.
-   Dashboard et journal dédupliquent les chargements simultanés identiques.
+1. `main.dart` installe les handlers d'erreurs et affiche immédiatement le bootstrap.
+2. La configuration, les locales et les plugins s'initialisent avec une erreur
+   récupérable, une échéance et un bouton de reprise.
+3. `AppDependencies` possède les services et providers. Il reprend d'abord les
+   purges de compte inachevées puis restaure la session sécurisée sans attendre
+   le réseau.
+4. Chaque changement de session invalide le client HTTP et tous les états du
+   compte, puis hydrate le profil, les préférences et la gamification.
+5. Les pages chargent leurs données avec des requêtes dédupliquées. Le routeur
+   est recréé au changement de compte et libéré avec son propriétaire.
 
 Providers globaux : thème, authentification, journal, chat, gamification,
 profil/réglages, mascotte, dashboard et coach.
@@ -49,12 +53,12 @@ cesse ses animations hors écran et libère son viewer après 15 secondes.
 ## Configuration réseau
 
 Ordre de résolution : argument explicite, `ELYRII_API_URL`, ancien `BASE_URL`,
-puis adresse locale. Le port local par défaut est **3001** et peut être remplacé
+puis adresse locale uniquement en développement. Les autres environnements exigent une URL HTTPS explicite. Le port local par défaut est **3001** et peut être remplacé
 avec `ELYRII_API_PORT`. Android emulator utilise `10.0.2.2` ; iOS utilise
 `localhost`. Fournir explicitement l’URL adaptée à l’environnement :
 
 ```bash
-flutter run --dart-define=ELYRII_API_URL=http://127.0.0.1:3000
+flutter run --dart-define=ELYRII_API_URL=http://127.0.0.1:3001
 ```
 
 Tous les services REST passent par la gateway. Le chat ouvre `/chat/ws`.
@@ -76,7 +80,7 @@ flutter run --dart-define=CHECK_BACKEND_HEALTH=true
 - **Migration du chat** : l’ancien JSON global n’identifie pas son propriétaire.
   L’utilisateur doit donc confirmer « Récupérer mon ancien historique ». Le JSON
   reste conservé si l’import échoue et n’est supprimé qu’après la transaction.
-- **Journal** : CRUD REST, cache de secours par identifiant de compte, lecture de
+- **Journal** : CRUD REST, entrées et brouillons SQLite chiffrés par compte, lecture de
   l’ancien cache filtrée sur `userId`. Un 401/403 reste une erreur et ne devient
   pas artificiellement un succès grâce au cache. La déconnexion invalide aussi
   les requêtes du journal encore en vol et vide son état mémoire.
@@ -85,9 +89,14 @@ flutter run --dart-define=CHECK_BACKEND_HEALTH=true
   statut « Sauvegardé ».
 - **Préférences** : thème et personnalisation utilisent SharedPreferences.
 
-SQLite et le cache du journal ne sont pas présentés comme un coffre chiffré.
-Le stockage des tokens est distinct. La synchronisation multi-appareils de
-l’historique local n’est pas implémentée.
+Les titres/messages du chat et les entrées/brouillons du journal sont chiffrés
+avec AES-GCM et une clé par compte dans le stockage sécurisé, avec authentification
+du propriétaire et de la ressource. Les caches en clair sont migrés. La suppression
+d'un compte tente toutes les purges et détruit sa clé ; un marqueur conserve les
+étapes à reprendre après un échec. Une déconnexion conserve les données locales
+protégées pour une prochaine connexion. Le chiffrement navigateur ne protège pas
+contre du JavaScript compromis dans la même origine. La synchronisation entre
+appareils de l'historique chat local reste hors contrat.
 
 ## Rendu et performances
 
@@ -106,14 +115,15 @@ Voir [mesures, validations et limites](performance.md).
 
 - La pagination SQL du chat est locale ; `GET /journal` récupère encore la
   collection réseau complète. Une pagination serveur nécessite un contrat API.
-- Pas de refresh token automatique ni de traitement global de tous les 401
-  dans le client HTTP.
+- Pas de refresh token automatique ; un 401 de la session courante ferme
+  localement cette session, sans affecter un compte connecté ultérieurement.
 - Les tests de widget et le simulateur ne mesurent pas les FPS, la consommation
   ou la mémoire GPU d’un appareil réel.
 - Le chat IA réel, Android sur appareil et les services distants ne sont pas
   certifiés par les fixtures locales de cette passe.
-- Les cibles Windows/Linux/web ne sont pas validées ici ; le stockage sqflite
-  de production vise les plateformes mobiles et macOS.
+- Les cibles de livraison sont uniquement iOS et Android. Les builds natifs,
+  les plugins sur appareils et le profilage matériel restent à exécuter dans
+  les environnements correspondants.
 
 ## Vérification
 
@@ -126,3 +136,6 @@ flutter build ios --simulator --debug --no-pub
 
 La CI utilise Flutter 3.47.4. Son artifact iOS est explicitement une application
 **simulateur**, pas une archive signée ou une livraison TestFlight.
+
+Le détail des corrections et des commandes reproductibles figure dans
+[le suivi de l’audit](frontend-audit-implementation.md).

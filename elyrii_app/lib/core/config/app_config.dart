@@ -1,41 +1,71 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
+
 import 'api_config.dart';
 
-/// App-wide configuration
-/// Use [ApiConfig] for endpoint URLs
+enum AppEnvironment { development, staging, production }
+
+/// Release builds default to production and require an explicit HTTPS gateway.
 class AppConfig {
   AppConfig._();
-
-  /// Whether the app is running in debug mode
-  static const bool isDebug = true;
-
-  static const int _gatewayPort = int.fromEnvironment(
+  static const isDebug = kDebugMode;
+  static const _environment = String.fromEnvironment(
+    'ELYRII_ENV',
+    defaultValue: kReleaseMode ? 'production' : 'development',
+  );
+  static const _gatewayPort = int.fromEnvironment(
     'ELYRII_API_PORT',
     defaultValue: 3001,
   );
-  static const String _gatewayUrlOverride = String.fromEnvironment(
-    'ELYRII_API_URL',
+  static const _gatewayUrl = String.fromEnvironment('ELYRII_API_URL');
+  static AppEnvironment get environment => AppEnvironment.values.firstWhere(
+    (value) => value.name == _environment,
+    orElse: () => throw const FormatException(
+      'ELYRII_ENV doit être development, staging ou production.',
+    ),
   );
 
-  /// Resolve the correct gateway host for the current platform
-  static String get _defaultGatewayUrl {
-    if (kIsWeb) return 'http://localhost:$_gatewayPort';
-    if (Platform.isAndroid) return 'http://10.0.2.2:$_gatewayPort';
-    return 'http://localhost:$_gatewayPort';
+  static String resolveGateway({
+    required AppEnvironment environment,
+    String? gatewayUrl,
+    TargetPlatform? platform,
+  }) {
+    var url = gatewayUrl?.trim() ?? '';
+    if (url.isEmpty && environment == AppEnvironment.development) {
+      final host = (platform ?? defaultTargetPlatform) == TargetPlatform.android
+          ? '10.0.2.2'
+          : 'localhost';
+      url = 'http://$host:$_gatewayPort';
+    }
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        !uri.hasAuthority ||
+        uri.host.isEmpty ||
+        !{'http', 'https'}.contains(uri.scheme) ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasQuery ||
+        uri.hasFragment) {
+      throw const FormatException(
+        'Configure une adresse API valide avec ELYRII_API_URL.',
+      );
+    }
+    if (environment != AppEnvironment.development &&
+        (uri.scheme != 'https' ||
+            {'localhost', '127.0.0.1', '::1', '10.0.2.2'}.contains(uri.host))) {
+      throw const FormatException(
+        'La configuration staging/production exige une API HTTPS explicite.',
+      );
+    }
+    return url.replaceAll(RegExp(r'/+$'), '');
   }
 
-  /// Configure the gateway URL based on environment or auto-detect platform
   static void initialize({String? gatewayUrl}) {
-    const baseUrlDefine = String.fromEnvironment('BASE_URL');
-    final override = gatewayUrl ?? '';
-    final resolved = override.isNotEmpty
-        ? override
-        : _gatewayUrlOverride.isNotEmpty
-        ? _gatewayUrlOverride
-        : baseUrlDefine.isNotEmpty
-        ? baseUrlDefine
-        : _defaultGatewayUrl;
-    ApiConfig.setBaseUrl(resolved);
+    const legacy = String.fromEnvironment('BASE_URL');
+    ApiConfig.setBaseUrl(
+      resolveGateway(
+        environment: environment,
+        gatewayUrl:
+            gatewayUrl ?? (_gatewayUrl.isNotEmpty ? _gatewayUrl : legacy),
+      ),
+    );
   }
 }

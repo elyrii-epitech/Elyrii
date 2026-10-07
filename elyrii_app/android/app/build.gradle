@@ -18,12 +18,12 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = JavaVersion.VERSION_17
     }
 
     defaultConfig {
@@ -45,15 +45,20 @@ android {
 
     buildTypes {
         release {
-            // Use the real release keystore when key.properties is present;
-            // otherwise fall back to debug signing so CI can still build the APK.
-            signingConfig = keystorePropertiesFile.exists()
-                ? signingConfigs.release
-                : signingConfigs.debug
+            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : null
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+// Distribution builds must never silently use the debug key.
+gradle.taskGraph.whenReady { graph ->
+    if (!keystorePropertiesFile.exists() && graph.allTasks.any {
+        it.project == project && (it.name == 'assembleRelease' || it.name == 'bundleRelease')
+    }) {
+        throw new GradleException('Release signing requires android/key.properties. Use --debug for technical validation.')
+    }
 }

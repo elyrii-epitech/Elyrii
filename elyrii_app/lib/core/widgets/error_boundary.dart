@@ -1,3 +1,7 @@
+import 'package:provider/provider.dart';
+
+import '../../features/auth/presentation/providers/auth_provider.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
@@ -66,10 +70,9 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: () {
-                    if (context.mounted) {
-                      context.go(AppRoutes.login);
-                    }
+                  onPressed: () async {
+                    await context.read<AuthProvider>().clearLocalSession();
+                    if (mounted) context.go(AppRoutes.login);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,

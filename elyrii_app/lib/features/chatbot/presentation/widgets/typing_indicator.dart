@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import 'chat_message_bubble.dart' show ChatBubbleStyles;
 
@@ -27,7 +28,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
     _controller = AnimationController(
       duration: const Duration(milliseconds: _period),
       vsync: this,
-    )..repeat();
+    );
 
     // Chaque point monte puis redescend sur 600 ms, décalé de 200 ms
     // par rapport au précédent — jamais synchrones, jamais mécaniques.
@@ -56,6 +57,18 @@ class _TypingIndicatorState extends State<TypingIndicator>
         ),
       );
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller
+        ..stop()
+        ..value = 1;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat();
+    }
   }
 
   @override

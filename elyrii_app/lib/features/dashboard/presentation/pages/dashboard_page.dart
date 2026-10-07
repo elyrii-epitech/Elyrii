@@ -1,14 +1,23 @@
+import '../widgets/dashboard_cards.dart';
+import '../widgets/dashboard_skeleton.dart';
+import '../widgets/mood_chip.dart';
+import '../widgets/mascot_customize_charm.dart';
+import '../../../../core/widgets/accessible_action.dart';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/widgets/elyrii_page_header.dart';
+
 import 'package:provider/provider.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
-import '../../../journal/data/models/journal_entry_model.dart';
+
 import 'package:go_router/go_router.dart';
+
 import '../../../../routes/app_routes.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/glass_settings_button.dart';
@@ -63,8 +72,8 @@ class _DashboardPageState extends State<DashboardPage> {
           : AppColors.scaffoldLight,
       body: ElyriiPageFrame(
         header: _buildPinnedHeaderControls(
-          context.read<AuthProvider>(),
-          context.read<UserProvider>(),
+          context.watch<AuthProvider>(),
+          context.watch<UserProvider>(),
           isDark,
         ),
         child: SingleChildScrollView(
@@ -88,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     width: 44,
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: _MascotCustomizeCharm(isDark: isDark),
+                      child: MascotCustomizeCharm(isDark: isDark),
                     ),
                   ),
                 ],
@@ -109,10 +118,41 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                     const SizedBox(height: 22),
-                    Selector<DashboardProvider, MoodType?>(
-                      selector: (_, p) => p.selectedMood,
-                      builder: (_, mood, _) =>
+                    Selector<
+                      DashboardProvider,
+                      (MoodType?, bool, String?, DateTime?)
+                    >(
+                      selector: (_, p) =>
+                          (p.selectedMood, p.isSavingMood, p.error, p.cachedAt),
+                      builder: (_, state, _) => Column(
+                        children: [
                           _buildMoodSection(isDark, provider),
+                          if (state.$2)
+                            const Padding(
+                              padding: EdgeInsets.all(8),
+                              child: Text('Enregistrement de ton humeur…'),
+                            ),
+                          if (state.$4 != null)
+                            const Text(
+                              'Données conservées hors ligne, datant de moins de 24 h.',
+                            ),
+                          if (state.$3 != null)
+                            Semantics(
+                              liveRegion: true,
+                              child: Text(
+                                state.$3!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          if (state.$3 != null)
+                            TextButton(
+                              onPressed: provider.refresh,
+                              child: const Text('Actualiser'),
+                            ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 22),
                     Selector2<
@@ -126,7 +166,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         journal.entries.firstOrNull,
                       ),
                       builder: (context, value, _) => value.$1
-                          ? _DashboardSkeleton(isDark: isDark)
+                          ? DashboardSkeleton(isDark: isDark)
                           : _buildBentoGrid(
                               provider,
                               context.read<JournalProvider>(),
@@ -235,8 +275,9 @@ class _DashboardPageState extends State<DashboardPage> {
         Semantics(
           button: true,
           label: 'Profil utilisateur',
-          child: GestureDetector(
-            onTap: () {
+          child: AccessibleAction(
+            label: null,
+            onPressed: () {
               ElyriiHaptics.light();
               context.push(AppRoutes.editProfile);
             },
@@ -390,11 +431,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   return Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: _MoodChip(
+                      child: DashboardMoodChip(
                         mood: mood,
                         isSelected: isSelected,
                         isDark: isDark,
-                        onTap: () => provider.selectMood(mood),
+                        onTap: provider.isSavingMood
+                            ? null
+                            : () => provider.selectMood(mood),
                       ),
                     ),
                   );
@@ -454,8 +497,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       const SizedBox(height: 10),
                       // Bouton d'action contextuel
-                      GestureDetector(
-                        onTap: () {
+                      AccessibleAction(
+                        label: selectedMood.suggestedActionLabel,
+                        onPressed: () {
                           ElyriiHaptics.light();
                           context.read<MascotProvider>().react(
                             MascotAnimations.invite,
@@ -526,7 +570,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             // Carte Série (Gauche)
             Expanded(
-              child: _BentoStreakCard(
+              child: DashboardStreakCard(
                 streak: provider.currentStreak,
                 isDark: isDark,
                 onTap: () {
@@ -545,7 +589,7 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(width: 12),
             // Carte Respiration (Droite)
             Expanded(
-              child: _BentoBreatheCard(
+              child: DashboardBreatheCard(
                 isDark: isDark,
                 onTap: () {
                   ElyriiHaptics.light();
@@ -558,7 +602,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         const SizedBox(height: 12),
         // Ligne 2 : Carte pleine largeur Journal Récent
-        _BentoJournalCard(
+        DashboardJournalCard(
           lastEntry: journalProvider.entries.isNotEmpty
               ? journalProvider.entries.first
               : null,
@@ -575,7 +619,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         const SizedBox(height: 12),
         // Ligne 3 : Barre Bilan & Progrès
-        _BentoReviewBar(
+        DashboardReviewBar(
           isDark: isDark,
           onTap: () {
             ElyriiHaptics.light();
@@ -583,529 +627,6 @@ class _DashboardPageState extends State<DashboardPage> {
           },
         ),
       ],
-    );
-  }
-}
-
-/// Puce de mood interactive avec micro-rebond élastique Apple, haptique et halo.
-class _MoodChip extends StatefulWidget {
-  final MoodType mood;
-  final bool isSelected;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _MoodChip({
-    required this.mood,
-    required this.isSelected,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  State<_MoodChip> createState() => _MoodChipState();
-}
-
-class _MoodChipState extends State<_MoodChip> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final moodColor = widget.mood.color;
-
-    return Semantics(
-      button: true,
-      label: widget.mood.label,
-      selected: widget.isSelected,
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          ElyriiHaptics.selection();
-          widget.onTap();
-        },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedScale(
-          scale: _isPressed ? 0.90 : (widget.isSelected ? 1.08 : 1.0),
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOutBack,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-            decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? moodColor.withValues(alpha: widget.isDark ? 0.25 : 0.18)
-                  : (widget.isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.03)),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: widget.isSelected
-                    ? moodColor.withValues(alpha: 0.6)
-                    : Colors.transparent,
-                width: 1.8,
-              ),
-              boxShadow: widget.isSelected
-                  ? [
-                      BoxShadow(
-                        color: moodColor.withValues(
-                          alpha: widget.isDark ? 0.35 : 0.20,
-                        ),
-                        blurRadius: 12,
-                        offset: const Offset(0, 3),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Icon(
-              widget.mood.icon,
-              size: widget.isSelected ? 26 : 22,
-              color: widget.isSelected
-                  ? moodColor
-                  : (widget.isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Carte Bento Série & Régularité (esprit Apple Fitness).
-class _BentoStreakCard extends StatelessWidget {
-  final int streak;
-  final bool isDark;
-  final VoidCallback? onTap;
-
-  const _BentoStreakCard({
-    required this.streak,
-    required this.isDark,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const coral = Color(0xFFFF6B6B);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: coral.withValues(alpha: 0.14),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.local_fire_department_rounded,
-                    color: coral,
-                    size: 18,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  'SÉRIE',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              '$streak ${streak > 1 ? 'jours' : 'jour'}',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              streak > 0 ? 'Tu tiens le rythme !' : 'Commence aujourd\'hui',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Carte Bento Pause Respiration avec bouton d'accès rapide.
-class _BentoBreatheCard extends StatelessWidget {
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _BentoBreatheCard({required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    const lavender = AppColors.primary;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 4,
-              runSpacing: 6,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: lavender.withValues(alpha: 0.14),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.air_rounded,
-                    color: lavender,
-                    size: 18,
-                  ),
-                ),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: lavender.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Démarrer',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: lavender,
-                        ),
-                      ),
-                      SizedBox(width: 2),
-                      Icon(Icons.play_arrow_rounded, size: 12, color: lavender),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Text(
-              '2 min',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Cohérence cardiaque',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Carte Bento Pleine Largeur : Dernière entrée de journal.
-class _BentoJournalCard extends StatelessWidget {
-  final JournalEntryModel? lastEntry;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _BentoJournalCard({
-    required this.lastEntry,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.14),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.edit_note_rounded,
-                    color: AppColors.primary,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'Dernière réflexion',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (lastEntry != null) ...[
-              Text(
-                lastEntry!.title.isNotEmpty ? lastEntry!.title : 'Sans titre',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                lastEntry!.content ?? '',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ] else ...[
-              Text(
-                'Prends un instant pour poser tes pensées...',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Barre Bento Bilan & Progrès.
-class _BentoReviewBar extends StatelessWidget {
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _BentoReviewBar({required this.isDark, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: LiquidGlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.insights_rounded,
-                color: AppColors.accent,
-                size: 18,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Consulter mon bilan & progression',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Squelette de chargement discret : shimmer doux aux couleurs de surface,
-/// en remplacement de toute barre de progression brute.
-class _DashboardSkeleton extends StatelessWidget {
-  final bool isDark;
-
-  const _DashboardSkeleton({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final surface = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.04);
-    final isTest = WidgetsBinding.instance.runtimeType.toString().contains(
-      'Test',
-    );
-
-    Widget block(double height) {
-      final box = Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(16),
-        ),
-      );
-      if (isTest) return box;
-      return box
-          .animate(onPlay: (controller) => controller.repeat())
-          .shimmer(
-            duration: 1400.ms,
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.white.withValues(alpha: 0.5),
-          );
-    }
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(child: block(92)),
-            const SizedBox(width: 12),
-            Expanded(child: block(92)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        block(72),
-      ],
-    );
-  }
-}
-
-/// Charm de personnalisation discret et épuré en Liquid Glass pur.
-///
-/// Suppression de la surbrillance criarde et de l'oscillation : surface de verre
-/// dépoli subtile, parfaitement intégrée à la ligne visuelle Apple de l'écran.
-class _MascotCustomizeCharm extends StatefulWidget {
-  final bool isDark;
-
-  const _MascotCustomizeCharm({required this.isDark});
-
-  @override
-  State<_MascotCustomizeCharm> createState() => _MascotCustomizeCharmState();
-}
-
-class _MascotCustomizeCharmState extends State<_MascotCustomizeCharm> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Personnaliser la mascotte',
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          ElyriiHaptics.selection();
-          context.push(AppRoutes.mascotCustomization);
-        },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedScale(
-          scale: _isPressed ? 0.90 : 1.0,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOutBack,
-          child: ElyriiGlassSurface(
-            role: GlassRole.floatingControl,
-            borderRadius: BorderRadius.circular(20),
-            width: 40,
-            height: 40,
-            child: Center(
-              child: Icon(
-                Icons.palette_outlined,
-                size: 19,
-                color: widget.isDark
-                    ? Colors.white.withValues(alpha: 0.85)
-                    : AppColors.primary,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

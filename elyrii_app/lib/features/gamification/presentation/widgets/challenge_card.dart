@@ -1,6 +1,9 @@
+import '../../../../core/accessibility/motion.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../data/models/gamification_models.dart';
@@ -102,7 +105,10 @@ class ChallengeAvailableCard extends StatelessWidget {
                           ),
                         ),
                       )
-                      .animate(onPlay: (c) => c.repeat())
+                      .animateRespectingMotion(
+                        context,
+                        onPlay: (c) => c.repeat(),
+                      )
                       .shimmer(
                         duration: 1000.ms,
                         color: Colors.white.withValues(alpha: 0.5),

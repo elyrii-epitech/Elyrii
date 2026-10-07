@@ -1,3 +1,5 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -88,7 +90,7 @@ class _CoachPageState extends State<CoachPage> {
                                   size: 210,
                                   onTap: provider.nextMascotMessage,
                                 )
-                                .animate()
+                                .animateRespectingMotion(context)
                                 .fadeIn(duration: 450.ms, delay: 60.ms)
                                 .slideY(
                                   begin: 0.05,
@@ -258,7 +260,8 @@ class _CoachPageState extends State<CoachPage> {
                       isDark: isDark,
                       onTap: () => launchCoachActivity(context, activities[i]),
                     )
-                    .animate(
+                    .animateRespectingMotion(
+                      context,
                       key: ValueKey(
                         '${selectedNeed?.name}-${activities[i].id}',
                       ),

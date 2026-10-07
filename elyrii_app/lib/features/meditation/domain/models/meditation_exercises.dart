@@ -88,8 +88,7 @@ class MeditationExercises {
       'Respiration carrée',
       'Quatre phases de même durée pour suivre un repère régulier.',
       [boxBreathing],
-      tip:
-          'Les rétentions restent confortables. Tu peux choisir une pratique sans rétention.',
+      tip: 'Les rétentions restent confortables. Tu peux choisir une pratique sans rétention.',
     ),
     _breathing(
       BreathingType.relaxation478,
@@ -97,8 +96,7 @@ class MeditationExercises {
       'Quatre cycles, puis souffle libre',
       'Après quatre cycles guidés, la séance continue au rythme naturel.',
       [weilBreathing],
-      tip:
-          'Quatre cycles maximum par séance, suivis d’un temps de respiration libre. Les secondes sont un repère adapté pour Elyrii.',
+      tip: 'Quatre cycles maximum par séance, suivis d’un temps de respiration libre. Les secondes sont un repère adapté pour Elyrii.',
     ),
     _breathing(
       BreathingType.ujjayi,
@@ -106,15 +104,13 @@ class MeditationExercises {
       'Inspiration du yoga',
       'Écoute un souffle légèrement sonore, en gardant la gorge détendue.',
       [nccihYoga],
-      tip:
-          'Le rythme 6–6 est une adaptation pour le guidage. Garde un souffle facile, sans serrer la gorge.',
+      tip: 'Le rythme 6–6 est une adaptation pour le guidage. Garde un souffle facile, sans serrer la gorge.',
     ),
     const MeditationExercise(
       id: 'mindful-breathing',
       title: 'Souffle conscient',
       subtitle: 'Observer, sans contrôler',
-      description:
-          'Porte ton attention sur le souffle naturel, sans compter les secondes.',
+      description: 'Porte ton attention sur le souffle naturel, sans compter les secondes.',
       category: MeditationCategory.mindfulness,
       icon: Icons.spa_rounded,
       color: Color(0xFFA8D5BA),
@@ -148,8 +144,7 @@ class MeditationExercises {
       id: 'body-scan',
       title: 'Scan corporel',
       subtitle: 'Parcourir les sensations',
-      description:
-          'Déplace ton attention dans le corps, sans chercher à changer ce que tu ressens.',
+      description: 'Déplace ton attention dans le corps, sans chercher à changer ce que tu ressens.',
       category: MeditationCategory.body,
       icon: Icons.accessibility_new_rounded,
       color: Color(0xFF93B8DA),
@@ -194,8 +189,7 @@ class MeditationExercises {
       id: 'sound-awareness',
       title: 'Écoute des sons',
       subtitle: 'Revenir à ce qui est là',
-      description:
-          'Accueille les sons proches et lointains comme un point d’attention au présent.',
+      description: 'Accueille les sons proches et lointains comme un point d’attention au présent.',
       category: MeditationCategory.mindfulness,
       icon: Icons.hearing_rounded,
       color: Color(0xFFFDD876),
@@ -230,8 +224,7 @@ class MeditationExercises {
       id: 'loving-kindness',
       title: 'Bienveillance',
       subtitle: 'Cultiver des souhaits doux',
-      description:
-          'Adresse-toi des souhaits bienveillants, puis étends-les à une personne de ton choix.',
+      description: 'Adresse-toi des souhaits bienveillants, puis étends-les à une personne de ton choix.',
       category: MeditationCategory.kindness,
       icon: Icons.favorite_border_rounded,
       color: Color(0xFFFFB5A8),
@@ -266,8 +259,7 @@ class MeditationExercises {
       id: 'self-compassion',
       title: 'Auto-compassion',
       subtitle: 'Se parler avec douceur',
-      description:
-          'Fais une pause pour reconnaître ce que tu vis et t’adresser un peu de soutien.',
+      description: 'Fais une pause pour reconnaître ce que tu vis et t’adresser un peu de soutien.',
       category: MeditationCategory.kindness,
       icon: Icons.volunteer_activism_rounded,
       color: Color(0xFFA99AF0),
@@ -306,8 +298,7 @@ class MeditationExercises {
     String subtitle,
     String description,
     List<MeditationSource> sources, {
-    String tip =
-        'Le rythme est un repère : garde un souffle confortable, sans chercher à remplir les poumons au maximum.',
+    String tip = 'Le rythme est un repère : garde un souffle confortable, sans chercher à remplir les poumons au maximum.',
   }) => MeditationExercise(
     id: type.name,
     title: title,

@@ -1,16 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../core/config/api_config.dart';
+
 import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/network/api_client.dart';
 import '../../data/models/mascot_accessory.dart';
 import '../../data/models/mascot_appearance.dart';
 import '../../data/models/mascot_model.dart';
+import '../../data/repositories/mascot_repository.dart';
 
 /// Provider gérant l'état et l'interaction avec la mascotte 3D.
 ///
@@ -18,11 +16,6 @@ import '../../data/models/mascot_model.dart';
 /// (palettes des matériaux), les pièces 3D de sa garde-robe et les
 /// animations.
 class MascotProvider extends ChangeNotifier {
-  static const String _storageBase = 'elyrii_mascot_customization';
-  static const String _themeBase = 'elyrii_mascot_theme';
-  static const String _appearanceBase = 'elyrii_mascot_appearance';
-  static const String _pendingSyncBase = 'elyrii_mascot_pending_sync';
-  static const String _schemaBase = 'elyrii_mascot_schema_version';
   String? _userId;
   bool _isDemo;
   bool _sessionBound;
@@ -32,11 +25,22 @@ class MascotProvider extends ChangeNotifier {
   String get storageScope => _isDemo ? 'demo' : _userId ?? 'guest';
   int get sessionRevision => _sessionRevision;
   bool get _needsSync => _userId != null && !_isDemo;
-  bool get _canSync => _client != null && _needsSync;
-  String _key(String base, [String? scope]) =>
-      '${base}_${scope ?? storageScope}';
+  bool get _canSync => _repository.canSync && _needsSync;
+  final MascotRepository _repository;
+  final Set<Future<void>> _loadingOperations = {};
 
-  final ApiClient? _client;
+  Future<void> get flushed async {
+    await Future.wait(_loadingOperations.toList());
+    await Future.wait([_persistTail, _syncTail]);
+  }
+
+  Future<void> _trackLoad(Future<void> operation) {
+    late final Future<void> tracked;
+    tracked = operation.whenComplete(() => _loadingOperations.remove(tracked));
+    _loadingOperations.add(tracked);
+    return tracked;
+  }
+
   MascotModel _mascot = MascotModel.defaultMascot();
   Future<void> _syncTail = Future<void>.value();
   Future<void> _persistTail = Future<void>.value();
@@ -92,12 +96,16 @@ class MascotProvider extends ChangeNotifier {
   bool _isSyncing = false;
   String? _error;
 
-  MascotProvider({ApiClient? client, String? userId, bool isDemo = false})
-    : _client = client,
-      _userId = userId,
-      _isDemo = isDemo,
-      _sessionBound = userId != null || isDemo {
-    unawaited(_loadSavedMascot(_sessionRevision));
+  MascotProvider({
+    ApiClient? client,
+    MascotRepository? repository,
+    String? userId,
+    bool isDemo = false,
+  }) : _repository = repository ?? MascotRepository(client: client),
+       _userId = userId,
+       _isDemo = isDemo,
+       _sessionBound = userId != null || isDemo {
+    unawaited(_trackLoad(_loadSavedMascot(_sessionRevision)));
   }
 
   /// Account-scoped persistence adapted from Lucas's studio. Changing scope
@@ -115,12 +123,12 @@ class MascotProvider extends ChangeNotifier {
     final session = _sessionRevision;
     late final Future<void> future;
     future =
-        () async {
+        _trackLoad(() async {
           if (migrateLegacy && userId != null && !isDemo) {
             await _migrateLegacy(session);
           }
           if (session == _sessionRevision) await _loadMascot(session);
-        }().whenComplete(() {
+        }()).whenComplete(() {
           if (identical(_loadFuture, future)) _loadFuture = null;
         });
     _loadFuture = future;
@@ -134,7 +142,6 @@ class MascotProvider extends ChangeNotifier {
     _sessionRevision++;
     _syncRevision++;
     _loadFuture = null;
-    _syncTail = Future<void>.value();
     _mascot = MascotModel.defaultMascot();
     _pendingSync = false;
     _isLoading = false;
@@ -152,40 +159,10 @@ class MascotProvider extends ChangeNotifier {
     _changeSession(null, false);
   }
 
-  Future<void> _migrateLegacy(int session) async {
-    final scope = storageScope;
-    final prefs = await SharedPreferences.getInstance();
-    if (session != _sessionRevision) return;
-    final owner = prefs.getString('elyrii_mascot_legacy_owner');
-    if (owner != null && owner != scope) return;
-    final cosmetics = prefs.getStringList(_storageBase);
-    final theme = prefs.getString(_themeBase);
-    final appearance = prefs.getString(_appearanceBase);
-    if (cosmetics == null && theme == null && appearance == null) return;
-    // Claim legacy preferences even when this account already has a scoped
-    // cache, so another account cannot inherit them on a later launch.
-    await prefs.setString('elyrii_mascot_legacy_owner', scope);
-    if (prefs.containsKey(_key(_storageBase, scope)) ||
-        prefs.containsKey(_key(_themeBase, scope)) ||
-        prefs.containsKey(_key(_appearanceBase, scope))) {
-      return;
-    }
-    if (cosmetics != null) {
-      await prefs.setStringList(_key(_storageBase, scope), cosmetics);
-    }
-    if (theme != null) await prefs.setString(_key(_themeBase, scope), theme);
-    if (appearance != null) {
-      await prefs.setString(_key(_appearanceBase, scope), appearance);
-    }
-    await prefs.setBool(
-      _key(_pendingSyncBase, scope),
-      prefs.getBool(_pendingSyncBase) ?? false,
-    );
-    final seen = prefs.getStringList('elyrii_seen_cosmetic_unlocks');
-    if (seen != null) {
-      await prefs.setStringList('elyrii_seen_cosmetic_unlocks_$scope', seen);
-    }
-  }
+  Future<void> _migrateLegacy(int session) => _repository.migrateLegacy(
+    storageScope,
+    () => !_disposed && session == _sessionRevision,
+  );
 
   MascotModel get mascot => _mascot;
 
@@ -303,7 +280,7 @@ class MascotProvider extends ChangeNotifier {
   Future<void> loadMascot() {
     if (_loadFuture != null) return _loadFuture!;
     late final Future<void> future;
-    future = _loadMascot(_sessionRevision).whenComplete(() {
+    future = _trackLoad(_loadMascot(_sessionRevision)).whenComplete(() {
       if (identical(_loadFuture, future)) _loadFuture = null;
     });
     _loadFuture = future;
@@ -316,7 +293,7 @@ class MascotProvider extends ChangeNotifier {
     _notify();
 
     await _loadSavedMascot(session);
-    if (session != _sessionRevision) return;
+    if (_disposed || session != _sessionRevision) return;
 
     if (!_canSync) {
       _isLoading = false;
@@ -333,19 +310,17 @@ class MascotProvider extends ChangeNotifier {
 
     try {
       final localRevision = _syncRevision;
-      final response =
-          await _client!.get(ApiConfig.userMascotUrl) as Map<String, dynamic>;
+      final remote = await _repository.getRemote(_mascot);
       if (session != _sessionRevision ||
           _pendingSync ||
           localRevision != _syncRevision) {
         return;
       }
-      _mascot = _mascotFromBackend(response);
+      _mascot = remote;
       await _saveMascot();
     } catch (e) {
       if (session == _sessionRevision) {
-        _error =
-            'Ton look local reste disponible. La synchronisation sera réessayée.';
+        _error = 'Ton look local reste disponible. La synchronisation sera réessayée.';
       }
     } finally {
       if (session == _sessionRevision) {
@@ -356,68 +331,20 @@ class MascotProvider extends ChangeNotifier {
   }
 
   Future<void> _loadSavedMascot(int session) async {
-    final scope = storageScope;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      if (session != _sessionRevision) return;
-      _pendingSync = prefs.getBool(_key(_pendingSyncBase, scope)) ?? false;
-      final hasScopedCache = [
-        _storageBase,
-        _themeBase,
-        _appearanceBase,
-      ].any((base) => prefs.containsKey(_key(base, scope)));
-      final needsUpgrade =
-          hasScopedCache && prefs.getInt(_key(_schemaBase, scope)) != 2;
-      final legacyGuest =
-          scope == 'guest' &&
-          prefs.getString('elyrii_mascot_legacy_owner') == null;
-
-      // Unscoped preferences are read only by the guest preview. A restored
-      // authenticated account may explicitly claim its legacy cache once.
-      final savedTheme =
-          prefs.getString(_key(_themeBase, scope)) ??
-          (legacyGuest ? prefs.getString(_themeBase) : null);
-      if (savedTheme != null) {
-        _mascot = _mascot.copyWith(themeId: _validThemeId(savedTheme));
+      final saved = await _repository.readLocal(
+        storageScope,
+        needsSync: _needsSync,
+        isCurrent: () => !_disposed && session == _sessionRevision,
+      );
+      if (_disposed || session != _sessionRevision || saved.model == null) {
+        return;
       }
-
-      final savedAppearance =
-          prefs.getString(_key(_appearanceBase, scope)) ??
-          (legacyGuest ? prefs.getString(_appearanceBase) : null);
-      if (savedAppearance != null) {
-        _mascot = _mascot.copyWith(
-          appearance: MascotAppearance.fromJson(
-            jsonDecode(savedAppearance) as Map<String, dynamic>,
-          ),
-        );
-      }
-
-      final rawCosmetics =
-          prefs.getStringList(_key(_storageBase, scope)) ??
-          (legacyGuest ? prefs.getStringList(_storageBase) : null);
-      if (rawCosmetics != null) {
-        final cosmetics = MascotAccessories.sanitizeSelection(rawCosmetics);
-        _mascot = _mascot.copyWith(equippedCosmetics: cosmetics);
-        if (!listEquals(rawCosmetics, cosmetics) &&
-            prefs.containsKey(_key(_storageBase, scope))) {
-          await prefs.setStringList(_key(_storageBase, scope), cosmetics);
-        }
-      }
-
-      // Lucas's original studio saved only locally. Upload that cache once
-      // before accepting a default server look during the first upgrade.
-      if (session != _sessionRevision) return;
-      if (needsUpgrade) {
-        if (_needsSync) {
-          _pendingSync = true;
-          await prefs.setBool(_key(_pendingSyncBase, scope), true);
-        }
-        await prefs.setInt(_key(_schemaBase, scope), 2);
-      }
-
-      if (session == _sessionRevision) _notify();
-    } catch (e) {
-      if (session == _sessionRevision) {
+      _mascot = saved.model!;
+      _pendingSync = saved.pending;
+      _notify();
+    } catch (_) {
+      if (!_disposed && session == _sessionRevision) {
         _error = 'Ta personnalisation locale n’a pas pu être chargée.';
         _notify();
       }
@@ -432,25 +359,7 @@ class MascotProvider extends ChangeNotifier {
     if (pending) _pendingSync = true;
     final save = _persistTail.then((_) async {
       try {
-        final prefs = await SharedPreferences.getInstance();
-        if (pending) {
-          await prefs.setBool(_key(_pendingSyncBase, scope), true);
-        }
-        final saved = await Future.wait([
-          prefs.setStringList(
-            _key(_storageBase, scope),
-            snapshot.equippedCosmetics,
-          ),
-          prefs.setString(_key(_themeBase, scope), snapshot.themeId),
-          prefs.setString(
-            _key(_appearanceBase, scope),
-            jsonEncode(snapshot.appearance.toJson()),
-          ),
-          prefs.setInt(_key(_schemaBase, scope), 2),
-        ]);
-        if (saved.any((success) => !success)) {
-          throw StateError('Écriture refusée');
-        }
+        await _repository.writeLocal(scope, snapshot, pending: pending);
         return true;
       } catch (e) {
         if (session == _sessionRevision) {
@@ -477,22 +386,10 @@ class MascotProvider extends ChangeNotifier {
     _syncTail = _syncTail.then((_) async {
       if (session != _sessionRevision) return;
       try {
-        await _client!.put(
-          ApiConfig.userMascotUrl,
-          body: {
-            'appearance': snapshot.themeId,
-            'themeId': snapshot.themeId,
-            'equippedCosmetics': snapshot.equippedCosmetics,
-            'personality': {
-              'equippedCosmetics': snapshot.equippedCosmetics,
-              'customization': snapshot.appearance.toJson(),
-            },
-          },
-        );
+        await _repository.saveRemote(snapshot);
         if (session == _sessionRevision && revision == _syncRevision) {
           _pendingSync = false;
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool(_key(_pendingSyncBase, scope), false);
+          await _repository.markSynced(scope);
         }
       } catch (e) {
         if (session == _sessionRevision && revision == _syncRevision) {
@@ -507,33 +404,6 @@ class MascotProvider extends ChangeNotifier {
       }
     });
     await _syncTail;
-  }
-
-  MascotModel _mascotFromBackend(Map<String, dynamic> json) {
-    final personality = Map<String, dynamic>.from(
-      json['personality'] as Map? ?? const <String, dynamic>{},
-    );
-    final rawTheme =
-        json['appearance'] as String? ??
-        personality['themeId'] as String? ??
-        'nature';
-    final themeId = _validThemeId(rawTheme == 'default' ? 'nature' : rawTheme);
-    final cosmetics =
-        (json['equippedCosmetics'] as List<dynamic>?) ??
-        (personality['equippedCosmetics'] as List<dynamic>?) ??
-        const <dynamic>[];
-
-    return _mascot.copyWith(
-      themeId: themeId,
-      equippedCosmetics: MascotAccessories.sanitizeSelection(
-        cosmetics.whereType<String>(),
-      ),
-      appearance: personality['customization'] is Map
-          ? MascotAppearance.fromJson(
-              Map<String, dynamic>.from(personality['customization'] as Map),
-            )
-          : _mascot.appearance,
-    );
   }
 
   String _validThemeId(String themeId) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../data/entities/chat_message.dart';
 
 abstract final class ChatBubbleStyles {
   static const BorderRadius userRadius = BorderRadius.only(
@@ -22,12 +23,16 @@ class ChatMessageBubble extends StatelessWidget {
   final String message;
   final bool isUser;
   final DateTime timestamp;
+  final MessageDelivery delivery;
+  final VoidCallback? onRetry;
 
   const ChatMessageBubble({
     super.key,
     required this.message,
     required this.isUser,
     required this.timestamp,
+    this.delivery = MessageDelivery.delivered,
+    this.onRetry,
   });
 
   @override
@@ -73,6 +78,25 @@ class ChatMessageBubble extends StatelessWidget {
                 fontWeight: FontWeight.w400,
               ),
             ),
+            if (delivery != MessageDelivery.delivered) ...[
+              const SizedBox(height: 6),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  delivery == MessageDelivery.pending
+                      ? 'En attente de réponse…'
+                      : 'Réponse non reçue',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: delivery == MessageDelivery.failed
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              if (delivery == MessageDelivery.failed)
+                TextButton(onPressed: onRetry, child: const Text('Réessayer')),
+            ],
           ],
         ),
       ),

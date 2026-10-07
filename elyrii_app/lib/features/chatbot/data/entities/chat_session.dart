@@ -15,14 +15,14 @@ class ChatSession {
   final int? _messageCount;
   int get messageCount => _messageCount ?? messages.length;
 
-  const ChatSession({
+  ChatSession({
     required this.id,
     required this.title,
     required this.createdAt,
     required this.updatedAt,
-    required this.messages,
-    int? messageCount,
-  }) : _messageCount = messageCount;
+    required List<ChatMessage> messages,
+    this._messageCount,
+  }) : messages = List.unmodifiable(messages);
 
   factory ChatSession.create() {
     final now = DateTime.now();

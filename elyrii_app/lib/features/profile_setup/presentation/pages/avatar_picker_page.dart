@@ -1,4 +1,5 @@
-import 'dart:io';
+import '../../../../core/widgets/user_avatar.dart';
+
 import 'package:flutter/cupertino.dart'
     show
         CupertinoActivityIndicator,
@@ -6,7 +7,10 @@ import 'package:flutter/cupertino.dart'
         CupertinoDialogAction,
         showCupertinoDialog;
 import 'package:flutter/material.dart';
+
+import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
@@ -79,13 +83,14 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
         maxHeight: 1024,
         imageQuality: 85,
       );
+      if (!mounted) return;
       if (picked == null) {
         setState(() => _isProcessing = false);
         return;
       }
 
       // Recadrage carre
-      final cropped = await ImageCropper().cropImage(
+      final cropped = (await ImageCropper().cropImage(
         sourcePath: picked.path,
         aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         compressFormat: ImageCompressFormat.jpg,
@@ -104,12 +109,13 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
             aspectRatioPresets: [CropAspectRatioPreset.square],
           ),
         ],
-      );
+      ))?.path;
 
+      if (!mounted) return;
       if (cropped != null) {
         ElyriiHaptics.light();
         setState(() {
-          _customImagePath = cropped.path;
+          _customImagePath = cropped;
           _customAvatarUrl = null;
           // Deselectionner les presets
           _selectedId = '__custom__';
@@ -293,7 +299,11 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
           ),
           child: ClipOval(
             child: _customImagePath != null
-                ? Image.file(File(_customImagePath!), fit: BoxFit.cover)
+                ? UserAvatar(
+                    pfp: _customImagePath,
+                    size: 120,
+                    showBorder: false,
+                  )
                 : (imageUrl != null
                       ? Image.network(
                           imageUrl,
@@ -371,8 +381,11 @@ class _PresetAvatarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
+    return AccessibleAction(
+      label: option.isMascot
+          ? 'Choisir la mascotte comme avatar'
+          : 'Choisir l’avatar ${option.id}',
+      onPressed: onTap,
       child: AnimatedScale(
         scale: isSelected ? 1.08 : 1.0,
         duration: const Duration(milliseconds: 200),

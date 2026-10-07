@@ -1,5 +1,12 @@
+import 'dart:async';
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
+
+import '../../../../core/network/api_exception.dart';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/network/api_client.dart';
 import '../../data/models/coach_model.dart';
 import '../../data/repositories/coach_repository.dart';
@@ -25,6 +32,41 @@ class CoachProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isCreatingSession = false;
   bool _hasLoadedRemote = false;
+  String? _owner;
+  int _session = 0;
+  bool _disposed = false;
+  String? _error;
+  Future<void>? _loadFuture;
+  String? get error => _error;
+  bool _current(int session) => !_disposed && session == _session;
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  void onUserChanged({String? userId, bool isDemo = false}) {
+    final owner = isDemo ? 'demo-user' : userId;
+    if (_owner == owner) return;
+    _owner = owner;
+    _session++;
+    _sessions = [];
+    _selectedNeed = null;
+    _mascotMessage = kCoachMascotLines.first;
+    _isLoading = false;
+    _isCreatingSession = false;
+    _hasLoadedRemote = false;
+    _error = null;
+    _loadFuture = null;
+    _loadLocalData();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _session++;
+    super.dispose();
+  }
 
   /// Besoin immédiat sélectionné par l'utilisateur (null = sélection par
   /// défaut du coach). Pilote la section recommandée et le message de la
@@ -38,7 +80,7 @@ class CoachProvider extends ChangeNotifier {
   DailyAdvice? get todayAdvice => _todayAdvice;
   List<CoachActivity> get recommendedActivities => _recommendedActivities;
   List<CoachActivity> get allActivities => _allActivities;
-  List<CoachSession> get sessions => List.unmodifiable(_sessions);
+  List<CoachSession> get sessions => UnmodifiableListView(_sessions);
   CoachSession? get latestSession =>
       _sessions.isNotEmpty ? _sessions.first : null;
   bool get isLoading => _isLoading;
@@ -87,21 +129,34 @@ class CoachProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadCoachData() async {
+  Future<void> loadCoachData() {
+    if (_loadFuture != null) return _loadFuture!;
+    late final Future<void> request;
+    request = _loadCoachData().whenComplete(() {
+      if (identical(_loadFuture, request)) _loadFuture = null;
+    });
+    return _loadFuture = request;
+  }
+
+  Future<void> _loadCoachData() async {
+    final revision = _session;
     _isLoading = true;
     notifyListeners();
 
     _loadLocalData();
 
     try {
-      _sessions = await _repository.getSessions();
+      final sessions = await _repository.getSessions();
+      if (_current(revision)) _sessions = sessions;
     } catch (e) {
       // Frontend d'abord : sans backend, la page reste pleinement utilisable.
-      debugPrint('[CoachProvider] sessions load failed: $e');
+      if (_current(revision)) _error = 'Impossible de charger les séances.';
     } finally {
-      _hasLoadedRemote = true;
-      _isLoading = false;
-      notifyListeners();
+      if (_current(revision)) {
+        _hasLoadedRemote = true;
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -113,6 +168,8 @@ class CoachProvider extends ChangeNotifier {
   /// prend sa place sans changer l'interface.
   Future<bool> requestGuidanceForActivity(CoachActivity activity) async {
     if (_isCreatingSession) return false;
+    final revision = _session;
+    _error = null;
     _isCreatingSession = true;
     notifyListeners();
 
@@ -131,11 +188,16 @@ class CoachProvider extends ChangeNotifier {
         prompt: prompt,
         context: context,
       );
+      if (!_current(revision)) return false;
       _sessions = [session, ..._sessions];
       _hasLoadedRemote = true;
       return true;
     } catch (e) {
-      debugPrint('[CoachProvider] guidance fallback to placeholder: $e');
+      if (!_current(revision)) return false;
+      if (e is FormatException || (e is ApiException && !e.canUseOfflineData)) {
+        _error = e is ApiException ? e.message : 'Réponse du service invalide.';
+        return false;
+      }
       _sessions = [
         CoachSession(
           id: 'local-${DateTime.now().millisecondsSinceEpoch}',
@@ -148,8 +210,10 @@ class CoachProvider extends ChangeNotifier {
       ];
       return true;
     } finally {
-      _isCreatingSession = false;
-      notifyListeners();
+      if (_current(revision)) {
+        _isCreatingSession = false;
+        notifyListeners();
+      }
     }
   }
 

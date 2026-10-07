@@ -7,10 +7,12 @@ enum MascotFinish { velours, satin, porcelain }
 /// Independent material settings, shared by the studio and every mascot view.
 @immutable
 class MascotAppearance {
-  const MascotAppearance({
-    this.colors = const {},
+  MascotAppearance({
+    Map<String, String> colors = const {},
     this.finish = MascotFinish.velours,
-  });
+  }) : colors = Map.unmodifiable(colors);
+  const MascotAppearance._() : colors = const {}, finish = MascotFinish.velours;
+  static const defaults = MascotAppearance._();
 
   final Map<String, String> colors;
   final MascotFinish finish;

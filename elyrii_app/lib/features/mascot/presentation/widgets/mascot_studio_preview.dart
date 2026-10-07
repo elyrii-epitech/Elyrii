@@ -109,8 +109,7 @@ class MascotStudioPreview extends StatelessWidget {
                       ),
                     ),
                     Semantics(
-                      label:
-                          'Aperçu de ta mascotte. Fais glisser pour la tourner.',
+                      label: 'Aperçu de ta mascotte. Fais glisser pour la tourner.',
                       child: MascotWithAccessories(
                         mascot: mascot,
                         config: Mascot3DConfig(

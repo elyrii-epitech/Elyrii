@@ -1,6 +1,11 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
+
 import '../../../../core/constants/profile_option_labels.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +16,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/constants/avatar_options.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../auth/presentation/widgets/glass_auth_text_field.dart';
@@ -59,7 +65,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_initialized) {
+    final provider = context.watch<UserProvider>();
+    if (!_initialized && provider.profile != null) {
       _prefillFromProfile();
       _initialized = true;
     }
@@ -94,6 +101,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       AppRoutes.avatarPicker,
       extra: _selectedPfp,
     );
+    if (!mounted) return;
     // Ignorer si l'utilisateur a annule (back)
     if (result != kAvatarPickerCancelled) {
       setState(() => _selectedPfp = result as String?);
@@ -164,34 +172,51 @@ class _EditProfilePageState extends State<EditProfilePage> {
           subtitle: 'Ce qu’Elyrii sait de toi.',
           leading: ElyriiBackButton(),
         ),
-        child: CustomScrollView(
-          slivers: [
-            // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
-
-            // Avatar cliquable
-            SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
-
-            // Identite
-            SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
-
-            // Bien-etre
-            SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
-
-            // Save
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-                child: LiquidGlassButton(
-                  label: 'Enregistrer',
-                  icon: Icons.check_rounded,
-                  isLoading: _isSaving,
-                  isExpanded: true,
-                  onPressed: _isSaving ? null : _saveProfile,
+        child: !_initialized
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (context.watch<UserProvider>().error == null)
+                      const CupertinoActivityIndicator()
+                    else ...[
+                      Text(context.watch<UserProvider>().error!),
+                      TextButton(
+                        onPressed: context.read<UserProvider>().loadProfile,
+                        child: const Text('Réessayer'),
+                      ),
+                    ],
+                  ],
                 ),
+              )
+            : CustomScrollView(
+                slivers: [
+                  // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
+
+                  // Avatar cliquable
+                  SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
+
+                  // Identite
+                  SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
+
+                  // Bien-etre
+                  SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
+
+                  // Save
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+                      child: LiquidGlassButton(
+                        label: 'Enregistrer',
+                        icon: Icons.check_rounded,
+                        isLoading: _isSaving,
+                        isExpanded: true,
+                        onPressed: _isSaving ? null : _saveProfile,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -203,8 +228,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
         padding: const EdgeInsets.only(top: 8, bottom: 24),
         child: Column(
           children: [
-            GestureDetector(
-                  onTap: _openAvatarPicker,
+            AccessibleAction(
+                  label: 'Modifier mon avatar',
+                  onPressed: _openAvatarPicker,
                   child: Stack(
                     children: [
                       UserAvatar(pfp: _selectedPfp, size: 110),
@@ -234,7 +260,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ],
                   ),
                 )
-                .animate()
+                .animateRespectingMotion(context)
                 .fadeIn(duration: 400.ms)
                 .scale(
                   begin: const Offset(0.85, 0.85),

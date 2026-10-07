@@ -1,3 +1,5 @@
+import '../../../../core/data/json_contract.dart';
+
 class MoodTrendPoint {
   final String day;
   final int count;
@@ -61,7 +63,7 @@ class DashboardStats {
   final List<MoodDistributionItem> moodDistribution;
   final List<ActivityTimelinePoint> activityTimeline;
 
-  const DashboardStats({
+  DashboardStats({
     required this.rangeDays,
     required this.streak,
     required this.moodLogsCount,
@@ -72,13 +74,15 @@ class DashboardStats {
     required this.meditationSessionsCount,
     required this.coachSessionsCount,
     this.latestMood,
-    required this.moodTrend7Days,
-    required this.moodDistribution,
-    required this.activityTimeline,
-  });
+    required List<MoodTrendPoint> moodTrend7Days,
+    required List<MoodDistributionItem> moodDistribution,
+    required List<ActivityTimelinePoint> activityTimeline,
+  }) : moodTrend7Days = List.unmodifiable(moodTrend7Days),
+       moodDistribution = List.unmodifiable(moodDistribution),
+       activityTimeline = List.unmodifiable(activityTimeline);
 
   factory DashboardStats.empty() {
-    return const DashboardStats(
+    return DashboardStats(
       rangeDays: 7,
       streak: 0,
       moodLogsCount: 0,
@@ -141,20 +145,27 @@ class DashboardStats {
 
 class DashboardData {
   final String? latestMood;
+  final DateTime? cachedAt;
   final DashboardStats stats;
   final List<dynamic> activeChallenges;
   final List<dynamic> pendingChallenges;
 
-  const DashboardData({
+  DashboardData({
+    this.cachedAt,
     required this.latestMood,
     required this.stats,
-    required this.activeChallenges,
-    required this.pendingChallenges,
-  });
+    required List<dynamic> activeChallenges,
+    required List<dynamic> pendingChallenges,
+  }) : activeChallenges = freezeJson(activeChallenges) as List<dynamic>,
+       pendingChallenges = freezeJson(pendingChallenges) as List<dynamic>;
 
-  factory DashboardData.fromJson(Map<String, dynamic> json) {
+  factory DashboardData.fromJson(
+    Map<String, dynamic> json, {
+    DateTime? cachedAt,
+  }) {
     final challenges = json['challenges'] as Map? ?? const {};
     return DashboardData(
+      cachedAt: cachedAt,
       latestMood: json['latestMood'] as String?,
       stats: DashboardStats.fromJson(
         json['stats'] as Map<String, dynamic>? ?? json,

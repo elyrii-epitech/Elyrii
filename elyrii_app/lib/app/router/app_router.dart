@@ -21,22 +21,24 @@ import 'app_routes.dart';
 import 'app_shell.dart';
 import 'page_transitions.dart';
 
-/// Listenable composite regroupant l'état d'authentification et le statut de profil.
+/// The router releases its subscriptions when disposed; no permanent wrapper
+/// subscriptions are installed on the source notifiers.
 class _CompositeListenable extends ChangeNotifier {
   final List<Listenable> _listenables;
 
-  _CompositeListenable(this._listenables) {
-    for (final l in _listenables) {
-      l.addListener(notifyListeners);
+  _CompositeListenable(this._listenables);
+  @override
+  void addListener(VoidCallback listener) {
+    for (final source in _listenables) {
+      source.addListener(listener);
     }
   }
 
   @override
-  void dispose() {
-    for (final l in _listenables) {
-      l.removeListener(notifyListeners);
+  void removeListener(VoidCallback listener) {
+    for (final source in _listenables) {
+      source.removeListener(listener);
     }
-    super.dispose();
   }
 }
 
@@ -67,7 +69,9 @@ abstract final class AppRouter {
         }
 
         // Onboarding profil obligatoire avant le reste de l'application
-        if (!setupDone && location != AppRoutes.profileSetup) {
+        if (!setupDone &&
+            location != AppRoutes.profileSetup &&
+            location != AppRoutes.avatarPicker) {
           return AppRoutes.profileSetup;
         }
 
@@ -201,13 +205,17 @@ abstract final class AppRouter {
           pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(
             key: state.pageKey,
             name: state.name,
-            child: const AvatarPickerPage(),
+            child: AvatarPickerPage(
+              currentPfp: state.extra is String ? state.extra as String : null,
+            ),
           ),
         ),
 
         // Session de méditation immersive (hors shell : aucun dock)
         GoRoute(
           path: AppRoutes.meditationSession,
+          redirect: (context, state) =>
+              state.extra is MeditationController ? null : AppRoutes.meditation,
           pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(
             key: state.pageKey,
             name: state.name,

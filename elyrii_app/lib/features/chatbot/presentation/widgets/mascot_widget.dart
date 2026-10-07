@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/config/mascot_animations.dart';
 import '../providers/chatbot_provider.dart' show ChatbotProvider;
 import '../../../../core/config/mascot_themes.dart';

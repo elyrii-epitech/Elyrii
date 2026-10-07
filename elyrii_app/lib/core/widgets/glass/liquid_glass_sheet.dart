@@ -1,8 +1,10 @@
+import '../../accessibility/motion.dart';
 // iOS 26 Liquid Glass Sheet
 // Part of the Liquid Glass Widget Kit
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../glass/elyrii_glass_surface.dart';
 import '../../theme/app_dimensions.dart';
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -113,7 +115,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
             );
           },
         )
-        .animate()
+        .animateRespectingMotion(context)
         .fadeIn(duration: 300.ms, curve: Curves.easeOutCubic)
         .slideY(
           begin: 0.1,

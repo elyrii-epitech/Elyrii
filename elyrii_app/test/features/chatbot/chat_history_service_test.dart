@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -19,27 +20,24 @@ void main() {
   });
   tearDown(() => history.close());
 
-  test(
-    'updating session metadata preserves its messages and original creation date',
-    () async {
-      final session = ChatSession.create();
-      await history.append('a', session, ChatMessage.user('First'));
-      final updated = session.copyWith(
-        title: 'Renamed',
-        updatedAt: DateTime(2027),
-      );
-      await history.append('a', updated, ChatMessage.user('Second'));
-      final stored = (await history.sessions('a')).single;
-      expect(stored.title, 'Renamed');
-      expect(stored.createdAt, session.createdAt);
-      expect(stored.updatedAt, DateTime(2027));
-      expect(stored.messageCount, 2);
-      expect((await history.messages('a', session.id)).map((m) => m.content), [
-        'First',
-        'Second',
-      ]);
-    },
-  );
+  test('updating session metadata preserves its messages and original creation date', () async {
+    final session = ChatSession.create();
+    await history.append('a', session, ChatMessage.user('First'));
+    final updated = session.copyWith(
+      title: 'Renamed',
+      updatedAt: DateTime(2027),
+    );
+    await history.append('a', updated, ChatMessage.user('Second'));
+    final stored = (await history.sessions('a')).single;
+    expect(stored.title, 'Renamed');
+    expect(stored.createdAt, session.createdAt);
+    expect(stored.updatedAt, DateTime(2027));
+    expect(stored.messageCount, 2);
+    expect((await history.messages('a', session.id)).map((m) => m.content), [
+      'First',
+      'Second',
+    ]);
+  });
 
   test(
     'writes one message at a time, counts duplicates once, pages in order',

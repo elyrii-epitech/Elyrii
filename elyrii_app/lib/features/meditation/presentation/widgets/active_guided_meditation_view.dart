@@ -43,6 +43,7 @@ class ActiveGuidedMeditationView extends StatelessWidget {
               label: 'Interrompre la séance',
               button: true,
               child: LiquidGlassIconButton(
+                tooltip: 'Interrompre la séance',
                 icon: Icons.close_rounded,
                 onPressed: onRequestExit,
                 size: 44,
@@ -54,6 +55,9 @@ class ActiveGuidedMeditationView extends StatelessWidget {
                   : 'Mettre en pause',
               button: true,
               child: LiquidGlassIconButton(
+                tooltip: controller.isPaused
+                    ? 'Reprendre la séance'
+                    : 'Mettre en pause',
                 icon: controller.isPaused
                     ? Icons.play_arrow_rounded
                     : Icons.pause_rounded,
@@ -113,9 +117,8 @@ class ActiveGuidedMeditationView extends StatelessWidget {
                   step.instruction,
                   key: const Key('meditation-guidance-instruction'),
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyLarge(
-                    color: secondary,
-                  ).copyWith(height: 1.6),
+                  style: AppTextStyles.bodyLarge(color: secondary)
+                      .copyWith(height: 1.6),
                 ),
                 const SizedBox(height: 24),
                 Text(

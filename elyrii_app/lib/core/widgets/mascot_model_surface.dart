@@ -3,6 +3,7 @@
 // the same platform renderer/asset loader, with cancellable play and pose seek.
 // ignore_for_file: implementation_imports
 
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -14,12 +15,15 @@ import 'package:flutter_3d_controller/src/data/repositories/flutter_3d_repositor
 import 'package:flutter_3d_controller/src/utils/utils.dart';
 
 import 'launch_scope.dart';
+import '../diagnostics/app_diagnostics.dart';
 import '../../features/mascot/data/models/mascot_appearance.dart';
 import 'mascot_material_script.dart';
 
 /// Commandes atomiques : attendre updateComplete avant de jouer/chercher évite
 /// que model-viewer réinitialise le temps, la pause ou le nombre de répétitions.
 class MascotModelController extends Flutter3DController {
+  MascotModelController({this._sendCommand});
+  final Future<Object?> Function(String)? _sendCommand;
   IFlutter3DDatasource? _source;
   String? _id;
 
@@ -29,8 +33,13 @@ class MascotModelController extends Flutter3DController {
     init(Flutter3DRepository(source));
   }
 
+  void _detach(String id) {
+    if (_id != id) return;
+    _source = null;
+    _id = null;
+  }
+
   void _command(String operation) {
-    if (!onModelLoaded.value || _source == null) return;
     final cleanOp = operation.replaceAll(RegExp(r'[\r\n]+'), ' ').trim();
     final js =
         '(function(){'
@@ -40,7 +49,28 @@ class MascotModelController extends Flutter3DController {
         '$cleanOp'
         'return [];'
         '})();';
-    _source!.executeCustomJsCodeWithResult(js);
+    _sendJavascript(js);
+  }
+
+  void _sendJavascript(String js) {
+    final source = _source;
+    final send = _sendCommand ?? source?.executeCustomJsCodeWithResult;
+    if (!onModelLoaded.value || send == null) return;
+    unawaited(_executeCommand(send, js, source));
+  }
+
+  Future<void> _executeCommand(
+    Future<Object?> Function(String) send,
+    String js,
+    IFlutter3DDatasource? source,
+  ) async {
+    try {
+      await send(js);
+    } catch (error) {
+      if (identical(_source, source) && onModelLoaded.value) {
+        AppDiagnostics.record('mascot_command_failed', error);
+      }
+    }
   }
 
   @override
@@ -99,8 +129,7 @@ class MascotModelController extends Flutter3DController {
   /// Public model-viewer material variants select a fitted accessory without
   /// reloading the GLB or interrupting its current gesture.
   void setAccessoryVariant(String? accessoryId) {
-    if (!onModelLoaded.value || _source == null) return;
-    _source!.executeCustomJsCodeWithResult(
+    _sendJavascript(
       '(function(){'
       'var m=document.getElementById(${jsonEncode(_id)});'
       'if(m)m.variantName=${jsonEncode(accessoryId)};return [];'
@@ -109,8 +138,7 @@ class MascotModelController extends Flutter3DController {
   }
 
   void setAppearance(MascotAppearance appearance) {
-    if (!onModelLoaded.value || _source == null) return;
-    _source!.executeCustomJsCodeWithResult(
+    _sendJavascript(
       '(function(){'
       'var m=document.getElementById(${jsonEncode(_id)});'
       'if(!m)return [];'
@@ -139,8 +167,7 @@ class MascotModelController extends Flutter3DController {
   }
 
   void _sceneCommand(String operation) {
-    if (!onModelLoaded.value || _source == null) return;
-    _source!.executeCustomJsCodeWithResult(
+    _sendJavascript(
       '(function(){var m=document.getElementById(${jsonEncode(_id)});'
       'if(m){$operation}return [];})();',
     );
@@ -194,7 +221,7 @@ class MascotModelSurface extends StatefulWidget {
     required this.onError,
     this.interactive = false,
     this.accessoryVariant,
-    this.appearance = const MascotAppearance(),
+    this.appearance = MascotAppearance.defaults,
   });
 
   final String src;
@@ -249,6 +276,12 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
   }
 
   @override
+  void dispose() {
+    widget.controller._detach(_id);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     // Native WebViews / web platform views do not reliably blend with a
     // Flutter opacity overlay. Do not create the surface until the splash
@@ -280,12 +313,14 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
       onWebViewCreated: kIsWeb
           ? null
           : (webView) {
+              if (!mounted) return;
               widget.controller._attach(
                 _id,
                 IFlutter3DDatasource(_id, webView, widget.interactive),
               );
             },
       onLoad: (address) {
+        if (!mounted) return;
         widget.controller.onModelLoaded.value = true;
         widget.controller.setStudioRenderQuality(widget.interactive);
         widget.controller.setAccessoryVariant(widget.accessoryVariant);
@@ -293,6 +328,7 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
         widget.onLoad(address);
       },
       onError: (error) {
+        if (!mounted) return;
         widget.controller.onModelLoaded.value = false;
         widget.onError(error);
       },

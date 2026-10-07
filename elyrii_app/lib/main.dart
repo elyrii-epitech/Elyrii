@@ -1,186 +1,221 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'dart:async';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
+import 'package:go_router/go_router.dart';
 
-import 'core/theme/app_theme.dart';
-import 'core/config/app_constants.dart';
+import 'app/app_dependencies.dart';
+import 'app/router/app_router.dart';
+import 'app/launch/elyrii_launch.dart';
 import 'core/config/app_config.dart';
+import 'core/config/app_constants.dart';
+import 'core/diagnostics/app_diagnostics.dart';
+import 'core/theme/app_theme.dart';
 import 'core/network/api_client.dart';
 import 'core/services/secure_storage_service.dart';
 import 'core/services/theme_provider.dart';
 import 'core/widgets/error_boundary.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/settings/providers/settings_provider.dart';
 import 'features/journal/presentation/providers/journal_provider.dart';
 import 'features/chatbot/presentation/providers/chatbot_provider.dart';
-import 'features/gamification/presentation/providers/gamification_provider.dart';
-import 'features/settings/providers/settings_provider.dart';
-import 'features/mascot/presentation/providers/mascot_provider.dart';
-import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'features/coach/presentation/providers/coach_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'app/router/app_router.dart';
-import 'app/launch/elyrii_launch.dart';
+import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'features/gamification/presentation/providers/gamification_provider.dart';
+import 'features/mascot/presentation/providers/mascot_provider.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  final defaultError = FlutterError.onError;
+  FlutterError.onError = (details) {
+    AppDiagnostics.record('flutter_error', details.exception);
+    defaultError?.call(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    AppDiagnostics.record('async_error', error);
+    return true;
+  };
+  runApp(const ApplicationBootstrap());
+}
 
+Future<AppDependencies> initializeApplication() async {
   AppConfig.initialize();
-
-  final secureStorage = SecureStorageService();
-  final apiClient = ApiClient(storage: secureStorage);
-  final themeProvider = ThemeProvider();
-
-  await Future.wait([themeProvider.init(), LiquidGlassWidgets.initialize()]);
-
-  final authProvider = AuthProvider(client: apiClient, storage: secureStorage);
-  final journalProvider = JournalProvider(client: apiClient);
-  final chatbotProvider = ChatbotProvider(storage: secureStorage);
-  final gamificationProvider = GamificationProvider(
-    client: apiClient,
-    isDemoSession: () => authProvider.isDemoSession,
-  );
-  final userProvider = UserProvider(client: apiClient);
-  final mascotProvider = MascotProvider(client: apiClient);
-  final dashboardProvider = DashboardProvider(
-    apiClient: apiClient,
-    isDemoSession: () => authProvider.isDemoSession,
-  );
-  final coachProvider = CoachProvider(client: apiClient);
-
-  // Explicit diagnostic opt-in: never poll every service on a normal launch.
-  if (kDebugMode && const bool.fromEnvironment('CHECK_BACKEND_HEALTH')) {
-    unawaited(apiClient.checkHealth());
-  }
-
-  // Offline-first startup: restore the session from local storage only
-  // (token presence + local JWT expiry check). No network call blocks
-  // runApp, so a slow or absent network can never white-screen the launch.
-  await authProvider.restoreLocalSession();
-  String? activeStudioSession;
-  var accountBindingRevision = 0;
-  Future<void> synchronizeStudioAccount({bool migrateLegacy = false}) async {
-    final revision = ++accountBindingRevision;
-    final authenticated = authProvider.isAuthenticated;
-    final userId = authenticated
-        ? authProvider.user?.id ?? await secureStorage.getUserId()
-        : null;
-    if (revision != accountBindingRevision) return;
-    final isDemo = authProvider.isDemoSession;
-    final session = isDemo ? 'demo' : userId ?? 'guest';
-    if (session == activeStudioSession) return;
-    activeStudioSession = session;
-    gamificationProvider.onUserChanged(userId: userId, isDemo: isDemo);
-    dashboardProvider.onUserChanged(userId: userId, isDemo: isDemo);
+  await initializeDateFormatting('fr');
+  await initializeDateFormatting('en');
+  await LiquidGlassWidgets.initialize();
+  final storage = SecureStorageService();
+  final api = ApiClient(storage: storage);
+  final theme = ThemeProvider();
+  AppDependencies? dependencies;
+  try {
+    await theme.init();
+    dependencies = AppDependencies(storage: storage, api: api, theme: theme);
+    await dependencies.initialize();
+    if (kDebugMode && const bool.fromEnvironment('CHECK_BACKEND_HEALTH')) {
+      unawaited(
+        api.checkHealth().catchError(
+          (Object error) => AppDiagnostics.record('health_check', error),
+        ),
+      );
+    }
     unawaited(
-      mascotProvider.onUserChanged(
-        userId: userId,
-        isDemo: isDemo,
-        migrateLegacy: migrateLegacy,
-      ),
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]),
     );
-    if (authenticated && userId != null) {
-      unawaited(gamificationProvider.loadAll());
+    return dependencies;
+  } catch (_) {
+    if (dependencies != null) {
+      dependencies.dispose();
+    } else {
+      api.dispose();
+      theme.dispose();
+    }
+    rethrow;
+  }
+}
+
+/// The first frame exists before plugin or storage initialization. Failures
+/// have an explicit retry path; late initialization attempts are disposed.
+class ApplicationBootstrap extends StatefulWidget {
+  final Future<AppDependencies> Function()? initialize;
+  const ApplicationBootstrap({super.key, this.initialize});
+  @override
+  State<ApplicationBootstrap> createState() => _ApplicationBootstrapState();
+}
+
+class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
+  AppDependencies? _dependencies;
+  bool _failed = false;
+  int _attempt = 0;
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_start());
+  }
+
+  Future<void> _start() async {
+    final attempt = ++_attempt;
+    setState(() => _failed = false);
+    final startup = Future<AppDependencies>.sync(
+      widget.initialize ?? initializeApplication,
+    );
+    unawaited(
+      startup.then<void>((services) {
+        if (!mounted || attempt != _attempt) services.dispose();
+      }, onError: (Object _, StackTrace _) {}),
+    );
+    try {
+      final services = await startup.timeout(const Duration(seconds: 30));
+      if (!mounted || attempt != _attempt) return;
+      setState(() => _dependencies = services);
+    } catch (error) {
+      AppDiagnostics.record('startup_failed', error);
+      if (mounted && attempt == _attempt) {
+        _attempt++;
+        setState(() => _failed = true);
+      }
     }
   }
 
-  // Bind the local cache before the first frame. Network hydration stays
-  // asynchronous; an account switch immediately invalidates old requests.
-  await synchronizeStudioAccount(migrateLegacy: true);
-  authProvider.addListener(() {
-    unawaited(synchronizeStudioAccount());
-    if (authProvider.status == AuthStatus.unauthenticated) {
-      journalProvider.resetSession();
-    }
-    unawaited(chatbotProvider.synchronizeAccount());
-  });
-  // Restore may have removed an expired account after chat initialization.
-  unawaited(chatbotProvider.synchronizeAccount());
-  final profileSetupDone = authProvider.isAuthenticated
-      ? await secureStorage.isProfileSetupCompleted()
-      : true;
-  // Le routeur GoRouter lit ce notifier pour lever le guard d'onboarding
-  // une fois le profil complété (voir ProfileSetupPage._finish).
-  final profileSetupDoneListenable = ValueNotifier<bool>(profileSetupDone);
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  @override
+  void dispose() {
+    _attempt++;
+    _dependencies?.dispose();
+    super.dispose();
+  }
 
-  runApp(
-    LiquidGlassWidgets.wrap(
+  @override
+  Widget build(BuildContext context) {
+    final services = _dependencies;
+    if (services == null) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        // Leave the platform's initial deep link to GoRouter after startup.
+        builder: (context, _) => Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: _failed
+                  ? Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Impossible d’ouvrir Elyrii pour le moment.',
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          onPressed: () => unawaited(_start()),
+                          child: const Text('Réessayer'),
+                        ),
+                      ],
+                    )
+                  : const CircularProgressIndicator(
+                      semanticsLabel: 'Ouverture d’Elyrii',
+                    ),
+            ),
+          ),
+        ),
+      );
+    }
+    return LiquidGlassWidgets.wrap(
       brightnessResolver: Theme.maybeBrightnessOf,
       adaptiveQuality: true,
       child: MultiProvider(
         providers: [
-          Provider<ApiClient>.value(value: apiClient),
-          Provider<SecureStorageService>.value(value: secureStorage),
+          Provider<AppDependencies>.value(value: services),
+          Provider<ApiClient>.value(value: services.api),
+          Provider<SecureStorageService>.value(value: services.storage),
           ListenableProvider<ValueNotifier<bool>>.value(
-            value: profileSetupDoneListenable,
+            value: services.profileSetupDone,
           ),
-          ChangeNotifierProvider.value(value: themeProvider),
-          ChangeNotifierProvider.value(value: authProvider),
-          ChangeNotifierProvider.value(value: journalProvider),
-          ChangeNotifierProvider.value(value: chatbotProvider),
-          ChangeNotifierProvider.value(value: gamificationProvider),
-          ChangeNotifierProvider.value(value: userProvider),
-          ChangeNotifierProvider.value(value: mascotProvider),
-          ChangeNotifierProvider.value(value: dashboardProvider),
-          ChangeNotifierProvider.value(value: coachProvider),
+          ChangeNotifierProvider<ThemeProvider>.value(value: services.theme),
+          ChangeNotifierProvider<AuthProvider>.value(value: services.auth),
+          ChangeNotifierProvider<UserProvider>.value(value: services.user),
+          ChangeNotifierProvider<JournalProvider>.value(
+            value: services.journal,
+          ),
+          ChangeNotifierProvider<ChatbotProvider>.value(value: services.chat),
+          ChangeNotifierProvider<CoachProvider>.value(value: services.coach),
+          ChangeNotifierProvider<DashboardProvider>.value(
+            value: services.dashboard,
+          ),
+          ChangeNotifierProvider<GamificationProvider>.value(
+            value: services.gamification,
+          ),
+          ChangeNotifierProvider<MascotProvider>.value(value: services.mascot),
         ],
-        child: MyApp(
-          authProvider: authProvider,
-          profileSetupDoneListenable: profileSetupDoneListenable,
+        child: Consumer<AuthProvider>(
+          builder: (context, auth, _) => MyApp(
+            key: ValueKey(auth.isAuthenticated ? auth.accountId : 'guest'),
+            authProvider: services.auth,
+            profileSetupDoneListenable: services.profileSetupDone,
+          ),
         ),
       ),
-    ),
-  );
-
-  // Post-launch hydration: verify the session and warm the providers without
-  // ever blocking the first frame. Pages already self-load in initState,
-  // so these calls only pre-warm data and reconcile the saved theme.
-  unawaited(() async {
-    await authProvider.revalidateSession(onProfile: userProvider.acceptProfile);
-    if (authProvider.isAuthenticated) {
-      await synchronizeStudioAccount();
-      if (authProvider.isDemoSession) {
-        await Future.wait([
-          mascotProvider.loadMascot(),
-          dashboardProvider.loadDashboardData(),
-        ]);
-        return;
-      }
-      await Future.wait([
-        userProvider.loadSettings(),
-        mascotProvider.loadMascot(),
-      ]);
-      final savedTheme = userProvider.settings?.themeModeValue;
-      if (savedTheme != null) {
-        themeProvider.setThemeMode(savedTheme);
-      }
-    }
-  }());
+    );
+  }
 }
 
 class MyApp extends StatefulWidget {
   final AuthProvider authProvider;
   final ValueNotifier<bool> profileSetupDoneListenable;
-
   const MyApp({
     super.key,
     required this.authProvider,
     required this.profileSetupDoneListenable,
   });
-
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
   late final GoRouter _router;
-
   @override
   void initState() {
     super.initState();
@@ -191,33 +226,40 @@ class _MyAppState extends State<MyApp> {
   }
 
   @override
+  void dispose() {
+    _router.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        return MaterialApp.router(
-          title: AppConstants.appName,
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeProvider.themeMode,
-          routerConfig: _router,
-          builder: (context, child) {
-            // Status bar follows the active theme instead of being forced
-            // to dark icons (unreadable in dark mode).
-            final brightness = Theme.of(context).brightness;
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: brightness == Brightness.dark
-                    ? Brightness.light
-                    : Brightness.dark,
-                statusBarBrightness: brightness == Brightness.dark
-                    ? Brightness.dark
-                    : Brightness.light,
-              ),
-              child: ElyriiLaunch(child: GlobalErrorBoundary(child: child!)),
-            );
-          },
+    final theme = context.watch<ThemeProvider>();
+    final language = context.select<UserProvider, String>(
+      (value) => value.settings?.language ?? 'fr',
+    );
+    return MaterialApp.router(
+      title: AppConstants.appName,
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: theme.themeMode,
+      locale: Locale(language == 'en' ? 'en' : 'fr'),
+      supportedLocales: const [Locale('fr'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      routerConfig: _router,
+      builder: (context, child) {
+        final dark = Theme.of(context).brightness == Brightness.dark;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+            statusBarBrightness: dark ? Brightness.dark : Brightness.light,
+          ),
+          child: ElyriiLaunch(child: GlobalErrorBoundary(child: child!)),
         );
       },
     );

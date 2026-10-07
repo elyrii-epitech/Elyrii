@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_colors.dart';
 
 /// Palette sémantique unifiée Elyrii.
@@ -6,8 +7,8 @@ import '../../theme/app_colors.dart';
 abstract final class ElyriiColors {
   // Teintes fondamentales (Lavande apaisante, Pêche chaleureuse, Menthe douce)
   static const Color brandPrimary = AppColors.primary;
-  static const Color brandSecondary = Color(0xFFFFB5A8);
-  static const Color brandAccent = Color(0xFFA8D5BA);
+  static const Color brandSecondary = AppColors.secondary;
+  static const Color brandAccent = AppColors.accent;
 
   // Arrière-plans Scaffolds
   static const Color backgroundLight =
@@ -20,7 +21,8 @@ abstract final class ElyriiColors {
   static const Color surfaceDark = AppColors.surfaceDark;
 
   // Verre Translucide (Liquid Glass fonctionnel)
-  static const Color glassLight = Color(0xD9FFFFFF); // 85% blanc pur
+  static const Color glassLight =
+      AppColors.glassBackgroundLight; // 85% blanc pur
   static const Color glassDark = Color(0x33FFFFFF); // 20% blanc sur fond noir
   static const Color glassBorderLight = Color(
     0x4DFFFFFF,
@@ -38,5 +40,5 @@ abstract final class ElyriiColors {
   // États sémantiques
   static const Color positive = Color(0xFF4E9A68);
   static const Color warning = Color(0xFFD97706);
-  static const Color critical = Color(0xFFDC2626);
+  static const Color critical = AppColors.error;
 }

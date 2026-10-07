@@ -2,6 +2,7 @@
 // Part of the Liquid Glass Widget Kit
 
 import 'package:flutter/material.dart';
+
 import '../../design_system/haptics/elyrii_haptics.dart';
 import '../../glass/elyrii_glass_surface.dart';
 

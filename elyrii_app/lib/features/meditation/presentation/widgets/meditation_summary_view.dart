@@ -1,3 +1,5 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -88,27 +90,31 @@ class MeditationSummaryView extends StatelessWidget {
           const SizedBox(height: AppDimensions.spacingSm),
 
           Text(
-            'Bravo, c\'est terminé !',
-            style: AppTextStyles.headlineMedium(
-              color: textColor,
-              fontWeight: FontWeight.w700,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+                'Bravo, c\'est terminé !',
+                style: AppTextStyles.headlineMedium(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              )
+              .animateRespectingMotion(context)
+              .fadeIn(duration: 500.ms, delay: 200.ms),
 
           const SizedBox(height: AppDimensions.spacingXs),
 
           Text(
-            'Tu as pris un moment pour toi,\net c\'est déjà une belle victoire.',
-            style: AppTextStyles.bodyMedium(color: subtitleColor),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
+                'Tu as pris un moment pour toi,\net c\'est déjà une belle victoire.',
+                style: AppTextStyles.bodyMedium(color: subtitleColor),
+                textAlign: TextAlign.center,
+              )
+              .animateRespectingMotion(context)
+              .fadeIn(duration: 500.ms, delay: 400.ms),
 
           const SizedBox(height: AppDimensions.spacingXl),
 
           // Carte de statistiques de la séance
           _buildStatsCard(isDark, textColor, subtitleColor, accent)
-              .animate()
+              .animateRespectingMotion(context)
               .fadeIn(duration: 500.ms, delay: 500.ms)
               .slideY(begin: 0.15, end: 0),
 
@@ -125,13 +131,15 @@ class MeditationSummaryView extends StatelessWidget {
 
           // Question humeur après séance
           Text(
-            'Comment te sens-tu maintenant ?',
-            style: AppTextStyles.titleMedium(
-              color: textColor,
-              fontWeight: FontWeight.w600,
-            ),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 500.ms, delay: 600.ms),
+                'Comment te sens-tu maintenant ?',
+                style: AppTextStyles.titleMedium(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              )
+              .animateRespectingMotion(context)
+              .fadeIn(duration: 500.ms, delay: 600.ms),
 
           const SizedBox(height: AppDimensions.spacingLg),
 
@@ -147,46 +155,52 @@ class MeditationSummaryView extends StatelessWidget {
               final selected = controller.selectedMoodIndex == index;
 
               return GestureDetector(
-                onTap: () => controller.selectMood(index, mood.backendKey),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.primary.withValues(alpha: 0.18)
-                        : (isDark
-                              ? Colors.white.withValues(alpha: 0.04)
-                              : Colors.black.withValues(alpha: 0.02)),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: selected ? AppColors.primary : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(mood.icon, size: 32, color: mood.color),
-                      const SizedBox(height: 6),
-                      Text(
-                        mood.label,
-                        style: AppTextStyles.labelSmall(
-                          color: selected ? AppColors.primary : subtitleColor,
-                          fontWeight: selected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                    onTap: () => controller.selectMood(index, mood.backendKey),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? AppColors.primary.withValues(alpha: 0.18)
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.04)
+                                  : Colors.black.withValues(alpha: 0.02)),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: selected
+                              ? AppColors.primary
+                              : Colors.transparent,
+                          width: 1.5,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ).animate().fadeIn(
-                duration: 350.ms,
-                delay: Duration(milliseconds: 700 + (index * 80)),
-              );
+                      child: Column(
+                        children: [
+                          Icon(mood.icon, size: 32, color: mood.color),
+                          const SizedBox(height: 6),
+                          Text(
+                            mood.label,
+                            style: AppTextStyles.labelSmall(
+                              color: selected
+                                  ? AppColors.primary
+                                  : subtitleColor,
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .animateRespectingMotion(context)
+                  .fadeIn(
+                    duration: 350.ms,
+                    delay: Duration(milliseconds: 700 + (index * 80)),
+                  );
             }).toList(),
           ),
 
@@ -194,32 +208,37 @@ class MeditationSummaryView extends StatelessWidget {
 
           // Bouton retour au catalogue
           Center(
-            child: LiquidGlassCard(
-              onTap: () => controller.resetToSetup(),
-              borderRadius: 30,
-              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 14),
-              color: AppColors.primary.withValues(alpha: 0.22),
-              borderColor: AppColors.primary.withValues(alpha: 0.5),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.refresh_rounded,
-                    color: AppColors.primary,
-                    size: 20,
+                child: LiquidGlassCard(
+                  onTap: () => controller.resetToSetup(),
+                  borderRadius: 30,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 36,
+                    vertical: 14,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Nouvelle séance',
-                    style: AppTextStyles.labelLarge(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.primary.withValues(alpha: 0.22),
+                  borderColor: AppColors.primary.withValues(alpha: 0.5),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.refresh_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Nouvelle séance',
+                        style: AppTextStyles.labelLarge(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-          ).animate().fadeIn(duration: 400.ms, delay: 900.ms),
+                ),
+              )
+              .animateRespectingMotion(context)
+              .fadeIn(duration: 400.ms, delay: 900.ms),
 
           const SizedBox(height: 40),
         ],

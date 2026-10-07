@@ -61,30 +61,24 @@ void main() {
     },
   );
 
-  test(
-    'les pièces inconnues et verrouillées ne sont pas équipées ni synchronisées',
-    () async {
-      final client = _MascotClient({});
-      final provider = MascotProvider(client: client, userId: 'user');
-      await provider.loadMascot();
-      var notifications = 0;
-      provider.addListener(() => notifications++);
+  test('les pièces inconnues et verrouillées ne sont pas équipées ni synchronisées', () async {
+    final client = _MascotClient({});
+    final provider = MascotProvider(client: client, userId: 'user');
+    await provider.loadMascot();
+    var notifications = 0;
+    provider.addListener(() => notifications++);
 
-      expect(provider.equipCosmetic('beret', completedChallenges: 1), isFalse);
-      expect(
-        provider.equipCosmetic('unknown', completedChallenges: 100),
-        isFalse,
-      );
-      expect(
-        provider.equipCosmetic('custom1', completedChallenges: 0),
-        isFalse,
-      );
-      expect(provider.mascot.equippedCosmetics, isEmpty);
-      expect(client.updates, isEmpty);
-      expect(notifications, 0);
-      provider.dispose();
-    },
-  );
+    expect(provider.equipCosmetic('beret', completedChallenges: 1), isFalse);
+    expect(
+      provider.equipCosmetic('unknown', completedChallenges: 100),
+      isFalse,
+    );
+    expect(provider.equipCosmetic('custom1', completedChallenges: 0), isFalse);
+    expect(provider.mascot.equippedCosmetics, isEmpty);
+    expect(client.updates, isEmpty);
+    expect(notifications, 0);
+    provider.dispose();
+  });
 
   test(
     'le palier exact équipe, remplace la pièce portée et permet de la retirer',

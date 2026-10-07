@@ -1,3 +1,6 @@
+import '../../../core/widgets/accessible_action.dart';
+import '../../../app/app_dependencies.dart';
+
 import 'package:flutter/cupertino.dart'
     show
         CupertinoActivityIndicator,
@@ -7,7 +10,9 @@ import 'package:flutter/cupertino.dart'
         CupertinoTextField,
         showCupertinoDialog;
 import 'package:flutter/material.dart';
+
 import '../../../core/widgets/elyrii_page_header.dart';
+
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -36,7 +41,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<UserProvider>().loadSettings();
+      if (mounted) context.read<UserProvider>().loadSettings();
     });
   }
 
@@ -49,7 +54,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final notificationsEnabled =
         appSettings?.notificationsEnabled ?? _notifications;
     final hapticsEnabled = appSettings?.hapticsEnabled ?? _haptics;
-    ElyriiHaptics.setEnabled(hapticsEnabled);
     final strictPrivacy = appSettings?.privacyMode == 'STRICT';
 
     return Scaffold(
@@ -65,6 +69,31 @@ class _SettingsPageState extends State<SettingsPage> {
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
+            if (userProvider.error != null)
+              SliverToBoxAdapter(
+                child: Semantics(
+                  liveRegion: true,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Text(
+                          userProvider.error!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: userProvider.isLoading
+                              ? null
+                              : userProvider.loadSettings,
+                          child: const Text('Recharger les paramètres'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
 
             // Section Apparence
@@ -85,7 +114,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       activeTrackColor: AppColors.primary,
                       onChanged: (value) {
                         final mode = value ? ThemeMode.dark : ThemeMode.light;
-                        themeProvider.setThemeMode(mode);
                         context.read<UserProvider>().updateSettings(
                           themeMode: _themeModeToServerValue(mode),
                         );
@@ -192,8 +220,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () {
                       _showInfoDialog(
                         title: 'Données et stockage',
-                        message:
-                            'Tes entrées de journal, tes humeurs et tes conversations sont synchronisées avec ton compte sur nos serveurs. Tes préférences (thème, effets visuels, vibrations) et ta session restent stockées localement sur ton appareil. Pour effacer définitivement l’ensemble de tes données, utilise « Supprimer mon compte » ci-dessous.',
+                        message: 'Tes notes et tes humeurs sont synchronisées quand le réseau est disponible. Les brouillons et l’historique des conversations sont conservés sur cet appareil. Supprimer ton compte efface aussi ses données locales. Une déconnexion conserve les contenus locaux protégés pour ta prochaine connexion.',
                       );
                     },
                   ),
@@ -244,8 +271,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () {
                       _showInfoDialog(
                         title: 'Conditions d\'utilisation',
-                        message:
-                            'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+                        message: 'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
                       );
                     },
                   ),
@@ -257,8 +283,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     onTap: () {
                       _showInfoDialog(
                         title: 'Politique de confidentialité',
-                        message:
-                            'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
+                        message: 'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
                       );
                     },
                   ),
@@ -478,14 +503,18 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isDeletingAccount = true);
 
     final userProvider = context.read<UserProvider>();
-    final authProvider = context.read<AuthProvider>();
-    final success = await userProvider.deleteAccount(password: password);
+    bool success = false;
+    String? localError;
+    try {
+      success = await context.read<AppDependencies>().deleteAccount(password);
+    } catch (_) {
+      localError = 'Le compte a été supprimé, mais le nettoyage local a échoué. Redémarre Elyrii pour réessayer le nettoyage.';
+    }
 
     if (!mounted) return;
     setState(() => _isDeletingAccount = false);
 
     if (success) {
-      await authProvider.clearLocalSession();
       if (!mounted) return;
       context.go(AppRoutes.login);
       return;
@@ -498,8 +527,7 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (dialogContext) => CupertinoAlertDialog(
         title: const Text('Suppression impossible'),
         content: Text(
-          userProvider.error ??
-              'Impossible de supprimer le compte. Vérifie ton mot de passe et réessaie.',
+          localError ?? userProvider.error ?? 'Impossible de supprimer le compte. Vérifie ton mot de passe et réessaie.',
         ),
         actions: [
           CupertinoDialogAction(
@@ -516,7 +544,7 @@ class _SettingsPageState extends State<SettingsPage> {
 /// Cellule de liste groupée façon Réglages iOS : icône colorée dans un
 /// squircle arrondi, séparateurs insetés gérés par le parent, trailing libre
 /// (switch natif, chevron ou indicateur d'activité).
-class _SettingsCell extends StatefulWidget {
+class _SettingsCell extends StatelessWidget {
   final String title;
   final String? subtitle;
   final IconData icon;
@@ -536,99 +564,76 @@ class _SettingsCell extends StatefulWidget {
   });
 
   @override
-  State<_SettingsCell> createState() => _SettingsCellState();
-}
-
-class _SettingsCellState extends State<_SettingsCell> {
-  bool _isPressed = false;
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final titleColor = widget.isDestructive
-        ? AppColors.errorDark
+    final titleColor = isDestructive
+        ? Theme.of(context).colorScheme.error
         : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight);
 
-    return GestureDetector(
-      onTapDown: widget.onTap != null
-          ? (_) => setState(() => _isPressed = true)
-          : null,
-      onTapUp: widget.onTap != null
-          ? (_) => setState(() => _isPressed = false)
-          : null,
-      onTapCancel: widget.onTap != null
-          ? () => setState(() => _isPressed = false)
-          : null,
-      onTap: widget.onTap != null
-          ? () {
-              ElyriiHaptics.light();
-              widget.onTap?.call();
-            }
-          : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        color: _isPressed
-            ? (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.04))
-            : Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            // Pastille douce monotone : une seule teinte d'accent, ton apaisé.
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: widget.iconColor.withValues(alpha: isDark ? 0.20 : 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(widget.icon, size: 18, color: widget.iconColor),
+    final content = Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Pastille douce monotone : une seule teinte d'accent, ton apaisé.
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: isDark ? 0.20 : 0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
+                    color: titleColor,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
                   Text(
-                    widget.title,
+                    subtitle!,
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.2,
-                      color: titleColor,
+                      fontSize: 12,
+                      height: 1.3,
+                      color: isDark
+                          ? AppColors.textTertiaryDark
+                          : AppColors.textTertiaryLight,
                     ),
                   ),
-                  if (widget.subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.subtitle!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        height: 1.3,
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-            if (widget.trailing != null) ...[
-              const SizedBox(width: 12),
-              widget.trailing!,
-            ] else if (widget.onTap != null)
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 20,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.25),
-              ),
-          ],
-        ),
+          ),
+          if (trailing != null) ...[
+            const SizedBox(width: 12),
+            trailing!,
+          ] else if (onTap != null)
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.25),
+            ),
+        ],
       ),
+    );
+    if (onTap == null) return MergeSemantics(child: content);
+    return AccessibleAction(
+      label: '$title${subtitle == null ? '' : '. $subtitle'}',
+      onPressed: onTap,
+      child: content,
     );
   }
 }

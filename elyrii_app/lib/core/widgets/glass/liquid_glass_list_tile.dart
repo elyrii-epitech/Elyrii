@@ -2,14 +2,15 @@
 // Part of the Liquid Glass Widget Kit
 
 import 'package:flutter/material.dart';
-import '../../../core/design_system/haptics/elyrii_haptics.dart';
+
 import '../../glass/elyrii_glass_surface.dart';
+import '../accessible_action.dart';
 
 // =============================================================================
 // LIQUID GLASS LIST TILE
 // =============================================================================
 
-class LiquidGlassListTile extends StatefulWidget {
+class LiquidGlassListTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final IconData? leadingIcon;
@@ -28,100 +29,75 @@ class LiquidGlassListTile extends StatefulWidget {
   });
 
   @override
-  State<LiquidGlassListTile> createState() => _LiquidGlassListTileState();
-}
-
-class _LiquidGlassListTileState extends State<LiquidGlassListTile> {
-  bool _isPressed = false;
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTapDown: widget.onTap != null
-          ? (_) => setState(() => _isPressed = true)
-          : null,
-      onTapUp: widget.onTap != null
-          ? (_) => setState(() => _isPressed = false)
-          : null,
-      onTapCancel: widget.onTap != null
-          ? () => setState(() => _isPressed = false)
-          : null,
-      onTap: widget.onTap != null
-          ? () {
-              ElyriiHaptics.light();
-              widget.onTap?.call();
-            }
-          : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        color: _isPressed
-            ? (isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.04))
-            : Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            if (widget.leadingIcon != null) ...[
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.black.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  widget.leadingIcon,
-                  size: 18,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
+    final content = Container(
+      constraints: const BoxConstraints(minHeight: 44),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          if (leadingIcon != null) ...[
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(width: 12),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.title,
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w400,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                  ),
-                  if (widget.subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.subtitle!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.5)
-                            : Colors.black.withValues(alpha: 0.4),
-                      ),
-                    ),
-                  ],
-                ],
+              child: Icon(
+                leadingIcon,
+                size: 18,
+                color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            if (widget.trailing != null) widget.trailing!,
-            if (widget.trailing == null &&
-                widget.showChevron &&
-                widget.onTap != null)
-              Icon(
-                Icons.chevron_right,
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.3)
-                    : Colors.black.withValues(alpha: 0.25),
-              ),
+            const SizedBox(width: 12),
           ],
-        ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.5)
+                          : Colors.black.withValues(alpha: 0.4),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          ?trailing,
+          if (trailing == null && showChevron && onTap != null)
+            Icon(
+              Icons.chevron_right,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.25),
+            ),
+        ],
       ),
+    );
+    if (onTap == null) return content;
+    return AccessibleAction(
+      label: subtitle == null ? title : '$title, $subtitle',
+      onPressed: onTap,
+      child: content,
     );
   }
 }
@@ -149,44 +125,49 @@ class LiquidGlassChip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
 
-    return GestureDetector(
-      onTap: () {
-        ElyriiHaptics.light();
-        onTap();
-      },
-      child: ElyriiGlassSurface(
-        role: GlassRole.floatingControl,
+    return Semantics(
+      selected: isSelected,
+      child: AccessibleAction(
+        label: label,
+        onPressed: onTap,
         borderRadius: BorderRadius.circular(20),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        glassColor: isSelected ? primaryColor : null,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected
-                    ? Colors.white
-                    : (isDark
-                          ? Colors.white
-                          : Colors.black.withValues(alpha: 0.7)),
-              ),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isSelected
-                    ? Colors.white
-                    : (isDark
-                          ? Colors.white
-                          : Colors.black.withValues(alpha: 0.7)),
-              ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: ElyriiGlassSurface(
+            role: GlassRole.floatingControl,
+            borderRadius: BorderRadius.circular(20),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            glassColor: isSelected ? primaryColor : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 16,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark
+                              ? Colors.white
+                              : Colors.black.withValues(alpha: 0.7)),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark
+                              ? Colors.white
+                              : Colors.black.withValues(alpha: 0.7)),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

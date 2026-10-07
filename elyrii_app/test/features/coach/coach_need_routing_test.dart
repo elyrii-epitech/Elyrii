@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:elyrii_app/core/network/api_client.dart';
@@ -27,7 +29,10 @@ void main() {
 
     setUp(() {
       final storage = SecureStorageService();
-      final client = ApiClient(storage: storage);
+      final client = ApiClient(
+        storage: storage,
+        client: MockClient((_) async => throw http.ClientException('offline')),
+      );
       repository = CoachRepository(client: client);
       provider = CoachProvider(client: client);
     });
@@ -137,7 +142,10 @@ void main() {
   group('CoachPage — parcours utile et immersif', () {
     Widget createApp() {
       final storage = SecureStorageService();
-      final client = ApiClient(storage: storage);
+      final client = ApiClient(
+        storage: storage,
+        client: MockClient((_) async => throw http.ClientException('offline')),
+      );
       return MultiProvider(
         providers: [
           ChangeNotifierProvider(

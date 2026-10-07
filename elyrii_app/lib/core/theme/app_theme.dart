@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 import 'app_dimensions.dart';
@@ -268,13 +269,13 @@ class AppTheme {
         secondaryContainer: AppColors.secondary,
         tertiary: AppColors.accentDark, // #C2E3D2 - Menthe pâle
         tertiaryContainer: AppColors.accent,
-        error: AppColors.error,
+        error: AppColors.errorDark,
         errorContainer: AppColors.errorDark,
         surface: AppColors.surfaceDark, // #2A2627 - Brun très foncé
         onPrimary: AppColors.backgroundDark,
         onSecondary: AppColors.textPrimaryDark,
         onTertiary: AppColors.textPrimaryDark,
-        onError: Colors.white,
+        onError: Color(0xFF601410),
         onSurface: AppColors.textPrimaryDark,
         onSurfaceVariant: AppColors.textSecondaryDark,
         outline: AppColors.borderDark,

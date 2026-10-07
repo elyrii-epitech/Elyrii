@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
@@ -26,20 +28,21 @@ class MascotSpeechBubble extends StatefulWidget {
   State<MascotSpeechBubble> createState() => _MascotSpeechBubbleState();
 }
 
-class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _typingController;
+class _MascotSpeechBubbleState extends State<MascotSpeechBubble> {
   Timer? _typingTimer;
   String _displayedText = '';
   int _charIndex = 0;
   bool _isTypingComplete = false;
+  bool _reduceMotion = false;
   @override
   void initState() {
     super.initState();
-    _typingController = AnimationController(
-      duration: const Duration(milliseconds: 50),
-      vsync: this,
-    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _reduceMotion = MediaQuery.disableAnimationsOf(context);
     _startTypingAnimation();
   }
 
@@ -60,6 +63,12 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
 
   void _startTypingAnimation() {
     _typingTimer?.cancel();
+    if (_reduceMotion) {
+      _displayedText = widget.message;
+      _charIndex = widget.message.characters.length;
+      _isTypingComplete = true;
+      return;
+    }
     if (_charIndex < widget.message.characters.length) {
       _typingTimer = Timer(
         Duration(milliseconds: 30 + (_charIndex % 3) * 10),
@@ -85,7 +94,6 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble>
   @override
   void dispose() {
     _typingTimer?.cancel();
-    _typingController.dispose();
     super.dispose();
   }
 
@@ -219,8 +227,20 @@ class _TypingCursorState extends State<_TypingCursor>
     _controller = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
-    )..repeat(reverse: true);
+    );
     _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller
+        ..stop()
+        ..value = 1;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override

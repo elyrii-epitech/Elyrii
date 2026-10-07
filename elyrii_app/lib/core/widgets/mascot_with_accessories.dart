@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+
 import 'mascot_model_surface.dart';
+
 import 'package:provider/provider.dart';
+
 import '../config/mascot_3d_config.dart';
 import '../config/mascot_themes.dart';
 import 'mascot_3d_viewer.dart';

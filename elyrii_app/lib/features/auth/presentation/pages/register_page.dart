@@ -1,14 +1,21 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/utils/validators.dart';
+
 import 'package:provider/provider.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
 import '../widgets/auth_error_banner.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
@@ -35,7 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _errorBannerIsSuccess = false;
   MascotAnimation _mascotAnimation = MascotAnimations.greet;
   int _mascotTrigger = 0;
-  bool get _isLoading => context.read<AuthProvider>().isLoading;
+  bool get _isLoading => context.watch<AuthProvider>().isLoading;
 
   @override
   void dispose() {
@@ -47,12 +54,12 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _handleRegister() async {
+    if (context.read<AuthProvider>().isLoading) return;
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
       setState(() {
         _errorBannerIsSuccess = false;
-        _errorBanner =
-            'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.';
+        _errorBanner = 'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.';
       });
       return;
     }
@@ -142,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           height: 250,
                         ),
                       )
-                      .animate()
+                      .animateRespectingMotion(context)
                       .fadeIn(duration: 600.ms)
                       .slideY(begin: 0.2, end: 0),
 
@@ -185,240 +192,248 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
 
                   Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Name Field
-                        Text(
-                          'Prénom',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _nameController,
-                          hint: '',
-                          prefixIcon: Icons.person_outline,
-                          keyboardType: TextInputType.name,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Entre ton prénom';
-                            }
-                            if (value.length < 2) {
-                              return 'Le prénom doit contenir au moins 2 caractères';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppDimensions.spacingMd),
-
-                        // Email Field
-                        Text(
-                          'Adresse email',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _emailController,
-                          hint: '',
-                          prefixIcon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Entre ton email';
-                            }
-                            if (!Validators.isValidEmail(value)) {
-                              return 'Email invalide';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppDimensions.spacingMd),
-
-                        // Password Field
-                        Text(
-                          'Mot de passe',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _passwordController,
-                          hint: '',
-                          prefixIcon: Icons.lock_outline,
-                          isPassword: true,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Entre ton mot de passe';
-                            }
-                            if (value.length < 8) {
-                              return 'Le mot de passe doit contenir au moins 8 caractères';
-                            }
-                            if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                              return 'Le mot de passe doit contenir au moins une majuscule';
-                            }
-                            if (!RegExp(r'[0-9]').hasMatch(value)) {
-                              return 'Le mot de passe doit contenir au moins un chiffre';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppDimensions.spacingMd),
-
-                        // Confirm Password Field
-                        Text(
-                          'Confirmer le mot de passe',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _confirmPasswordController,
-                          hint: '',
-                          prefixIcon: Icons.lock_outline,
-                          isPassword: true,
-                          textInputAction: TextInputAction.done,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Confirme ton mot de passe';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'Les mots de passe ne correspondent pas';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: AppDimensions.spacingLg),
-
-                        // Terms and Conditions
-                        Row(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Checkbox(
-                                value: _acceptTerms,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _acceptTerms = value ?? false;
-                                  });
-                                },
-                                activeColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
+                            // Name Field
+                            Text(
+                              'Prénom',
+                              style: AppTextStyles.bodyMedium(
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ).copyWith(fontWeight: FontWeight.w600),
                             ),
-                            const SizedBox(width: AppDimensions.spacingSm),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _acceptTerms = !_acceptTerms;
-                                  });
-                                },
-                                child: Text.rich(
-                                  TextSpan(
-                                    text: 'J\'accepte les ',
-                                    style: AppTextStyles.bodySmall(
-                                      color: isDark
-                                          ? AppColors.textSecondaryDark
-                                          : AppColors.textSecondaryLight,
+                            const SizedBox(height: AppDimensions.spacingXs),
+                            GlassAuthTextField(
+                              controller: _nameController,
+                              hint: '',
+                              prefixIcon: Icons.person_outline,
+                              keyboardType: TextInputType.name,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Entre ton prénom';
+                                }
+                                if (value.length < 2) {
+                                  return 'Le prénom doit contenir au moins 2 caractères';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppDimensions.spacingMd),
+
+                            // Email Field
+                            Text(
+                              'Adresse email',
+                              style: AppTextStyles.bodyMedium(
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: AppDimensions.spacingXs),
+                            GlassAuthTextField(
+                              controller: _emailController,
+                              hint: '',
+                              prefixIcon: Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Entre ton email';
+                                }
+                                if (!Validators.isValidEmail(value)) {
+                                  return 'Email invalide';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppDimensions.spacingMd),
+
+                            // Password Field
+                            Text(
+                              'Mot de passe',
+                              style: AppTextStyles.bodyMedium(
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: AppDimensions.spacingXs),
+                            GlassAuthTextField(
+                              controller: _passwordController,
+                              hint: '',
+                              prefixIcon: Icons.lock_outline,
+                              isPassword: true,
+                              textInputAction: TextInputAction.next,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Entre ton mot de passe';
+                                }
+                                if (value.length < 8) {
+                                  return 'Le mot de passe doit contenir au moins 8 caractères';
+                                }
+                                if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                                  return 'Le mot de passe doit contenir au moins une majuscule';
+                                }
+                                if (!RegExp(r'[0-9]').hasMatch(value)) {
+                                  return 'Le mot de passe doit contenir au moins un chiffre';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: AppDimensions.spacingMd),
+
+                            // Confirm Password Field
+                            Text(
+                              'Confirmer le mot de passe',
+                              style: AppTextStyles.bodyMedium(
+                                color: isDark
+                                    ? AppColors.textPrimaryDark
+                                    : AppColors.textPrimaryLight,
+                              ).copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: AppDimensions.spacingXs),
+                            GlassAuthTextField(
+                              controller: _confirmPasswordController,
+                              hint: '',
+                              prefixIcon: Icons.lock_outline,
+                              isPassword: true,
+                              textInputAction: TextInputAction.done,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Confirme ton mot de passe';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'Les mots de passe ne correspondent pas';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: AppDimensions.spacingLg),
+
+                            // Terms and Conditions
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _acceptTerms,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _acceptTerms = value ?? false;
+                                      });
+                                    },
+                                    activeColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
                                     ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'conditions d\'utilisation',
-                                        style: AppTextStyles.bodySmall(
-                                          color: AppColors.primary,
-                                        ).copyWith(fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
                                   ),
                                 ),
-                              ),
+                                const SizedBox(width: AppDimensions.spacingSm),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _acceptTerms = !_acceptTerms;
+                                      });
+                                    },
+                                    child: Text.rich(
+                                      TextSpan(
+                                        text: 'J\'accepte les ',
+                                        style: AppTextStyles.bodySmall(
+                                          color: isDark
+                                              ? AppColors.textSecondaryDark
+                                              : AppColors.textSecondaryLight,
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: 'conditions d\'utilisation',
+                                            style:
+                                                AppTextStyles.bodySmall(
+                                                  color: AppColors.primary,
+                                                ).copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
 
-                        const SizedBox(height: AppDimensions.spacingXl),
+                            const SizedBox(height: AppDimensions.spacingXl),
 
-                        // Register Button
-                        LiquidGlassButton(
-                          label: 'Créer mon compte',
-                          isLoading: _isLoading,
-                          isExpanded: true,
-                          onPressed: _handleRegister,
-                        ),
-
-                        const SizedBox(height: AppDimensions.spacingSm),
-                        LiquidGlassButton(
-                          label: 'Découvrir Elyrii',
-                          icon: Icons.bolt_rounded,
-                          style: LiquidGlassButtonStyle.tinted,
-                          isExpanded: true,
-                          onPressed: () async {
-                            ElyriiHaptics.medium();
-                            await context
-                                .read<AuthProvider>()
-                                .startDemoSession();
-                            if (!context.mounted) return;
-                            context.read<ValueNotifier<bool>>().value = true;
-                            context.go(AppRoutes.home);
-                          },
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXl),
-
-                        // Login Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Déjà un compte ? ',
-                              style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                              ),
+                            // Register Button
+                            LiquidGlassButton(
+                              label: 'Créer mon compte',
+                              isLoading: _isLoading,
+                              isExpanded: true,
+                              onPressed: _handleRegister,
                             ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
+
+                            const SizedBox(height: AppDimensions.spacingSm),
+                            LiquidGlassButton(
+                              label: 'Découvrir Elyrii',
+                              icon: Icons.bolt_rounded,
+                              style: LiquidGlassButtonStyle.tinted,
+                              isExpanded: true,
+                              onPressed: () async {
+                                ElyriiHaptics.medium();
+                                await context
+                                    .read<AuthProvider>()
+                                    .startDemoSession();
+                                if (!context.mounted) return;
+                                context.read<ValueNotifier<bool>>().value =
+                                    true;
+                                context.go(AppRoutes.home);
                               },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                'Se connecter',
-                                style: AppTextStyles.bodySmall(
-                                  color: AppColors.primary,
-                                ).copyWith(fontWeight: FontWeight.bold),
-                              ),
+                            ),
+                            const SizedBox(height: AppDimensions.spacingXl),
+
+                            // Login Link
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Déjà un compte ? ',
+                                  style: AppTextStyles.bodySmall(
+                                    color: isDark
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondaryLight,
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                  },
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Text(
+                                    'Se connecter',
+                                    style: AppTextStyles.bodySmall(
+                                      color: AppColors.primary,
+                                    ).copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ).animate().fadeIn(duration: 800.ms, delay: 200.ms).slideY(begin: 0.2, end: 0),
+                      )
+                      .animateRespectingMotion(context)
+                      .fadeIn(duration: 800.ms, delay: 200.ms)
+                      .slideY(begin: 0.2, end: 0),
                 ],
               ),
             ),

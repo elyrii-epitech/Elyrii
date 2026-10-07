@@ -1,8 +1,14 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
+
+import 'package:uuid/uuid.dart';
+
+import '../../../../core/network/chat/chat_connection.dart';
+import '../../../../core/diagnostics/app_diagnostics.dart';
+
 import 'package:flutter/foundation.dart';
+
 import '../../../../core/config/api_config.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../data/entities/chat_message.dart';
@@ -12,21 +18,29 @@ import '../../data/repositories/chat_history_service.dart';
 /// Account-scoped, paged chat state. Rendering does not copy collections.
 class ChatbotProvider extends ChangeNotifier {
   ChatbotProvider({
-    required SecureStorageService storage,
+    required this._storage,
     ChatHistoryService? history,
-  }) : _storage = storage,
-       _history = history ?? ChatHistoryService(),
-       _ownsHistory = history == null {
-    ready = synchronizeAccount();
+    String? initialOwner,
+    ChatConnector? connector,
+    this._replyTimeout = const Duration(seconds: 60),
+  }) : _history = history ?? ChatHistoryService(),
+       _ownsHistory = history == null,
+       _connector = connector ?? openChatConnection {
+    ready = initialOwner == null
+        ? synchronizeAccount()
+        : _synchronizeAccount(ownerOverride: initialOwner);
   }
   final SecureStorageService _storage;
   final ChatHistoryService _history;
   final bool _ownsHistory;
+  final ChatConnector _connector;
+  final Duration _replyTimeout;
+  Future<bool> _lastMessageWrite = Future.value(true);
   final List<ChatMessage> _messages = [];
   final List<ChatSession> _sessions = [];
   late final List<ChatMessage> _messageView = UnmodifiableListView(_messages);
   late final List<ChatSession> _sessionView = UnmodifiableListView(_sessions);
-  final Map<String, ChatSession> _pendingReplies = {};
+  final Map<String, _PendingReply> _pendingReplies = {};
   final Set<String> _deleted = {};
   ChatSession? _activeSession;
   String? _owner;
@@ -42,8 +56,9 @@ class ChatbotProvider extends ChangeNotifier {
   bool _hasMoreSessions = false;
   bool _hasLegacyHistory = false;
   String? _error;
-  WebSocket? _socket;
+  ChatConnection? _socket;
   Future<void>? _connecting;
+  int _connectionRevision = 0;
   Future<void> _writes = Future.value();
   Future<void> _accountSync = Future.value();
   late Future<void> ready;
@@ -51,8 +66,9 @@ class ChatbotProvider extends ChangeNotifier {
   List<ChatMessage> get messages => _messageView;
   List<ChatSession> get conversations => _sessionView;
   String? get activeSessionId => _activeSession?.id;
-  bool get isTyping =>
-      _pendingReplies.values.any((s) => s.id == activeSessionId);
+  bool get isTyping => _pendingReplies.values.any(
+    (pending) => pending.session.id == activeSessionId,
+  );
   bool get loadingSession => _loadingSession;
   bool get isConnected => _isConnected;
   bool get hasMoreMessages => _hasMoreMessages;
@@ -69,8 +85,12 @@ class ChatbotProvider extends ChangeNotifier {
   Future<void> synchronizeAccount() =>
       ready = _accountSync = _accountSync.then((_) => _synchronizeAccount());
 
-  Future<void> _synchronizeAccount() async {
-    final owner = await _storage.getUserId() ?? 'local-guest';
+  Future<void> onUserChanged(String? owner) {
+    return ready = _synchronizeAccount(ownerOverride: owner ?? 'local-guest');
+  }
+
+  Future<void> _synchronizeAccount({String? ownerOverride}) async {
+    final owner = ownerOverride ?? await _storage.getUserId() ?? 'local-guest';
     if (_disposed || owner == _owner) return;
     final generation = ++_generation;
     _selection++;
@@ -78,7 +98,7 @@ class ChatbotProvider extends ChangeNotifier {
     _owner = owner;
     _messages.clear();
     _sessions.clear();
-    _pendingReplies.clear();
+    _clearPending();
     _deleted.clear();
     _activeSession = ChatSession.create();
     _hasMoreMessages = false;
@@ -100,7 +120,7 @@ class ChatbotProvider extends ChangeNotifier {
       if (generation == _generation) {
         _error = 'Impossible de charger l’historique local.';
       }
-      debugPrint('[ChatbotProvider] history load failed: $e');
+      AppDiagnostics.record('chat_history_load_failed', e);
     }
     _notify();
   }
@@ -200,43 +220,56 @@ class ChatbotProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> connect() =>
-      _connecting ??= _connect().whenComplete(() => _connecting = null);
+  Future<void> connect() {
+    if (_connecting != null) return _connecting!;
+    late final Future<void> request;
+    final revision = ++_connectionRevision;
+    request = _connect(revision)
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            if (!_disposed && revision == _connectionRevision) {
+              _connectionRevision++;
+              _error = 'La connexion au chat a expiré. Réessaie.';
+              _notify();
+            }
+          },
+        )
+        .whenComplete(() {
+          if (identical(_connecting, request)) _connecting = null;
+        });
+    return _connecting = request;
+  }
 
-  Future<void> _connect() async {
+  Future<void> _connect(int revision) async {
     if (_isConnected || _disposed) return;
     final generation = _generation;
-    final token = await _storage.getAccessToken();
-    final userId = await _storage.getUserId();
-    if (_disposed || generation != _generation) return;
-    if ((token == null || token.isEmpty) &&
-        (userId == null || userId.isEmpty)) {
-      return;
-    }
     try {
-      final socket = await WebSocket.connect(
-        ApiConfig.chatWsUrl(
-          userId: token == null || token.isEmpty ? userId : null,
-        ),
-        headers: token != null && token.isNotEmpty
-            ? {'Authorization': 'Bearer $token'}
-            : null,
-      ).timeout(const Duration(seconds: 15));
-      if (_disposed || generation != _generation) {
+      final token = await _storage.getAccessToken();
+      if (_disposed ||
+          generation != _generation ||
+          revision != _connectionRevision) {
+        return;
+      }
+      final socket = await _connector(
+        Uri.parse(ApiConfig.chatWsUrl()),
+        token: token,
+      );
+      if (_disposed ||
+          generation != _generation ||
+          revision != _connectionRevision) {
         await socket.close();
         return;
       }
       _socket = socket;
       _isConnected = true;
       _notify();
-      socket.listen(
+      socket.frames.listen(
         (data) {
           if (_disposed || generation != _generation || _socket != socket) {
             return;
           }
-          // Plain-text or uncorrelated frames must never consume a request:
-          // the server can finish requests out of order or send late replies.
-          dynamic frame;
+          Object? frame;
           try {
             frame = jsonDecode(data.toString());
           } catch (_) {
@@ -247,18 +280,36 @@ class ChatbotProvider extends ChangeNotifier {
               frame['requestId'] is! String ||
               frame['conversationId'] is! String ||
               frame['message'] is! String) {
-            _error =
-                'Réponse incompatible du service. Réessaie après sa mise à jour.';
-            _pendingReplies.clear();
-            _notify();
+            _failAll(
+              'Réponse incompatible du service. Réessaie après sa mise à jour.',
+            );
             return;
           }
           final requestId = frame['requestId'] as String;
-          final origin = _pendingReplies[requestId];
-          if (origin == null || origin.id != frame['conversationId']) return;
+          final pending = _pendingReplies[requestId];
+          if (pending == null ||
+              pending.session.id != frame['conversationId']) {
+            return;
+          }
+          if (frame['type'] == 'error') {
+            _fail(
+              requestId,
+              'La réponse a échoué. Tu peux réessayer ce message.',
+            );
+            return;
+          }
           _pendingReplies.remove(requestId);
-          if (!_deleted.contains(origin.id)) {
-            _appendMessage(ChatMessage.ai(frame['message'] as String), origin);
+          pending.timer.cancel();
+          if (!_deleted.contains(pending.session.id)) {
+            _setDelivery(
+              pending.message,
+              pending.session,
+              MessageDelivery.delivered,
+            );
+            _appendMessage(
+              ChatMessage.ai(frame['message'] as String),
+              pending.session,
+            );
           }
           _notify();
         },
@@ -269,59 +320,159 @@ class ChatbotProvider extends ChangeNotifier {
           if (_socket == socket) _connectionEnded();
         },
       );
-    } catch (_) {
-      if (generation == _generation) {
+    } catch (error) {
+      if (!_disposed &&
+          generation == _generation &&
+          revision == _connectionRevision) {
+        _error = error is ChatTransportException
+            ? error.message
+            : 'Impossible de se connecter au chat. Tu peux réessayer.';
         _isConnected = false;
         _notify();
       }
     }
   }
 
-  void _connectionEnded() {
-    _isConnected = false;
-    _socket = null;
-    if (_pendingReplies.isNotEmpty) {
-      _error = 'Connexion interrompue. Tu peux réessayer.';
+  void _clearPending() {
+    for (final pending in _pendingReplies.values) {
+      pending.timer.cancel();
     }
     _pendingReplies.clear();
+  }
+
+  void _setDelivery(
+    ChatMessage message,
+    ChatSession session,
+    MessageDelivery delivery,
+  ) {
+    final index = _messages.indexWhere((value) => value.id == message.id);
+    if (index >= 0) _messages[index] = message.withDelivery(delivery);
+    final owner = _owner!;
+    _queue(() => _history.updateDelivery(owner, message.id, delivery));
+  }
+
+  void _fail(String requestId, String reason) {
+    final pending = _pendingReplies.remove(requestId);
+    if (pending == null) return;
+    pending.timer.cancel();
+    if (!_deleted.contains(pending.session.id)) {
+      _setDelivery(pending.message, pending.session, MessageDelivery.failed);
+    }
+    _error = reason;
     _notify();
   }
 
+  void _failAll(String reason) {
+    for (final id in _pendingReplies.keys.toList()) {
+      _fail(id, reason);
+    }
+    _error = reason;
+    _notify();
+  }
+
+  void _connectionEnded() {
+    _isConnected = false;
+    _socket = null;
+    _failAll('Connexion interrompue. Tu peux réessayer.');
+  }
+
+  /// True means accepted into the local conversation, not answered by the AI.
+  /// Delivery state on the bubble distinguishes pending, delivered and failed.
   Future<bool> sendMessage(String content) async {
     if (_loadingSession) return false;
-    await ready;
-    if (_disposed || _loadingSession || content.trim().isEmpty) return false;
     final generation = _generation;
+    await ready;
+    if (_disposed ||
+        generation != _generation ||
+        _loadingSession ||
+        content.trim().isEmpty) {
+      return false;
+    }
+    _error = null;
     final message = ChatMessage.user(content.trim());
     final origin = _appendMessage(
       message,
       _activeSession ?? ChatSession.create(),
     );
-    _pendingReplies[message.id] = origin;
+    final saved = _lastMessageWrite;
     _notify();
-    await connect();
+    if (!await saved) {
+      if (generation == _generation) {
+        _messages.removeWhere((value) => value.id == message.id);
+        final index = _sessions.indexWhere((value) => value.id == origin.id);
+        if (index >= 0) {
+          final reverted = _sessions[index].copyWith(
+            messageCount: origin.messageCount - 1,
+          );
+          _sessions[index] = reverted;
+          if (activeSessionId == origin.id) _activeSession = reverted;
+        }
+        _notify();
+      }
+      return false;
+    }
     if (_disposed || generation != _generation) return true;
-    if (_socket != null && _isConnected) {
-      _socket!.add(
-        jsonEncode({
-          'message': message.content,
-          'requestId': message.id,
-          'conversationId': origin.id,
-        }),
-      );
-    } else {
-      _pendingReplies.remove(message.id);
-      if (!_deleted.contains(origin.id)) {
-        _appendMessage(
-          ChatMessage.ai(
-            'Impossible de se connecter au service. Veuillez réessayer.',
-          ),
-          origin,
+    await _dispatch(message, origin, message.id, generation);
+    return true;
+  }
+
+  Future<void> retryMessage(String id) async {
+    final message = _messages.where((value) => value.id == id).firstOrNull;
+    final session = _activeSession;
+    if (message == null ||
+        session == null ||
+        !message.isUser ||
+        message.delivery != MessageDelivery.failed ||
+        _loadingSession) {
+      return;
+    }
+    _error = null;
+    _setDelivery(message, session, MessageDelivery.pending);
+    _notify();
+    // A fresh attempt ID rejects any late reply from the timed-out attempt.
+    await _dispatch(message, session, const Uuid().v4(), _generation);
+  }
+
+  Future<void> _dispatch(
+    ChatMessage message,
+    ChatSession session,
+    String requestId,
+    int generation,
+  ) async {
+    final timer = Timer(_replyTimeout, () {
+      if (!_disposed && generation == _generation) {
+        _fail(
+          requestId,
+          'La réponse prend trop de temps. Tu peux réessayer ce message.',
         );
       }
-      _notify();
+    });
+    _pendingReplies[requestId] = _PendingReply(message, session, timer);
+    _notify();
+    await connect();
+    if (_disposed ||
+        generation != _generation ||
+        !_pendingReplies.containsKey(requestId)) {
+      return;
     }
-    return true;
+    try {
+      if (_socket == null || !_isConnected) {
+        _fail(
+          requestId,
+          _error ?? 'Impossible de se connecter au chat. Réessaie.',
+        );
+        return;
+      }
+      _socket!.send(
+        jsonEncode({
+          'message': message.content,
+          'requestId': requestId,
+          'conversationId': session.id,
+        }),
+      );
+    } catch (_) {
+      _fail(requestId, 'L’envoi a échoué. Tu peux réessayer.');
+    }
   }
 
   ChatSession _appendMessage(ChatMessage message, ChatSession origin) {
@@ -341,7 +492,7 @@ class ChatbotProvider extends ChangeNotifier {
     _sessions.removeWhere((s) => s.id == session.id);
     _sessions.insert(0, session);
     final owner = _owner!;
-    _queue(() => _history.append(owner, session, message));
+    _lastMessageWrite = _queue(() => _history.append(owner, session, message));
     return session;
   }
 
@@ -350,13 +501,23 @@ class ChatbotProvider extends ChangeNotifier {
     return clean.length <= 42 ? clean : '${clean.substring(0, 42)}…';
   }
 
-  void _queue(Future<void> Function() write) {
-    _writes = _writes.then((_) => write()).catchError((Object e) {
-      _error =
-          'La sauvegarde locale a échoué. Garde cette conversation ouverte.';
-      debugPrint('[ChatbotProvider] history save failed: $e');
-      _notify();
-    });
+  Future<bool> _queue(Future<void> Function() write) {
+    final generation = _generation;
+    final task = _writes
+        .then((_) => write())
+        .then(
+          (_) => true,
+          onError: (Object error) {
+            if (!_disposed && generation == _generation) {
+              _error = 'La sauvegarde locale a échoué. Garde cette conversation ouverte.';
+              AppDiagnostics.record('chat_history_save_failed', error);
+              _notify();
+            }
+            return false;
+          },
+        );
+    _writes = task.then<void>((_) {});
+    return task;
   }
 
   Future<void> startNewConversation() async {
@@ -377,6 +538,13 @@ class ChatbotProvider extends ChangeNotifier {
     // Block late socket replies before waiting for the database. Otherwise a
     // queued append could recreate the session immediately after deletion.
     _deleted.add(sessionId);
+    for (final id
+        in _pendingReplies.entries
+            .where((entry) => entry.value.session.id == sessionId)
+            .map((entry) => entry.key)
+            .toList()) {
+      _pendingReplies.remove(id)?.timer.cancel();
+    }
     _selection++;
     _loadingSession = false;
     await _writes;
@@ -420,7 +588,11 @@ class ChatbotProvider extends ChangeNotifier {
     final socket = _socket;
     _socket = null;
     _isConnected = false;
-    _pendingReplies.clear();
+    _connecting = null;
+    _connectionRevision++;
+    if (_pendingReplies.isNotEmpty) {
+      _failAll('Connexion interrompue. Tu peux réessayer.');
+    }
     if (socket != null) unawaited(socket.close());
     _notify();
   }
@@ -433,6 +605,13 @@ class ChatbotProvider extends ChangeNotifier {
     _selection++;
     _loadingSession = false;
     _messages.clear();
+    for (final id
+        in _pendingReplies.entries
+            .where((entry) => entry.value.session.id == session.id)
+            .map((entry) => entry.key)
+            .toList()) {
+      _pendingReplies.remove(id)?.timer.cancel();
+    }
     _hasMoreMessages = false;
     _activeSession = session.copyWith(
       messages: const [],
@@ -450,9 +629,17 @@ class ChatbotProvider extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _generation++;
+    _clearPending();
     unawaited(_socket?.close());
     _socket = null;
     if (_ownsHistory) unawaited(_writes.then((_) => _history.close()));
     super.dispose();
   }
+}
+
+class _PendingReply {
+  const _PendingReply(this.message, this.session, this.timer);
+  final ChatMessage message;
+  final ChatSession session;
+  final Timer timer;
 }

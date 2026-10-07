@@ -32,9 +32,8 @@ Future<void> _capture(WidgetTester tester, String name) async {
     final data = await screenshot.toByteData(format: ui.ImageByteFormat.png);
     final directory = Directory('../art/meditation');
     await directory.create(recursive: true);
-    await File(
-      '${directory.path}/$name.png',
-    ).writeAsBytes(data!.buffer.asUint8List());
+    await File('${directory.path}/$name.png')
+        .writeAsBytes(data!.buffer.asUint8List());
     screenshot.dispose();
   });
   expect(tester.takeException(), isNull);

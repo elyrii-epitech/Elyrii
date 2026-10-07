@@ -18,12 +18,12 @@ Elyrii mobile is a Flutter well-being companion app with:
 ## Quick Information
 
 - **App version:** `1.0.0+1`
-- **Minimum Flutter:** `>= 3.38.4`
-- **Dart:** `>= 3.10.3 < 4.0.0`
-- **CI Flutter:** `3.38.4` stable
+- **Minimum Flutter:** `3.47.4 (pinned in `.fvmrc`)`
+- **Dart:** `>= 3.13.3 < 4.0.0`
+- **CI Flutter:** `3.47.4` from `.fvmrc`
 - **Android:** `compileSdk 36`, `targetSdk 36`
 - **iOS:** deployment target `15.0`
-- **Default backend:** gateway port `3000`
+- **Default backend:** development gateway port `3001`
 - **Backend override:** `--dart-define=BASE_URL=...`
 
 ## Documentation Pages
@@ -59,21 +59,21 @@ Flutter GitHub Actions workflows, artifacts, and equivalent local commands.
 
 ```bash
 cd elyrii_app
-flutter pub get
+flutter pub get --enforce-lockfile
 flutter run
 ```
 
 With a specific backend:
 
 ```bash
-flutter run --dart-define=BASE_URL=http://localhost:3000
+flutter run --dart-define=BASE_URL=http://localhost:3001
 ```
 
 Local verification:
 
 ```bash
 cd elyrii_app
-dart format --set-exit-if-changed .
+dart format --output=none --set-exit-if-changed lib test tool integration_test test_driver
 flutter analyze
 flutter test
 ```
@@ -84,7 +84,15 @@ flutter test
 - `elyrii_app/lib/core/config/app_config.dart`
 - `elyrii_app/lib/core/config/api_config.dart`
 - `elyrii_app/lib/core/network/api_client.dart`
-- `elyrii_app/lib/routes/home_navigation.dart`
+- `elyrii_app/lib/app/app_dependencies.dart`
+- `elyrii_app/lib/app/router/app_router.dart`
 - `elyrii_app/pubspec.yaml`
-- `.github/workflows/flutter-build.yml`
 - `.github/workflows/flutter-check-and-docs.yml`
+
+## Frontend audit corrections
+
+The application targets **iOS and Android only**. Its CI and integration tests
+cover these native targets; browser and desktop distribution are outside scope.
+
+See [implementation and validation](frontend-audit-implementation.md) for the
+23 audit findings and their current treatment.

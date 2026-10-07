@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/config/mascot_animations.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 
@@ -27,24 +28,31 @@ class MeditationSessionPage extends StatefulWidget {
   State<MeditationSessionPage> createState() => _MeditationSessionPageState();
 }
 
-class _MeditationSessionPageState extends State<MeditationSessionPage> {
+class _MeditationSessionPageState extends State<MeditationSessionPage>
+    with WidgetsBindingObserver {
   bool _hasReactedFinished = false;
+  late MeditationSessionState _observedState = widget.controller.sessionState;
   late final _exercise = widget.controller.selectedExercise!;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     widget.controller.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.controller.removeListener(_onControllerChanged);
     super.dispose();
   }
 
   void _onControllerChanged() {
     if (!mounted) return;
+    if (_observedState != widget.controller.sessionState) {
+      setState(() => _observedState = widget.controller.sessionState);
+    }
     if (widget.controller.isFinished && !_hasReactedFinished) {
       _hasReactedFinished = true;
       context.read<MascotProvider>().react(MascotAnimations.settle);
@@ -53,6 +61,11 @@ class _MeditationSessionPageState extends State<MeditationSessionPage> {
     if (widget.controller.isSetup && context.canPop()) {
       context.pop();
     }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) widget.controller.pauseSession();
   }
 
   /// Confirmation bienveillante avant d'interrompre la séance.
@@ -85,7 +98,7 @@ class _MeditationSessionPageState extends State<MeditationSessionPage> {
       ),
     ).then((result) {
       // Rejet hors boutons (tap à l'extérieur) : la séance reprend.
-      if (result == null && widget.controller.isPaused) {
+      if (mounted && result == null && widget.controller.isPaused) {
         widget.controller.resumeSession();
       }
     });

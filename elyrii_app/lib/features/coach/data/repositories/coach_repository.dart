@@ -1,4 +1,7 @@
+import '../../../../core/network/json_response.dart';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/coach_model.dart';
@@ -6,78 +9,66 @@ import '../models/coach_model.dart';
 class CoachRepository {
   final ApiClient _client;
 
-  CoachRepository({required ApiClient client}) : _client = client;
+  CoachRepository({required this._client});
 
   static const List<DailyAdvice> _advices = [
     DailyAdvice(
-      text:
-          'La régularité est plus importante que la durée. Mieux vaut 3 minutes chaque jour que 30 minutes une fois par semaine.',
+      text: 'La régularité est plus importante que la durée. Mieux vaut 3 minutes chaque jour que 30 minutes une fois par semaine.',
       source: 'Recherche en neuroscience',
       icon: Icons.yard_rounded,
     ),
     DailyAdvice(
-      text:
-          'Nommer ce que tu ressens réduit son intensité. Essaye : "Je remarque que je me sens..."',
+      text: 'Nommer ce que tu ressens réduit son intensité. Essaye : "Je remarque que je me sens..."',
       source: 'Thérapie cognitive-comportementale',
       icon: Icons.psychology_rounded,
     ),
     DailyAdvice(
-      text:
-          'Ton corps et ton esprit sont liés. Une marche de 10 minutes peut changer ta journée.',
+      text: 'Ton corps et ton esprit sont liés. Une marche de 10 minutes peut changer ta journée.',
       source: 'Psychologie positive',
       icon: Icons.directions_walk_rounded,
     ),
     DailyAdvice(
-      text:
-          "Il n'y a pas de « bonne » façon de méditer. Si tu es présent, tu réussis.",
+      text: "Il n'y a pas de « bonne » façon de méditer. Si tu es présent, tu réussis.",
       source: 'Pleine conscience (Mindfulness)',
       icon: Icons.self_improvement_rounded,
     ),
     DailyAdvice(
-      text:
-          "Écrire 3 choses dont tu es reconnaissant(e) chaque soir améliore significativement ton bien-être.",
+      text: "Écrire 3 choses dont tu es reconnaissant(e) chaque soir améliore significativement ton bien-être.",
       source: 'Étude Robert Emmons',
       icon: Icons.auto_awesome_rounded,
     ),
     DailyAdvice(
-      text:
-          'Respirer profondément 4 secondes, retenir 7 secondes, expirer 8 secondes active ton système nerveux parasympathique.',
+      text: 'Respirer profondément 4 secondes, retenir 7 secondes, expirer 8 secondes active ton système nerveux parasympathique.',
       source: 'Technique 4-7-8 du Dr. Andrew Weil',
       icon: Icons.air_rounded,
     ),
     DailyAdvice(
-      text:
-          "T'accorder 5 minutes de pause n'est pas de la paresse, c'est de l'hygiène mentale.",
+      text: "T'accorder 5 minutes de pause n'est pas de la paresse, c'est de l'hygiène mentale.",
       source: 'Psychologie du burn-out',
       icon: Icons.coffee_rounded,
     ),
     DailyAdvice(
-      text:
-          'Les émotions difficiles sont comme les vagues : elles montent, puis elles redescendent toujours.',
+      text: 'Les émotions difficiles sont comme les vagues : elles montent, puis elles redescendent toujours.',
       source: 'Thérapie d\'acceptation (ACT)',
       icon: Icons.water_rounded,
     ),
     DailyAdvice(
-      text:
-          'Parler à quelqu\'un — même un chatbot — de ce que tu ressens aide à structurer tes pensées.',
+      text: 'Parler à quelqu\'un — même un chatbot — de ce que tu ressens aide à structurer tes pensées.',
       source: 'Journaling thérapeutique',
       icon: Icons.record_voice_over_rounded,
     ),
     DailyAdvice(
-      text:
-          "Chaque nuit, ton cerveau traite tes émotions. Un bon sommeil est le premier pas vers le bien-être.",
+      text: "Chaque nuit, ton cerveau traite tes émotions. Un bon sommeil est le premier pas vers le bien-être.",
       source: 'Neuroscience du sommeil',
       icon: Icons.bedtime_rounded,
     ),
     DailyAdvice(
-      text:
-          "Soyez bienveillant envers vous-même. Traitez-vous comme vous traiteriez un bon ami.",
+      text: "Soyez bienveillant envers vous-même. Traitez-vous comme vous traiteriez un bon ami.",
       source: 'Auto-compassion (Kristin Neff)',
       icon: Icons.volunteer_activism_rounded,
     ),
     DailyAdvice(
-      text:
-          "L'anxiété vit dans le futur, la tristesse dans le passé. La paix se trouve dans le présent.",
+      text: "L'anxiété vit dans le futur, la tristesse dans le passé. La paix se trouve dans le présent.",
       source: 'Sagesse contemplative',
       icon: Icons.wb_twilight_rounded,
     ),
@@ -248,24 +239,17 @@ class CoachRepository {
       ApiConfig.coachSessionsUrl,
       queryParams: {'limit': '$limit'},
     );
-    final List<dynamic> data = response is List
-        ? response
-        : (response['data'] ?? []);
-    return data
-        .map((item) => CoachSession.fromJson(item as Map<String, dynamic>))
-        .toList();
+    return decodeListResponse(response, CoachSession.fromJson);
   }
 
   Future<CoachSession> createSession({
     required String prompt,
     Map<String, dynamic>? context,
   }) async {
-    final response =
-        await _client.post(
-              ApiConfig.coachSessionsUrl,
-              body: {'prompt': prompt, 'context': ?context},
-            )
-            as Map<String, dynamic>;
-    return CoachSession.fromJson(response);
+    final response = await _client.post(
+      ApiConfig.coachSessionsUrl,
+      body: {'prompt': prompt, 'context': ?context},
+    );
+    return decodeResponse(response, CoachSession.fromJson);
   }
 }

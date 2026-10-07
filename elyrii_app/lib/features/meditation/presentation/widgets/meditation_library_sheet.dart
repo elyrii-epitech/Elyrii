@@ -63,6 +63,7 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
                 excludeSemantics: true,
                 onTap: () => Navigator.pop(context),
                 child: LiquidGlassIconButton(
+                  tooltip: 'Fermer le catalogue',
                   icon: Icons.close_rounded,
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -82,9 +83,8 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
             ),
             children: [
               Theme(
-                data: Theme.of(
-                  context,
-                ).copyWith(canvasColor: Colors.transparent),
+                data: Theme.of(context)
+                    .copyWith(canvasColor: Colors.transparent),
                 child: Wrap(
                   spacing: 6,
                   runSpacing: 6,

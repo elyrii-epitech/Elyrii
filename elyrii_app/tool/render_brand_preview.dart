@@ -42,9 +42,8 @@ void main() {
     await tester.runAsync(() async {
       final screenshot = await boundary.toImage(pixelRatio: 2);
       final data = await screenshot.toByteData(format: ui.ImageByteFormat.png);
-      await File(
-        '../art/branding/launch-preview.png',
-      ).writeAsBytes(data!.buffer.asUint8List());
+      await File('../art/branding/launch-preview.png')
+          .writeAsBytes(data!.buffer.asUint8List());
       screenshot.dispose();
     });
     expect(tester.takeException(), isNull);

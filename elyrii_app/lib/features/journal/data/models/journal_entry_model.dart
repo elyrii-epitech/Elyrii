@@ -1,3 +1,5 @@
+import '../../../../core/data/json_contract.dart';
+
 /// Journal entry model matching the backend journal_entries table
 class JournalEntryModel {
   final String id;
@@ -20,8 +22,8 @@ class JournalEntryModel {
 
   factory JournalEntryModel.fromJson(Map<String, dynamic> json) {
     return JournalEntryModel(
-      id: json['id'] as String? ?? '',
-      userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
+      userId: requiredJsonString(json['userId'] ?? json['user_id'], 'userId'),
       title: json['title'] as String? ?? '',
       content: json['content'] as String?,
       mood: json['mood'] as String?,
@@ -46,11 +48,8 @@ class JournalEntryModel {
     'updatedAt': updatedAt.toIso8601String(),
   };
 
-  static DateTime _parseDate(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-    return DateTime.now();
-  }
+  static DateTime _parseDate(dynamic value) =>
+      requiredJsonDate(value, 'journal date');
 
   JournalEntryModel copyWith({
     String? id,
@@ -90,9 +89,12 @@ class JournalMediaModel {
 
   factory JournalMediaModel.fromJson(Map<String, dynamic> json) {
     return JournalMediaModel(
-      id: json['id'] as String? ?? '',
-      entryId: json['entryId'] as String? ?? json['entry_id'] as String? ?? '',
-      url: json['url'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
+      entryId: requiredJsonString(
+        json['entryId'] ?? json['entry_id'],
+        'entryId',
+      ),
+      url: requiredJsonString(json['url'], 'url'),
       type: json['type'] as String?,
       createdAt: JournalEntryModel._parseDate(
         json['createdAt'] ?? json['created_at'],

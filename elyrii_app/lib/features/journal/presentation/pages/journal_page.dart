@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import '../../../../core/widgets/elyrii_page_header.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -103,6 +105,7 @@ class _JournalPageState extends State<JournalPage> {
       children: [
         // Bouton de tri (récent / ancien)
         LiquidGlassIconButton(
+          tooltip: 'Changer l’ordre des notes',
           icon: provider.sortNewest
               ? Icons.arrow_downward_rounded
               : Icons.arrow_upward_rounded,
@@ -115,6 +118,7 @@ class _JournalPageState extends State<JournalPage> {
 
         // Bouton nouvelle note
         LiquidGlassIconButton(
+          tooltip: 'Écrire une note',
           icon: Icons.add_rounded,
           onPressed: () => _showEditorSheet(),
         ),

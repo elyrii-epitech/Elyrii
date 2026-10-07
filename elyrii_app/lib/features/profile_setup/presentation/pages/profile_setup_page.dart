@@ -1,3 +1,5 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/cupertino.dart'
     show
         CupertinoActivityIndicator,
@@ -5,7 +7,9 @@ import 'package:flutter/cupertino.dart'
         CupertinoDialogAction,
         showCupertinoDialog;
 import 'package:flutter/material.dart';
+
 import '../../../../core/constants/profile_option_labels.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +21,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/constants/avatar_options.dart';
 import '../../../../core/services/secure_storage_service.dart';
 import '../../../../routes/app_routes.dart';
@@ -89,6 +94,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       AppRoutes.avatarPicker,
       extra: _selectedPfp,
     );
+    if (!mounted) return;
     // Ignorer si l'utilisateur a annule (back)
     if (result != kAvatarPickerCancelled) {
       setState(() => _selectedPfp = result as String?);
@@ -281,9 +287,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           children: [
             // Aperçu cliquable : mascotte 3D fidèle avec ombre de contact
             // par défaut, avatar choisi (image) sinon.
-            GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _openAvatarPicker,
+            AccessibleAction(
+                  label: 'Personnaliser mon avatar',
+                  onPressed: _openAvatarPicker,
                   child: isMascotAvatar(_selectedPfp)
                       ? MascotAvatarPreview(
                           width: 220,
@@ -320,7 +326,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                           ],
                         ),
                 )
-                .animate()
+                .animateRespectingMotion(context)
                 .fadeIn(duration: 400.ms)
                 .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1)),
             const SizedBox(height: AppDimensions.spacingLg),
@@ -375,7 +381,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             Icons.spa_rounded,
             size: 48,
             color: AppColors.primary,
-          ).animate().fadeIn(duration: 400.ms),
+          ).animateRespectingMotion(context).fadeIn(duration: 400.ms),
           const SizedBox(height: AppDimensions.spacingMd),
           Text(
             'Dis-m\'en un peu plus',
@@ -465,7 +471,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   isDark: isDark,
                   animation: MascotAnimations.greet,
                 )
-                .animate()
+                .animateRespectingMotion(context)
                 .fadeIn(duration: 500.ms)
                 .scale(
                   begin: const Offset(0.7, 0.7),
@@ -474,7 +480,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 )
           else
             UserAvatar(pfp: _selectedPfp, size: 120)
-                .animate()
+                .animateRespectingMotion(context)
                 .fadeIn(duration: 500.ms)
                 .scale(
                   begin: const Offset(0.7, 0.7),
@@ -483,26 +489,30 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 ),
           const SizedBox(height: AppDimensions.spacingXl),
           Text(
-            'Ton espace est prêt',
-            style: AppTextStyles.headlineMedium(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ).copyWith(fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+                'Ton espace est prêt',
+                style: AppTextStyles.headlineMedium(
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ).copyWith(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              )
+              .animateRespectingMotion(context)
+              .fadeIn(duration: 500.ms, delay: 200.ms),
           const SizedBox(height: AppDimensions.spacingMd),
           Text(
-            'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
-            'explore à ton rythme et n\'oublie pas : chaque petit pas '
-            'compte vers ton bien-être.',
-            style: AppTextStyles.bodyMedium(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ).copyWith(height: 1.6),
-            textAlign: TextAlign.center,
-          ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
+                'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
+                'explore à ton rythme et n\'oublie pas : chaque petit pas '
+                'compte vers ton bien-être.',
+                style: AppTextStyles.bodyMedium(
+                  color: isDark
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondaryLight,
+                ).copyWith(height: 1.6),
+                textAlign: TextAlign.center,
+              )
+              .animateRespectingMotion(context)
+              .fadeIn(duration: 500.ms, delay: 350.ms),
         ],
       ),
     );
@@ -638,9 +648,8 @@ class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
         Flexible(
           child: Text(
             widget.label,
-            style: AppTextStyles.bodyLarge(
-              color: textColor,
-            ).copyWith(fontWeight: FontWeight.w700),
+            style: AppTextStyles.bodyLarge(color: textColor)
+                .copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ],

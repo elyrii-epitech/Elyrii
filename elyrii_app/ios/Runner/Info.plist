@@ -28,17 +28,16 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
+		<key>NSAllowsLocalNetworking</key>
+        <true/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>localhost</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+            <key>127.0.0.1</key><dict><key>NSExceptionAllowsInsecureHTTPLoads</key><true/></dict>
+        </dict>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Elyrii peut utiliser la caméra pour des fonctionnalités futures.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Elyrii utilise le microphone pour les fonctionnalités de méditation guidée et d'interaction vocale.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Elyrii peut accéder à votre galerie pour personnaliser votre expérience.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Elyrii utilise la reconnaissance vocale pour améliorer votre expérience interactive.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

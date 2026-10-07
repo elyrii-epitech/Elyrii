@@ -1,3 +1,5 @@
+import '../../../core/data/json_contract.dart';
+
 /// User profile model matching the backend user service response.
 class UserProfile {
   final String id;
@@ -32,7 +34,7 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      id: json['id'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
       email: json['email'] as String? ?? '',
       firstName: json['firstName'] as String?,
       lastName: json['lastName'] as String?,

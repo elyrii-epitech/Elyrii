@@ -1,5 +1,12 @@
 # Chat reliability fixes — 20 September 2026
 
+> Frontend update — 6 October 2026: the implementation now uses a separate
+> request UUID for each send/retry attempt while keeping the stored message UUID
+> stable. Delivery state, deadlines, encryption and native Bearer transport are
+> described in [the frontend audit record](frontend-audit-implementation.md).
+> The backend and simulator results below are historical; they were not rerun
+> during this frontend-only intervention.
+
 ## Storage compatibility
 
 Session metadata uses `INSERT OR IGNORE` followed by `UPDATE`, inside the
@@ -10,7 +17,7 @@ deleting the parent session would cascade to its messages.
 ## Correlated WebSocket responses
 
 New clients send `{message, requestId, conversationId}`. The request ID is the
-UUID of the local user message; the conversation ID is the local session UUID.
+UUID of a send attempt; the conversation ID is the local session UUID.
 The server returns `{type, message, requestId, conversationId}`, where `type` is
 `reply` or `error`. Both identifiers must match a pending client request.
 Duplicate, unknown, mismatched and already-completed responses are ignored.
@@ -60,7 +67,8 @@ submission is rejected. Successful selection preserves the draft too.
 The final simulator logs contained a mascot/WebView `MissingPluginException`
 from `executeCustomJsCodeWithResult` targeting a missing `evaluateJavascript`
 channel. `MascotModelController._command` in `mascot_model_surface.dart` starts
-that future without awaiting or handling its failure. This is separate from
-the three chat review findings and remains unresolved; the exact timing relative
-to viewer release/app shutdown was not established. The chat checks above do
-not constitute a claim that the entire app is runtime-error-free.
+that future without awaiting or handling its failure in the historical revision.
+The 6 October frontend update consumes this asynchronous failure, records only
+its category and ignores completions from an obsolete renderer. A regression
+test covers a closed renderer. Native simulator/device validation is still
+required; the earlier chat checks do not certify every platform-view lifecycle.

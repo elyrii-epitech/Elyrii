@@ -89,8 +89,7 @@ abstract final class MascotAccessories {
     MascotAccessory(
       id: 'graduate_cap',
       name: 'Chapeau de diplômé',
-      description:
-          'Une coiffe bleu nuit et son pompon doré pour célébrer tes premiers pas.',
+      description: 'Une coiffe bleu nuit et son pompon doré pour célébrer tes premiers pas.',
       emoji: '🎓',
       category: 'Tête',
       requiredChallenges: 1,
@@ -98,8 +97,7 @@ abstract final class MascotAccessories {
     MascotAccessory(
       id: 'laurel_crown',
       name: 'Couronne de laurier',
-      description:
-          'Des feuilles sculptées et de petites touches dorées pour marquer tes progrès.',
+      description: 'Des feuilles sculptées et de petites touches dorées pour marquer tes progrès.',
       emoji: '🌿',
       category: 'Tête',
       requiredChallenges: 3,
@@ -133,8 +131,7 @@ abstract final class MascotAccessories {
     MascotAccessory(
       id: 'cheek_sparkle',
       name: 'Éclat céleste',
-      description:
-          'Un petit éclat lumineux posé sur la joue, comme une étoile personnelle.',
+      description: 'Un petit éclat lumineux posé sur la joue, comme une étoile personnelle.',
       emoji: '✨',
       category: 'Visage',
       requiredChallenges: 4,

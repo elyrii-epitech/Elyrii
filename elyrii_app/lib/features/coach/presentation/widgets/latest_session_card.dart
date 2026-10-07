@@ -90,9 +90,8 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
               alignment: Alignment.topCenter,
               child: Text(
                 widget.session.response,
-                style: AppTextStyles.bodySmall(
-                  color: subtitleColor,
-                ).copyWith(height: 1.5),
+                style: AppTextStyles.bodySmall(color: subtitleColor)
+                    .copyWith(height: 1.5),
                 maxLines: _expanded ? null : 5,
                 overflow: _expanded
                     ? TextOverflow.visible

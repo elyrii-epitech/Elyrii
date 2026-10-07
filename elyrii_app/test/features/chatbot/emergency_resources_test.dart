@@ -24,9 +24,8 @@ void main() {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: const TextScaler.linear(1.5)),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(1.5)),
               child: child!,
             ),
             home: const Scaffold(

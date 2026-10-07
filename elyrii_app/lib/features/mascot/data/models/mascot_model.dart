@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+
 import 'mascot_appearance.dart';
 
 /// Modèle de données représentant l'état et la configuration de la mascotte.
@@ -22,19 +23,19 @@ class MascotModel {
 
   final MascotAppearance appearance;
 
-  const MascotModel({
+  MascotModel({
     required this.baseModelPath,
-    this.equippedCosmetics = const [],
+    List<String> equippedCosmetics = const [],
     this.animationState = 'idle',
     this.themeId = 'nature',
-    this.appearance = const MascotAppearance(),
-  });
+    this.appearance = MascotAppearance.defaults,
+  }) : equippedCosmetics = List.unmodifiable(equippedCosmetics);
 
   /// Crée un modèle par défaut de la mascotte.
   factory MascotModel.defaultMascot() {
-    return const MascotModel(
+    return MascotModel(
       baseModelPath: 'assets/optimized/mascot.glb',
-      equippedCosmetics: [],
+      equippedCosmetics: const [],
       animationState: 'idle',
       themeId: 'nature',
     );

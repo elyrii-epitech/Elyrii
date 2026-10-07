@@ -365,6 +365,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
           children: [
             if (showDate) _buildDateLabel(message.timestamp, isDark),
             ChatMessageBubble(
+              key: ValueKey(message.id),
+              delivery: message.delivery,
+              onRetry: () =>
+                  context.read<ChatbotProvider>().retryMessage(message.id),
               message: message.content,
               isUser: message.isUser,
               timestamp: message.timestamp,
@@ -403,9 +407,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   Widget _buildDateLabel(DateTime date, bool isDark) {
-    final difference = DateUtils.dateOnly(
-      DateTime.now(),
-    ).difference(DateUtils.dateOnly(date)).inDays;
+    final difference = DateUtils.dateOnly(DateTime.now())
+        .difference(DateUtils.dateOnly(date))
+        .inDays;
     final label = difference == 0
         ? 'Aujourd’hui'
         : difference == 1

@@ -307,6 +307,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
               ),
               const SizedBox(width: 8),
               LiquidGlassIconButton(
+                tooltip: 'Commencer la séance',
                 icon: Icons.play_arrow_rounded,
                 onPressed: onPressed,
               ),

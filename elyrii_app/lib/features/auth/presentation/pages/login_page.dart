@@ -1,14 +1,21 @@
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/utils/validators.dart';
+
 import 'package:provider/provider.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../widgets/glass_auth_text_field.dart';
 import '../widgets/auth_error_banner.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../routes/app_routes.dart';
 import '../providers/auth_provider.dart';
 import '../../../../core/config/mascot_3d_config.dart';
@@ -30,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
   String? _errorBanner;
   MascotAnimation _mascotAnimation = MascotAnimations.greet;
   int _mascotTrigger = 0;
-  bool get _isLoading => context.read<AuthProvider>().isLoading;
+  bool get _isLoading => context.watch<AuthProvider>().isLoading;
 
   @override
   void dispose() {
@@ -40,6 +47,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
+    if (context.read<AuthProvider>().isLoading) return;
     if (!_formKey.currentState!.validate()) return;
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.login(
@@ -104,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                               height: 250,
                             ),
                           )
-                          .animate()
+                          .animateRespectingMotion(context)
                           .fadeIn(duration: 600.ms)
                           .slideY(begin: 0.2, end: 0),
 
@@ -149,8 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                                 GlassAuthTextField(
                                   controller: _emailController,
                                   hint: '',
-                                  prefixIcon: Icons
-                                      .email_outlined, // We might remove this if we want strict GitHub copy, but keeping for now
+                                  prefixIcon: Icons.email_outlined, // We might remove this if we want strict GitHub copy, but keeping for now
                                   keyboardType: TextInputType.emailAddress,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -329,7 +336,7 @@ class _LoginPageState extends State<LoginPage> {
                               ],
                             ),
                           )
-                          .animate()
+                          .animateRespectingMotion(context)
                           .fadeIn(duration: 800.ms, delay: 200.ms)
                           .slideY(begin: 0.2, end: 0),
                     ],

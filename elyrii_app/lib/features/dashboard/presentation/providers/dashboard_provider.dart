@@ -1,165 +1,17 @@
 import 'dart:async';
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
+
 import 'dart:math';
+
 import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../data/repositories/dashboard_repository.dart';
 
-/// Enum représentant les différents moods disponibles
-enum MoodType { verySad, sad, neutral, happy, veryHappy }
-
-/// Enum pour les types d'objectifs quotidiens
-enum GoalType { journal, meditation, breathing, gratitude }
-
-/// Extension pour obtenir les propriétés du mood
-extension MoodTypeExtension on MoodType {
-  IconData get icon {
-    switch (this) {
-      case MoodType.verySad:
-        return Icons.sentiment_very_dissatisfied_rounded;
-      case MoodType.sad:
-        return Icons.sentiment_dissatisfied_rounded;
-      case MoodType.neutral:
-        return Icons.sentiment_neutral_rounded;
-      case MoodType.happy:
-        return Icons.sentiment_satisfied_rounded;
-      case MoodType.veryHappy:
-        return Icons.sentiment_very_satisfied_rounded;
-    }
-  }
-
-  Color get color {
-    switch (this) {
-      case MoodType.verySad:
-        return const Color(0xFF6B7FA3); // Ardoise apaisante
-      case MoodType.sad:
-        return const Color(0xFF7E94B3); // Bleu brumeux
-      case MoodType.neutral:
-        return const Color(0xFF8E959E); // Sauge / pierre calme
-      case MoodType.happy:
-        return const Color(0xFF5BA87E); // Vert clarté & sérénité
-      case MoodType.veryHappy:
-        return const Color(0xFFE5A038); // Ambre doré & rayonnement
-    }
-  }
-
-  String get label {
-    switch (this) {
-      case MoodType.verySad:
-        return 'Éprouvé';
-      case MoodType.sad:
-        return 'Vulnérable';
-      case MoodType.neutral:
-        return 'Paisible';
-      case MoodType.happy:
-        return 'Serein';
-      case MoodType.veryHappy:
-        return 'Rayonnant';
-    }
-  }
-
-  String get subtitle {
-    switch (this) {
-      case MoodType.verySad:
-        return 'Besoin de douceur et de repos';
-      case MoodType.sad:
-        return 'Une baisse d\'énergie passagère';
-      case MoodType.neutral:
-        return 'Calme, présent, à ton rythme';
-      case MoodType.happy:
-        return 'Une belle clarté d\'esprit';
-      case MoodType.veryHappy:
-        return 'Plein d\'élan et de gratitude';
-    }
-  }
-
-  String get suggestedActionLabel {
-    switch (this) {
-      case MoodType.verySad:
-        return '2 min de respiration apaisante';
-      case MoodType.sad:
-        return 'Déposer mes pensées dans le journal';
-      case MoodType.neutral:
-        return 'Prendre un instant de pause';
-      case MoodType.happy:
-        return 'Noter ce qui m\'a fait sourire';
-      case MoodType.veryHappy:
-        return 'Ancrer ce moment dans mon journal';
-    }
-  }
-
-  IconData get suggestedActionIcon {
-    switch (this) {
-      case MoodType.verySad:
-        return Icons.air_rounded;
-      case MoodType.sad:
-        return Icons.edit_note_rounded;
-      case MoodType.neutral:
-        return Icons.self_improvement_rounded;
-      case MoodType.happy:
-        return Icons.auto_awesome_rounded;
-      case MoodType.veryHappy:
-        return Icons.stars_rounded;
-    }
-  }
-
-  String get suggestedActionRoute {
-    switch (this) {
-      case MoodType.verySad:
-        return '/meditation';
-      case MoodType.sad:
-        return '/journal';
-      case MoodType.neutral:
-        return '/meditation';
-      case MoodType.happy:
-        return '/journal';
-      case MoodType.veryHappy:
-        return '/journal';
-    }
-  }
-}
-
-/// Extension pour les propriétés des objectifs
-extension GoalTypeExtension on GoalType {
-  String get title {
-    switch (this) {
-      case GoalType.journal:
-        return 'Écrire dans ton journal';
-      case GoalType.meditation:
-        return '5 minutes de méditation';
-      case GoalType.breathing:
-        return 'Exercice de respiration';
-      case GoalType.gratitude:
-        return 'Noter 3 gratitudes';
-    }
-  }
-
-  IconData get icon {
-    switch (this) {
-      case GoalType.journal:
-        return Icons.edit_note_rounded;
-      case GoalType.meditation:
-        return Icons.self_improvement_rounded;
-      case GoalType.breathing:
-        return Icons.air_rounded;
-      case GoalType.gratitude:
-        return Icons.favorite_rounded;
-    }
-  }
-
-  String get completedMessage {
-    switch (this) {
-      case GoalType.journal:
-        return 'Bravo ! Tu as pris le temps d\'écrire';
-      case GoalType.meditation:
-        return 'Magnifique ! Ton esprit te remercie';
-      case GoalType.breathing:
-        return 'Super ! Tu respires la sérénité';
-      case GoalType.gratitude:
-        return 'Génial ! La gratitude illumine ta journée';
-    }
-  }
-}
+import '../mood_presentation.dart';
+export '../mood_presentation.dart';
 
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
@@ -180,11 +32,18 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   bool _isLoading = false;
+  bool _isSavingMood = false;
+  DateTime? _cachedAt;
+  final DateTime Function() _now;
+  int _moodVersion = 0;
   String? _error;
 
   // Mood du jour
   MoodType? _selectedMood;
   final Map<DateTime, MoodType> _moodHistory = {};
+  late final Map<DateTime, MoodType> _historyView = UnmodifiableMapView(
+    _moodHistory,
+  );
 
   // Streak (série de jours consécutifs)
   int _currentStreak = 0;
@@ -266,6 +125,8 @@ class DashboardProvider extends ChangeNotifier {
   String _userName = '';
 
   // Getters
+  bool get isSavingMood => _isSavingMood;
+  DateTime? get cachedAt => _cachedAt;
   bool get isLoading => _isLoading;
   String? get error => _error;
   MoodType? get selectedMood => _selectedMood;
@@ -279,7 +140,7 @@ class DashboardProvider extends ChangeNotifier {
   int get moodLogsCount => _moodLogsCount;
   String get userName => _userName;
   String get currentQuote => _quotes[_currentQuoteIndex];
-  Map<DateTime, MoodType> get moodHistory => Map.unmodifiable(_moodHistory);
+  Map<DateTime, MoodType> get moodHistory => _historyView;
   GoalType get dailyGoal => _dailyGoal;
   bool get goalCompleted => _goalCompleted;
 
@@ -295,13 +156,14 @@ class DashboardProvider extends ChangeNotifier {
   DashboardProvider({
     DashboardRepository? repository,
     ApiClient? apiClient,
-    bool Function()? isDemoSession,
+    this._isDemoSession,
+    DateTime Function()? now,
   }) : assert(
          repository != null || apiClient != null,
          'repository or apiClient must be provided',
        ),
        _repository = repository ?? DashboardRepository(client: apiClient!),
-       _isDemoSession = isDemoSession {
+       _now = now ?? DateTime.now {
     _initializeQuoteOfTheDay();
     _initializeDailyGoal();
     _initializeMascotMessage();
@@ -311,6 +173,9 @@ class DashboardProvider extends ChangeNotifier {
     _sessionRevision++;
     _loadInFlight = null;
     _selectedMood = null;
+    _moodVersion++;
+    _isSavingMood = false;
+    _cachedAt = null;
     _moodHistory.clear();
     _currentStreak = 0;
     _activeChallengesCount = 0;
@@ -343,18 +208,18 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   void _initializeQuoteOfTheDay() {
-    final now = DateTime.now();
+    final now = _now();
     _currentQuoteIndex = (now.day + now.month) % _quotes.length;
   }
 
   void _initializeDailyGoal() {
-    final now = DateTime.now();
+    final now = _now();
     final goalIndex = (now.day + now.month + now.year) % GoalType.values.length;
     _dailyGoal = GoalType.values[goalIndex];
   }
 
   void _initializeMascotMessage() {
-    final now = DateTime.now();
+    final now = _now();
     _currentMascotMessageIndex =
         (now.hour + now.minute) % _mascotMessages.length;
   }
@@ -371,45 +236,49 @@ class DashboardProvider extends ChangeNotifier {
     _notify();
   }
 
-  Future<void> selectMood(MoodType mood) async {
-    if (_selectedMood == mood) return;
-
+  Future<bool> selectMood(MoodType mood) async {
+    if (_selectedMood == mood || _isSavingMood || _disposed) return false;
+    final session = _sessionRevision;
+    _moodVersion++;
+    final previous = _selectedMood;
+    final now = _now();
+    final today = DateTime(now.year, now.month, now.day);
+    final previousHistory = _moodHistory[today];
     _selectedMood = mood;
+    _moodHistory[today] = mood;
     _currentMascotMessageIndex = Random().nextInt(
       _moodMascotMessages[mood]!.length,
     );
-    final today = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    );
-    _moodHistory[today] = mood;
     _error = null;
-    _notify(); // Mise à jour optimiste immédiate (sans flash de squelette)
-    if (_isDemo) return;
-    final session = _sessionRevision;
-
-    // Synchronisation en arrière-plan sans bloquer l'UI ni recharger l'état de chargement
-    unawaited(() async {
-      try {
-        await _repository.logMood(mood.name);
-        if (session != _sessionRevision) return;
-        final data = await _repository.getDashboard();
-        if (session != _sessionRevision) return;
-        final stats = data.stats;
-        _currentStreak = stats.streak;
-        _activeChallengesCount = stats.activeChallengesCount;
-        _journalEntriesCount = stats.journalEntriesCount;
-        _completedChallengesCount = stats.completedChallengesCount;
-        _totalPoints = stats.totalPoints;
-        _meditationSessionsCount = stats.meditationSessionsCount;
-        _coachSessionsCount = stats.coachSessionsCount;
-        _moodLogsCount = stats.moodLogsCount;
-        _notify();
-      } catch (_) {
-        // En mode déconnecté, préserve silencieusement la saisie locale
+    _isSavingMood = !_isDemo;
+    _notify();
+    if (_isDemo) return true;
+    try {
+      await _repository.logMood(mood.name);
+      if (session != _sessionRevision || _disposed) return false;
+      _isSavingMood = false;
+      _notify();
+      // A refresh failure does not undo an already acknowledged mutation.
+      await loadDashboardData();
+      return true;
+    } catch (error) {
+      if (session != _sessionRevision || _disposed) return false;
+      _selectedMood = previous;
+      if (previousHistory == null) {
+        _moodHistory.remove(today);
+      } else {
+        _moodHistory[today] = previousHistory;
       }
-    }());
+      _error = error is ApiException
+          ? error.message
+          : 'Ton humeur n’a pas été enregistrée. Réessaie.';
+      return false;
+    } finally {
+      if (session == _sessionRevision && !_disposed) {
+        _isSavingMood = false;
+        _notify();
+      }
+    }
   }
 
   void completeGoal() {
@@ -418,7 +287,7 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   String getGreeting() {
-    final hour = DateTime.now().hour;
+    final hour = _now().hour;
     if (hour < 12) {
       return 'Bonjour';
     } else if (hour < 18) {
@@ -464,6 +333,7 @@ class DashboardProvider extends ChangeNotifier {
       return;
     }
     final session = _sessionRevision;
+    final moodVersion = _moodVersion;
     _isLoading = true;
     _error = null;
     _notify();
@@ -472,12 +342,13 @@ class DashboardProvider extends ChangeNotifier {
       final data = await _repository.getDashboard();
       if (session != _sessionRevision) return;
       final moodTypeStr = data.latestMood;
-      if (moodTypeStr != null) {
+      _cachedAt = data.cachedAt;
+      if (moodVersion == _moodVersion && moodTypeStr != null) {
         _selectedMood = MoodType.values.firstWhere(
           (m) => m.name == moodTypeStr,
           orElse: () => MoodType.neutral,
         );
-      } else {
+      } else if (moodVersion == _moodVersion) {
         _selectedMood = null;
       }
 
@@ -492,8 +363,11 @@ class DashboardProvider extends ChangeNotifier {
       _moodLogsCount = stats.moodLogsCount;
       _isLoading = false;
       _notify();
-    } catch (_) {
+    } catch (error) {
       if (session != _sessionRevision) return;
+      _error = error is ApiException
+          ? error.message
+          : 'Impossible de charger ton tableau de bord. Réessaie.';
       // Mode silencieux : n'affiche pas d'exception socket brute sur l'accueil
       _isLoading = false;
       _notify();

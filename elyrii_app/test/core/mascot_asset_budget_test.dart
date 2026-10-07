@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  for (final name in ['mascot']) {
+  for (final name in ['mascot', 'mascot_wardrobe']) {
     test('$name keeps the rig and all clips within the geometry budget', () {
       final bytes = File('assets/optimized/$name.glb').readAsBytesSync();
       final header = ByteData.sublistView(bytes);
@@ -19,8 +20,8 @@ void main() {
           triangles += (accessors[primitive['indices']]['count'] as int) ~/ 3;
         }
       }
-      expect(triangles, lessThan(75000));
-      expect(bytes.length, lessThan(3600000));
+      expect(triangles, lessThan(name == 'mascot' ? 75000 : 90000));
+      expect(bytes.length, lessThan(name == 'mascot' ? 3600000 : 4100000));
       expect(
         (data['animations'] as List).map((a) => a['name']),
         containsAll([
@@ -42,7 +43,7 @@ void main() {
           'invite',
         ]),
       );
-      expect(data['skins'], hasLength(2));
+      expect((data['skins'] as List).length, greaterThanOrEqualTo(2));
     });
   }
 }

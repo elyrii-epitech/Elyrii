@@ -97,6 +97,10 @@ class MascotProgressCard extends StatelessWidget {
                         : Colors.white.withValues(alpha: 0.7),
                     child: Image.asset(
                       'assets/accessory_portraits/${next.id}.png',
+                      cacheHeight: (76 * MediaQuery.devicePixelRatioOf(context))
+                          .ceil()
+                          .clamp(1, 600)
+                          .toInt(),
                       fit: BoxFit.contain,
                       excludeFromSemantics: true,
                     ),
@@ -425,6 +429,11 @@ class _CollectionTile extends StatelessWidget {
                       width: double.infinity,
                       child: Image.asset(
                         'assets/accessory_portraits/${piece.id}.png',
+                        cacheHeight:
+                            (118 * MediaQuery.devicePixelRatioOf(context))
+                                .ceil()
+                                .clamp(1, 600)
+                                .toInt(),
                         fit: BoxFit.contain,
                         excludeFromSemantics: true,
                       ),

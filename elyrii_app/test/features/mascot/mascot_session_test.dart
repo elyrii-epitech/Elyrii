@@ -114,30 +114,27 @@ void main() {
     );
   }
 
-  test(
-    'un look local de Lucas est synchronisé avant de lire un serveur encore vierge',
-    () async {
-      SharedPreferences.setMockInitialValues({
-        'elyrii_mascot_theme_alice': 'zen',
-        'elyrii_mascot_customization_alice': ['crown_laurel', 'flower_mouth'],
-      });
-      final client = _Client();
-      final provider = MascotProvider(client: client, userId: 'alice');
-      addTearDown(provider.dispose);
-      await provider.loadMascot();
-      await provider.retrySync();
-      expect(client.reads, 0);
-      expect(provider.mascot.themeId, 'zen');
-      expect(provider.mascot.equippedCosmetics, [
-        'laurel_crown',
-        'cheek_sparkle',
-      ]);
-      expect(client.writes.last['equippedCosmetics'], [
-        'laurel_crown',
-        'cheek_sparkle',
-      ]);
-    },
-  );
+  test('un look local de Lucas est synchronisé avant de lire un serveur encore vierge', () async {
+    SharedPreferences.setMockInitialValues({
+      'elyrii_mascot_theme_alice': 'zen',
+      'elyrii_mascot_customization_alice': ['crown_laurel', 'flower_mouth'],
+    });
+    final client = _Client();
+    final provider = MascotProvider(client: client, userId: 'alice');
+    addTearDown(provider.dispose);
+    await provider.loadMascot();
+    await provider.retrySync();
+    expect(client.reads, 0);
+    expect(provider.mascot.themeId, 'zen');
+    expect(provider.mascot.equippedCosmetics, [
+      'laurel_crown',
+      'cheek_sparkle',
+    ]);
+    expect(client.writes.last['equippedCosmetics'], [
+      'laurel_crown',
+      'cheek_sparkle',
+    ]);
+  });
 
   test(
     'le mode démo et le visiteur ne lisent ni écrivent sur le serveur',
@@ -202,14 +199,14 @@ void main() {
       await provider.loadMascot();
       await provider.saveCustomization(
         provider.mascot.copyWith(
-          appearance: const MascotAppearance(colors: {'body': '#B8A3DC'}),
+          appearance: MascotAppearance(colors: const {'body': '#B8A3DC'}),
         ),
         completedChallenges: 0,
       );
       await client.writeStarted.future;
       await provider.saveCustomization(
         provider.mascot.copyWith(
-          appearance: const MascotAppearance(colors: {'body': '#91C5BD'}),
+          appearance: MascotAppearance(colors: const {'body': '#91C5BD'}),
         ),
         completedChallenges: 0,
       );
@@ -228,7 +225,7 @@ void main() {
       );
       await provider.saveCustomization(
         provider.mascot.copyWith(
-          appearance: const MascotAppearance(colors: {'body': '#E67E22'}),
+          appearance: MascotAppearance(colors: const {'body': '#E67E22'}),
         ),
         completedChallenges: 0,
       );
@@ -261,23 +258,20 @@ void main() {
     },
   );
 
-  test(
-    'un chargement ancien ne remplace pas une sauvegarde récente du même compte',
-    () async {
-      final stale = Completer<Map<String, dynamic>>();
-      final client = _Client()..read = () => stale.future;
-      final provider = MascotProvider(client: client, userId: 'alice');
-      addTearDown(provider.dispose);
-      final loading = provider.loadMascot();
-      await client.readStarted.future;
-      final look = provider.mascot.copyWith(
-        appearance: const MascotAppearance(colors: {'body': '#12AB9F'}),
-      );
-      await provider.saveCustomization(look, completedChallenges: 0);
-      await provider.retrySync();
-      stale.complete({'appearance': 'nature'});
-      await loading;
-      expect(provider.mascot, look);
-    },
-  );
+  test('un chargement ancien ne remplace pas une sauvegarde récente du même compte', () async {
+    final stale = Completer<Map<String, dynamic>>();
+    final client = _Client()..read = () => stale.future;
+    final provider = MascotProvider(client: client, userId: 'alice');
+    addTearDown(provider.dispose);
+    final loading = provider.loadMascot();
+    await client.readStarted.future;
+    final look = provider.mascot.copyWith(
+      appearance: MascotAppearance(colors: const {'body': '#12AB9F'}),
+    );
+    await provider.saveCustomization(look, completedChallenges: 0);
+    await provider.retrySync();
+    stale.complete({'appearance': 'nature'});
+    await loading;
+    expect(provider.mascot, look);
+  });
 }

@@ -1,5 +1,7 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+
+import '../../../../core/diagnostics/app_diagnostics.dart';
+import '../../../../core/network/json_response.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_exception.dart';
@@ -10,15 +12,21 @@ class AuthResult {
   final String token;
   final UserModel? user;
   final String message;
+  final bool verificationRequired;
 
-  const AuthResult({required this.token, this.user, required this.message});
+  const AuthResult({
+    required this.token,
+    this.user,
+    required this.message,
+    this.verificationRequired = false,
+  });
 }
 
 /// Repository handling authentication API calls
 class AuthRepository {
   final ApiClient _client;
 
-  AuthRepository({required ApiClient client}) : _client = client;
+  AuthRepository({required this._client});
 
   ApiClient get client => _client;
 
@@ -28,13 +36,15 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    final response =
-        await _client.post(
-              ApiConfig.loginUrl,
-              body: {'email': email, 'password': password},
-              auth: false,
-            )
-            as Map<String, dynamic>;
+    final response = await _client.post(
+      ApiConfig.loginUrl,
+      body: {'email': email, 'password': password},
+      auth: false,
+    );
+    return decodeResponse(response, (json) => _loginResult(json));
+  }
+
+  AuthResult _loginResult(Map<String, dynamic> response) {
     final token = response['token'] as String? ?? '';
     final user = _decodeTokenPayload(token);
     return AuthResult(
@@ -59,23 +69,26 @@ class AuthRepository {
       'lastName': lastName,
     };
     if (age != null) body['age'] = age;
-    final response =
-        await _client.post(ApiConfig.registerUrl, body: body, auth: false)
-            as Map<String, dynamic>;
+    final response = await _client.post(
+      ApiConfig.registerUrl,
+      body: body,
+      auth: false,
+    );
+    return decodeResponse(response, (json) => _registrationResult(json));
+  }
 
+  AuthResult _registrationResult(Map<String, dynamic> response) {
     // Check if email verification is required and token is not returned
     final bool emailVerificationRequired =
         response['emailVerificationRequired'] == true;
     final token = response['token'] as String?;
 
     if (emailVerificationRequired && token == null) {
-      // In this case, we don't have a token yet because the email needs verification.
-      // We will throw an exception or handle it to inform the UI that verification is required.
-      throw ApiException(
-        statusCode: 201,
+      return AuthResult(
+        token: '',
+        verificationRequired: true,
         message:
             response['message'] as String? ?? 'Email verification required.',
-        body: response,
       );
     }
 
@@ -90,9 +103,13 @@ class AuthRepository {
   }
 
   /// Logout the current user
-  Future<void> logout() async {
+  Future<void> logout({String? token}) async {
     try {
-      await _client.post(ApiConfig.logoutUrl);
+      if (token != null) {
+        await _client.postWithToken(ApiConfig.logoutUrl, token);
+      } else {
+        await _client.post(ApiConfig.logoutUrl);
+      }
     } on ApiException {
       // Ignore errors on logout — token will be cleared locally
     }
@@ -113,7 +130,7 @@ class AuthRepository {
       final json = jsonDecode(decoded) as Map<String, dynamic>;
       return UserModel.fromJson(json);
     } catch (e) {
-      debugPrint('Error decoding token payload: $e');
+      AppDiagnostics.record('token_payload_invalid', e);
       return null;
     }
   }

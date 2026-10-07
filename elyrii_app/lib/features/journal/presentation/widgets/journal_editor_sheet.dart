@@ -1,14 +1,22 @@
+import '../../../../core/widgets/accessible_action.dart';
+import '../../../../core/accessibility/motion.dart';
+
 import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
+
 import 'dart:async';
+
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+
 import 'package:provider/provider.dart';
+
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../providers/journal_provider.dart';
 import 'glass_text_field.dart';
@@ -43,11 +51,40 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   Future<void>? _saveInFlight;
   bool _saveFailed = false;
   int _revision = 0;
+  String get _draftKey => widget.entry?.id ?? 'new';
+  late final String? _draftOwner;
+  bool get _sameAccount => widget.provider.owner == _draftOwner;
+  Future<void> _persistDraft() async {
+    if (!_sameAccount) return;
+    try {
+      await widget.provider.saveDraft(_draftKey, {
+        'title': _titleController.text,
+        'content': _contentController.text,
+        'entryId': _createdEntryId,
+      });
+    } catch (_) {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final draft = await widget.provider.readDraft(_draftKey);
+      if (!mounted || !_sameAccount || _revision != 0 || draft == null) return;
+      _titleController.text = draft['title'] as String? ?? '';
+      _contentController.text = draft['content'] as String? ?? '';
+      _createdEntryId = draft['entryId'] as String?;
+      setState(() => _hasChanges = true);
+    } catch (_) {
+      if (mounted) setState(() => _saveFailed = true);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     final entry = widget.entry;
+    _draftOwner = widget.provider.owner;
     _titleController = TextEditingController(
       text: entry?.title ?? widget.initialPrompt ?? '',
     );
@@ -55,6 +92,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
+    unawaited(_restoreDraft());
   }
 
   @override
@@ -67,6 +105,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
   void _onTextChanged() {
     _revision++;
+    unawaited(_persistDraft());
     if (!_hasChanges) {
       setState(() => _hasChanges = true);
     }
@@ -78,7 +117,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       _saveInFlight ??= _save().whenComplete(() => _saveInFlight = null);
 
   Future<void> _save() async {
-    if (!_hasChanges || _contentController.text.trim().isEmpty) return;
+    if (!_sameAccount ||
+        !_hasChanges ||
+        _contentController.text.trim().isEmpty) {
+      return;
+    }
     final revision = _revision;
     bool success;
     setState(() => _isSaving = true);
@@ -118,6 +161,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       }
     }
 
+    if (!_sameAccount || !mounted) return;
+    if (success && revision == _revision) {
+      await widget.provider.deleteDraft(_draftKey);
+    } else {
+      await _persistDraft();
+    }
     if (!mounted) return;
     setState(() {
       _hasChanges = !success || revision != _revision;
@@ -131,7 +180,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   }
 
   Future<bool> _onWillPop() async {
-    if (!_hasChanges || _contentController.text.trim().isEmpty) return true;
+    if (!_sameAccount ||
+        !_hasChanges ||
+        _contentController.text.trim().isEmpty) {
+      return true;
+    }
 
     final result = await showLiquidGlassDialog<String>(
       context: context,
@@ -158,6 +211,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     );
 
     if (result == 'save') await _autoSave();
+    if (result == 'discard') await widget.provider.deleteDraft(_draftKey);
     return (result == 'save' && !_hasChanges) || result == 'discard';
   }
 
@@ -174,13 +228,19 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         LiquidGlassDialogAction(
           label: 'Supprimer',
           isDestructive: true,
-          onPressed: () {
+          onPressed: () async {
             final idToDelete = widget.entry?.id ?? _createdEntryId;
-            if (idToDelete != null) {
-              widget.provider.deleteEntry(idToDelete);
+            Navigator.pop(context);
+            if (idToDelete == null || !_sameAccount) return;
+            _autoSaveTimer?.cancel();
+            final deleted = await widget.provider.deleteEntry(idToDelete);
+            if (!mounted || !_sameAccount) return;
+            if (deleted) {
+              await widget.provider.deleteDraft(_draftKey);
+              if (mounted) Navigator.pop(context);
+            } else {
+              setState(() => _saveFailed = true);
             }
-            Navigator.pop(context);
-            Navigator.pop(context);
           },
         ),
       ],
@@ -215,41 +275,49 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                 if (widget.initialPrompt != null && widget.entry == null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: AppColors.accent.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.lightbulb_rounded,
-                                size: 14,
-                                color: AppColors.accent,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Inspiration',
-                                style: AppTextStyles.labelSmall(
-                                  color: AppColors.accent,
+                    child:
+                        Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: AppColors.accent.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.lightbulb_rounded,
+                                        size: 14,
+                                        color: AppColors.accent,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Inspiration',
+                                        style: AppTextStyles.labelSmall(
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ).animate().fadeIn(duration: 200.ms).slideY(begin: 0.1),
+                              ],
+                            )
+                            .animateRespectingMotion(context)
+                            .fadeIn(duration: 200.ms)
+                            .slideY(begin: 0.1),
                   ),
                 // Champ titre
                 GlassTextField(
@@ -260,7 +328,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                     )
-                    .animate()
+                    .animateRespectingMotion(context)
                     .fadeIn(
                       duration: 300.ms,
                       delay: 100.ms,
@@ -282,7 +350,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                       minLines: 12,
                       fontSize: 16,
                     )
-                    .animate()
+                    .animateRespectingMotion(context)
                     .fadeIn(
                       duration: 300.ms,
                       delay: 200.ms,
@@ -313,8 +381,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       child: Row(
         children: [
           // Bouton fermer
-          GestureDetector(
-            onTap: () async {
+          AccessibleAction(
+            label: 'Fermer la note',
+            onPressed: () async {
               ElyriiHaptics.light();
               final canPop = await _onWillPop();
               if (canPop && mounted) {
@@ -322,6 +391,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               }
             },
             child: Container(
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: isDark
@@ -342,12 +412,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           // Status
           Expanded(child: _buildStatusIndicator(isDark)),
           // Bouton ajouter/sauvegarder
-          GestureDetector(
-            onTap: () {
+          AccessibleAction(
+            label: 'Enregistrer la note',
+            onPressed: () async {
               ElyriiHaptics.light();
-              if (_contentController.text.trim().isNotEmpty) {
-                _autoSave();
-                Navigator.of(context).pop();
+              if (_contentController.text.trim().isNotEmpty && !_isSaving) {
+                await _autoSave();
+                if (mounted && !_hasChanges) Navigator.of(context).pop();
               }
             },
             child: Container(
@@ -365,12 +436,14 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           const SizedBox(width: 8),
           // Menu supprimer (si édition)
           if (widget.entry != null || _createdEntryId != null)
-            GestureDetector(
-              onTap: () {
+            AccessibleAction(
+              label: 'Supprimer la note',
+              onPressed: () {
                 ElyriiHaptics.light();
                 _deleteEntry();
               },
               child: Container(
+                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppColors.error.withValues(alpha: 0.1),

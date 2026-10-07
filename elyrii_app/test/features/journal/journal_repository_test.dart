@@ -121,26 +121,20 @@ void main() {
     },
   );
 
-  test(
-    'a request started without an account cannot fall back to a newly signed-in account',
-    () async {
-      SharedPreferences.setMockInitialValues({
-        'cache_journal_entries_account-b': jsonEncode([_entry('account-b')]),
-      });
-      final storage = _Storage()..owner = null;
-      final repository = JournalRepository(
-        client: ApiClient(
-          storage: storage,
-          client: MockClient((request) async {
-            storage.owner = 'account-b';
-            throw const SocketException('Offline');
-          }),
-        ),
-      );
-      await expectLater(
-        repository.getEntries(),
-        throwsA(isA<SocketException>()),
-      );
-    },
-  );
+  test('a request started without an account cannot fall back to a newly signed-in account', () async {
+    SharedPreferences.setMockInitialValues({
+      'cache_journal_entries_account-b': jsonEncode([_entry('account-b')]),
+    });
+    final storage = _Storage()..owner = null;
+    final repository = JournalRepository(
+      client: ApiClient(
+        storage: storage,
+        client: MockClient((request) async {
+          storage.owner = 'account-b';
+          throw const SocketException('Offline');
+        }),
+      ),
+    );
+    await expectLater(repository.getEntries(), throwsA(isA<ApiException>()));
+  });
 }

@@ -25,6 +25,7 @@ nav:
       - Design System: mobile/design.md
       - CI/CD: mobile/ci-cd.md
       - Development: mobile/development.md
+      - Frontend audit: mobile/frontend-audit-implementation.md
       - Generated Docs: mobile/api/index.md
   - Server:
       - Overview: server/index.md

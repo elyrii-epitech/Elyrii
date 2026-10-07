@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
+import '../../../../core/localization/app_dates.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -330,6 +332,6 @@ class ChatHistorySheet extends StatelessWidget {
     if (diff == 0) return 'Aujourd\'hui';
     if (diff == 1) return 'Hier';
     if (diff < 7) return 'Il y a $diff jours';
-    return DateFormat('d MMMM', 'fr').format(date);
+    return AppDates.format(date, 'd MMMM');
   }
 }

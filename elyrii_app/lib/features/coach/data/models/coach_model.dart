@@ -1,4 +1,7 @@
+import '../../../../core/data/json_contract.dart';
+
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 
 enum ActivityCategory {
@@ -197,29 +200,26 @@ class CoachSession {
   final Map<String, dynamic> context;
   final DateTime createdAt;
 
-  const CoachSession({
+  CoachSession({
     required this.id,
     required this.prompt,
     required this.response,
-    required this.context,
+    required Map<String, dynamic> context,
     required this.createdAt,
-  });
+  }) : context = freezeJson(context) as Map<String, dynamic>;
 
   factory CoachSession.fromJson(Map<String, dynamic> json) {
     return CoachSession(
-      id: json['id'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
       prompt: json['prompt'] as String? ?? '',
       response: json['response'] as String? ?? '',
       context: Map<String, dynamic>.from(
         json['context'] as Map? ?? const <String, dynamic>{},
       ),
-      createdAt: _parseDate(json['createdAt'] ?? json['created_at']),
+      createdAt: requiredJsonDate(
+        json['createdAt'] ?? json['created_at'],
+        'createdAt',
+      ),
     );
-  }
-
-  static DateTime _parseDate(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-    return DateTime.now();
   }
 }

@@ -1,4 +1,9 @@
+import '../../../core/network/json_response.dart';
+import '../../../core/data/json_contract.dart';
 import '../../../core/network/api_client.dart';
+
+import 'package:cross_file/cross_file.dart';
+
 import '../../../core/config/api_config.dart';
 import '../../../core/constants/avatar_options.dart';
 import '../models/app_settings.dart';
@@ -8,13 +13,12 @@ import '../models/user_profile.dart';
 class UserRepository {
   final ApiClient _client;
 
-  UserRepository({required ApiClient client}) : _client = client;
+  UserRepository({required this._client});
 
   /// Fetch the authenticated user's profile
   Future<UserProfile> getMe() async {
-    final response =
-        await _client.get(ApiConfig.userMeUrl) as Map<String, dynamic>;
-    return UserProfile.fromJson(response);
+    final response = await _client.get(ApiConfig.userMeUrl);
+    return decodeResponse(response, UserProfile.fromJson);
   }
 
   /// Update the authenticated user's profile.
@@ -30,6 +34,7 @@ class UserRepository {
     String? wellnessGoal,
     String? timezone,
   }) async {
+    final context = _client.sessionGeneration;
     final body = <String, dynamic>{};
     final uploadedPfp = pfp != null && isLocalAvatarPath(pfp)
         ? await uploadAvatar(pfp)
@@ -48,27 +53,31 @@ class UserRepository {
     if (pronouns != null) body['pronouns'] = pronouns;
     if (wellnessGoal != null) body['wellnessGoal'] = wellnessGoal;
     if (timezone != null) body['timezone'] = timezone;
-    final response =
-        await _client.put(ApiConfig.userMeUrl, body: body)
-            as Map<String, dynamic>;
-    return UserProfile.fromJson(response);
+    _client.ensureSession(context);
+    final response = await _client.put(ApiConfig.userMeUrl, body: body);
+    return decodeResponse(response, UserProfile.fromJson);
   }
 
   Future<String> uploadAvatar(String filePath) async {
-    final response =
-        await _client.uploadFile(
-              ApiConfig.userAvatarUrl,
-              fieldName: 'avatar',
-              filePath: localAvatarFilePath(filePath),
-            )
-            as Map<String, dynamic>;
-    return response['pfp'] as String;
+    final response = await _client.uploadXFile(
+      ApiConfig.userAvatarUrl,
+      fieldName: 'avatar',
+      file: XFile(
+        localAvatarFilePath(filePath),
+        name: filePath.startsWith('blob:') || filePath.startsWith('data:')
+            ? 'avatar.png'
+            : null,
+      ),
+    );
+    return decodeResponse(
+      response,
+      (json) => requiredJsonString(json['pfp'], 'pfp'),
+    );
   }
 
   Future<AppSettings> getSettings() async {
-    final response =
-        await _client.get(ApiConfig.userSettingsUrl) as Map<String, dynamic>;
-    return AppSettings.fromJson(response);
+    final response = await _client.get(ApiConfig.userSettingsUrl);
+    return decodeResponse(response, AppSettings.fromJson);
   }
 
   Future<AppSettings> updateSettings({
@@ -87,10 +96,8 @@ class UserRepository {
     if (privacyMode != null) body['privacyMode'] = privacyMode;
     if (language != null) body['language'] = language;
 
-    final response =
-        await _client.put(ApiConfig.userSettingsUrl, body: body)
-            as Map<String, dynamic>;
-    return AppSettings.fromJson(response);
+    final response = await _client.put(ApiConfig.userSettingsUrl, body: body);
+    return decodeResponse(response, AppSettings.fromJson);
   }
 
   Future<void> deleteAccount({required String password}) async {

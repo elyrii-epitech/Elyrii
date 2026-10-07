@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'dart:math' as math;
 
 import '../../../../core/config/mascot_3d_config.dart';
@@ -154,6 +155,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
               label: 'Interrompre la séance',
               button: true,
               child: LiquidGlassIconButton(
+                tooltip: 'Interrompre la séance',
                 icon: Icons.close_rounded,
                 onPressed: widget.onRequestExit,
                 size: 44,
@@ -163,6 +165,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
               label: isPaused ? 'Reprendre la séance' : 'Mettre en pause',
               button: true,
               child: LiquidGlassIconButton(
+                tooltip: isPaused ? 'Reprendre la séance' : 'Mettre en pause',
                 icon: isPaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                 onPressed: isPaused
                     ? widget.controller.resumeSession
