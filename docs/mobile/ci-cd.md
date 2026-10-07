@@ -40,6 +40,11 @@ purge, avec les vrais plugins SQLite et Keychain/Keystore. Il couvre notamment
 les commandes SQLite qui renvoient une ligne et exigent `rawQuery`, même
 lorsqu’elles configurent une valeur comme `PRAGMA secure_delete = ON`.
 
+Les parcours fonctionnels CI exécutent leurs assertions sans connexion au
+service VM pour la collecte de traces. Cette collecte est réservée au test
+de performance sur appareil physique, lancé avec `flutter drive` en mode
+`--profile --no-dds` comme décrit dans [Development](development.md).
+
 ## Commandes locales
 
 Depuis `elyrii_app`, avec la version du SDK de `.fvmrc` :

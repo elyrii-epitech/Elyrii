@@ -27,6 +27,7 @@ Future<void> tapVisible(WidgetTester tester, Finder target) async {
     description: '$target to appear',
   );
   await tester.ensureVisible(target);
+  await tester.pump();
   await waitFor(
     tester,
     () => target.hitTestable().evaluate().isNotEmpty,

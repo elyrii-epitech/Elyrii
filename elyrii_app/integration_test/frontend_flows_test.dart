@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart' show FocusManager, TextField;
+import 'package:flutter/material.dart' show FocusManager, IconButton, TextField;
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart';
 import 'package:elyrii_app/app/app_dependencies.dart';
@@ -20,7 +20,7 @@ import 'support/native_app.dart';
 /// Runs with real secure storage, SQLite and mascot platform views on a device.
 /// The demo fixture does not require production credentials or an AI backend.
 void main() {
-  final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('real bootstrap, restored demo and primary navigation', (
     tester,
   ) async {
@@ -30,45 +30,60 @@ void main() {
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.byType(GlassNavigationBar), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await binding.traceAction(() async {
-      await tapVisible(tester, find.byType(GlassBubbleButtonStateful));
-      await waitFor(
-        tester,
-        () => find.byType(ChatbotPage).evaluate().isNotEmpty,
-        description: 'the chat page',
-      );
-      expect(find.byType(ChatbotPage), findsOneWidget);
-      final services = tester
-          .element(find.byType(ChatbotPage))
-          .read<AppDependencies>();
-      await tester.runAsync(() => services.chat.ready);
-      const message = 'Native integration persistence fixture';
-      await tester.enterText(find.byType(TextField).last, message);
-      await tapVisible(tester, find.byTooltip('Envoyer le message'));
-      await tester.runAsync(() => services.chat.flushed);
-      final messages = await tester.runAsync(
-        () => services.history.messages(
-          services.auth.accountId!,
-          services.chat.activeSessionId!,
-        ),
-      );
-      expect(
-        messages!.any((item) => item.isUser && item.content == message),
-        isTrue,
-      );
-      await tester.runAsync(() => services.chat.disconnect());
-      FocusManager.instance.primaryFocus?.unfocus();
-      await tapVisible(
-        tester,
-        find.bySemanticsLabel(RegExp(r'^Onglet Méditation,')).first,
-      );
-      await waitFor(
-        tester,
-        () => find.byType(MeditationPage).evaluate().isNotEmpty,
-        description: 'the meditation page',
-      );
-      expect(find.byType(MeditationPage), findsOneWidget);
-    }, reportKey: 'frontend_navigation');
+    await tapVisible(tester, find.byType(GlassBubbleButtonStateful));
+    await waitFor(
+      tester,
+      () => find.byType(ChatbotPage).evaluate().isNotEmpty,
+      description: 'the chat page',
+    );
+    expect(find.byType(ChatbotPage), findsOneWidget);
+    final services = tester
+        .element(find.byType(ChatbotPage))
+        .read<AppDependencies>();
+    await tester.runAsync(() => services.chat.ready);
+    const message = 'Native integration persistence fixture';
+    await tester.enterText(find.byType(TextField).last, message);
+    await tapVisible(
+      tester,
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is IconButton &&
+            widget.tooltip == 'Envoyer le message' &&
+            widget.onPressed != null,
+        description: 'the enabled send-message button',
+      ),
+    );
+    await waitFor(
+      tester,
+      () => services.chat.messages.any(
+        (item) => item.isUser && item.content == message,
+      ),
+      description: 'the submitted user message to enter the conversation',
+    );
+    await tester.runAsync(() => services.chat.flushed);
+    final messages = await tester.runAsync(
+      () => services.history.messages(
+        services.auth.accountId!,
+        services.chat.activeSessionId!,
+      ),
+    );
+    expect(
+      messages!.any((item) => item.isUser && item.content == message),
+      isTrue,
+      reason: 'The submitted user message must be saved to native history.',
+    );
+    await tester.runAsync(() => services.chat.disconnect());
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tapVisible(
+      tester,
+      find.bySemanticsLabel(RegExp(r'^Onglet Méditation,')).first,
+    );
+    await waitFor(
+      tester,
+      () => find.byType(MeditationPage).evaluate().isNotEmpty,
+      description: 'the meditation page',
+    );
+    expect(find.byType(MeditationPage), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

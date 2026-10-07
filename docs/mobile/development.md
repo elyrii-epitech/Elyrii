@@ -59,7 +59,7 @@ séances, routes, bootstrap, accessibilité et listes volumineuses.
 
 ```bash
 flutter test integration_test/frontend_flows_test.dart -d DEVICE_ID --dart-define=ELYRII_ENV=development
-flutter drive --profile -d PHYSICAL_DEVICE_ID --driver=test_driver/integration_test.dart --target=integration_test/performance_test.dart --dart-define=ELYRII_ENV=development
+flutter drive --profile --no-dds -d PHYSICAL_DEVICE_ID --driver=test_driver/integration_test.dart --target=integration_test/performance_test.dart --dart-define=ELYRII_ENV=development
 ```
 
 Le harness profile rapporte le temps d’ouverture du dashboard, le nombre de
