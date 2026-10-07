@@ -22,13 +22,23 @@ void main() {
               body: visible
                   ? Column(
                       children: [
-                        FilledButton(
-                          onPressed: () => firstTaps++,
-                          child: const Text('Continue'),
+                        Semantics(
+                          container: true,
+                          excludeSemantics: true,
+                          label: 'Onglet Méditation, 4 sur 5',
+                          child: FilledButton(
+                            onPressed: () => firstTaps++,
+                            child: const Text('Continue'),
+                          ),
                         ),
-                        FilledButton(
-                          onPressed: () => secondTaps++,
-                          child: const Text('Continue'),
+                        Semantics(
+                          container: true,
+                          excludeSemantics: true,
+                          label: 'Onglet Méditation, 4 sur 5',
+                          child: FilledButton(
+                            onPressed: () => secondTaps++,
+                            child: const Text('Continue'),
+                          ),
                         ),
                       ],
                     )
@@ -43,7 +53,10 @@ void main() {
       () => rebuild(() => visible = true),
     );
     addTearDown(timer.cancel);
-    await tapVisible(tester, find.text('Continue'));
+    await tapVisible(
+      tester,
+      find.bySemanticsLabel(RegExp(r'^Onglet Méditation,')),
+    );
     expect(firstTaps, 1);
     expect(secondTaps, 0);
   });

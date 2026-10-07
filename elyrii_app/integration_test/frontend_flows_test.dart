@@ -24,8 +24,6 @@ void main() {
   testWidgets('real bootstrap, restored demo and primary navigation', (
     tester,
   ) async {
-    final semantics = tester.ensureSemantics();
-    addTearDown(semantics.dispose);
     await startDemoApp(tester);
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.byType(GlassNavigationBar), findsOneWidget);
