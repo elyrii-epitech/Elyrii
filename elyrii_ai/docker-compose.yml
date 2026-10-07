@@ -68,6 +68,22 @@ services:
     networks:
       - elyrii_net
 
+  context-extractor:
+    build:
+      context: .
+      dockerfile: BridgeDockerfile
+    command: ["python", "extraction_worker.py"]
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+      - AI_BASE_URL=http://host.docker.internal:11434
+      - AI_MODEL=mistral
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "redpanda:host-gateway"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
 networks:
   elyrii_net:
     name: elyrii_net

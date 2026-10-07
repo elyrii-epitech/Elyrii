@@ -209,6 +209,24 @@ services:
     networks:
       - elyrii_net
 
+  context-extractor:
+    build:
+      context: ./elyrii_ai
+      dockerfile: BridgeDockerfile
+    command: ["python", "extraction_worker.py"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - AI_BASE_URL=http://ollama:11434
+      - AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
 networks:
   elyrii_net:
     name: elyrii_net
