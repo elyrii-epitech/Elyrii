@@ -26,6 +26,20 @@ Les builds et l’intégration dépendent du job qualité. Les protections de
 branche et les checks obligatoires doivent être configurés dans GitHub par
 les administrateurs ; un fichier de workflow ne les active pas à lui seul.
 
+## Compatibilité et intégration native
+
+Le wrapper Android utilise **Gradle 8.14.3**, avec Java 17, AGP 8.11.1 et
+Kotlin 2.2.20. Ces versions respectent les minima de Flutter 3.47.4 ; les
+vérifications de compatibilité du SDK restent actives.
+
+Les parcours attendent la fin de l’écran de lancement et font défiler les
+contrôles avant de cliquer, afin de fonctionner sur les tailles d’écran des
+simulateurs. Le même démarrage est utilisé par le harness de performance.
+Un scénario natif dédié vérifie la réouverture de l’historique chiffré et sa
+purge, avec les vrais plugins SQLite et Keychain/Keystore. Il couvre notamment
+les commandes SQLite qui renvoient une ligne et exigent `rawQuery`, même
+lorsqu’elles configurent une valeur comme `PRAGMA secure_delete = ON`.
+
 ## Commandes locales
 
 Depuis `elyrii_app`, avec la version du SDK de `.fvmrc` :
@@ -43,8 +57,7 @@ dart doc --output doc/api
 
 Android exige son SDK et iOS Xcode sur macOS. L’environnement Linux de
 l’intervention ne possède ni Android SDK, ni Xcode : les builds natifs et les
-tests d’émulateur/simulateur n’y sont pas exécutés. Les workflows sont fournis,
-sans prétendre qu’un run GitHub Actions a eu lieu.
+tests d’émulateur/simulateur sont vérifiés sur les runners GitHub Actions.
 
 ## Distribution
 

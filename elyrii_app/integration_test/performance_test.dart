@@ -1,8 +1,8 @@
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:elyrii_app/main.dart' as app;
-import 'package:elyrii_app/features/dashboard/presentation/pages/dashboard_page.dart';
+
+import 'support/native_app.dart';
 
 /// Use --profile on physical Android/iOS hardware; raster metrics in headless
 /// browsers or widget tests do not substitute for native GPU measurements.
@@ -10,18 +10,7 @@ void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('cold start and 3D dashboard frame timings', (tester) async {
     final startup = Stopwatch()..start();
-    app.main();
-    for (
-      var i = 0;
-      i < 180 && find.byType(DashboardPage).evaluate().isEmpty;
-      i++
-    ) {
-      await tester.pump(const Duration(milliseconds: 250));
-      if (find.text('Découvrir Elyrii').evaluate().isNotEmpty) {
-        await tester.tap(find.text('Découvrir Elyrii'));
-      }
-    }
-    expect(find.byType(DashboardPage), findsOneWidget);
+    await startDemoApp(tester);
     startup.stop();
     final timings = <FrameTiming>[];
     SchedulerBinding.instance.addTimingsCallback(timings.addAll);

@@ -120,7 +120,9 @@ class ChatHistoryService {
         singleInstance: false,
         onConfigure: (db) async {
           await db.execute('PRAGMA foreign_keys = ON');
-          await db.execute('PRAGMA secure_delete = ON');
+          // This PRAGMA returns a row, even when assigning its value. The
+          // native Android/iOS drivers require the query API for such SQL.
+          await db.rawQuery('PRAGMA secure_delete = ON');
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
@@ -393,7 +395,7 @@ class ChatHistoryService {
       whereArgs: [owner],
     );
     // Compact deleted plaintext pages from old databases as well.
-    await (await _db).execute('PRAGMA secure_delete = ON');
+    await (await _db).rawQuery('PRAGMA secure_delete = ON');
     await (await _db).execute('VACUUM');
   }
 
