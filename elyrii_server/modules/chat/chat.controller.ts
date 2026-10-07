@@ -7,6 +7,7 @@ import { resolveWsIdentity } from "../../utils/ws-auth.utils";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import ChatRepository from "../../repository/chat.repository";
 import type { HonoEnv } from "../../utils/hono.types";
+import { randomUUID } from "node:crypto";
 // NOTE: unused while the blocking AI wait is disabled (delivery is fully
 // asynchronous via consumer.service.ts). Kept for easy re-enable.
 // import { aiResponseTracker } from "./response-tracker.utils";
@@ -118,14 +119,17 @@ chatRouter.get("/ws", describeRoute({
                     console.log("[Chat] Parsing failed, using message as plain text");
                 }
 
+                const requestId = randomUUID();
+                let sourceMessageId: string | undefined;
                 try {
                     console.log(`[Chat] Persisting message for ${userId}...`);
-                    await chatRepository.createMessage({
+                    const persisted = await chatRepository.createMessage({
                         userId,
                         conversationId,
                         role: "user",
                         message,
-                    });
+                    }, requestId);
+                    sourceMessageId = persisted.id;
                 } catch (error) {
                     console.error("[Chat] Failed to persist user chat message:", error);
                 }
@@ -133,7 +137,7 @@ chatRouter.get("/ws", describeRoute({
                 try {
                     console.log(`[Chat] Getting history and sending to Kafka for ${userId}...`);
                     const history = await chatRepository.getRecentMessagesForContext(userId, conversationId, 12);
-                    const requestId = await sendMessageToTopic(userId, message, { conversationId, history });
+                    await sendMessageToTopic(userId, message, { conversationId, history, requestId, sourceMessageId });
 
                     console.log(`[Chat] Message dispatched to Kafka (request ${requestId}). Response will arrive asynchronously via the AI consumer.`);
 

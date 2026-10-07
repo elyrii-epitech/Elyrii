@@ -17,6 +17,7 @@ export const userTable = pgTable("users", {
     pronouns: text("pronouns"),
     wellnessGoal: text("wellness_goal"),
     timezone: text("timezone"),
+    contextGeneration: integer("context_generation").notNull().default(0),
     currentStreak: integer("current_streak").notNull().default(0),
     highestStreak: integer("highest_streak").notNull().default(0),
     lastActivityDate: timestamp("last_activity_date"),

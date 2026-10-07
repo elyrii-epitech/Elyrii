@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../config/db.config";
 import { userTable } from "../config/db/user.table";
@@ -41,6 +41,16 @@ export class ContextRepository {
         const [row] = await this.database.select().from(facts).where(and(eq(facts.id, id(factId)), eq(facts.userId, this.userId)));
         return row ?? null;
     }
+    /** Also fences in-flight jobs when there are no stored rows yet. */
+    async forgetAll() {
+        return this.database.transaction(async tx => {
+            await this.lockUser(tx);
+            await tx.update(userTable).set({ contextGeneration: sql`${userTable.contextGeneration} + 1` }).where(eq(userTable.id, this.userId));
+            await tx.delete(facts).where(eq(facts.userId, this.userId));
+            await tx.delete(memories).where(eq(memories.userId, this.userId));
+            await tx.delete(summaries).where(eq(summaries.userId, this.userId));
+        });
+    }
     async listEligibleFacts(limit = 100) {
         return this.database.select().from(facts).where(this.policy.factsEligible(this.userId))
             .orderBy(asc(facts.key), asc(facts.id)).limit(limitSchema.parse(limit));
@@ -62,6 +72,8 @@ export class ContextRepository {
             if (expectedFactId ? current?.id !== expectedFactId : !!current) {
                 throw new ContextConflictError("Active fact changed or already exists");
             }
+            if (expectedFactId) await tx.update(userTable).set({ contextGeneration: sql`${userTable.contextGeneration} + 1` })
+                .where(eq(userTable.id, this.userId));
             if (current) await tx.update(facts).set({ status: "superseded", updatedAt: now })
                 .where(and(eq(facts.id, current.id), eq(facts.userId, this.userId)));
             const [row] = await tx.insert(facts).values({ userId: this.userId, key: input.key,
@@ -88,6 +100,7 @@ export class ContextRepository {
     private async writeMemory(candidate: MemoryCandidate, previousId?: string) {
         const input = memoryCandidateSchema.parse(candidate);
         return this.database.transaction(async tx => {
+            await this.lockUser(tx);
             if (previousId) {
                 const [old] = await tx.select().from(memories).where(and(eq(memories.id, previousId),
                     eq(memories.userId, this.userId))).for("update");
@@ -102,6 +115,8 @@ export class ContextRepository {
                     .where(and(eq(memories.id, previousId), eq(memories.userId, this.userId)));
                 // Ownership was checked while holding the parent row lock.
                 await tx.delete(embeddings).where(eq(embeddings.memoryId, previousId));
+                await tx.update(userTable).set({ contextGeneration: sql`${userTable.contextGeneration} + 1` })
+                    .where(eq(userTable.id, this.userId));
             }
             const [row] = await tx.insert(memories).values({ userId: this.userId, content: input.content,
                 retention: input.retention, origin: input.origin, sourceMessageId: input.sourceMessageId,
