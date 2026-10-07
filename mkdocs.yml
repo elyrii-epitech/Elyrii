@@ -28,6 +28,7 @@ nav:
   - Server:
       - Overview: server/index.md
       - Database: server/database.md
+      - Context Extraction: server/context-extraction.md
       - Generated Docs: server/api/index.md
   - AI:
       - Overview: ai/index.md

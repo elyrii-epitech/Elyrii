@@ -5,7 +5,10 @@ Context candidate extraction
 candidate-only capability. It does not consume Kafka events, write PostgreSQL,
 or alter the response prompt. The existing Kafka chat payload does not yet
 provide the persisted source message ID and trusted timestamps required here;
-the later server orchestration step must supply them after persistence.
+the dedicated ``extraction_worker.py`` consumes the versioned #223 job topic with
+these identifiers after transactional server persistence. It runs separately from
+the response bridge; see ``docs/server/context-extraction.md`` for deployment,
+job/result contracts, retry behavior, storage decisions, and forgetting barriers.
 
 Usage
 -----
