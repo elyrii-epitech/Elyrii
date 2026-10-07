@@ -20,20 +20,54 @@ class GlobalErrorBoundary extends StatefulWidget {
 }
 
 class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
-  ErrorWidgetBuilder? _defaultErrorBuilder;
+  // Keyed account changes can mount a new boundary before disposing the old
+  // one. A shared dispatcher keeps the global hook owned by active scopes.
+  static final List<_GlobalErrorBoundaryState> _active = [];
+  static ErrorWidgetBuilder? _defaultErrorBuilder;
+  static Widget _dispatcher(FlutterErrorDetails details) {
+    final boundary = _active.lastOrNull;
+    return boundary?._buildErrorWidget(details) ??
+        ErrorWidget(details.exception);
+  }
+
+  void _register() {
+    if (_active.contains(this)) return;
+    final first = _active.isEmpty;
+    if (first) _defaultErrorBuilder = ErrorWidget.builder;
+    _active.add(this);
+    if (first) ErrorWidget.builder = _dispatcher;
+  }
+
+  void _unregister() {
+    if (!_active.remove(this) || _active.isNotEmpty) return;
+    final original = _defaultErrorBuilder;
+    if (ErrorWidget.builder == _dispatcher && original != null) {
+      ErrorWidget.builder = original;
+    }
+    _defaultErrorBuilder = null;
+  }
 
   @override
   void initState() {
     super.initState();
-    _defaultErrorBuilder = ErrorWidget.builder;
-    ErrorWidget.builder = _buildErrorWidget;
+    _register();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _register();
+  }
+
+  @override
+  void deactivate() {
+    _unregister();
+    super.deactivate();
   }
 
   @override
   void dispose() {
-    if (_defaultErrorBuilder != null) {
-      ErrorWidget.builder = _defaultErrorBuilder!;
-    }
+    _unregister();
     super.dispose();
   }
 
