@@ -5,9 +5,11 @@ import { userTable } from "../config/db/user.table";
 import { chatMessagesTable as messages } from "../config/db/chat.table";
 import { userContextFactsTable as facts, userMemoriesTable as memories,
     conversationSummariesTable as summaries, memoryEmbeddingsTable as embeddings } from "../config/db/context.table";
-import { factCandidateSchema, memoryCandidateSchema, summaryInputSchema, embeddingInputSchema,
+import { factCandidateSchema, memoryCandidateSchema, embeddingInputSchema,
     type FactCandidate, type MemoryCandidate, type SummaryInput, type EmbeddingInput } from "../modules/context/context.candidates";
 import { ContextPolicy } from "../modules/context/context.policy";
+import { SummaryRepository } from "./summary.repository";
+import { summaryTasks } from "../config/db/summary.table";
 
 type Database = typeof db;
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -49,6 +51,9 @@ export class ContextRepository {
             await tx.delete(facts).where(eq(facts.userId, this.userId));
             await tx.delete(memories).where(eq(memories.userId, this.userId));
             await tx.delete(summaries).where(eq(summaries.userId, this.userId));
+            await tx.update(summaryTasks).set({ revision: sql`${summaryTasks.revision} + 1`, status: "idle", dirty: false,
+                jobId: null, sourceIds: null, snapshotThroughAt: null, snapshotThroughId: null, attempts: 0 })
+                .where(eq(summaryTasks.userId, this.userId));
         });
     }
     async listEligibleFacts(limit = 100) {
@@ -125,18 +130,7 @@ export class ContextRepository {
         });
     }
     async putSummary(candidate: SummaryInput) {
-        const input = summaryInputSchema.parse(candidate);
-        return this.database.transaction(async tx => {
-            const [source] = await tx.select({ id: messages.id }).from(messages).where(and(
-                eq(messages.id, input.throughMessageId), eq(messages.userId, this.userId),
-                eq(messages.conversationId, input.conversationId))).for("key share");
-            if (!source) throw new ContextAccessError("Summary boundary is unavailable");
-            const now = this.policy.now();
-            const [row] = await tx.insert(summaries).values({ ...input, userId: this.userId, createdAt: now, updatedAt: now })
-                .onConflictDoUpdate({ target: [summaries.userId, summaries.conversationId],
-                    set: { summary: input.summary, throughMessageId: input.throughMessageId, updatedAt: now } }).returning();
-            return row!;
-        });
+        return new SummaryRepository(this.database, undefined, () => this.policy.now()).putManual(this.userId, candidate);
     }
     async getSummary(conversationId: string) {
         const [row] = await this.database.select().from(summaries).where(and(eq(summaries.userId, this.userId),

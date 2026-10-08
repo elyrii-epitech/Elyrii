@@ -42,7 +42,7 @@ class ChatRepository {
             .select()
             .from(chatMessagesTable)
             .where(and(...conditions))
-            .orderBy(desc(chatMessagesTable.createdAt))
+            .orderBy(desc(chatMessagesTable.createdAt), desc(chatMessagesTable.id))
             .limit(limit);
 
         return rows.reverse();
@@ -59,7 +59,7 @@ class ChatRepository {
                 eq(chatMessagesTable.userId, userId),
                 eq(chatMessagesTable.conversationId, conversationId),
             ))
-            .orderBy(desc(chatMessagesTable.createdAt))
+            .orderBy(desc(chatMessagesTable.createdAt), desc(chatMessagesTable.id))
             .limit(limit);
         return rows.reverse();
     }

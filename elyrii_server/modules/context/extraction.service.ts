@@ -5,11 +5,20 @@ import { EXTRACTION_JOBS_TOPIC, EXTRACTION_RESULTS_TOPIC, RESULT_LIMIT_BYTES } f
 
 /** Independent Kafka clients: extraction connection failures never gate chat startup. */
 export function startExtractionService() {
-    const kafka = new Kafka({ clientId: "elyrii-context", brokers: [resolveKafkaBroker(Bun.env)],
+    return startDurableContextService({ clientId: "elyrii-context", groupId: "elyrii-context-results-v1",
+        jobsTopic: EXTRACTION_JOBS_TOPIC, resultsTopic: EXTRACTION_RESULTS_TOPIC,
+        resultLimitBytes: RESULT_LIMIT_BYTES, repository: new ExtractionRepository() });
+}
+
+export function startDurableContextService<T extends { userId: string }>(options: {
+    clientId: string; groupId: string; jobsTopic: string; resultsTopic: string; resultLimitBytes: number;
+    repository: { publishNext(publish: (job: T) => Promise<void>): Promise<boolean>; complete(raw: unknown): Promise<unknown> };
+}) {
+    const kafka = new Kafka({ clientId: options.clientId, brokers: [resolveKafkaBroker(Bun.env)],
         connectionTimeout: 5000, requestTimeout: 10000, retry: { retries: 2 } });
     const producer = kafka.producer();
-    const consumer = kafka.consumer({ groupId: "elyrii-context-results-v1" });
-    const repository = new ExtractionRepository();
+    const consumer = kafka.consumer({ groupId: options.groupId });
+    const repository = options.repository;
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
@@ -19,7 +28,7 @@ export function startExtractionService() {
         try {
             for (let count = 0; count < 20 && !stopped; count++) {
                 if (!await repository.publishNext(async job => {
-                    await producer.send({ topic: EXTRACTION_JOBS_TOPIC,
+                    await producer.send({ topic: options.jobsTopic,
                         messages: [{ key: job.userId, value: JSON.stringify(job) }] });
                 })) break;
             }
@@ -32,9 +41,9 @@ export function startExtractionService() {
         try {
             await producer.connect();
             await consumer.connect();
-            await consumer.subscribe({ topic: EXTRACTION_RESULTS_TOPIC, fromBeginning: true });
+            await consumer.subscribe({ topic: options.resultsTopic, fromBeginning: true });
             await consumer.run({ eachMessage: async ({ message }) => {
-                if (!message.value || message.value.length > RESULT_LIMIT_BYTES) return;
+                if (!message.value || message.value.length > options.resultLimitBytes) return;
                 let payload: unknown;
                 try { payload = JSON.parse(message.value.toString()); } catch { return; }
                 // Let DB errors propagate: the offset must not commit before reconciliation.
