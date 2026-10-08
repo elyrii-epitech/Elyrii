@@ -16,6 +16,7 @@ import { initQuestConsumers } from "./modules/quest/consumer.service";
 import { openAPIRouteHandler } from "hono-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { startExtractionService } from "./modules/context/extraction.service";
+import { startSummaryService } from "./modules/context/summary.service";
 
 export const clientSockets = new Map<string, WSContext>();
 const AVATAR_UPLOAD_DIR = Bun.env.AVATAR_UPLOAD_DIR ?? "./uploads/avatars";
@@ -101,6 +102,9 @@ console.log(`[Main] Kafka consumers enabled: ${shouldEnableKafkaConsumers}`);
 // Initialize Kafka and consumers only when explicitly enabled.
 if (shouldEnableKafkaConsumers) {
     startExtractionService();
+    if (Bun.env.ENABLE_SUMMARIES === "true") {
+        try { startSummaryService(); } catch { console.error("[Summary] Invalid configuration; summary processing disabled"); }
+    }
     initKafka()
         .then(() => {
             console.log("[Kafka] initialized");
