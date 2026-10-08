@@ -84,6 +84,26 @@ services:
     networks:
       - elyrii_net
 
+  summary-worker:
+    profiles: ["summaries"]
+    build:
+      context: .
+      dockerfile: BridgeDockerfile
+    command: ["python", "summary_worker.py"]
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+      - AI_BASE_URL=http://host.docker.internal:11434
+      - SUMMARY_AI_MODEL=${SUMMARY_AI_MODEL:-mistral}
+      - SUMMARY_TOKENIZER_PATH=/tokenizer/tokenizer.json
+    volumes:
+      - ${SUMMARY_TOKENIZER_DIR:-../models/summary-tokenizer}:/tokenizer:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "redpanda:host-gateway"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
 networks:
   elyrii_net:
     name: elyrii_net

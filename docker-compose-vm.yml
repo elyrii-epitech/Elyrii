@@ -18,6 +18,8 @@ services:
       - SECRET_KEY=${SECRET_KEY:-super-secret-key}
       - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY:-super-refresh-secret-key}
       - NODE_ENV=development
+      - ENABLE_SUMMARIES=${ENABLE_SUMMARIES:-false}
+      - SUMMARY_AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
     depends_on:
       redpanda:
         condition: service_healthy
@@ -223,6 +225,28 @@ services:
       - KAFKA_BROKER=redpanda:9092
       - AI_BASE_URL=http://ollama:11434
       - AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  summary-worker:
+    profiles: ["summaries"]
+    build:
+      context: ./elyrii_ai
+      dockerfile: BridgeDockerfile
+    command: ["python", "summary_worker.py"]
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - AI_BASE_URL=http://ollama:11434
+      - SUMMARY_AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+      - SUMMARY_TOKENIZER_PATH=/tokenizer/tokenizer.json
+    volumes:
+      - ${SUMMARY_TOKENIZER_DIR:-./models/summary-tokenizer}:/tokenizer:ro
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - elyrii_net
