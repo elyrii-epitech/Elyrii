@@ -138,8 +138,9 @@ suite("Context repository (PostgreSQL)", () => {
         expect(rows.map(r => r.id)).toEqual([source, assistantSource].sort());
         expect((await repo.getRecentMessages("a", 1)).map(r => r.id)).toEqual([source, assistantSource].sort().slice(-1));
         expect(await repo.getRecentMessages("b")).toEqual([]);
-        await repo.putSummary({ conversationId: "a", summary: "Initial", throughMessageId: source });
-        await repo.putSummary({ conversationId: "a", summary: "Updated", throughMessageId: assistantSource });
+        await repo.putSummary({ conversationId: "a", summary: "Initial", throughMessageId: rows[0]!.id });
+        await repo.putSummary({ conversationId: "a", summary: "Updated", throughMessageId: rows[1]!.id });
+        await expect(repo.putSummary({ conversationId: "a", summary: "Stale", throughMessageId: rows[0]!.id })).rejects.toThrow();
         expect((await repo.getSummary("a"))?.summary).toBe("Updated");
     });
 });
