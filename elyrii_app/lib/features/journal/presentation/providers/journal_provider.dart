@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../data/models/journal_entry_model.dart';
 import '../../data/repositories/journal_repository.dart';
 
@@ -36,9 +37,15 @@ class JournalProvider extends ChangeNotifier {
   /// Load entries from the backend
   final Map<(DateTime?, DateTime?), Future<void>> _loads = {};
   int _loadVersion = 0;
+  int _mutationVersion = 0;
+  bool _loadingMore = false;
+  bool get loadingMore => _loadingMore;
+  bool get hasMore => _repository.hasMore;
+  int? get totalCount => _repository.totalCount;
   int _sessionVersion = 0;
   String? _owner;
   String? get owner => _owner;
+  String? get storageWarning => _repository.storageWarning;
   bool _disposed = false;
   @override
   void notifyListeners() {
@@ -85,6 +92,9 @@ class JournalProvider extends ChangeNotifier {
     _sortedEntries = const [];
     _isLoading = false;
     _error = null;
+    _repository.storageWarning = null;
+    _repository.resetPagination();
+    _loadingMore = false;
     notifyListeners();
   }
 
@@ -101,8 +111,41 @@ class JournalProvider extends ChangeNotifier {
     return _loads[key] = request;
   }
 
+  Future<void> loadMore() async {
+    if (_isLoading || _loadingMore || !hasMore) return;
+    final session = _sessionVersion;
+    final mutation = _mutationVersion;
+    final load = _loadVersion;
+    _loadingMore = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final page = await _repository.getMoreEntries();
+      if (session != _sessionVersion ||
+          mutation != _mutationVersion ||
+          load != _loadVersion) {
+        return;
+      }
+      final known = _entries.map((entry) => entry.id).toSet();
+      _entries.addAll(page.where((entry) => !known.contains(entry.id)));
+      _updateSortedEntries();
+    } catch (e) {
+      if (session == _sessionVersion) {
+        _error = e is ApiException
+            ? e.message
+            : 'Impossible de charger les notes suivantes.';
+      }
+    } finally {
+      if (session == _sessionVersion) {
+        _loadingMore = false;
+        notifyListeners();
+      }
+    }
+  }
+
   Future<void> _loadEntries({DateTime? startDate, DateTime? endDate}) async {
     final version = ++_loadVersion;
+    final mutation = _mutationVersion;
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -113,7 +156,7 @@ class JournalProvider extends ChangeNotifier {
       );
       pending.ignore();
       final cached = await _repository.getCachedEntries();
-      if (version != _loadVersion) return;
+      if (version != _loadVersion || mutation != _mutationVersion) return;
       _entries = cached
           .where(
             (entry) =>
@@ -125,16 +168,21 @@ class JournalProvider extends ChangeNotifier {
       if (cached.isNotEmpty) _isLoading = false;
       notifyListeners();
       final entries = await pending;
-      if (version != _loadVersion) return;
+      if (version != _loadVersion || mutation != _mutationVersion) return;
       _entries = entries;
       _updateSortedEntries();
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      if (version != _loadVersion) return;
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
+      if (version != _loadVersion || mutation != _mutationVersion) return;
+      _error = e is ApiException
+          ? e.message
+          : 'Impossible de charger les notes. Réessaie.';
+    } finally {
+      if (version == _loadVersion) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -149,18 +197,23 @@ class JournalProvider extends ChangeNotifier {
   }
 
   Future<JournalEntryModel?> createEntry({
+    String? clientRequestId,
     String? title,
     required String content,
     String? mood,
   }) async {
     final session = _sessionVersion;
+    _mutationVersion++;
     try {
       final entry = await _repository.createEntry(
-        title: title ?? 'Sans titre',
+        clientRequestId: clientRequestId,
+        title: title == null || title.trim().isEmpty ? 'Sans titre' : title,
         content: content,
         mood: mood,
       );
       if (session != _sessionVersion) return null;
+      _mutationVersion++;
+      _entries.removeWhere((existing) => existing.id == entry.id);
       _entries.add(entry);
       _error = null;
       _updateSortedEntries();
@@ -168,7 +221,9 @@ class JournalProvider extends ChangeNotifier {
       return entry;
     } catch (e) {
       if (session != _sessionVersion) return null;
-      _error = e.toString();
+      _error = e is ApiException
+          ? e.message
+          : 'Impossible de sauvegarder la note. Réessaie.';
       notifyListeners();
       return null;
     }
@@ -181,6 +236,7 @@ class JournalProvider extends ChangeNotifier {
     String? mood,
   }) async {
     final session = _sessionVersion;
+    _mutationVersion++;
     try {
       final updated = await _repository.updateEntry(
         id: id,
@@ -189,6 +245,7 @@ class JournalProvider extends ChangeNotifier {
         mood: mood,
       );
       if (session != _sessionVersion) return false;
+      _mutationVersion++;
       final index = _entries.indexWhere((e) => e.id == id);
       _error = null;
       if (index != -1) {
@@ -199,7 +256,9 @@ class JournalProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       if (session != _sessionVersion) return false;
-      _error = e.toString();
+      _error = e is ApiException
+          ? e.message
+          : 'Impossible de modifier la note. Réessaie.';
       notifyListeners();
       return false;
     }
@@ -207,9 +266,11 @@ class JournalProvider extends ChangeNotifier {
 
   Future<bool> deleteEntry(String id) async {
     final session = _sessionVersion;
+    _mutationVersion++;
     try {
       await _repository.deleteEntry(id);
       if (session != _sessionVersion) return false;
+      _mutationVersion++;
       _error = null;
       _entries.removeWhere((e) => e.id == id);
       _updateSortedEntries();
@@ -217,7 +278,9 @@ class JournalProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       if (session != _sessionVersion) return false;
-      _error = e.toString();
+      _error = e is ApiException
+          ? e.message
+          : 'Impossible de supprimer la note. Réessaie.';
       notifyListeners();
       return false;
     }
@@ -225,6 +288,12 @@ class JournalProvider extends ChangeNotifier {
 
   void toggleSort() {
     _sortNewest = !_sortNewest;
+    _repository.newestFirst = _sortNewest;
+    if (_repository.isPaginated || _isLoading) {
+      // A request for the previous order must not satisfy the new order.
+      _loads.clear();
+      unawaited(loadEntries());
+    }
     _updateSortedEntries();
     notifyListeners();
   }

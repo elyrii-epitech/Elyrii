@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 
 import 'dart:async';
 
+import 'package:uuid/uuid.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -45,6 +47,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
   Timer? _autoSaveTimer;
+  Timer? _draftTimer;
+  String _clientRequestId = const Uuid().v4();
+  bool _deleting = false;
   bool _hasChanges = false;
   bool _isSaving = false;
   String? _createdEntryId;
@@ -61,6 +66,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         'title': _titleController.text,
         'content': _contentController.text,
         'entryId': _createdEntryId,
+        'clientRequestId': _clientRequestId,
       });
     } catch (_) {
       if (mounted) setState(() => _saveFailed = true);
@@ -74,6 +80,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       _titleController.text = draft['title'] as String? ?? '';
       _contentController.text = draft['content'] as String? ?? '';
       _createdEntryId = draft['entryId'] as String?;
+      _clientRequestId =
+          draft['clientRequestId'] as String? ?? _clientRequestId;
       setState(() => _hasChanges = true);
     } catch (_) {
       if (mounted) setState(() => _saveFailed = true);
@@ -98,6 +106,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    _draftTimer?.cancel();
+    if (_hasChanges && !_deleting) unawaited(_persistDraft());
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
@@ -105,7 +115,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
   void _onTextChanged() {
     _revision++;
-    unawaited(_persistDraft());
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 200), _persistDraft);
     if (!_hasChanges) {
       setState(() => _hasChanges = true);
     }
@@ -118,6 +129,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
   Future<void> _save() async {
     if (!_sameAccount ||
+        _deleting ||
         !_hasChanges ||
         _contentController.text.trim().isEmpty) {
       return;
@@ -146,13 +158,36 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         mood: currentMood,
       );
     } else {
+      try {
+        await widget.provider.saveDraft(_draftKey, {
+          'title': title,
+          'content': content,
+          'clientRequestId': _clientRequestId,
+        });
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _saveFailed = true;
+            _isSaving = false;
+          });
+        }
+        return;
+      }
       final created = await widget.provider.createEntry(
+        clientRequestId: _clientRequestId,
         title: title,
         content: content,
         mood: currentMood,
       );
       _createdEntryId = created?.id;
       success = created != null;
+      // A retried creation may return the earlier acknowledged snapshot.
+      // Subsequent edits must be patched before reporting the draft as saved.
+      if (created != null &&
+          (created.content != content ||
+              created.title != (title.isEmpty ? 'Sans titre' : title))) {
+        _revision++;
+      }
       if (created != null && mounted) {
         // Le premier enregistrement est une petite victoire : la mascotte du
         // dashboard pourra jouer ce moment même si l'utilisateur ferme la
@@ -162,10 +197,15 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     }
 
     if (!_sameAccount || !mounted) return;
-    if (success && revision == _revision) {
-      await widget.provider.deleteDraft(_draftKey);
-    } else {
-      await _persistDraft();
+    _draftTimer?.cancel();
+    try {
+      if (success && revision == _revision) {
+        await widget.provider.deleteDraft(_draftKey);
+      } else {
+        await _persistDraft();
+      }
+    } catch (_) {
+      // A local cleanup failure does not invalidate the server acknowledgement.
     }
     if (!mounted) return;
     setState(() {
@@ -198,7 +238,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           onPressed: () => Navigator.pop(context, 'cancel'),
         ),
         LiquidGlassDialogAction(
-          label: 'Supprimer',
+          label: 'Abandonner les modifications',
           isDestructive: true,
           onPressed: () => Navigator.pop(context, 'discard'),
         ),
@@ -211,7 +251,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     );
 
     if (result == 'save') await _autoSave();
-    if (result == 'discard') await widget.provider.deleteDraft(_draftKey);
+    if (result == 'discard') {
+      _hasChanges = false;
+      _draftTimer?.cancel();
+      _autoSaveTimer?.cancel();
+      await widget.provider.deleteDraft(_draftKey);
+    }
     return (result == 'save' && !_hasChanges) || result == 'discard';
   }
 
@@ -232,13 +277,18 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             final idToDelete = widget.entry?.id ?? _createdEntryId;
             Navigator.pop(context);
             if (idToDelete == null || !_sameAccount) return;
+            _deleting = true;
             _autoSaveTimer?.cancel();
+            _draftTimer?.cancel();
+            await _saveInFlight;
+            if (!mounted || !_sameAccount) return;
             final deleted = await widget.provider.deleteEntry(idToDelete);
             if (!mounted || !_sameAccount) return;
             if (deleted) {
               await widget.provider.deleteDraft(_draftKey);
               if (mounted) Navigator.pop(context);
             } else {
+              _deleting = false;
               setState(() => _saveFailed = true);
             }
           },
@@ -307,7 +357,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                                       Text(
                                         'Inspiration',
                                         style: AppTextStyles.labelSmall(
-                                          color: AppColors.accent,
+                                          color: AppColors.readableAccent(
+                                            AppColors.accent,
+                                            isDark:
+                                                Theme.of(context).brightness ==
+                                                Brightness.dark,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -429,7 +484,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               ),
               child: Text(
                 widget.entry != null ? 'Modifier' : 'Ajouter',
-                style: AppTextStyles.labelMedium(color: AppColors.primary),
+                style: AppTextStyles.labelMedium(
+                  color: AppColors.readableAccent(
+                    AppColors.primary,
+                    isDark: Theme.of(context).brightness == Brightness.dark,
+                  ),
+                ),
               ),
             ),
           ),
@@ -462,6 +522,16 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   }
 
   Widget _buildStatusIndicator(bool isDark) {
+    final warning = widget.provider.storageWarning;
+    if (warning != null) {
+      return Semantics(
+        liveRegion: true,
+        child: Text(
+          warning,
+          style: AppTextStyles.labelSmall(color: AppColors.primaryText(isDark)),
+        ),
+      );
+    }
     if (_isSaving) {
       return Row(
         children: [
@@ -470,8 +540,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           Flexible(
             child: Text(
               'Sauvegarde...',
-              style: AppTextStyles.labelMedium(color: AppColors.primary),
-              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.labelMedium(
+                color: AppColors.readableAccent(
+                  AppColors.primary,
+                  isDark: Theme.of(context).brightness == Brightness.dark,
+                ),
+              ),
             ),
           ),
         ],
@@ -500,7 +574,6 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                     ? AppColors.textSecondaryDark
                     : AppColors.textSecondaryLight,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -509,17 +582,18 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
     return Row(
       children: [
-        const Icon(
+        Icon(
           Icons.check_circle_rounded,
-          color: AppColors.success,
+          color: AppColors.successText(isDark),
           size: 16,
         ),
         const SizedBox(width: 6),
         Flexible(
           child: Text(
             'Sauvegardé',
-            style: AppTextStyles.labelMedium(color: AppColors.success),
-            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.labelMedium(
+              color: AppColors.successText(isDark),
+            ),
           ),
         ),
       ],

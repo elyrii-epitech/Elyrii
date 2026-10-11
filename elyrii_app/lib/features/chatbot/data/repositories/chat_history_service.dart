@@ -399,6 +399,52 @@ class ChatHistoryService {
     await (await _db).execute('VACUUM');
   }
 
+  Future<List<Map<String, dynamic>>> exportOwner(String owner) async {
+    if (_removed.contains(owner)) return const [];
+    await _migrateOwner(owner);
+    return (await _db).transaction((tx) async {
+      final sessions = await tx.query(
+        'sessions',
+        where: 'owner = ?',
+        whereArgs: [owner],
+        orderBy: 'updatedAt DESC',
+      );
+      final result = <Map<String, dynamic>>[];
+      for (final session in sessions) {
+        final messages = await tx.query(
+          'messages',
+          where: 'owner = ? AND sessionId = ?',
+          whereArgs: [owner, session['id']],
+          orderBy: 'seq ASC',
+        );
+        result.add({
+          'id': session['id'],
+          'title': await cipher.open(
+            owner,
+            session['title'] as String,
+            purpose: 'chat-title:${session['id']}',
+          ),
+          'updatedAt': session['updatedAt'],
+          'messages': [
+            for (final message in messages)
+              {
+                'id': message['id'],
+                'isUser': message['isUser'] == 1,
+                'timestamp': message['timestamp'],
+                'delivery': message['delivery'],
+                'content': await cipher.open(
+                  owner,
+                  message['content'] as String,
+                  purpose: 'chat-message:${message['id']}',
+                ),
+              },
+          ],
+        });
+      }
+      return result;
+    });
+  }
+
   Future<void> close() async {
     if (_database != null) await (await _database!).close();
     _database = null;

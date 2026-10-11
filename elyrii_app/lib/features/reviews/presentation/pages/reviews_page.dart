@@ -1,7 +1,6 @@
 import '../widgets/review_content.dart';
 
-import 'package:flutter/cupertino.dart'
-    show CupertinoSlidingSegmentedControl, CupertinoSliverRefreshControl;
+import 'package:flutter/cupertino.dart' show CupertinoSliverRefreshControl;
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/elyrii_page_header.dart';
@@ -170,9 +169,9 @@ class _ReviewsPageState extends State<ReviewsPage> {
 /// Sélecteur de période façon iOS : segmented control coulissant natif.
 class _RangeSelector extends StatelessWidget {
   static const Map<String, String> _labels = {
-    '7d': '7j',
-    '30d': '30j',
-    '90d': '90j',
+    '7d': '7 jours',
+    '30d': '30 jours',
+    '90d': '90 jours',
   };
 
   final bool isDark;
@@ -187,39 +186,10 @@ class _RangeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: CupertinoSlidingSegmentedControl<String>(
-        groupValue: selectedRange,
-        onValueChanged: (val) {
-          if (val != null) onSelected(val);
-        },
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-        thumbColor: isDark ? AppColors.cardDark : Colors.white,
-        backgroundColor: isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.06),
-        children: {
-          for (final entry in _labels.entries)
-            entry.key: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text(
-                entry.value,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: selectedRange == entry.key
-                      ? FontWeight.w600
-                      : FontWeight.w500,
-                  color: selectedRange == entry.key
-                      ? (isDark ? AppColors.primaryDark : AppColors.primary)
-                      : (isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight),
-                ),
-              ),
-            ),
-        },
-      ),
+    return LiquidGlassSegmentedControl<String>(
+      segments: _labels,
+      selectedValue: selectedRange,
+      onValueChanged: onSelected,
     );
   }
 }

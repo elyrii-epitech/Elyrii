@@ -2,6 +2,7 @@ import '../../../../core/accessibility/motion.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
@@ -165,7 +166,10 @@ class _CoachPageState extends State<CoachPage> {
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: isDark ? AppColors.primaryDark : AppColors.primary,
+            color: AppColors.readableAccent(
+              isDark ? AppColors.primaryDark : AppColors.primary,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
           ),
         ),
         const SizedBox(height: 2),
@@ -308,11 +312,15 @@ class _CoachPageState extends State<CoachPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Conseil du jour',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                        color: AppColors.readableAccent(
+                          AppColors.primary,
+                          isDark:
+                              Theme.of(context).brightness == Brightness.dark,
+                        ),
                         fontSize: 15,
                       ),
                     ),
@@ -340,6 +348,24 @@ class _CoachPageState extends State<CoachPage> {
               fontWeight: FontWeight.w400,
             ).copyWith(height: 1.6),
           ),
+          if (advice.sourceUrl != null)
+            TextButton.icon(
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: const Text('Consulter la source'),
+              onPressed: () async {
+                final opened = await launchUrl(
+                  Uri.parse(advice.sourceUrl!),
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!opened && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Impossible d’ouvrir la source. Réessaie.'),
+                    ),
+                  );
+                }
+              },
+            ),
         ],
       ),
     );

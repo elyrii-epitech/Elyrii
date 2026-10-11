@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import '../../design_system/haptics/elyrii_haptics.dart';
 import '../../theme/app_text_styles.dart';
@@ -15,31 +14,31 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
     required this.segments,
     required this.selectedValue,
     required this.onValueChanged,
-    this.height = 36,
+    this.height = 48,
   });
 
   @override
   Widget build(BuildContext context) {
-    final entries = segments.entries.toList(growable: false);
-    final selectedIndex = entries.indexWhere(
-      (entry) => entry.key == selectedValue,
-    );
-    assert(selectedIndex >= 0, 'selectedValue must exist in segments');
-
-    return GlassSegmentedControl(
-      segments: [for (final entry in entries) GlassSegment(label: entry.value)],
-      selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-      onSegmentSelected: (index) => onValueChanged(entries[index].key),
-      height: height,
-      borderRadius: 10,
-      selectedTextStyle: AppTextStyles.labelMedium(
-        color: Theme.of(context).colorScheme.onSurface,
-        fontWeight: FontWeight.w600,
-      ),
-      unselectedTextStyle: AppTextStyles.labelMedium(
-        color: Theme.of(context).colorScheme.onSurfaceVariant,
-      ),
-      useOwnLayer: true,
+    assert(segments.containsKey(selectedValue));
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        for (final entry in segments.entries)
+          ChoiceChip(
+            label: Text(
+              entry.value,
+              style: AppTextStyles.labelLarge(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            selectedColor: Theme.of(context).colorScheme.primaryContainer,
+            selected: entry.key == selectedValue,
+            materialTapTargetSize: MaterialTapTargetSize.padded,
+            onSelected: (_) => onValueChanged(entry.key),
+          ),
+      ],
     );
   }
 }
@@ -58,17 +57,14 @@ class LiquidGlassSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassSwitch(
+    return Switch.adaptive(
       value: value,
       onChanged: (nextValue) {
         ElyriiHaptics.selection();
         onChanged(nextValue);
       },
-      activeColor: activeColor ?? Theme.of(context).primaryColor,
-      width: 51,
-      height: 31,
-      useOwnLayer: true,
-      enableHaptics: false,
+      activeThumbColor: activeColor ?? Theme.of(context).primaryColor,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
     );
   }
 }
@@ -79,6 +75,7 @@ class LiquidGlassSlider extends StatelessWidget {
   final double min;
   final double max;
   final Color? activeColor;
+  final String? semanticLabel;
 
   const LiquidGlassSlider({
     super.key,
@@ -87,17 +84,23 @@ class LiquidGlassSlider extends StatelessWidget {
     this.min = 0.0,
     this.max = 1.0,
     this.activeColor,
+    this.semanticLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GlassSlider(
-      value: value,
-      min: min,
-      max: max,
-      activeColor: activeColor ?? Theme.of(context).primaryColor,
-      useOwnLayer: true,
-      onChanged: onChanged,
+    return Semantics(
+      label: semanticLabel,
+      child: Slider.adaptive(
+        value: value,
+        min: min,
+        max: max,
+        activeColor: activeColor ?? Theme.of(context).primaryColor,
+        divisions: 100,
+        semanticFormatterCallback: (value) =>
+            '${((value - min) / (max - min) * 100).round()} pour cent',
+        onChanged: onChanged,
+      ),
     );
   }
 }

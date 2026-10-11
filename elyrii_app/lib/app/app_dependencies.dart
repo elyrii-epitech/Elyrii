@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/network/api_client.dart';
+import '../core/export/private_export.dart';
+import '../core/media/avatar_files.dart';
 import '../core/services/secure_storage_service.dart';
 import '../core/services/theme_provider.dart';
 import '../core/storage/content_cipher.dart';
@@ -87,6 +89,13 @@ class AppDependencies {
   }
 
   Future<void> initialize() async {
+    _track(PrivateExport.cleanup(), 'export_cleanup_failed');
+    _track(AvatarFiles.cleanupAbandoned(), 'avatar_cleanup_failed');
+    try {
+      await AppDiagnostics.initialize();
+    } catch (error) {
+      AppDiagnostics.record('diagnostics_initialization_failed', error);
+    }
     final prefs = await SharedPreferences.getInstance();
     for (final owner
         in prefs.getStringList('pending_account_deletions') ?? <String>[]) {
@@ -99,6 +108,10 @@ class AppDependencies {
       await _removeDeletionMarker(owner);
     }
     await auth.restoreLocalSession();
+    final owner = auth.accountId;
+    if (owner != null) {
+      _track(AvatarFiles.recover(owner), 'avatar_recovery_failed');
+    }
   }
 
   void _track(Future<void> operation, String event) {
@@ -230,6 +243,8 @@ class AppDependencies {
 
   Future<void> _purgeOwner(String owner) async {
     final operations = <Future<void>>[
+      PrivateExport.cleanup(all: true),
+      AvatarFiles.deleteOwner(owner),
       journalStore.deleteOwner(owner),
       history.deleteOwner(owner),
       storage.clearProfileSetup(owner),

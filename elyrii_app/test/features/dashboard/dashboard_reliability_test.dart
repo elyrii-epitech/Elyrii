@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:elyrii_app/core/storage/content_cipher.dart';
+
 import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/network/api_exception.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
@@ -95,7 +97,11 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       expect(
         jsonDecode(
-          prefs.getString('cache_dashboard_data_alice_30d')!,
+          await ContentCipher(api.storage).open(
+            'alice',
+            prefs.getString('cache_dashboard_data_alice_30d')!,
+            purpose: 'dashboard:30d',
+          ),
         )['data']['latestMood'],
         'happy',
       );

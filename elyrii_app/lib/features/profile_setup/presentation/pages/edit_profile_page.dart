@@ -314,6 +314,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 const SizedBox(height: AppDimensions.spacingXs),
                 GlassAuthTextField(
                   controller: _firstNameController,
+                  label: 'Prénom',
+                  autofillHints: const [AutofillHints.givenName],
                   hint: 'Ton prenom',
                   prefixIcon: Icons.person_outline,
                   keyboardType: TextInputType.name,
@@ -324,6 +326,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 const SizedBox(height: AppDimensions.spacingXs),
                 GlassAuthTextField(
                   controller: _lastNameController,
+                  label: 'Nom (optionnel)',
+                  autofillHints: const [AutofillHints.familyName],
                   hint: 'Optionnel',
                   prefixIcon: Icons.badge_outlined,
                   keyboardType: TextInputType.name,
@@ -334,6 +338,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 const SizedBox(height: AppDimensions.spacingXs),
                 GlassAuthTextField(
                   controller: _ageController,
+                  label: 'Âge (optionnel)',
                   hint: 'Optionnel',
                   prefixIcon: Icons.cake_outlined,
                   keyboardType: TextInputType.number,
@@ -344,6 +349,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 const SizedBox(height: AppDimensions.spacingXs),
                 GlassAuthTextField(
                   controller: _pronounsController,
+                  label: 'Pronoms (optionnels)',
                   hint: 'ex: elle/iel, il/lui...',
                   prefixIcon: Icons.favorite_outline,
                   keyboardType: TextInputType.text,

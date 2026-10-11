@@ -182,11 +182,13 @@ class CoachActivity {
 }
 
 class DailyAdvice {
+  final String? sourceUrl;
   final String text;
   final String source;
   final IconData icon;
 
   const DailyAdvice({
+    this.sourceUrl,
     required this.text,
     required this.source,
     required this.icon,

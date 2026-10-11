@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const createEntriySchema = z.object({
     title: z.string().min(1).max(100),
+    clientRequestId: z.uuid().optional(),
     userId: z.string().optional(),
     content: z.string().optional().nullable(),
     mood: z.string().optional().nullable(),
@@ -9,7 +10,7 @@ export const createEntriySchema = z.object({
 });
 
 
-export const updateEntrySchema = createEntriySchema.partial();
+export const updateEntrySchema = createEntriySchema.omit({ clientRequestId: true }).partial();
 
 export type CreateEntriySchemaType = z.infer<typeof createEntriySchema>;
 export type UpdateEntrySchemaType = z.infer<typeof updateEntrySchema>;

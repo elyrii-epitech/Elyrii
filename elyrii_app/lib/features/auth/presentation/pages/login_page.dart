@@ -1,3 +1,4 @@
+import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/accessibility/motion.dart';
 
 import 'package:flutter/material.dart';
@@ -95,9 +96,9 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       // Mascotte cadrée par la caméra (cameraTarget du
                       // config authPage) — aucun décalage de layout.
-                      GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () {
+                      AccessibleAction(
+                            label: 'Faire réagir la mascotte Elyrii',
+                            onPressed: () {
                               ElyriiHaptics.light();
                               setState(() {
                                 _mascotAnimation = MascotAnimations.greet;
@@ -139,201 +140,245 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: AppDimensions.spacingLg),
                       ],
 
-                      Form(
-                            key: _formKey,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // Email Field
-                                Text(
-                                  'Adresse email',
-                                  style: AppTextStyles.bodyMedium(
-                                    color: isDark
-                                        ? AppColors.textPrimaryDark
-                                        : AppColors.textPrimaryLight,
-                                  ).copyWith(fontWeight: FontWeight.w600),
-                                ),
-                                const SizedBox(height: AppDimensions.spacingXs),
-                                GlassAuthTextField(
-                                  controller: _emailController,
-                                  hint: '',
-                                  prefixIcon: Icons.email_outlined, // We might remove this if we want strict GitHub copy, but keeping for now
-                                  keyboardType: TextInputType.emailAddress,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Entre ton email';
-                                    }
-                                    if (!Validators.isValidEmail(value)) {
-                                      return 'Email invalide';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: AppDimensions.spacingLg),
+                      AutofillGroup(
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Email Field
+                                  Text(
+                                    'Adresse email',
+                                    style: AppTextStyles.bodyMedium(
+                                      color: isDark
+                                          ? AppColors.textPrimaryDark
+                                          : AppColors.textPrimaryLight,
+                                    ).copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(
+                                    height: AppDimensions.spacingXs,
+                                  ),
+                                  GlassAuthTextField(
+                                    controller: _emailController,
+                                    label: 'Adresse email',
+                                    autofillHints: const [AutofillHints.email],
+                                    hint: '',
+                                    prefixIcon: Icons.email_outlined, // We might remove this if we want strict GitHub copy, but keeping for now
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Entre ton email';
+                                      }
+                                      if (!Validators.isValidEmail(value)) {
+                                        return 'Email invalide';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(
+                                    height: AppDimensions.spacingLg,
+                                  ),
 
-                                // Password Field
-                                Wrap(
-                                  alignment: WrapAlignment.spaceBetween,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Mot de passe',
-                                      style: AppTextStyles.bodyMedium(
-                                        color: isDark
-                                            ? AppColors.textPrimaryDark
-                                            : AppColors.textPrimaryLight,
-                                      ).copyWith(fontWeight: FontWeight.w600),
-                                    ),
-                                    TextButton(
-                                      onPressed: null,
-                                      style: TextButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Text(
-                                        'Mot de passe oublié ?',
-                                        style: AppTextStyles.bodySmall(
+                                  // Password Field
+                                  Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Mot de passe',
+                                        style: AppTextStyles.bodyMedium(
                                           color: isDark
-                                              ? AppColors.textTertiaryDark
-                                              : AppColors.textTertiaryLight,
+                                              ? AppColors.textPrimaryDark
+                                              : AppColors.textPrimaryLight,
+                                        ).copyWith(fontWeight: FontWeight.w600),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => context.push(
+                                          AppRoutes.passwordReset,
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(48, 48),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.padded,
+                                        ),
+                                        child: Text(
+                                          'Mot de passe oublié ?',
+                                          style: AppTextStyles.bodySmall(
+                                            color: isDark
+                                                ? AppColors.textTertiaryDark
+                                                : AppColors.textTertiaryLight,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: AppDimensions.spacingXs),
-                                GlassAuthTextField(
-                                  controller: _passwordController,
-                                  hint: '',
-                                  prefixIcon: Icons.lock_outline,
-                                  isPassword: true,
-                                  textInputAction: TextInputAction.done,
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'Entre ton mot de passe';
-                                    }
-                                    if (value.length < 6) {
-                                      return 'Le mot de passe doit contenir au moins 6 caractères';
-                                    }
-                                    return null;
-                                  },
-                                ),
+                                    ],
+                                  ),
+                                  const SizedBox(
+                                    height: AppDimensions.spacingXs,
+                                  ),
+                                  GlassAuthTextField(
+                                    controller: _passwordController,
+                                    label: 'Mot de passe',
+                                    onSubmitted: (_) {
+                                      _handleLogin();
+                                    },
+                                    autofillHints: const [
+                                      AutofillHints.password,
+                                    ],
+                                    hint: '',
+                                    prefixIcon: Icons.lock_outline,
+                                    isPassword: true,
+                                    textInputAction: TextInputAction.done,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Entre ton mot de passe';
+                                      }
+                                      if (value.length < 6) {
+                                        return 'Le mot de passe doit contenir au moins 6 caractères';
+                                      }
+                                      return null;
+                                    },
+                                  ),
 
-                                const SizedBox(height: AppDimensions.spacingXl),
+                                  const SizedBox(
+                                    height: AppDimensions.spacingXl,
+                                  ),
 
-                                // Login Button
-                                LiquidGlassButton(
-                                  label: 'Se connecter',
-                                  isLoading: _isLoading,
-                                  isExpanded: true,
-                                  onPressed: _handleLogin,
-                                ),
+                                  // Login Button
+                                  LiquidGlassButton(
+                                    label: 'Se connecter',
+                                    isLoading: _isLoading,
+                                    isExpanded: true,
+                                    onPressed: _handleLogin,
+                                  ),
 
-                                const SizedBox(height: AppDimensions.spacingSm),
-                                LiquidGlassButton(
-                                  label: 'Découvrir Elyrii',
-                                  icon: Icons.bolt_rounded,
-                                  style: LiquidGlassButtonStyle.tinted,
-                                  isExpanded: true,
-                                  onPressed: () async {
-                                    ElyriiHaptics.medium();
-                                    await context
-                                        .read<AuthProvider>()
-                                        .startDemoSession();
-                                    if (!context.mounted) return;
-                                    context.read<ValueNotifier<bool>>().value =
-                                        true;
-                                    context.go(AppRoutes.home);
-                                  },
-                                ),
+                                  const SizedBox(
+                                    height: AppDimensions.spacingSm,
+                                  ),
+                                  LiquidGlassButton(
+                                    label: 'Découvrir Elyrii',
+                                    icon: Icons.bolt_rounded,
+                                    style: LiquidGlassButtonStyle.tinted,
+                                    isExpanded: true,
+                                    onPressed: () async {
+                                      ElyriiHaptics.medium();
+                                      await context
+                                          .read<AuthProvider>()
+                                          .startDemoSession();
+                                      if (!context.mounted) return;
+                                      context
+                                              .read<ValueNotifier<bool>>()
+                                              .value =
+                                          true;
+                                      context.go(AppRoutes.home);
+                                    },
+                                  ),
 
-                                const SizedBox(height: AppDimensions.spacingXl),
+                                  const SizedBox(
+                                    height: AppDimensions.spacingXl,
+                                  ),
 
-                                // Divider
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Divider(
-                                        color: isDark
-                                            ? const Color(0xFF30363D)
-                                            : AppColors.dividerLight,
+                                  // Divider
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Divider(
+                                          color: isDark
+                                              ? const Color(0xFF30363D)
+                                              : AppColors.dividerLight,
+                                        ),
                                       ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: AppDimensions.paddingMd,
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppDimensions.paddingMd,
+                                        ),
+                                        child: Text(
+                                          'ou',
+                                          style: AppTextStyles.bodySmall(
+                                            color: isDark
+                                                ? AppColors.textSecondaryDark
+                                                : AppColors.textSecondaryLight,
+                                          ),
+                                        ),
                                       ),
-                                      child: Text(
-                                        'ou',
+                                      Expanded(
+                                        child: Divider(
+                                          color: isDark
+                                              ? const Color(0xFF30363D)
+                                              : AppColors.dividerLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(
+                                    height: AppDimensions.spacingXl,
+                                  ),
+
+                                  // Social Buttons (Stacked)
+                                  _buildSocialButtonFull(
+                                    'Google bientôt disponible',
+                                    Icons.g_mobiledata,
+                                    isDark,
+                                  ),
+                                  const SizedBox(
+                                    height: AppDimensions.spacingMd,
+                                  ),
+                                  _buildSocialButtonFull(
+                                    'Apple bientôt disponible',
+                                    Icons.apple,
+                                    isDark,
+                                  ),
+
+                                  const SizedBox(
+                                    height: AppDimensions.spacingXl,
+                                  ),
+
+                                  // Register Link
+                                  Wrap(
+                                    alignment: WrapAlignment.center,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Nouveau sur Elyrii ? ',
                                         style: AppTextStyles.bodySmall(
                                           color: isDark
                                               ? AppColors.textSecondaryDark
                                               : AppColors.textSecondaryLight,
                                         ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: Divider(
-                                        color: isDark
-                                            ? const Color(0xFF30363D)
-                                            : AppColors.dividerLight,
+                                      TextButton(
+                                        onPressed: () {
+                                          context.push(AppRoutes.register);
+                                        },
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(48, 48),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.padded,
+                                        ),
+                                        child: Text(
+                                          'Créer un compte',
+                                          style:
+                                              AppTextStyles.bodySmall(
+                                                color: AppColors.readableAccent(
+                                                  AppColors.primary,
+                                                  isDark:
+                                                      Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark,
+                                                ),
+                                              ).copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: AppDimensions.spacingXl),
-
-                                // Social Buttons (Stacked)
-                                _buildSocialButtonFull(
-                                  'Google bientôt disponible',
-                                  Icons.g_mobiledata,
-                                  isDark,
-                                ),
-                                const SizedBox(height: AppDimensions.spacingMd),
-                                _buildSocialButtonFull(
-                                  'Apple bientôt disponible',
-                                  Icons.apple,
-                                  isDark,
-                                ),
-
-                                const SizedBox(height: AppDimensions.spacingXl),
-
-                                // Register Link
-                                Wrap(
-                                  alignment: WrapAlignment.center,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    Text(
-                                      'Nouveau sur Elyrii ? ',
-                                      style: AppTextStyles.bodySmall(
-                                        color: isDark
-                                            ? AppColors.textSecondaryDark
-                                            : AppColors.textSecondaryLight,
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        context.push(AppRoutes.register);
-                                      },
-                                      style: TextButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Text(
-                                        'Créer un compte',
-                                        style: AppTextStyles.bodySmall(
-                                          color: AppColors.primary,
-                                        ).copyWith(fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           )
                           .animateRespectingMotion(context)
@@ -363,8 +408,8 @@ class _LoginPageState extends State<LoginPage> {
       borderColor: isDark
           ? Colors.white.withValues(alpha: 0.1)
           : Colors.white.withValues(alpha: 0.6),
-      child: SizedBox(
-        height: 50,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -376,13 +421,15 @@ class _LoginPageState extends State<LoginPage> {
               size: 20,
             ),
             const SizedBox(width: AppDimensions.spacingMd),
-            Text(
-              text,
-              style: AppTextStyles.bodyMedium(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ).copyWith(fontWeight: FontWeight.w600),
+            Flexible(
+              child: Text(
+                text,
+                style: AppTextStyles.bodyMedium(
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                ).copyWith(fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),

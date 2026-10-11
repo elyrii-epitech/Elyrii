@@ -12,7 +12,7 @@ class MascotCustomizeCharm extends StatelessWidget {
   Widget build(BuildContext context) => LiquidGlassIconButton(
     icon: Icons.palette_outlined,
     tooltip: 'Personnaliser la mascotte',
-    size: 44,
+    size: 48,
     onPressed: () => context.push(AppRoutes.mascotCustomization),
   );
 }

@@ -64,7 +64,12 @@ VoidCallback? _startCallback(WidgetTester tester) {
       .onPressed;
 }
 
-String _startLabel(WidgetTester tester) {
+Future<String> _startLabel(WidgetTester tester) async {
+  await tester.scrollUntilVisible(
+    find.byKey(const Key('meditation-start')),
+    -160,
+    scrollable: find.byType(Scrollable).first,
+  );
   return tester
       .widget<Semantics>(find.byKey(const Key('meditation-start')))
       .properties
@@ -247,7 +252,7 @@ void main() {
       expect(controller.selectedExercise, isNull);
       expect(find.text('Commencer').hitTestable(), findsOneWidget);
       expect(_startCallback(tester), isNull);
-      expect(_startLabel(tester), 'Commencer, choisis une pratique');
+      expect(await _startLabel(tester), 'Commencer, choisis une pratique');
     });
 
     testWidgets('changer de contrôleur puis fermer la vue libère les écoutes', (
@@ -259,19 +264,19 @@ void main() {
       replacement.setExercise(MeditationExercises.all.first);
       replacement.setDuration(13);
       await _pumpCatalog(tester, replacement);
-      expect(_startLabel(tester), 'Commencer Découverte, 13 min');
+      expect(await _startLabel(tester), 'Commencer Découverte, 13 min');
 
       controller.setExercise(MeditationExercises.all.last);
       controller.setDuration(73);
       await tester.pump();
-      expect(_startLabel(tester), 'Commencer Découverte, 13 min');
+      expect(await _startLabel(tester), 'Commencer Découverte, 13 min');
 
       replacement.setExercise(
         MeditationExercises.all.firstWhere((e) => e.id == 'body-scan'),
       );
       replacement.setDuration(8);
       await tester.pump();
-      expect(_startLabel(tester), 'Commencer Scan corporel, 8 min');
+      expect(await _startLabel(tester), 'Commencer Scan corporel, 8 min');
 
       await tester.pumpWidget(const SizedBox.shrink());
       replacement.setDuration(9);
@@ -292,7 +297,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         expect(controller.selectedBreathingType, BreathingType.carree);
-        expect(_startLabel(tester), 'Commencer Focus, 5 min');
+        expect(await _startLabel(tester), 'Commencer Focus, 5 min');
         expect(_startCallback(tester), isNotNull);
         try {
           await tester.tap(find.text('Commencer'));
@@ -353,7 +358,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('meditation-library')), findsNothing);
         expect(controller.selectedExercise?.id, 'coherence');
-        expect(_startLabel(tester), 'Commencer Équilibre, 5 min');
+        expect(await _startLabel(tester), 'Commencer Équilibre, 5 min');
         expect(_startCallback(tester), isNotNull);
         expect(
           find.byKey(const Key('meditation-practice-coherence')),
@@ -457,7 +462,7 @@ void main() {
       expect(controller.selectedDurationMinutes, 73);
       expect(controller.remainingSeconds, 4380);
       expect(find.text('1 h 13 min'), findsOneWidget);
-      expect(_startLabel(tester), 'Commencer Focus, 1 h 13 min');
+      expect(await _startLabel(tester), 'Commencer Focus, 1 h 13 min');
       expect(_startCallback(tester), isNotNull);
       expect(controller.selectedExercise?.id, 'carree');
     });
@@ -520,7 +525,10 @@ void main() {
       await tester.pump();
       expect(controller.selectedExercise, selected);
       expect(controller.selectedDurationMinutes, 1439);
-      expect(_startLabel(tester), 'Commencer ${selected!.title}, 23 h 59 min');
+      expect(
+        await _startLabel(tester),
+        'Commencer ${selected!.title}, 23 h 59 min',
+      );
       await tester.tap(find.byKey(const Key('meditation-library-close')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('meditation-library')), findsNothing);

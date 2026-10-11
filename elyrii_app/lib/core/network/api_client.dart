@@ -8,12 +8,14 @@ import 'package:http_parser/http_parser.dart';
 import '../config/api_config.dart';
 import '../services/secure_storage_service.dart';
 import 'api_exception.dart';
+import 'demo_api.dart';
 import 'transport_failure.dart';
 
 /// One transport boundary for errors, full-response deadlines, cancellation
 /// and shared concurrent GETs. Mutations are never retried automatically.
 class ApiClient {
   final http.Client _client;
+  DemoApi _demoApi = DemoApi();
   final SecureStorageService _storage;
   final Duration timeout;
   final Map<(String, bool, int), Future<dynamic>> _reads = {};
@@ -42,6 +44,7 @@ class ApiClient {
 
   void invalidateSession() {
     _generation++;
+    _demoApi = DemoApi();
     _reads.clear();
     for (final entry in _active.entries.toList()) {
       if (entry.value && !entry.key.isCompleted) entry.key.complete();
@@ -175,6 +178,11 @@ class ApiClient {
           message: 'Opération annulée.',
           kind: ApiFailureKind.cancelled,
         );
+      }
+      final bearer = headers['Authorization']?.replaceFirst('Bearer ', '');
+      if (DemoApi.accepts(bearer)) {
+        if (auth) ensureSession(generation);
+        return _demoApi.request(method, uri, body);
       }
       final http.BaseRequest request;
       if (file != null) {

@@ -5,6 +5,8 @@ import '../../../core/network/api_client.dart';
 import 'package:cross_file/cross_file.dart';
 
 import '../../../core/config/api_config.dart';
+import '../../../core/media/avatar_files.dart';
+import '../../../core/diagnostics/app_diagnostics.dart';
 import '../../../core/constants/avatar_options.dart';
 import '../models/app_settings.dart';
 import '../models/user_profile.dart';
@@ -69,10 +71,14 @@ class UserRepository {
             : null,
       ),
     );
-    return decodeResponse(
+    final uploaded = decodeResponse(
       response,
       (json) => requiredJsonString(json['pfp'], 'pfp'),
     );
+    await AvatarFiles.release(localAvatarFilePath(filePath)).catchError(
+      (Object e) => AppDiagnostics.record('avatar_cleanup_failed', e),
+    );
+    return uploaded;
   }
 
   Future<AppSettings> getSettings() async {

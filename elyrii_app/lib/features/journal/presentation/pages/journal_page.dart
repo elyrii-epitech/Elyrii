@@ -90,6 +90,19 @@ class _JournalPageState extends State<JournalPage> {
 
                 // 2. En-tête spatial fluide (le titre défile avec le contenu)
                 ..._buildContentSlivers(entries, isDark),
+                if (provider.hasMore)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: LiquidGlassButton(
+                        label: 'Charger les notes suivantes',
+                        isLoading: provider.loadingMore,
+                        onPressed: provider.loadingMore
+                            ? null
+                            : provider.loadMore,
+                      ),
+                    ),
+                  ),
               ],
             ),
           );
@@ -142,7 +155,10 @@ class _JournalPageState extends State<JournalPage> {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
-                  color: isDark ? AppColors.primaryDark : AppColors.primary,
+                  color: AppColors.readableAccent(
+                    isDark ? AppColors.primaryDark : AppColors.primary,
+                    isDark: Theme.of(context).brightness == Brightness.dark,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
@@ -247,12 +263,17 @@ class _JournalPageState extends State<JournalPage> {
                             color: AppColors.primary.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Privé & Sûr',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: AppColors.readableAccent(
+                                AppColors.primary,
+                                isDark:
+                                    Theme.of(context).brightness ==
+                                    Brightness.dark,
+                              ),
                             ),
                           ),
                         ),
@@ -315,7 +336,8 @@ class _JournalPageState extends State<JournalPage> {
                             Text(
                               'Déposées',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
@@ -343,7 +365,16 @@ class _JournalPageState extends State<JournalPage> {
                   ),
                   child: Row(
                     children: [
-                      Text(latestMood, style: const TextStyle(fontSize: 18)),
+                      Semantics(
+                        label: count > 0
+                            ? 'Dernière humeur : ${entries.first.mood ?? 'non renseignée'}'
+                            : null,
+                        excludeSemantics: true,
+                        child: Text(
+                          latestMood,
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -362,7 +393,8 @@ class _JournalPageState extends State<JournalPage> {
                             Text(
                               count > 0 ? 'Ton humeur' : 'Commence ici',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,

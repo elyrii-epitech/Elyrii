@@ -1,4 +1,11 @@
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/media/avatar_files.dart';
+import '../../../../core/diagnostics/app_diagnostics.dart';
+import '../../../../core/services/secure_storage_service.dart';
+
+import 'package:provider/provider.dart';
+
+import 'dart:async';
 
 import 'package:flutter/cupertino.dart'
     show
@@ -47,11 +54,17 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   String? _customImagePath;
   String? _customAvatarUrl;
   bool _isProcessing = false;
+  String? _owner;
 
   @override
   void initState() {
     super.initState();
     _selectedId = avatarIdFromPfp(widget.currentPfp);
+    unawaited(
+      _restorePhoto().catchError(
+        (Object e) => AppDiagnostics.record('avatar_restore_failed', e),
+      ),
+    );
     // Si l'utilisateur avait une image custom, la conserver pour l'apercu
     if (_selectedId == '__custom__' && widget.currentPfp != null) {
       if (isLocalAvatarPath(widget.currentPfp!)) {
@@ -59,6 +72,21 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
       } else {
         _customAvatarUrl = widget.currentPfp;
       }
+    }
+  }
+
+  Future<void> _restorePhoto() async {
+    final storage = context.read<SecureStorageService>();
+    _owner = await storage.getUserId();
+    if (_owner == null) return;
+    await AvatarFiles.recover(_owner!);
+    final path = await AvatarFiles.pending(_owner!);
+    if (mounted && path != null) {
+      setState(() {
+        _customImagePath = path;
+        _customAvatarUrl = null;
+        _selectedId = '__custom__';
+      });
     }
   }
 
@@ -76,6 +104,10 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   Future<void> _pickAndCropImage() async {
     setState(() => _isProcessing = true);
     try {
+      final owner =
+          _owner ?? await context.read<SecureStorageService>().getUserId();
+      if (owner == null) return;
+      await AvatarFiles.begin(owner);
       final picker = ImagePicker();
       final picked = await picker.pickImage(
         source: ImageSource.gallery,
@@ -113,9 +145,17 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
 
       if (!mounted) return;
       if (cropped != null) {
+        if (await context.read<SecureStorageService>().getUserId() != owner) {
+          return;
+        }
+        final ownedPath = await AvatarFiles.adopt(cropped, owner);
+        if (!mounted) {
+          await AvatarFiles.release(ownedPath);
+          return;
+        }
         ElyriiHaptics.light();
         setState(() {
-          _customImagePath = cropped;
+          _customImagePath = ownedPath;
           _customAvatarUrl = null;
           // Deselectionner les presets
           _selectedId = '__custom__';
@@ -154,6 +194,10 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   }
 
   void _cancel() {
+    final path = _customImagePath;
+    if (path != null && path != widget.currentPfp) {
+      unawaited(AvatarFiles.release(path));
+    }
     Navigator.pop(context, kAvatarPickerCancelled);
   }
 

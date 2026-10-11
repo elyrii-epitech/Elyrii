@@ -43,7 +43,7 @@ void main() {
         expect(decoration.focusedBorder, InputBorder.none);
         final composer = find.byKey(const ValueKey('chat-composer'));
         final singleLineHeight = tester.getSize(composer).height;
-        expect(singleLineHeight, lessThanOrEqualTo(60));
+        expect(singleLineHeight, lessThanOrEqualTo(96));
 
         await tester.tap(find.text('Ma journée'));
         await tester.pumpAndSettle();

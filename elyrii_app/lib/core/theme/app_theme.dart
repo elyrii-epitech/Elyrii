@@ -48,7 +48,7 @@ class AppTheme {
         onError: Colors.white,
         onSurface: AppColors.textPrimaryLight,
         onSurfaceVariant: AppColors.textSecondaryLight,
-        outline: AppColors.borderLight,
+        outline: AppColors.controlOutlineLight,
         shadow: AppColors.shadowLight,
       ),
 
@@ -219,7 +219,9 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.cardLight,
         deleteIconColor: AppColors.textSecondaryLight,
-        labelStyle: AppTextStyles.labelMedium(),
+        labelStyle: AppTextStyles.labelMedium(
+          color: AppColors.textPrimaryLight,
+        ),
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingSm,
           vertical: AppDimensions.paddingXs,
@@ -278,7 +280,7 @@ class AppTheme {
         onError: Color(0xFF601410),
         onSurface: AppColors.textPrimaryDark,
         onSurfaceVariant: AppColors.textSecondaryDark,
-        outline: AppColors.borderDark,
+        outline: AppColors.controlOutlineDark,
         shadow: AppColors.shadowDark,
       ),
 
@@ -453,7 +455,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.cardDark,
         deleteIconColor: AppColors.textSecondaryDark,
-        labelStyle: AppTextStyles.labelMedium(),
+        labelStyle: AppTextStyles.labelMedium(color: AppColors.textPrimaryDark),
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingSm,
           vertical: AppDimensions.paddingXs,

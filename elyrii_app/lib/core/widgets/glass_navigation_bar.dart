@@ -52,7 +52,7 @@ class GlassNavigationBar extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       margin: margin,
-      height: height,
+      constraints: BoxConstraints(minHeight: height),
       child: ElyriiGlassSurface(
         role: GlassRole.navigation,
         borderRadius: BorderRadius.circular(borderRadius),
@@ -61,18 +61,21 @@ class GlassNavigationBar extends StatelessWidget {
         glassColor: media.highContrast
             ? null
             : theme.colorScheme.surface.withValues(alpha: isDark ? 0.20 : 0.16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: items.map((item) {
-            return _GlassNavItemView(
-              item: item,
-              isSelected: currentIndex == item.index,
-              isDark: isDark,
-              totalItems: items.length,
-              onItemSelected: onItemSelected,
-              iconController: iconControllers[item.index],
-            );
-          }).toList(),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: items.map((item) {
+              return _GlassNavItemView(
+                item: item,
+                isSelected: currentIndex == item.index,
+                isDark: isDark,
+                totalItems: items.length,
+                onItemSelected: onItemSelected,
+                iconController: iconControllers[item.index],
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -205,6 +208,7 @@ class _GlassNavItemViewState extends State<_GlassNavItemView> {
                       ),
                     ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // Translation et scale de l'icône
@@ -239,9 +243,9 @@ class _GlassNavItemViewState extends State<_GlassNavItemView> {
                                       : AppColors.iconDefaultLight),
                             letterSpacing: -0.2,
                           ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(widget.item.label, maxLines: 1),
+                          child: Text(
+                            widget.item.label,
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ],

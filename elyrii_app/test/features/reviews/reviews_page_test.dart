@@ -35,7 +35,7 @@ void main() {
         ),
       );
       expect(repository.calls, ['30d']);
-      await tester.tap(find.text('7j'));
+      await tester.tap(find.text('7 jours'));
       await tester.pump();
       expect(repository.calls, ['30d', '7d']);
       repository.pending[0].complete(DashboardStats.empty());
@@ -45,7 +45,7 @@ void main() {
         find.text('Impossible de charger le bilan pour le moment.'),
         findsOneWidget,
       );
-      await tester.tap(find.text('90j'));
+      await tester.tap(find.text('90 jours'));
       await tester.pump();
       repository.pending[2].complete(DashboardStats.empty());
       await tester.pump();

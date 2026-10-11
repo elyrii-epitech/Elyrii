@@ -18,7 +18,7 @@ class GlassSettingsButton extends StatelessWidget {
     icon: Icons.settings_rounded,
     tooltip: 'Paramètres',
     onPressed: onTap,
-    size: 44,
+    size: 48,
     color: isDark ? Colors.white : Colors.black,
   );
 }

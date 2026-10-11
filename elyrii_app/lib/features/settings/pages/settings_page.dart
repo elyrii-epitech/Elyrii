@@ -1,12 +1,17 @@
 import '../../../core/widgets/accessible_action.dart';
 import '../../../app/app_dependencies.dart';
+import '../../../core/export/private_export.dart';
+import '../../../core/diagnostics/app_diagnostics.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../core/config/api_config.dart';
+
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:flutter/cupertino.dart'
     show
         CupertinoActivityIndicator,
         CupertinoAlertDialog,
         CupertinoDialogAction,
-        CupertinoSwitch,
         CupertinoTextField,
         showCupertinoDialog;
 import 'package:flutter/material.dart';
@@ -18,7 +23,6 @@ import 'package:provider/provider.dart';
 
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../core/widgets/glass/elyrii_back_button.dart';
-import '../../../core/services/theme_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../routes/app_routes.dart';
@@ -33,13 +37,25 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _notifications = true;
   bool _haptics = true;
   bool _isDeletingAccount = false;
+  bool _isExporting = false;
+  String _version = 'Chargement…';
 
   @override
   void initState() {
     super.initState();
+    PackageInfo.fromPlatform()
+        .then((info) {
+          if (mounted) {
+            setState(
+              () => _version = '${info.version} (Build ${info.buildNumber})',
+            );
+          }
+        })
+        .catchError((Object _) {
+          if (mounted) setState(() => _version = 'Indisponible');
+        });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) context.read<UserProvider>().loadSettings();
     });
@@ -47,12 +63,9 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
     final userProvider = context.watch<UserProvider>();
     final appSettings = userProvider.settings;
-    final isDark = themeProvider.isDarkMode;
-    final notificationsEnabled =
-        appSettings?.notificationsEnabled ?? _notifications;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final hapticsEnabled = appSettings?.hapticsEnabled ?? _haptics;
     final strictPrivacy = appSettings?.privacyMode == 'STRICT';
 
@@ -109,9 +122,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.dark_mode_rounded,
                     iconColor: AppColors.primary,
                     onTap: null,
-                    trailing: CupertinoSwitch(
+                    trailing: Switch.adaptive(
                       value: isDark,
-                      activeTrackColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (value) {
                         final mode = value ? ThemeMode.dark : ThemeMode.light;
                         context.read<UserProvider>().updateSettings(
@@ -130,22 +143,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'Notifications',
                 isDark: isDark,
                 children: [
-                  _SettingsCell(
+                  const _SettingsCell(
                     title: 'Notifications push',
-                    subtitle: 'Rappels et mises à jour',
+                    subtitle: 'Les rappels ne sont pas disponibles dans cette version.',
                     icon: Icons.notifications_rounded,
                     iconColor: AppColors.primary,
                     onTap: null,
-                    trailing: CupertinoSwitch(
-                      value: notificationsEnabled,
-                      activeTrackColor: AppColors.primary,
-                      onChanged: (value) {
-                        setState(() => _notifications = value);
-                        context.read<UserProvider>().updateSettings(
-                          notificationsEnabled: value,
-                        );
-                      },
-                    ),
                   ),
                   _buildDivider(isDark),
                   _SettingsCell(
@@ -154,9 +157,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.vibration_rounded,
                     iconColor: AppColors.primary,
                     onTap: null,
-                    trailing: CupertinoSwitch(
+                    trailing: Switch.adaptive(
                       value: hapticsEnabled,
-                      activeTrackColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (value) {
                         setState(() => _haptics = value);
                         ElyriiHaptics.setEnabled(value);
@@ -201,9 +204,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         privacyMode: strictPrivacy ? 'STANDARD' : 'STRICT',
                       );
                     },
-                    trailing: CupertinoSwitch(
+                    trailing: Switch.adaptive(
                       value: strictPrivacy,
-                      activeTrackColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: (value) {
                         context.read<UserProvider>().updateSettings(
                           privacyMode: value ? 'STRICT' : 'STANDARD',
@@ -214,15 +217,25 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildDivider(isDark),
                   _SettingsCell(
                     title: 'Données et stockage',
-                    subtitle: 'Exporte ou supprime tes contenus',
+                    subtitle: 'Comprendre les copies locales',
                     icon: Icons.storage_rounded,
                     iconColor: AppColors.primary,
                     onTap: () {
                       _showInfoDialog(
                         title: 'Données et stockage',
-                        message: 'Tes notes et tes humeurs sont synchronisées quand le réseau est disponible. Les brouillons et l’historique des conversations sont conservés sur cet appareil. Supprimer ton compte efface aussi ses données locales. Une déconnexion conserve les contenus locaux protégés pour ta prochaine connexion.',
+                        message: 'Les notes enregistrées sur le serveur ont une copie locale protégée. Hors connexion, les modifications restent dans un brouillon sur cet appareil : rouvre la note et utilise Enregistrer pour réessayer. Les conversations restent sur cet appareil. Supprimer ton compte efface aussi ses données locales.',
                       );
                     },
+                  ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Exporter mes données',
+                    subtitle: _isExporting
+                        ? 'Préparation…'
+                        : 'Compte, notes et conversations dans un fichier JSON',
+                    icon: Icons.download_rounded,
+                    iconColor: AppColors.primary,
+                    onTap: _isExporting ? null : _exportAccount,
                   ),
                   _buildDivider(isDark),
                   _SettingsCell(
@@ -256,12 +269,20 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: 'À propos',
                 isDark: isDark,
                 children: [
-                  const _SettingsCell(
+                  _SettingsCell(
                     title: 'Version',
-                    subtitle: '1.0.0 (Build 1)',
+                    subtitle: _version,
                     icon: Icons.info_rounded,
                     iconColor: AppColors.primary,
                     onTap: null,
+                  ),
+                  _buildDivider(isDark),
+                  _SettingsCell(
+                    title: 'Exporter un diagnostic technique',
+                    subtitle: 'Événements techniques sans tes contenus ni tes identifiants',
+                    icon: Icons.bug_report_outlined,
+                    iconColor: AppColors.primary,
+                    onTap: _exportDiagnostics,
                   ),
                   _buildDivider(isDark),
                   _SettingsCell(
@@ -334,6 +355,74 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _exportDiagnostics() async {
+    try {
+      final data = await AppDiagnostics.export();
+      if (mounted) {
+        await PrivateExport.share(context, data, title: 'Diagnostic Elyrii');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showInfoDialog(
+          title: 'Diagnostic indisponible',
+          message: 'Impossible de partager le diagnostic. Réessaie.',
+        );
+      }
+    }
+  }
+
+  Future<void> _exportAccount() async {
+    final approved = await showLiquidGlassDialog<bool>(
+      context: context,
+      title: 'Exporter mes données',
+      child: const Text(
+        'Le fichier contient tes notes et conversations lisibles. Choisis où le conserver ou le partager. Une copie temporaire sur cet appareil est supprimée après 24 heures au prochain lancement.',
+      ),
+      actions: [
+        LiquidGlassDialogAction(
+          label: 'Annuler',
+          onPressed: () => Navigator.pop(context, false),
+        ),
+        LiquidGlassDialogAction(
+          label: 'Préparer le fichier',
+          onPressed: () => Navigator.pop(context, true),
+        ),
+      ],
+    );
+    if (approved != true || !mounted) return;
+    final services = context.read<AppDependencies>();
+    final owner = services.auth.accountId;
+    final revision = services.auth.sessionRevision;
+    if (owner == null) return;
+    setState(() => _isExporting = true);
+    try {
+      await services.chat.flushed;
+      final remote = await services.api.get('${ApiConfig.baseUrl}/user/export');
+      final local = await services.history.exportOwner(owner);
+      final drafts = await services.journalStore.exportDrafts(owner);
+      if (!mounted || revision != services.auth.sessionRevision) return;
+      await PrivateExport.share(
+        context,
+        {'server': remote, 'localConversations': local, 'localDrafts': drafts},
+        title: 'Mes données Elyrii',
+        isCurrentOwner: () =>
+            services.auth.accountId == owner &&
+            services.auth.sessionRevision == revision,
+      );
+    } catch (e) {
+      if (mounted) {
+        _showInfoDialog(
+          title: 'Export indisponible',
+          message: e is ApiException
+              ? e.message
+              : 'Impossible de préparer ou partager le fichier. Réessaie.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
   }
 
   Widget _buildSection(
@@ -475,7 +564,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 8),
                 Text(
                   errorText,
-                  style: const TextStyle(fontSize: 13, color: AppColors.error),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.readableAccent(
+                      AppColors.error,
+                      isDark: Theme.of(context).brightness == Brightness.dark,
+                    ),
+                  ),
                 ),
               ],
             ],
@@ -629,7 +724,9 @@ class _SettingsCell extends StatelessWidget {
         ],
       ),
     );
-    if (onTap == null) return MergeSemantics(child: content);
+    if (onTap == null || trailing is Switch) {
+      return MergeSemantics(child: content);
+    }
     return AccessibleAction(
       label: '$title${subtitle == null ? '' : '. $subtitle'}',
       onPressed: onTap,

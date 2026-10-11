@@ -1,0 +1,116 @@
+00:00 +0: loading /workspace/scratch/frontend-audit-2027/layout_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: login mobile
+LAYOUT login mobile: 0 errors
+00:01 +1: register mobile
+LAYOUT register mobile: 0 errors
+00:02 +2: dashboard mobile
+LAYOUT dashboard mobile: 0 errors
+00:02 +3: challenges mobile
+LAYOUT challenges mobile: 0 errors
+00:03 +4: journal mobile
+LAYOUT journal mobile: 0 errors
+00:03 +5: chat mobile
+LAYOUT chat mobile: 0 errors
+00:03 +6: coach mobile
+LAYOUT coach mobile: 0 errors
+00:04 +7: meditation mobile
+LAYOUT meditation mobile: 0 errors
+00:04 +8: mascot mobile
+LAYOUT mascot mobile: 0 errors
+00:05 +9: profile-setup mobile
+LAYOUT profile-setup mobile: 0 errors
+00:05 +10: profile-edit mobile
+LAYOUT profile-edit mobile: 0 errors
+00:05 +11: avatar mobile
+LAYOUT avatar mobile: 0 errors
+00:06 +12: settings mobile
+LAYOUT settings mobile: 0 errors
+00:06 +13: reviews mobile
+LAYOUT reviews mobile: 0 errors
+00:06 +14: login small-text200
+LAYOUT login small-text200: 2 errors
+00:06 +15: register small-text200
+LAYOUT register small-text200: 1 errors
+00:06 +16: dashboard small-text200
+LAYOUT dashboard small-text200: 2 errors
+00:07 +17: challenges small-text200
+LAYOUT challenges small-text200: 1 errors
+00:07 +18: journal small-text200
+LAYOUT journal small-text200: 0 errors
+00:07 +19: chat small-text200
+LAYOUT chat small-text200: 0 errors
+00:07 +20: coach small-text200
+LAYOUT coach small-text200: 0 errors
+00:07 +21: meditation small-text200
+LAYOUT meditation small-text200: 0 errors
+00:07 +22: mascot small-text200
+LAYOUT mascot small-text200: 0 errors
+00:08 +23: profile-setup small-text200
+LAYOUT profile-setup small-text200: 0 errors
+00:08 +24: profile-edit small-text200
+LAYOUT profile-edit small-text200: 0 errors
+00:08 +25: avatar small-text200
+LAYOUT avatar small-text200: 0 errors
+00:08 +26: settings small-text200
+LAYOUT settings small-text200: 0 errors
+00:08 +27: reviews small-text200
+LAYOUT reviews small-text200: 0 errors
+00:09 +28: login dark-text200
+LAYOUT login dark-text200: 2 errors
+00:09 +29: register dark-text200
+LAYOUT register dark-text200: 1 errors
+00:09 +30: dashboard dark-text200
+LAYOUT dashboard dark-text200: 1 errors
+00:09 +31: challenges dark-text200
+LAYOUT challenges dark-text200: 1 errors
+00:09 +32: journal dark-text200
+LAYOUT journal dark-text200: 0 errors
+00:09 +33: chat dark-text200
+LAYOUT chat dark-text200: 0 errors
+00:10 +34: coach dark-text200
+LAYOUT coach dark-text200: 0 errors
+00:10 +35: meditation dark-text200
+LAYOUT meditation dark-text200: 0 errors
+00:10 +36: mascot dark-text200
+LAYOUT mascot dark-text200: 0 errors
+00:10 +37: profile-setup dark-text200
+LAYOUT profile-setup dark-text200: 0 errors
+00:11 +38: profile-edit dark-text200
+LAYOUT profile-edit dark-text200: 0 errors
+00:11 +39: avatar dark-text200
+LAYOUT avatar dark-text200: 0 errors
+00:11 +40: settings dark-text200
+LAYOUT settings dark-text200: 0 errors
+00:11 +41: reviews dark-text200
+LAYOUT reviews dark-text200: 0 errors
+00:11 +42: login tablet-landscape
+LAYOUT login tablet-landscape: 0 errors
+00:11 +43: register tablet-landscape
+LAYOUT register tablet-landscape: 0 errors
+00:12 +44: dashboard tablet-landscape
+LAYOUT dashboard tablet-landscape: 0 errors
+00:12 +45: challenges tablet-landscape
+LAYOUT challenges tablet-landscape: 0 errors
+00:12 +46: journal tablet-landscape
+LAYOUT journal tablet-landscape: 0 errors
+00:13 +47: chat tablet-landscape
+LAYOUT chat tablet-landscape: 0 errors
+00:13 +48: coach tablet-landscape
+LAYOUT coach tablet-landscape: 0 errors
+00:14 +49: meditation tablet-landscape
+LAYOUT meditation tablet-landscape: 0 errors
+00:14 +50: mascot tablet-landscape
+LAYOUT mascot tablet-landscape: 0 errors
+00:15 +51: profile-setup tablet-landscape
+LAYOUT profile-setup tablet-landscape: 0 errors
+00:15 +52: profile-edit tablet-landscape
+LAYOUT profile-edit tablet-landscape: 0 errors
+00:15 +53: avatar tablet-landscape
+LAYOUT avatar tablet-landscape: 0 errors
+00:16 +54: settings tablet-landscape
+LAYOUT settings tablet-landscape: 0 errors
+00:16 +55: reviews tablet-landscape
+LAYOUT reviews tablet-landscape: 0 errors
+00:17 +56: (tearDownAll)
+00:17 +56: All tests passed!

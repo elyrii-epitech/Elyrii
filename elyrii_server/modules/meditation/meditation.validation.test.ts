@@ -7,8 +7,8 @@ describe("meditation session preparation", () => {
     test("the server accepts every identifier offered by the Flutter catalogue", () => {
         const phases = readFileSync(new URL("../../../elyrii_app/lib/features/meditation/domain/models/breath_phase.dart", import.meta.url), "utf8");
         const guided = readFileSync(new URL("../../../elyrii_app/lib/features/meditation/domain/models/meditation_exercises.dart", import.meta.url), "utf8");
-        const breathingIds = [...phases.matchAll(/^  (\w+)\(/gm)].map((match) => match[1]);
-        const guidedIds = [...guided.matchAll(/id: '([^']+)'/g)].map((match) => match[1]);
+        const breathingIds = [...phases.matchAll(/^  (\w+)\(/gm)].map((match) => match[1]!);
+        const guidedIds = [...guided.matchAll(/id: '([^']+)'/g)].map((match) => match[1]!);
         expect(MEDITATION_PROGRAMS.map((p) => p.id).sort()).toEqual([...breathingIds, ...guidedIds].sort());
     });
     test("all native exercises accept a duration chosen by the user", () => {

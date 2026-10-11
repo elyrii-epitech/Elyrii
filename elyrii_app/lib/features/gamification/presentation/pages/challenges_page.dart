@@ -50,44 +50,32 @@ class _ChallengesPageState extends State<ChallengesPage> {
   /// Sous-segment Succès : 0 = Badges & Trophées, 1 = Historique.
   int _successesSubSegment = 0;
 
-  static const List<BadgeItem> _badges = [
-    BadgeItem(
-      id: '1',
-      title: 'Premier pas',
-      icon: Icons.directions_walk_rounded,
-      isUnlocked: true,
-    ),
-    BadgeItem(
-      id: '2',
-      title: 'Explorateur',
-      icon: Icons.explore_rounded,
-      isUnlocked: true,
-    ),
-    BadgeItem(
-      id: '3',
-      title: 'Pleine conscience',
-      icon: Icons.spa_rounded,
-      isUnlocked: false,
-    ),
-    BadgeItem(
-      id: '4',
-      title: 'Écoute active',
-      icon: Icons.hearing_rounded,
-      isUnlocked: false,
-    ),
-    BadgeItem(
-      id: '5',
-      title: 'Étoile du soir',
-      icon: Icons.nights_stay_rounded,
-      isUnlocked: false,
-    ),
-    BadgeItem(
-      id: '6',
-      title: 'Lumière du matin',
-      icon: Icons.wb_sunny_rounded,
-      isUnlocked: false,
-    ),
-  ];
+  List<BadgeItem> get _badges {
+    final completed = context
+        .watch<GamificationProvider>()
+        .completedChallenges
+        .length;
+    const milestones = [1, 3, 7, 12, 24, 36];
+    const titles = [
+      'Premier pas',
+      'Explorateur',
+      'Persévérance',
+      'Élan',
+      'Épanouissement',
+      'Jardin accompli',
+    ];
+    return List.generate(
+      milestones.length,
+      (i) => BadgeItem(
+        id: '${milestones[i]}',
+        title: titles[i],
+        icon: Icons.emoji_events_rounded,
+        requirement:
+            '${milestones[i]} défi${milestones[i] == 1 ? '' : 's'} terminé${milestones[i] == 1 ? '' : 's'}',
+        isUnlocked: completed >= milestones[i],
+      ),
+    );
+  }
 
   static const _botanicalStates = <({String label, String emoji, String desc})>[
     (
@@ -326,7 +314,10 @@ class _ChallengesPageState extends State<ChallengesPage> {
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: isDark ? AppColors.primaryDark : AppColors.primary,
+            color: AppColors.readableAccent(
+              isDark ? AppColors.primaryDark : AppColors.primary,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
           ),
         ),
         const SizedBox(height: 4),
@@ -407,7 +398,10 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 4,
                       children: [
                         Text(
                           stateData.label,
@@ -419,7 +413,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
                                 : AppColors.textPrimaryLight,
                           ),
                         ),
-                        const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
@@ -431,10 +424,15 @@ class _ChallengesPageState extends State<ChallengesPage> {
                           ),
                           child: Text(
                             'Étape $level',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: AppColors.readableAccent(
+                                AppColors.primary,
+                                isDark:
+                                    Theme.of(context).brightness ==
+                                    Brightness.dark,
+                              ),
                             ),
                           ),
                         ),
@@ -444,7 +442,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     Text(
                       stateData.desc,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                         color: isDark
                             ? AppColors.textSecondaryDark
                             : AppColors.textSecondaryLight,
@@ -479,10 +478,13 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   ),
                   Text(
                     '$currentXp / $maxXp pts',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AppColors.readableAccent(
+                        AppColors.primary,
+                        isDark: Theme.of(context).brightness == Brightness.dark,
+                      ),
                     ),
                   ),
                 ],
@@ -557,7 +559,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
                             Text(
                               'Série active',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
@@ -736,10 +739,13 @@ class _ChallengesPageState extends State<ChallengesPage> {
               ),
               child: Text(
                 '$unlockedCount / $totalCount débloqués',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color: AppColors.readableAccent(
+                    AppColors.primary,
+                    isDark: Theme.of(context).brightness == Brightness.dark,
+                  ),
                 ),
               ),
             ),
@@ -811,14 +817,19 @@ class _ChallengesPageState extends State<ChallengesPage> {
           for (final entry in labels.entries)
             entry.key: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                entry.value,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: entry.key == groupValue
-                      ? selectedColor
-                      : unselectedColor,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Center(
+                  child: Text(
+                    entry.value,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: entry.key == groupValue
+                          ? selectedColor
+                          : unselectedColor,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -870,9 +881,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            badge.isUnlocked
-                ? 'Tu as développé cette belle compétence.\nElle fait maintenant partie de ton sanctuaire.'
-                : 'Cette qualité prend racine en toi,\npetit à petit, à ton rythme.',
+            '${badge.requirement}. ${badge.isUnlocked ? 'Objectif atteint !' : 'À ton rythme.'}',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,

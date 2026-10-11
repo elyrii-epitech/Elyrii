@@ -1,11 +1,7 @@
 import '../../../../core/accessibility/motion.dart';
 
 import 'package:flutter/cupertino.dart'
-    show
-        CupertinoActivityIndicator,
-        CupertinoAlertDialog,
-        CupertinoDialogAction,
-        showCupertinoDialog;
+    show CupertinoAlertDialog, CupertinoDialogAction, showCupertinoDialog;
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/profile_option_labels.dart';
@@ -18,7 +14,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/widgets/accessible_action.dart';
@@ -230,7 +225,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: SizedBox(
-        height: 44,
+        height: 48,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -409,6 +404,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           const SizedBox(height: AppDimensions.spacingXs),
           GlassAuthTextField(
             controller: _firstNameController,
+            label: 'Prénom',
+            autofillHints: const [AutofillHints.givenName],
             hint: 'Ton prenom',
             prefixIcon: Icons.person_outline,
             keyboardType: TextInputType.name,
@@ -420,6 +417,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           const SizedBox(height: AppDimensions.spacingXs),
           GlassAuthTextField(
             controller: _lastNameController,
+            label: 'Nom (optionnel)',
+            autofillHints: const [AutofillHints.familyName],
             hint: 'Optionnel',
             prefixIcon: Icons.badge_outlined,
             keyboardType: TextInputType.name,
@@ -431,6 +430,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           const SizedBox(height: AppDimensions.spacingXs),
           GlassAuthTextField(
             controller: _ageController,
+            label: 'Âge (optionnel)',
             hint: 'Optionnel',
             prefixIcon: Icons.cake_outlined,
             keyboardType: TextInputType.number,
@@ -532,7 +532,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   Widget _buildFooter(bool isDark) {
     final isLastStep = _currentStep == 2;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
       child: Column(
         children: [
           _ProfileSetupGlassButton(
@@ -580,81 +580,17 @@ class _ProfileSetupGlassButton extends StatefulWidget {
 }
 
 class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
-  bool _isPressed = false;
-
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isDisabled = widget.onPressed == null || widget.isLoading;
-    final radius = BorderRadius.circular(AppDimensions.radiusLiquidGlassButton);
-    const primary = AppColors.primary;
-    final textColor = widget.isPrimary
-        ? (isDark ? Colors.white : primary.withValues(alpha: 0.92))
-        : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight);
-
-    final button = ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 52),
-      child: ElyriiGlassSurface(
-        role: GlassRole.floatingControl,
-        borderRadius: radius,
-        width: widget.isExpanded ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-        glassColor: widget.isPrimary
-            ? primary.withValues(alpha: isDark ? 0.30 : 0.18)
-            : null,
-        child: Center(child: _buildContent(textColor)),
-      ),
-    );
-
-    return Semantics(
-      button: true,
-      enabled: !isDisabled,
-      label: widget.label,
-      child: GestureDetector(
-        onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
-        onTapUp: isDisabled ? null : (_) => setState(() => _isPressed = false),
-        onTapCancel: isDisabled
-            ? null
-            : () => setState(() => _isPressed = false),
-        onTap: isDisabled ? null : widget.onPressed,
-        child: AnimatedScale(
-          scale: _isPressed ? 0.98 : 1,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOutCubic,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 150),
-            opacity: isDisabled ? 0.55 : (_isPressed ? 0.78 : 1),
-            child: button,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent(Color textColor) {
-    if (widget.isLoading) {
-      // Indicateur d'activité natif Apple (pas de spinner Material).
-      return CupertinoActivityIndicator(radius: 10, color: textColor);
-    }
-
-    return Row(
-      mainAxisSize: widget.isExpanded ? MainAxisSize.max : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (widget.icon != null) ...[
-          Icon(widget.icon, size: 20, color: textColor),
-          const SizedBox(width: 8),
-        ],
-        Flexible(
-          child: Text(
-            widget.label,
-            style: AppTextStyles.bodyLarge(color: textColor)
-                .copyWith(fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => LiquidGlassButton(
+    label: widget.label,
+    onPressed: widget.onPressed,
+    icon: widget.icon,
+    isExpanded: widget.isExpanded,
+    isLoading: widget.isLoading,
+    style: widget.isPrimary
+        ? LiquidGlassButtonStyle.filled
+        : LiquidGlassButtonStyle.gray,
+  );
 }
 
 // ==================== Goal Selector (chips) ====================
@@ -677,40 +613,14 @@ class _GoalSelector extends StatelessWidget {
       runSpacing: 8,
       children: _wellnessGoals.map((goal) {
         final isSelected = value == goal;
-        return GestureDetector(
-          onTap: () {
+        return ChoiceChip(
+          label: Text(profileOptionLabel(goal)),
+          selected: isSelected,
+          materialTapTargetSize: MaterialTapTargetSize.padded,
+          onSelected: (selected) {
             ElyriiHaptics.selection();
-            onChanged(isSelected ? null : goal);
+            onChanged(selected ? goal : null);
           },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.primary
-                  : (isDark
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : Colors.black.withValues(alpha: 0.04)),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-              border: Border.all(
-                color: isSelected
-                    ? AppColors.primary
-                    : (isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.08)),
-              ),
-            ),
-            child: Text(
-              profileOptionLabel(goal),
-              style: AppTextStyles.bodyMedium(
-                color: isSelected
-                    ? Colors.white
-                    : (isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight),
-              ).copyWith(fontWeight: FontWeight.w500),
-            ),
-          ),
         );
       }).toList(),
     );

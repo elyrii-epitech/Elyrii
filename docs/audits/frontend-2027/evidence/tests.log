@@ -1,0 +1,317 @@
+00:00 +0: loading /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart
+00:00 +0: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService should save and retrieve access token
+00:00 +1: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService should return null when no token exists
+00:00 +2: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService hasAccessToken should return true when token exists
+00:00 +3: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService hasAccessToken should return false when token does not exist
+00:00 +4: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService should save and retrieve refresh token
+00:00 +5: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService should save and retrieve user id
+00:00 +6: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService clearAuthData should remove all tokens and user id
+00:00 +7: /workspace/Elyrii/elyrii_app/test/core/services/secure_storage_service_test.dart: SecureStorageService isAvailable should return true in mock environment
+00:02 +8: loading /workspace/Elyrii/elyrii_app/test/core/services/mascot_motion_controller_test.dart
+00:05 +8: /workspace/Elyrii/elyrii_app/test/core/services/mascot_motion_controller_test.dart: un geste se termine et le même événement ne le redémarre pas
+00:06 +9: /workspace/Elyrii/elyrii_app/test/core/services/mascot_motion_controller_test.dart: une réponse rapide annule la réflexion différée
+00:06 +10: /workspace/Elyrii/elyrii_app/test/core/services/mascot_motion_controller_test.dart: la réflexion interrompt le salut et se calme après deux boucles
+00:06 +11: /workspace/Elyrii/elyrii_app/test/core/services/mascot_motion_controller_test.dart: une interruption suspend les timers et consomme les gestes périmés
+00:06 +12: /workspace/Elyrii/elyrii_app/test/core/services/mascot_motion_controller_test.dart: les variations du repos ne coupent jamais une écoute
+00:07 +13: loading /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart
+00:08 +13: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: (setUpAll)
+00:08 +13: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: Personnalisation reste entre les boutons à 320 px, texte 1.0
+00:10 +14: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: Personnalisation reste entre les boutons à 320 px, texte 1.5
+00:11 +15: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: Paramètres reste entre les boutons à 320 px, texte 1.0
+00:12 +16: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: Paramètres reste entre les boutons à 320 px, texte 1.5
+00:12 +17: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: Mon avatar reste entre les boutons à 320 px, texte 1.0
+00:12 +18: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: Mon avatar reste entre les boutons à 320 px, texte 1.5
+00:12 +19: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_page_header_test.dart: (tearDownAll)
+00:15 +19: loading /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_wardrobe_test.dart
+00:20 +19: /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_wardrobe_test.dart: switches fitted accessories in the same animated scene
+00:23 +20: loading /workspace/Elyrii/elyrii_app/test/core/widgets/error_boundary_lifecycle_test.dart
+00:38 +20: /workspace/Elyrii/elyrii_app/test/core/widgets/error_boundary_lifecycle_test.dart: account replacement keeps the current error boundary active
+00:40 +21: /workspace/Elyrii/elyrii_app/test/core/widgets/error_boundary_lifecycle_test.dart: disposing a boundary preserves a newer external error builder
+00:42 +22: loading /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_back_button_test.dart
+00:44 +22: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_back_button_test.dart: design unifié : flèche iOS dans un LiquidGlassIconButton 44
+00:44 +23: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_back_button_test.dart: sans onPressed : tap revient à la page précédente
+00:45 +24: /workspace/Elyrii/elyrii_app/test/core/widgets/elyrii_back_button_test.dart: avec onPressed : action personnalisée au lieu du pop
+00:45 +25: loading /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_command_lifecycle_test.dart
+00:46 +25: /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_command_lifecycle_test.dart: a closing native WebView cannot produce an unhandled command failure
+[Elyrii] mascot_command_failed (MissingPluginException)
+00:47 +26: loading /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_bounce_test.dart
+00:50 +26: /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_bounce_test.dart: MascotBounce rebond rejoué quand le trigger augmente, puis repos
+00:51 +27: /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_bounce_test.dart: MascotBounce pas de rebond sans nouvelle incrémentation
+00:51 +28: /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_bounce_test.dart: MascotPeek tap sur la mascotte déclenche le rebond
+00:52 +29: /workspace/Elyrii/elyrii_app/test/core/widgets/mascot_bounce_test.dart: MascotPeek sélection d'humeur déclenche le rebond
+00:54 +30: loading /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart
+00:55 +30: /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart: dock translucide en thème clair
+00:55 +31: /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart: contraste élevé opaque en thème clair
+00:56 +32: /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart: dock translucide en thème sombre
+00:56 +33: /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart: contraste élevé opaque en thème sombre
+00:56 +34: /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart: six destinations accessibles à 320 px et texte à 150 %
+00:56 +35: /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart: activation au clavier et état des branches conservé
+00:57 +36: /workspace/Elyrii/elyrii_app/test/core/widgets/glass_navigation_bar_test.dart: réduire les animations supprime le rebond du dock
+00:58 +37: loading /workspace/Elyrii/elyrii_app/test/core/widgets/liquid_glass_button_test.dart
+00:59 +37: /workspace/Elyrii/elyrii_app/test/core/widgets/liquid_glass_button_test.dart: touch, clavier et lecteur d’écran activent la même action
+01:00 +38: /workspace/Elyrii/elyrii_app/test/core/widgets/liquid_glass_button_test.dart: bouton inactif sans double envoi, chargement=false
+01:00 +39: /workspace/Elyrii/elyrii_app/test/core/widgets/liquid_glass_button_test.dart: bouton inactif sans double envoi, chargement=true
+01:02 +40: loading /workspace/Elyrii/elyrii_app/test/core/storage/content_storage_test.dart
+01:06 +40: /workspace/Elyrii/elyrii_app/test/core/storage/content_storage_test.dart: database names remain distinct when the platform directory is its root
+01:06 +41: /workspace/Elyrii/elyrii_app/test/core/storage/content_storage_test.dart: chat plaintext migration can be retried after secure storage recovers
+01:06 +42: /workspace/Elyrii/elyrii_app/test/core/storage/content_storage_test.dart: a transient secure-storage error does not permanently poison the content key
+01:06 +43: /workspace/Elyrii/elyrii_app/test/core/storage/content_storage_test.dart: ciphertext is randomized and bound to both account and resource
+01:06 +44: /workspace/Elyrii/elyrii_app/test/core/storage/content_storage_test.dart: encrypted journal drafts survive reopening without plaintext SQLite content
+01:07 +45: /workspace/Elyrii/elyrii_app/test/core/storage/content_storage_test.dart: chat purge cascades its messages, preserves other accounts and rejects late writes
+01:08 +46: loading /workspace/Elyrii/elyrii_app/test/core/design_system/haptic_service_test.dart
+01:09 +46: /workspace/Elyrii/elyrii_app/test/core/design_system/haptic_service_test.dart: ElyriiHaptics activé par défaut
+01:09 +47: /workspace/Elyrii/elyrii_app/test/core/design_system/haptic_service_test.dart: ElyriiHaptics désactivation globale respectée
+01:09 +48: /workspace/Elyrii/elyrii_app/test/core/design_system/haptic_service_test.dart: ElyriiHaptics réactivation fonctionne
+01:09 +49: loading /workspace/Elyrii/elyrii_app/test/core/mascot_wardrobe_asset_test.dart
+01:11 +49: /workspace/Elyrii/elyrii_app/test/core/mascot_wardrobe_asset_test.dart: all unlockable pieces have hidden defaults and an animated attachment
+01:13 +50: loading /workspace/Elyrii/elyrii_app/test/core/network/native_chat_connection_test.dart
+01:14 +50: /workspace/Elyrii/elyrii_app/test/core/network/native_chat_connection_test.dart: native WebSocket authenticates its handshake and exchanges real frames
+01:14 +51: /workspace/Elyrii/elyrii_app/test/core/network/native_chat_connection_test.dart: native WebSocket rejects missing credentials before a connection is opened
+01:15 +52: loading /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart
+01:18 +52: /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart: identical concurrent GETs share a request, later reads fetch again
+01:18 +53: /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart: deadline includes credential reads and sends nothing after expiry
+01:18 +54: /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart: deadline covers a response whose body never completes
+01:18 +55: /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart: late 401 from an old account never logs out its successor
+01:18 +56: /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart: a current 401 identifies its owner and cannot fall back offline
+01:18 +57: /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart: invalid success JSON is a protocol failure, never an empty resource
+01:18 +58: /workspace/Elyrii/elyrii_app/test/core/network/api_client_test.dart: failed mutations are attempted once
+01:18 +59: loading /workspace/Elyrii/elyrii_app/test/core/mascot_asset_budget_test.dart
+01:19 +59: /workspace/Elyrii/elyrii_app/test/core/mascot_asset_budget_test.dart: mascot keeps the rig and all clips within the geometry budget
+01:19 +60: /workspace/Elyrii/elyrii_app/test/core/mascot_asset_budget_test.dart: mascot_wardrobe keeps the rig and all clips within the geometry budget
+01:20 +61: loading /workspace/Elyrii/elyrii_app/test/core/account_progress_test.dart
+01:21 +61: /workspace/Elyrii/elyrii_app/test/core/account_progress_test.dart: la démo débloque la collection localement et un vrai compte garde sa progression
+01:21 +62: /workspace/Elyrii/elyrii_app/test/core/account_progress_test.dart: une réponse de défis ancienne ne remplace pas la progression du nouveau compte
+01:21 +63: /workspace/Elyrii/elyrii_app/test/core/account_progress_test.dart: le dashboard de démonstration reste local, cohérent et réinitialisable
+01:21 +64: /workspace/Elyrii/elyrii_app/test/core/account_progress_test.dart: un ancien dashboard ne remplace pas les statistiques du compte actif
+01:21 +65: /workspace/Elyrii/elyrii_app/test/core/account_progress_test.dart: le cache du dashboard hors ligne est isolé par compte
+01:22 +66: loading /workspace/Elyrii/elyrii_app/test/features/gamification/presentation/pages/challenges_page_test.dart
+01:25 +66: /workspace/Elyrii/elyrii_app/test/features/gamification/presentation/pages/challenges_page_test.dart: jardin shows garden header without mascot customization
+[Elyrii] challenges_load_failed (validation)
+01:29 +67: loading /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart
+01:30 +67: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController état initial conforme par défaut
+01:30 +68: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController démarrage sans intention choisie est un no-op
+01:30 +69: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController changement de durée et de type en mode setup
+01:30 +70: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController durées libres valides et refus des valeurs hors limites
+01:30 +71: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController une durée native conserve les heures et chaque minute
+01:30 +72: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController le sélecteur refuse zéro, une journée et les minutes incomplètes
+01:30 +73: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController le guidage respecte aussi une séance de plus de trois heures
+01:31 +74: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController chaque exercice termine exactement à la durée choisie
+01:31 +75: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController les étapes guidées évoluent et restent figées pendant une pause
+01:31 +76: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController le 4–7–8 rejoint le souffle libre après quatre cycles
+01:31 +77: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController démarrage de session initialise la première phase
+01:31 +78: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController transition exacte des phases (4-7-8 : inspire -> retiens -> expire)
+01:31 +79: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController complétion d'un cycle incrémente completedCycles
+01:31 +80: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController mise en pause et reprise de la session
+01:31 +81: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController arrêt anticipé réinitialise vers setup
+01:31 +82: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_controller_test.dart: MeditationController fin de séance normale passe en finished
+01:32 +83: loading /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_session_lifecycle_test.dart
+01:33 +83: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_session_lifecycle_test.dart: identifiant et durée libres envoyés, fin enregistrée avant le ressenti
+01:33 +84: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_session_lifecycle_test.dart: une réponse tardive après interruption est annulée
+01:33 +85: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_session_lifecycle_test.dart: une courte séance terminée avant la réponse est comptabilisée
+01:33 +86: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_session_lifecycle_test.dart: une séance finie reste comptabilisée après retour au catalogue
+01:34 +87: loading /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart
+01:37 +87: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: (setUpAll)
+01:37 +87: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: roues natives heures/minutes et aucun raccourci prédéfini
+01:39 +88: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: faire défiler chaque roue change la durée confirmée
+01:39 +89: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: zéro bloque la confirmation puis une minute la réactive
+01:40 +90: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: fermer annule les modifications sans renvoyer de durée
+01:40 +91: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: 320 px, texte à 150 %, durée maximale, thème Brightness.dark
+01:41 +92: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: 320 px, texte à 150 %, durée maximale, thème Brightness.light
+01:41 +93: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_duration_sheet_test.dart: (tearDownAll)
+01:43 +93: loading /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart
+01:45 +93: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: (setUpAll)
+01:45 +93: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView lancement accessible après défilement, largeur 320.0, texte 1.0
+01:49 +94: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView lancement accessible après défilement, largeur 390.0, texte 1.0
+01:50 +95: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView lancement accessible après défilement, largeur 390.0, texte 1.5
+01:50 +96: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView le texte à 150 % reste entier sur un petit écran
+01:52 +97: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView aucune intention présélectionnée : CTA désactivé
+01:52 +98: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView changer de contrôleur puis fermer la vue libère les écoutes
+01:52 +99: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView un tap sur une intention sélectionne le mode et active le CTA
+01:53 +100: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView quatre pratiques en accueil, catalogue complet dans la feuille
+01:54 +101: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView une pratique du catalogue remplace une carte sans allonger la page
+01:55 +102: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView durée et pratique annoncées une fois et activables
+01:56 +103: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView une durée libre se propage au catalogue et au lancement
+01:56 +104: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView fermer les roues conserve la durée et la pratique
+01:56 +105: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView le filtre Corps propose une vraie pratique guidée
+01:57 +106: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: MeditationCatalogView changer de filtre conserve une durée libre et la sélection
+01:57 +107: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_catalog_view_test.dart: (tearDownAll)
+01:58 +107: loading /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_session_page_test.dart
+01:59 +107: /workspace/Elyrii/elyrii_app/test/features/meditation/meditation_session_page_test.dart: séance guidée, pause, fin et retour au catalogue
+02:02 +108: loading /workspace/Elyrii/elyrii_app/test/features/settings/account_settings_test.dart
+02:04 +108: /workspace/Elyrii/elyrii_app/test/features/settings/account_settings_test.dart: late profile/settings responses cannot hydrate the next account
+02:04 +109: /workspace/Elyrii/elyrii_app/test/features/settings/account_settings_test.dart: failed older preference rolls back only its own patch, then persists the newest confirmation
+02:05 +110: loading /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart
+02:07 +110: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: Routage du coach par besoin chaque besoin renvoie au moins deux activités réelles
+02:07 +111: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: Routage du coach par besoin les techniques respiratoires référencées existent nativement
+02:07 +112: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: Routage du coach par besoin les activités journal ont toutes un prompt guidé
+02:07 +113: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: Routage du coach par besoin sélection de besoin pilote les recommandations et la bulle
+02:07 +114: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: Routage du coach par besoin la bulle d'Elyrii tourne et accepte un message contextuel
+02:07 +115: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: Routage du coach par besoin sans backend, la guidance retombe sur un placeholder honnête
+02:07 +116: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: CoachPage — parcours utile et immersif accueil : Elyrii, besoin et recommandations groupées
+02:08 +117: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: CoachPage — parcours utile et immersif filtrer par besoin réorganise les recommandations
+02:08 +118: /workspace/Elyrii/elyrii_app/test/features/coach/coach_need_routing_test.dart: CoachPage — parcours utile et immersif une activité d'écriture ouvre le journal prérempli
+02:10 +119: loading /workspace/Elyrii/elyrii_app/test/features/reviews/reviews_page_test.dart
+02:10 +119: /workspace/Elyrii/elyrii_app/test/features/reviews/reviews_page_test.dart: injected repository handles periods, stale results and visible errors
+02:12 +120: loading /workspace/Elyrii/elyrii_app/test/features/dashboard/dashboard_reliability_test.dart
+02:14 +120: /workspace/Elyrii/elyrii_app/test/features/dashboard/dashboard_reliability_test.dart: offline dashboard cache has a lifetime, a period and an account
+02:14 +121: /workspace/Elyrii/elyrii_app/test/features/dashboard/dashboard_reliability_test.dart: 401 and malformed payloads cannot be replaced by cached dashboard success
+02:14 +122: /workspace/Elyrii/elyrii_app/test/features/dashboard/dashboard_reliability_test.dart: a rejected mood rolls back, duplicate taps are blocked and retry succeeds
+02:15 +123: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_selection_test.dart
+02:16 +123: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_selection_test.dart: history stays open while loading and preserves the draft (success)
+02:18 +124: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_selection_test.dart: history stays open while loading and preserves the draft (failure)
+02:19 +125: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_deadline_test.dart
+02:20 +125: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_deadline_test.dart: missing reply expires, persists failure and retries without duplicating the user message
+02:20 +126: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_deadline_test.dart: account switch cancels deadlines and never sends an old-account draft
+02:21 +127: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_session_test.dart
+02:23 +127: /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_session_test.dart: late reply stays in its originating session; switching accounts clears memory
+02:25 +128: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_regressions_test.dart
+02:26 +128: /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_regressions_test.dart: out-of-order, duplicate and late-after-timeout frames cannot cross conversations
+02:26 +129: /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_regressions_test.dart: blocked selection rejects sends and releases the composer after success
+02:26 +130: /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_regressions_test.dart: blocked selection rejects sends and releases the composer after failure
+02:27 +131: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/emergency_resources_test.dart
+02:28 +131: /workspace/Elyrii/elyrii_app/test/features/chatbot/emergency_resources_test.dart: emergency sheet is themed and scrolls with large text (false)
+02:29 +132: /workspace/Elyrii/elyrii_app/test/features/chatbot/emergency_resources_test.dart: emergency sheet is themed and scrolls with large text (true)
+02:30 +133: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_service_test.dart
+02:31 +133: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_service_test.dart: updating session metadata preserves its messages and original creation date
+02:31 +134: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_service_test.dart: writes one message at a time, counts duplicates once, pages in order
+02:32 +135: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_service_test.dart: accounts are isolated, including delete and clear
+02:32 +136: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_service_test.dart: session keyset pagination handles equal timestamps without duplicates
+02:32 +137: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_service_test.dart: legacy history is retained until explicit successful import
+02:32 +138: /workspace/Elyrii/elyrii_app/test/features/chatbot/chat_history_service_test.dart: corrupt legacy data is not deleted or partially imported
+02:33 +139: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_provider_test.dart
+02:34 +139: /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_provider_test.dart: first message can be stored when history starts empty
+02:35 +140: loading /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_layout_test.dart
+02:36 +140: /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_layout_test.dart: compact chat keeps a single input surface and clears keyboard (light)
+02:38 +141: /workspace/Elyrii/elyrii_app/test/features/chatbot/chatbot_layout_test.dart: compact chat keeps a single input surface and clears keyboard (dark)
+02:39 +142: loading /workspace/Elyrii/elyrii_app/test/features/auth/auth_demo_test.dart
+02:41 +142: /workspace/Elyrii/elyrii_app/test/features/auth/auth_demo_test.dart: une démo restaurée reste authentifiée sans requête backend
+02:41 +143: /workspace/Elyrii/elyrii_app/test/features/auth/auth_demo_test.dart: un profil ancien ne réactive pas le compte après la déconnexion
+02:42 +144: loading /workspace/Elyrii/elyrii_app/test/features/auth/auth_logout_test.dart
+02:43 +144: /workspace/Elyrii/elyrii_app/test/features/auth/auth_logout_test.dart: logout clears local credentials even when the network is unavailable
+02:44 +145: loading /workspace/Elyrii/elyrii_app/test/features/journal/journal_provider_test.dart
+02:44 +145: /workspace/Elyrii/elyrii_app/test/features/journal/journal_provider_test.dart: deduplicates loads and ignores old-account responses after logout
+02:44 +146: /workspace/Elyrii/elyrii_app/test/features/journal/journal_provider_test.dart: an older failed request cannot replace the latest successful state
+02:44 +147: /workspace/Elyrii/elyrii_app/test/features/journal/journal_provider_test.dart: a save finishing after logout does not restore private notes in memory
+02:45 +148: loading /workspace/Elyrii/elyrii_app/test/features/journal/journal_editor_reliability_test.dart
+02:46 +148: /workspace/Elyrii/elyrii_app/test/features/journal/journal_editor_reliability_test.dart: failed autosave retains the draft and does not claim it is saved
+02:47 +149: /workspace/Elyrii/elyrii_app/test/features/journal/journal_editor_reliability_test.dart: typing during a save queues the new revision without parallel requests
+02:48 +150: loading /workspace/Elyrii/elyrii_app/test/features/journal/journal_repository_test.dart
+02:49 +150: /workspace/Elyrii/elyrii_app/test/features/journal/journal_repository_test.dart: JournalEntryModel Serialization toCacheJson préserve tous les champs nécessaires à la reconstruction
+02:49 +151: /workspace/Elyrii/elyrii_app/test/features/journal/journal_repository_test.dart: JournalRepository Offline Cache getCachedEntries retourne une liste vide si aucun cache
+02:49 +152: /workspace/Elyrii/elyrii_app/test/features/journal/journal_repository_test.dart: legacy cache only exposes entries belonging to the current account
+02:49 +153: /workspace/Elyrii/elyrii_app/test/features/journal/journal_repository_test.dart: offline requests use the account cache, but never mask a rejected session
+02:49 +154: /workspace/Elyrii/elyrii_app/test/features/journal/journal_repository_test.dart: a request started without an account cannot fall back to a newly signed-in account
+02:50 +155: loading /workspace/Elyrii/elyrii_app/test/features/journal/journal_page_revamp_test.dart
+02:50 +155: /workspace/Elyrii/elyrii_app/test/features/journal/journal_page_revamp_test.dart: GlassJournalCard Apple HIG typography affiche la date au format FR, l'heure, le titre et la pastille d'humeur
+02:51 +156: /workspace/Elyrii/elyrii_app/test/features/journal/journal_page_revamp_test.dart: JournalPage iOS HIG architecture keeps a thousand notes lazy while scrolling
+02:52 +157: /workspace/Elyrii/elyrii_app/test/features/journal/journal_page_revamp_test.dart: JournalPage iOS HIG architecture utilise CustomScrollView sans bandeau sombre avec boutons en verre liquide et grand titre
+02:53 +158: loading /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart
+02:54 +158: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: garde-robe : les quinze pièces et les anciens identifiants sont conservés
+02:54 +159: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: les pièces inconnues et verrouillées ne sont pas équipées ni synchronisées
+02:54 +160: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: le palier exact équipe, remplace la pièce portée et permet de la retirer
+02:54 +161: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: rééquiper depuis la célébration ne retire pas la pièce portée
+02:54 +162: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: le chapeau historique de Lucas retrouve le modèle intégré
+02:54 +163: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: la sauvegarde historique conserve la dernière pièce de chaque zone
+02:54 +164: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: une nouvelle pièce est sauvegardée et restaurée
+02:54 +165: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_accessories_test.dart: une réponse serveur invalide garde une pièce reconnue par zone
+02:54 +166: loading /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_appearance_test.dart
+02:55 +166: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_appearance_test.dart: normalise les couleurs et ignore les champs inconnus ou invalides
+02:55 +167: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_appearance_test.dart: sauvegarde et restaure les quatre zones, leurs couleurs et la matière
+02:55 +168: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_appearance_test.dart: un brouillon contenant une récompense verrouillée ne modifie pas le look enregistré
+02:55 +169: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_appearance_test.dart: un look hors ligne survit à un ancien état serveur puis se synchronise
+02:55 +170: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_appearance_test.dart: les écritures serveur gardent leur ordre quand le premier look est lent
+02:56 +171: loading /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart
+02:57 +171: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii les filtres équipés gardent leur nom accessible
+02:59 +172: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii aperçu persistant et paliers réels
+03:00 +173: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii un thème est essayé, annulé puis enregistré explicitement
+03:00 +174: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii couleurs arbitraires indépendantes et saisie invalide
+03:01 +175: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii un glissement de couleur s’annule en une seule action
+03:01 +176: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii une tenue combine quatre zones et remplace seulement sa zone
+03:03 +177: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii une récompense verrouillée peut être essayée sans être sauvegardée
+03:03 +178: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii filtres de famille et de disponibilité
+03:04 +179: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii une pièce restaurée reste retirable sans progression chargée
+03:04 +180: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii les nouveaux paliers se célèbrent ensemble et équipent un brouillon
+03:05 +181: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii récompenses lisibles sans animation, dark=false
+03:05 +182: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii écran compact, texte agrandi et contraste élevé, dark=false
+03:05 +183: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii récompenses lisibles sans animation, dark=true
+03:05 +184: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_customization_page_test.dart: Atelier Elyrii écran compact, texte agrandi et contraste élevé, dark=true
+03:06 +185: loading /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart
+03:08 +185: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: les looks de Lucas sont normalisés et restent séparés par compte
+03:08 +186: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: la migration historique appartient à un seul compte (cache existant : false)
+03:08 +187: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: la migration historique appartient à un seul compte (cache existant : true)
+03:08 +188: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: un look local de Lucas est synchronisé avant de lire un serveur encore vierge
+03:08 +189: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: le mode démo et le visiteur ne lisent ni écrivent sur le serveur
+03:08 +190: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: une ancienne réponse serveur ne remplace pas le look du nouveau compte
+03:08 +191: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: les écritures en attente sont invalidées au changement de compte
+03:08 +192: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: un brouillon ouvert par un ancien compte ne peut pas être enregistré
+03:08 +193: /workspace/Elyrii/elyrii_app/test/features/mascot/mascot_session_test.dart: un chargement ancien ne remplace pas une sauvegarde récente du même compte
+03:09 +194: loading /workspace/Elyrii/elyrii_app/test/mascot_interactions_test.dart
+03:10 +194: /workspace/Elyrii/elyrii_app/test/mascot_interactions_test.dart: Mascot Physical & Visual Interactions MascotContactShadow réagit à l'élévation (physique Apple)
+03:10 +195: /workspace/Elyrii/elyrii_app/test/mascot_interactions_test.dart: Mascot Physical & Visual Interactions MascotWarmPlaceholder pulse sans crash
+03:10 +196: /workspace/Elyrii/elyrii_app/test/mascot_interactions_test.dart: Mascot Physical & Visual Interactions MascotPeek tap déclenche le rebond élastique et le haptique sans crash
+03:10 +197: /workspace/Elyrii/elyrii_app/test/mascot_interactions_test.dart: Mascot Physical & Visual Interactions MascotPeek réagit au changement d'humeur (celebrate / breathe / attentive)
+03:12 +198: loading /workspace/Elyrii/elyrii_app/test/frontend/bootstrap_test.dart
+03:13 +198: /workspace/Elyrii/elyrii_app/test/frontend/bootstrap_test.dart: bootstrap preserves a deep link while services are loading
+[Elyrii] startup_failed (StateError)
+03:14 +199: /workspace/Elyrii/elyrii_app/test/frontend/bootstrap_test.dart: bootstrap shows retry after initialization fails and releases late services
+[Elyrii] startup_failed (StateError)
+03:15 +200: loading /workspace/Elyrii/elyrii_app/test/frontend/contracts_test.dart
+03:16 +200: /workspace/Elyrii/elyrii_app/test/frontend/contracts_test.dart: release environments require a real HTTPS endpoint
+03:16 +201: /workspace/Elyrii/elyrii_app/test/frontend/contracts_test.dart: required IDs and dates fail parsing instead of creating empty resources
+03:16 +202: /workspace/Elyrii/elyrii_app/test/frontend/contracts_test.dart: mascot snapshots detach collections and preserve equality/hash stability
+03:16 +203: /workspace/Elyrii/elyrii_app/test/frontend/contracts_test.dart: delayed timer callbacks advance real elapsed seconds and breath phases
+03:17 +204: loading /workspace/Elyrii/elyrii_app/test/frontend/accessibility_test.dart
+03:18 +204: /workspace/Elyrii/elyrii_app/test/frontend/accessibility_test.dart: error text/background pairs meet 4.5:1 contrast in both themes
+03:18 +205: /workspace/Elyrii/elyrii_app/test/frontend/accessibility_test.dart: high-contrast glass uses an opaque surface even with a translucent tint
+03:18 +206: /workspace/Elyrii/elyrii_app/test/frontend/accessibility_test.dart: shared actions work with keyboard and expose one explicit label
+03:19 +207: /workspace/Elyrii/elyrii_app/test/frontend/accessibility_test.dart: reduced-motion typing indicator leaves no repeating ticker
+03:20 +208: loading /workspace/Elyrii/elyrii_app/test/frontend/native_test_helpers_test.dart
+03:21 +208: /workspace/Elyrii/elyrii_app/test/frontend/native_test_helpers_test.dart: waits for a hidden control before selecting the first match
+03:22 +209: /workspace/Elyrii/elyrii_app/test/frontend/native_test_helpers_test.dart: rebuilds an enabled control after text input before tapping
+03:24 +210: loading /workspace/Elyrii/elyrii_app/test/frontend/account_deletion_test.dart
+03:25 +210: /workspace/Elyrii/elyrii_app/test/frontend/account_deletion_test.dart: account deletion purges all owned stores and preserves another account
+03:25 +211: /workspace/Elyrii/elyrii_app/test/frontend/account_deletion_test.dart: restart retries deletion and purges content even when credential removal fails
+03:26 +212: loading /workspace/Elyrii/elyrii_app/test/frontend/challenges_scalability_test.dart
+03:27 +212: /workspace/Elyrii/elyrii_app/test/frontend/challenges_scalability_test.dart: 1000 completed challenges stay lazy and concurrent loads are shared
+03:29 +213: loading /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart
+03:30 +213: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: (setUpAll)
+03:30 +213: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: une réponse de login tardive ne réouvre pas une session déconnectée
+03:30 +214: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: une authentification sans token est refusée
+03:30 +215: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: une note supprimée reste supprimée hors ligne
+03:30 +216: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: les préférences sont sérialisées sans annuler le dernier choix
+03:30 +217: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: les dates françaises anciennes sont affichables après initialisation
+03:31 +218: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: la fin de méditation autorise le retour système
+03:31 +219: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: la route avatar conserve la photo transmise dans extra
+03:32 +220: /workspace/Elyrii/elyrii_app/test/regression/frontend_audit_test.dart: (tearDownAll)
+03:35 +220: loading /workspace/Elyrii/elyrii_app/test/dashboard_mood_system_test.dart
+03:36 +220: /workspace/Elyrii/elyrii_app/test/dashboard_mood_system_test.dart: Dashboard State of Mind & Bento Grid Tests Dashboard affiche la section État d'esprit et la Bento Grid sans glitch
+03:38 +221: /workspace/Elyrii/elyrii_app/test/dashboard_mood_system_test.dart: Dashboard State of Mind & Bento Grid Tests Sélectionner une humeur affiche la résonance et l'action contextuelle sans erreur
+03:40 +222: loading /workspace/Elyrii/elyrii_app/test/smoke_revamp_test.dart
+03:41 +222: /workspace/Elyrii/elyrii_app/test/smoke_revamp_test.dart: Smoke Test Refonte Apple HIG & Mascotte Dashboard affiche la mascotte épurée sans LinearProgressIndicator
+03:42 +223: /workspace/Elyrii/elyrii_app/test/smoke_revamp_test.dart: Smoke Test Refonte Apple HIG & Mascotte LoginPage sans Transform.translate arbitraire ni SnackBar
+03:42 +224: /workspace/Elyrii/elyrii_app/test/smoke_revamp_test.dart: Smoke Test Refonte Apple HIG & Mascotte JournalPage sans bandeau sombre avec boutons flottants en verre liquide
+03:42 +225: /workspace/Elyrii/elyrii_app/test/smoke_revamp_test.dart: Smoke Test Refonte Apple HIG & Mascotte Jardin (ChallengesPage) sans RefreshIndicator Material
+[Elyrii] challenges_load_failed (validation)
+03:42 +226: /workspace/Elyrii/elyrii_app/test/smoke_revamp_test.dart: Smoke Test Refonte Apple HIG & Mascotte CoachPage utilise un CustomScrollView sans LinearProgressIndicator
+03:43 +227: loading /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart
+03:45 +227: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: toucher, maintien et humeur difficile ont leurs gestes propres
+03:46 +228: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: une réussite reçue depuis un autre onglet arrive au dashboard
+03:46 +229: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: le chat suit saisie, attente, réponse et déconnexion sans rejouer les notifications
+03:46 +230: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: la détection de crise dans le chat bascule la mascotte en posture rassurante
+03:46 +231: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: une fin de méditation prépare le geste settle pour le dashboard
+03:47 +232: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: relaxation478: souffle synchronisé, pause exacte et rétention
+03:47 +233: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: carree: souffle synchronisé, pause exacte et rétention
+03:47 +234: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: coherence: souffle synchronisé, pause exacte et rétention
+03:47 +235: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: diaphragmatique: souffle synchronisé, pause exacte et rétention
+03:47 +236: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: ujjayi: souffle synchronisé, pause exacte et rétention
+03:47 +237: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: facile: souffle synchronisé, pause exacte et rétention
+03:47 +238: /workspace/Elyrii/elyrii_app/test/mascot_context_test.dart: expirationLongue: souffle synchronisé, pause exacte et rétention
+03:49 +239: loading /workspace/Elyrii/elyrii_app/test/app/launch/elyrii_launch_test.dart
+03:50 +239: /workspace/Elyrii/elyrii_app/test/app/launch/elyrii_launch_test.dart: reveals the already mounted page and preserves its state
+03:51 +240: /workspace/Elyrii/elyrii_app/test/app/launch/elyrii_launch_test.dart: holds readable text before a gradual fade into the page
+03:51 +241: /workspace/Elyrii/elyrii_app/test/app/launch/elyrii_launch_test.dart: does not create the mascot platform view during the fade
+03:51 +242: /workspace/Elyrii/elyrii_app/test/app/launch/elyrii_launch_test.dart: reduced motion enters the page without waiting for the reveal
+03:51 +243: /workspace/Elyrii/elyrii_app/test/app/launch/elyrii_launch_test.dart: compact launch supports enlarged text without overflow
+03:52 +244: loading /workspace/Elyrii/elyrii_app/test/app/router/app_router_test.dart
+03:53 +244: /workspace/Elyrii/elyrii_app/test/app/router/app_router_test.dart: GoRouter shell affiche la barre de navigation sur les écrans connectés
+03:54 +245: All tests passed!

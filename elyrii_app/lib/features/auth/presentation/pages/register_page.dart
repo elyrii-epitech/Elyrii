@@ -1,3 +1,4 @@
+import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/accessibility/motion.dart';
 
 import 'package:flutter/material.dart';
@@ -132,9 +133,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 children: [
                   // Mascotte cadrée par la caméra (cameraTarget du config
                   // authPage) — aucun décalage de layout.
-                  GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
+                  AccessibleAction(
+                        label: 'Faire réagir la mascotte Elyrii',
+                        onPressed: () {
                           ElyriiHaptics.light();
                           setState(() {
                             _mascotAnimation = MascotAnimations.greet;
@@ -191,244 +192,229 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: AppDimensions.spacingLg),
                   ],
 
-                  Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Name Field
-                            Text(
-                              'Prénom',
-                              style: AppTextStyles.bodyMedium(
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ).copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingXs),
-                            GlassAuthTextField(
-                              controller: _nameController,
-                              hint: '',
-                              prefixIcon: Icons.person_outline,
-                              keyboardType: TextInputType.name,
-                              textInputAction: TextInputAction.next,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Entre ton prénom';
-                                }
-                                if (value.length < 2) {
-                                  return 'Le prénom doit contenir au moins 2 caractères';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: AppDimensions.spacingMd),
+                  AutofillGroup(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Name Field
+                              Text(
+                                'Prénom',
+                                style: AppTextStyles.bodyMedium(
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ).copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: AppDimensions.spacingXs),
+                              GlassAuthTextField(
+                                controller: _nameController,
+                                label: 'Prénom',
+                                autofillHints: const [AutofillHints.givenName],
+                                hint: '',
+                                prefixIcon: Icons.person_outline,
+                                keyboardType: TextInputType.name,
+                                textInputAction: TextInputAction.next,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Entre ton prénom';
+                                  }
+                                  if (value.length < 2) {
+                                    return 'Le prénom doit contenir au moins 2 caractères';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppDimensions.spacingMd),
 
-                            // Email Field
-                            Text(
-                              'Adresse email',
-                              style: AppTextStyles.bodyMedium(
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ).copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingXs),
-                            GlassAuthTextField(
-                              controller: _emailController,
-                              hint: '',
-                              prefixIcon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Entre ton email';
-                                }
-                                if (!Validators.isValidEmail(value)) {
-                                  return 'Email invalide';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: AppDimensions.spacingMd),
+                              // Email Field
+                              Text(
+                                'Adresse email',
+                                style: AppTextStyles.bodyMedium(
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ).copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: AppDimensions.spacingXs),
+                              GlassAuthTextField(
+                                controller: _emailController,
+                                label: 'Adresse email',
+                                autofillHints: const [AutofillHints.email],
+                                hint: '',
+                                prefixIcon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Entre ton email';
+                                  }
+                                  if (!Validators.isValidEmail(value)) {
+                                    return 'Email invalide';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppDimensions.spacingMd),
 
-                            // Password Field
-                            Text(
-                              'Mot de passe',
-                              style: AppTextStyles.bodyMedium(
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ).copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingXs),
-                            GlassAuthTextField(
-                              controller: _passwordController,
-                              hint: '',
-                              prefixIcon: Icons.lock_outline,
-                              isPassword: true,
-                              textInputAction: TextInputAction.next,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Entre ton mot de passe';
-                                }
-                                if (value.length < 8) {
-                                  return 'Le mot de passe doit contenir au moins 8 caractères';
-                                }
-                                if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                                  return 'Le mot de passe doit contenir au moins une majuscule';
-                                }
-                                if (!RegExp(r'[0-9]').hasMatch(value)) {
-                                  return 'Le mot de passe doit contenir au moins un chiffre';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: AppDimensions.spacingMd),
+                              // Password Field
+                              Text(
+                                'Mot de passe',
+                                style: AppTextStyles.bodyMedium(
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ).copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: AppDimensions.spacingXs),
+                              GlassAuthTextField(
+                                controller: _passwordController,
+                                label: 'Mot de passe',
+                                autofillHints: const [
+                                  AutofillHints.newPassword,
+                                ],
+                                hint: '',
+                                prefixIcon: Icons.lock_outline,
+                                isPassword: true,
+                                textInputAction: TextInputAction.next,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Entre ton mot de passe';
+                                  }
+                                  if (value.length < 8) {
+                                    return 'Le mot de passe doit contenir au moins 8 caractères';
+                                  }
+                                  if (!RegExp(r'[A-Z]').hasMatch(value)) {
+                                    return 'Le mot de passe doit contenir au moins une majuscule';
+                                  }
+                                  if (!RegExp(r'[0-9]').hasMatch(value)) {
+                                    return 'Le mot de passe doit contenir au moins un chiffre';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: AppDimensions.spacingMd),
 
-                            // Confirm Password Field
-                            Text(
-                              'Confirmer le mot de passe',
-                              style: AppTextStyles.bodyMedium(
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ).copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: AppDimensions.spacingXs),
-                            GlassAuthTextField(
-                              controller: _confirmPasswordController,
-                              hint: '',
-                              prefixIcon: Icons.lock_outline,
-                              isPassword: true,
-                              textInputAction: TextInputAction.done,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Confirme ton mot de passe';
-                                }
-                                if (value != _passwordController.text) {
-                                  return 'Les mots de passe ne correspondent pas';
-                                }
-                                return null;
-                              },
-                            ),
+                              // Confirm Password Field
+                              Text(
+                                'Confirmer le mot de passe',
+                                style: AppTextStyles.bodyMedium(
+                                  color: isDark
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimaryLight,
+                                ).copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: AppDimensions.spacingXs),
+                              GlassAuthTextField(
+                                controller: _confirmPasswordController,
+                                label: 'Confirmer le mot de passe',
+                                onSubmitted: (_) {
+                                  _handleRegister();
+                                },
+                                autofillHints: const [
+                                  AutofillHints.newPassword,
+                                ],
+                                hint: '',
+                                prefixIcon: Icons.lock_outline,
+                                isPassword: true,
+                                textInputAction: TextInputAction.done,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Confirme ton mot de passe';
+                                  }
+                                  if (value != _passwordController.text) {
+                                    return 'Les mots de passe ne correspondent pas';
+                                  }
+                                  return null;
+                                },
+                              ),
 
-                            const SizedBox(height: AppDimensions.spacingLg),
+                              const SizedBox(height: AppDimensions.spacingLg),
 
-                            // Terms and Conditions
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: Checkbox(
-                                    value: _acceptTerms,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _acceptTerms = value ?? false;
-                                      });
-                                    },
-                                    activeColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: AppDimensions.spacingSm),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _acceptTerms = !_acceptTerms;
-                                      });
-                                    },
-                                    child: Text.rich(
-                                      TextSpan(
-                                        text: 'J\'accepte les ',
-                                        style: AppTextStyles.bodySmall(
-                                          color: isDark
-                                              ? AppColors.textSecondaryDark
-                                              : AppColors.textSecondaryLight,
-                                        ),
-                                        children: [
-                                          TextSpan(
-                                            text: 'conditions d\'utilisation',
-                                            style:
-                                                AppTextStyles.bodySmall(
-                                                  color: AppColors.primary,
-                                                ).copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                          ),
-                                        ],
+                              CheckboxListTile(
+                                value: _acceptTerms,
+                                onChanged: _isLoading
+                                    ? null
+                                    : (value) => setState(
+                                        () => _acceptTerms = value ?? false,
                                       ),
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                                title: const Text(
+                                  "J'accepte les conditions d'utilisation",
+                                ),
+                              ),
+
+                              const SizedBox(height: AppDimensions.spacingXl),
+
+                              // Register Button
+                              LiquidGlassButton(
+                                label: 'Créer mon compte',
+                                isLoading: _isLoading,
+                                isExpanded: true,
+                                onPressed: _handleRegister,
+                              ),
+
+                              const SizedBox(height: AppDimensions.spacingSm),
+                              LiquidGlassButton(
+                                label: 'Découvrir Elyrii',
+                                icon: Icons.bolt_rounded,
+                                style: LiquidGlassButtonStyle.tinted,
+                                isExpanded: true,
+                                onPressed: () async {
+                                  ElyriiHaptics.medium();
+                                  await context
+                                      .read<AuthProvider>()
+                                      .startDemoSession();
+                                  if (!context.mounted) return;
+                                  context.read<ValueNotifier<bool>>().value =
+                                      true;
+                                  context.go(AppRoutes.home);
+                                },
+                              ),
+                              const SizedBox(height: AppDimensions.spacingXl),
+
+                              // Login Link
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    'Déjà un compte ? ',
+                                    style: AppTextStyles.bodySmall(
+                                      color: isDark
+                                          ? AppColors.textSecondaryDark
+                                          : AppColors.textSecondaryLight,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: AppDimensions.spacingXl),
-
-                            // Register Button
-                            LiquidGlassButton(
-                              label: 'Créer mon compte',
-                              isLoading: _isLoading,
-                              isExpanded: true,
-                              onPressed: _handleRegister,
-                            ),
-
-                            const SizedBox(height: AppDimensions.spacingSm),
-                            LiquidGlassButton(
-                              label: 'Découvrir Elyrii',
-                              icon: Icons.bolt_rounded,
-                              style: LiquidGlassButtonStyle.tinted,
-                              isExpanded: true,
-                              onPressed: () async {
-                                ElyriiHaptics.medium();
-                                await context
-                                    .read<AuthProvider>()
-                                    .startDemoSession();
-                                if (!context.mounted) return;
-                                context.read<ValueNotifier<bool>>().value =
-                                    true;
-                                context.go(AppRoutes.home);
-                              },
-                            ),
-                            const SizedBox(height: AppDimensions.spacingXl),
-
-                            // Login Link
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Déjà un compte ? ',
-                                  style: AppTextStyles.bodySmall(
-                                    color: isDark
-                                        ? AppColors.textSecondaryDark
-                                        : AppColors.textSecondaryLight,
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      'Se connecter',
+                                      style: AppTextStyles.bodySmall(
+                                        color: AppColors.readableAccent(
+                                          AppColors.primary,
+                                          isDark:
+                                              Theme.of(context).brightness ==
+                                              Brightness.dark,
+                                        ),
+                                      ).copyWith(fontWeight: FontWeight.bold),
+                                    ),
                                   ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  child: Text(
-                                    'Se connecter',
-                                    style: AppTextStyles.bodySmall(
-                                      color: AppColors.primary,
-                                    ).copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       )
                       .animateRespectingMotion(context)

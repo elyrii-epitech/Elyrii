@@ -1,11 +1,15 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
 import { swaggerUI } from "@hono/swagger-ui";
+import PasswordResetController from "./password-reset.controller";
+import { resetRateLimit } from "./password-reset.rate-limit";
 import AuthController from "./auth.controller";
 import { openAPIRouteHandler } from "hono-openapi";
 
 class AuthRoutes {
     private readonly router = new Hono();
     private readonly controller = new AuthController();
+    private readonly passwordReset = new PasswordResetController();
     
     constructor() {
         this.initRoutes();
@@ -14,6 +18,8 @@ class AuthRoutes {
     public initRoutes() {
         this.router.get('/health', (ctx) => ctx.text("Auth Service healthy"));
         
+        this.router.post('/password-reset/request', bodyLimit({maxSize: 1024}), resetRateLimit(10), ...this.passwordReset.request);
+        this.router.post('/password-reset/confirm', bodyLimit({maxSize: 4096}), resetRateLimit(30), ...this.passwordReset.confirm);
         this.router.post('/login', ...this.controller.login);
         this.router.post('/register', ...this.controller.register);
         this.router.post('/oauth/google', ...this.controller.googleOAuth);

@@ -9,6 +9,11 @@ class AccessibleAction extends StatefulWidget {
     required this.label,
     required this.onPressed,
     this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+    this.selected,
+    this.value,
+    this.hint,
+    this.excludeChildSemantics = false,
+    this.liveRegion = false,
     required this.child,
   });
 
@@ -16,6 +21,11 @@ class AccessibleAction extends StatefulWidget {
   final VoidCallback? onPressed;
   final BorderRadius borderRadius;
   final Widget child;
+  final bool? selected;
+  final String? value;
+  final String? hint;
+  final bool excludeChildSemantics;
+  final bool liveRegion;
 
   @override
   State<AccessibleAction> createState() => AccessibleActionState();
@@ -39,11 +49,16 @@ class AccessibleActionState extends State<AccessibleAction> {
         ? Duration.zero
         : const Duration(milliseconds: 150);
     return Semantics(
-      container: true,
-      excludeSemantics: widget.label != null,
+      container: widget.label != null,
+      excludeSemantics: widget.excludeChildSemantics,
+      explicitChildNodes: widget.label != null && !widget.excludeChildSemantics,
       button: true,
       enabled: enabled,
       label: widget.label,
+      selected: widget.selected,
+      value: widget.value,
+      hint: widget.hint,
+      liveRegion: widget.liveRegion,
       onTap: enabled ? _activate : null,
       child: FocusableActionDetector(
         enabled: enabled,
@@ -80,11 +95,25 @@ class AccessibleActionState extends State<AccessibleAction> {
             curve: Curves.easeOutCubic,
             child: AnimatedOpacity(
               duration: duration,
-              opacity: _isPressed && enabled ? 0.7 : 1,
+              // Press feedback must not lower the contrast of active labels.
+              opacity: 1,
               child: DecoratedBox(
-                position: DecorationPosition.foreground,
                 decoration: BoxDecoration(
                   borderRadius: widget.borderRadius,
+                  // Two contrasting rings remain visible on both filled and
+                  // transparent controls, without covering their content.
+                  boxShadow: _showFocus && enabled
+                      ? [
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            spreadRadius: 4,
+                          ),
+                          BoxShadow(
+                            color: Theme.of(context).colorScheme.surface,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : null,
                   border: _showFocus && enabled
                       ? Border.all(
                           color: Theme.of(context).colorScheme.primary,
@@ -92,7 +121,13 @@ class AccessibleActionState extends State<AccessibleAction> {
                         )
                       : null,
                 ),
-                child: widget.child,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 48,
+                    minHeight: 48,
+                  ),
+                  child: widget.child,
+                ),
               ),
             ),
           ),

@@ -84,17 +84,19 @@ class _DashboardPageState extends State<DashboardPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(width: 44),
-                  Selector<DashboardProvider, MoodType?>(
-                    selector: (_, p) => p.selectedMood,
-                    builder: (_, mood, _) => MascotPeek(
-                      selectedMood: mood,
-                      isDark: isDark,
-                      onTap: provider.nextMascotMessage,
+                  const SizedBox(width: 48),
+                  Flexible(
+                    child: Selector<DashboardProvider, MoodType?>(
+                      selector: (_, p) => p.selectedMood,
+                      builder: (_, mood, _) => MascotPeek(
+                        selectedMood: mood,
+                        isDark: isDark,
+                        onTap: provider.nextMascotMessage,
+                      ),
                     ),
                   ),
                   SizedBox(
-                    width: 44,
+                    width: 48,
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: MascotCustomizeCharm(isDark: isDark),
@@ -215,7 +217,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return '$dayName ${now.day} $monthName';
   }
 
-  /// Date et salutation, épinglées entre les boutons de l’en-tête.
+  /// Date et salutation pouvant se replier sans perdre de texte.
   Widget _buildScrollingGreeting(
     AuthProvider authProvider,
     UserProvider userProvider,
@@ -235,85 +237,100 @@ class _DashboardPageState extends State<DashboardPage> {
       children: [
         Text(
           _formatHeaderDate(),
+          key: const ValueKey('dashboard-date'),
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.2,
-            color: isDark ? AppColors.primaryDark : AppColors.primary,
+            color: AppColors.readableAccent(
+              isDark ? AppColors.primaryDark : AppColors.primary,
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
-        Text(
-          greeting,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-            height: 1.1,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
+        Semantics(
+          header: true,
+          child: Text(
+            greeting,
+            key: const ValueKey('dashboard-greeting'),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+              height: 1.1,
+              color: isDark
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimaryLight,
+            ),
           ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
   }
 
-  /// Contrôles épinglés : avatar et réglages restent fixés en haut.
+  /// Les grands textes prennent toute la largeur sous les contrôles.
   Widget _buildPinnedHeaderControls(
     AuthProvider authProvider,
     UserProvider userProvider,
     bool isDark,
   ) {
-    return Row(
-      children: [
-        // Avatar utilisateur circulaire en Liquid Glass (44x44)
-        Semantics(
-          button: true,
-          label: 'Profil utilisateur',
-          child: AccessibleAction(
-            label: null,
-            onPressed: () {
-              ElyriiHaptics.light();
-              context.push(AppRoutes.editProfile);
-            },
-            child: ElyriiGlassSurface(
-              role: GlassRole.floatingControl,
-              borderRadius: BorderRadius.circular(22),
-              width: 44,
-              height: 44,
-              child: Center(
-                child: ClipOval(
-                  child: UserAvatar(
-                    pfp: userProvider.profile?.pfp,
-                    size: 38,
-                    showBorder: false,
-                  ),
-                ),
-              ),
+    final profile = AccessibleAction(
+      label: 'Profil utilisateur',
+      excludeChildSemantics: true,
+      onPressed: () {
+        ElyriiHaptics.light();
+        context.push(AppRoutes.editProfile);
+      },
+      child: ElyriiGlassSurface(
+        role: GlassRole.floatingControl,
+        borderRadius: BorderRadius.circular(22),
+        width: 48,
+        height: 48,
+        child: Center(
+          child: ClipOval(
+            child: UserAvatar(
+              pfp: userProvider.profile?.pfp,
+              size: 38,
+              showBorder: false,
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildScrollingGreeting(
-            authProvider,
-            userProvider,
-            context.read<DashboardProvider>(),
-            isDark,
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Bouton Réglages circulaire en Liquid Glass (44x44)
-        GlassSettingsButton(
-          isDark: isDark,
-          onTap: () => context.push(AppRoutes.settings),
-        ),
-      ],
+      ),
+    );
+    final settings = GlassSettingsButton(
+      isDark: isDark,
+      onTap: () => context.push(AppRoutes.settings),
+    );
+    final greeting = _buildScrollingGreeting(
+      authProvider,
+      userProvider,
+      context.read<DashboardProvider>(),
+      isDark,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 300 ||
+            MediaQuery.textScalerOf(context).scale(16) > 24) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [profile, const Spacer(), settings]),
+              const SizedBox(height: 12),
+              greeting,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            profile,
+            const SizedBox(width: 8),
+            Expanded(child: greeting),
+            const SizedBox(width: 8),
+            settings,
+          ],
+        );
+      },
     );
   }
 
@@ -566,39 +583,55 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       children: [
         // Ligne 1 : Deux cartes symétriques Bento (Série & Respiration)
-        Row(
-          children: [
-            // Carte Série (Gauche)
-            Expanded(
-              child: DashboardStreakCard(
-                streak: provider.currentStreak,
-                isDark: isDark,
-                onTap: () {
-                  ElyriiHaptics.light();
-                  final mascotProvider = context.read<MascotProvider>();
-                  if (provider.currentStreak > 1) {
-                    mascotProvider.react(MascotAnimations.celebrate);
-                  } else if (provider.currentStreak == 1) {
-                    mascotProvider.react(MascotAnimations.delight);
-                  } else {
-                    mascotProvider.react(MascotAnimations.invite);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Carte Respiration (Droite)
-            Expanded(
-              child: DashboardBreatheCard(
-                isDark: isDark,
-                onTap: () {
-                  ElyriiHaptics.light();
-                  context.read<MascotProvider>().react(MascotAnimations.invite);
-                  context.go(AppRoutes.meditation);
-                },
-              ),
-            ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns =
+                MediaQuery.textScalerOf(context).scale(14) > 21 ||
+                    constraints.maxWidth < 260
+                ? 1
+                : 2;
+            final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                // Carte Série (Gauche)
+                SizedBox(
+                  width: width,
+                  child: DashboardStreakCard(
+                    streak: provider.currentStreak,
+                    isDark: isDark,
+                    onTap: () {
+                      ElyriiHaptics.light();
+                      final mascotProvider = context.read<MascotProvider>();
+                      if (provider.currentStreak > 1) {
+                        mascotProvider.react(MascotAnimations.celebrate);
+                      } else if (provider.currentStreak == 1) {
+                        mascotProvider.react(MascotAnimations.delight);
+                      } else {
+                        mascotProvider.react(MascotAnimations.invite);
+                      }
+                    },
+                  ),
+                ),
+
+                // Carte Respiration (Droite)
+                SizedBox(
+                  width: width,
+                  child: DashboardBreatheCard(
+                    isDark: isDark,
+                    onTap: () {
+                      ElyriiHaptics.light();
+                      context.read<MascotProvider>().react(
+                        MascotAnimations.invite,
+                      );
+                      context.go(AppRoutes.meditation);
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 12),
         // Ligne 2 : Carte pleine largeur Journal Récent

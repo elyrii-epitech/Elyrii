@@ -102,7 +102,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(GlassJournalCard).evaluate().length, lessThan(15));
       expect(find.text('Note 999'), findsNothing);
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1400));
+      await tester.drag(
+        find.byType(CustomScrollView).last,
+        const Offset(0, -1400),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(GlassJournalCard).evaluate().length, lessThan(15));
       expect(tester.takeException(), isNull);

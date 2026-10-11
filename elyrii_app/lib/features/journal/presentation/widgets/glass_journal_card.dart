@@ -51,12 +51,14 @@ class GlassJournalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final createdAt = entry.createdAt.toLocal();
     final timeStr =
-        '${entry.createdAt.hour.toString().padLeft(2, '0')}:${entry.createdAt.minute.toString().padLeft(2, '0')}';
+        '${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
     final moodInfo = _getMoodInfo(entry.mood);
 
     return AccessibleAction(
-      label: 'Ouvrir la note ${entry.title}, ${_formatDate(entry.createdAt)}',
+      label:
+          'Ouvrir la note ${entry.title}, ${_formatDate(createdAt)}, $timeStr${entry.mood == null ? '' : ', humeur ${_getMoodInfo(entry.mood)?.label ?? entry.mood}'}',
       onPressed: onTap,
       child: Container(
         decoration: BoxDecoration(
@@ -87,7 +89,7 @@ class GlassJournalCard extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    _formatDate(entry.createdAt),
+                    _formatDate(createdAt),
                     style: AppTextStyles.labelSmall(
                       color: isDark
                           ? AppColors.textTertiaryDark

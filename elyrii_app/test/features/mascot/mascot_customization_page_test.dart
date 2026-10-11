@@ -120,6 +120,7 @@ void main() {
           completedCount: 12,
           savedCosmetics: ['graduate_cap', 'cheek_sparkle'],
         );
+        await tester.ensureVisible(find.text('Collection'));
         await tester.tap(find.text('Collection'));
         await tester.pump();
         for (final category in ['Tête', 'Visage']) {
@@ -142,6 +143,7 @@ void main() {
       expect(find.text('Éclat céleste'), findsOneWidget);
       expect(find.text('Encore 1 défi à ton rythme'), findsOneWidget);
       final scene = tester.state(find.byType(Mascot3DViewer));
+      await tester.ensureVisible(find.text('Collection'));
       await tester.tap(find.text('Collection'));
       await tester.pump();
       await tester.ensureVisible(find.text('Petit sac à dos'));
@@ -223,6 +225,7 @@ void main() {
       'une tenue combine quatre zones et remplace seulement sa zone',
       (tester) async {
         final provider = await _pumpPage(tester, completedCount: 36);
+        await tester.ensureVisible(find.text('Collection'));
         await tester.tap(find.text('Collection'));
         await tester.pump();
         for (final name in [
@@ -265,6 +268,7 @@ void main() {
       'une récompense verrouillée peut être essayée sans être sauvegardée',
       (tester) async {
         final provider = await _pumpPage(tester, completedCount: 2);
+        await tester.ensureVisible(find.text('Collection'));
         await tester.tap(find.text('Collection'));
         await tester.pump();
         await tester.ensureVisible(find.text('Bonnet douillet').last);
@@ -295,6 +299,7 @@ void main() {
 
     testWidgets('filtres de famille et de disponibilité', (tester) async {
       await _pumpPage(tester, completedCount: 3);
+      await tester.ensureVisible(find.text('Collection'));
       await tester.tap(find.text('Collection'));
       await tester.pump();
       await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Cou'));
@@ -319,6 +324,7 @@ void main() {
       'une pièce restaurée reste retirable sans progression chargée',
       (tester) async {
         final provider = await _pumpPage(tester, savedCosmetics: ['beret']);
+        await tester.ensureVisible(find.text('Collection'));
         await tester.tap(find.text('Collection'));
         await tester.pump();
         await tester.ensureVisible(find.text('Béret sauge'));
@@ -386,6 +392,7 @@ void main() {
             reducedMotion: true,
           );
           expect(tester.takeException(), isNull);
+          await tester.ensureVisible(find.text('Collection'));
           await tester.tap(find.text('Collection'));
           await tester.pump();
           await tester.ensureVisible(find.widgetWithText(ChoiceChip, 'Cou'));

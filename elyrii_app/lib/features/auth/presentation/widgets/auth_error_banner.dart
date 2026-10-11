@@ -21,37 +21,41 @@ class AuthErrorBanner extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tint = isSuccess ? AppColors.success : AppColors.warning;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: tint.withValues(alpha: isDark ? 0.14 : 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: tint.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isSuccess
-                ? Icons.check_circle_outline_rounded
-                : Icons.info_outline_rounded,
-            size: 20,
-            color: tint,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-                height: 1.3,
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: isDark ? 0.14 : 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: tint.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSuccess
+                  ? Icons.check_circle_outline_rounded
+                  : Icons.info_outline_rounded,
+              size: 20,
+              color: tint,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isDark
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimaryLight,
+                  height: 1.3,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

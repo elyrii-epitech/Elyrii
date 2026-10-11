@@ -86,6 +86,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     final bottomMargin = bottomInset > 0 ? 20.0 : 16.0;
     // Keep every tab at least 44 points wide on a 320-point screen.
     final compactDock = MediaQuery.sizeOf(context).width < 360;
+    final accessibleDock =
+        MediaQuery.sizeOf(context).width < 320 ||
+        MediaQuery.textScalerOf(context).scale(12) > 18;
 
     return Scaffold(
       extendBody: true,
@@ -97,40 +100,64 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
           ? null
           : Container(
               margin: EdgeInsets.only(
-                left: 16,
-                right: 16,
+                left: compactDock ? 8 : 16,
+                right: compactDock ? 8 : 16,
                 bottom: bottomMargin,
               ),
-              height: 64,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GlassNavigationBar(
-                      items: _navItems,
-                      currentIndex: currentIndex < 5 ? currentIndex : -1,
-                      onItemSelected: _onTabSelected,
-                      iconControllers: _iconControllers,
-                      isDark: isDark,
-                      margin: EdgeInsets.zero,
-                      height: 64,
-                      borderRadius: 32,
+              child: accessibleDock
+                  ? DropdownButtonFormField<int>(
+                      key: ValueKey(currentIndex),
+                      initialValue: currentIndex,
+                      itemHeight: null,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Navigation',
+                      ),
+                      items: [
+                        for (var i = 0; i < 6; i++)
+                          DropdownMenuItem(
+                            value: i,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                i == 5 ? 'Chat Elyrii' : _navItems[i].label,
+                              ),
+                            ),
+                          ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) _onTabSelected(value);
+                      },
+                    )
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: GlassNavigationBar(
+                            items: _navItems,
+                            currentIndex: currentIndex < 5 ? currentIndex : -1,
+                            onItemSelected: _onTabSelected,
+                            iconControllers: _iconControllers,
+                            isDark: isDark,
+                            margin: EdgeInsets.zero,
+                            height: 64,
+                            borderRadius: 32,
+                          ),
+                        ),
+                        SizedBox(width: compactDock ? 8 : 10),
+                        GlassBubbleButtonStateful(
+                          icon: Icons.chat_bubble_rounded,
+                          onTap: () => _onTabSelected(5),
+                          size: compactDock ? 56 : 64,
+                          isDark: isDark,
+                          isSelected: currentIndex == 5,
+                          tooltip: 'Chat Elyrii',
+                          // Marque vectorielle aplatie : même poids et même teinte
+                          // que les pictogrammes des autres onglets.
+                          iconAsset: 'assets/brand/logo_monochrome.png',
+                          iconAssetSize: 26,
+                        ),
+                      ],
                     ),
-                  ),
-                  SizedBox(width: compactDock ? 8 : 10),
-                  GlassBubbleButtonStateful(
-                    icon: Icons.chat_bubble_rounded,
-                    onTap: () => _onTabSelected(5),
-                    size: compactDock ? 56 : 64,
-                    isDark: isDark,
-                    isSelected: currentIndex == 5,
-                    tooltip: 'Chat Elyrii',
-                    // Marque vectorielle aplatie : même poids et même teinte
-                    // que les pictogrammes des autres onglets.
-                    iconAsset: 'assets/brand/logo_monochrome.png',
-                    iconAssetSize: 26,
-                  ),
-                ],
-              ),
             ),
     );
   }

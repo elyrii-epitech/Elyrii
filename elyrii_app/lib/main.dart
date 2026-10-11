@@ -63,12 +63,6 @@ Future<AppDependencies> initializeApplication() async {
         ),
       );
     }
-    unawaited(
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ]),
-    );
     return dependencies;
   } catch (_) {
     if (dependencies != null) {
@@ -234,17 +228,14 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<ThemeProvider>();
-    final language = context.select<UserProvider, String>(
-      (value) => value.settings?.language ?? 'fr',
-    );
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: theme.themeMode,
-      locale: Locale(language == 'en' ? 'en' : 'fr'),
-      supportedLocales: const [Locale('fr'), Locale('en')],
+      locale: const Locale('fr'),
+      supportedLocales: const [Locale('fr')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

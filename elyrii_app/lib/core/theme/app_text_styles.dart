@@ -135,7 +135,7 @@ class AppTextStyles {
   static TextStyle bodySmall({Color? color, FontWeight? fontWeight}) {
     return _baseStyle.copyWith(
       fontSize: 12,
-      fontWeight: fontWeight ?? FontWeight.w400,
+      fontWeight: fontWeight ?? FontWeight.w500,
       color: color,
       height: 1.33,
       letterSpacing: 0.4,

@@ -321,10 +321,10 @@ class ReviewTrendChart extends StatelessWidget {
         .fold<int>(0, (max, value) => value > max ? value : max)
         .clamp(1, 9999)
         .toDouble();
-    return LiquidGlassCard(
+    final chart = LiquidGlassCard(
       padding: const EdgeInsets.all(16),
       child: SizedBox(
-        height: 180,
+        height: 140 + MediaQuery.textScalerOf(context).scale(14) * 4,
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -337,7 +337,7 @@ class ReviewTrendChart extends StatelessWidget {
                   : (isDark ? Colors.white24 : Colors.black12);
 
               return SizedBox(
-                width: 44,
+                width: 44 * (MediaQuery.textScalerOf(context).scale(11) / 11),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -356,7 +356,9 @@ class ReviewTrendChart extends StatelessWidget {
                       height: 108,
                       alignment: Alignment.bottomCenter,
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 200),
                         width: 16,
                         height: barHeight.clamp(6, 104).toDouble(),
                         decoration: BoxDecoration(
@@ -384,6 +386,23 @@ class ReviewTrendChart extends StatelessWidget {
           ),
         ),
       ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ExcludeSemantics(child: chart),
+        ExpansionTile(
+          title: const Text('Données du graphique des humeurs'),
+          children: [
+            for (final point in points)
+              ListTile(
+                title: Text(
+                  '${point.day} : ${point.count} humeur${point.count == 1 ? '' : 's'} enregistrée${point.count == 1 ? '' : 's'}',
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -474,65 +493,75 @@ class ReviewMoodDistributionList extends StatelessWidget {
       child: Column(
         children: items.map((item) {
           final percentage = total == 0 ? 0.0 : item.count / total;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _moodColor(item.moodType),
-                    shape: BoxShape.circle,
+          return Semantics(
+            container: true,
+            label:
+                '${_moodLabel(item.moodType)} : ${item.count} humeurs, ${(percentage * 100).round()} pour cent',
+            excludeSemantics: true,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _moodColor(item.moodType),
+                      shape: BoxShape.circle,
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _moodLabel(item.moodType),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      // Barre de progression déterminée : simple bloc coloré,
-                      // sans LinearProgressIndicator Material.
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: Container(
-                          height: 8,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.06)
-                              : Colors.black.withValues(alpha: 0.05),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: percentage.clamp(0.0, 1.0).toDouble(),
-                            child: Container(color: _moodColor(item.moodType)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _moodLabel(item.moodType),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 6),
+                        // Barre de progression déterminée : simple bloc coloré,
+                        // sans LinearProgressIndicator Material.
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            height: 8,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : Colors.black.withValues(alpha: 0.05),
+                            child: FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: percentage
+                                  .clamp(0.0, 1.0)
+                                  .toDouble(),
+                              child: Container(
+                                color: _moodColor(item.moodType),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '${item.count}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
+                  const SizedBox(width: 10),
+                  Text(
+                    '${item.count}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),
@@ -574,72 +603,80 @@ class ReviewActivityTimeline extends StatelessWidget {
         children: points.map((point) {
           final parsedDate = DateTime.tryParse(point.day);
           final total = point.moodLogs + point.journalEntries;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 88,
-                  child: Text(
-                    parsedDate != null
-                        ? _shortDateLabel(parsedDate)
-                        : point.day,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
+          return Semantics(
+            container: true,
+            label:
+                '${point.day} : ${point.moodLogs} humeurs et ${point.journalEntries} notes, total $total',
+            excludeSemantics: true,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 88,
+                    child: Text(
+                      parsedDate != null
+                          ? _shortDateLabel(parsedDate)
+                          : point.day,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textTertiaryDark
+                            : AppColors.textTertiaryLight,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Humeurs ${point.moodLogs}  Journal ${point.journalEntries}  Total $total',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Humeurs ${point.moodLogs}  Journal ${point.journalEntries}  Total $total',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimaryLight,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: point.moodLogs == 0 ? 1 : point.moodLogs,
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(
-                                  alpha: 0.75,
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: point.moodLogs == 0 ? 1 : point.moodLogs,
+                              child: Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.75,
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
                                 ),
-                                borderRadius: BorderRadius.circular(999),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            flex: point.journalEntries == 0
-                                ? 1
-                                : point.journalEntries,
-                            child: Container(
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.75),
-                                borderRadius: BorderRadius.circular(999),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              flex: point.journalEntries == 0
+                                  ? 1
+                                  : point.journalEntries,
+                              child: Container(
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.75,
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         }).toList(),

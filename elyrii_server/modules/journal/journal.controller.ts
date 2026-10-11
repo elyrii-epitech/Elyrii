@@ -73,6 +73,14 @@ class JournalController {
             }
         }
 
+        const limitParam = ctx.req.query('limit');
+        if (limitParam != null) {
+            const paging = z.object({limit: z.coerce.number().int().min(1).max(100), order: z.enum(['asc', 'desc']).default('desc'), cursorDate: z.iso.datetime().optional(), cursorId: z.uuid().optional()}).safeParse(ctx.req.query());
+            if (!paging.success || Boolean(paging.data.cursorDate) !== Boolean(paging.data.cursorId)) return ctx.json({error: 'Invalid pagination'}, 400);
+            const input = paging.data;
+            const cursor = input.cursorDate && input.cursorId ? {createdAt: new Date(input.cursorDate), id: input.cursorId} : undefined;
+            return ctx.json(await this.journalRepository.getPage(userID, input.limit, input.order, cursor, startDate, endDate));
+        }
         const entries = await this.journalRepository.getEntries(userID, startDate, endDate);
         return ctx.json(entries); 
     });
@@ -151,14 +159,16 @@ class JournalController {
         try {
             body["userId"] = userID;
             if (!body.userId) return ctx.json({ error: "User ID is required" }, 400);
-            const entry = await this.journalRepository.createEntryWithRelations({
+            const {wasCreated, ...entry} = await this.journalRepository.createEntryWithRelations({
                 ...body,
                 userId: userID as string,
                 tags: body.tags ?? [],
             });
             // Déclencher la vérification des défis en arrière-plan (non bloquant)
-            this.questLogic.checkAndUpdateProgress(userID, 'journal_created').catch(() => {});
-            this.userRepository.touchActivity(userID).catch(() => {});
+            if (wasCreated) {
+                this.questLogic.checkAndUpdateProgress(userID, 'journal_created').catch(() => {});
+                this.userRepository.touchActivity(userID).catch(() => {});
+            }
             return ctx.json({ message: "Entry created successfully", body: entry }, 201);
         } catch (error) {
             return ctx.json({ error: "Failed to create entry" }, 500);

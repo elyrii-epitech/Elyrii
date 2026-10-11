@@ -436,21 +436,19 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                     onEndTryOn: () => setState(() => _tryOn = null),
                     compact: compact,
                   );
-                  final editor = Column(
-                    children: [
-                      _tabBar(),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          controller: _editorScroll,
-                          padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
-                          child: IgnorePointer(
-                            ignoring: !_loaded || _saving,
-                            child: _editor(provider, progress, dark),
-                          ),
+                  final editor = SingleChildScrollView(
+                    controller: _editorScroll,
+                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
+                    child: Column(
+                      children: [
+                        _tabBar(),
+                        const SizedBox(height: 12),
+                        IgnorePointer(
+                          ignoring: !_loaded || _saving,
+                          child: _editor(provider, progress, dark),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                   return Padding(
                     padding: const EdgeInsets.fromLTRB(

@@ -1,3 +1,5 @@
+import '../../../../core/widgets/accessible_action.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -103,8 +105,9 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble> {
         ? AppColors.primary.withValues(alpha: 0.25)
         : Colors.white.withValues(alpha: 0.9);
 
-    return GestureDetector(
-      onTap: () {
+    return AccessibleAction(
+      label: 'Changer le message de la mascotte',
+      onPressed: () {
         ElyriiHaptics.light();
         widget.onTap?.call();
       },

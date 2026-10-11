@@ -15,6 +15,7 @@ Future<GoRouter> _pumpShell(
   bool dark = false,
   bool highContrast = false,
   bool reduceMotion = false,
+  double textScale = 1.5,
 }) async {
   tester.view.physicalSize = const Size(320, 568);
   tester.view.devicePixelRatio = 1;
@@ -45,7 +46,7 @@ Future<GoRouter> _pumpShell(
       theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(
-          textScaler: const TextScaler.linear(1.5),
+          textScaler: TextScaler.linear(textScale),
           highContrast: highContrast,
           disableAnimations: reduceMotion,
           padding: const EdgeInsets.only(top: 24, bottom: 20),
@@ -83,6 +84,55 @@ class _BranchViewState extends State<_BranchView> {
 }
 
 void main() {
+  testWidgets(
+    'six destinations remain reachable in the 300 percent navigation selector',
+    (tester) async {
+      await _pumpShell(
+        tester,
+        highContrast: true,
+        reduceMotion: true,
+        textScale: 3,
+      );
+      expect(find.byType(DropdownButtonFormField<int>), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.byType(ModalBarrier), findsWidgets);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      const labels = [
+        'Accueil',
+        'Jardin',
+        'Journal',
+        'Méditation',
+        'Coach',
+        'Chat Elyrii',
+      ];
+      for (var i = 0; i < labels.length; i++) {
+        await tester.tap(find.byType(DropdownButtonFormField<int>));
+        await tester.pumpAndSettle();
+        await tester.scrollUntilVisible(
+          find.text(labels[i]),
+          i < (i == 0 ? 3 : i - 1) ? -100 : 100,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(labels[i]).last);
+        await tester.pumpAndSettle();
+        expect(
+          find.text('Branche $i · 0'),
+          findsOneWidget,
+          reason: tester
+              .widgetList<Text>(find.byType(Text))
+              .map((w) => w.data)
+              .where((s) => s?.startsWith('Branche') ?? false)
+              .join(', '),
+        );
+        expect(tester.takeException(), isNull);
+      }
+    },
+  );
   for (final dark in [false, true]) {
     testWidgets('dock translucide en thème ${dark ? "sombre" : "clair"}', (
       tester,

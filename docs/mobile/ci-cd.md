@@ -20,7 +20,7 @@ le même SDK et Dart **3.13.3**.
 | iOS simulator technical build | Application debug de développement pour simulateur, runner macOS |
 | Frontend Android integration | Émulateur API 35, bootstrap, persistance et navigation avec les plugins natifs |
 | Frontend iOS integration | Simulateur iPhone disponible du runner macOS, bootstrap, persistance native et navigation |
-| Frontend API documentation | `dart doc`, artefact `dartdoc-html` conservé pour le pipeline documentaire |
+| Frontend API documentation | Dartdoc 9.0.11 épinglé, artefact `dartdoc-html` conservé pour le pipeline documentaire |
 
 Les builds et l’intégration dépendent du job qualité. Les protections de
 branche et les checks obligatoires doivent être configurés dans GitHub par
@@ -28,9 +28,10 @@ les administrateurs ; un fichier de workflow ne les active pas à lui seul.
 
 ## Compatibilité et intégration native
 
-Le wrapper Android utilise **Gradle 8.14.3**, avec Java 17, AGP 8.11.1 et
-Kotlin 2.2.20. Ces versions respectent les minima de Flutter 3.47.4 ; les
-vérifications de compatibilité du SDK restent actives.
+Le wrapper Android utilise **Gradle 8.14.3**, avec Java 17, AGP 8.12.1 et
+Kotlin 2.2.20. Ces versions respectent les minima de Flutter 3.47.4 et des
+plugins de partage/version installés ; les vérifications de compatibilité du
+SDK restent actives.
 
 Les parcours attendent la fin de l’écran de lancement et font défiler les
 contrôles avant de cliquer, afin de fonctionner sur les tailles d’écran des
@@ -57,7 +58,8 @@ flutter test --no-pub --coverage
 flutter build apk --debug --no-pub --dart-define=ELYRII_ENV=development
 flutter build ios --simulator --debug --no-pub --dart-define=ELYRII_ENV=development
 flutter test integration_test/frontend_flows_test.dart -d DEVICE_ID --dart-define=ELYRII_ENV=development
-dart doc --output doc/api
+dart pub global activate dartdoc 9.0.11
+dart pub global run dartdoc --output doc/api
 ```
 
 Android exige son SDK et iOS Xcode sur macOS. L’environnement Linux de

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'liquid_glass_button.dart';
 
 /// Bouton retour unifié de l'application : flèche iOS dans un bouton
-/// Liquid Glass de 44 px, identique sur toutes les pages.
+/// Liquid Glass de 48 px, identique sur toutes les pages.
 ///
 /// Sans [onPressed], exécute `Navigator.pop`.
 class ElyriiBackButton extends StatelessWidget {
@@ -17,7 +17,7 @@ class ElyriiBackButton extends StatelessWidget {
     return LiquidGlassIconButton(
       tooltip: 'Retour',
       icon: Icons.arrow_back_ios_new_rounded,
-      size: 44,
+      size: 48,
       color: color,
       onPressed: onPressed ?? () => Navigator.of(context).pop(),
     );

@@ -1,4 +1,5 @@
 class AppRoutes {
+  static const passwordReset = '/password-reset';
   static const String home = '/';
   static const String dashboard = '/dashboard';
   static const String reviews = '/reviews';

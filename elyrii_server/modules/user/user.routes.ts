@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { bodyLimit } from "hono/body-limit";
+import AccountController from "../account/account.controller";
 import UserController from "./user.controller";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import type { HonoEnv } from "../../utils/hono.types";
@@ -6,6 +8,7 @@ import type { HonoEnv } from "../../utils/hono.types";
 class UserRoutes {
     private readonly router = new Hono<HonoEnv>();
     private readonly userController = new UserController();
+    private readonly accountController = new AccountController();
 
     constructor() {
         this.initRoutes();
@@ -14,6 +17,10 @@ class UserRoutes {
     private initRoutes() {
         this.router.get("/health", (c) => c.text("User Service Healthy"));
         this.router.use("*", authMiddleware);
+        this.router.get("/export", ...this.accountController.export);
+        this.router.post("/ai-reports", bodyLimit({maxSize: 96 * 1024}), ...this.accountController.report);
+        this.router.get("/moderation/reports", ...this.accountController.queue);
+        this.router.put("/moderation/reports/:reportId", bodyLimit({maxSize: 128}), ...this.accountController.review);
         this.router.get("/me", ...this.userController.getMe);
         this.router.put("/me", ...this.userController.updateMe);
         this.router.post("/avatar", ...this.userController.uploadAvatar);

@@ -28,6 +28,12 @@ Elyrii mobile is a Flutter well-being companion app with:
 
 ## Documentation Pages
 
+### [Audit frontend 2027 — corrections](../audits/frontend-2027/implementation.md)
+
+Suivi des 30 constats, exclusions, preuves et préconditions de livraison.
+Le [dossier d’accessibilité](../audits/frontend-2027/accessibilite.md) détaille
+les mesures et le protocole TalkBack/VoiceOver pour l’évaluation.
+
 ### [Architecture](architecture.md)
 
 Code structure, providers, navigation, backend flows, storage, and security.

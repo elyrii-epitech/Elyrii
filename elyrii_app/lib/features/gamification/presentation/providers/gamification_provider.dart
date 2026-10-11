@@ -14,6 +14,7 @@ class GamificationProvider extends ChangeNotifier {
   bool _demo = false;
   int _sessionRevision = 0;
   int _loadRevision = 0;
+  final Set<String> _rejectedProposalIds = {};
   Future<void>? _loadFuture;
   final Set<String> _commands = {};
   bool _disposed = false;
@@ -58,6 +59,7 @@ class GamificationProvider extends ChangeNotifier {
     _loadRevision++;
     _loadFuture = null;
     _commands.clear();
+    _rejectedProposalIds.clear();
     _userId = null;
     _demo = false;
     _availableChallenges = const [];
@@ -141,7 +143,11 @@ class GamificationProvider extends ChangeNotifier {
       _completedChallenges = List.unmodifiable(
         results[2] as List<UserChallenge>,
       );
-      _proposals = List.unmodifiable(results[3] as List<UserChallenge>);
+      _proposals = List.unmodifiable(
+        (results[3] as List<UserChallenge>).where(
+          (proposal) => !_rejectedProposalIds.contains(proposal.id),
+        ),
+      );
     } catch (e) {
       if (session == _sessionRevision && request == _loadRevision) {
         _error = e is ApiException
@@ -210,6 +216,7 @@ class GamificationProvider extends ChangeNotifier {
     try {
       await _repository.rejectChallenge(challengeId);
       if (session != _sessionRevision) return false;
+      _rejectedProposalIds.add(challengeId);
       _proposals = List.unmodifiable(
         _proposals.where((c) => c.id != challengeId),
       );

@@ -9,7 +9,7 @@ class AppColors {
 
   /// Couleur principale de l'application.
   /// Lavande apaisée, utilisée comme accent plutôt que comme ambiance dominante.
-  static const Color primary = Color(0xFF6752BC);
+  static const Color primary = Color(0xFF6050A5);
   static const Color primaryLight = Color(0xFFEDE8FF); // Lavande très pâle
   static const Color primaryDark = Color(
     0xFFA99AF0,
@@ -40,6 +40,17 @@ class AppColors {
   static const Color errorLight = Color(0xFFF5CCCC);
   static const Color errorDark = Color(0xFFFFB4AB);
 
+  static Color successText(bool isDark) =>
+      isDark ? const Color(0xFF8DD5A8) : const Color(0xFF286B41);
+  static Color errorText(bool isDark) => isDark ? errorDark : error;
+  static Color primaryText(bool isDark) => isDark ? primaryDark : primary;
+
+  /// Boundaries of enabled controls must remain distinguishable from surfaces.
+  static const Color controlOutlineLight = Color(0xFF6C6258);
+  static const Color controlOutlineDark = Color(0xFFA39C96);
+  static Color controlOutline(bool isDark) =>
+      isDark ? controlOutlineDark : controlOutlineLight;
+
   static const Color warning = Color(0xFFFFCFA8);
   static const Color warningLight = Color(0xFFFFE7D1);
   static const Color warningDark = Color(0xFFFFB888);
@@ -58,8 +69,8 @@ class AppColors {
   static const Color cardLight = Color(0xFFF5F2EF); // Crème doux
 
   static const Color textPrimaryLight = Color(0xFF3D3A38);
-  static const Color textSecondaryLight = Color(0xFF675F5B);
-  static const Color textTertiaryLight = Color(0xFF6E6660);
+  static const Color textSecondaryLight = Color(0xFF514B47);
+  static const Color textTertiaryLight = Color(0xFF5A524D);
 
   static const Color dividerLight = Color(0xFFE8E3DD);
   static const Color borderLight = Color(0xFFD9D2CC);
@@ -156,16 +167,16 @@ class AppColors {
 
   /// Preserve pastel hues in decoration while keeping text readable.
   static Color readableAccent(Color color, {required bool isDark}) {
-    final background = isDark ? scaffoldDark : scaffoldLight;
+    final background = isDark ? cardDark : scaffoldLight;
     final luminance = background.computeLuminance();
-    var hsl = HSLColor.fromColor(color);
+    var hsl = HSLColor.fromColor(color.withValues(alpha: 1));
     if (!isDark) hsl = hsl.withSaturation(hsl.saturation.clamp(0.0, 0.5));
     for (var i = 0; i < 40; i++) {
       final foreground = hsl.toColor().computeLuminance();
       final ratio = foreground > luminance
           ? (foreground + 0.05) / (luminance + 0.05)
           : (luminance + 0.05) / (foreground + 0.05);
-      if (ratio >= 4.5) return hsl.toColor();
+      if (ratio >= 7.0) return hsl.toColor();
       hsl = hsl.withLightness(
         (hsl.lightness + (isDark ? 0.025 : -0.025)).clamp(0.0, 1.0),
       );

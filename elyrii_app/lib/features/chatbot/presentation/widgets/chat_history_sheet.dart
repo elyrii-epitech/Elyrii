@@ -68,12 +68,17 @@ class ChatHistorySheet extends StatelessWidget {
                           provider.startNewConversation();
                           Navigator.pop(context);
                         },
-                        child: const Text(
+                        child: Text(
                           'Nouvelle',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
+                            color: AppColors.readableAccent(
+                              AppColors.primary,
+                              isDark:
+                                  Theme.of(context).brightness ==
+                                  Brightness.dark,
+                            ),
                           ),
                         ),
                       ),

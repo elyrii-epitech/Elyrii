@@ -25,6 +25,7 @@ class ChatMessageBubble extends StatelessWidget {
   final DateTime timestamp;
   final MessageDelivery delivery;
   final VoidCallback? onRetry;
+  final VoidCallback? onReport;
 
   const ChatMessageBubble({
     super.key,
@@ -33,6 +34,7 @@ class ChatMessageBubble extends StatelessWidget {
     required this.timestamp,
     this.delivery = MessageDelivery.delivered,
     this.onRetry,
+    this.onReport,
   });
 
   @override
@@ -129,7 +131,7 @@ class ChatMessageBubble extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Elyrii',
+                  'Elyrii · IA',
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
@@ -139,17 +141,26 @@ class ChatMessageBubble extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                SelectableText(
-                  message,
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                    fontSize: 15.5,
-                    height: 1.55,
-                    fontWeight: FontWeight.w400,
+                Semantics(
+                  label: 'Réponse de l’assistant IA',
+                  child: SelectableText(
+                    message,
+                    style: TextStyle(
+                      color: isDark
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimaryLight,
+                      fontSize: 15.5,
+                      height: 1.55,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
+                if (onReport != null)
+                  TextButton.icon(
+                    onPressed: onReport,
+                    icon: const Icon(Icons.flag_outlined),
+                    label: const Text('Signaler cette réponse'),
+                  ),
               ],
             ),
           ),

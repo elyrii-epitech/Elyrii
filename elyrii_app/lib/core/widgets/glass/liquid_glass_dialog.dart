@@ -19,9 +19,12 @@ Future<T?> showLiquidGlassDialog<T>({
   return showGeneralDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    barrierLabel: 'Dismiss',
+    barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    requestFocus: true,
     barrierColor: Colors.black.withValues(alpha: 0.4),
-    transitionDuration: const Duration(milliseconds: 300),
+    transitionDuration: MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 300),
     pageBuilder: (context, animation, secondaryAnimation) {
       return LiquidGlassDialogContent(
         title: title,
@@ -75,57 +78,70 @@ class LiquidGlassDialogContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 40),
-        constraints: const BoxConstraints(maxWidth: 320),
-        child: ElyriiGlassSurface(
-          role: GlassRole.dialog,
-          borderRadius: BorderRadius.circular(20),
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: ElyriiGlassSurface(
+                role: GlassRole.dialog,
+                borderRadius: BorderRadius.circular(20),
+                child: Material(
+                  color: Colors.transparent,
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (title != null) ...[
-                        Text(
-                          title!,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                          textAlign: TextAlign.center,
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                        child: Column(
+                          children: [
+                            if (title != null) ...[
+                              Semantics(
+                                header: true,
+                                namesRoute: true,
+                                child: Text(
+                                  title!,
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? Colors.white : Colors.black,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            DefaultTextStyle(
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.7)
+                                    : Colors.black.withValues(alpha: 0.6),
+                              ),
+                              textAlign: TextAlign.center,
+                              child: child,
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
-                      ],
-                      DefaultTextStyle(
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.7)
-                              : Colors.black.withValues(alpha: 0.6),
-                        ),
-                        textAlign: TextAlign.center,
-                        child: child,
                       ),
+                      if (actions != null && actions!.isNotEmpty) ...[
+                        Divider(
+                          height: 0.5,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.15)
+                              : Colors.black.withValues(alpha: 0.1),
+                        ),
+                        _buildActions(context, isDark),
+                      ],
                     ],
                   ),
                 ),
-                if (actions != null && actions!.isNotEmpty) ...[
-                  Divider(
-                    height: 0.5,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.15)
-                        : Colors.black.withValues(alpha: 0.1),
-                  ),
-                  _buildActions(context, isDark),
-                ],
-              ],
+              ),
             ),
           ),
         ),
@@ -134,7 +150,9 @@ class LiquidGlassDialogContent extends StatelessWidget {
   }
 
   Widget _buildActions(BuildContext context, bool isDark) {
-    if (actions!.length == 2) {
+    if (actions!.length == 2 &&
+        MediaQuery.textScalerOf(context).scale(14) < 21 &&
+        MediaQuery.sizeOf(context).width >= 360) {
       return IntrinsicHeight(
         child: Row(
           children: [
@@ -176,17 +194,19 @@ class LiquidGlassDialogContent extends StatelessWidget {
     LiquidGlassDialogAction action,
     bool isDark,
   ) {
-    Color textColor;
-    if (action.isDestructive) {
-      textColor = Colors.red;
-    } else if (action.isDefault) {
-      textColor = Theme.of(context).primaryColor;
-    } else {
-      textColor = Theme.of(context).primaryColor;
-    }
+    final textColor = action.isDestructive
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.primary;
 
-    return InkWell(
-      onTap: () {
+    return TextButton(
+      style: TextButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+        foregroundColor: action.isDestructive
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.primary,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      onPressed: () {
         ElyriiHaptics.light();
         action.onPressed();
       },

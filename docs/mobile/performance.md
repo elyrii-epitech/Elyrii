@@ -31,7 +31,10 @@ aucun gain de mémoire GPU lié aux textures n’est revendiqué.
 - Collection de messages exposée en vue non modifiable stable ; le rendu ne
   recopie pas tout l’historique pour accéder à un élément.
 - Journal et historique : construction des cartes à la demande. Le réseau du
-  journal n’est pas paginé côté serveur dans cette passe.
+  journal est désormais paginé côté serveur et en cache local par 100 notes,
+  depuis les [corrections du 10 octobre 2026](../audits/frontend-2027/implementation.md).
+  Le test sur 10 000 notes mesure le travail borné de déchiffrement sous SQLite
+  FFI ; ses temps ne constituent pas une mesure sur téléphone.
 - Dashboard : abonnements ciblés aux parties d’état affichées.
 - Mascotte : pause hors écran, prise en compte du cycle de vie et des animations
   réduites, destruction du viewer après 15 secondes hors écran puis recréation

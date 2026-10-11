@@ -9,6 +9,7 @@ import '../widgets/chat_history_sheet.dart';
 import '../widgets/chat_message_bubble.dart';
 import '../widgets/conversation_suggestions.dart';
 import '../widgets/crisis_detection_banner.dart';
+import '../widgets/ai_report_sheet.dart';
 import '../widgets/emergency_resources_button.dart';
 import '../widgets/typing_indicator.dart';
 
@@ -39,7 +40,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
   void _handleTextChanged() {
     final text = _textController.text;
     final hasText = text.trim().isNotEmpty;
-    final showCrisisBanner = text.isNotEmpty && containsCrisisKeyword(text);
+    final showCrisisBanner = _showCrisisBanner || containsCrisisKeyword(text);
     if (_hasText != hasText || _showCrisisBanner != showCrisisBanner) {
       setState(() {
         _hasText = hasText;
@@ -304,8 +305,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       'Un soutien au quotidien, pas un suivi médical.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 14,
                         height: 1.4,
+                        fontWeight: FontWeight.w500,
                         color: isDark
                             ? AppColors.textTertiaryDark
                             : AppColors.textSecondaryLight,
@@ -367,6 +369,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
             ChatMessageBubble(
               key: ValueKey(message.id),
               delivery: message.delivery,
+              onReport: message.isUser
+                  ? null
+                  : () => showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      builder: (_) => AiReportSheet(
+                        message: message,
+                        conversationId:
+                            context.read<ChatbotProvider>().activeSessionId ??
+                            'default',
+                      ),
+                    ),
               onRetry: () =>
                   context.read<ChatbotProvider>().retryMessage(message.id),
               message: message.content,
@@ -488,6 +503,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       color: foreground,
                     ),
                     decoration: InputDecoration(
+                      labelText: 'Message à l’assistant IA',
                       hintText: 'Message à Elyrii',
                       hintMaxLines: 1,
                       hintStyle: TextStyle(
@@ -507,7 +523,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 6,
-                        vertical: 10,
+                        vertical: 14,
                       ),
                     ),
                   ),

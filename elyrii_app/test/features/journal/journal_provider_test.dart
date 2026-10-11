@@ -23,6 +23,7 @@ class _Repository extends JournalRepository {
 
   @override
   Future<JournalEntryModel> createEntry({
+    String? clientRequestId,
     required String title,
     String? content,
     String? mood,

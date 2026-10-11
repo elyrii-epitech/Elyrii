@@ -38,11 +38,21 @@ class JournalStore {
   Future<Database> _open() async => _factory.openDatabase(
     _path ?? await LocalDatabase.path('elyrii_journal_v3.db', _factory),
     options: OpenDatabaseOptions(
-      version: 1,
+      version: 2,
       singleInstance: false,
+      onUpgrade: (db, old, _) async {
+        if (old < 2) {
+          await db.execute(
+            'CREATE INDEX IF NOT EXISTS journal_page_idx ON entries(owner, createdAt, id)',
+          );
+        }
+      },
       onCreate: (db, _) async {
         await db.execute(
           'CREATE TABLE entries(owner TEXT NOT NULL, id TEXT NOT NULL, data TEXT NOT NULL, createdAt TEXT NOT NULL, PRIMARY KEY(owner,id))',
+        );
+        await db.execute(
+          'CREATE INDEX journal_page_idx ON entries(owner, createdAt, id)',
         );
         await db.execute('CREATE TABLE snapshots(owner TEXT PRIMARY KEY)');
         await db.execute(
@@ -74,7 +84,7 @@ class JournalStore {
     return {
       'owner': owner,
       'id': entry.id,
-      'createdAt': entry.createdAt.toIso8601String(),
+      'createdAt': entry.createdAt.toUtc().toIso8601String(),
       'data': await cipher.seal(
         owner,
         jsonEncode(entry.toCacheJson()),
@@ -153,14 +163,30 @@ class JournalStore {
     )).isNotEmpty;
   }
 
-  Future<List<JournalEntryModel>> read(String owner) async {
+  Future<List<JournalEntryModel>> read(
+    String owner, {
+    int? limit,
+    int offset = 0,
+    bool newestFirst = true,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     await _migrate(owner);
     await _writes;
     final rows = await (await _db).query(
       'entries',
-      where: 'owner = ?',
-      whereArgs: [owner],
-      orderBy: 'createdAt DESC',
+      where:
+          'owner = ?${startDate == null ? '' : ' AND createdAt >= ?'}${endDate == null ? '' : ' AND createdAt <= ?'}',
+      whereArgs: [
+        owner,
+        if (startDate != null) startDate.toUtc().toIso8601String(),
+        if (endDate != null) endDate.toUtc().toIso8601String(),
+      ],
+      orderBy: newestFirst
+          ? 'createdAt DESC, id DESC'
+          : 'createdAt ASC, id ASC',
+      limit: limit,
+      offset: offset,
     );
     return [
       for (final row in rows)
@@ -184,6 +210,8 @@ class JournalStore {
     _ensureOwner(owner);
     if (revision(owner) != expectedRevision) return;
     final rows = [for (final entry in entries) await _row(owner, entry)];
+    _ensureOwner(owner);
+    if (revision(owner) != expectedRevision) return;
     await db.transaction((txn) async {
       await txn.delete('entries', where: 'owner = ?', whereArgs: [owner]);
       for (final row in rows) {
@@ -194,6 +222,46 @@ class JournalStore {
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
     });
   });
+  Future<void> mergePage(
+    String owner,
+    List<JournalEntryModel> entries, {
+    required int expectedRevision,
+  }) => _write((db) async {
+    _ensureOwner(owner);
+    if (revision(owner) != expectedRevision) return;
+    final rows = [for (final entry in entries) await _row(owner, entry)];
+    _ensureOwner(owner);
+    if (revision(owner) != expectedRevision) return;
+    await db.transaction((tx) async {
+      for (final row in rows) {
+        await tx.insert(
+          'entries',
+          row,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      await tx.insert('snapshots', {
+        'owner': owner,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
+    });
+  });
+  Future<int> count(
+    String owner, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    await _writes;
+    final rows = await (await _db).rawQuery(
+      'SELECT count(*) AS count FROM entries WHERE owner = ?${startDate == null ? '' : ' AND createdAt >= ?'}${endDate == null ? '' : ' AND createdAt <= ?'}',
+      [
+        owner,
+        if (startDate != null) startDate.toUtc().toIso8601String(),
+        if (endDate != null) endDate.toUtc().toIso8601String(),
+      ],
+    );
+    return rows.single['count'] as int;
+  }
+
   Future<void> upsert(String owner, JournalEntryModel entry) {
     _revisions[owner] = revision(owner) + 1;
     return _write((db) async {
@@ -272,6 +340,29 @@ class JournalStore {
         }
       }),
     );
+  }
+
+  Future<List<Map<String, dynamic>>> exportDrafts(String owner) async {
+    await _writes;
+    if (_removedOwners.contains(owner)) return const [];
+    final rows = await (await _db).query(
+      'drafts',
+      where: 'owner = ?',
+      whereArgs: [owner],
+    );
+    return [
+      for (final row in rows)
+        {
+          'id': row['id'],
+          'data': jsonDecode(
+            await cipher.open(
+              owner,
+              row['data'] as String,
+              purpose: 'draft:${row['id']}',
+            ),
+          ),
+        },
+    ];
   }
 
   Future<void> close() async {

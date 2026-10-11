@@ -13,14 +13,30 @@ class ElyriiPageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
     bottom: false,
-    child: Column(
-      children: [
-        Padding(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final title = Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: header,
-        ),
-        Expanded(child: child),
-      ],
+        );
+        final needsScrolling =
+            MediaQuery.textScalerOf(context).scale(14) > 21 ||
+            constraints.maxHeight < 400;
+        if (!needsScrolling) {
+          return Column(
+            children: [
+              title,
+              Expanded(child: child),
+            ],
+          );
+        }
+        return CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: title),
+            SliverFillRemaining(hasScrollBody: true, child: child),
+          ],
+        );
+      },
     ),
   );
 }
@@ -50,12 +66,11 @@ class ElyriiPageHeader extends StatelessWidget {
         Expanded(
           child: Column(
             children: [
-              // Only the title scales down if a long name runs out of room.
-              FittedBox(
-                fit: BoxFit.scaleDown,
+              Semantics(
+                header: true,
                 child: Text(
                   title,
-                  maxLines: 1,
+                  textAlign: TextAlign.center,
                   style: AppTextStyles.titleLarge(
                     color: isDark
                         ? AppColors.textPrimaryDark

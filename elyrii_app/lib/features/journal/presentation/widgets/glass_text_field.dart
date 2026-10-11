@@ -42,6 +42,7 @@ class GlassTextField extends StatelessWidget {
           height: 1.5,
         ),
         decoration: InputDecoration(
+          labelText: hint,
           hintText: hint,
           hintStyle: TextStyle(
             color: isDark

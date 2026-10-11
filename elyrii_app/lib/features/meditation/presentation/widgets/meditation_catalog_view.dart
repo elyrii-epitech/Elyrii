@@ -162,9 +162,8 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
           ),
         ),
         const SizedBox(height: 4),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
+        Semantics(
+          header: true,
           child: Text(
             'Méditation',
             style: TextStyle(
@@ -297,12 +296,16 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Commencer',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: selected == null ? text.withValues(alpha: 0.4) : text,
+              Flexible(
+                child: Text(
+                  'Commencer',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: selected == null
+                        ? text.withValues(alpha: 0.4)
+                        : text,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),

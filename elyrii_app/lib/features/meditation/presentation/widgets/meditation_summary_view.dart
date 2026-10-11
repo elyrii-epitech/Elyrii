@@ -184,9 +184,12 @@ class MeditationSummaryView extends StatelessWidget {
                           Text(
                             mood.label,
                             style: AppTextStyles.labelSmall(
-                              color: selected
-                                  ? AppColors.primary
-                                  : subtitleColor,
+                              color: AppColors.readableAccent(
+                                selected ? AppColors.primary : subtitleColor,
+                                isDark:
+                                    Theme.of(context).brightness ==
+                                    Brightness.dark,
+                              ),
                               fontWeight: selected
                                   ? FontWeight.w700
                                   : FontWeight.w500,
@@ -229,7 +232,11 @@ class MeditationSummaryView extends StatelessWidget {
                       Text(
                         'Nouvelle séance',
                         style: AppTextStyles.labelLarge(
-                          color: AppColors.primary,
+                          color: AppColors.readableAccent(
+                            AppColors.primary,
+                            isDark:
+                                Theme.of(context).brightness == Brightness.dark,
+                          ),
                           fontWeight: FontWeight.w700,
                         ),
                       ),

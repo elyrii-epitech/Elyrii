@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/login_page.dart';
+import '../../features/auth/presentation/pages/password_reset_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/chatbot/presentation/pages/chatbot_page.dart';
@@ -55,7 +56,9 @@ abstract final class AppRouter {
         final isAuthenticated = authProvider.isAuthenticated;
         final location = state.matchedLocation;
         final isAuthRoute =
-            location == AppRoutes.login || location == AppRoutes.register;
+            location == AppRoutes.login ||
+            location == AppRoutes.register ||
+            location == AppRoutes.passwordReset;
         final setupDone = profileSetupDone.value;
 
         // Utilisateur non connecté tentant d'accéder à l'application
@@ -141,6 +144,10 @@ abstract final class AppRouter {
           ],
         ),
 
+        GoRoute(
+          path: AppRoutes.passwordReset,
+          builder: (context, state) => const PasswordResetPage(),
+        ),
         // Routes d'authentification
         GoRoute(
           path: AppRoutes.login,

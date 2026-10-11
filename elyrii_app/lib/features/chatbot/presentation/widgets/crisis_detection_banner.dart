@@ -4,27 +4,45 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 
-/// Crisis keywords in French that may indicate the user is in distress.
-const List<String> _crisisKeywords = [
-  'suicide',
-  'suicidaire',
-  'mourir',
-  'finir ma vie',
-  'ne plus en pouvoir',
-  'automutilation',
-  'me faire du mal',
-  'mettre fin',
-  'sauter',
-  'avaler',
-];
-
-/// Checks whether [text] contains any crisis keyword.
+/// Conservative French cues for offering help, not a clinical assessment.
+/// Ordinary verbs such as “sauter” and “avaler” are not distress signals alone.
 bool containsCrisisKeyword(String text) {
-  final lowered = text.toLowerCase();
-  for (final keyword in _crisisKeywords) {
-    if (lowered.contains(keyword)) return true;
-  }
-  return false;
+  final normalized = text
+      .toLowerCase()
+      .replaceAll(RegExp('[àâä]'), 'a')
+      .replaceAll(RegExp('[éèêë]'), 'e')
+      .replaceAll(RegExp('[îï]'), 'i')
+      .replaceAll(RegExp('[ôö]'), 'o')
+      .replaceAll(RegExp('[ùûü]'), 'u')
+      .replaceAll('’', "'")
+      .replaceAll(RegExp(r"[^a-z0-9']+"), ' ');
+  const phrases = [
+    'suicide',
+    'suicidaire',
+    'automutilation',
+    'me faire du mal',
+    'finir ma vie',
+    'mettre fin a ma vie',
+    'mettre fin a mes jours',
+    'je veux en finir',
+    "j'ai envie d'en finir",
+    'je ne veux plus vivre',
+    'je veux mourir',
+    "j'ai envie de mourir",
+    'je vais me tuer',
+    'je veux me tuer',
+    'sauter du pont',
+    'sauter par la fenetre',
+    'avaler tous mes medicaments',
+    'avaler des medicaments pour mourir',
+    "je n'en peux plus",
+    'je ne peux plus continuer',
+  ];
+  return phrases.any(
+    (phrase) =>
+        RegExp(r'(?:^| )' + RegExp.escape(phrase) + r'(?: |$)')
+            .hasMatch(normalized),
+  );
 }
 
 /// A non-intrusive but visible banner that slides down smoothly when the
@@ -47,16 +65,25 @@ class CrisisDetectionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      height: visible ? null : 0.0,
-      clipBehavior: Clip.hardEdge,
-      decoration: const BoxDecoration(),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: visible ? 1.0 : 0.0,
-        child: _buildBannerContent(context, isDark),
+    if (!visible) return const SizedBox.shrink();
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: AnimatedContainer(
+        duration: MediaQuery.of(context).disableAnimations
+            ? Duration.zero
+            : const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        height: visible ? null : 0.0,
+        clipBehavior: Clip.hardEdge,
+        decoration: const BoxDecoration(),
+        child: AnimatedOpacity(
+          duration: MediaQuery.of(context).disableAnimations
+              ? Duration.zero
+              : const Duration(milliseconds: 300),
+          opacity: visible ? 1.0 : 0.0,
+          child: _buildBannerContent(context, isDark),
+        ),
       ),
     );
   }

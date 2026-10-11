@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('design unifié : flèche iOS dans un LiquidGlassIconButton 44', (
+  testWidgets('design unifié : flèche iOS dans un LiquidGlassIconButton 48', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -17,7 +17,7 @@ void main() {
       find.byType(LiquidGlassIconButton),
     );
     expect(button.icon, Icons.arrow_back_ios_new_rounded);
-    expect(button.size, 44);
+    expect(button.size, 48);
   });
 
   testWidgets('sans onPressed : tap revient à la page précédente', (

@@ -1,34 +1,37 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/theme/app_text_styles.dart';
-
-/// Champ de formulaire d'authentification au style iOS natif.
-///
-/// - Bordures subtiles (1 px) sans halo au focus,
-/// - icône de préfixe, effacement rapide du texte (✕),
-/// - bascule de visibilité pour les mots de passe,
-/// - validation inline sous le champ.
+/// Native form semantics connect the visible label, input and validation.
 class GlassAuthTextField extends StatefulWidget {
+  const GlassAuthTextField({
+    super.key,
+    required this.controller,
+    required this.label,
+    this.hint = '',
+    required this.prefixIcon,
+    this.isPassword = false,
+    this.validator,
+    this.keyboardType = TextInputType.text,
+    this.textInputAction = TextInputAction.next,
+    this.autofillHints,
+    this.onSubmitted,
+    this.enabled = true,
+    this.helperText,
+    this.textCapitalization = TextCapitalization.none,
+  });
+
   final TextEditingController controller;
+  final String label;
   final String hint;
   final IconData prefixIcon;
   final bool isPassword;
   final String? Function(String?)? validator;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
-
-  const GlassAuthTextField({
-    super.key,
-    required this.controller,
-    required this.hint,
-    required this.prefixIcon,
-    this.isPassword = false,
-    this.validator,
-    this.keyboardType = TextInputType.text,
-    this.textInputAction = TextInputAction.next,
-  });
+  final Iterable<String>? autofillHints;
+  final ValueChanged<String>? onSubmitted;
+  final bool enabled;
+  final String? helperText;
+  final TextCapitalization textCapitalization;
 
   @override
   State<GlassAuthTextField> createState() => _GlassAuthTextFieldState();
@@ -36,19 +39,20 @@ class GlassAuthTextField extends StatefulWidget {
 
 class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
   bool _obscureText = true;
-  final FocusNode _focusNode = FocusNode();
-  bool _isFocused = false;
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      if (mounted) {
-        setState(() => _isFocused = _focusNode.hasFocus);
-      }
-    });
-    // Rebuild léger pour afficher/masquer le bouton d'effacement.
     widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void didUpdateWidget(GlassAuthTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onTextChanged);
+      widget.controller.addListener(_onTextChanged);
+    }
   }
 
   void _onTextChanged() {
@@ -58,136 +62,105 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
   @override
   void dispose() {
     widget.controller.removeListener(_onTextChanged);
-    _focusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasText = widget.controller.text.isNotEmpty;
-
-    return FormField<String>(
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
+    return TextFormField(
+      controller: widget.controller,
+      enabled: widget.enabled,
+      obscureText: widget.isPassword && _obscureText,
+      keyboardType: widget.keyboardType,
+      textInputAction: widget.textInputAction,
+      textCapitalization: widget.textCapitalization,
+      autofillHints: widget.autofillHints,
+      onFieldSubmitted: widget.onSubmitted,
       validator: widget.validator,
-      initialValue: widget.controller.text,
-      builder: (FormFieldState<String> state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              decoration: BoxDecoration(
-                // Fond rempli discret : chaque champ est une surface
-                // contenue (façon Réglages iOS) au lieu d'un rectangle
-                // nu posé sur la carte de verre.
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.06)
-                    : Colors.black.withValues(alpha: 0.035),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-                border: Border.all(
-                  color: state.hasError
-                      ? AppColors.error
-                      : (_isFocused
-                            ? AppColors.primary
-                            : (isDark
-                                  ? Colors.white.withValues(alpha: 0.12)
-                                  : Colors.black.withValues(alpha: 0.10))),
-                  width: _isFocused || state.hasError ? 1.5 : 1,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      autocorrect:
+          !widget.isPassword &&
+          widget.keyboardType != TextInputType.emailAddress,
+      enableSuggestions: !widget.isPassword,
+      enableIMEPersonalizedLearning: !widget.isPassword,
+      style: TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: 16,
+        color: scheme.onSurface,
+      ),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        hintText: widget.hint.isEmpty ? null : widget.hint,
+        helperText: widget.helperText,
+        helperMaxLines: 30,
+        errorMaxLines: 30,
+        labelStyle: TextStyle(color: scheme.onSurfaceVariant),
+        hintStyle: TextStyle(color: scheme.onSurfaceVariant),
+        errorStyle: TextStyle(color: scheme.error),
+        filled: true,
+        fillColor: dark
+            ? Colors.white.withValues(alpha: .06)
+            : Colors.black.withValues(alpha: .035),
+        prefixIcon: ExcludeSemantics(
+          child: Icon(
+            widget.prefixIcon,
+            size: 20,
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 48,
+          minHeight: 48,
+        ),
+        suffixIconConstraints: const BoxConstraints(
+          minWidth: 48,
+          minHeight: 48,
+        ),
+        suffixIcon: widget.isPassword
+            ? IconButton(
+                tooltip: _obscureText
+                    ? 'Afficher le mot de passe'
+                    : 'Masquer le mot de passe',
+                onPressed: widget.enabled
+                    ? () => setState(() => _obscureText = !_obscureText)
+                    : null,
+                icon: Icon(
+                  _obscureText
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
                 ),
-              ),
-              child: TextField(
-                controller: widget.controller,
-                focusNode: _focusNode,
-                obscureText: widget.isPassword ? _obscureText : false,
-                keyboardType: widget.keyboardType,
-                textInputAction: widget.textInputAction,
-                onChanged: state.didChange,
-                style: AppTextStyles.bodyMedium(
-                  color: isDark ? Colors.white : Colors.black,
-                ).copyWith(fontWeight: FontWeight.w500),
-                decoration: InputDecoration(
-                  // Le thème global remplit les champs d'un blanc opaque
-                  // (surfaceLight/surfaceDark) : sur une carte de verre,
-                  // cela dessine des rectangles qui débordent visuellement.
-                  // Le fond du conteneur ci-dessus fournit la surface.
-                  filled: true,
-                  fillColor: Colors.transparent,
-                  hintText: widget.hint,
-                  hintStyle: AppTextStyles.inputHint().copyWith(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.4)
-                        : Colors.black.withValues(alpha: 0.35),
-                  ),
-                  prefixIcon: Icon(
-                    widget.prefixIcon,
-                    size: 20,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.45)
-                        : Colors.black.withValues(alpha: 0.40),
-                  ),
-                  prefixIconConstraints: const BoxConstraints(
-                    minWidth: 46,
-                    minHeight: 46,
-                  ),
-                  suffixIcon: widget.isPassword
-                      ? IconButton(
-                          icon: Icon(
-                            _obscureText
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.55)
-                                : Colors.black.withValues(alpha: 0.55),
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureText = !_obscureText;
-                            });
-                          },
-                        )
-                      : hasText
-                      ? IconButton(
-                          tooltip: 'Effacer',
-                          icon: Icon(
-                            Icons.cancel_rounded,
-                            size: 18,
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.35)
-                                : Colors.black.withValues(alpha: 0.30),
-                          ),
-                          onPressed: () {
-                            widget.controller.clear();
-                            state.didChange('');
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingMd,
-                    vertical: AppDimensions.paddingMd,
-                  ),
-                ),
-              ),
-            ),
-            if (state.hasError)
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: AppDimensions.spacingXs,
-                  left: AppDimensions.paddingMd,
-                ),
-                child: Text(
-                  state.errorText!,
-                  style: AppTextStyles.bodySmall(color: AppColors.error),
-                ),
-              ),
-          ],
-        );
-      },
+              )
+            : widget.controller.text.isNotEmpty
+            ? IconButton(
+                tooltip: 'Effacer ${widget.label.toLowerCase()}',
+                onPressed: widget.enabled ? widget.controller.clear : null,
+                icon: const Icon(Icons.cancel_outlined),
+              )
+            : null,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.error, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: scheme.error, width: 2),
+        ),
+      ),
     );
   }
 }

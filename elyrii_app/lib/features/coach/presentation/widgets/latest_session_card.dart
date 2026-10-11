@@ -106,7 +106,10 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
             child: Text(
               _expanded ? 'Réduire' : 'Lire la suite',
               style: AppTextStyles.labelMedium(
-                color: AppColors.primary,
+                color: AppColors.readableAccent(
+                  AppColors.primary,
+                  isDark: Theme.of(context).brightness == Brightness.dark,
+                ),
                 fontWeight: FontWeight.w600,
               ),
             ),

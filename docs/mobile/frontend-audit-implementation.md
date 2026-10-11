@@ -1,5 +1,11 @@
 # Application de l’audit frontend
 
+> Historique : ce bilan concerne l’audit précédent à 23 constats. Le suivi des
+> 30 constats de l’audit du 10 octobre 2026, les corrections frontend/API et le
+> dossier approfondi d’accessibilité sont dans le
+> [nouveau bilan](../audits/frontend-2027/implementation.md). Les numéros de
+> constats et les résultats ci-dessous appartiennent à l’audit précédent.
+
 Ce document suit les 23 constats de l’audit de la branche `frontend`, effectué
 sur le commit `e4624470b63fd05e1523115acaf1d91e0269be38`. Les modifications
 concernent l’application Flutter, ses configurations de plateforme, ses tests,

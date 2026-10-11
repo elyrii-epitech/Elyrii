@@ -92,12 +92,17 @@ class AiProposalCard extends StatelessWidget {
                               color: AppColors.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Text(
+                            child: Text(
                               'IA',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
+                                color: AppColors.readableAccent(
+                                  AppColors.primary,
+                                  isDark:
+                                      Theme.of(context).brightness ==
+                                      Brightness.dark,
+                                ),
                               ),
                             ),
                           ),

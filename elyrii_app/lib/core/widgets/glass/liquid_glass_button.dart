@@ -4,6 +4,7 @@ import '../accessible_action.dart';
 import '../../glass/elyrii_glass_surface.dart';
 import '../../theme/app_dimensions.dart';
 import '../../theme/app_text_styles.dart';
+import '../../theme/app_colors.dart';
 
 enum LiquidGlassButtonStyle { filled, tinted, plain, gray }
 
@@ -38,11 +39,11 @@ class LiquidGlassButton extends StatelessWidget {
       ),
       LiquidGlassButtonStyle.tinted => (
         primary.withValues(alpha: 0.15),
-        primary.withValues(alpha: isDisabled ? 0.5 : 1),
+        AppColors.readableAccent(primary, isDark: isDark),
       ),
       LiquidGlassButtonStyle.plain => (
         Colors.transparent,
-        primary.withValues(alpha: isDisabled ? 0.5 : 1),
+        AppColors.readableAccent(primary, isDark: isDark),
       ),
       LiquidGlassButtonStyle.gray => (
         scheme.onSurface.withValues(alpha: isDark ? 0.1 : 0.05),
@@ -52,9 +53,14 @@ class LiquidGlassButton extends StatelessWidget {
     final radius = BorderRadius.circular(AppDimensions.radiusMd);
     return AccessibleAction(
       label: label,
+      value: isLoading ? 'En cours' : null,
+      liveRegion: isLoading,
+      excludeChildSemantics: true,
       onPressed: isLoading ? null : onPressed,
       borderRadius: radius,
       child: ElyriiGlassSurface(
+        // A shader tint cannot guarantee the contrast of white button text.
+        lightweight: style == LiquidGlassButtonStyle.filled,
         role: GlassRole.floatingControl,
         borderRadius: radius,
         width: isExpanded ? double.infinity : null,
@@ -114,7 +120,7 @@ class LiquidGlassIconButton extends StatelessWidget {
     super.key,
     required this.icon,
     this.onPressed,
-    this.size = 44,
+    this.size = 48,
     this.color,
     this.backgroundColor,
     required this.tooltip,
@@ -126,6 +132,7 @@ class LiquidGlassIconButton extends StatelessWidget {
     final tint = color ?? Theme.of(context).colorScheme.onSurface;
     final button = AccessibleAction(
       label: tooltip,
+      excludeChildSemantics: true,
       onPressed: onPressed,
       borderRadius: radius,
       child: ElyriiGlassSurface(

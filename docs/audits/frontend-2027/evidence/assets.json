@@ -1,0 +1,14 @@
+[
+  {
+    "file": "elyrii_app/assets/optimized/mascot.glb",
+    "bytes": 3294916,
+    "trianglesSumOfTrianglePrimitives": 62404,
+    "textures": 2
+  },
+  {
+    "file": "elyrii_app/assets/optimized/mascot_wardrobe.glb",
+    "bytes": 3778356,
+    "trianglesSumOfTrianglePrimitives": 81302,
+    "textures": 2
+  }
+]

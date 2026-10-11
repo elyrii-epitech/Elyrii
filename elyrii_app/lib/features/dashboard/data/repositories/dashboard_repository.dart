@@ -7,6 +7,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/network/json_response.dart';
 import '../../../../core/diagnostics/app_diagnostics.dart';
+import '../../../../core/storage/content_cipher.dart';
 import '../models/dashboard_models.dart';
 
 class DashboardRepository {
@@ -15,6 +16,8 @@ class DashboardRepository {
   final ApiClient _client;
   final DateTime Function() _now;
   SharedPreferences? _prefs;
+  Future<SharedPreferences>? _readyPrefs;
+  ContentCipher get _cipher => ContentCipher(_client.storage);
   String _storageScope = 'guest';
   int _generation = 0;
 
@@ -29,8 +32,20 @@ class DashboardRepository {
     _storageScope = isDemo ? 'demo' : userId ?? 'guest';
   }
 
-  Future<SharedPreferences> _getPrefs() async =>
-      _prefs ??= await SharedPreferences.getInstance();
+  Future<SharedPreferences> _getPrefs() => _readyPrefs ??= _preparePrefs();
+
+  Future<SharedPreferences> _preparePrefs() async {
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    for (final key in prefs.getKeys().where(
+      (key) => key.startsWith(_cacheKey),
+    )) {
+      final value = prefs.getString(key);
+      if (value != null && !value.startsWith('aesgcm1:')) {
+        await prefs.remove(key);
+      }
+    }
+    return prefs;
+  }
 
   Future<DashboardData?> getCachedDashboard({
     String? scope,
@@ -42,13 +57,27 @@ class DashboardRepository {
     final raw = prefs.getString(key);
     if (raw == null) return null;
     try {
-      final map = jsonDecode(raw) as Map<String, dynamic>;
+      // Discard legacy plaintext instead of continuing to retain sensitive
+      // moods. A fresh request can recreate the cache under the account key.
+      if (!raw.startsWith('aesgcm1:')) {
+        await prefs.remove(key);
+        return null;
+      }
+      final clear = await _cipher.open(
+        expectedOwner,
+        raw,
+        purpose: 'dashboard:$range',
+      );
+      final map = jsonDecode(clear) as Map<String, dynamic>;
       if (map['owner'] != null && map['owner'] != expectedOwner) {
         throw const FormatException('Dashboard cache account mismatch');
       }
       final fetchedAt = DateTime.parse(map['fetchedAt'] as String);
       final age = _now().difference(fetchedAt);
-      if (age.isNegative || age > cacheLifetime) return null;
+      if (age.isNegative || age > cacheLifetime) {
+        await prefs.remove(key);
+        return null;
+      }
       return DashboardData.fromJson(
         map['data'] as Map<String, dynamic>,
         cachedAt: fetchedAt,
@@ -72,14 +101,18 @@ class DashboardRepository {
       final prefs = await _getPrefs();
       if (generation == _generation) {
         try {
-          await prefs.setString(
-            '${_cacheKey}_${scope}_$range',
+          final encrypted = await _cipher.seal(
+            scope,
             jsonEncode({
               'owner': scope,
               'fetchedAt': _now().toUtc().toIso8601String(),
               'data': response,
             }),
+            purpose: 'dashboard:$range',
           );
+          if (generation == _generation) {
+            await prefs.setString('${_cacheKey}_${scope}_$range', encrypted);
+          }
         } catch (error) {
           AppDiagnostics.record('dashboard_cache_write_failed', error);
         }
