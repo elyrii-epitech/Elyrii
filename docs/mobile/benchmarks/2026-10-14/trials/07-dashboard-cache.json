@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "phase": "07-dashboard-cache",
+  "baseline_commit": "f8f2f174ca3a8c81fe363bfda9417c1ab224565a",
+  "runtime": "3.13.3 (stable) (Tue Sep 1 01:07:17 2026 -0700) on \"linux_x64\"",
+  "os": "linux",
+  "iterations": 9,
+  "scope": "Flutter VM JIT + headless widgets; SQLite FFI on temporary disk databases; real AES-GCM; synthetic content; controlled local HTTP responses. No OS cold-launch, native WebView/GPU, FPS, energy or production-network claims.",
+  "network_delay_ms": 200,
+  "credential_delay_ms": 20,
+  "results": {
+    "dashboard_first_cached_content": {
+      "milliseconds": {
+        "samples": [
+          0.712,
+          0.78,
+          0.695,
+          0.664,
+          0.817,
+          0.73,
+          0.722,
+          0.698,
+          4.329
+        ],
+        "median": 0.722,
+        "p95": 4.329
+      }
+    },
+    "dashboard_refresh_complete": {
+      "milliseconds": {
+        "samples": [
+          203.226,
+          205.292,
+          204.792,
+          204.896,
+          203.336,
+          203.397,
+          203.016,
+          205.132,
+          208.563
+        ],
+        "median": 204.792,
+        "p95": 208.563
+      }
+    }
+  }
+}

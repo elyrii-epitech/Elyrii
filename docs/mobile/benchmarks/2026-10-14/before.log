@@ -1,0 +1,45 @@
+00:00 +0: loading /tmp/tmp.I8KcqPQauz/elyrii_app/benchmark/app_performance_benchmark_test.dart
+00:00 +0: (setUpAll)
+00:00 +0: launch gate
+PERF launch_input_gate {"sample_count":3,"milliseconds":{"samples":[3008.0,3008.0,3008.0],"median":3008.0,"p95":3008.0},"scope":"Simulated Flutter frame clock after asset decode; animation/input floor only"}
+00:01 +1: credential request
+PERF session_restoration {"sample_count":9,"milliseconds":{"samples":[41.499,41.44,41.47,41.623,41.424,41.434,41.474,41.437,41.538],"median":41.47,"p95":41.623}}
+PERF authenticated_request_credentials {"sample_count":9,"milliseconds":{"samples":[42.454,42.494,42.346,42.383,42.518,42.544,42.449,42.458,42.495],"median":42.458,"p95":42.544}}
+00:02 +2: cold chat history
+PERF chat_reopen_100 {"sample_count":9,"milliseconds":{"samples":[14.589,17.687,13.843,14.644,12.503,13.246,13.419,12.237,11.706],"median":13.419,"p95":17.687},"rows_read":[152,152,152,152,152,152,152,152,152],"messages_in_database":100}
+PERF chat_older_page_100 {"sample_count":9,"milliseconds":{"samples":[11.636,12.668,10.764,9.52,8.595,8.507,8.797,8.089,8.492],"median":8.797,"p95":12.668}}
+PERF chat_reopen_1000 {"sample_count":9,"milliseconds":{"samples":[14.113,14.33,16.022,13.718,12.851,13.129,12.625,14.4,12.495],"median":13.718,"p95":16.022},"rows_read":[1052,1052,1052,1052,1052,1052,1052,1052,1052],"messages_in_database":1000}
+PERF chat_older_page_1000 {"sample_count":9,"milliseconds":{"samples":[7.816,7.855,8.013,7.837,8.113,7.395,8.093,7.78,7.471],"median":7.837,"p95":8.113}}
+PERF chat_reopen_10000 {"sample_count":9,"milliseconds":{"samples":[59.662,71.869,41.267,61.803,41.078,61.903,42.846,52.1,34.054],"median":52.1,"p95":71.869},"rows_read":[10052,10052,10052,10052,10052,10052,10052,10052,10052],"messages_in_database":10000}
+PERF chat_older_page_10000 {"sample_count":9,"milliseconds":{"samples":[7.084,8.546,8.022,8.779,7.967,12.242,7.618,21.839,7.688],"median":8.022,"p95":21.839}}
+00:05 +3: journal page cache
+PERF journal_cache_100_writes {"sample_count":9,"milliseconds":{"samples":[34.35,37.026,35.468,36.444,36.891,35.595,34.737,35.22,33.737],"median":35.468,"p95":37.026}}
+PERF journal_cache_100_reads {"sample_count":9,"milliseconds":{"samples":[16.23,18.286,17.374,16.855,18.097,18.605,17.777,16.296,15.975],"median":17.374,"p95":18.605}}
+00:06 +4: dashboard cached content
+PERF dashboard_first_cached_content {"sample_count":9,"milliseconds":{"samples":[201.369,202.268,201.725,201.788,202.044,202.085,202.009,201.758,202.002],"median":202.002,"p95":202.268}}
+PERF dashboard_refresh_complete {"sample_count":9,"milliseconds":{"samples":[201.38,202.279,201.737,201.799,202.055,202.096,202.02,201.769,202.013],"median":202.013,"p95":202.279}}
+00:08 +5: garden revisit
+PERF garden_revisit {"sample_count":9,"milliseconds":{"samples":[202.579,207.636,203.003,202.632,203.259,202.413,202.86,203.14,203.105],"median":203.003,"p95":207.636},"http_requests":[4,4,4,4,4,4,4,4,4]}
+00:12 +6: long chat viewport
+PERF chat_open_1000_loaded {"sample_count":9,"milliseconds":{"samples":[2326.694,2255.667,2124.791,1975.992,1867.174,2117.076,1604.455,2071.814,1566.603],"median":2071.814,"p95":2326.694},"bubble_builds":[946,946,946,946,946,946,946,946,946],"latest_visible":[false,false,false,false,false,false,false,false,false]}
+PERF chat_scroll_20_drags {"sample_count":9,"milliseconds":{"samples":[166.893,173.797,133.625,164.147,136.494,132.066,127.13,135.73,124.757],"median":135.73,"p95":173.797},"scope":"Host wall-clock for widget gesture/layout work; not native frame timings"}
+00:41 +7: older chat page viewport
+PERF chat_older_page_visible_1000 {"sample_count":9,"milliseconds":{"samples":[43.767,44.514,48.295,46.034,46.283,58.038,42.759,45.256,47.435],"median":46.034,"p95":58.038},"reading_position_preserved":[false,false,false,false,false,false,false,false,false],"bubble_builds":[29,29,29,29,29,29,29,29,29],"scope":"Host widget time for paging 50 older messages and settling layout; storage represented by a bounded in-memory fixture"}
+01:23 +8: screen first layout
+PERF screen_first_layout_login {"sample_count":9,"milliseconds":{"samples":[33.029,34.108,36.701,29.762,31.3,34.081,31.047,33.644,28.671],"median":33.029,"p95":36.701},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_register {"sample_count":9,"milliseconds":{"samples":[47.318,62.278,40.264,36.738,39.996,40.815,44.765,37.702,38.095],"median":40.264,"p95":62.278},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_password_reset {"sample_count":9,"milliseconds":{"samples":[14.501,16.478,15.219,14.077,16.082,14.504,14.419,14.462,18.342],"median":14.504,"p95":18.342},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_profile_setup {"sample_count":9,"milliseconds":{"samples":[17.908,17.038,16.76,15.241,15.06,15.753,16.905,14.663,17.0],"median":16.76,"p95":17.908},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_profile_edit {"sample_count":9,"milliseconds":{"samples":[48.673,45.758,44.632,47.205,45.173,41.375,39.904,42.857,38.836],"median":44.632,"p95":48.673},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_avatar {"sample_count":9,"milliseconds":{"samples":[30.05,33.395,49.035,28.48,28.141,27.362,32.577,27.058,28.756],"median":28.756,"p95":49.035},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_dashboard {"sample_count":9,"milliseconds":{"samples":[33.571,27.846,28.115,31.239,28.08,30.363,30.925,26.816,27.615],"median":28.115,"p95":33.571},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_garden {"sample_count":9,"milliseconds":{"samples":[24.422,23.774,35.766,21.432,19.791,28.236,18.875,19.53,22.78],"median":22.78,"p95":35.766},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_journal {"sample_count":9,"milliseconds":{"samples":[30.053,32.85,33.3,30.588,28.409,29.967,30.011,26.087,26.605],"median":30.011,"p95":33.3},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_meditation {"sample_count":9,"milliseconds":{"samples":[22.27,20.867,23.284,23.048,21.435,26.531,24.157,29.033,21.261],"median":23.048,"p95":29.033},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_coach {"sample_count":9,"milliseconds":{"samples":[46.858,45.162,45.207,58.992,49.191,43.946,43.031,42.19,39.838],"median":45.162,"p95":58.992},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_chat {"sample_count":9,"milliseconds":{"samples":[19.474,21.47,21.779,20.898,18.694,20.117,20.442,21.031,18.843],"median":20.442,"p95":21.779},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_settings {"sample_count":9,"milliseconds":{"samples":[37.017,32.309,31.749,33.703,33.312,35.595,32.634,34.402,36.742],"median":33.703,"p95":37.017},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_reviews {"sample_count":9,"milliseconds":{"samples":[35.982,34.963,34.465,32.854,34.808,32.766,32.618,31.268,39.618],"median":34.465,"p95":39.618},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+PERF screen_first_layout_mascot {"sample_count":9,"milliseconds":{"samples":[85.916,62.584,58.283,72.383,65.862,58.428,57.85,57.897,58.006],"median":58.428,"p95":85.916},"scope":"Warm host widget build/layout with demo data and native views mocked; excludes network and route transitions"}
+01:33 +9: (tearDownAll)
+01:34 +9: All tests passed!

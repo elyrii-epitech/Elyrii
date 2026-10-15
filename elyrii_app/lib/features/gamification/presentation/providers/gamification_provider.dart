@@ -16,6 +16,9 @@ class GamificationProvider extends ChangeNotifier {
   int _loadRevision = 0;
   final Set<String> _rejectedProposalIds = {};
   Future<void>? _loadFuture;
+  DateTime? _loadedAt;
+  final DateTime Function() _now;
+  static const _freshFor = Duration(seconds: 30);
   final Set<String> _commands = {};
   bool _disposed = false;
 
@@ -41,11 +44,13 @@ class GamificationProvider extends ChangeNotifier {
     GamificationRepository? repository,
     ApiClient? client,
     this._isDemoSession,
+    DateTime Function()? now,
   }) : assert(
          repository != null || client != null,
          'repository or client must be provided',
        ),
-       _repository = repository ?? GamificationRepository(client: client!);
+       _repository = repository ?? GamificationRepository(client: client!),
+       _now = now ?? DateTime.now;
 
   void onUserChanged({String? userId, bool isDemo = false}) {
     if (_userId == userId && _demo == isDemo) return;
@@ -58,6 +63,7 @@ class GamificationProvider extends ChangeNotifier {
     _sessionRevision++;
     _loadRevision++;
     _loadFuture = null;
+    _loadedAt = null;
     _commands.clear();
     _rejectedProposalIds.clear();
     _userId = null;
@@ -104,8 +110,13 @@ class GamificationProvider extends ChangeNotifier {
   String? get error => _error;
 
   /// Charge toutes les données en parallèle
-  Future<void> loadAll() {
+  Future<void> loadAll({bool force = false}) {
     if (_loadFuture != null) return _loadFuture!;
+    final loadedAt = _loadedAt;
+    if (!force && loadedAt != null && _error == null) {
+      final age = _now().difference(loadedAt);
+      if (!age.isNegative && age < _freshFor) return Future.value();
+    }
     late final Future<void> request;
     request = _loadAll().whenComplete(() {
       if (identical(_loadFuture, request)) _loadFuture = null;
@@ -115,7 +126,7 @@ class GamificationProvider extends ChangeNotifier {
 
   Future<void> _reloadAfterCommand() async {
     await _loadFuture;
-    if (!_disposed) await loadAll();
+    if (!_disposed) await loadAll(force: true);
   }
 
   Future<void> _loadAll() async {
@@ -148,6 +159,7 @@ class GamificationProvider extends ChangeNotifier {
           (proposal) => !_rejectedProposalIds.contains(proposal.id),
         ),
       );
+      _loadedAt = _now();
     } catch (e) {
       if (session == _sessionRevision && request == _loadRevision) {
         _error = e is ApiException

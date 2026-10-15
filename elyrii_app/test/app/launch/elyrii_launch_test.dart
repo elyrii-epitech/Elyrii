@@ -35,7 +35,7 @@ void main() {
     expect(taps, 0);
 
     await decodeMark(tester);
-    await tester.pump(const Duration(milliseconds: 3200));
+    await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(ElyriiLaunchScene), findsNothing);
     expect(mounts, 1);
     await tester.tap(find.byType(TextButton));
@@ -49,7 +49,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('holds readable text before a gradual fade into the page', (
+  testWidgets('reveals the brand and releases the page within half a second', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -77,7 +77,7 @@ void main() {
         )
         .opacity;
 
-    await tester.pump(const Duration(milliseconds: 800));
+    await tester.pump(const Duration(milliseconds: 120));
     expect(overlayOpacity(), 1);
     expect(
       tester
@@ -94,15 +94,16 @@ void main() {
     );
     expect(find.text('Un instant pour toi.'), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 1300));
+    await tester.pump(const Duration(milliseconds: 180));
     expect(overlayOpacity(), 1);
     expect(find.text('Waiting'), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 480));
-    expect(overlayOpacity(), closeTo(0.5, 0.02));
+    await tester.pump(const Duration(milliseconds: 90));
+    expect(overlayOpacity(), greaterThan(0));
+    expect(overlayOpacity(), lessThan(1));
     expect(find.text('Waiting'), findsOneWidget);
 
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 110));
     expect(find.byType(ElyriiLaunchScene), findsNothing);
     expect(find.text('Ready'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -127,7 +128,7 @@ void main() {
       ),
     );
     await decodeMark(tester);
-    await tester.pump(const Duration(milliseconds: 2580));
+    await tester.pump(const Duration(milliseconds: 350));
 
     // This tests the real surface, bypassing Mascot3DViewer's test fallback.
     expect(find.byType(ElyriiLaunchScene), findsOneWidget);

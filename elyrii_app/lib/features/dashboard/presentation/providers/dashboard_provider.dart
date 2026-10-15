@@ -9,6 +9,7 @@ import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/repositories/dashboard_repository.dart';
+import '../../data/models/dashboard_models.dart';
 
 import '../mood_presentation.dart';
 export '../mood_presentation.dart';
@@ -338,33 +339,31 @@ class DashboardProvider extends ChangeNotifier {
     _error = null;
     _notify();
 
+    var networkFinished = false;
+    // Cached content and the refresh race independently. A slow cache must
+    // never hold up a faster network result or replace fresher data afterward.
+    unawaited(() async {
+      try {
+        final cached = await _repository.getCachedDashboard();
+        if (_disposed ||
+            session != _sessionRevision ||
+            networkFinished ||
+            cached == null) {
+          return;
+        }
+        _applyDashboardData(cached, moodVersion);
+      } catch (_) {
+        // Cache failures do not cancel the network request or hide its errors.
+      }
+    }());
     try {
       final data = await _repository.getDashboard();
-      if (session != _sessionRevision) return;
-      final moodTypeStr = data.latestMood;
-      _cachedAt = data.cachedAt;
-      if (moodVersion == _moodVersion && moodTypeStr != null) {
-        _selectedMood = MoodType.values.firstWhere(
-          (m) => m.name == moodTypeStr,
-          orElse: () => MoodType.neutral,
-        );
-      } else if (moodVersion == _moodVersion) {
-        _selectedMood = null;
-      }
-
-      final stats = data.stats;
-      _currentStreak = stats.streak;
-      _activeChallengesCount = stats.activeChallengesCount;
-      _journalEntriesCount = stats.journalEntriesCount;
-      _completedChallengesCount = stats.completedChallengesCount;
-      _totalPoints = stats.totalPoints;
-      _meditationSessionsCount = stats.meditationSessionsCount;
-      _coachSessionsCount = stats.coachSessionsCount;
-      _moodLogsCount = stats.moodLogsCount;
-      _isLoading = false;
-      _notify();
+      networkFinished = true;
+      if (_disposed || session != _sessionRevision) return;
+      _applyDashboardData(data, moodVersion);
     } catch (error) {
-      if (session != _sessionRevision) return;
+      networkFinished = true;
+      if (_disposed || session != _sessionRevision) return;
       _error = error is ApiException
           ? error.message
           : 'Impossible de charger ton tableau de bord. Réessaie.';
@@ -372,6 +371,30 @@ class DashboardProvider extends ChangeNotifier {
       _isLoading = false;
       _notify();
     }
+  }
+
+  void _applyDashboardData(DashboardData data, int moodVersion) {
+    final moodTypeStr = data.latestMood;
+    _cachedAt = data.cachedAt;
+    if (moodVersion == _moodVersion && moodTypeStr != null) {
+      _selectedMood = MoodType.values.firstWhere(
+        (m) => m.name == moodTypeStr,
+        orElse: () => MoodType.neutral,
+      );
+    } else if (moodVersion == _moodVersion) {
+      _selectedMood = null;
+    }
+    final stats = data.stats;
+    _currentStreak = stats.streak;
+    _activeChallengesCount = stats.activeChallengesCount;
+    _journalEntriesCount = stats.journalEntriesCount;
+    _completedChallengesCount = stats.completedChallengesCount;
+    _totalPoints = stats.totalPoints;
+    _meditationSessionsCount = stats.meditationSessionsCount;
+    _coachSessionsCount = stats.coachSessionsCount;
+    _moodLogsCount = stats.moodLogsCount;
+    _isLoading = false;
+    _notify();
   }
 
   Future<void> refresh() async {

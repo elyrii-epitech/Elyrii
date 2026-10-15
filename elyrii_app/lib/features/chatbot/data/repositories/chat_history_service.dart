@@ -40,14 +40,25 @@ class ChatHistoryService {
 
   Future<void> _migrateOwnerRows(String owner) async {
     final db = await _db;
+    // Persist completion across process launches. Pagination must not first
+    // transfer an account's entire encrypted history into Dart on every boot.
+    if ((await db.query(
+      'content_migrations',
+      columns: ['owner'],
+      where: 'owner = ?',
+      whereArgs: [owner],
+      limit: 1,
+    )).isNotEmpty) {
+      return;
+    }
     final sessions = await db.query(
       'sessions',
-      where: 'owner = ?',
+      where: "owner = ? AND substr(title, 1, 8) != 'aesgcm1:'",
       whereArgs: [owner],
     );
     final messages = await db.query(
       'messages',
-      where: 'owner = ?',
+      where: "owner = ? AND substr(content, 1, 8) != 'aesgcm1:'",
       whereArgs: [owner],
     );
     final titles = <String, String>{};
@@ -74,6 +85,7 @@ class ChatHistoryService {
     }
     _ensureOwner(owner);
     await db.transaction((txn) async {
+      _ensureOwner(owner);
       for (final item in titles.entries) {
         await txn.update(
           'sessions',
@@ -90,6 +102,11 @@ class ChatHistoryService {
           whereArgs: [owner, item.key],
         );
       }
+      // Only mark complete in the same successful transaction as encryption.
+      // Failed secure-storage or database operations remain retryable.
+      await txn.insert('content_migrations', {
+        'owner': owner,
+      }, conflictAlgorithm: ConflictAlgorithm.ignore);
     });
   }
 
@@ -116,7 +133,7 @@ class ChatHistoryService {
     return _factory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         singleInstance: false,
         onConfigure: (db) async {
           await db.execute('PRAGMA foreign_keys = ON');
@@ -128,6 +145,11 @@ class ChatHistoryService {
           if (oldVersion < 2) {
             await db.execute(
               "ALTER TABLE messages ADD COLUMN delivery TEXT NOT NULL DEFAULT 'delivered'",
+            );
+          }
+          if (oldVersion < 3) {
+            await db.execute(
+              'CREATE TABLE content_migrations(owner TEXT PRIMARY KEY)',
             );
           }
         },
@@ -148,6 +170,9 @@ class ChatHistoryService {
           );
           await db.execute(
             'CREATE INDEX session_page ON sessions(owner, updatedAt DESC, id)',
+          );
+          await db.execute(
+            'CREATE TABLE content_migrations(owner TEXT PRIMARY KEY)',
           );
         },
       ),
@@ -389,11 +414,14 @@ class ChatHistoryService {
     try {
       await _migrations[owner];
     } catch (_) {}
-    await (await _db).delete(
-      'sessions',
-      where: 'owner = ?',
-      whereArgs: [owner],
-    );
+    await (await _db).transaction((txn) async {
+      await txn.delete('sessions', where: 'owner = ?', whereArgs: [owner]);
+      await txn.delete(
+        'content_migrations',
+        where: 'owner = ?',
+        whereArgs: [owner],
+      );
+    });
     // Compact deleted plaintext pages from old databases as well.
     await (await _db).rawQuery('PRAGMA secure_delete = ON');
     await (await _db).execute('VACUUM');

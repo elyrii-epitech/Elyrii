@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "phase": "04-journal-batch",
+  "baseline_commit": "f8f2f174ca3a8c81fe363bfda9417c1ab224565a",
+  "runtime": "3.13.3 (stable) (Tue Sep 1 01:07:17 2026 -0700) on \"linux_x64\"",
+  "os": "linux",
+  "iterations": 9,
+  "scope": "Flutter VM JIT + headless widgets; SQLite FFI on temporary disk databases; real AES-GCM; synthetic content; controlled local HTTP responses. No OS cold-launch, native WebView/GPU, FPS, energy or production-network claims.",
+  "network_delay_ms": 200,
+  "credential_delay_ms": 20,
+  "results": {
+    "journal_cache_100_writes": {
+      "milliseconds": {
+        "samples": [
+          33.798,
+          37.96,
+          31.55,
+          29.153,
+          27.453,
+          31.876,
+          25.318,
+          31.502,
+          22.33
+        ],
+        "median": 31.502,
+        "p95": 37.96
+      }
+    },
+    "journal_cache_100_reads": {
+      "milliseconds": {
+        "samples": [
+          26.821,
+          26.636,
+          26.821,
+          28.846,
+          23.547,
+          21.902,
+          21.747,
+          33.512,
+          21.426
+        ],
+        "median": 26.636,
+        "p95": 33.512
+      }
+    }
+  }
+}

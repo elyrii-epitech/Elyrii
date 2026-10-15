@@ -81,7 +81,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients || !mounted) return;
       _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
+        0,
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeOutCubic,
       );
@@ -140,7 +140,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
     if (keyboardOpen != _keyboardWasOpen) {
       _keyboardWasOpen = keyboardOpen;
       if (!_scrollController.hasClients ||
-          _scrollController.position.extentAfter < 100) {
+          _scrollController.position.extentBefore < 100) {
         _scrollToLatestMessage();
       }
     }
@@ -326,26 +326,44 @@ class _ChatbotPageState extends State<ChatbotPage> {
   Widget _buildConversation(ChatbotProvider provider, bool isDark) {
     final messages = provider.messages;
     final olderOffset = provider.hasMoreMessages ? 1 : 0;
-    final itemCount =
-        messages.length + olderOffset + (provider.isTyping ? 1 : 0);
+    final typingOffset = provider.isTyping ? 1 : 0;
+    final itemCount = messages.length + olderOffset + typingOffset;
     if (_lastMessageCount != itemCount ||
         _lastSessionId != provider.activeSessionId) {
       final followLatest =
           _lastSessionId != provider.activeSessionId ||
           !_scrollController.hasClients ||
-          _scrollController.position.extentAfter < 100;
+          _scrollController.position.extentBefore < 100;
       _lastMessageCount = itemCount;
       _lastSessionId = provider.activeSessionId;
       if (followLatest && !_loadingOlderMessages) _scrollToLatestMessage();
     }
     return ListView.builder(
       controller: _scrollController,
+      // Zero is the newest message. Opening a long conversation now lays out
+      // only the visible tail, and older pages extend the far end of the list.
+      reverse: true,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.only(top: 16, bottom: 12),
       itemCount: itemCount,
+      findChildIndexCallback: (key) {
+        if (key == const ValueKey('chat-typing')) {
+          return typingOffset == 1 ? 0 : null;
+        }
+        if (key == const ValueKey('chat-older-page')) {
+          return olderOffset == 1 ? itemCount - 1 : null;
+        }
+        if (key is! ValueKey<String>) return null;
+        final index = messages.indexWhere((message) => message.id == key.value);
+        return index < 0 ? null : messages.length - 1 - index + typingOffset;
+      },
       itemBuilder: (context, index) {
-        if (olderOffset == 1 && index == 0) {
+        if (typingOffset == 1 && index == 0) {
+          return const TypingIndicator(key: ValueKey('chat-typing'));
+        }
+        if (olderOffset == 1 && index == itemCount - 1) {
           return TextButton(
+            key: const ValueKey('chat-older-page'),
             onPressed: provider.loadingOlder
                 ? null
                 : () => _loadOlder(provider),
@@ -354,8 +372,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
             ),
           );
         }
-        final messageIndex = index - olderOffset;
-        if (messageIndex == messages.length) return const TypingIndicator();
+        final messageIndex = messages.length - 1 - index + typingOffset;
         final message = messages[messageIndex];
         final showDate =
             messageIndex == 0 ||
@@ -364,6 +381,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
               messages[messageIndex - 1].timestamp,
             );
         return Column(
+          key: ValueKey(message.id),
           children: [
             if (showDate) _buildDateLabel(message.timestamp, isDark),
             ChatMessageBubble(
@@ -395,28 +413,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   Future<void> _loadOlder(ChatbotProvider provider) async {
+    if (_loadingOlderMessages || provider.loadingOlder) return;
     _loadingOlderMessages = true;
-    final before = _scrollController.hasClients
-        ? _scrollController.position.maxScrollExtent
-        : 0.0;
-    final offset = _scrollController.hasClients
-        ? _scrollController.offset
-        : 0.0;
-    final sessionId = provider.activeSessionId;
     await provider.loadOlderMessages();
     if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted &&
-          _scrollController.hasClients &&
-          provider.activeSessionId == sessionId) {
-        final position = _scrollController.position;
-        _scrollController.jumpTo(
-          (offset + position.maxScrollExtent - before).clamp(
-            0.0,
-            position.maxScrollExtent,
-          ),
-        );
-      }
+      // Existing reversed-list indices and offsets stay stable when older
+      // messages arrive. An estimated maxScrollExtent must not move the reader.
       _loadingOlderMessages = false;
     });
   }

@@ -1,5 +1,13 @@
 # Performance du frontend
 
+## Mesures de latence du 14 octobre 2026
+
+Le [rapport avant/après](benchmarks/2026-10-14/README.md) documente les
+goulots mesurés, les corrections conservées, les essais rejetés, les résultats
+sur les 15 écrans et les limites des mesures VM. Les échantillons bruts et le
+script de reproduction sont fournis. Le test profile natif couvre désormais
+la navigation, le défilement et le chargement d'une page de messages anciens.
+
 ## Changements mesurables
 
 Mesures sur les fichiers GLB et leur géométrie, pas sur le framerate.

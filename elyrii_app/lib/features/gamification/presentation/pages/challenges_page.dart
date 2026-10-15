@@ -183,7 +183,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
         ),
         slivers: [
           // Tirer-relâcher natif Cupertino (aucun indicateur Material).
-          CupertinoSliverRefreshControl(onRefresh: () => provider.loadAll()),
+          CupertinoSliverRefreshControl(
+            onRefresh: () => provider.loadAll(force: true),
+          ),
 
           // En-tête spatial fluide (remplace le SliverAppBar.large rigide).
           SliverToBoxAdapter(

@@ -20,8 +20,9 @@ class _ElyriiLaunchState extends State<ElyriiLaunch>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    // Reveal the text in 750 ms, hold it, then fade into the app over 840 ms.
-    duration: const Duration(milliseconds: 3000),
+    // Services are already initialized. A short reveal must not add a
+    // three-second input gate before the routed page can be used.
+    duration: const Duration(milliseconds: 450),
   )..addStatusListener(_onStatus);
   bool _started = false;
   bool _finished = false;

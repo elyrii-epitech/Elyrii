@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "phase": "03-chat-history",
+  "baseline_commit": "f8f2f174ca3a8c81fe363bfda9417c1ab224565a",
+  "runtime": "3.13.3 (stable) (Tue Sep 1 01:07:17 2026 -0700) on \"linux_x64\"",
+  "os": "linux",
+  "iterations": 9,
+  "scope": "Flutter VM JIT + headless widgets; SQLite FFI on temporary disk databases; real AES-GCM; synthetic content; controlled local HTTP responses. No OS cold-launch, native WebView/GPU, FPS, energy or production-network claims.",
+  "network_delay_ms": 200,
+  "credential_delay_ms": 20,
+  "results": {
+    "chat_reopen_100": {
+      "milliseconds": {
+        "samples": [
+          17.609,
+          14.791,
+          15.875,
+          15.027,
+          14.433,
+          14.113,
+          13.631,
+          13.865,
+          12.882
+        ],
+        "median": 14.433,
+        "p95": 17.609
+      },
+      "rows_read": [
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52
+      ],
+      "messages_in_database": 100
+    },
+    "chat_older_page_100": {
+      "milliseconds": {
+        "samples": [
+          11.914,
+          11.265,
+          15.074,
+          11.75,
+          10.676,
+          12.212,
+          10.182,
+          10.255,
+          9.094
+        ],
+        "median": 11.265,
+        "p95": 15.074
+      }
+    },
+    "chat_reopen_1000": {
+      "milliseconds": {
+        "samples": [
+          12.26,
+          12.206,
+          10.64,
+          10.81,
+          10.935,
+          10.836,
+          10.249,
+          12.456,
+          13.819
+        ],
+        "median": 10.935,
+        "p95": 13.819
+      },
+      "rows_read": [
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52
+      ],
+      "messages_in_database": 1000
+    },
+    "chat_older_page_1000": {
+      "milliseconds": {
+        "samples": [
+          12.154,
+          8.888,
+          9.82,
+          8.352,
+          9.261,
+          8.146,
+          9.567,
+          9.07,
+          8.07
+        ],
+        "median": 9.07,
+        "p95": 12.154
+      }
+    },
+    "chat_reopen_10000": {
+      "milliseconds": {
+        "samples": [
+          10.354,
+          11.272,
+          16.074,
+          12.629,
+          10.733,
+          10.409,
+          10.215,
+          10.602,
+          11.035
+        ],
+        "median": 10.733,
+        "p95": 16.074
+      },
+      "rows_read": [
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52,
+        52
+      ],
+      "messages_in_database": 10000
+    },
+    "chat_older_page_10000": {
+      "milliseconds": {
+        "samples": [
+          8.105,
+          10.449,
+          8.832,
+          8.28,
+          8.151,
+          7.505,
+          10.242,
+          7.508,
+          7.69
+        ],
+        "median": 8.151,
+        "p95": 10.449
+      }
+    }
+  }
+}

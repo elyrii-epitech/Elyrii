@@ -166,8 +166,14 @@ class ApiClient {
         headers['Authorization'] = 'Bearer $bearerToken';
       }
       if (auth) {
-        owner = await currentUserId;
-        final token = await _storage.getAccessToken();
+        // Independent platform reads share one wait. Session cancellation is
+        // still checked after both complete; no credential cache can go stale.
+        final credentials = await Future.wait([
+          currentUserId,
+          _storage.getAccessToken(),
+        ]);
+        owner = credentials[0];
+        final token = credentials[1];
         if (token?.isNotEmpty ?? false) {
           headers['Authorization'] = 'Bearer $token';
         }

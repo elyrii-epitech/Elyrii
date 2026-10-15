@@ -118,16 +118,18 @@ class JournalStore {
             .toList();
         final rows = [for (final entry in own) await _row(owner, entry)];
         await db.transaction((txn) async {
+          final batch = txn.batch();
           for (final row in rows) {
-            await txn.insert(
+            batch.insert(
               'entries',
               row,
               conflictAlgorithm: ConflictAlgorithm.ignore,
             );
           }
-          await txn.insert('snapshots', {
+          batch.insert('snapshots', {
             'owner': owner,
           }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          await batch.commit(noResult: true);
         });
         if (prefs.containsKey(scoped)) {
           await prefs.remove(scoped);
@@ -213,13 +215,15 @@ class JournalStore {
     _ensureOwner(owner);
     if (revision(owner) != expectedRevision) return;
     await db.transaction((txn) async {
-      await txn.delete('entries', where: 'owner = ?', whereArgs: [owner]);
+      final batch = txn.batch();
+      batch.delete('entries', where: 'owner = ?', whereArgs: [owner]);
       for (final row in rows) {
-        await txn.insert('entries', row);
+        batch.insert('entries', row);
       }
-      await txn.insert('snapshots', {
+      batch.insert('snapshots', {
         'owner': owner,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      await batch.commit(noResult: true);
     });
   });
   Future<void> mergePage(
@@ -233,16 +237,20 @@ class JournalStore {
     _ensureOwner(owner);
     if (revision(owner) != expectedRevision) return;
     await db.transaction((tx) async {
+      // One platform/FFI batch per page rather than 101 awaited calls, while
+      // retaining the same atomic transaction and revision checks.
+      final batch = tx.batch();
       for (final row in rows) {
-        await tx.insert(
+        batch.insert(
           'entries',
           row,
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
       }
-      await tx.insert('snapshots', {
+      batch.insert('snapshots', {
         'owner': owner,
       }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      await batch.commit(noResult: true);
     });
   });
   Future<int> count(

@@ -51,8 +51,8 @@ class DashboardRepository {
     String? scope,
     String range = '30d',
   }) async {
-    final prefs = await _getPrefs();
     final expectedOwner = scope ?? _storageScope;
+    final prefs = await _getPrefs();
     final key = '${_cacheKey}_${expectedOwner}_$range';
     final raw = prefs.getString(key);
     if (raw == null) return null;

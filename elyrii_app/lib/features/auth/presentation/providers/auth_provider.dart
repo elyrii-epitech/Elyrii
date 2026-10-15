@@ -56,8 +56,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> restoreLocalSession() async {
     final revision = ++_sessionRevision;
     try {
-      final token = await _storage.getAccessToken();
-      final owner = await _storage.getUserId();
+      final credentials = await Future.wait([
+        _storage.getAccessToken(),
+        _storage.getUserId(),
+      ]);
+      final token = credentials[0];
+      final owner = credentials[1];
       if (!_current(revision)) return;
       if (token == null ||
           _isJwtExpired(token) ||
