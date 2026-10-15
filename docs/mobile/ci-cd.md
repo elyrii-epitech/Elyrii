@@ -35,16 +35,11 @@ SDK restent actives.
 
 Les parcours attendent la fin de l’écran de lancement et font défiler les
 contrôles avant de cliquer, afin de fonctionner sur les tailles d’écran des
-simulateurs. Le même démarrage est utilisé par le harness de performance.
+simulateurs.
 Un scénario natif dédié vérifie la réouverture de l’historique chiffré et sa
 purge, avec les vrais plugins SQLite et Keychain/Keystore. Il couvre notamment
 les commandes SQLite qui renvoient une ligne et exigent `rawQuery`, même
 lorsqu’elles configurent une valeur comme `PRAGMA secure_delete = ON`.
-
-Les parcours fonctionnels CI exécutent leurs assertions sans connexion au
-service VM pour la collecte de traces. Cette collecte est réservée au test
-de performance sur appareil physique, lancé avec `flutter drive` en mode
-`--profile --no-dds` comme décrit dans [Development](development.md).
 
 ## Commandes locales
 
@@ -52,7 +47,7 @@ Depuis `elyrii_app`, avec la version du SDK de `.fvmrc` :
 
 ```bash
 flutter pub get --enforce-lockfile
-dart format --output=none --set-exit-if-changed lib test tool benchmark integration_test test_driver
+dart format --output=none --set-exit-if-changed lib test tool integration_test
 flutter analyze --no-pub
 flutter test --no-pub --coverage
 flutter build apk --debug --no-pub --dart-define=ELYRII_ENV=development

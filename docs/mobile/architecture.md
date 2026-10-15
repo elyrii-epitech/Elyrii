@@ -128,7 +128,7 @@ La mascotte et son chapeau constituent une scène 3D unique ; les sources
 originales restent dans le dépôt. La génération des variantes optimisées est
 reproductible dans `elyrii_app/tool/mascot/`.
 
-Voir [mesures, validations et limites](performance.md).
+La reconstruction de la scène est décrite dans le [guide des accessoires](mascot-accessories.md).
 
 ## Limites à ne pas confondre avec des garanties
 

@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: ./.github/actions/setup-flutter
-      - run: dart format --output=none --set-exit-if-changed lib test tool benchmark integration_test test_driver
+      - run: dart format --output=none --set-exit-if-changed lib test tool integration_test
       - run: flutter analyze --no-pub
       - run: flutter test --no-pub --coverage
       - name: Inventory locked dependencies and embedded viewer

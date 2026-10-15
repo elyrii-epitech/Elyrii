@@ -172,27 +172,7 @@ natifs nécessaires. Les workflows n’ont pas été déclenchés et les nouveau
 binaires natifs n’ont donc pas été validés ici. Les fixtures ELF prouvent le
 comportement du contrôle, pas la compatibilité de l’APK final.
 
-## Mesures sur appareils
-
-Exécuter `integration_test/performance_test.dart` avec `flutter drive`, le
-driver fourni et `--profile` sur matériel physique. Le test refuse le mode
-debug et expose le budget configurable `ELYRII_FRAME_BUDGET_MS`, par défaut
-16,7 ms, pour le p95 des frames build/raster Flutter. Adapter à 8,3 ms pour une
-cible de 120 Hz. Mesurer les deux modes sur les modèles de téléphone retenus.
-
-Ce harness mesure l’initialisation de la démo après démarrage du processus de
-test, la navigation, le défilement et une page de messages anciens ;
-**il ne mesure pas un lancement OS à froid,
-les frames WebGL, la mémoire native/WebView/GPU ou l’énergie**. Mesurer ces
-éléments séparément avec les outils Android/iOS. Compléter les
-[budgets de ressources existants](performance.md) par des valeurs
-observées et un appareil de référence, et comparer avant/après sur les mêmes
-parcours : dashboard/mascotte équipée, long journal, chat, méditation,
-arrière-plan/reprise et navigation prolongée.
-
-Le benchmark local de 100/1 000/10 000 notes démontre que seule une page de
-100 lignes est déchiffrée. Ses durées SQLite FFI en mémoire sur VM Linux ne
-sont pas des promesses de latence sur téléphone.
+## Vérifications sur appareils
 
 Avant livraison, exécuter aussi les parcours TalkBack/VoiceOver décrits dans
 le [protocole d’accessibilité](accessibility.md), les permissions galerie,

@@ -27,7 +27,6 @@ nav:
       - Development: mobile/development.md
       - Accessibility: mobile/accessibility.md
       - Release: mobile/release.md
-      - Performance: mobile/performance.md
       - Mascot Accessories: mobile/mascot-accessories.md
       - Mascot Motion: mobile/velours-motion.md
       - Generated Docs: mobile/api/index.md

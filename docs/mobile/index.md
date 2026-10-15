@@ -28,7 +28,6 @@ accessible avec `--dart-define=ELYRII_API_URL=https://YOUR_GATEWAY`.
 | [CI/CD](ci-cd.md) | Contrôles, tests, builds et artefacts |
 | [Livraison](release.md) | Migration, configuration des services et validation native |
 | [Accessibilité](accessibility.md) | Tests automatiques et protocole TalkBack/VoiceOver |
-| [Performance](performance.md) | Budgets, mesures avant/après et profilage |
 | [Méditation](meditation.md) | Catalogue, durées, guidage et contrat API |
 | [Personnalisation](mascot-accessories.md) | Garde-robe, progression et reconstruction des assets |
 | [Mouvements de la mascotte](velours-motion.md) | Clips, transitions et génération |
@@ -41,9 +40,7 @@ Depuis la racine du dépôt, avec le SDK épinglé dans le `PATH` :
 bash scripts/flutter_ci_check.sh
 ```
 
-Les tests de performance lourds sont lancés séparément avec
-`elyrii_app/benchmark/run_comparison.sh`. Les tests natifs et le profilage
-sur appareil sont décrits dans le guide de développement.
+Les tests natifs sont décrits dans le guide de développement.
 
 ## Points d’entrée
 

@@ -55,19 +55,14 @@ courses de session, credentials, stockage chiffré, purge/reprise, journal,
 préférences hors ordre, annulation/délais réseau, chat, horloge/cycle de vie des
 séances, routes, bootstrap, accessibilité et listes volumineuses.
 
-## Intégration et profilage natifs
+## Intégration native
 
 ```bash
 flutter test integration_test/frontend_flows_test.dart -d DEVICE_ID --dart-define=ELYRII_ENV=development
-flutter drive --profile --no-dds -d PHYSICAL_DEVICE_ID --driver=test_driver/integration_test.dart --target=integration_test/performance_test.dart --dart-define=ELYRII_ENV=development
 ```
 
-Le harness profile rapporte le démarrage de la démo, l’ouverture des routes,
-le chargement de messages anciens, le nombre de frames, build p95 et raster p95.
-Contrôler également GPU/mémoire, galerie et
-upload, libération du renderer, TalkBack/VoiceOver et texte agrandi sur les
-appareils représentatifs avec DevTools. Les timings de tests widgets ne
-prouvent pas la performance native.
+Contrôler également galerie et upload, libération du renderer, TalkBack/VoiceOver
+et texte agrandi sur les appareils représentatifs.
 
 Voir le [guide de livraison](release.md) pour les migrations et les vérifications
 sur appareils et gateway, et le [protocole d’accessibilité](accessibility.md)

@@ -68,4 +68,4 @@ Les configurations sont `flutter_native_splash.yaml` et la section
 Android/iOS et les deux thèmes après une régénération.
 
 Pour les listes longues, construire les éléments à la demande et limiter les
-animations. Comparer les changements de rendu avec les [mesures de performance](performance.md).
+animations.
