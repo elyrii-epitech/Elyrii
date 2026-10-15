@@ -23,17 +23,22 @@ Flutter **3.47.4** / Dart **3.13.3** sont utilisés localement et dans la CI ;
 | share_plus | Partage natif volontaire des exports et diagnostics, avec origine adaptée à l’iPad |
 | uuid, url_launcher, cupertino_icons | Identifiants de corrélation/ressources, ressources externes et icônes |
 | flutter_test, integration_test, flutter_lints | Tests unitaires/widgets, intégration native et analyse statique |
-| image ^4.8.0, flutter_launcher_icons, flutter_native_splash | Fixtures et outils de génération des assets |
+| flutter_launcher_icons, flutter_native_splash | Génération des icônes et du splash depuis les assets sources |
 
 Le transport chat utilise `dart:io` pour le WebSocket authentifié avec Bearer.
 Les polices Poppins sont embarquées, sans téléchargement Google Fonts.
-Les ajouts réservés au navigateur sont retirés : pas de runtime SQLite web,
-de transport cookie web ni de recadrage navigateur dans cette intervention.
+L’application utilise SQLite, le WebSocket authentifié et le recadrage natifs.
 
 Les upgrades doivent repasser les tests d’assets, les builds iOS/Android et
-les parcours natifs avant fusion. Les dossiers de plateformes créés par
-Flutter ne constituent pas une promesse de livraison sur ces plateformes.
+les parcours natifs avant fusion.
 
-Le [bilan du 10 octobre 2026](../audits/frontend-2027/implementation.md) décrit
-la mise à jour du lockfile et l’inventaire CycloneDX. Le suivi des dépendances
-natives Gradle/CocoaPods complète cet inventaire après build.
+Pour régénérer l’inventaire CycloneDX depuis `elyrii_app` :
+
+```bash
+mkdir -p build
+flutter pub deps --json > build/pub-deps.json
+python3 tool/frontend_sbom.py --deps build/pub-deps.json --output build/frontend.cdx.json
+```
+
+Le suivi des dépendances natives Gradle/CocoaPods complète cet inventaire après
+build ; voir le [guide de livraison](release.md).

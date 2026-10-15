@@ -74,14 +74,17 @@ flutter run --dart-define=CHECK_BACKEND_HEALTH=true
   La déconnexion efface la session locale même si l’appel distant échoue.
 - **Chat** : `ChatHistoryService` utilise SQLite, tables de conversations et
   messages indexées par propriétaire. Écriture incrémentale et transactionnelle ;
-  pages de 50 résumés/messages. Les getters du provider n’allouent plus une copie
+  pages de 50 résumés/messages. La migration de chiffrement est marquée par compte
+  pour éviter de relire tout l’historique à chaque démarrage.
+  Les getters du provider n’allouent plus une copie
   complète à chaque accès. Chaque réponse reste rattachée à la conversation
   d’origine, même pendant un changement de conversation.
 - **Migration du chat** : l’ancien JSON global n’identifie pas son propriétaire.
   L’utilisateur doit donc confirmer « Récupérer mon ancien historique ». Le JSON
   reste conservé si l’import échoue et n’est supprimé qu’après la transaction.
-- **Journal** : CRUD REST, entrées et brouillons SQLite chiffrés par compte, lecture de
-  l’ancien cache filtrée sur `userId`. Un 401/403 reste une erreur et ne devient
+- **Journal** : CRUD REST paginé par 100 notes avec filtres, tri et curseurs stables,
+  entrées et brouillons SQLite chiffrés par compte, lecture de l’ancien cache
+  filtrée sur `userId`. Un 401/403 reste une erreur et ne devient
   pas artificiellement un succès grâce au cache. La déconnexion invalide aussi
   les requêtes du journal encore en vol et vide son état mémoire.
 - **Éditeur du journal** : une seule sauvegarde en vol ; une nouvelle révision
@@ -94,9 +97,25 @@ avec AES-GCM et une clé par compte dans le stockage sécurisé, avec authentifi
 du propriétaire et de la ressource. Les caches en clair sont migrés. La suppression
 d'un compte tente toutes les purges et détruit sa clé ; un marqueur conserve les
 étapes à reprendre après un échec. Une déconnexion conserve les données locales
-protégées pour une prochaine connexion. Le chiffrement navigateur ne protège pas
-contre du JavaScript compromis dans la même origine. La synchronisation entre
+protégées pour une prochaine connexion. La synchronisation entre
 appareils de l'historique chat local reste hors contrat.
+
+### Contrat du chat
+
+Le WebSocket natif utilise le header Bearer et envoie
+`{message, requestId, conversationId}`. Chaque tentative d’envoi ou reprise a un
+nouveau `requestId`, tandis que l’identifiant du message stocké reste stable.
+Une réponse `{type, message, requestId, conversationId}` n’est acceptée que si
+ses deux identifiants correspondent à une tentative en attente. Les doublons et
+réponses tardives sont ignorés ; les échecs et délais dépassés permettent une
+reprise explicite. Un changement de conversation conserve le brouillon et
+bloque l’envoi pendant le chargement.
+
+Le backend compatible doit être livré avant le client : une réponse sans
+corrélation ne permet pas de déterminer sa conversation. En SQLite, les
+métadonnées utilisent `INSERT OR IGNORE` puis `UPDATE` dans une transaction.
+Ne pas utiliser `REPLACE` : supprimer la conversation parente supprimerait ses
+messages par cascade.
 
 ## Rendu et performances
 
@@ -113,8 +132,6 @@ Voir [mesures, validations et limites](performance.md).
 
 ## Limites à ne pas confondre avec des garanties
 
-- La pagination SQL du chat est locale ; `GET /journal` récupère encore la
-  collection réseau complète. Une pagination serveur nécessite un contrat API.
 - Pas de refresh token automatique ; un 401 de la session courante ferme
   localement cette session, sans affecter un compte connecté ultérieurement.
 - Les tests de widget et le simulateur ne mesurent pas les FPS, la consommation
@@ -137,5 +154,5 @@ flutter build ios --simulator --debug --no-pub
 La CI utilise Flutter 3.47.4. Son artifact iOS est explicitement une application
 **simulateur**, pas une archive signée ou une livraison TestFlight.
 
-Le détail des corrections et des commandes reproductibles figure dans
-[le suivi de l’audit](frontend-audit-implementation.md).
+Les contrôles avant distribution figurent dans le [guide de livraison](release.md)
+et le [protocole d’accessibilité](accessibility.md).

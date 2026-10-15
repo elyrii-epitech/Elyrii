@@ -25,7 +25,11 @@ nav:
       - Design System: mobile/design.md
       - CI/CD: mobile/ci-cd.md
       - Development: mobile/development.md
-      - Frontend audit: mobile/frontend-audit-implementation.md
+      - Accessibility: mobile/accessibility.md
+      - Release: mobile/release.md
+      - Performance: mobile/performance.md
+      - Mascot Accessories: mobile/mascot-accessories.md
+      - Mascot Motion: mobile/velours-motion.md
       - Generated Docs: mobile/api/index.md
   - Server:
       - Overview: server/index.md

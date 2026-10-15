@@ -1,334 +1,71 @@
-# Elyrii Mobile Design System
+# Design system mobile
 
-The Elyrii mobile design system is based on Material 3, a soft color palette,
-locally bundled Poppins, and reusable Liquid Glass components.
+L’interface utilise Material 3, les polices Poppins embarquées et les composants
+Liquid Glass communs. Les thèmes clair, sombre et système sont fournis par
+`AppTheme` et persistés par `ThemeProvider`.
 
-## Reference Files
+## Sources et composants
 
-```text
-lib/core/theme/
-+-- app_colors.dart
-+-- app_dimensions.dart
-+-- app_text_styles.dart
-+-- app_theme.dart
+| Source dans `elyrii_app/lib` | Responsabilité |
+| --- | --- |
+| `core/theme/app_colors.dart` | Palette et couleurs selon le thème |
+| `core/theme/app_text_styles.dart` | Typographie Poppins |
+| `core/theme/app_dimensions.dart` | Espacements, rayons et dimensions |
+| `core/design_system/colors/elyrii_colors.dart` | Alias sémantiques de couleurs |
+| `core/glass/elyrii_glass_surface.dart` et `glass_role.dart` | Matériau partagé et rôles du verre |
+| `core/widgets/glass/liquid_glass_kit.dart` | Boutons, cartes, contrôles, listes, dialogues et feuilles |
+| `core/widgets/accessible_action.dart` | Activation clavier, focus et état d’action |
+| `core/widgets/elyrii_page_header.dart` | Cadre et en-tête de page défilant |
+| `core/accessibility/motion.dart` | Extension `animateRespectingMotion` |
+| `app/router/app_shell.dart` | Navigation persistante et dock |
 
-lib/core/widgets/
-+-- glass/
-|   +-- liquid_glass_action_sheet.dart
-|   +-- liquid_glass_app_bar.dart
-|   +-- liquid_glass_button.dart
-|   +-- liquid_glass_card.dart
-|   +-- liquid_glass_controls.dart
-|   +-- liquid_glass_dialog.dart
-|   +-- liquid_glass_list_tile.dart
-|   +-- liquid_glass_sheet.dart
-|   +-- liquid_glass_text_field.dart
-|   +-- liquid_glass_toast.dart
-+-- glass_container.dart
-+-- glass_navigation_bar.dart
-+-- glass_bubble_button.dart
-+-- mascot_3d_viewer.dart
-+-- mascot_customize_button.dart
-```
-
-## Theme
-
-The app exposes three modes through `ThemeProvider`:
-- `ThemeMode.system`
-- `ThemeMode.light`
-- `ThemeMode.dark`
-
-The selected mode is persisted in `SharedPreferences` with the `theme_mode` key.
+Importer les contrôles via :
 
 ```dart
-final themeProvider = context.watch<ThemeProvider>();
-themeProvider.setThemeMode(ThemeMode.dark);
+import 'package:elyrii_app/core/widgets/glass/liquid_glass_kit.dart';
 ```
 
-`MaterialApp` uses:
+`LiquidGlassWidgets.initialize()` et `LiquidGlassWidgets.wrap` sont configurés
+au démarrage. Les écrans utilisent les primitives Elyrii. `ElyriiGlassSurface`
+fournit une surface opaque en contraste élevé et un chemin léger pour les
+lignes déjà placées dans une feuille.
 
-```dart
-theme: AppTheme.lightTheme,
-darkTheme: AppTheme.darkTheme,
-themeMode: themeProvider.themeMode,
+## Accessibilité et adaptation
+
+Conserver les labels persistants, les états de chargement/sélection et les
+zones tactiles des contrôles communs. Utiliser les couleurs du thème et laisser
+le texte s’agrandir ; adapter les colonnes et permettre le défilement plutôt
+que réduire la police pour faire tenir le contenu.
+
+Les animations respectent les préférences système. Les scénarios de clavier,
+de contraste, de texte agrandi et de lecteur d’écran sont décrits dans le
+[protocole d’accessibilité](accessibility.md). Les tests widgets ne remplacent
+pas la validation des composants natifs.
+
+## Mascotte
+
+`Mascot3DViewer` et `MascotModelSurface` utilisent `flutter_3d_controller` avec
+un PNG de secours. Le corps et ses accessoires partagent une scène GLB.
+La visibilité, le cycle de vie et les préférences d’animation contrôlent le
+renderer ; sa pause et sa libération évitent un rendu permanent hors écran.
+
+Les [accessoires](mascot-accessories.md) et les [mouvements](velours-motion.md)
+ont leurs sources et outils de reconstruction. Les polices et portraits
+livrés restent dans `elyrii_app/assets`.
+
+## Icônes et lancement
+
+Les sources sont `assets/splash_icon.png` pour le lancement et
+`assets/icon_black_bg.png` pour l’icône de l’application. Depuis `elyrii_app` :
+
+```bash
+dart run flutter_native_splash:create
+dart run flutter_launcher_icons
 ```
 
-## Color Palette
+Les configurations sont `flutter_native_splash.yaml` et la section
+`flutter_launcher_icons` de `pubspec.yaml`. Vérifier les ressources générées
+Android/iOS et les deux thèmes après une régénération.
 
-### Primary Colors
-
-- Primary: `#6752BC`
-- Primary light: `#EDE8FF`
-- Primary dark: `#A99AF0`
-- Secondary: `#FFB5A8`
-- Accent: `#A8D5BA`
-
-### Semantic Colors
-
-- Success: `#7BC393`
-- Error: `#EA9999`
-- Warning: `#FFCFA8`
-- Info: `#93B8DA`
-
-### Backgrounds
-
-- Light background: `#E8E8EB`
-- Light scaffold: `#E8E8EB`
-- Dark background: `#1A1818`
-- Dark scaffold: `#171719`
-- Dark surface: `#2A2627`
-
-### Feature Colors
-
-- XP bar: `#FDD876`
-- Level badge: `#7E6AD8`
-- Streak: `#FFB5A8`
-- Meditation active: `#7E6AD8`
-- Chatbot gradient: `#7E6AD8` to `#A99AF0`
-
-## Typography
-
-`AppTextStyles` uses Poppins:
-
-```dart
-static const TextStyle _baseStyle = TextStyle(fontFamily: 'Poppins');
-```
-
-Available levels:
-- `displayLarge`, `displayMedium`, `displaySmall`
-- `headlineLarge`, `headlineMedium`, `headlineSmall`
-- `titleLarge`, `titleMedium`, `titleSmall`
-- `bodyLarge`, `bodyMedium`, `bodySmall`
-- `labelLarge`, `labelMedium`, `labelSmall`
-
-Specialized styles:
-- `chatbotMessage`
-- `journalEntry`
-- `timestamp`
-- `emotionLabel`
-- `objectiveTitle`
-- `achievementBadge`
-- `statNumber`
-- `statLabel`
-
-## Dimensions
-
-Spacing and sizes live in `AppDimensions`.
-
-### Spacing
-
-```dart
-spacingXxs = 4
-spacingXs = 8
-spacingSm = 12
-spacingMd = 16
-spacingLg = 24
-spacingXl = 32
-spacingXxl = 48
-spacingXxxl = 64
-```
-
-### Radius
-
-```dart
-radiusXs = 4
-radiusSm = 8
-radiusMd = 12
-radiusLg = 16
-radiusXl = 24
-radiusXxl = 32
-radiusCircular = 1000
-```
-
-### Content Widths
-
-- mobile: `480`
-- tablet: `768`
-- desktop: `1200`
-- max content: `600`
-
-## Liquid Glass
-
-The Liquid Glass layer provides standard app components:
-- `LiquidGlassCard`
-- `LiquidGlassButton`
-- `LiquidGlassIconButton`
-- `LiquidGlassListTile`
-- `LiquidGlassChip`
-- `LiquidGlassSwitch`
-- `LiquidGlassSlider`
-- `LiquidGlassSegmentedControl`
-- `LiquidGlassTextField`
-- `LiquidGlassDialogContent`
-- `LiquidGlassSheetContent`
-- `LiquidGlassActionSheetContent`
-- `LiquidGlassToast`
-- `LiquidGlassAppBar`
-
-Imports can use:
-
-```dart
-import '../../../../core/widgets/glass/liquid_glass_kit.dart';
-```
-
-or the historical re-export:
-
-```dart
-import '../../../../core/widgets/liquid_glass_kit.dart';
-```
-
-## Visual Performance
-
-`GlassPerformanceService` adapts visual effects:
-- low-end device heuristics;
-- manual effect reduction;
-- adaptive blur while scrolling;
-- optional highlight and transition disabling.
-
-Persisted preferences:
-- `reduce_glass_effects`
-- `adaptive_blur_on_scroll`
-
-Typical usage:
-
-```dart
-final performance = GlassPerformanceService();
-final blur = performance.getEffectiveBlurSigma(22);
-```
-
-## Navigation
-
-The main navigation uses:
-- `GlassNavigationBar` for the five main tabs;
-- `GlassBubbleButtonStateful` for the chatbot;
-- `MascotCustomizeButton` as a global overlay.
-
-`HomeNavigation` animates:
-- tab changes with fade/scale;
-- nav bar pulse;
-- selected icons;
-- haptic feedback.
-
-Special route transitions:
-- `/mascot-customization`: fade;
-- `/settings`: slide from the right plus fade.
-
-## 3D Mascot
-
-The base component is `Mascot3DViewer`.
-
-Capabilities:
-- loads GLB files through `flutter_3d_controller`;
-- shimmer while loading;
-- `assets/mascotte.png` fallback;
-- `idle` animation on load;
-- optional auto-rotation;
-- touch interactions disabled by default;
-- independent material colors and Velours, Satin or Porcelain finishes;
-- one accessory per head, face, neck and back slot without reloading the scene.
-
-Configurations:
-- `Mascot3DConfig.authPage()`
-- `Mascot3DConfig.chatbotFull()`
-- `Mascot3DConfig.chatbotMinimized()`
-
-Themes:
-- Elyrii Originel;
-- Astral;
-- Esprit Zen;
-- Sakura Céleste;
-- Automne Cuivré;
-- Panda Mystique;
-- Noël;
-- Océan.
-
-Themes provide material palettes for the same GLB. Custom colors preserve the
-painted face and eye highlights, with independent fur, details, ears/cheeks,
-eyes and accessory colors. The personalization studio keeps a draft with
-undo and explicit save, a persistent preview, and a challenge-based collection
-with temporary reward try-on and 15 pieces. Saved looks and progress are scoped
-to the account; the local demo is isolated. See [the studio specification](mascot-accessories.md)
-for rendering, persistence and reward details.
-
-The studio shares the page frame and header, circular back/undo controls,
-Liquid Glass buttons, segmented controls, cards and reward sheet with the rest
-of Elyrii. Its backgrounds and type hierarchy come from `AppColors` and
-`AppTextStyles`; the mascot palette only colors the preview halo. Palette and
-accessory cards use the same glass material and selection border as meditation
-practice cards. Save/try-on actions keep keyboard activation, accessible labels
-and disabled/loading states. Enlarged text reduces the palette grid columns.
-
-## Animations
-
-Packages in use:
-- `flutter_animate` for declarative transitions;
-- `lottie` for `breath.json` and `Coucou.json`;
-- `shimmer` for loading states.
-
-Real usages:
-- auth pages: mascot and form fade/slide;
-- journal: animation limited to the first 8 items;
-- meditation: breathing circle through `AnimationController`;
-- chatbot: text field glow while typing;
-- chatbot mascot: slow pulse in full-screen mode.
-
-## Accessibility and Emotional Safety
-
-Already present:
-- system text scaling through standard Flutter widgets;
-- dedicated light/dark contrast colors;
-- `flutter_tts` available as a dependency;
-- emergency button in the chatbot;
-- crisis keyword detection and help banner;
-- useful phone numbers shown directly in the UI.
-
-Needs improvement:
-- add explicit `Semantics` to icon-only buttons;
-- verify contrast across all Liquid Glass components;
-- wire `flutter_tts` into flows that should read content aloud;
-- avoid relying only on keyword matching for crisis messages.
-
-## Responsive
-
-`core/utils/responsive.dart` defines:
-
-```dart
-compact: < 360
-phone: < 600
-foldable: < 840
-tablet: < 1200
-desktop: >= 1200
-```
-
-Available helpers:
-- `Responsive.getBreakpoint(context)`
-- `Responsive.getGridColumns(context)`
-- `Responsive.getHorizontalPadding(context)`
-- `Responsive.getMaxContentWidth(context)`
-- `ResponsiveBuilder`
-- `ResponsiveConstrainedBox`
-- `ResponsivePadding`
-
-## Splash and Icons
-
-`flutter_native_splash.yaml`:
-- black background in light and dark mode;
-- image `assets/icon.png`;
-- Android 12 configured;
-- web splash disabled.
-
-`flutter_launcher_icons`:
-- source `assets/icon_black_bg.png`;
-- Android launcher icon;
-- iOS with alpha removal.
-
-## UI Contribution Rules
-
-- Use `AppColors`, `AppDimensions`, and `AppTextStyles` before adding inline
-  values.
-- Prefer existing Liquid Glass components for buttons, cards, dialogs, sheets,
-  and list tiles.
-- Preserve light/dark support on every new screen.
-- Add a visual fallback when a 3D or Lottie asset can fail.
-- Limit animations in long lists to avoid frame drops.
-- Test screens with reduced effects through `GlassPerformanceService`.
+Pour les listes longues, construire les éléments à la demande et limiter les
+animations. Comparer les changements de rendu avec les [mesures de performance](performance.md).

@@ -1,9 +1,8 @@
-# Préconditions de livraison des corrections
+# Livraison de l’application mobile
 
-Ce document complète le [bilan](implementation.md) et le
-[protocole d’accessibilité](accessibilite.md). Les modifications sont vérifiées
-localement ; aucun déploiement, envoi d’email réel ou action de modération
-sur des données de production n’a été effectué.
+Ce guide complète les [contrôles CI/CD](ci-cd.md) et le
+[protocole d’accessibilité](accessibility.md). Les tests locaux ne remplacent pas
+la configuration des services et les vérifications natives avant distribution.
 
 ## Migration et ordre de livraison
 
@@ -11,7 +10,7 @@ sur des données de production n’a été effectué.
    des créations d’index sur un volume représentatif. Les index standards de
    cette migration peuvent verrouiller des écritures pendant leur création.
 2. Appliquer
-   [`20261010_frontend_reliability.sql`](../../../elyrii_server/migrations/20261010_frontend_reliability.sql)
+   [`20261010_frontend_reliability.sql`](https://github.com/elyrii-epitech/Elyrii/blob/frontend/elyrii_server/migrations/20261010_frontend_reliability.sql)
    par le mécanisme de migration du déploiement avant d’activer le nouveau
    backend. La migration est additive et a été rejouée deux fois sur une base
    PostgreSQL 16 jetable. Ne jamais utiliser le `drizzle-kit push --force` de la
@@ -75,7 +74,7 @@ les parcours d’activation email restent volontairement hors périmètre.
 Exécuter en staging : adresse inconnue, livraison réussie, indisponibilité du
 webhook, code expiré, deux confirmations concurrentes, demandes répétées et
 mot de passe correct après confirmation. Aucun vrai message n’a été envoyé
-pendant cet audit.
+pour valider les fixtures automatisées.
 
 Les routes publiques ont des limites de corps de 1 KiB (demande) et 4 KiB
 (confirmation), et des quotas par processus de 10 / 30 requêtes par fenêtre
@@ -147,7 +146,7 @@ avec des fins de ligne CRLF ; la version corrigée est exécutée explicitement
 en local et dans le job documentaire.
 
 L’inventaire CycloneDX généré par `elyrii_app/tool/frontend_sbom.py` contient
-173 composants, le graphe Dart, les hashes d’archives Pub, le JS model-viewer
+le graphe Dart, les hashes d’archives Pub, le JS model-viewer
 embarqué et les GLB. La version amont du JS embarqué n’est pas déterminée :
 il est identifié par son hash, avec son en-tête de licence. L’inventaire ne
 constitue ni un scan de vulnérabilités ni une revue exhaustive des licences.
@@ -182,10 +181,11 @@ debug et expose le budget configurable `ELYRII_FRAME_BUDGET_MS`, par défaut
 cible de 120 Hz. Mesurer les deux modes sur les modèles de téléphone retenus.
 
 Ce harness mesure l’initialisation de la démo après démarrage du processus de
-test et les frames dashboard ; **il ne mesure pas un lancement OS à froid,
+test, la navigation, le défilement et une page de messages anciens ;
+**il ne mesure pas un lancement OS à froid,
 les frames WebGL, la mémoire native/WebView/GPU ou l’énergie**. Mesurer ces
 éléments séparément avec les outils Android/iOS. Compléter les
-[budgets de ressources existants](../../mobile/performance.md) par des valeurs
+[budgets de ressources existants](performance.md) par des valeurs
 observées et un appareil de référence, et comparer avant/après sur les mêmes
 parcours : dashboard/mascotte équipée, long journal, chat, méditation,
 arrière-plan/reprise et navigation prolongée.
@@ -195,7 +195,7 @@ Le benchmark local de 100/1 000/10 000 notes démontre que seule une page de
 sont pas des promesses de latence sur téléphone.
 
 Avant livraison, exécuter aussi les parcours TalkBack/VoiceOver décrits dans
-le [dossier d’accessibilité](accessibilite.md), les permissions galerie,
+le [protocole d’accessibilité](accessibility.md), les permissions galerie,
 la reprise Android après destruction du picker, les partages natifs, la
 suppression/reprise de purge et l’expiration de session. Renseigner résultats,
 modèles, versions, traces et anomalies ; aucun de ces essais physiques n’est

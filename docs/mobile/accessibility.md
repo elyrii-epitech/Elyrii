@@ -1,8 +1,8 @@
-# Dossier d’accessibilité approfondi
+# Accessibilité mobile
 
-Évaluation et corrections du 10 octobre 2026, application Elyrii iOS/Android,
-branche `frontend`, base `4b90d68ff8c09fd9e357f40ed78e5422bb80aa18`.
-Ce dossier accompagne le [bilan des corrections](implementation.md).
+Méthode de validation de l’application iOS/Android et des composants communs.
+Les matrices automatiques sont dans `elyrii_app/test/frontend/` ; les résultats
+sont régénérés dans `elyrii_app/build/a11y-evidence/` et publiés par la CI.
 
 ## Cible et niveau de preuve
 
@@ -67,9 +67,9 @@ du SDK. Un test négatif avec une cible **44 × 44 entièrement visible** sous
 SafeArea démontre que le contrôle Android continue de la refuser. Les helpers
 de nom et de contraste restent ceux du SDK dans tous les états.
 
-Preuves : [rendus](preuves-implementation/layout.json),
-[sémantique](preuves-implementation/semantics.json),
-[exécutions et empreintes](preuves-implementation/verification.json).
+Sources : [matrice de rendu](https://github.com/elyrii-epitech/Elyrii/blob/frontend/elyrii_app/test/frontend/accessibility_matrix_test.dart),
+[matrice sémantique](https://github.com/elyrii-epitech/Elyrii/blob/frontend/elyrii_app/test/frontend/semantics_matrix_test.dart) et
+[interactions](https://github.com/elyrii-epitech/Elyrii/blob/frontend/elyrii_app/test/frontend/accessibility_interactions_test.dart).
 
 ## Corrections apportées aux composants
 

@@ -143,8 +143,8 @@ et oreilles peuvent être recolorées indépendamment. L’éclat conserve son
 La conversion RGB linéaire vers sRGB préserve la couleur de l’atlas lors de sa
 lecture. Trois textures canvas réutilisables limitent la mémoire pendant les
 réglages. La finition ajuste rugosité, relief et clearcoat, dont l’extension
-est présente dans le modèle assemblé. Le rendu web utilise le même script
-model-viewer embarqué que les plateformes natives.
+est présente dans le modèle assemblé. L’outil local de revue utilise le même
+script model-viewer embarqué que les plateformes natives.
 Le studio maintient un seuil de résolution de 75 % via l’API publique
 `minimumRenderScale` ; le seuil précédent est rétabli à la sortie. L’adaptation
 automatique reste disponible au-dessus de ce seuil pour les appareils plus lents.
@@ -181,9 +181,13 @@ Une entrée dédiée permet de vérifier les widgets de production sans compte :
 
 ```sh
 cd elyrii_app
-flutter run -d chrome -t tool/preview_mascot_studio.dart
+flutter run -d DEVICE_ID -t tool/preview_mascot_studio.dart
 # --dart-define=PREVIEW_CHALLENGES=36 déverrouille la collection pour la revue.
 ```
+
+Utiliser un émulateur ou appareil iOS/Android de développement. Les portraits
+livrés sont dans `elyrii_app/assets/accessory_portraits/` ; les images de revue
+générées dans `scripts/mascot/previews/` restent locales et ignorées par Git.
 
 Les tests `mascot_wardrobe_asset_test.dart` relient chaque identifiant et tenue
 au catalogue, vérifient les ancrages animés, matériaux masqués, skins, clips et

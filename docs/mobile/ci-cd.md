@@ -1,8 +1,8 @@
 # Frontend CI — iOS et Android
 
 Le workflow Flutter unique est `.github/workflows/flutter-check-and-docs.yml`.
-Son nom **Flutter Style, Test & Docs** est conservé pour la publication des
-API docs existante. Le workflow redondant `flutter-build.yml` est retiré.
+Son nom **Flutter Style, Test & Docs** est utilisé par la publication des
+API docs.
 
 Les seules cibles de l’application sont **iOS et Android**. Les pushes et PR
 sur `frontend`, `dev` et `main` déclenchent les vérifications lorsque le code
@@ -52,7 +52,7 @@ Depuis `elyrii_app`, avec la version du SDK de `.fvmrc` :
 
 ```bash
 flutter pub get --enforce-lockfile
-dart format --output=none --set-exit-if-changed lib test tool integration_test test_driver
+dart format --output=none --set-exit-if-changed lib test tool benchmark integration_test test_driver
 flutter analyze --no-pub
 flutter test --no-pub --coverage
 flutter build apk --debug --no-pub --dart-define=ELYRII_ENV=development
@@ -61,6 +61,9 @@ flutter test integration_test/frontend_flows_test.dart -d DEVICE_ID --dart-defin
 dart pub global activate dartdoc 9.0.11
 dart pub global run dartdoc --output doc/api
 ```
+
+`bash scripts/flutter_ci_check.sh`, depuis la racine du dépôt, exécute la
+résolution verrouillée, le formatage sans mutation, l’analyse et les tests.
 
 Android exige son SDK et iOS Xcode sur macOS. L’environnement Linux de
 l’intervention ne possède ni Android SDK, ni Xcode : les builds natifs et les

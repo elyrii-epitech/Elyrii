@@ -62,11 +62,13 @@ flutter test integration_test/frontend_flows_test.dart -d DEVICE_ID --dart-defin
 flutter drive --profile --no-dds -d PHYSICAL_DEVICE_ID --driver=test_driver/integration_test.dart --target=integration_test/performance_test.dart --dart-define=ELYRII_ENV=development
 ```
 
-Le harness profile rapporte le temps d’ouverture du dashboard, le nombre de
-frames, build p95 et raster p95. Contrôler également GPU/mémoire, galerie et
+Le harness profile rapporte le démarrage de la démo, l’ouverture des routes,
+le chargement de messages anciens, le nombre de frames, build p95 et raster p95.
+Contrôler également GPU/mémoire, galerie et
 upload, libération du renderer, TalkBack/VoiceOver et texte agrandi sur les
 appareils représentatifs avec DevTools. Les timings de tests widgets ne
 prouvent pas la performance native.
 
-Voir [le suivi de l’audit](frontend-audit-implementation.md) pour les migrations,
-les résultats et les vérifications dépendantes des appareils et de la gateway.
+Voir le [guide de livraison](release.md) pour les migrations et les vérifications
+sur appareils et gateway, et le [protocole d’accessibilité](accessibility.md)
+pour les parcours avec les aides techniques.

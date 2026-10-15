@@ -46,8 +46,9 @@ of the baseline and the current checkout, serially. Core cases discard one warmu
 and retain nine samples; widget cases discard three warmups and retain nine
 samples. The launch animation uses three samples of a simulated 16 ms Flutter
 frame clock after logo decode. All retained samples, including outliers, are in
-`before.json` and `after.json`; `comparison.json` and `comparison.md` include
-every case, including regressions.
+`before.json` and `after.json`; `comparison.md` includes every case, including
+regressions. Generated logs and intermediate trial files are kept out of the
+source tree.
 
 The workload includes 100, 1,000 and 10,000 encrypted chat messages; 100 roughly
 1 KB journal entries; 1,000 loaded chat messages with variable-height bubbles;
@@ -91,9 +92,8 @@ painting an actual frame adds rendering time.
 
 ## Trials rejected
 
-The individual trial samples are in `trials/`. They were diagnostic runs with
-the sample counts recorded in each file; the final paired run is the comparison
-used for the retained implementation.
+The final paired run is the comparison used for the retained implementation.
+Two alternatives were tried and reverted:
 
 - A shared selection surface with plain text replaced per-message selectable
   text. Isolated runs looked promising, but repeated scrolling comparisons did
@@ -111,17 +111,16 @@ opening/layout cost and the reflow/jump when adding older messages.
 
 Baseline regression suite: **403 tests passed**. Final suite: **411 tests passed**;
 static analysis reported **no issues**, formatting and diff checks passed, and
-both paired benchmark runs passed all nine tests. See [checks.json](checks.json). New regressions cover bounded
+both paired benchmark runs passed all nine tests. New regressions cover bounded
 chat reads and rendering, stable reading position, selection/copy, cache races,
-account changes, and Garden expiry/forced refresh/commands. Final check results
-are saved with the evidence.
+account changes, and Garden expiry/forced refresh/commands.
 
 These are Flutter VM/JIT and headless widget measurements on Linux. Native
 plugins, secure storage and native views are mocked. Small-sample p95 values are
 descriptive, and host scheduling/JIT/GC affect timings. They do not establish
 native FPS, GPU/WebView cost, peak memory, energy, or OS cold-launch performance.
-`devices.json` records that the available Linux target has no hardware rendering;
-there is no attached Android/iOS device for a physical profile measurement.
+The available Linux target had no hardware rendering and no Android/iOS device
+was attached for a physical profile measurement.
 
 The extended native profile test records Flutter build/raster p95 for all nine
 main routes, route mount time, and an older chat page, using synthetic demo data.
@@ -158,6 +157,5 @@ flutter test --no-pub benchmark/app_performance_benchmark_test.dart \
 ```
 
 The benchmarks live outside `test/` so the default regression suite does not run
-heavy performance fixtures. `product-changes.patch` records the measured product
-diff; the working tree also contains the harness, regression tests and native
-profile extension.
+heavy performance fixtures. Source changes and earlier diagnostic artifacts are
+available in Git history; new benchmark outputs belong under `build/performance`.

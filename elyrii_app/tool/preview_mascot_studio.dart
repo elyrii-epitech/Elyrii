@@ -1,5 +1,5 @@
 // Local visual review of the production studio with deterministic challenge
-// progress. Run: flutter run -d chrome -t tool/preview_mascot_studio.dart
+// progress. Run: flutter run -d DEVICE_ID -t tool/preview_mascot_studio.dart
 // Optional: --dart-define=PREVIEW_CHALLENGES=36 --dart-define=PREVIEW_DARK=true
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
