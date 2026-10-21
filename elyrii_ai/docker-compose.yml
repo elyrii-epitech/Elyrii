@@ -60,7 +60,12 @@ services:
     environment:
       - KAFKA_BROKER=host.docker.internal:9092
       - AI_BASE_URL=http://host.docker.internal:11434
-      - AI_MODEL=mistral
+      - AI_MODEL=${AI_MODEL:-mistral}
+      - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - CHAT_TOKENIZER_DIR=/generation-tokenizer
+      - CONTEXT_SERVER_URL=${CONTEXT_SERVER_URL:-http://host.docker.internal:3000}
+    volumes:
+      - ${CHAT_TOKENIZER_HOST_DIR:-./generation-tokenizer}:/generation-tokenizer:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "redpanda:host-gateway"
