@@ -209,7 +209,7 @@ suite("Asynchronous extraction (PostgreSQL)", () => {
         await repo.complete(result(job, [memory(job)]));
         const context = new ContextRepository(owner, database, new ContextPolicy(() => now));
         const [old] = await context.listEligibleMemories();
-        await context.putEmbedding(old!.id, { model: "test", dimensions: 3, embedding: [1, 2, 3] });
+        await context.putEmbedding(old!.id, { model: "test", dimensions: 3, contentRevision: 1, embedding: [1, 2, 3] });
         const correction = await source("I graduated in 2025, not 2024."); const pendingJob = await claim();
         await context.correctMemory(old!.id, { kind: "memory", content: "Graduated in 2025", origin: "explicit",
             sourceMessageId: correction.id, retention: "long_term" });

@@ -20,7 +20,7 @@ suite("Context repository (PostgreSQL)", () => {
         value: "short", origin: "explicit", sourceMessageId: source, ...extra });
     const memory = (extra: Partial<MemoryCandidate> = {}): MemoryCandidate => ({ kind: "memory", content: "Graduated",
         retention: "long_term", origin: "explicit", sourceMessageId: source, ...extra });
-    const vector = { model: "test-v1", dimensions: 3, embedding: [1, 2, 3] };
+    const vector = { model: "test-v1", dimensions: 3, contentRevision: 1, embedding: [1, 2, 3] };
     beforeEach(async () => {
         owner = randomUUID(); other = randomUUID(); source = randomUUID(); foreignSource = randomUUID(); assistantSource = randomUUID();
         time = new Date("2030-01-01T00:00:00Z");

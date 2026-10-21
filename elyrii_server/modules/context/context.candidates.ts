@@ -38,6 +38,7 @@ export const summaryInputSchema = z.strictObject({
 });
 export type SummaryInput = z.input<typeof summaryInputSchema>;
 export const embeddingInputSchema = z.strictObject({
+    contentRevision: z.number().int().positive(),
     model: z.string().trim().min(1).max(200),
     dimensions: z.number().int().min(1).max(16000),
     embedding: z.array(z.number().finite()).min(1).max(16000),

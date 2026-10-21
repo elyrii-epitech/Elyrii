@@ -151,6 +151,7 @@ export class ContextRepository {
             const [memory] = await tx.select().from(memories).where(and(eq(memories.id, targetId),
                 eq(memories.userId, this.userId))).for("update");
             if (!memory) throw new ContextAccessError("Memory is unavailable");
+            if (memory.contentRevision !== input.contentRevision) throw new ContextConflictError("Memory content changed");
             const now = this.policy.now();
             const [eligible] = await tx.select({ id: memories.id }).from(memories).where(and(
                 eq(memories.id, targetId), this.policy.memoriesEligible(this.userId, now)));
@@ -163,10 +164,11 @@ export class ContextRepository {
     }
     async getEmbeddings(memoryId: string) {
         return this.database.select({ memoryId: embeddings.memoryId, model: embeddings.model,
+            contentRevision: embeddings.contentRevision,
             dimensions: embeddings.dimensions, embedding: embeddings.embedding,
             createdAt: embeddings.createdAt, updatedAt: embeddings.updatedAt }).from(embeddings)
             .innerJoin(memories, eq(memories.id, embeddings.memoryId))
-            .where(and(eq(memories.id, id(memoryId)), this.policy.memoriesEligible(this.userId)))
+            .where(and(eq(memories.id, id(memoryId)), eq(embeddings.contentRevision, memories.contentRevision), this.policy.memoriesEligible(this.userId)))
             .orderBy(asc(embeddings.model));
     }
 }

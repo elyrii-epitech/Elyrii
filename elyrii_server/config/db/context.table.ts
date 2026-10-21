@@ -14,8 +14,8 @@ export const memoryRetention = pgEnum("memory_retention", ["short_term", "long_t
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () => timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date());
 
-// No embedding model has been selected yet. Model-specific dimensions are checked
-// per row; a future model-specific migration can add a fixed-size ANN index.
+// Variable dimensions allow isolated model versions. Exact cosine search first;
+// a measured, model-specific migration may add an ANN index later.
 const embeddingVector = customType<{ data: number[]; driverData: string }>({
     dataType: () => "vector",
     toDriver: (value) => JSON.stringify(value),
@@ -69,6 +69,7 @@ export const userMemoriesTable = pgTable("user_memories", {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull().references(() => userTable.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
+    contentRevision: integer("content_revision").notNull().default(1),
     origin: contextOrigin("origin").notNull(),
     sourceMessageId: uuid("source_message_id"),
     retention: memoryRetention("retention").notNull(),
@@ -97,6 +98,7 @@ export const memoryEmbeddingsTable = pgTable("memory_embeddings", {
     model: text("model").notNull(),
     dimensions: integer("dimensions").notNull(),
     embedding: embeddingVector("embedding").notNull(),
+    contentRevision: integer("content_revision").notNull().default(1),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
 }, (table) => [
