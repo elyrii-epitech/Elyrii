@@ -10,8 +10,10 @@ import { summaryConfig, summaryConfigSchema, summaryJobSchema, summaryResultSche
 import { retryDelay } from "../modules/context/extraction.contracts";
 import { summaryInputSchema, type SummaryInput } from "../modules/context/context.candidates";
 
-const scope = (table: typeof tasks | typeof summaries | typeof messages, userId: string, conversationId: string) =>
-    and(eq(table.userId, userId), eq(table.conversationId, conversationId));
+import { contextSourceEligible, conversationHasExpiredContext } from "../modules/context/source-eligibility";
+
+const scope = (table: typeof tasks | typeof summaries | typeof messages, userId: string, conversationId: string, now = new Date()) =>
+    and(eq(table.userId, userId), eq(table.conversationId, conversationId), table === messages ? contextSourceEligible(now) : undefined);
 const afterBoundary = (boundary?: { createdAt: Date; id: string }) => boundary ?
     or(gt(messages.createdAt, boundary.createdAt), and(eq(messages.createdAt, boundary.createdAt), gt(messages.id, boundary.id))) : undefined;
 const clearJob = { jobId: null, sourceIds: null, snapshotThroughAt: null, snapshotThroughId: null, attempts: 0 };
@@ -28,13 +30,15 @@ export class SummaryRepository {
             const [task] = await tx.select().from(tasks).where(and(inArray(tasks.status, ["pending", "retry", "awaiting"]), lte(tasks.nextAttemptAt, now)))
                 .orderBy(tasks.nextAttemptAt, tasks.userId, tasks.conversationId).limit(1).for("update", { skipLocked: true });
             if (!task) return null;
+            const [expired] = await tx.select({ found: conversationHasExpiredContext(task.userId, task.conversationId, now) }).from(users).where(eq(users.id, task.userId));
+            if (expired?.found) { await tx.execute(sql`SELECT invalidate_conversation_summary(${task.userId}::uuid, ${task.conversationId})`); return null; }
             const where = scope(tasks, task.userId, task.conversationId);
             if (task.attempts >= 5) {
                 await tx.update(tasks).set({ status: "failed", lastError: "attempts_exhausted" }).where(where); return null;
             }
             const [prior] = await tx.select().from(summaries).where(scope(summaries, task.userId, task.conversationId));
-            const [boundary] = prior ? await tx.select().from(messages).where(and(scope(messages, task.userId, task.conversationId), eq(messages.id, prior.throughMessageId))) : [];
-            const uncovered = and(scope(messages, task.userId, task.conversationId), afterBoundary(boundary));
+            const [boundary] = prior ? await tx.select().from(messages).where(and(scope(messages, task.userId, task.conversationId, this.clock()), eq(messages.id, prior.throughMessageId))) : [];
+            const uncovered = and(scope(messages, task.userId, task.conversationId, this.clock()), afterBoundary(boundary));
             let rows;
             if (task.sourceIds) {
                 rows = await tx.select().from(messages).where(and(uncovered, inArray(messages.id, task.sourceIds)))
@@ -95,6 +99,8 @@ export class SummaryRepository {
         return this.database.transaction(async tx => {
             const [owner] = await tx.select({ id: users.id }).from(users).where(eq(users.id, result.userId)).for("update");
             if (!owner) return "discarded";
+            const [expired] = await tx.select({ found: conversationHasExpiredContext(result.userId, result.conversationId, this.clock()) }).from(users).where(eq(users.id, result.userId));
+            if (expired?.found) { await tx.execute(sql`SELECT invalidate_conversation_summary(${result.userId}::uuid, ${result.conversationId})`); return "discarded"; }
             const where = scope(tasks, result.userId, result.conversationId);
             const [task] = await tx.select().from(tasks).where(where).for("update");
             if (!task || task.jobId !== result.jobId || task.revision !== result.revision || task.attempts !== result.attempt ||
@@ -114,7 +120,7 @@ export class SummaryRepository {
             // triggers fence edits/deletions and backfilled messages with revision.
             const [prior] = await tx.select().from(summaries).where(scope(summaries, task.userId, task.conversationId));
             const [boundary] = prior ? await tx.select().from(messages).where(eq(messages.id, prior.throughMessageId)) : [];
-            const rows = await tx.select().from(messages).where(and(scope(messages, task.userId, task.conversationId), afterBoundary(boundary)))
+            const rows = await tx.select().from(messages).where(and(scope(messages, task.userId, task.conversationId, this.clock()), afterBoundary(boundary)))
                 .orderBy(asc(messages.createdAt), asc(messages.id)).limit(task.sourceIds.length);
             if (rows.map(m => m.id).join() !== task.sourceIds.join()) return "discarded";
             const now = this.clock();
@@ -138,9 +144,10 @@ export class SummaryRepository {
             const revision = task?.revision ?? 0;
             const historyVersion = task?.historyVersion ?? 0;
             if (cursor && (cursor.revision !== revision || cursor.historyVersion !== historyVersion)) throw new Error("Conversation changed; restart continuity pagination");
-            const [summary] = await tx.select().from(summaries).where(scope(summaries, userId, conversationId));
+            const [summary] = await tx.select().from(summaries).where(and(scope(summaries, userId, conversationId),
+                sql`NOT ${conversationHasExpiredContext(userId, conversationId, this.clock())}`));
             const [boundary] = summary ? await tx.select().from(messages).where(eq(messages.id, summary.throughMessageId)) : [];
-            const rows = await tx.select().from(messages).where(and(scope(messages, userId, conversationId), afterBoundary(boundary),
+            const rows = await tx.select().from(messages).where(and(scope(messages, userId, conversationId, this.clock()), afterBoundary(boundary),
                 cursor ? afterBoundary({ id: cursor.id, createdAt: new Date(cursor.createdAt) }) : undefined))
                 .orderBy(asc(messages.createdAt), asc(messages.id)).limit(limit + 1);
             const tail = rows.slice(0, limit), last = tail.at(-1);
@@ -158,7 +165,7 @@ export class SummaryRepository {
             const where = scope(tasks, userId, input.conversationId);
             const [task] = await tx.select().from(tasks).where(where).for("update");
             if (!task) throw new Error("Conversation is unavailable");
-            const [source] = await tx.select().from(messages).where(and(scope(messages, userId, input.conversationId), eq(messages.id, input.throughMessageId)));
+            const [source] = await tx.select().from(messages).where(and(scope(messages, userId, input.conversationId, this.clock()), eq(messages.id, input.throughMessageId)));
             if (!source) throw new Error("Summary boundary is unavailable");
             const [current] = await tx.select().from(summaries).innerJoin(messages, eq(messages.id, summaries.throughMessageId))
                 .where(scope(summaries, userId, input.conversationId));

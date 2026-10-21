@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../config/db.config";
 import { userTable } from "../config/db/user.table";
@@ -9,7 +9,10 @@ import { factCandidateSchema, memoryCandidateSchema, embeddingInputSchema,
     type FactCandidate, type MemoryCandidate, type SummaryInput, type EmbeddingInput } from "../modules/context/context.candidates";
 import { ContextPolicy } from "../modules/context/context.policy";
 import { SummaryRepository } from "./summary.repository";
+import { extractionKeys } from "../config/db/extraction.table";
 import { summaryTasks } from "../config/db/summary.table";
+
+import { contextSourceEligible, conversationHasExpiredContext } from "../modules/context/source-eligibility";
 
 type Database = typeof db;
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -29,7 +32,7 @@ export class ContextRepository {
     }
     private async source(tx: Transaction, messageId: string) {
         const [source] = await tx.select({ id: messages.id }).from(messages).where(and(
-            eq(messages.id, messageId), eq(messages.userId, this.userId), eq(messages.role, "user"),
+            eq(messages.id, messageId), eq(messages.userId, this.userId), eq(messages.role, "user"), eq(messages.contextSuppressed, false),
         )).for("key share");
         if (!source) throw new ContextAccessError("Source message is unavailable");
     }
@@ -40,7 +43,7 @@ export class ContextRepository {
         if (!user) throw new ContextAccessError("Context owner is unavailable");
     }
     async getFact(factId: string) {
-        const [row] = await this.database.select().from(facts).where(and(eq(facts.id, id(factId)), eq(facts.userId, this.userId)));
+        const [row] = await this.database.select().from(facts).where(and(eq(facts.id, id(factId)), eq(facts.userId, this.userId), or(isNull(facts.validUntil), gt(facts.validUntil, this.policy.now()))));
         return row ?? null;
     }
     /** Also fences in-flight jobs when there are no stored rows yet. */
@@ -48,6 +51,8 @@ export class ContextRepository {
         return this.database.transaction(async tx => {
             await this.lockUser(tx);
             await tx.update(userTable).set({ contextGeneration: sql`${userTable.contextGeneration} + 1` }).where(eq(userTable.id, this.userId));
+            await tx.update(extractionKeys).set({ suppressed: true }).where(eq(extractionKeys.userId, this.userId));
+            await tx.update(messages).set({ contextSuppressed: true }).where(eq(messages.userId, this.userId));
             await tx.delete(facts).where(eq(facts.userId, this.userId));
             await tx.delete(memories).where(eq(memories.userId, this.userId));
             await tx.delete(summaries).where(eq(summaries.userId, this.userId));
@@ -89,7 +94,8 @@ export class ContextRepository {
     }
     async getMemory(memoryId: string) {
         const [row] = await this.database.select().from(memories)
-            .where(and(eq(memories.id, id(memoryId)), eq(memories.userId, this.userId)));
+            .where(and(eq(memories.id, id(memoryId)), eq(memories.userId, this.userId),
+                or(isNull(memories.validUntil), gt(memories.validUntil, this.policy.now())), or(isNull(memories.expiresAt), gt(memories.expiresAt, this.policy.now()))));
         return row ?? null;
     }
     async listEligibleMemories(limit = 100) {
@@ -134,12 +140,12 @@ export class ContextRepository {
     }
     async getSummary(conversationId: string) {
         const [row] = await this.database.select().from(summaries).where(and(eq(summaries.userId, this.userId),
-            eq(summaries.conversationId, z.string().min(1).parse(conversationId))));
+            eq(summaries.conversationId, z.string().min(1).parse(conversationId)), sql`NOT ${conversationHasExpiredContext(this.userId, conversationId, this.policy.now())}`));
         return row ?? null;
     }
     async getRecentMessages(conversationId: string, limit = 12) {
         const rows = await this.database.select().from(messages).where(and(eq(messages.userId, this.userId),
-            eq(messages.conversationId, z.string().min(1).parse(conversationId))))
+            eq(messages.conversationId, z.string().min(1).parse(conversationId)), contextSourceEligible(this.policy.now())))
             .orderBy(desc(messages.createdAt), desc(messages.id)).limit(limitSchema.parse(limit));
         return rows.reverse();
     }

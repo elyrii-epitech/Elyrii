@@ -9,6 +9,8 @@ import { ContextPolicy } from "../modules/context/context.policy";
 import { canonical, extractionJobSchema, extractionResultSchema, MAX_ATTEMPTS, retryDelay, supportedBySource,
     type ExtractionJob, type Proposal } from "../modules/context/extraction.contracts";
 
+import { contextSourceEligible } from "../modules/context/source-eligibility";
+
 const pending = ["pending", "retry", "awaiting"];
 const memoryKey = (p: Proposal) => {
     const c = p.candidate;
@@ -31,14 +33,14 @@ export class ExtractionRepository {
                 return null;
             }
             const [source] = await tx.select().from(messages).where(and(eq(messages.id, job.sourceMessageId),
-                eq(messages.userId, job.userId), eq(messages.conversationId, job.conversationId), eq(messages.role, "user")));
+                eq(messages.userId, job.userId), eq(messages.conversationId, job.conversationId), eq(messages.role, "user"), contextSourceEligible(this.policy.now())));
             const [owner] = await tx.select().from(users).where(eq(users.id, job.userId));
             if (!source || !owner || owner.contextGeneration !== job.generation) {
                 await tx.update(jobs).set({ status: "discarded", completedAt: now }).where(eq(jobs.id, job.id));
                 return null;
             }
             const history = await tx.select().from(messages).where(and(eq(messages.userId, job.userId),
-                eq(messages.conversationId, job.conversationId), eq(messages.role, "user"),
+                eq(messages.conversationId, job.conversationId), eq(messages.role, "user"), contextSourceEligible(this.policy.now()),
                 or(lt(messages.createdAt, source.createdAt), and(eq(messages.createdAt, source.createdAt), lt(messages.id, source.id)))))
                 .orderBy(desc(messages.createdAt), desc(messages.id)).limit(12);
             const input: ExtractionJob["input"] = { source: { id: source.id, role: "user", content: source.message,
@@ -92,7 +94,7 @@ export class ExtractionRepository {
                 await tx.update(jobs).set({ status, lastError, completedAt: now }).where(eq(jobs.id, job.id));
             };
             const [source] = await tx.select().from(messages).where(and(eq(messages.id, job.sourceMessageId),
-                eq(messages.userId, owner.id), eq(messages.conversationId, job.conversationId), eq(messages.role, "user"))).for("key share");
+                eq(messages.userId, owner.id), eq(messages.conversationId, job.conversationId), eq(messages.role, "user"), contextSourceEligible(this.policy.now()))).for("key share");
             if (!source || owner.contextGeneration !== job.generation) {
                 await finish("discarded"); return "discarded";
             }
@@ -117,7 +119,7 @@ export class ExtractionRepository {
                 // proposals into authoritative context by dropping that metadata.
                 if (proposal.certainty === "uncertain") continue;
                 const [watermark] = await tx.select().from(keys).where(and(eq(keys.userId, owner.id), eq(keys.key, key)));
-                if (watermark && watermark.sequence >= job.sequence) continue;
+                if (watermark && (watermark.suppressed || watermark.sequence >= job.sequence)) continue;
                 const c = proposal.candidate;
                 let targetId: string;
                 if (c.kind === "memory") {

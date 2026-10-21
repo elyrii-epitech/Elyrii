@@ -127,7 +127,7 @@ suite("Context repository (PostgreSQL)", () => {
         expect(await repo.listEligibleFacts()).toEqual([]);
         expect(await repo.listEligibleMemories()).toEqual([]);
         expect(await repo.getEmbeddings(m.id)).toEqual([]);
-        await repo.putSummary({ conversationId: "a", summary: "Summary", throughMessageId: source });
+        await expect(repo.putSummary({ conversationId: "a", summary: "Summary", throughMessageId: source })).rejects.toThrow("Summary boundary is unavailable");
         await database.delete(schema.chatMessagesTable).where(eq(schema.chatMessagesTable.id, source));
         expect(await repo.getFact(f.id)).toBeNull();
         expect(await repo.getMemory(m.id)).toBeNull();

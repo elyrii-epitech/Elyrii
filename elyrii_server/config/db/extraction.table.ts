@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { bigint, bigserial, check, foreignKey, index, integer, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { boolean, bigint, bigserial, check, foreignKey, index, integer, pgTable, primaryKey, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { userTable } from "./user.table";
 import { chatMessagesTable } from "./chat.table";
 
@@ -34,5 +34,6 @@ export const extractionKeys = pgTable("context_extraction_keys", {
     userId: uuid("user_id").notNull().references(() => userTable.id, { onDelete: "cascade" }),
     key: text("key").notNull(),
     sequence: bigint("sequence", { mode: "bigint" }).notNull(),
+    suppressed: boolean("suppressed").notNull().default(false),
     targetId: uuid("target_id").notNull(),
 }, table => [primaryKey({ columns: [table.userId, table.key] })]);

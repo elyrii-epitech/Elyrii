@@ -8,6 +8,8 @@ import { ContextPolicy } from "../modules/context/context.policy";
 import type { EmbeddingModel } from "../modules/context/embedding.contracts";
 import type { RankedMemory, RetrievedContext, RetrievalConfig, RetrievalRequest } from "../modules/context/retrieval.contracts";
 
+import { contextSourceEligible, conversationHasExpiredContext } from "../modules/context/source-eligibility";
+
 export class RetrievalRepository {
     constructor(private readonly database: typeof db = db, private readonly clock = () => new Date()) {}
 
@@ -48,13 +50,13 @@ export class RetrievalRepository {
         ranked: RankedMemory[], config: RetrievalConfig): Promise<Omit<RetrievedContext, "semanticStatus">> {
         return this.database.transaction(async tx => {
             const now = this.clock(), policy = new ContextPolicy(() => now);
-            const scope = and(eq(messages.userId, userId), eq(messages.conversationId, request.conversationId));
+            const scope = and(eq(messages.userId, userId), eq(messages.conversationId, request.conversationId), contextSourceEligible(now));
             const [current] = request.currentMessageId ? await tx.select().from(messages)
                 .where(and(scope, eq(messages.id, request.currentMessageId), eq(messages.role, "user"))) : [];
             // A deleted/wrong-owner/wrong-conversation input must not fall back to unrelated history.
             const validCurrent = !request.currentMessageId || !!current;
             const [storedSummary] = validCurrent ? await tx.select().from(summaries)
-                .where(and(eq(summaries.userId, userId), eq(summaries.conversationId, request.conversationId))) : [];
+                .where(and(eq(summaries.userId, userId), eq(summaries.conversationId, request.conversationId), sql`NOT ${conversationHasExpiredContext(userId, request.conversationId, now)}`)) : [];
             const [boundary] = storedSummary ? await tx.select().from(messages).where(and(scope, eq(messages.id, storedSummary.throughMessageId))) : [];
             const beforeCurrent = (row: { createdAt: Date; id: string }) => !current ||
                 +row.createdAt < +current.createdAt || (+row.createdAt === +current.createdAt && row.id < current.id);

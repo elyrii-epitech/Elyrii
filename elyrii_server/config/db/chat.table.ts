@@ -1,9 +1,10 @@
-import { index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { userTable } from "./user.table";
 
 export const chatMessagesTable = pgTable("chat_messages", {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
+    contextSuppressed: boolean("context_suppressed").notNull().default(false),
     conversationId: text("conversation_id").notNull().default("default"),
     role: text("role").notNull(), // user | ai | system
     message: text("message").notNull(),

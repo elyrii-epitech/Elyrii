@@ -6,6 +6,8 @@ import { extractionJobs } from "../config/db/extraction.table";
 import { extractionMessageSchema } from "../modules/context/extraction.contracts";
 import { randomUUID } from "node:crypto";
 
+import { contextSourceEligible } from "../modules/context/source-eligibility";
+
 class ChatRepository {
     constructor(private readonly database: typeof db = db) {}
 
@@ -58,6 +60,7 @@ class ChatRepository {
             .where(and(
                 eq(chatMessagesTable.userId, userId),
                 eq(chatMessagesTable.conversationId, conversationId),
+                contextSourceEligible(),
             ))
             .orderBy(desc(chatMessagesTable.createdAt), desc(chatMessagesTable.id))
             .limit(limit);
