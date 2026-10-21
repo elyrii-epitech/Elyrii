@@ -21,7 +21,7 @@ export async function handleAiResponse() {
     await kafkaService.consumer.run({
         eachMessage: async ({ message }) => {
             if (!message.value) return;
-            const data: { userId: string, response: string, conversationId?: string, requestId?: string } = JSON.parse(message.value.toString());
+            const data: { userId: string, response: string, conversationId?: string, requestId?: string, sourceMessageId?: string, sourceHash?: string } = JSON.parse(message.value.toString());
             const { userId, response /*, requestId*/ } = data;
             const conversationId = data.conversationId ?? "default";
 
@@ -32,14 +32,16 @@ export async function handleAiResponse() {
             // }
 
             try {
-                await chatRepository.createMessage({
-                    userId,
-                    conversationId,
-                    role: "ai",
-                    message: response,
-                });
+                const record = { userId, conversationId, role: "ai", message: response };
+                if (data.sourceMessageId && data.sourceHash) {
+                    if (!await chatRepository.createCurrentResponse(record, data.sourceMessageId, data.sourceHash)) return;
+                } else {
+                    if (process.env.ENABLE_PERSISTENT_CONTEXT === "true") return;
+                    await chatRepository.createMessage(record);
+                }
             } catch (error) {
-                console.error("Failed to persist AI chat message:", error);
+                console.error("Failed to persist AI chat message");
+                return;
             }
             const ws = clientSockets.get(userId);
 

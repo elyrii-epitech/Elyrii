@@ -7,6 +7,7 @@ import { resolveWsIdentity } from "../../utils/ws-auth.utils";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import ChatRepository from "../../repository/chat.repository";
 import type { HonoEnv } from "../../utils/hono.types";
+import { bounded, prepareContext } from "./context-dispatch";
 import { randomUUID } from "node:crypto";
 // NOTE: unused while the blocking AI wait is disabled (delivery is fully
 // asynchronous via consumer.service.ts). Kept for easy re-enable.
@@ -81,7 +82,7 @@ chatRouter.get("/ws", describeRoute({
         );
 
         if (!identity) {
-            console.warn(`[Chat] Unauthorized WS connection attempt from ${ctx.req.url}`);
+            console.warn("[Chat] Unauthorized WebSocket connection attempt");
             return {
                 onOpen: (_event, ws) => {
                     console.log("[Chat] Closing unauthorized connection");
@@ -102,7 +103,7 @@ chatRouter.get("/ws", describeRoute({
                 clientSockets.delete(userId);
             },
             onMessage: async (event, ws) => {
-                console.log(`[Chat] Message received from ${userId}: ${event.data}`);
+                console.log("[Chat] Message received");
                 const rawMessage = event.data.toString();
                 let message = rawMessage;
                 let conversationId = defaultConversationId;
@@ -131,13 +132,16 @@ chatRouter.get("/ws", describeRoute({
                     }, requestId);
                     sourceMessageId = persisted.id;
                 } catch (error) {
-                    console.error("[Chat] Failed to persist user chat message:", error);
+                    console.error("[Chat] Failed to persist user chat message");
                 }
 
                 try {
                     console.log(`[Chat] Getting history and sending to Kafka for ${userId}...`);
-                    const history = await chatRepository.getRecentMessagesForContext(userId, conversationId, 12);
-                    await sendMessageToTopic(userId, message, { conversationId, history, requestId, sourceMessageId });
+                    const context = await prepareContext(userId, conversationId, sourceMessageId, message);
+                    let history: Array<{ role: string; message: string }> = [];
+                    try { history = await bounded(chatRepository.getRecentMessagesForContext(userId, conversationId, 12, sourceMessageId), 1000); }
+                    catch { console.warn("[Chat] History unavailable; sending current input only"); }
+                    await sendMessageToTopic(userId, message, { conversationId, history, requestId, sourceMessageId, context });
 
                     console.log(`[Chat] Message dispatched to Kafka (request ${requestId}). Response will arrive asynchronously via the AI consumer.`);
 
@@ -152,7 +156,7 @@ chatRouter.get("/ws", describeRoute({
                     //
                     // // Post-AI logic can go here
                 } catch (error) {
-                    console.error("[Chat] Message dispatch failed:", error);
+                    console.error("[Chat] Message dispatch failed");
                     ws.send("Une erreur est survenue lors de l'envoi du message.");
                 }
             },

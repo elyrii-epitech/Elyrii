@@ -1,10 +1,10 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db } from "../config/db.config";
 import { chatMessagesTable, type ChatMessageRow, type NewChatMessageRow } from "../config/db/chat.table";
 import { userTable } from "../config/db/user.table";
 import { extractionJobs } from "../config/db/extraction.table";
 import { extractionMessageSchema } from "../modules/context/extraction.contracts";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { contextSourceEligible } from "../modules/context/source-eligibility";
 
@@ -34,6 +34,20 @@ class ChatRepository {
         });
     }
 
+    /** Reject responses generated before a source correction/forget/account deletion. */
+    async createCurrentResponse(data: NewChatMessageRow, sourceMessageId: string, sourceHash: string): Promise<ChatMessageRow | null> {
+        return this.database.transaction(async tx => {
+            const [owner] = await tx.select({ id: userTable.id }).from(userTable).where(eq(userTable.id, data.userId)).for("update");
+            if (!owner) return null;
+            const [source] = await tx.select().from(chatMessagesTable).where(and(eq(chatMessagesTable.id, sourceMessageId),
+                eq(chatMessagesTable.userId, data.userId), eq(chatMessagesTable.conversationId, data.conversationId ?? "default"),
+                eq(chatMessagesTable.role, "user"), eq(chatMessagesTable.contextSuppressed, false)));
+            if (!source || createHash("sha256").update(source.message).digest("hex") !== sourceHash) return null;
+            const [saved] = await tx.insert(chatMessagesTable).values({ ...data, role: "ai" }).returning();
+            return saved ?? null;
+        });
+    }
+
     async getHistory(userId: string, limit = 50, conversationId?: string): Promise<ChatMessageRow[]> {
         const conditions = [eq(chatMessagesTable.userId, userId)];
         if (conversationId) {
@@ -50,7 +64,7 @@ class ChatRepository {
         return rows.reverse();
     }
 
-    async getRecentMessagesForContext(userId: string, conversationId: string, limit = 12): Promise<Array<{ role: string; message: string }>> {
+    async getRecentMessagesForContext(userId: string, conversationId: string, limit = 12, currentMessageId?: string): Promise<Array<{ role: string; message: string }>> {
         const rows = await this.database
             .select({
                 role: chatMessagesTable.role,
@@ -61,6 +75,7 @@ class ChatRepository {
                 eq(chatMessagesTable.userId, userId),
                 eq(chatMessagesTable.conversationId, conversationId),
                 contextSourceEligible(),
+                currentMessageId ? ne(chatMessagesTable.id, currentMessageId) : undefined,
             ))
             .orderBy(desc(chatMessagesTable.createdAt), desc(chatMessagesTable.id))
             .limit(limit);

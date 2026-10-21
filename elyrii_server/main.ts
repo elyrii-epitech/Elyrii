@@ -19,6 +19,7 @@ import { startExtractionService } from "./modules/context/extraction.service";
 import { startSummaryService } from "./modules/context/summary.service";
 import { startEmbeddingService } from "./modules/context/embedding.service";
 
+import { createContextRefreshRouter } from "./modules/chat/context-refresh.routes";
 import { createContextRouter } from "./modules/context/lifecycle.routes";
 import { startContextCleanup } from "./modules/context/cleanup.service";
 
@@ -72,6 +73,7 @@ app.route("/journal", journalRouter.getRouter);
 app.route("/user", userRouter.getRouter);
 app.route("/chat", chatRouter);
 app.route("/context", createContextRouter());
+app.route("/internal/chat-context", createContextRefreshRouter());
 if (Bun.env.ENABLE_CONTEXT_CLEANUP === "true") startContextCleanup();
 app.route("/challenge", questRouter.getRouter);
 app.route("/coach", coachRouter.getRouter);
