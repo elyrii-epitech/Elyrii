@@ -19,6 +19,9 @@ import { startExtractionService } from "./modules/context/extraction.service";
 import { startSummaryService } from "./modules/context/summary.service";
 import { startEmbeddingService } from "./modules/context/embedding.service";
 
+import { createContextRouter } from "./modules/context/lifecycle.routes";
+import { startContextCleanup } from "./modules/context/cleanup.service";
+
 export const clientSockets = new Map<string, WSContext>();
 const AVATAR_UPLOAD_DIR = Bun.env.AVATAR_UPLOAD_DIR ?? "./uploads/avatars";
 
@@ -68,6 +71,8 @@ app.route("/auth", authRouter.Router);
 app.route("/journal", journalRouter.getRouter);
 app.route("/user", userRouter.getRouter);
 app.route("/chat", chatRouter);
+app.route("/context", createContextRouter());
+if (Bun.env.ENABLE_CONTEXT_CLEANUP === "true") startContextCleanup();
 app.route("/challenge", questRouter.getRouter);
 app.route("/coach", coachRouter.getRouter);
 app.route("/meditation", meditationRouter.getRouter);
