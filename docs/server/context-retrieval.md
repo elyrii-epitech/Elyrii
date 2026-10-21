@@ -1,6 +1,6 @@
 # Three-layer context retrieval
 
-`ContextRetrievalService.retrieve(authenticatedUserId, request)` returns structured context for a chat request. It does not compose a prompt, change the Kafka chat payload, or alter the current WebSocket flow. The prompt integration step can call this service after persisting the input and before building the AI request.
+`ContextRetrievalService.retrieve(authenticatedUserId, request)` returns structured context for a chat request. It returns data without composing a prompt. The optional [budgeted chat rollout](context-rollout.md) calls this service after persistence and revalidates its output at the bridge.
 
 ```ts
 import { ContextRetrievalService } from "../../modules/context/retrieval.service";
