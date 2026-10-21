@@ -31,6 +31,7 @@ nav:
       - Context Extraction: server/context-extraction.md
       - Rolling Summaries: server/rolling-summaries.md
       - Memory Embeddings: server/memory-embeddings.md
+      - Context Retrieval: server/context-retrieval.md
       - Generated Docs: server/api/index.md
   - AI:
       - Overview: ai/index.md
