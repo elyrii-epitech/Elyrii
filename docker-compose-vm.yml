@@ -19,6 +19,9 @@ services:
       - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY:-super-refresh-secret-key}
       - NODE_ENV=development
       - ENABLE_SUMMARIES=${ENABLE_SUMMARIES:-false}
+      - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - CONTEXT_BRIDGE_SECRET=${CONTEXT_BRIDGE_SECRET:-}
+      - CHAT_RETRIEVAL_TIMEOUT_MS=${CHAT_RETRIEVAL_TIMEOUT_MS:-4000}
       - ENABLE_CONTEXT_CLEANUP=${ENABLE_CONTEXT_CLEANUP:-true}
       - CONTEXT_CLEANUP_INTERVAL_MS=${CONTEXT_CLEANUP_INTERVAL_MS:-60000}
       - CONTEXT_CLEANUP_BATCH_SIZE=${CONTEXT_CLEANUP_BATCH_SIZE:-100}
@@ -217,6 +220,11 @@ services:
       - KAFKA_BROKER=redpanda:9092
       - AI_BASE_URL=http://ollama:11434
       - AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+      - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - CHAT_TOKENIZER_DIR=/generation-tokenizer
+      - CONTEXT_SERVER_URL=http://server:${PORT:-3000}
+    volumes:
+      - ${CHAT_TOKENIZER_HOST_DIR:-./elyrii_ai/generation-tokenizer}:/generation-tokenizer:ro
     restart: unless-stopped
     networks:
       - elyrii_net
