@@ -261,7 +261,11 @@ class _DashboardPageState extends State<DashboardPage> {
   /// 5 puces émotionnelles expressives, résonance textuelle et action immédiate.
   Widget _buildMoodSection(bool isDark, DashboardProvider provider) {
     final selectedMood = provider.selectedMood;
-    final moodColor = selectedMood?.color ?? AppColors.primary;
+    final moodColor =
+        selectedMood?.colorFor(
+          isDark ? Brightness.dark : Brightness.light,
+        ) ??
+        AppColors.primary;
 
     return Stack(
       alignment: Alignment.center,

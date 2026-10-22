@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
+
+import '../../../../core/theme/app_colors.dart';
 
 /// Enum représentant les différents moods disponibles
 enum MoodType { verySad, sad, neutral, happy, veryHappy }
@@ -8,30 +11,32 @@ extension MoodTypeExtension on MoodType {
   IconData get icon {
     switch (this) {
       case MoodType.verySad:
-        return Icons.sentiment_very_dissatisfied_rounded;
+        return Symbols.sentiment_stressed_rounded;
       case MoodType.sad:
-        return Icons.sentiment_dissatisfied_rounded;
+        return Symbols.sentiment_sad_rounded;
       case MoodType.neutral:
-        return Icons.sentiment_neutral_rounded;
+        return Symbols.sentiment_calm_rounded;
       case MoodType.happy:
-        return Icons.sentiment_satisfied_rounded;
+        return Symbols.sentiment_satisfied_rounded;
       case MoodType.veryHappy:
-        return Icons.sentiment_very_satisfied_rounded;
+        return Symbols.sentiment_excited_rounded;
     }
   }
 
-  Color get color {
+  /// Couleur du mood selon le thème : rose, orange, teal, vert, jaune v2.
+  Color colorFor(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
     switch (this) {
       case MoodType.verySad:
-        return const Color(0xFF6B7FA3); // Ardoise apaisante
+        return AppColors.pink(isDark);
       case MoodType.sad:
-        return const Color(0xFF7E94B3); // Bleu brumeux
+        return AppColors.orange(isDark);
       case MoodType.neutral:
-        return const Color(0xFF8E959E); // Sauge / pierre calme
+        return AppColors.teal(isDark);
       case MoodType.happy:
-        return const Color(0xFF5BA87E); // Vert clarté & sérénité
+        return AppColors.green(isDark);
       case MoodType.veryHappy:
-        return const Color(0xFFE5A038); // Ambre doré & rayonnement
+        return AppColors.yellow(isDark);
     }
   }
 

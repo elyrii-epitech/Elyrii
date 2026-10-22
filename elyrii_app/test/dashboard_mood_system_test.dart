@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:elyrii_app/core/network/api_client.dart';
@@ -75,7 +76,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 500));
 
         // Trouver les icônes de mood
-        final happyIcon = find.byIcon(Icons.sentiment_satisfied_rounded);
+        final happyIcon = find.byIcon(Symbols.sentiment_satisfied_rounded);
         expect(happyIcon, findsOneWidget);
 
         // Tap sur l'humeur Serein
@@ -95,7 +96,7 @@ void main() {
         expect(find.textContaining('SocketException'), findsNothing);
 
         // Changement vers une autre humeur : Vulnérable (sad)
-        final sadIcon = find.byIcon(Icons.sentiment_dissatisfied_rounded);
+        final sadIcon = find.byIcon(Symbols.sentiment_sad_rounded);
         await tester.tap(sadIcon);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));

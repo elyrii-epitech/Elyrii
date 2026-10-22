@@ -13,6 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  material_symbols_icons: ^4.2960.0
 
   # Network and content encryption
   http: ^1.6.0
