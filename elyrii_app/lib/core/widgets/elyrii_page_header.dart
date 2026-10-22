@@ -339,38 +339,6 @@ class _LargeTitle extends StatelessWidget {
   }
 }
 
-class _DetailTitle extends StatelessWidget {
-  const _DetailTitle({required this.title, this.subtitle});
-
-  final String title;
-  final String? subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Semantics(
-          header: true,
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.navTitle(color: context.textPrimary),
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: AppDimensions.spacing4),
-          Text(
-            subtitle!,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall(color: context.textSecondary),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 /// Non-scrolling screens (live sessions, the mascot workshop) keep their
 /// title beside the buttons.
 class ElyriiPageHeader extends StatelessWidget {
@@ -394,7 +362,27 @@ class ElyriiPageHeader extends StatelessWidget {
         leading,
         const SizedBox(width: AppDimensions.spacing8),
         Expanded(
-          child: _DetailTitle(title: title, subtitle: subtitle),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.navTitle(color: context.textPrimary),
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: AppDimensions.spacing4),
+                Text(
+                  subtitle!,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodySmall(color: context.textSecondary),
+                ),
+              ],
+            ],
+          ),
         ),
         const SizedBox(width: AppDimensions.spacing8),
         trailing,
