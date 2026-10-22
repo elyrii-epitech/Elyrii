@@ -102,22 +102,49 @@ jobs:
     needs: quality
     runs-on: macos-latest
     timeout-minutes: 30
+    env:
+      # Keep Xcode and the simulator runtime aligned when macos-latest changes.
+      DEVELOPER_DIR: /Applications/Xcode_26.4.1.app/Contents/Developer
     defaults:
       run:
         working-directory: elyrii_app
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: ./.github/actions/setup-flutter
+      - name: Build the integration app before booting the simulator
+        run: |
+          set -o pipefail
+          mkdir -p build
+          xcodebuild -version
+          flutter build ios --simulator --debug --no-pub --target=integration_test/frontend_flows_test.dart --dart-define=ELYRII_ENV=development --verbose 2>&1 | tee build/ios-integration-build.log
       - name: Select an available iPhone simulator
         run: |
-          ELYRII_SIMULATOR_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; data=json.load(sys.stdin); phones=[d for runtime,devices in data["devices"].items() if "iOS" in runtime for d in devices if d.get("isAvailable") and d["name"].startswith("iPhone")]; phones.sort(key=lambda d: d["state"] != "Booted"); print(phones[0]["udid"] if phones else sys.exit("No available iPhone simulator"))')
+          ELYRII_SIMULATOR_SDK=$(xcrun --sdk iphonesimulator --show-sdk-version)
+          ELYRII_SIMULATOR_ID=$(xcrun simctl list devices available --json | python3 -c '
+          import json, sys
+          runtime = "com.apple.CoreSimulator.SimRuntime.iOS-" + sys.argv[1].replace(".", "-")
+          devices = json.load(sys.stdin)["devices"].get(runtime, [])
+          phones = [d for d in devices if d.get("isAvailable") and d["name"].startswith("iPhone")]
+          phones.sort(key=lambda d: (d["state"] != "Booted", d["name"]))
+          if not phones:
+              sys.exit(f"No available iPhone simulator for the selected Xcode SDK: {runtime}")
+          print(phones[0]["udid"])
+          ' "$ELYRII_SIMULATOR_SDK")
           echo "ELYRII_SIMULATOR_ID=$ELYRII_SIMULATOR_ID" >> "$GITHUB_ENV"
+          echo "Using Xcode simulator SDK $ELYRII_SIMULATOR_SDK, device $ELYRII_SIMULATOR_ID"
           if ! xcrun simctl list devices booted | grep -q "$ELYRII_SIMULATOR_ID"; then
             xcrun simctl boot "$ELYRII_SIMULATOR_ID"
           fi
           xcrun simctl bootstatus "$ELYRII_SIMULATOR_ID" -b
       - name: Bootstrap, native persistence and navigation
-        run: flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development
+        run: |
+          set -o pipefail
+          flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development --verbose 2>&1 | tee build/ios-integration-test.log
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: frontend-ios-integration-logs
+          path: elyrii_app/build/ios-integration-*.log
   dartdoc:
     name: Frontend API documentation
     needs: quality
