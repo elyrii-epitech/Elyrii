@@ -146,7 +146,11 @@ abstract final class AppRouter {
 
         GoRoute(
           path: AppRoutes.passwordReset,
-          builder: (context, state) => const PasswordResetPage(),
+          pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(
+            key: state.pageKey,
+            name: state.name,
+            child: const PasswordResetPage(),
+          ),
         ),
         // Routes d'authentification
         GoRoute(
