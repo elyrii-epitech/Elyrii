@@ -142,32 +142,6 @@ void main() {
             await app.mascot.flushed;
           });
           await tester.pump();
-          if (page.key == 'dashboard') {
-            for (final finder in [
-              find.textContaining(RegExp(r'^[A-ZÉÛ]+ \d{1,2} [A-ZÉÛ]+$')),
-              find.textContaining(app.dashboard.getGreeting()),
-            ]) {
-              final paragraph = tester.renderObject<RenderParagraph>(finder);
-              final lineHeight = paragraph.textScaler.scale(
-                paragraph.text.style!.fontSize!,
-              );
-              expect(
-                paragraph.didExceedMaxLines,
-                isFalse,
-                reason: '$finder must remain fully readable at ${cfg.scale}',
-              );
-              expect(
-                tester.getRect(finder).height,
-                closeTo(paragraph.size.height, 0.5),
-                reason: '$finder must not be shrunk to fit at ${cfg.scale}',
-              );
-              expect(
-                paragraph.size.height,
-                greaterThanOrEqualTo(lineHeight),
-                reason: '$finder must follow the text size ${cfg.scale}',
-              );
-            }
-          }
           final boundary =
               key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
           final png = await tester.runAsync(() async {

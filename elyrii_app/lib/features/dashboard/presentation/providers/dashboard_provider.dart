@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -53,55 +52,6 @@ class DashboardProvider extends ChangeNotifier {
   CalendarCoverage? _coverage;
   int _widestDays = 30;
 
-  // Messages de la mascotte Elyrii
-  int _currentMascotMessageIndex = 0;
-  final List<String> _mascotMessages = [
-    "Je suis contente de te voir",
-    "Comment vas-tu aujourd'hui ?",
-    "N'oublie pas : tu es incroyable !",
-    "Prends un moment pour toi",
-    "Je suis là si tu as besoin de parler",
-    "Chaque petit pas compte",
-    "Tu fais du super boulot !",
-    "Respire profondément... voilà",
-    "Ta présence ici est déjà une victoire",
-    "Je crois en toi, toujours",
-  ];
-
-  // Messages adaptés au mood
-  final Map<MoodType, List<String>> _moodMascotMessages = {
-    MoodType.verySad: [
-      "Je suis là pour toi, toujours",
-      "C'est ok de ne pas aller bien...",
-      "Veux-tu qu'on en parle ensemble ?",
-      "Je t'envoie plein de douceur",
-    ],
-    MoodType.sad: [
-      "Les nuages passent, le soleil revient",
-      "Prends le temps qu'il te faut",
-      "Courage, je suis là",
-      "Demain sera un nouveau jour",
-    ],
-    MoodType.neutral: [
-      "Une journée tranquille, c'est bien aussi",
-      "Que dirais-tu d'un petit moment zen ?",
-      "Parfois, neutre c'est parfait",
-      "On avance à notre rythme",
-    ],
-    MoodType.happy: [
-      "Ça fait plaisir de te voir sourire !",
-      "Continue comme ça, tu gères !",
-      "Ta bonne humeur est contagieuse",
-      "Profite bien de cette belle énergie !",
-    ],
-    MoodType.veryHappy: [
-      "Quelle belle énergie !",
-      "Tu rayonnes aujourd'hui !",
-      "J'adore te voir comme ça !",
-      "Partage cette joie avec le monde !",
-    ],
-  };
-
   // Getters
   bool get isSavingMood => _isSavingMood;
   DateTime? get cachedAt => _cachedAt;
@@ -117,15 +67,6 @@ class DashboardProvider extends ChangeNotifier {
   /// hors plage est inconnu, jamais absent.
   CalendarCoverage? get coverage => _coverage;
 
-  /// Retourne le message actuel de la mascotte
-  String get mascotMessage {
-    if (_selectedMood != null) {
-      final messages = _moodMascotMessages[_selectedMood]!;
-      return messages[_currentMascotMessageIndex % messages.length];
-    }
-    return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
-  }
-
   DashboardProvider({
     DashboardRepository? repository,
     ApiClient? apiClient,
@@ -139,7 +80,6 @@ class DashboardProvider extends ChangeNotifier {
        _repository = repository ?? DashboardRepository(client: apiClient!),
        _now = now ?? DateTime.now {
     _activities = activities;
-    _initializeMascotMessage();
   }
 
   void resetSession() {
@@ -174,33 +114,12 @@ class DashboardProvider extends ChangeNotifier {
     _error = null;
   }
 
-  void _initializeMascotMessage() {
-    final now = _now();
-    _currentMascotMessageIndex =
-        (now.hour + now.minute) % _mascotMessages.length;
-  }
-
-  void nextMascotMessage() {
-    if (_selectedMood != null) {
-      final messages = _moodMascotMessages[_selectedMood]!;
-      _currentMascotMessageIndex =
-          (_currentMascotMessageIndex + 1) % messages.length;
-    } else {
-      _currentMascotMessageIndex =
-          (_currentMascotMessageIndex + 1) % _mascotMessages.length;
-    }
-    _notify();
-  }
-
   Future<bool> selectMood(MoodType mood) async {
     if (_selectedMood == mood || _isSavingMood || _disposed) return false;
     final session = _sessionRevision;
     _moodVersion++;
     final previous = _selectedMood;
     _selectedMood = mood;
-    _currentMascotMessageIndex = Random().nextInt(
-      _moodMascotMessages[mood]!.length,
-    );
     _error = null;
     _isSavingMood = !_isDemo;
     _notify();
@@ -240,17 +159,6 @@ class DashboardProvider extends ChangeNotifier {
     unawaited(
       activities.recordMood(day: CivilDay.fromLocal(_now()), mood: mood),
     );
-  }
-
-  String getGreeting() {
-    final hour = _now().hour;
-    if (hour < 12) {
-      return 'Bonjour';
-    } else if (hour < 18) {
-      return 'Bon après-midi';
-    } else {
-      return 'Bonsoir';
-    }
   }
 
   Future<void>? _loadInFlight;
