@@ -1,6 +1,7 @@
 import 'package:elyrii_app/app/router/app_shell.dart';
 import 'package:elyrii_app/core/glass/elyrii_glass_surface.dart';
 import 'package:elyrii_app/core/theme/app_colors.dart';
+import 'package:elyrii_app/core/theme/app_text_styles.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/widgets/glass_bubble_button.dart';
 import 'package:elyrii_app/core/widgets/glass_navigation_bar.dart';
@@ -16,8 +17,9 @@ Future<GoRouter> _pumpShell(
   bool highContrast = false,
   bool reduceMotion = false,
   double textScale = 1.5,
+  Size size = const Size(320, 568),
 }) async {
-  tester.view.physicalSize = const Size(320, 568);
+  tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final router = GoRouter(
@@ -266,4 +268,27 @@ void main() {
     await bubbleGesture.up();
     expect(tester.takeException(), isNull);
   });
+
+  for (final width in [375.0, 420.0]) {
+    testWidgets('les libellés du dock tiennent sur une ligne à $width px', (
+      tester,
+    ) async {
+      final loader = FontLoader('Poppins')
+        ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'));
+      await loader.load();
+      await _pumpShell(tester, textScale: 1, size: Size(width, 852));
+      const labels = ['Accueil', 'Jardin', 'Journal', 'Méditation', 'Coach'];
+      final heights = [
+        for (final label in labels)
+          tester.getRect(find.text(label).last).height,
+      ];
+      final oneLine =
+          AppTextStyles.labelSmall().fontSize! *
+          AppTextStyles.labelSmall().height!;
+      for (final height in heights) {
+        expect(height, lessThanOrEqualTo(oneLine + 0.5));
+        expect(height, closeTo(heights.first, 0.01));
+      }
+    });
+  }
 }
