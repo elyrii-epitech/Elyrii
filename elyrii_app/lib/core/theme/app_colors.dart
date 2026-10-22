@@ -101,6 +101,11 @@ class AppColors {
   static Color pink(bool isDark) => isDark ? pinkDark : pinkLight;
   static Color violet(bool isDark) => isDark ? violetDark : violetLight;
 
+  /// The 3114 help line: pink in dark, a deeper rose that keeps 4.5:1 on
+  /// the light soft-pink card.
+  static Color helpInk(bool isDark) =>
+      isDark ? pinkDark : const Color(0xFFBC4159);
+
   /// label-2 et label-3 exacts du spec, translucides. label-3 n'atteint pas
   /// 4,5:1 sur un petit texte : il sert au texte large et au décoratif, les
   /// rôles textSecondary/textTertiary opaques gardent le texte courant.

@@ -162,7 +162,7 @@ class _DressingState extends State<_Dressing> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.spacing16,
+              horizontal: AppDimensions.spacing12,
             ),
             child: Row(
               children: [
@@ -181,7 +181,7 @@ class _DressingState extends State<_Dressing> {
                         child: Container(
                           constraints: const BoxConstraints(minHeight: 44),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.spacing4,
+                            horizontal: AppDimensions.spacing2,
                             vertical: AppDimensions.spacing8,
                           ),
                           decoration: BoxDecoration(
@@ -194,8 +194,10 @@ class _DressingState extends State<_Dressing> {
                               AppDimensions.radius20,
                             ),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: AppDimensions.spacing4,
                             children: [
                               Icon(
                                 tabs[i].$2,
@@ -339,8 +341,16 @@ class _DressingState extends State<_Dressing> {
             color: dark ? AppColors.surfaceDark : AppColors.cardLight,
             borderRadius: BorderRadius.circular(AppDimensions.radius16),
           ),
-          child: Text(
-            '${selected.name} · ${selected.description}',
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: selected.name,
+                  style: AppTextStyles.labelMedium(color: context.textPrimary),
+                ),
+                TextSpan(text: ' · ${selected.description}'),
+              ],
+            ),
             style: AppTextStyles.bodySmall(color: context.textSecondary),
           ),
         ),
@@ -434,7 +444,7 @@ class _DressingState extends State<_Dressing> {
       ('Cou', Symbols.styler_rounded),
       ('Dos', Symbols.backpack_rounded),
     ];
-    final available = MascotAccessories.all.where(
+    final available = MascotAccessories.progression.where(
       (item) => item.category == _slot,
     );
     final unlocked = MascotAccessories.all
@@ -546,9 +556,14 @@ class _DressingState extends State<_Dressing> {
                                       opacity: known && item.isUnlocked(count)
                                           ? 1
                                           : .35,
-                                      child: Image.asset(
-                                        'assets/accessory_portraits/${item.id}.png',
-                                        fit: BoxFit.cover,
+                                      child: Transform.scale(
+                                        scale: 1.25,
+                                        alignment: Alignment.topCenter,
+                                        child: Image.asset(
+                                          'assets/accessory_portraits/${item.id}.png',
+                                          fit: BoxFit.cover,
+                                          alignment: const Alignment(0, -0.88),
+                                        ),
                                       ),
                                     ),
                                     if (known && !item.isUnlocked(count))

@@ -392,12 +392,17 @@ class _AnswerCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ClipOval(
-                  child: Image.asset(
-                    'assets/splash_icon.png',
-                    width: 36,
-                    height: 36,
+                Container(
+                  width: 36,
+                  height: 36,
+                  padding: const EdgeInsets.all(AppDimensions.spacing4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.cardDark
+                        : AppColors.cardLight,
                   ),
+                  child: Image.asset('assets/splash_icon.png'),
                 ),
                 const SizedBox(width: AppDimensions.spacing12),
                 Expanded(
@@ -449,7 +454,7 @@ class _AnswerCard extends StatelessWidget {
                     Icon(
                       Symbols.call_rounded,
                       size: 18,
-                      color: AppColors.pink(
+                      color: AppColors.helpInk(
                         Theme.of(context).brightness == Brightness.dark,
                       ),
                     ),
@@ -458,7 +463,9 @@ class _AnswerCard extends StatelessWidget {
                       child: Text(
                         helpLine,
                         style: AppTextStyles.labelMedium(
-                          color: context.textPrimary,
+                          color: AppColors.helpInk(
+                            Theme.of(context).brightness == Brightness.dark,
+                          ),
                         ),
                       ),
                     ),
@@ -835,36 +842,39 @@ class _SmallButton extends StatelessWidget {
       label: label,
       excludeChildSemantics: true,
       onPressed: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing12,
-          vertical: AppDimensions.spacing8,
-        ),
-        decoration: BoxDecoration(
-          color: plain
-              ? Colors.transparent
-              : filled
-              ? AppColors.primaryText(dark)
-              : AppColors.tintSoft(dark),
-          borderRadius: BorderRadius.circular(AppDimensions.radius18),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: AppDimensions.spacing4),
-            ],
-            Flexible(
-              child: Text(
-                label,
-                style: AppTextStyles.buttonSmall(
-                  color: onTap == null ? context.textTertiary : color,
+      child: Align(
+        widthFactor: 1,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 36),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing12 + AppDimensions.spacing2,
+            vertical: AppDimensions.spacing4,
+          ),
+          decoration: BoxDecoration(
+            color: plain
+                ? Colors.transparent
+                : filled
+                ? AppColors.primaryText(dark)
+                : AppColors.tintSoft(dark),
+            borderRadius: BorderRadius.circular(AppDimensions.radius18),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 18, color: color),
+                const SizedBox(width: AppDimensions.spacing4),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  style: AppTextStyles.buttonSmall(
+                    color: onTap == null ? context.textTertiary : color,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

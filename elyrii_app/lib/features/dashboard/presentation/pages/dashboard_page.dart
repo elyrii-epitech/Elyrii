@@ -157,10 +157,10 @@ class _DashboardPageState extends State<DashboardPage>
         await showLiquidGlassSheet<void>(
           context: context,
           initialChildSize: 0.92,
-          minChildSize: 0.92,
           maxChildSize: 0.92,
+          minChildSize: 0.5,
           useRootNavigator: true,
-          scrollableBuilder: (_, scroll) => JournalEditorSheet(
+          child: JournalEditorSheet(
             provider: context.read<JournalProvider>(),
             initialPrompt: initialPrompt,
           ),
@@ -169,7 +169,7 @@ class _DashboardPageState extends State<DashboardPage>
         final box = context.findRenderObject() as RenderBox?;
         await SharePlus.instance.share(
           ShareParams(
-            text: 'Je pensais à toi.',
+            text: contactShareText,
             sharePositionOrigin: box == null
                 ? null
                 : box.localToGlobal(Offset.zero) & box.size,
@@ -242,8 +242,8 @@ Duration _motion(BuildContext context, Duration duration) =>
     MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
 
 const _weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-String _dateLabel(DateTime date) {
-  final value = DateFormat('EEE d MMMM', 'fr_FR').format(date);
+String _frenchDate(String pattern, DateTime date) {
+  final value = DateFormat(pattern, 'fr_FR').format(date);
   return '${value[0].toUpperCase()}${value.substring(1)}';
 }
 

@@ -86,8 +86,15 @@ class AppDimensions {
 
   static const double accueilBarHeight = 54;
   static const double accueilHeaderControl = 44;
-  static const double accueilHeroTop = 78;
-  static const double accueilHeroSize = 230;
+
+  /// The 3D viewer frames the bear with margins, so its box is larger than
+  /// the mockup's 230-pt image and starts higher to put the bear at the
+  /// same place (top ≈ 102, feet ≈ 303 under the status bar).
+  static const double accueilHeroTop = 46;
+  static const double accueilHeroSize = 304;
+
+  /// Distance from the viewer's bottom edge to the bear's feet.
+  static const double accueilHeroFeetInset = 36;
   static const double accueilDressingHeroLift = 14;
   static const double accueilSheetTop = 384;
   static const double accueilCapsuleTop = 358;

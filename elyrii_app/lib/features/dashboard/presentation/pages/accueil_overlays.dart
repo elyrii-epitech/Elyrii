@@ -2,6 +2,11 @@ part of 'dashboard_page.dart';
 
 enum _AccueilOverlay { calendar, streak, flowers, dressing }
 
+final _sheetGlassFilter = ui.ImageFilter.compose(
+  outer: ColorFilter.saturation(1.7),
+  inner: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+);
+
 class _AccueilOverlayRoute extends PopupRoute<_AccueilOverlay> {
   final _AccueilOverlay kind;
   final bool reduced;
@@ -70,6 +75,7 @@ class _AccueilOverlayRoute extends PopupRoute<_AccueilOverlay> {
           constraints: BoxConstraints(
             maxWidth: AppDimensions.maxContentWidth,
             maxHeight: maxHeight,
+            minHeight: dressing ? maxHeight : 0,
           ),
           child: Material(
             color: Colors.transparent,
@@ -83,43 +89,54 @@ class _AccueilOverlayRoute extends PopupRoute<_AccueilOverlay> {
                 _AccueilOverlay.flowers => 'Fleurs de la semaine',
                 _AccueilOverlay.dressing => 'Tenue d’Elyrii',
               },
-              child: Container(
-                clipBehavior: Clip.antiAlias,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Color(
-                          dressing
-                              ? 0xF51E1B2A
-                              : calendar
-                              ? 0xF71E1B2A
-                              : 0xE61E1B2A,
-                        )
-                      : Color(
-                          dressing
-                              ? 0xF7FAF9FD
-                              : calendar
-                              ? 0xFAFFFFFF
-                              : 0xBDFAF9FD,
-                        ),
-                  borderRadius: BorderRadius.circular(
-                    calendar ? AppDimensions.radius30 : AppDimensions.radius38,
-                  ),
-                  border: Border.all(
-                    color: isDark
-                        ? AppColors.glassBorderDark
-                        : AppColors.glassBorderLight,
-                    width: .5,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                  calendar ? AppDimensions.radius30 : AppDimensions.radius38,
+                ),
+                child: BackdropFilter(
+                  enabled: !dressing && !calendar,
+                  filter: _sheetGlassFilter,
+                  child: Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Color(
+                              dressing
+                                  ? 0xF51E1B2A
+                                  : calendar
+                                  ? 0xF71E1B2A
+                                  : 0xE61E1B2A,
+                            )
+                          : Color(
+                              dressing
+                                  ? 0xF7FAF9FD
+                                  : calendar
+                                  ? 0xFAFFFFFF
+                                  : 0xBDFAF9FD,
+                            ),
+                      borderRadius: BorderRadius.circular(
+                        calendar
+                            ? AppDimensions.radius30
+                            : AppDimensions.radius38,
+                      ),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.glassBorderDark
+                            : AppColors.glassBorderLight,
+                        width: .5,
+                      ),
+                    ),
+                    child: switch (kind) {
+                      _AccueilOverlay.calendar => _CalendarPanel(now: now),
+                      _AccueilOverlay.streak => _StreakSheet(now: now),
+                      _AccueilOverlay.flowers => _FlowersSheet(now: now),
+                      _AccueilOverlay.dressing => _Dressing(
+                        onPreview: onPreview,
+                        onBusy: (value) => _saving = value,
+                      ),
+                    },
                   ),
                 ),
-                child: switch (kind) {
-                  _AccueilOverlay.calendar => _CalendarPanel(now: now),
-                  _AccueilOverlay.streak => _StreakSheet(now: now),
-                  _AccueilOverlay.flowers => _FlowersSheet(now: now),
-                  _AccueilOverlay.dressing => _Dressing(
-                    onPreview: onPreview,
-                    onBusy: (value) => _saving = value,
-                  ),
-                },
               ),
             ),
           ),
@@ -447,7 +464,7 @@ class _FlowersSheet extends StatelessWidget {
               style: AppTextStyles.bodyMedium(color: context.textSecondary),
             ),
             const SizedBox(height: AppDimensions.spacing16),
-            for (final flower in flowers.all)
+            for (final flower in flowers.all.reversed)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppDimensions.spacing8),
                 child: Row(
@@ -464,10 +481,7 @@ class _FlowersSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            DateFormat(
-                              'EEEE',
-                              'fr_FR',
-                            ).format(flower.day.toLocalDateTime()),
+                            _frenchDate('EEEE', flower.day.toLocalDateTime()),
                             style: AppTextStyles.titleSmall(
                               color: context.textPrimary,
                             ),
@@ -693,10 +707,7 @@ class _CalendarPanelState extends State<_CalendarPanel> {
       ...calendar.cells,
     ];
     final rows = (cells.length / 7).ceil();
-    final title = DateFormat(
-      'MMMM yyyy',
-      'fr_FR',
-    ).format(_month.firstDay.toLocalDateTime());
+    final title = _frenchDate('MMMM yyyy', _month.firstDay.toLocalDateTime());
     final detail = switch (selected.state) {
       CalendarCellState.future => 'À venir',
       CalendarCellState.uncovered => 'Données indisponibles pour ce jour',
@@ -720,7 +731,7 @@ class _CalendarPanelState extends State<_CalendarPanel> {
             children: [
               Expanded(
                 child: Text(
-                  '${title[0].toUpperCase()}${title.substring(1)}',
+                  title,
                   style: AppTextStyles.titleMedium(color: context.textPrimary),
                 ),
               ),
@@ -867,10 +878,7 @@ class _CalendarPanelState extends State<_CalendarPanel> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        DateFormat(
-                          'EEEE d MMMM',
-                          'fr_FR',
-                        ).format(_selected.toLocalDateTime()),
+                        _frenchDate('EEEE d MMMM', _selected.toLocalDateTime()),
                         style: AppTextStyles.labelMedium(
                           color: context.textPrimary,
                         ),
@@ -922,6 +930,7 @@ class _CalendarPanelState extends State<_CalendarPanel> {
                 top: AppDimensions.spacing4 + AppDimensions.spacing2,
                 bottom: AppDimensions.spacing4 + AppDimensions.spacing2,
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
                       child: ColoredBox(

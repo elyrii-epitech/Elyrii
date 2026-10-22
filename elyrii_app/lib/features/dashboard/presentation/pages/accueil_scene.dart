@@ -77,6 +77,7 @@ class _ScenePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
+    canvas.clipRect(Offset.zero & size);
     final scale = thumbnail
         ? math.max(size.width / 370, size.height / 230)
         : math.max(size.width / 390, size.height / 470);

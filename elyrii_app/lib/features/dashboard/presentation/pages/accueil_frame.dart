@@ -52,9 +52,9 @@ class _AccueilFrame extends StatelessWidget {
             alignment: Alignment.bottomCenter,
             children: [
               Positioned(
-                bottom: AppDimensions.spacing20,
+                bottom: AppDimensions.accueilHeroFeetInset,
                 child: MascotContactShadow(
-                  width: AppDimensions.accueilHeroSize * 0.46,
+                  width: AppDimensions.accueilHeroSize * 0.35,
                   elevation: 0,
                   isDark: dark,
                 ),
@@ -116,6 +116,8 @@ class _AccueilFrame extends StatelessWidget {
                     onRefresh: onRefresh,
                     child: CustomScrollView(
                       key: const PageStorageKey('accueil-scroll'),
+                      scrollBehavior: ScrollConfiguration.of(context)
+                          .copyWith(scrollbars: false),
                       controller: scroll,
                       physics: const AlwaysScrollableScrollPhysics(
                         parent: ClampingScrollPhysics(),
@@ -299,7 +301,7 @@ class _AccueilHeader extends StatelessWidget {
               children: [
                 Flexible(
                   child: Text(
-                    _dateLabel(now),
+                    _frenchDate('EEE d MMMM', now),
                     style: AppTextStyles.navDate(color: context.textPrimary),
                     textAlign: TextAlign.center,
                   ),
@@ -352,35 +354,39 @@ class _GlassControl extends StatelessWidget {
       label: label,
       excludeChildSemantics: true,
       onPressed: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-        child: BackdropFilter(
-          filter: _accueilGlassFilter,
-          child: Container(
-            constraints: const BoxConstraints(
-              minHeight: AppDimensions.accueilHeaderControl,
-            ),
-            height: wide ? null : AppDimensions.accueilHeaderControl,
-            width: wide ? null : AppDimensions.accueilHeaderControl,
-            padding: wide
-                ? const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacing12,
-                  )
-                : EdgeInsets.zero,
-            decoration: BoxDecoration(
-              color: dark
-                  ? AppColors.glassBackgroundDark
-                  : AppColors.glassBackgroundLight,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-              border: Border.all(
-                color: dark
-                    ? AppColors.glassBorderDark
-                    : AppColors.glassBorderLight,
-                width: 0.5,
+      child: Align(
+        widthFactor: 1,
+        heightFactor: 1,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+          child: BackdropFilter(
+            filter: _accueilGlassFilter,
+            child: Container(
+              constraints: const BoxConstraints(
+                minHeight: AppDimensions.accueilHeaderControl,
               ),
+              height: wide ? null : AppDimensions.accueilHeaderControl,
+              width: wide ? null : AppDimensions.accueilHeaderControl,
+              padding: wide
+                  ? const EdgeInsets.only(
+                      left: AppDimensions.spacing16,
+                      right: AppDimensions.spacing12 + AppDimensions.spacing2,
+                    )
+                  : EdgeInsets.zero,
+              decoration: BoxDecoration(
+                color: dark
+                    ? AppColors.glassBackgroundDark
+                    : AppColors.glassBackgroundLight,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+                border: Border.all(
+                  color: dark
+                      ? AppColors.glassBorderDark
+                      : AppColors.glassBorderLight,
+                  width: 0.5,
+                ),
+              ),
+              child: Center(widthFactor: wide ? 1 : null, child: child),
             ),
-            alignment: Alignment.center,
-            child: child,
           ),
         ),
       ),
