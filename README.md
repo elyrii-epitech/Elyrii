@@ -91,7 +91,9 @@ Each service is a separate Hono micro‑service containerized with Docker.
 
 ### Backend Setup
 
-- Clone the repo
+For database-only setup or an existing database upgrade, see the
+[PostgreSQL context storage guide](docs/server/database.md). Existing databases
+created with `db:push` need the baseline adoption step before migration.
 
 ```bash
 git clone https://github.com/elyrii-epitech/Elyrii.git

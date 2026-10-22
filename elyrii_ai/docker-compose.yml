@@ -60,7 +60,65 @@ services:
     environment:
       - KAFKA_BROKER=host.docker.internal:9092
       - AI_BASE_URL=http://host.docker.internal:11434
+      - AI_MODEL=${AI_MODEL:-mistral}
+      - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - CHAT_TOKENIZER_DIR=/generation-tokenizer
+      - CONTEXT_SERVER_URL=${CONTEXT_SERVER_URL:-http://host.docker.internal:3000}
+    volumes:
+      - ${CHAT_TOKENIZER_HOST_DIR:-./generation-tokenizer}:/generation-tokenizer:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "redpanda:host-gateway"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  context-extractor:
+    build:
+      context: .
+      dockerfile: BridgeDockerfile
+    command: ["python", "extraction_worker.py"]
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+      - AI_BASE_URL=http://host.docker.internal:11434
       - AI_MODEL=mistral
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "redpanda:host-gateway"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  summary-worker:
+    profiles: ["summaries"]
+    build:
+      context: .
+      dockerfile: BridgeDockerfile
+    command: ["python", "summary_worker.py"]
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+      - AI_BASE_URL=http://host.docker.internal:11434
+      - SUMMARY_AI_MODEL=${SUMMARY_AI_MODEL:-mistral}
+      - SUMMARY_TOKENIZER_PATH=/tokenizer/tokenizer.json
+    volumes:
+      - ${SUMMARY_TOKENIZER_DIR:-../models/summary-tokenizer}:/tokenizer:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "redpanda:host-gateway"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  embedding-worker:
+    profiles: ["embeddings"]
+    build:
+      context: .
+      dockerfile: BridgeDockerfile
+    command: ["python", "embedding_worker.py"]
+    environment:
+      - KAFKA_BROKER=host.docker.internal:9092
+      - EMBEDDING_AI_BASE_URL=${EMBEDDING_AI_BASE_URL:-http://host.docker.internal:11434}
+      - EMBEDDING_MODEL_DIGEST=${EMBEDDING_MODEL_DIGEST:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "redpanda:host-gateway"

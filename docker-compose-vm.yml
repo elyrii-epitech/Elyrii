@@ -18,12 +18,27 @@ services:
       - SECRET_KEY=${SECRET_KEY:-super-secret-key}
       - REFRESH_SECRET_KEY=${REFRESH_SECRET_KEY:-super-refresh-secret-key}
       - NODE_ENV=development
+      - ENABLE_SUMMARIES=${ENABLE_SUMMARIES:-false}
+      - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - CONTEXT_BRIDGE_SECRET=${CONTEXT_BRIDGE_SECRET:-}
+      - CHAT_RETRIEVAL_TIMEOUT_MS=${CHAT_RETRIEVAL_TIMEOUT_MS:-4000}
+      - ENABLE_CONTEXT_CLEANUP=${ENABLE_CONTEXT_CLEANUP:-true}
+      - CONTEXT_CLEANUP_INTERVAL_MS=${CONTEXT_CLEANUP_INTERVAL_MS:-60000}
+      - CONTEXT_CLEANUP_BATCH_SIZE=${CONTEXT_CLEANUP_BATCH_SIZE:-100}
+      - ENABLE_EMBEDDINGS=${ENABLE_EMBEDDINGS:-false}
+      - EMBEDDING_MODEL_DIGEST=${EMBEDDING_MODEL_DIGEST:-}
+      - EMBEDDING_AI_BASE_URL=${EMBEDDING_AI_BASE_URL:-http://ollama:11434}
+      - CONTEXT_MIN_SIMILARITY=${CONTEXT_MIN_SIMILARITY:-0.65}
+      - CONTEXT_TOP_K=${CONTEXT_TOP_K:-5}
+      - CONTEXT_RECENT_LIMIT=${CONTEXT_RECENT_LIMIT:-12}
+      - CONTEXT_EMBEDDING_TIMEOUT_MS=${CONTEXT_EMBEDDING_TIMEOUT_MS:-3000}
+      - SUMMARY_AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
     depends_on:
       redpanda:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
-    command: sh -c "sleep 5 && bun run db:push && bun run start"
+      db-migrate:
+        condition: service_completed_successfully
+    command: ["bun", "run", "start"]
     restart: unless-stopped
     networks:
       - elyrii_net
@@ -70,8 +85,26 @@ services:
     networks:
       - elyrii_net
 
+  db-migrate:
+    build:
+      context: ./elyrii_server
+      dockerfile: Dockerfile
+      target: db-migrations
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-elyrii_db}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - elyrii_net
+
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:0.8.6-pg16-bookworm
     container_name: postgres_elyrii
     environment:
       - POSTGRES_USER=${DB_USER:-postgres}
@@ -80,11 +113,8 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./elyrii_server/init_dbs.sh:/docker-entrypoint-initdb.d/init_dbs.sh:ro
-    depends_on:
-      redpanda:
-        condition: service_healthy
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${DB_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -190,6 +220,70 @@ services:
       - KAFKA_BROKER=redpanda:9092
       - AI_BASE_URL=http://ollama:11434
       - AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+      - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - CHAT_TOKENIZER_DIR=/generation-tokenizer
+      - CONTEXT_SERVER_URL=http://server:${PORT:-3000}
+    volumes:
+      - ${CHAT_TOKENIZER_HOST_DIR:-./elyrii_ai/generation-tokenizer}:/generation-tokenizer:ro
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  context-extractor:
+    build:
+      context: ./elyrii_ai
+      dockerfile: BridgeDockerfile
+    command: ["python", "extraction_worker.py"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - AI_BASE_URL=http://ollama:11434
+      - AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  summary-worker:
+    profiles: ["summaries"]
+    build:
+      context: ./elyrii_ai
+      dockerfile: BridgeDockerfile
+    command: ["python", "summary_worker.py"]
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - AI_BASE_URL=http://ollama:11434
+      - SUMMARY_AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
+      - SUMMARY_TOKENIZER_PATH=/tokenizer/tokenizer.json
+    volumes:
+      - ${SUMMARY_TOKENIZER_DIR:-./models/summary-tokenizer}:/tokenizer:ro
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
+  embedding-worker:
+    profiles: ["embeddings"]
+    build:
+      context: ./elyrii_ai
+      dockerfile: BridgeDockerfile
+    command: ["python", "embedding_worker.py"]
+    environment:
+      - KAFKA_BROKER=redpanda:9092
+      - EMBEDDING_AI_BASE_URL=${EMBEDDING_AI_BASE_URL:-http://ollama:11434}
+      - EMBEDDING_MODEL_DIGEST=${EMBEDDING_MODEL_DIGEST:-}
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      ollama:
+        condition: service_started
     restart: unless-stopped
     networks:
       - elyrii_net

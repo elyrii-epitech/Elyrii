@@ -1,3 +1,4 @@
+import type { ChatContextEnvelope } from "./context-dispatch";
 import { kafkaService } from "./chat.service";
 import { CompressionTypes } from "kafkajs";
 import { randomUUIDv7 } from "bun";
@@ -16,11 +17,14 @@ export async function sendMessageToTopic(
   userId: string,
   message: string,
   options?: {
+    context?: ChatContextEnvelope;
     conversationId?: string;
+    requestId?: string;
+    sourceMessageId?: string;
     history?: Array<{ role: string; message: string }>;
   }
 ): Promise<string> {
-  const requestId = randomUUIDv7();
+  const requestId = options?.requestId ?? randomUUIDv7();
 
   await kafkaService.producer.send({
     compression: CompressionTypes.GZIP,
@@ -29,6 +33,8 @@ export async function sendMessageToTopic(
       key: requestId,
       value: JSON.stringify({
         userId,
+        context: options?.context,
+        sourceMessageId: options?.sourceMessageId,
         message,
         conversationId: options?.conversationId ?? "default",
         history: options?.history ?? [],

@@ -67,6 +67,7 @@ Contents
    api
    configuration
    deployment
+   extraction
 
 Indices and tables
 ==================
