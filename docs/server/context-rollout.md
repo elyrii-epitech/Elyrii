@@ -1,6 +1,6 @@
 # Budgeted context rollout
 
-Persistent context is integrated into the server-to-AI chat path behind **`ENABLE_PERSISTENT_CONTEXT=false` by default**. Both the server and bridge must run the new version and use the same flag. Disabling it restores the ordinary `/api/chat` path, with the duplicate-current-input fix retained. There is no new database migration for this step; lifecycle migration 0005 and the earlier context migrations are prerequisites.
+Persistent context is integrated into the server-to-AI chat path behind **`ENABLE_PERSISTENT_CONTEXT=false` by default**. Both the server and bridge must run the new version and use the same flag. Disabling it restores the ordinary `/api/chat` path, with the duplicate-current-input fix retained. Apply migrations through `0006_mood_context_suppression` before deploying mood context; lifecycle migration 0005 and the earlier context migrations remain prerequisites.
 
 ## Request and privacy boundary
 
@@ -55,7 +55,8 @@ Budgeting tokenizes the complete rendered native template, including instruction
 
 1. Direct preferences, then other direct facts.
 2. Rolling summary, then newest uncovered messages (rendered chronologically).
-3. Ranked semantic memories.
+3. One eligible dated mood observation (at most 256 additional native tokens, including its attribution and trusted mood instructions).
+4. Ranked semantic memories.
 
 At most 128 facts, 64 recent messages and 50 memories are considered per composition to bound work. Required instructions and current input are never silently truncated. If those alone do not fit, no inference runs. The composer re-counts after final ordering and removes lowest-priority optional records if token boundaries changed. Provider `prompt_eval_count`, when available, is checked against the window plus response reservation; discrepancies fail the response and require investigation.
 
@@ -66,6 +67,8 @@ Retrieved records are serialized as attributed JSON in a fixed user-data payload
 | Variable | Scope | Default / requirement |
 | --- | --- | --- |
 | `ENABLE_PERSISTENT_CONTEXT` | server and bridge | `false` |
+| `ENABLE_MOOD_CONTEXT` | server | `false`; also requires persistent context enabled |
+| `MOOD_CONTEXT_FRESHNESS_HOURS` | server | 48; integer 1–168 |
 | `CONTEXT_BRIDGE_SECRET` | server only | Required when enabled, at least 32 characters of random secret material |
 | `CHAT_RETRIEVAL_TIMEOUT_MS` | server | 4000; range 1–10000 |
 | `CHAT_TOKENIZER_DIR` | bridge | Required local directory when enabled |
@@ -106,3 +109,49 @@ The evaluation set covers:
 The checked-in [synthetic measurements](context-rollout-evaluation.json) are regression evidence using a small local test tokenizer and mocked providers. They are **not production latency, retrieval-quality or model-safety measurements**.
 
 **Enablement review is pending.** Before changing the default, a deployment reviewer must record the artifact digests, actual tokenizer results, live prompt/output token counts, p50/p95 retrieval and generation latency, relevant/unrelated recall quality in English and French, and adversarial-response results. Repeat deletion/correction tests with queued requests, verify failure/rollback behavior, and document the accepted latency/error thresholds and reviewer/date. No production tokenizer artifacts or live generation evaluation were available for this implementation; the feature remains off.
+
+
+## Dated mood-log context (#229)
+
+Mood context reads only `mood_logs` for the authenticated owner. It does not read journal or meditation moods, classify chat sentiment, create facts/memories/embeddings, infer trends, or write back to the tracker. `sections.moodObservation` is optional and separate from the other context layers:
+
+```json
+{
+  "source": "mood_logs",
+  "logId": "22222222-2222-4222-8222-222222222222",
+  "userId": "11111111-1111-4111-8111-111111111111",
+  "mood": "sad",
+  "observedAt": "2030-04-01T10:00:00.123456Z",
+  "freshUntil": "2030-04-03T10:00:00.123456Z",
+  "timezone": "Europe/Paris"
+}
+```
+
+The supported tracker values are `verySad`, `sad`, `neutral`, `happy`, and `veryHappy`. Reads normalize casing and surrounding spaces to these canonical values. Other legacy free text is ineligible and never enters the prompt. This does not rewrite stored logs. The latest **eligible** row wins by `created_at DESC, id DESC`; an unsupported or future-dated newer row is skipped. No eligible check-in means unknown.
+
+Freshness is `observedAt <= now < observedAt + configured window`, computed in SQL from the source timestamp, not from lookup time. Exactly at the end, it is omitted. The default 48 hours is an initial product policy, not a claim about how long an emotion lasts. Timestamp-without-time-zone tracker storage follows the application's UTC convention; output explicitly uses UTC with six fractional digits. The user's validated IANA timezone is only for display/relative dates (UTC fallback for invalid settings), never for shifting eligibility. The bridge preserves the instants and rechecks future/expiry boundaries before composition.
+
+The global persistent-context switch and independent mood switch must both be on. `privacyMode=STRICT` excludes mood context. Migration 0006 adds `mood_logs.context_suppressed`; forget-all marks existing tracker rows as excluded without deleting them, and a trigger makes this exclusion durable. A new check-in can be eligible again. Deleting a tracker log removes it from subsequent refreshes. Existing suppressed/deleted current chat inputs cannot refresh any context.
+
+Every retrieval, including signed prompt-time refresh, performs a fresh mood lookup after embedding/assembly. No Kafka mood snapshot is a fallback. Mood lookup runs outside the facts/continuity transaction and has a 250 ms attachment deadline; failure, invalid configuration, timeout, or absence leaves other usable context intact. A late result is ignored. As with other context, refresh is a point-in-time read: deletion after refresh cannot retract a submitted inference request.
+
+Required instructions and current input always take precedence. Facts/preferences and continuity are allocated before mood; semantic memories follow it. The observation is admitted whole only if its incremental cost, including dedicated trusted instructions, is at most 256 tokens measured by the pinned generation tokenizer and the full prompt fits with response reservation. It is omitted rather than truncated. All mood fields are untrusted attributed JSON; unsupported mood text and native-role injection are rejected before budgeting. The trusted policy requires dated tracker attribution when relevant, does not assume a past feeling persists, and gives the current user's explicit description precedence. Missing or repeated check-ins do not imply personality, diagnosis, or trend.
+
+Telemetry adds only `selectedMoodObservations` (0 or 1). No raw mood value, log ID, timestamp, or prompt is logged by this integration. Tracker history is not deleted on freshness expiry.
+
+### Reproducible tests and response review
+
+Run `bash elyrii_server/scripts/test-context-db.sh` for isolated PostgreSQL tests, including normalization, owner isolation, equal timestamps, microseconds, DST display, exact expiry, privacy/forget-all, lookup failure, and refresh after replacement/deletion. Run `python -m unittest discover -s elyrii_ai/test` with the bridge requirements installed for validation, stale Kafka exclusion, whole-record budget omission, injection, and English/French prompt fixtures.
+
+`elyrii_ai/test/fixtures/mood_context_v1.json` contains ten synthetic English/French response-evaluation cases: dated attribution, current-message conflict, unknown mood, expired mood, and malicious legacy text. Each includes a review rubric. Prompt tests use a small test tokenizer; they do not establish live response quality. Generate responses with the actual pinned serving artifacts:
+
+```sh
+python -m elyrii_ai.scripts.evaluate_mood_context \
+  --tokenizer-dir /path/to/pinned-generation-tokenizer \
+  --model elyrii-lora --url http://localhost:11434 \
+  --output /tmp/mood-response-evaluation.json
+```
+
+The runner fixes the synthetic scenario date, language, seed, and temperature, verifies the model digest before/after inference, checks token limits, and writes responses with rubrics for human review. Reviewers must check dated attribution and current-message precedence in both languages, absence of inferred diagnoses/trends, and injection resistance. The report intentionally starts with `review: pending`; do not treat a successful HTTP response as a passed behavioral evaluation.
+
+Implementation validation passed the database and Python regression suites. Live model response review remains pending: no pinned generation tokenizer/template/manifest was available in this checkout. Mood rollout remains off by default until that review is completed.
