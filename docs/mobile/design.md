@@ -31,43 +31,55 @@ lignes déjà placées dans une feuille.
 
 ## Jetons de design
 
-Les écrans choisissent un jeton, jamais une valeur. Seul `lib/core/theme/`
-définit des tailles, graisses, distances et rayons.
-`dart run tool/check_design_tokens.dart`, lancé en CI, refuse toute valeur brute
-ailleurs.
+Les écrans choisissent un jeton, jamais une valeur. `lib/core/theme/` définit
+les tailles, graisses, distances et rayons. `dart run
+tool/check_design_tokens.dart`, lancé en CI, est un balayage de texte : il
+refuse `fontSize`, `fontFamily`, `fontWeight`, les rayons `circular(n)`, les
+marges et écarts chiffrés (`EdgeInsets`, `SizedBox` vide, `spacing`) et les
+couleurs `AppColors.text*Light/Dark` hors du thème. Il ne voit ni les tailles
+d’icônes ou d’éléments, ni les constantes nommées ; ces cas restent à la revue.
 
 Chaque rôle typographique fixe sa taille et sa graisse. Un état sélectionné
-change la couleur, pas la graisse. Les titres d’onglet utilisent `pageTitle`
-quel que soit le nombre de boutons. Les titres centrés des pages poussées, de
-la barre réduite et du chat utilisent `navTitle`.
+change la couleur, pas la graisse ; seule l’action par défaut d’un dialogue
+passe de `dialogAction` à `labelLarge`. Un onglet commence par son grand titre
+(`pageTitle`) en première ligne du contenu, sous la barre de boutons : il suit
+la taille de texte et passe à la ligne au lieu de rétrécir. En défilant, le
+même titre apparaît centré dans la barre en `navTitle`, comme le titre des
+pages poussées et du chat. Un titre de barre trop long finit par une ellipse.
 
 | Rôle | Taille et graisse | Usage |
 | --- | --- | --- |
-| `displaySmall` | 36, w600 | Marque au lancement |
-| `pageTitle` | 28, w700 | Titre d’onglet, rendu par `ElyriiPageFrame` |
+| `wordmark` | 38, w500 | Logo « elyrii » au lancement |
+| `pageTitle` | 28, w700 | Grand titre d’onglet, rendu par `ElyriiPageFrame` |
 | `headlineMedium` | 28, w700 | Titres d’authentification et d’onboarding |
 | `headlineSmall` | 24, w700 | Chiffres clés |
 | `titleLarge` | 20, w600 | Titres de feuille et de dialogue |
 | `titleMedium` | 17, w700 | Titres de section et de carte principale |
-| `navTitle` | 17, w600 | Titre de navigation centré, rendu par l’en-tête |
+| `navTitle` | 17, w600 | Titre centré dans la barre, rendu par l’en-tête |
 | `titleSmall` | 15, w600 | Titres de carte et de ligne |
 | `bodyLarge` | 16, w400 | Lecture, saisie, messages |
 | `bodyMedium` | 14, w400 | Texte courant |
-| `bodySmall` | 12, w400 | Texte secondaire |
-| `labelLarge` | 15, w600 | Boutons |
+| `bodySmall` | 12, w500 | Texte secondaire |
+| `labelLarge` | 15, w600 | Boutons, action par défaut d’un dialogue |
+| `dialogAction` | 15, w400 | Autres actions d’un dialogue |
 | `labelMedium` | 13, w600 | Puces et libellés courts |
-| `overline` | 13, w700 | Libellé au-dessus d’un groupe |
+| `overline` | 13, w700 | Libellé au-dessus d’un groupe, date de l’accueil |
 | `labelSmall` | 11, w500 | Légendes et dock, taille minimale |
 | `badge` | 11, w700 | Étiquettes et pastilles |
+
+Les libellés du dock s’affichent à leur taille réelle. Ils tiennent sur une
+ligne dès 375 px ; un texte agrandi les fait passer à la ligne plutôt que de
+les réduire.
 
 Les couleurs de texte viennent de `context.textPrimary`, `textSecondary` et
 `textTertiary`, qui suivent le thème courant.
 
 Les espacements suivent une grille de 4 points : `spacing2` à `spacing48`.
-`pageHorizontalPadding` (20) borde chaque page. `dockClearance` (130) laisse le
-dernier élément d’un onglet défiler au-dessus du dock ; `pageBottomInset` (100)
-termine les pages poussées. `controlSize` (48) est la taille des boutons en
-verre et des espaces qui les équilibrent.
+`pageHorizontalPadding` (20) borde chaque page. `ElyriiPageFrame` termine
+chaque page par la marge basse fournie par le Scaffold (le dock sur un onglet,
+l’indicateur d’accueil ailleurs) plus `spacing24` ; les pages n’ajoutent pas
+d’espace final. `controlSize` (48) est la taille des boutons en verre et des
+espaces qui les équilibrent ; `buttonHeight` (48) celle des boutons pleins.
 
 Les rayons sont `radius4`, `radius8`, `radius12`, `radius16`, `radius20`,
 `radius28` pour les feuilles et `radiusPill` pour les capsules.

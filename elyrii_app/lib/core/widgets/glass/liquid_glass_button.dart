@@ -66,11 +66,13 @@ class LiquidGlassButton extends StatelessWidget {
         width: isExpanded ? double.infinity : null,
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.spacing20,
-          vertical: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing12,
         ),
         glassColor: background,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 20),
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.buttonHeight - 2 * AppDimensions.spacing12,
+          ),
           child: isLoading
               ? Center(
                   widthFactor: isExpanded ? null : 1,

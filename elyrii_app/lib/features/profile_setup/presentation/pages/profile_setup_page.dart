@@ -239,9 +239,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 alignment: Alignment.centerLeft,
                 child: ElyriiBackButton(
                   onPressed: _isSaving ? null : _previousStep,
-                  color: isDark
-                      ? Colors.white
-                      : AppColors.textPrimaryLight.withValues(alpha: 0.82),
+                  color: context.textPrimary.withValues(
+                    alpha: isDark ? 1 : 0.82,
+                  ),
                 ),
               ),
             Row(

@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../../glass/elyrii_glass_surface.dart';
+import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_dimensions.dart';
 import '../accessible_action.dart';
@@ -66,18 +67,14 @@ class LiquidGlassListTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTextStyles.bodyLarge(
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
+                  style: AppTextStyles.bodyLarge(color: context.textPrimary),
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: AppDimensions.spacing2),
                   Text(
                     subtitle!,
                     style: AppTextStyles.bodyMedium(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.5)
-                          : Colors.black.withValues(alpha: 0.4),
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
