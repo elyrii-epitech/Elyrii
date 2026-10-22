@@ -317,18 +317,13 @@ class MeditationSummaryView extends StatelessWidget {
         Text(
           value,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: valueColor,
-          ),
+          style: AppTextStyles.headlineSmall(color: valueColor),
         ),
         const SizedBox(height: 2),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
+          style: AppTextStyles.bodySmall(
             color: isDark
                 ? AppColors.textTertiaryDark
                 : AppColors.textTertiaryLight,

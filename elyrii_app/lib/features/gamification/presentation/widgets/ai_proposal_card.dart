@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../data/models/gamification_models.dart';
 
@@ -74,9 +75,7 @@ class AiProposalCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               proposal.displayTitle,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                              style: AppTextStyles.titleSmall(
                                 color: isDark
                                     ? AppColors.textPrimaryDark
                                     : AppColors.textPrimaryLight,
@@ -94,8 +93,7 @@ class AiProposalCard extends StatelessWidget {
                             ),
                             child: Text(
                               'IA',
-                              style: TextStyle(
-                                fontSize: 10,
+                              style: AppTextStyles.labelSmall(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.readableAccent(
                                   AppColors.primary,
@@ -114,8 +112,7 @@ class AiProposalCard extends StatelessWidget {
                           proposal.displayDescription,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
+                          style: AppTextStyles.bodySmall(
                             color: isDark
                                 ? AppColors.textTertiaryDark
                                 : AppColors.textTertiaryLight,
@@ -151,8 +148,7 @@ class AiProposalCard extends StatelessWidget {
                       ),
                       child: Text(
                         'Plus tard',
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: AppTextStyles.bodySmall(
                           fontWeight: FontWeight.w500,
                           color: isDark
                               ? AppColors.textSecondaryDark
@@ -173,11 +169,9 @@ class AiProposalCard extends StatelessWidget {
                               color: AppColors.primary.withValues(alpha: 0.75),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text(
+                            child: Text(
                               'Un instant…',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                              style: AppTextStyles.labelMedium(
                                 color: Colors.white,
                               ),
                             ),
@@ -204,11 +198,9 @@ class AiProposalCard extends StatelessWidget {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Accepter',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                            style: AppTextStyles.labelMedium(
                               color: Colors.white,
                             ),
                           ),

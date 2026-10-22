@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/config/api_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../data/entities/chat_message.dart';
 
@@ -95,9 +96,9 @@ class _AiReportSheetState extends State<AiReportSheet> {
         children: [
           Semantics(
             header: true,
-            child: const Text(
+            child: Text(
               'Signaler une réponse IA',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              style: AppTextStyles.titleLarge(),
             ),
           ),
           const SizedBox(height: 16),
@@ -138,7 +139,9 @@ class _AiReportSheetState extends State<AiReportSheet> {
                 liveRegion: true,
                 child: Text(
                   _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  style: AppTextStyles.bodySmall(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                 ),
               ),
             const SizedBox(height: 16),

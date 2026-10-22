@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Widget de bulle de dialogue avec effet glassmorphism et animation de typing.
@@ -168,14 +169,11 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble> {
                   Flexible(
                     child: Text(
                       _displayedText,
-                      style: TextStyle(
-                        fontSize: 14.5,
+                      style: AppTextStyles.bodyMedium(
                         fontWeight: FontWeight.w500,
-                        letterSpacing: -0.1,
                         color: widget.isDark
                             ? AppColors.textPrimaryDark
                             : AppColors.textPrimaryLight,
-                        height: 1.35,
                       ),
                     ),
                   ),

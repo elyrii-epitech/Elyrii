@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../design_system/haptics/elyrii_haptics.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';
+import '../theme/app_text_styles.dart';
 import '../glass/elyrii_glass_surface.dart';
 
 /// Item de navigation pour la GlassNavigationBar
@@ -230,18 +231,15 @@ class _GlassNavItemViewState extends State<_GlassNavItemView> {
                         const SizedBox(height: 3),
                         AnimatedDefaultTextStyle(
                           duration: duration,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: widget.isSelected ? 10.5 : 10.0,
+                          style: AppTextStyles.labelSmall(
                             fontWeight: widget.isSelected
                                 ? FontWeight.w600
-                                : FontWeight.w500,
+                                : null,
                             color: widget.isSelected
                                 ? primaryColor
                                 : (widget.isDark
                                       ? AppColors.iconDefaultDark
                                       : AppColors.iconDefaultLight),
-                            letterSpacing: -0.2,
                           ),
                           child: Text(
                             widget.item.label,

@@ -9,7 +9,7 @@ Liquid Glass communs. Les thèmes clair, sombre et système sont fournis par
 | Source dans `elyrii_app/lib` | Responsabilité |
 | --- | --- |
 | `core/theme/app_colors.dart` | Palette et couleurs selon le thème |
-| `core/theme/app_text_styles.dart` | Typographie Poppins |
+| `core/theme/app_text_styles.dart` | Échelle typographique Poppins, seule source des tailles |
 | `core/theme/app_dimensions.dart` | Espacements, rayons et dimensions |
 | `core/design_system/colors/elyrii_colors.dart` | Alias sémantiques de couleurs |
 | `core/glass/elyrii_glass_surface.dart` et `glass_role.dart` | Matériau partagé et rôles du verre |
@@ -29,6 +29,30 @@ import 'package:elyrii_app/core/widgets/glass/liquid_glass_kit.dart';
 au démarrage. Les écrans utilisent les primitives Elyrii. `ElyriiGlassSurface`
 fournit une surface opaque en contraste élevé et un chemin léger pour les
 lignes déjà placées dans une feuille.
+
+## Typographie
+
+Chaque texte choisit un rôle `AppTextStyles`, jamais une taille. Les titres
+d’onglet utilisent `pageTitle` (28) quel que soit le nombre de boutons. Les
+titres centrés des pages poussées, de la barre réduite et du chat utilisent
+`titleMedium` (17). `tool/check_typography.sh`, lancé en CI, refuse tout
+`fontSize` ou `fontFamily` hors de `lib/core/theme/`.
+
+| Rôle | Taille | Usage |
+| --- | --- | --- |
+| `displaySmall` | 36 | Marque au lancement |
+| `pageTitle` | 28 | Titre d’onglet, rendu par `ElyriiPageFrame` |
+| `headlineMedium` | 28 | Titres d’authentification et d’onboarding |
+| `headlineSmall` | 24 | Chiffres clés |
+| `titleLarge` | 20 | Titres de feuille et de dialogue |
+| `titleMedium` | 17 | Titres de section et de navigation |
+| `titleSmall` | 15 | Titres de carte et de ligne |
+| `bodyLarge` | 16 | Lecture, saisie, messages |
+| `bodyMedium` | 14 | Texte courant |
+| `bodySmall` | 12 | Texte secondaire |
+| `labelLarge` | 15 | Boutons |
+| `labelMedium` | 13 | Puces, surtitres, libellés courts |
+| `labelSmall` | 11 | Badges et dock, taille minimale |
 
 ## Accessibilité et adaptation
 

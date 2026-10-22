@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
@@ -59,18 +60,16 @@ class BadgesGrid extends StatelessWidget {
                       Text(
                         badge.title,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: AppTextStyles.titleSmall(
                           color: colors.onSurface,
-                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         badge.isUnlocked ? 'Débloqué' : 'À débloquer',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: AppTextStyles.bodySmall(
                           color: colors.onSurfaceVariant,
-                          fontSize: 12,
                         ),
                       ),
                     ],

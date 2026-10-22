@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../journal/data/models/journal_entry_model.dart';
 
 class DashboardStreakCard extends StatelessWidget {
@@ -47,14 +48,12 @@ class DashboardStreakCard extends StatelessWidget {
                 Flexible(
                   child: Text(
                     'SÉRIE',
-                    style: TextStyle(
-                      fontSize: 10,
+                    style: AppTextStyles.labelSmall(
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
                       color: isDark
                           ? AppColors.textTertiaryDark
                           : AppColors.textTertiaryLight,
-                    ),
+                    ).copyWith(letterSpacing: 0.8),
                   ),
                 ),
               ],
@@ -62,20 +61,16 @@ class DashboardStreakCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               '$streak ${streak > 1 ? 'jours' : 'jour'}',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
+              style: AppTextStyles.headlineSmall(
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
-                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               streak > 0 ? 'Tu tiens le rythme !' : 'Commence aujourd\'hui',
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTextStyles.bodySmall(
                 fontWeight: FontWeight.w500,
                 color: isDark
                     ? AppColors.textSecondaryDark
@@ -140,19 +135,22 @@ class DashboardBreatheCard extends StatelessWidget {
                     color: lavender.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Wrap(
+                  child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         'Démarrer',
-                        style: TextStyle(
-                          fontSize: 10,
+                        style: AppTextStyles.labelSmall(
                           fontWeight: FontWeight.w700,
                           color: lavender,
                         ),
                       ),
-                      SizedBox(width: 2),
-                      Icon(Icons.play_arrow_rounded, size: 12, color: lavender),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.play_arrow_rounded,
+                        size: 12,
+                        color: lavender,
+                      ),
                     ],
                   ),
                 ),
@@ -161,20 +159,16 @@ class DashboardBreatheCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               '2 min',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
+              style: AppTextStyles.headlineSmall(
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
-                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               'Cohérence cardiaque',
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTextStyles.bodySmall(
                 fontWeight: FontWeight.w500,
                 color: isDark
                     ? AppColors.textSecondaryDark
@@ -229,9 +223,7 @@ class DashboardJournalCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Dernière réflexion',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                    style: AppTextStyles.titleSmall(
                       color: isDark
                           ? AppColors.textPrimaryDark
                           : AppColors.textPrimaryLight,
@@ -252,9 +244,7 @@ class DashboardJournalCard extends StatelessWidget {
             if (lastEntry != null) ...[
               Text(
                 lastEntry!.title.isNotEmpty ? lastEntry!.title : 'Sans titre',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.titleSmall(
                   color: isDark
                       ? AppColors.textPrimaryDark
                       : AppColors.textPrimaryLight,
@@ -265,8 +255,7 @@ class DashboardJournalCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 lastEntry!.content ?? '',
-                style: TextStyle(
-                  fontSize: 13,
+                style: AppTextStyles.bodyMedium(
                   color: isDark
                       ? AppColors.textSecondaryDark
                       : AppColors.textSecondaryLight,
@@ -277,13 +266,11 @@ class DashboardJournalCard extends StatelessWidget {
             ] else ...[
               Text(
                 'Prends un instant pour poser tes pensées...',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontStyle: FontStyle.italic,
+                style: AppTextStyles.bodyMedium(
                   color: isDark
                       ? AppColors.textTertiaryDark
                       : AppColors.textTertiaryLight,
-                ),
+                ).copyWith(fontStyle: FontStyle.italic),
               ),
             ],
           ],
@@ -329,9 +316,7 @@ class DashboardReviewBar extends StatelessWidget {
             Expanded(
               child: Text(
                 'Consulter mon bilan & progression',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.titleSmall(
                   color: isDark
                       ? AppColors.textPrimaryDark
                       : AppColors.textPrimaryLight,

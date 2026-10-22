@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../data/models/gamification_models.dart';
 
@@ -55,9 +56,7 @@ class ChallengeAvailableCard extends StatelessWidget {
                 children: [
                   Text(
                     challenge.title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                    style: AppTextStyles.titleSmall(
                       color: isDark
                           ? AppColors.textPrimaryDark
                           : AppColors.textPrimaryLight,
@@ -70,8 +69,7 @@ class ChallengeAvailableCard extends StatelessWidget {
                       challenge.description!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: AppTextStyles.bodySmall(
                         color: isDark
                             ? AppColors.textTertiaryDark
                             : AppColors.textTertiaryLight,
@@ -96,13 +94,9 @@ class ChallengeAvailableCard extends StatelessWidget {
                           color: AppColors.primary.withValues(alpha: 0.75),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Un instant…',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: AppTextStyles.labelMedium(color: Colors.white),
                         ),
                       )
                       .animateRespectingMotion(
@@ -127,13 +121,9 @@ class ChallengeAvailableCard extends StatelessWidget {
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Commencer',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        style: AppTextStyles.labelMedium(color: Colors.white),
                       ),
                     ),
                   ),

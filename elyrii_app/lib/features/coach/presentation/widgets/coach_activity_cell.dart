@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../data/models/coach_model.dart';
 
 /// Cellule d'activité dans le conteneur groupé iOS : icône squircle colorée,
@@ -76,9 +77,7 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                   children: [
                     Text(
                       widget.activity.title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.titleSmall(
                         color: widget.isDark
                             ? AppColors.textPrimaryDark
                             : AppColors.textPrimaryLight,
@@ -87,12 +86,10 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                     const SizedBox(height: 2),
                     Text(
                       widget.activity.description,
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: AppTextStyles.bodySmall(
                         color: widget.isDark
                             ? AppColors.textTertiaryDark
                             : AppColors.textTertiaryLight,
-                        height: 1.4,
                       ),
                     ),
                   ],
@@ -113,11 +110,7 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                 ),
                 child: Text(
                   '${widget.activity.durationMinutes} min',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: ink,
-                  ),
+                  style: AppTextStyles.labelMedium(color: ink),
                 ),
               ),
               const SizedBox(width: 4),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../data/models/coach_model.dart';
 
@@ -122,10 +123,7 @@ class _NeedChipState extends State<_NeedChip> {
                 const SizedBox(width: 7),
                 Text(
                   widget.need.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.1,
+                  style: AppTextStyles.labelMedium(
                     color: widget.isSelected
                         ? color
                         : (widget.isDark

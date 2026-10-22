@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../data/entities/chat_message.dart';
 
 abstract final class ChatBubbleStyles {
@@ -71,13 +72,10 @@ class ChatMessageBubble extends StatelessWidget {
           children: [
             Text(
               message,
-              style: TextStyle(
+              style: AppTextStyles.bodyLarge(
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
-                fontSize: 16,
-                height: 1.45,
-                fontWeight: FontWeight.w400,
               ),
             ),
             if (delivery != MessageDelivery.delivered) ...[
@@ -88,8 +86,7 @@ class ChatMessageBubble extends StatelessWidget {
                   delivery == MessageDelivery.pending
                       ? 'En attente de réponse…'
                       : 'Réponse non reçue',
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: AppTextStyles.bodySmall(
                     color: delivery == MessageDelivery.failed
                         ? Theme.of(context).colorScheme.error
                         : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -132,8 +129,7 @@ class ChatMessageBubble extends StatelessWidget {
               children: [
                 Text(
                   'Elyrii · IA',
-                  style: TextStyle(
-                    fontSize: 12.5,
+                  style: AppTextStyles.labelMedium(
                     fontWeight: FontWeight.w700,
                     color: isDark
                         ? AppColors.textSecondaryDark
@@ -145,13 +141,10 @@ class ChatMessageBubble extends StatelessWidget {
                   label: 'Réponse de l’assistant IA',
                   child: SelectableText(
                     message,
-                    style: TextStyle(
+                    style: AppTextStyles.bodyLarge(
                       color: isDark
                           ? AppColors.textPrimaryDark
                           : AppColors.textPrimaryLight,
-                      fontSize: 15.5,
-                      height: 1.55,
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),

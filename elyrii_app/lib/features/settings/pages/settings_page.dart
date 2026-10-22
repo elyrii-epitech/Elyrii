@@ -24,6 +24,7 @@ import 'package:provider/provider.dart';
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../routes/app_routes.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
@@ -88,7 +89,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     children: [
                       Text(
                         userProvider.error!,
-                        style: TextStyle(
+                        style: AppTextStyles.bodyMedium(
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
@@ -432,10 +433,8 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.only(left: 4, bottom: 10),
             child: Text(
               title,
-              style: TextStyle(
-                fontSize: 13,
+              style: AppTextStyles.labelMedium(
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
                 color: isDark
                     ? AppColors.textSecondaryDark
                     : AppColors.textSecondaryLight,
@@ -481,7 +480,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Text(
         message,
         textAlign: TextAlign.center,
-        style: const TextStyle(height: 1.45),
+        style: AppTextStyles.bodyMedium(),
       ),
       actions: [
         LiquidGlassDialogAction(
@@ -520,10 +519,10 @@ class _SettingsPageState extends State<SettingsPage> {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Cette action supprimera définitivement ton compte et tes données associées. Entre ton mot de passe pour confirmer.',
                 textAlign: TextAlign.center,
-                style: TextStyle(height: 1.4),
+                style: AppTextStyles.bodyMedium(),
               ),
               const SizedBox(height: 16),
               CupertinoTextField(
@@ -556,8 +555,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 8),
                 Text(
                   errorText,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: AppTextStyles.bodySmall(
                     color: AppColors.readableAccent(
                       AppColors.error,
                       isDark: Theme.of(context).brightness == Brightness.dark,
@@ -677,22 +675,12 @@ class _SettingsCell extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.2,
-                    color: titleColor,
-                  ),
-                ),
+                Text(title, style: AppTextStyles.titleSmall(color: titleColor)),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.3,
+                    style: AppTextStyles.bodySmall(
                       color: isDark
                           ? AppColors.textTertiaryDark
                           : AppColors.textTertiaryLight,

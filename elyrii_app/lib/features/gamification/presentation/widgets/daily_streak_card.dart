@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
 class DailyStreakCard extends StatelessWidget {
@@ -42,8 +43,7 @@ class DailyStreakCard extends StatelessWidget {
                   children: [
                     Text(
                       'Ton rythme cette semaine',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: AppTextStyles.titleMedium(
                         fontWeight: FontWeight.bold,
                         color: isDark
                             ? AppColors.textPrimaryDark
@@ -55,8 +55,7 @@ class DailyStreakCard extends StatelessWidget {
                       streakDays > 0
                           ? 'Tu as partagé $streakDays moments ensemble'
                           : 'Chaque jour compte, à ton rythme',
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: AppTextStyles.bodyMedium(
                         color: isDark
                             ? AppColors.textSecondaryDark
                             : AppColors.textSecondaryLight,
@@ -116,8 +115,7 @@ class DailyStreakCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     dayInitial,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: AppTextStyles.bodySmall(
                       fontWeight: FontWeight.w500,
                       color: isDark
                           ? AppColors.textSecondaryDark
@@ -140,12 +138,10 @@ class DailyStreakCard extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 'Moments vécus',
-                style: TextStyle(
-                  fontSize: 11,
+                style: AppTextStyles.labelSmall(
                   color: isDark
                       ? AppColors.textTertiaryDark
                       : AppColors.textTertiaryLight,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(width: 24),
@@ -161,12 +157,10 @@ class DailyStreakCard extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 'Repos & recharge',
-                style: TextStyle(
-                  fontSize: 11,
+                style: AppTextStyles.labelSmall(
                   color: isDark
                       ? AppColors.textTertiaryDark
                       : AppColors.textTertiaryLight,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],

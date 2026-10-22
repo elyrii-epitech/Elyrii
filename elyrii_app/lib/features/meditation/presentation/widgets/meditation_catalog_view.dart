@@ -115,11 +115,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
                   Expanded(
                     child: Text(
                       'Pratiques',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: text,
-                      ),
+                      style: AppTextStyles.titleMedium(color: text),
                     ),
                   ),
                   TextButton(
@@ -130,9 +126,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
                       minimumSize: const Size(0, 44),
                       visualDensity: VisualDensity.standard,
                       padding: const EdgeInsets.symmetric(horizontal: 8),
-                      textStyle: AppTextStyles.labelMedium(
-                        fontWeight: FontWeight.w600,
-                      ).copyWith(fontSize: 13),
+                      textStyle: AppTextStyles.labelMedium(),
                     ),
                     child: const Text('Tout voir'),
                   ),
@@ -164,8 +158,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
               children: [
                 Text(
                   controller.selectedExercise?.title ?? 'Choisis ta pratique',
-                  style: TextStyle(
-                    fontSize: 18,
+                  style: AppTextStyles.titleMedium(
                     fontWeight: FontWeight.w700,
                     color: text,
                   ),
@@ -209,11 +202,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
               Flexible(
                 child: Text(
                   controller.selectedDurationLabel,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: text,
-                  ),
+                  style: AppTextStyles.titleSmall(color: text),
                 ),
               ),
               const SizedBox(width: 6),
@@ -255,9 +244,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
               if (MediaQuery.textScalerOf(context).scale(13) <= 20) ...[
                 Text(
                   'Commencer',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                  style: AppTextStyles.labelMedium(
                     color: selected == null
                         ? text.withValues(alpha: 0.4)
                         : text,

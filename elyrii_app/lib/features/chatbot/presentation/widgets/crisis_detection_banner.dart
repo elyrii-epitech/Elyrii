@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 
@@ -119,13 +120,11 @@ class CrisisDetectionBanner extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'On dirait que tu traverses un moment difficile. Tu n\'es pas seul(e).',
-            style: TextStyle(
+            style: AppTextStyles.bodyLarge(
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
-              fontSize: 15,
               fontWeight: FontWeight.w500,
-              height: 1.4,
             ),
             textAlign: TextAlign.center,
           ),
@@ -197,11 +196,10 @@ class CrisisDetectionBanner extends StatelessWidget {
           Flexible(
             child: Text(
               '$label : $number',
-              style: TextStyle(
+              style: AppTextStyles.bodyMedium(
                 color: isDark
                     ? AppColors.textSecondaryDark
                     : AppColors.textSecondaryLight,
-                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -226,9 +224,7 @@ class CrisisDetectionBanner extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'SOS Amitié\n09 72 39 40 50',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
+            style: AppTextStyles.titleSmall(
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
@@ -238,9 +234,7 @@ class CrisisDetectionBanner extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Numéro national de prévention du suicide\n3114',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
+            style: AppTextStyles.titleSmall(
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
@@ -250,9 +244,7 @@ class CrisisDetectionBanner extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Urgence vitale : 15 ou 112',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
+            style: AppTextStyles.titleSmall(
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,

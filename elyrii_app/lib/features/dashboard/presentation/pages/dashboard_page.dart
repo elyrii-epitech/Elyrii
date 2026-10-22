@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
@@ -184,7 +185,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 liveRegion: true,
                                 child: Text(
                                   state.$3!,
-                                  style: TextStyle(
+                                  style: AppTextStyles.bodyMedium(
                                     color: Theme.of(context).colorScheme.error,
                                   ),
                                 ),
@@ -314,9 +315,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       children: [
                         Text(
                           'État d\'esprit',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                          style: AppTextStyles.titleSmall(
                             color: isDark
                                 ? AppColors.textPrimaryDark
                                 : AppColors.textPrimaryLight,
@@ -326,8 +325,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           selectedMood != null
                               ? 'Enregistré aujourd\'hui'
                               : 'Comment te sens-tu ce soir ?',
-                          style: TextStyle(
-                            fontSize: 12,
+                          style: AppTextStyles.bodySmall(
                             color: isDark
                                 ? AppColors.textTertiaryDark
                                 : AppColors.textTertiaryLight,
@@ -353,8 +351,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 4),
                           Text(
                             selectedMood.label,
-                            style: TextStyle(
-                              fontSize: 11,
+                            style: AppTextStyles.labelSmall(
                               fontWeight: FontWeight.w600,
                               color: moodColor,
                             ),
@@ -408,8 +405,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           Text(
                             selectedMood.label,
-                            style: TextStyle(
-                              fontSize: 14,
+                            style: AppTextStyles.titleSmall(
                               fontWeight: FontWeight.w700,
                               color: moodColor,
                             ),
@@ -417,7 +413,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 6),
                           Text(
                             '•',
-                            style: TextStyle(
+                            style: AppTextStyles.bodySmall(
                               color: isDark
                                   ? AppColors.textTertiaryDark
                                   : AppColors.textTertiaryLight,
@@ -427,8 +423,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           Expanded(
                             child: Text(
                               selectedMood.subtitle,
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: AppTextStyles.bodySmall(
                                 color: isDark
                                     ? AppColors.textSecondaryDark
                                     : AppColors.textSecondaryLight,
@@ -470,9 +465,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               Expanded(
                                 child: Text(
                                   selectedMood.suggestedActionLabel,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
+                                  style: AppTextStyles.labelMedium(
                                     color: isDark
                                         ? Colors.white
                                         : AppColors.textPrimaryLight,

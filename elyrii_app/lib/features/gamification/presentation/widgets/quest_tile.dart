@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
@@ -92,9 +93,7 @@ class QuestTile extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                        style: AppTextStyles.titleSmall(
                           color: isDark
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
@@ -107,8 +106,7 @@ class QuestTile extends StatelessWidget {
                             child: Text(
                               isCompleted ? 'Ce moment a été vécu' : subtitle,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 13,
+                              style: AppTextStyles.bodySmall(
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
@@ -132,8 +130,7 @@ class QuestTile extends StatelessWidget {
                               ),
                               child: Text(
                                 '+$xpReward XP',
-                                style: TextStyle(
-                                  fontSize: 10,
+                                style: AppTextStyles.labelSmall(
                                   fontWeight: FontWeight.bold,
                                   color: isDark
                                       ? Colors.amber[200]
@@ -186,8 +183,7 @@ class QuestTile extends StatelessWidget {
                                 child: Text(
                                   progressText!,
                                   overflow: TextOverflow.clip,
-                                  style: TextStyle(
-                                    fontSize: 11,
+                                  style: AppTextStyles.labelSmall(
                                     fontWeight: FontWeight.w600,
                                     color: isDark
                                         ? AppColors.textTertiaryDark

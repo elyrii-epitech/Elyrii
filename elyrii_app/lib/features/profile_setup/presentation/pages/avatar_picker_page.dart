@@ -22,6 +22,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/constants/avatar_options.dart';
@@ -388,10 +389,8 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
       child: Text(
         'Avatars Elyrii',
-        style: TextStyle(
-          fontSize: 13,
+        style: AppTextStyles.labelMedium(
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
           color: isDark
               ? AppColors.textSecondaryDark
               : AppColors.textSecondaryLight,

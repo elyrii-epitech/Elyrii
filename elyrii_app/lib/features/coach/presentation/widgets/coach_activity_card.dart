@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../data/models/coach_model.dart';
 
@@ -89,8 +90,7 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                           ],
                           Text(
                             '${widget.activity.durationMinutes} min',
-                            style: TextStyle(
-                              fontSize: 10,
+                            style: AppTextStyles.labelSmall(
                               fontWeight: FontWeight.w600,
                               color: ink,
                             ),
@@ -103,9 +103,7 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                 const SizedBox(height: 12),
                 Text(
                   widget.activity.title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  style: AppTextStyles.titleSmall(
                     color: widget.isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
@@ -114,12 +112,10 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                 const SizedBox(height: 4),
                 Text(
                   widget.activity.description,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: AppTextStyles.bodySmall(
                     color: widget.isDark
                         ? AppColors.textTertiaryDark
                         : AppColors.textTertiaryLight,
-                    height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -130,11 +126,7 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                     Expanded(
                       child: Text(
                         widget.activity.category.label,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: ink,
-                        ),
+                        style: AppTextStyles.labelSmall(color: ink),
                       ),
                     ),
                   ],

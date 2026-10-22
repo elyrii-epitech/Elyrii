@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/widgets/launch_scope.dart';
+import '../../core/theme/app_text_styles.dart';
 
 /// A readable brand reveal over the live router, independent of network readiness.
 /// Keeping the routed child in the same slot preserves navigation and page state.
@@ -201,37 +202,30 @@ class ElyriiLaunchScene extends StatelessWidget {
                           offset: Offset(0, 8 * (1 - reveal)),
                           child: Column(
                             children: [
-                              const FittedBox(
+                              FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
                                   'elyrii',
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 38,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 3,
-                                    height: 1.25,
-                                    color: Color(0xFFF8F2EE),
-                                    decoration: TextDecoration.none,
-                                  ),
+                                  style:
+                                      AppTextStyles.displaySmall(
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(0xFFF8F2EE),
+                                      ).copyWith(
+                                        letterSpacing: 3,
+                                        decoration: TextDecoration.none,
+                                      ),
                                 ),
                               ),
                               if (!compact) ...[
                                 const SizedBox(height: 14),
-                                const Text(
+                                Text(
                                   'Un instant pour toi.',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    letterSpacing: 0.5,
-                                    height: 1.5,
-                                    color: Color(0xFFC7BFCF),
-                                    decoration: TextDecoration.none,
-                                  ),
+                                  style: AppTextStyles.bodyMedium(
+                                    color: const Color(0xFFC7BFCF),
+                                  ).copyWith(decoration: TextDecoration.none),
                                 ),
                               ],
                             ],

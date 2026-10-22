@@ -11,6 +11,7 @@ import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
@@ -233,7 +234,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   liveRegion: true,
                   child: Text(
                     provider.error!,
-                    style: TextStyle(
+                    style: AppTextStyles.bodyMedium(
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
@@ -330,7 +331,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 child: Center(
                   child: Text(
                     stateData.emoji,
-                    style: const TextStyle(fontSize: 26),
+                    style: AppTextStyles.headlineSmall(),
                   ),
                 ),
               ),
@@ -346,8 +347,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                       children: [
                         Text(
                           stateData.label,
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: AppTextStyles.titleMedium(
                             fontWeight: FontWeight.w700,
                             color: isDark
                                 ? AppColors.textPrimaryDark
@@ -365,8 +365,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                           ),
                           child: Text(
                             'Étape $level',
-                            style: TextStyle(
-                              fontSize: 11,
+                            style: AppTextStyles.labelSmall(
                               fontWeight: FontWeight.w600,
                               color: AppColors.readableAccent(
                                 AppColors.primary,
@@ -382,8 +381,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     const SizedBox(height: 2),
                     Text(
                       stateData.desc,
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: AppTextStyles.bodyMedium(
                         fontWeight: FontWeight.w500,
                         color: isDark
                             ? AppColors.textSecondaryDark
@@ -409,9 +407,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 children: [
                   Text(
                     'Floraison du sanctuaire',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                    style: AppTextStyles.labelMedium(
                       color: isDark
                           ? AppColors.textSecondaryDark
                           : AppColors.textSecondaryLight,
@@ -419,8 +415,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   ),
                   Text(
                     '$currentXp / $maxXp pts',
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: AppTextStyles.labelMedium(
                       fontWeight: FontWeight.w700,
                       color: AppColors.readableAccent(
                         AppColors.primary,
@@ -489,8 +484,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                           children: [
                             Text(
                               '$streakDays ${streakDays > 1 ? "jours" : "jour"}',
-                              style: TextStyle(
-                                fontSize: 13,
+                              style: AppTextStyles.labelMedium(
                                 fontWeight: FontWeight.w700,
                                 color: isDark
                                     ? AppColors.textPrimaryDark
@@ -499,9 +493,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                             ),
                             Text(
                               'Série active',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                              style: AppTextStyles.bodySmall(
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
@@ -541,8 +533,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                           children: [
                             Text(
                               '$completedCount ${completedCount > 1 ? "fleuris" : "fleuri"}',
-                              style: TextStyle(
-                                fontSize: 13,
+                              style: AppTextStyles.labelMedium(
                                 fontWeight: FontWeight.w700,
                                 color: isDark
                                     ? AppColors.textPrimaryDark
@@ -551,8 +542,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                             ),
                             Text(
                               'Rituels clos',
-                              style: TextStyle(
-                                fontSize: 10,
+                              style: AppTextStyles.bodySmall(
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
@@ -610,8 +600,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 children: [
                   Text(
                     'Semer une graine avec le Coach IA',
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: AppTextStyles.labelMedium(
                       fontWeight: FontWeight.w700,
                       color: isDark
                           ? AppColors.textPrimaryDark
@@ -621,8 +610,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   const SizedBox(height: 2),
                   Text(
                     'Besoin d\'un rituel guidé sur-mesure ? Ton coach t\'écoute.',
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: AppTextStyles.labelSmall(
                       color: isDark
                           ? AppColors.textSecondaryDark
                           : AppColors.textSecondaryLight,
@@ -661,10 +649,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
           children: [
             Text(
               'Badges de sérénité',
-              style: TextStyle(
-                fontSize: 13,
+              style: AppTextStyles.labelMedium(
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
                 color: isDark
                     ? AppColors.textSecondaryDark
                     : AppColors.textSecondaryLight,
@@ -680,8 +666,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               ),
               child: Text(
                 '$unlockedCount / $totalCount débloqués',
-                style: TextStyle(
-                  fontSize: 11,
+                style: AppTextStyles.labelSmall(
                   fontWeight: FontWeight.w600,
                   color: AppColors.readableAccent(
                     AppColors.primary,
@@ -701,23 +686,19 @@ class _ChallengesPageState extends State<ChallengesPage> {
         Text(
           'Chaque badge fleuri témoigne d\'un pas vers la sérénité.',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 11,
-            fontStyle: FontStyle.italic,
+          style: AppTextStyles.labelSmall(
             color: isDark
                 ? AppColors.textTertiaryDark
                 : AppColors.textTertiaryLight,
-          ),
+          ).copyWith(fontStyle: FontStyle.italic),
         ),
         const SizedBox(height: 18),
 
         // Trophée de constance (volet Trophées du segment)
         Text(
           'Constance & rythme',
-          style: TextStyle(
-            fontSize: 13,
+          style: AppTextStyles.labelMedium(
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
             color: isDark
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,
@@ -763,9 +744,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 child: Center(
                   child: Text(
                     entry.value,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+                    style: AppTextStyles.labelMedium(
                       color: entry.key == groupValue
                           ? selectedColor
                           : unselectedColor,
@@ -824,9 +803,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
           Text(
             '${badge.requirement}. ${badge.isUnlocked ? 'Objectif atteint !' : 'À ton rythme.'}',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
+            style: AppTextStyles.bodyMedium(
               color: isDark
                   ? AppColors.textSecondaryDark
                   : AppColors.textSecondaryLight,

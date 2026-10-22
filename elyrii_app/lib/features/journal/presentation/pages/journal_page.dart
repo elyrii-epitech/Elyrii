@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../providers/journal_provider.dart';
 import '../widgets/empty_journal_state.dart';
@@ -174,8 +175,7 @@ class _JournalPageState extends State<JournalPage> {
                       children: [
                         Text(
                           'Refuge de l\'esprit',
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: AppTextStyles.titleMedium(
                             fontWeight: FontWeight.w700,
                             color: isDark
                                 ? AppColors.textPrimaryDark
@@ -194,8 +194,7 @@ class _JournalPageState extends State<JournalPage> {
                           ),
                           child: Text(
                             'Privé & Sûr',
-                            style: TextStyle(
-                              fontSize: 11,
+                            style: AppTextStyles.labelSmall(
                               fontWeight: FontWeight.w600,
                               color: AppColors.readableAccent(
                                 AppColors.primary,
@@ -211,8 +210,7 @@ class _JournalPageState extends State<JournalPage> {
                     const SizedBox(height: 2),
                     Text(
                       'Tes pensées sont un sanctuaire d\'apaisement.',
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: AppTextStyles.bodySmall(
                         color: isDark
                             ? AppColors.textSecondaryDark
                             : AppColors.textSecondaryLight,
@@ -254,8 +252,7 @@ class _JournalPageState extends State<JournalPage> {
                           children: [
                             Text(
                               '$count ${count > 1 ? "réflexions" : "réflexion"}',
-                              style: TextStyle(
-                                fontSize: 13,
+                              style: AppTextStyles.labelMedium(
                                 fontWeight: FontWeight.w700,
                                 color: isDark
                                     ? AppColors.textPrimaryDark
@@ -264,9 +261,7 @@ class _JournalPageState extends State<JournalPage> {
                             ),
                             Text(
                               'Déposées',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                              style: AppTextStyles.bodySmall(
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
@@ -301,7 +296,7 @@ class _JournalPageState extends State<JournalPage> {
                         excludeSemantics: true,
                         child: Text(
                           latestMood,
-                          style: const TextStyle(fontSize: 18),
+                          style: AppTextStyles.titleMedium(),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -311,8 +306,7 @@ class _JournalPageState extends State<JournalPage> {
                           children: [
                             Text(
                               count > 0 ? 'Dernier écho' : 'Prendre racine',
-                              style: TextStyle(
-                                fontSize: 13,
+                              style: AppTextStyles.labelMedium(
                                 fontWeight: FontWeight.w700,
                                 color: isDark
                                     ? AppColors.textPrimaryDark
@@ -321,9 +315,7 @@ class _JournalPageState extends State<JournalPage> {
                             ),
                             Text(
                               count > 0 ? 'Ton humeur' : 'Commence ici',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                              style: AppTextStyles.bodySmall(
                                 color: isDark
                                     ? AppColors.textTertiaryDark
                                     : AppColors.textTertiaryLight,
@@ -383,8 +375,7 @@ class _JournalPageState extends State<JournalPage> {
                 children: [
                   Text(
                     'Inspiration guidée du moment',
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: AppTextStyles.labelMedium(
                       fontWeight: FontWeight.w700,
                       color: isDark
                           ? AppColors.textPrimaryDark
@@ -394,13 +385,11 @@ class _JournalPageState extends State<JournalPage> {
                   const SizedBox(height: 2),
                   Text(
                     '« Qu\'est-ce qui occupe mes pensées en ce moment ? »',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
+                    style: AppTextStyles.labelSmall(
                       color: isDark
                           ? AppColors.textSecondaryDark
                           : AppColors.textSecondaryLight,
-                    ),
+                    ).copyWith(fontStyle: FontStyle.italic),
                   ),
                 ],
               ),
@@ -444,8 +433,7 @@ class _JournalPageState extends State<JournalPage> {
           sliver: SliverToBoxAdapter(
             child: Text(
               'Mes réflexions (${entries.length})',
-              style: TextStyle(
-                fontSize: 13,
+              style: AppTextStyles.labelMedium(
                 fontWeight: FontWeight.w700,
                 color: isDark
                     ? AppColors.textSecondaryDark

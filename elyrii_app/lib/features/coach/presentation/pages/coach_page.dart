@@ -158,8 +158,7 @@ class _CoachPageState extends State<CoachPage> {
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: 18,
+          style: AppTextStyles.titleMedium(
             fontWeight: FontWeight.w700,
             color: isDark
                 ? AppColors.textPrimaryDark
@@ -169,8 +168,7 @@ class _CoachPageState extends State<CoachPage> {
         const SizedBox(height: 4),
         Text(
           subtitle,
-          style: TextStyle(
-            fontSize: 13,
+          style: AppTextStyles.bodySmall(
             color: isDark
                 ? AppColors.textTertiaryDark
                 : AppColors.textTertiaryLight,
@@ -267,20 +265,17 @@ class _CoachPageState extends State<CoachPage> {
                   children: [
                     Text(
                       'Conseil du jour',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.titleSmall(
                         color: AppColors.readableAccent(
                           AppColors.primary,
                           isDark:
                               Theme.of(context).brightness == Brightness.dark,
                         ),
-                        fontSize: 15,
                       ),
                     ),
                     Text(
                       advice.source,
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: AppTextStyles.labelSmall(
                         color: isDark
                             ? AppColors.textTertiaryDark
                             : AppColors.textTertiaryLight,
@@ -298,7 +293,6 @@ class _CoachPageState extends State<CoachPage> {
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
-              fontWeight: FontWeight.w400,
             ).copyWith(height: 1.6),
           ),
           if (advice.sourceUrl != null)

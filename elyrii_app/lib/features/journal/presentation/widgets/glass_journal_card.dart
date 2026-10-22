@@ -94,7 +94,6 @@ class GlassJournalCard extends StatelessWidget {
                       color: isDark
                           ? AppColors.textTertiaryDark
                           : AppColors.textTertiaryLight,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   Text(
@@ -119,7 +118,6 @@ class GlassJournalCard extends StatelessWidget {
                     color: isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
-                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -135,7 +133,7 @@ class GlassJournalCard extends StatelessWidget {
                     color: isDark
                         ? AppColors.textSecondaryDark
                         : AppColors.textSecondaryLight,
-                  ).copyWith(height: 1.45),
+                  ),
                   maxLines: entry.title.isNotEmpty ? 2 : 3,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -173,12 +171,9 @@ class GlassJournalCard extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             moodInfo.label,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 11,
+            style: AppTextStyles.labelSmall(
               fontWeight: FontWeight.w600,
               color: moodInfo.color,
-              letterSpacing: 0.1,
             ),
           ),
         ],

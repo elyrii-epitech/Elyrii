@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 
 class ConversationSuggestions extends StatelessWidget {
   final ValueChanged<String> onSuggestionTap;
@@ -42,11 +43,7 @@ class ConversationSuggestions extends StatelessWidget {
               shape: const StadiumBorder(),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               minimumSize: const Size(0, 44),
-              textStyle: const TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              textStyle: AppTextStyles.bodyMedium(fontWeight: FontWeight.w500),
             ),
           ),
       ],

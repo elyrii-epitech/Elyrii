@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
 import '../../data/entities/chat_session.dart';
 import '../providers/chatbot_provider.dart';
@@ -51,10 +52,7 @@ class ChatHistorySheet extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Historique',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.5,
+                        style: AppTextStyles.titleLarge(
                           color: isDark
                               ? AppColors.textPrimaryDark
                               : AppColors.textPrimaryLight,
@@ -70,9 +68,7 @@ class ChatHistorySheet extends StatelessWidget {
                         },
                         child: Text(
                           'Nouvelle',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                          style: AppTextStyles.titleSmall(
                             color: AppColors.readableAccent(
                               AppColors.primary,
                               isDark:
@@ -184,9 +180,7 @@ class ChatHistorySheet extends StatelessWidget {
             'Aucune conversation pour l\'instant.\n'
             'Écris ton premier message à Elyrii.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
+            style: AppTextStyles.bodyMedium(
               color: isDark
                   ? AppColors.textSecondaryDark
                   : AppColors.textSecondaryLight,
@@ -257,9 +251,7 @@ class ChatHistorySheet extends StatelessWidget {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                          style: AppTextStyles.titleSmall(
                             color: isDark
                                 ? AppColors.textPrimaryDark
                                 : AppColors.textPrimaryLight,
@@ -268,8 +260,7 @@ class ChatHistorySheet extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           '$subtitle · ${session.messageCount} messages',
-                          style: TextStyle(
-                            fontSize: 12.5,
+                          style: AppTextStyles.bodySmall(
                             color: isDark
                                 ? AppColors.textTertiaryDark
                                 : AppColors.textTertiaryLight,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../domain/models/meditation_exercise.dart';
 import '../../domain/models/meditation_exercises.dart';
@@ -46,12 +47,7 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
               Expanded(
                 child: Text(
                   'Toutes les pratiques',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.8,
-                    color: text,
-                  ),
+                  style: AppTextStyles.titleLarge(color: text),
                 ),
               ),
               const SizedBox(width: 8),
@@ -117,8 +113,7 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
       showCheckmark: false,
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      labelStyle: TextStyle(
-        fontSize: 12,
+      labelStyle: AppTextStyles.labelMedium(
         fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
         color: selected
             ? accent

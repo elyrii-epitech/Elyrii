@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 
 /// Bannière d'alerte contextuelle affichée en haut de formulaire d'auth.
 ///
@@ -44,13 +45,11 @@ class AuthErrorBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: TextStyle(
-                  fontSize: 13,
+                style: AppTextStyles.bodyMedium(
                   fontWeight: FontWeight.w500,
                   color: isDark
                       ? AppColors.textPrimaryDark
                       : AppColors.textPrimaryLight,
-                  height: 1.3,
                 ),
               ),
             ),

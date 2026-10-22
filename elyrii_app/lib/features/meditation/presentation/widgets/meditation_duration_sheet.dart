@@ -98,13 +98,13 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
                     brightness: theme.brightness,
                     primaryColor: accent,
                     textTheme: CupertinoTextThemeData(
-                      pickerTextStyle: TextStyle(
-                        fontFamily: 'CupertinoSystemText',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        color: textColor,
-                      ),
+                      pickerTextStyle:
+                          AppTextStyles.titleMedium(
+                            fontWeight: FontWeight.w400,
+                            color: textColor,
+                          ).copyWith(
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
                     ),
                   ),
                   child: Localizations.override(

@@ -142,9 +142,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                         ),
                         child: Text(
                           details.exceptionAsString(),
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
+                          style: AppTextStyles.code(
                             color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),

@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../../glass/elyrii_glass_surface.dart';
+import '../../theme/app_text_styles.dart';
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Shows an iOS 26 style dialog with liquid glass effect
@@ -106,9 +107,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
                                 namesRoute: true,
                                 child: Text(
                                   title!,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
+                                  style: AppTextStyles.titleMedium(
                                     color: isDark ? Colors.white : Colors.black,
                                   ),
                                   textAlign: TextAlign.center,
@@ -117,8 +116,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
                               const SizedBox(height: 8),
                             ],
                             DefaultTextStyle(
-                              style: TextStyle(
-                                fontSize: 13,
+                              style: AppTextStyles.bodyMedium(
                                 color: isDark
                                     ? Colors.white.withValues(alpha: 0.7)
                                     : Colors.black.withValues(alpha: 0.6),
@@ -215,8 +213,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Text(
           action.label,
-          style: TextStyle(
-            fontSize: 17,
+          style: AppTextStyles.labelLarge(
             fontWeight: action.isDefault ? FontWeight.w600 : FontWeight.w400,
             color: textColor,
           ),

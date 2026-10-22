@@ -380,8 +380,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                       hint: 'Titre (optionnel)',
                       isDark: isDark,
                       maxLines: 1,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
+                      style: AppTextStyles.titleLarge(),
                     )
                     .animateRespectingMotion(context)
                     .fadeIn(
@@ -403,7 +402,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                       isDark: isDark,
                       maxLines: null,
                       minLines: 12,
-                      fontSize: 16,
+                      style: AppTextStyles.bodyLarge(),
                     )
                     .animateRespectingMotion(context)
                     .fadeIn(

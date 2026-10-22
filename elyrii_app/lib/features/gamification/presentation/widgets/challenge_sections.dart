@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../providers/gamification_provider.dart';
 import 'ai_proposal_card.dart';
 import 'challenge_card.dart';
@@ -141,7 +142,7 @@ class ChallengeEmptyCard extends StatelessWidget {
         Text(
           title,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: AppTextStyles.titleSmall(),
         ),
         const SizedBox(height: 6),
         Text(subtitle, textAlign: TextAlign.center),
@@ -158,8 +159,7 @@ class _SectionTitle extends StatelessWidget {
     padding: const EdgeInsets.only(top: 24, bottom: 10),
     child: Text(
       title,
-      style: TextStyle(
-        fontSize: 13,
+      style: AppTextStyles.labelMedium(
         fontWeight: FontWeight.w700,
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.textSecondaryDark

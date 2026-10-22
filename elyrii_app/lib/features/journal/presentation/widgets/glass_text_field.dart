@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
 
 class GlassTextField extends StatelessWidget {
@@ -10,8 +11,7 @@ class GlassTextField extends StatelessWidget {
   final bool isDark;
   final int? maxLines;
   final int? minLines;
-  final double fontSize;
-  final FontWeight fontWeight;
+  final TextStyle? style;
 
   const GlassTextField({
     super.key,
@@ -20,12 +20,12 @@ class GlassTextField extends StatelessWidget {
     required this.isDark,
     this.maxLines,
     this.minLines,
-    this.fontSize = 16,
-    this.fontWeight = FontWeight.w400,
+    this.style,
   });
 
   @override
   Widget build(BuildContext context) {
+    final baseStyle = style ?? AppTextStyles.bodyLarge();
     return ElyriiGlassSurface(
       role: GlassRole.floatingControl,
       borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -33,22 +33,18 @@ class GlassTextField extends StatelessWidget {
         controller: controller,
         maxLines: maxLines,
         minLines: minLines,
-        style: TextStyle(
+        style: baseStyle.copyWith(
           color: isDark
               ? AppColors.textPrimaryDark
               : AppColors.textPrimaryLight,
-          fontSize: fontSize,
-          fontWeight: fontWeight,
-          height: 1.5,
         ),
         decoration: InputDecoration(
           labelText: hint,
           hintText: hint,
-          hintStyle: TextStyle(
+          hintStyle: baseStyle.copyWith(
             color: isDark
                 ? AppColors.textTertiaryDark
                 : AppColors.textTertiaryLight,
-            fontSize: fontSize,
             fontWeight: FontWeight.w300,
           ),
           border: InputBorder.none,

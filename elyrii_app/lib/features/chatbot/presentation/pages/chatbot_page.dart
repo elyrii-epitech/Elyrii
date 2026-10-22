@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../providers/chatbot_provider.dart';
@@ -178,9 +179,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
                           ),
                           child: Text(
                             error,
-                            style: TextStyle(
+                            style: AppTextStyles.bodySmall(
                               color: Theme.of(context).colorScheme.error,
-                              fontSize: 12,
                             ),
                           ),
                         ),
@@ -258,10 +258,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   Text(
                     'Un moment pour toi.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 26,
-                      height: 1.2,
-                      letterSpacing: -0.8,
+                    style: AppTextStyles.headlineSmall(
                       fontWeight: FontWeight.w600,
                       color: isDark
                           ? AppColors.textPrimaryDark
@@ -272,9 +269,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   Text(
                     'Qu’as-tu en tête aujourd’hui ?',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      height: 1.4,
+                    style: AppTextStyles.bodyLarge(
                       color: isDark
                           ? AppColors.textSecondaryDark
                           : AppColors.textSecondaryLight,
@@ -287,9 +282,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     Text(
                       'Un soutien au quotidien, pas un suivi médical.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.4,
+                      style: AppTextStyles.bodyMedium(
                         fontWeight: FontWeight.w500,
                         color: isDark
                             ? AppColors.textTertiaryDark
@@ -423,8 +416,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
       padding: const EdgeInsets.symmetric(vertical: 20),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 12,
+        style: AppTextStyles.bodySmall(
           color: isDark
               ? AppColors.textTertiaryDark
               : AppColors.textSecondaryLight,
@@ -485,22 +477,15 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     cursorColor: isDark
                         ? AppColors.primaryDark
                         : AppColors.primary,
-                    style: TextStyle(
-                      fontSize: 17,
-                      height: 1.4,
-                      letterSpacing: 0,
-                      color: foreground,
-                    ),
+                    style: AppTextStyles.bodyLarge(color: foreground),
                     decoration: InputDecoration(
                       labelText: 'Message à l’assistant IA',
                       hintText: 'Message à Elyrii',
                       hintMaxLines: 1,
-                      hintStyle: TextStyle(
+                      hintStyle: AppTextStyles.bodyLarge(
                         color: isDark
                             ? const Color(0xFFAAA9AF)
                             : const Color(0xFF77767D),
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0,
                       ),
                       // Override all form defaults: the pill is the only
                       // surface and border, including while focused.

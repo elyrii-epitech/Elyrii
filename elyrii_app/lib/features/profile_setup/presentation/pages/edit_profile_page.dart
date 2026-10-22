@@ -284,10 +284,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 13,
+        style: AppTextStyles.labelMedium(
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
           color: isDark
               ? AppColors.textSecondaryDark
               : AppColors.textSecondaryLight,
@@ -410,8 +408,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Text(
       text,
       style: AppTextStyles.bodyMedium(
+        fontWeight: FontWeight.w600,
         color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-      ).copyWith(fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

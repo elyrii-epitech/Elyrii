@@ -5,6 +5,7 @@ import '../../../../core/config/mascot_animations.dart';
 import '../providers/chatbot_provider.dart' show ChatbotProvider;
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
@@ -216,11 +217,9 @@ class _MascotWidgetState extends State<MascotWidget> {
                 child: Text(
                   isBotThinking ? 'Elyrii réfléchit…' : 'Elyrii t\'écoute…',
                   key: ValueKey<bool>(isBotThinking),
-                  style: TextStyle(
+                  style: AppTextStyles.labelMedium(
                     color: Colors.white.withValues(alpha: 0.92),
-                    fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: 0.2,
                   ),
                 ),
               ),
@@ -282,26 +281,21 @@ class _MascotWidgetState extends State<MascotWidget> {
         Text(
           'Discuter avec Elyrii',
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: AppTextStyles.headlineSmall(
             color: isDark
                 ? AppColors.textPrimaryDark
                 : AppColors.textPrimaryLight,
-            fontSize: 26,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
           ),
         ),
         const SizedBox(height: 12),
         Text(
           'Je suis là pour t\'écouter\nsans jugement',
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: AppTextStyles.bodyLarge(
             color: isDark
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-            height: 1.5,
           ),
         ),
       ],

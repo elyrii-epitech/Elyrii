@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../dashboard/data/models/dashboard_models.dart';
 
@@ -217,9 +218,7 @@ class _SummaryTile extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
+              style: AppTextStyles.headlineSmall(
                 color: isDark
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimaryLight,
@@ -228,8 +227,7 @@ class _SummaryTile extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTextStyles.bodySmall(
                 fontWeight: FontWeight.w500,
                 color: isDark
                     ? AppColors.textTertiaryDark
@@ -264,10 +262,8 @@ class ReviewSectionHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 13,
+            style: AppTextStyles.labelMedium(
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
               color: isDark
                   ? AppColors.textSecondaryDark
                   : AppColors.textSecondaryLight,
@@ -276,8 +272,7 @@ class ReviewSectionHeader extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: TextStyle(
-              fontSize: 12,
+            style: AppTextStyles.bodySmall(
               color: isDark
                   ? AppColors.textTertiaryDark
                   : AppColors.textTertiaryLight,
@@ -307,7 +302,7 @@ class ReviewTrendChart extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Text(
           'Aucune humeur enregistrée sur cette période.',
-          style: TextStyle(
+          style: AppTextStyles.bodyMedium(
             color: isDark
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,
@@ -343,9 +338,7 @@ class ReviewTrendChart extends StatelessWidget {
                   children: [
                     Text(
                       '${point.count}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.labelMedium(
                         color: isDark
                             ? AppColors.textPrimaryDark
                             : AppColors.textPrimaryLight,
@@ -372,8 +365,7 @@ class ReviewTrendChart extends StatelessWidget {
                       parsedDate != null
                           ? _shortDateLabel(parsedDate)
                           : point.day,
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: AppTextStyles.labelSmall(
                         color: isDark
                             ? AppColors.textTertiaryDark
                             : AppColors.textTertiaryLight,
@@ -477,7 +469,7 @@ class ReviewMoodDistributionList extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Text(
           'Aucune répartition disponible.',
-          style: TextStyle(
+          style: AppTextStyles.bodyMedium(
             color: isDark
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,
@@ -517,9 +509,7 @@ class ReviewMoodDistributionList extends StatelessWidget {
                       children: [
                         Text(
                           _moodLabel(item.moodType),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                          style: AppTextStyles.labelMedium(
                             color: isDark
                                 ? AppColors.textPrimaryDark
                                 : AppColors.textPrimaryLight,
@@ -552,8 +542,7 @@ class ReviewMoodDistributionList extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     '${item.count}',
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: AppTextStyles.labelMedium(
                       fontWeight: FontWeight.w700,
                       color: isDark
                           ? AppColors.textPrimaryDark
@@ -588,7 +577,7 @@ class ReviewActivityTimeline extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Text(
           'Aucune activité à afficher sur cette période.',
-          style: TextStyle(
+          style: AppTextStyles.bodyMedium(
             color: isDark
                 ? AppColors.textSecondaryDark
                 : AppColors.textSecondaryLight,
@@ -618,9 +607,7 @@ class ReviewActivityTimeline extends StatelessWidget {
                       parsedDate != null
                           ? _shortDateLabel(parsedDate)
                           : point.day,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.labelMedium(
                         color: isDark
                             ? AppColors.textTertiaryDark
                             : AppColors.textTertiaryLight,
@@ -633,8 +620,7 @@ class ReviewActivityTimeline extends StatelessWidget {
                       children: [
                         Text(
                           'Humeurs ${point.moodLogs}  Journal ${point.journalEntries}  Total $total',
-                          style: TextStyle(
-                            fontSize: 12,
+                          style: AppTextStyles.bodySmall(
                             color: isDark
                                 ? AppColors.textPrimaryDark
                                 : AppColors.textPrimaryLight,

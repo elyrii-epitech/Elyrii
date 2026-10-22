@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../domain/models/meditation_exercise.dart';
 
@@ -85,18 +86,11 @@ class MeditationPracticeCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          exercise.title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: text,
-          ),
-        ),
+        Text(exercise.title, style: AppTextStyles.titleSmall(color: text)),
         const SizedBox(height: 4),
         Text(
           exercise.subtitle,
-          style: TextStyle(fontSize: 12, height: 1.4, color: secondary),
+          style: AppTextStyles.bodySmall(color: secondary),
         ),
       ],
     );

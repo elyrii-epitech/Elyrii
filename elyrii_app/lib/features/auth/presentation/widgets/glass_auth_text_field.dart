@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_text_styles.dart';
+
 /// Native form semantics connect the visible label, input and validation.
 class GlassAuthTextField extends StatefulWidget {
   const GlassAuthTextField({
@@ -86,11 +88,7 @@ class _GlassAuthTextFieldState extends State<GlassAuthTextField> {
           widget.keyboardType != TextInputType.emailAddress,
       enableSuggestions: !widget.isPassword,
       enableIMEPersonalizedLearning: !widget.isPassword,
-      style: TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 16,
-        color: scheme.onSurface,
-      ),
+      style: AppTextStyles.bodyLarge(color: scheme.onSurface),
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hint.isEmpty ? null : widget.hint,
