@@ -96,11 +96,11 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
       physics: const BouncingScrollPhysics(),
       slivers: [
         SliverPadding(
-          padding: EdgeInsets.fromLTRB(
+          padding: const EdgeInsets.fromLTRB(
             AppDimensions.pageHorizontalPadding,
             AppDimensions.spacing8,
             AppDimensions.pageHorizontalPadding,
-            MediaQuery.paddingOf(context).bottom + AppDimensions.spacing24,
+            0,
           ),
           sliver: SliverList.list(
             children: [

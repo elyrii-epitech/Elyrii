@@ -1,18 +1,22 @@
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';
 import '../theme/app_text_styles.dart';
 
-/// Tabs align their title to the start, detail pages center it.
+/// Tabs open on a large title, detail pages center their title in the bar.
 enum ElyriiTitleLevel { tab, detail }
 
-/// Scrolling page with an iOS-style collapsing title.
+/// Scrolling page under a pinned button bar, laid out like iOS.
 ///
-/// At rest the title sits in the button row. Scrolling slides it away while
-/// the buttons stay pinned; a glass band and a compact title then fade in.
+/// A tab starts with its large title as the first row of content. Scrolling
+/// past it fades in a glass band and the same title, centered in the bar.
+/// A detail page keeps its centered title in the bar from the start. The
+/// frame also owns the bottom inset, which clears the dock on tabs because
+/// the shell reports the dock height as bottom padding.
 class ElyriiPageFrame extends StatefulWidget {
   const ElyriiPageFrame.tab({
     super.key,
@@ -39,7 +43,7 @@ class ElyriiPageFrame extends StatefulWidget {
   final ElyriiTitleLevel level;
   final String title;
 
-  /// Small accent line above the title (the home date).
+  /// Small accent line above the large title (the home date).
   final String? eyebrow;
   final Widget? leading;
   final List<Widget> actions;
@@ -63,36 +67,57 @@ class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
     super.dispose();
   }
 
-  bool _onScroll(ScrollNotification notification) {
-    if (notification.depth == 0 && notification.metrics.axis == Axis.vertical) {
-      _offset.value = notification.metrics.pixels.clamp(0, _collapsedAt);
+  void _track(ScrollMetrics metrics, int depth) {
+    if (depth == 0 && metrics.axis == Axis.vertical) {
+      _offset.value = metrics.pixels.clamp(0, _collapsedAt);
     }
-    return false;
   }
 
   @override
   Widget build(BuildContext context) {
     final isTab = widget.level == ElyriiTitleLevel.tab;
     final extent = ElyriiHeaderBar.extentOf(context);
-    final title = _RestingTitle(
-      title: widget.title,
-      eyebrow: widget.eyebrow,
-      centered: !isTab,
-    );
+    final barTitle = _BarTitle(title: widget.title);
     return SafeArea(
       top: false,
       bottom: false,
       child: Stack(
         children: [
-          NotificationListener<ScrollNotification>(
-            onNotification: _onScroll,
-            child: CustomScrollView(
-              controller: widget.controller,
-              physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: extent)),
-                ...widget.slivers,
-              ],
+          // Content shrinking under a collapsed bar moves the offset without
+          // a scroll notification.
+          NotificationListener<ScrollMetricsNotification>(
+            onNotification: (n) {
+              _track(n.metrics, n.depth);
+              return false;
+            },
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (n) {
+                _track(n.metrics, n.depth);
+                return false;
+              },
+              child: CustomScrollView(
+                controller: widget.controller,
+                physics:
+                    widget.physics ?? const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(child: SizedBox(height: extent)),
+                  if (isTab)
+                    SliverToBoxAdapter(
+                      child: _LargeTitle(
+                        title: widget.title,
+                        eyebrow: widget.eyebrow,
+                      ),
+                    ),
+                  ...widget.slivers,
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height:
+                          MediaQuery.paddingOf(context).bottom +
+                          AppDimensions.spacing24,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Positioned(
@@ -100,44 +125,22 @@ class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
             left: 0,
             right: 0,
             height: extent,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: ValueListenableBuilder<double>(
-                    valueListenable: _offset,
-                    builder: (context, offset, _) =>
-                        _GlassBand(glass: (offset / 12).clamp(0.0, 1.0)),
-                  ),
-                ),
-                if (isTab)
-                  ValueListenableBuilder<double>(
-                    valueListenable: _offset,
-                    builder: (context, offset, _) => _CompactTitle(
-                      title: widget.title,
-                      opacity: ((offset - 28) / 24).clamp(0.0, 1.0),
-                    ),
-                  ),
-                _ButtonRow(
-                  leading: widget.leading,
-                  actions: widget.actions,
-                  centerMiddle: !isTab,
-                  // A centered title already reads as a navigation title, so
-                  // it stays put; a tab title leaves with its content.
-                  middle: isTab
-                      ? ValueListenableBuilder<double>(
-                          valueListenable: _offset,
-                          child: title,
-                          builder: (context, offset, title) => Opacity(
-                            opacity: (1 - offset / 32).clamp(0.0, 1.0),
-                            child: Transform.translate(
-                              offset: Offset(0, -offset),
-                              child: title,
-                            ),
-                          ),
-                        )
-                      : title,
-                ),
-              ],
+            child: _Bar(
+              offset: _offset,
+              leading: widget.leading,
+              actions: widget.actions,
+              middle: isTab
+                  ? ValueListenableBuilder<double>(
+                      valueListenable: _offset,
+                      child: barTitle,
+                      builder: (context, offset, title) {
+                        final opacity = ((offset - 24) / 24).clamp(0.0, 1.0);
+                        return opacity == 0
+                            ? const SizedBox.shrink()
+                            : Opacity(opacity: opacity, child: title);
+                      },
+                    )
+                  : barTitle,
             ),
           ),
         ],
@@ -146,7 +149,8 @@ class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
   }
 }
 
-/// Permanent top bar (chat): floating buttons around a centered title.
+/// Permanent top bar (chat): glass behind floating buttons and a centered
+/// title.
 class ElyriiHeaderBar extends StatelessWidget {
   const ElyriiHeaderBar({
     super.key,
@@ -156,7 +160,10 @@ class ElyriiHeaderBar extends StatelessWidget {
   });
 
   /// Button row height below the status bar, padding included.
-  static const rowExtent = 72.0;
+  static const rowExtent =
+      AppDimensions.spacing12 +
+      AppDimensions.controlSize +
+      AppDimensions.spacing12;
 
   static double extentOf(BuildContext context) =>
       MediaQuery.paddingOf(context).top + rowExtent;
@@ -168,52 +175,69 @@ class ElyriiHeaderBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SizedBox(
     height: extentOf(context),
-    child: Stack(
-      children: [
-        _CompactTitle(title: title, opacity: 1),
-        _ButtonRow(leading: leading, actions: actions, centerMiddle: true),
-      ],
+    child: _Bar(
+      leading: leading,
+      actions: actions,
+      middle: _BarTitle(title: title),
     ),
   );
 }
 
-class _ButtonRow extends StatelessWidget {
-  const _ButtonRow({
+/// The pinned bar: it owns every tap inside its bounds, so content scrolled
+/// underneath never receives them.
+class _Bar extends StatelessWidget {
+  const _Bar({
+    this.offset,
     this.leading,
     required this.actions,
-    required this.centerMiddle,
-    this.middle,
+    required this.middle,
   });
 
+  /// Scroll offset that fades the glass in over the first 12 px. Without
+  /// one, the glass is always on.
+  final ValueListenable<double>? offset;
   final Widget? leading;
   final List<Widget> actions;
-  final bool centerMiddle;
-  final Widget? middle;
+  final Widget middle;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.fromLTRB(
-      AppDimensions.pageHorizontalPadding,
-      MediaQuery.paddingOf(context).top + AppDimensions.spacing12,
-      AppDimensions.pageHorizontalPadding,
-      AppDimensions.spacing12,
-    ),
-    child: SizedBox(
-      height: AppDimensions.controlSize,
-      child: NavigationToolbar(
-        leading: leading,
-        middle: middle,
-        trailing: actions.isEmpty
-            ? null
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: AppDimensions.spacing8,
-                children: actions,
-              ),
-        centerMiddle: centerMiddle,
-        middleSpacing: leading == null ? 0 : AppDimensions.spacing12,
+  Widget build(BuildContext context) => Stack(
+    children: [
+      const Positioned.fill(child: ColoredBox(color: Colors.transparent)),
+      Positioned.fill(
+        child: switch (offset) {
+          final offset? => ValueListenableBuilder<double>(
+            valueListenable: offset,
+            builder: (context, pixels, _) =>
+                _GlassBand(glass: (pixels / 12).clamp(0.0, 1.0)),
+          ),
+          null => const _GlassBand(glass: 1),
+        },
       ),
-    ),
+      Padding(
+        padding: EdgeInsets.fromLTRB(
+          AppDimensions.pageHorizontalPadding,
+          MediaQuery.paddingOf(context).top + AppDimensions.spacing12,
+          AppDimensions.pageHorizontalPadding,
+          AppDimensions.spacing12,
+        ),
+        child: SizedBox(
+          height: AppDimensions.controlSize,
+          child: NavigationToolbar(
+            leading: leading,
+            middle: middle,
+            trailing: actions.isEmpty
+                ? null
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: AppDimensions.spacing8,
+                    children: actions,
+                  ),
+            middleSpacing: AppDimensions.spacing12,
+          ),
+        ),
+      ),
+    ],
   );
 }
 
@@ -227,19 +251,17 @@ class _GlassBand extends StatelessWidget {
     if (glass == 0) return const SizedBox.shrink();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tint = isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight;
-    return IgnorePointer(
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20 * glass, sigmaY: 20 * glass),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: tint.withValues(alpha: 0.62 * glass),
-              border: Border(
-                bottom: BorderSide(
-                  width: 0.5,
-                  color: (isDark ? Colors.white : Colors.black).withValues(
-                    alpha: 0.1 * glass,
-                  ),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20 * glass, sigmaY: 20 * glass),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: tint.withValues(alpha: 0.62 * glass),
+            border: Border(
+              bottom: BorderSide(
+                width: 0.5,
+                color: (isDark ? Colors.white : Colors.black).withValues(
+                  alpha: 0.1 * glass,
                 ),
               ),
             ),
@@ -250,101 +272,68 @@ class _GlassBand extends StatelessWidget {
   }
 }
 
-/// Centered across the whole bar, like an iOS navigation title.
-class _CompactTitle extends StatelessWidget {
-  const _CompactTitle({required this.title, required this.opacity});
-
-  static const _inset = 76.0;
+/// Centered title in the bar. Long titles end with an ellipsis instead of
+/// shrinking, so every bar title keeps one size.
+class _BarTitle extends StatelessWidget {
+  const _BarTitle({required this.title});
 
   final String title;
-  final double opacity;
 
   @override
-  Widget build(BuildContext context) {
-    if (opacity == 0) return const SizedBox.shrink();
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        _inset,
-        MediaQuery.paddingOf(context).top + AppDimensions.spacing12,
-        _inset,
-        AppDimensions.spacing12,
+  Widget build(BuildContext context) => Semantics(
+    header: true,
+    child: MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.5,
+      child: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: AppTextStyles.navTitle(color: context.textPrimary),
       ),
-      child: SizedBox(
-        height: AppDimensions.controlSize,
-        child: Center(
-          child: ExcludeSemantics(
-            child: Opacity(
-              opacity: opacity,
-              child: MediaQuery.withClampedTextScaling(
-                maxScaleFactor: 1.3,
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.navTitle(color: context.textPrimary),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }
 
-/// Title shown in the button row before scrolling. Every tab uses the same
-/// large title; centered detail titles use the navigation title.
-class _RestingTitle extends StatelessWidget {
-  const _RestingTitle({
-    required this.title,
-    this.eyebrow,
-    required this.centered,
-  });
+/// First row of a tab: the large title, which wraps and follows the text
+/// size instead of shrinking to fit beside the buttons.
+class _LargeTitle extends StatelessWidget {
+  const _LargeTitle({required this.title, this.eyebrow});
 
   final String title;
   final String? eyebrow;
-  final bool centered;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = context.textPrimary;
-    final heading = Semantics(
-      header: true,
-      child: Text(
-        title,
-        maxLines: 1,
-        textAlign: centered ? TextAlign.center : TextAlign.start,
-        style: centered
-            ? AppTextStyles.navTitle(color: primary)
-            : AppTextStyles.pageTitle(color: primary),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.pageHorizontalPadding,
+        0,
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing12,
       ),
-    );
-    // The row is 48 px tall: long titles and large text scale down to fit.
-    return IgnorePointer(
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: centered
-            ? Alignment.center
-            : AlignmentDirectional.centerStart,
-        child: eyebrow == null
-            ? heading
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    eyebrow!,
-                    style: AppTextStyles.overline(
-                      color: AppColors.readableAccent(
-                        isDark ? AppColors.primaryDark : AppColors.primary,
-                        isDark: isDark,
-                      ),
-                    ),
-                  ),
-                  heading,
-                ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (eyebrow case final eyebrow?)
+            Text(
+              eyebrow,
+              style: AppTextStyles.overline(
+                color: AppColors.readableAccent(
+                  isDark ? AppColors.primaryDark : AppColors.primary,
+                  isDark: isDark,
+                ),
               ),
+            ),
+          Semantics(
+            header: true,
+            child: Text(
+              title,
+              style: AppTextStyles.pageTitle(color: context.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }

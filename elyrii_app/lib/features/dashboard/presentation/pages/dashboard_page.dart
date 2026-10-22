@@ -215,7 +215,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                 context.read<JournalProvider>(),
                               ),
                       ),
-                      const SizedBox(height: AppDimensions.dockClearance),
                     ],
                   ),
                 ),
@@ -461,9 +460,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 child: Text(
                                   selectedMood.suggestedActionLabel,
                                   style: AppTextStyles.labelMedium(
-                                    color: isDark
-                                        ? Colors.white
-                                        : AppColors.textPrimaryLight,
+                                    color: context.textPrimary,
                                   ),
                                 ),
                               ),

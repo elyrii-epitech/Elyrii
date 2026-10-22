@@ -147,7 +147,6 @@ class _ReviewsPageState extends State<ReviewsPage> {
                             'Journal et humeur sur la même ligne du temps',
                       ),
                       ReviewActivityTimeline(stats: data),
-                      const SizedBox(height: AppDimensions.pageBottomInset),
                     ],
                   ]),
                 ),

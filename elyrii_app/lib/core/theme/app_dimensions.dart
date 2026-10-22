@@ -18,12 +18,6 @@ class AppDimensions {
   /// Horizontal inset of every page.
   static const double pageHorizontalPadding = spacing20;
 
-  /// Bottom inset of tab pages, so the last item scrolls above the dock.
-  static const double dockClearance = 130;
-
-  /// Bottom inset of pushed pages, which have no dock.
-  static const double pageBottomInset = 100;
-
   // ==================== RADII ====================
 
   static const double radius4 = 4;

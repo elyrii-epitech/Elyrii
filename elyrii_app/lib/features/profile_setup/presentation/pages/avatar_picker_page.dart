@@ -273,7 +273,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
                   AppDimensions.pageHorizontalPadding,
                   AppDimensions.spacing32,
                   AppDimensions.pageHorizontalPadding,
-                  AppDimensions.pageBottomInset,
+                  0,
                 ),
                 child: LiquidGlassButton(
                   label: 'Choisir cet avatar',

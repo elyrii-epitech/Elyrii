@@ -226,7 +226,10 @@ void main() {
             matching: find.text('3 gratitudes du soir'),
           )
           .first;
-      await tester.ensureVisible(gratitudeCell);
+      await Scrollable.ensureVisible(
+        tester.element(gratitudeCell),
+        alignment: 0.5,
+      );
       await tester.pump(const Duration(milliseconds: 400));
 
       // La cellule recommandée du groupe (la grille montre aussi ce titre).

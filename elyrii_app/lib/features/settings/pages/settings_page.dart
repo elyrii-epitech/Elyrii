@@ -340,10 +340,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
-          // Espace en bas
-          const SliverToBoxAdapter(
-            child: SizedBox(height: AppDimensions.pageBottomInset),
-          ),
         ],
       ),
     );

@@ -70,11 +70,8 @@ class _CoachPageState extends State<CoachPage> {
             slivers: [
               CupertinoSliverRefreshControl(onRefresh: provider.loadCoachData),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.pageHorizontalPadding,
-                  0,
-                  AppDimensions.pageHorizontalPadding,
-                  AppDimensions.dockClearance,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.pageHorizontalPadding,
                 ),
                 sliver: SliverToBoxAdapter(
                   child: Column(

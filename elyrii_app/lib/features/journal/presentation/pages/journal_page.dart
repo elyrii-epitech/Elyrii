@@ -455,13 +455,6 @@ class _JournalPageState extends State<JournalPage> {
           ),
         ),
       ],
-      SliverToBoxAdapter(
-        child: SizedBox(
-          height:
-              MediaQuery.paddingOf(context).bottom +
-              AppDimensions.dockClearance,
-        ),
-      ),
     ];
   }
 

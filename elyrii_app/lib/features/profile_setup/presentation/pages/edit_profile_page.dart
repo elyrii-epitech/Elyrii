@@ -208,7 +208,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       AppDimensions.pageHorizontalPadding,
                       AppDimensions.spacing24,
                       AppDimensions.pageHorizontalPadding,
-                      AppDimensions.pageBottomInset,
+                      0,
                     ),
                     child: LiquidGlassButton(
                       label: 'Enregistrer',
@@ -448,30 +448,20 @@ class _BioTextField extends StatelessWidget {
         maxLines: 3,
         maxLength: 200,
         textInputAction: TextInputAction.newline,
-        style: AppTextStyles.bodyMedium(
-          color: isDark ? Colors.white : Colors.black,
-        ),
+        style: AppTextStyles.bodyMedium(color: context.textPrimary),
         decoration: InputDecoration(
           // Fond du conteneur = surface ; neutralise le blanc opaque
           // du thème global qui dessine des rectangles hors carte.
           filled: true,
           fillColor: Colors.transparent,
           hintText: 'Raconte ce qui te rend unique...',
-          hintStyle: AppTextStyles.bodyMedium(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.4)
-                : Colors.black.withValues(alpha: 0.4),
-          ),
+          hintStyle: AppTextStyles.bodyMedium(color: context.textTertiary),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.spacing16,
             vertical: AppDimensions.spacing16,
           ),
-          counterStyle: AppTextStyles.bodySmall(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.3)
-                : Colors.black.withValues(alpha: 0.3),
-          ),
+          counterStyle: AppTextStyles.bodySmall(color: context.textTertiary),
         ),
       ),
     );
@@ -523,11 +513,7 @@ class _DropdownField extends StatelessWidget {
                 value: value,
                 hint: Text(
                   hint,
-                  style: AppTextStyles.bodyMedium(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.4)
-                        : Colors.black.withValues(alpha: 0.4),
-                  ),
+                  style: AppTextStyles.bodyMedium(color: context.textTertiary),
                 ),
                 isExpanded: true,
                 items: items.map((item) {
@@ -536,7 +522,7 @@ class _DropdownField extends StatelessWidget {
                     child: Text(
                       profileOptionLabel(item),
                       style: AppTextStyles.bodyMedium(
-                        color: isDark ? Colors.white : Colors.black,
+                        color: context.textPrimary,
                       ),
                     ),
                   );

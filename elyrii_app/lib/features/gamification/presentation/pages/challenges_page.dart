@@ -286,9 +286,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     ],
                   ),
           ),
-          const SliverToBoxAdapter(
-            child: SizedBox(height: AppDimensions.dockClearance),
-          ),
         ],
       ),
     );
@@ -765,7 +762,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               size: 28,
               color: badge.isUnlocked
                   ? AppColors.primary
-                  : AppColors.textTertiaryLight,
+                  : context.textTertiary,
             ),
           ),
           const SizedBox(height: AppDimensions.spacing16),

@@ -79,7 +79,12 @@ void main() {
         final paragraph = tester.renderObject<RenderParagraph>(
           find.text(title),
         );
-        expect(paragraph.didExceedMaxLines, isFalse);
+        expect(paragraph.text.style?.fontSize, 17, reason: 'navTitle');
+        expect(
+          titleRect.height,
+          closeTo(paragraph.size.height, 0.5),
+          reason: 'a long title is truncated, never shrunk',
+        );
         expect(tester.takeException(), isNull);
 
         await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
@@ -94,44 +99,107 @@ void main() {
     }
   }
 
-  testWidgets('les titres d’onglet ont la même taille, boutons ou non', (
+  for (final scale in [1.0, 1.3]) {
+    testWidgets('les grands titres d’onglet ont la même taille, texte $scale', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final button = SizedBox(
+        width: 48,
+        height: 48,
+        child: IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+      );
+      const greeting = 'Bon après-midi, Marie-Claire';
+      final frames = {
+        'Jardin': const ElyriiPageFrame.tab(title: 'Jardin', slivers: []),
+        'Journal': ElyriiPageFrame.tab(
+          title: 'Journal',
+          actions: [button, button],
+          slivers: const [],
+        ),
+        greeting: ElyriiPageFrame.tab(
+          title: greeting,
+          eyebrow: 'JEUDI 22 OCTOBRE',
+          leading: button,
+          actions: [button],
+          slivers: const [],
+        ),
+      };
+      final glyphHeights = <String, double>{};
+      for (final MapEntry(key: title, value: frame) in frames.entries) {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.lightTheme,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+            home: Scaffold(body: frame),
+          ),
+        );
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text(title),
+        );
+        expect(
+          tester.getRect(find.text(title)).height,
+          closeTo(paragraph.size.height, 0.5),
+          reason: '$title is laid out at its real size, not shrunk',
+        );
+        glyphHeights[title] = paragraph.textScaler.scale(
+          paragraph.text.style!.fontSize!,
+        );
+      }
+      expect(
+        glyphHeights.values.toSet(),
+        hasLength(1),
+        reason: '$glyphHeights',
+      );
+      expect(glyphHeights['Jardin'], closeTo(28 * scale, 0.01));
+    });
+  }
+
+  testWidgets('le contenu passé sous la barre ne reçoit pas les touchers', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    final button = SizedBox(
-      width: 48,
-      height: 48,
-      child: IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
-    );
-    final frames = {
-      'Jardin': const ElyriiPageFrame.tab(title: 'Jardin', slivers: []),
-      'Journal': ElyriiPageFrame.tab(
-        title: 'Journal',
-        actions: [button, button],
-        slivers: const [],
-      ),
-      'Bonjour': ElyriiPageFrame.tab(
-        title: 'Bonjour',
-        eyebrow: 'JEUDI 22 OCTOBRE',
-        leading: button,
-        actions: [button],
-        slivers: const [],
-      ),
-    };
-    final heights = <String, double>{};
-    for (final MapEntry(key: title, value: frame) in frames.entries) {
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.lightTheme,
-          home: Scaffold(body: frame),
+    final taps = <int>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: ElyriiPageFrame.detail(
+            title: 'Paramètres',
+            leading: ElyriiBackButton(onPressed: () {}),
+            slivers: [
+              SliverList.list(
+                children: [
+                  for (var i = 0; i < 30; i++)
+                    SizedBox(
+                      height: 60,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => taps.add(i),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
-      );
-      heights[title] = tester.getRect(find.text(title)).height;
-    }
-    expect(heights['Journal'], closeTo(heights['Jardin']!, 0.01));
-    expect(heights['Bonjour'], closeTo(heights['Jardin']!, 0.01));
+      ),
+    );
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+    await tester.tapAt(tester.getCenter(find.text('Paramètres')));
+    expect(taps, isEmpty, reason: 'the bar owns taps on its title');
+    await tester.tapAt(const Offset(195, 400));
+    expect(taps, hasLength(1));
   });
 }
