@@ -185,6 +185,10 @@ void main() {
   testWidgets('six destinations accessibles à 320 px et texte à 150 %', (
     tester,
   ) async {
+    await (FontLoader('Poppins')
+          ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
+          ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf')))
+        .load();
     final semantics = tester.ensureSemantics();
     await _pumpShell(tester, highContrast: true);
     const labels = ['Accueil', 'Jardin', 'Journal', 'Méditer', 'Coach'];
@@ -194,6 +198,24 @@ void main() {
       final target = tester.getSize(tab);
       expect(target.width, greaterThanOrEqualTo(44));
       expect(target.height, greaterThanOrEqualTo(44));
+      final paragraph = tester.renderObject<RenderParagraph>(
+        find.text(labels[i]).last,
+      );
+      for (final box in paragraph.getBoxesForSelection(
+        TextSelection(baseOffset: 0, extentOffset: labels[i].length),
+      )) {
+        expect(box.left, greaterThanOrEqualTo(0), reason: labels[i]);
+        expect(
+          box.right,
+          lessThanOrEqualTo(paragraph.size.width),
+          reason: labels[i],
+        );
+        expect(
+          box.bottom,
+          lessThanOrEqualTo(paragraph.size.height),
+          reason: labels[i],
+        );
+      }
       await tester.tap(tab);
       await tester.pumpAndSettle();
       expect(find.text('Branche $i · 0'), findsOneWidget);
