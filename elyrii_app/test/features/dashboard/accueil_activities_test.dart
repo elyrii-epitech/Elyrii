@@ -140,4 +140,35 @@ void main() {
       expect(store.snapshot.rituals, isEmpty);
     },
   );
+
+  test('le décor absent ou inconnu revient à Arches', () {
+    expect(AccueilActivities.parseDecor(null), MascotDecor.arches);
+    expect(AccueilActivities.parseDecor('volcan'), MascotDecor.arches);
+    expect(AccueilActivities.parseDecor('hills'), MascotDecor.hills);
+  });
+
+  test('la Clairière reste verrouillée avant dix défis terminés', () async {
+    store.onUserChanged(userId: 'alice');
+    await Future<void>.delayed(Duration.zero);
+    expect(store.snapshot.decor, MascotDecor.arches);
+    expect(
+      await store.setDecor(MascotDecor.clearing, completedChallenges: 9),
+      isFalse,
+    );
+    expect(store.snapshot.decor, MascotDecor.arches);
+    expect(
+      await store.setDecor(MascotDecor.clearing, completedChallenges: 10),
+      isTrue,
+    );
+    expect(store.snapshot.decor, MascotDecor.clearing);
+
+    final reloaded = AccueilActivities(cipher: cipher, now: () => now);
+    addTearDown(reloaded.dispose);
+    reloaded.onUserChanged(userId: 'alice');
+    await Future<void>.delayed(Duration.zero);
+    expect(reloaded.snapshot.decor, MascotDecor.clearing);
+    reloaded.onUserChanged(userId: 'bob');
+    await Future<void>.delayed(Duration.zero);
+    expect(reloaded.snapshot.decor, MascotDecor.arches);
+  });
 }

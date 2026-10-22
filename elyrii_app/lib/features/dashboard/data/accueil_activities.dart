@@ -14,6 +14,23 @@ enum AccueilRitual { breathe, gratitude, walk }
 /// Réponse typée au fil ; la première réponse confirmée est conservée.
 enum ThreadReply { ratherGood, notGreat }
 
+/// Le décor de la scène d'Accueil. Il vit dans ce store et non dans le look
+/// de la mascotte : le serveur remplace ce look à chaque chargement et
+/// retire les clés qu'il ne connaît pas.
+enum MascotDecor { arches, hills, waves, clearing }
+
+/// Règles de déblocage des décors, partagées par le dressing et le store.
+abstract final class MascotDecorRules {
+  /// La Clairière s'obtient avec dix défis terminés, les fleurs du Jardin.
+  static const clearingChallenges = 10;
+
+  static int requiredChallenges(MascotDecor decor) =>
+      decor == MascotDecor.clearing ? clearingChallenges : 0;
+
+  static bool isUnlocked(MascotDecor decor, int completedChallenges) =>
+      completedChallenges >= requiredChallenges(decor);
+}
+
 /// Rituels réalisés un jour donné, avec l'heure de chaque réalisation.
 class RitualDay {
   final CivilDay day;
@@ -59,6 +76,7 @@ class AccueilActivitySnapshot {
   final Map<CivilDay, SocialWeek> socialWeeks;
   final Map<String, ThreadAnswer> threadAnswers;
   final Map<CivilDay, MoodType> moodDays;
+  final MascotDecor decor;
   final bool isLoading;
   final bool isWriting;
   final String? error;
@@ -68,6 +86,7 @@ class AccueilActivitySnapshot {
     Map<CivilDay, SocialWeek>? socialWeeks,
     Map<String, ThreadAnswer>? threadAnswers,
     Map<CivilDay, MoodType>? moodDays,
+    this.decor = MascotDecor.arches,
     this.isLoading = false,
     this.isWriting = false,
     this.error,
@@ -77,12 +96,13 @@ class AccueilActivitySnapshot {
        moodDays = Map.unmodifiable(moodDays ?? const {});
 }
 
-/// Faits locaux mutables, copiés puis geler en photographie.
+/// Faits locaux mutables, copiés depuis une photographie puis regelés.
 class _Facts {
   final Map<CivilDay, RitualDay> rituals = {};
   final Map<CivilDay, SocialWeek> socialWeeks = {};
   final Map<String, ThreadAnswer> threadAnswers = {};
   final Map<CivilDay, MoodType> moodDays = {};
+  MascotDecor decor = MascotDecor.arches;
 
   _Facts();
 
@@ -102,20 +122,23 @@ class _Facts {
     }
     threadAnswers.addAll(snapshot.threadAnswers);
     moodDays.addAll(snapshot.moodDays);
+    decor = snapshot.decor;
   }
 
-  AccueilActivitySnapshot snapshot({bool isWriting = false}) =>
+  AccueilActivitySnapshot snapshot({bool isWriting = false, String? error}) =>
       AccueilActivitySnapshot(
         rituals: rituals,
         socialWeeks: socialWeeks,
         threadAnswers: threadAnswers,
         moodDays: moodDays,
+        decor: decor,
         isWriting: isWriting,
+        error: error,
       );
 }
 
-/// Seul propriétaire des nouveaux faits locaux d'Accueil : rituels cochés,
-/// pas sociaux, réponses au fil et humeurs notées sur cet appareil.
+/// Seul propriétaire des faits locaux d'Accueil : rituels cochés, pas
+/// sociaux, réponses au fil, humeurs notées sur cet appareil et décor.
 ///
 /// Le document est chiffré par compte (`accueil-activities:v1`), jamais
 /// synchronisé au serveur, et les jours de plus de 370 jours sont élagués :
@@ -195,7 +218,8 @@ class AccueilActivities extends ChangeNotifier {
         ..rituals.addAll(_parseRituals(document['ritualDays']))
         ..socialWeeks.addAll(_parseSocialWeeks(document['socialWeeks']))
         ..threadAnswers.addAll(_parseThreadAnswers(document['threadAnswers']))
-        ..moodDays.addAll(_parseMoodDays(document['moodDays']));
+        ..moodDays.addAll(_parseMoodDays(document['moodDays']))
+        ..decor = parseDecor(document['decor']);
       _publishIfCurrent(revision, facts.snapshot());
     } catch (_) {
       // Des données corrompues ne deviennent jamais un document vide :
@@ -215,16 +239,24 @@ class AccueilActivities extends ChangeNotifier {
     _notify();
   }
 
+  /// Un décor absent ou inconnu redevient Arches, sans jamais débloquer une
+  /// récompense.
+  @visibleForTesting
+  static MascotDecor parseDecor(dynamic raw) =>
+      MascotDecor.values.where((value) => value.name == raw).firstOrNull ??
+      MascotDecor.arches;
+
   Map<CivilDay, RitualDay> _parseRituals(dynamic raw) {
     final days = <CivilDay, RitualDay>{};
     if (raw is! Map) return days;
     for (final entry in raw.entries) {
       final day = CivilDay.tryParse(entry.key as String? ?? '');
-      if (day == null || entry.value is! Map) continue;
+      final value = entry.value;
+      if (day == null || value is! Map) continue;
       final completedAt = <AccueilRitual, DateTime>{};
-      for (final done in entry.value.entries) {
+      for (final done in value.entries) {
         final ritual = AccueilRitual.values
-            .where((value) => value.name == done.key)
+            .where((ritual) => ritual.name == done.key)
             .firstOrNull;
         final at = DateTime.tryParse(done.value as String? ?? '');
         if (ritual != null && at != null) completedAt[ritual] = at.toUtc();
@@ -239,9 +271,10 @@ class AccueilActivities extends ChangeNotifier {
     if (raw is! Map) return weeks;
     for (final entry in raw.entries) {
       final monday = CivilDay.tryParse(entry.key as String? ?? '');
-      if (monday == null || entry.value is! Map) continue;
+      final value = entry.value;
+      if (monday == null || value is! Map) continue;
       final completedAt = <CivilDay, DateTime>{};
-      final rawDone = entry.value['completedAt'];
+      final rawDone = value['completedAt'];
       if (rawDone is Map) {
         for (final done in rawDone.entries) {
           final day = CivilDay.tryParse(done.key as String? ?? '');
@@ -251,7 +284,7 @@ class AccueilActivities extends ChangeNotifier {
       }
       weeks[monday] = SocialWeek(
         monday: monday,
-        ideaIndex: entry.value['ideaIndex'] as int? ?? 0,
+        ideaIndex: value['ideaIndex'] as int? ?? 0,
         completedAt: completedAt,
       );
     }
@@ -262,11 +295,12 @@ class AccueilActivities extends ChangeNotifier {
     final answers = <String, ThreadAnswer>{};
     if (raw is! Map) return answers;
     for (final entry in raw.entries) {
-      if (entry.value is! Map) continue;
+      final value = entry.value;
+      if (value is! Map) continue;
       final reply = ThreadReply.values
-          .where((value) => value.name == entry.value['reply'])
+          .where((reply) => reply.name == value['reply'])
           .firstOrNull;
-      final at = DateTime.tryParse(entry.value['answeredAt'] as String? ?? '');
+      final at = DateTime.tryParse(value['answeredAt'] as String? ?? '');
       if (reply == null || at == null) continue;
       answers[entry.key as String] = ThreadAnswer(
         entryId: entry.key as String,
@@ -283,7 +317,7 @@ class AccueilActivities extends ChangeNotifier {
     for (final entry in raw.entries) {
       final day = CivilDay.tryParse(entry.key as String? ?? '');
       final mood = MoodType.values
-          .where((value) => value.name == entry.value)
+          .where((mood) => mood.name == entry.value)
           .firstOrNull;
       if (day != null && mood != null) moods[day] = mood;
     }
@@ -326,14 +360,13 @@ class AccueilActivities extends ChangeNotifier {
       reply: reply,
       answeredAt: now().toUtc(),
     );
-    _capThreadAnswers(facts.threadAnswers);
     return _commit(facts);
   }
 
   /// Un pas social au plus par date ; un second clic le même jour garde le
   /// premier horodatage.
   Future<bool> completeSocialStep({required CivilDay day}) {
-    final monday = _mondayOf(day);
+    final monday = mondayOf(day);
     final facts = _Facts.of(_snapshot);
     final week =
         facts.socialWeeks[monday] ??
@@ -351,7 +384,7 @@ class AccueilActivities extends ChangeNotifier {
 
   /// Passe à l'idée sociale suivante de la semaine, sans toucher au compteur.
   Future<bool> nextSocialIdea({required CivilDay day}) {
-    final monday = _mondayOf(day);
+    final monday = mondayOf(day);
     final facts = _Facts.of(_snapshot);
     final week =
         facts.socialWeeks[monday] ??
@@ -364,8 +397,7 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  /// Note l'humeur choisie ce jour-là, du même pas que la sélection de
-  /// l'Accueil. La dernière humeur du jour gagne.
+  /// Note l'humeur confirmée ce jour-là. La dernière humeur du jour gagne.
   Future<bool> recordMood({required CivilDay day, required MoodType mood}) {
     final facts = _Facts.of(_snapshot);
     if (facts.moodDays[day] == mood) return Future.value(true);
@@ -373,7 +405,20 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  CivilDay _mondayOf(CivilDay day) => day.addDays(-(day.weekday - 1));
+  /// Change le décor. Un décor verrouillé est refusé sans écriture ; le
+  /// dressing n'appelle cette commande qu'après l'enregistrement du look.
+  Future<bool> setDecor(MascotDecor decor, {required int completedChallenges}) {
+    if (!MascotDecorRules.isUnlocked(decor, completedChallenges)) {
+      return Future.value(false);
+    }
+    final facts = _Facts.of(_snapshot);
+    if (facts.decor == decor) return Future.value(true);
+    facts.decor = decor;
+    return _commit(facts);
+  }
+
+  /// Le lundi de la semaine ISO de [day], clé des pas sociaux.
+  static CivilDay mondayOf(CivilDay day) => day.addDays(-(day.weekday - 1));
 
   void _capThreadAnswers(Map<String, ThreadAnswer> answers) {
     if (answers.length <= _maxThreadAnswers) return;
@@ -416,10 +461,11 @@ class AccueilActivities extends ChangeNotifier {
         for (final entry in facts.moodDays.entries)
           entry.key.isoDate: entry.value.name,
       },
+      'decor': facts.decor.name,
     };
   }
 
-  /// Élague les faits trop vieux : 370 jours de rétention, pas plus.
+  /// Élague les faits trop vieux : 370 jours de rétention, 50 réponses.
   void _prune(_Facts facts) {
     final cutoff = CivilDay.fromLocal(now()).addDays(-_retentionDays);
     facts.rituals.removeWhere((day, _) => day.isBefore(cutoff));
@@ -432,8 +478,9 @@ class AccueilActivities extends ChangeNotifier {
     if (_disposed) return false;
     final revision = _revision;
     final scope = _scope;
+    final key = _key;
     _prune(facts);
-    final confirmed = _snapshot;
+    final confirmed = _Facts.of(_snapshot);
     _snapshot = facts.snapshot(isWriting: true);
     _notify();
     final write = _writes.then((_) async {
@@ -443,8 +490,9 @@ class AccueilActivities extends ChangeNotifier {
         purpose: _purpose,
       );
       final prefs = await _prefs;
-      final saved = await prefs.setString(_key, encrypted);
-      if (!saved) throw StateError('Accueil activities write refused');
+      if (!await prefs.setString(key, encrypted)) {
+        throw StateError('Accueil activities write refused');
+      }
     });
     _writes = write.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     try {
@@ -453,11 +501,7 @@ class AccueilActivities extends ChangeNotifier {
       // Le document confirmé survit à l'échec ; l'erreur est visible et la
       // commande peut être rejouée.
       if (!_disposed && revision == _revision) {
-        _snapshot = AccueilActivitySnapshot(
-          rituals: confirmed.rituals,
-          socialWeeks: confirmed.socialWeeks,
-          threadAnswers: confirmed.threadAnswers,
-          moodDays: confirmed.moodDays,
+        _snapshot = confirmed.snapshot(
           error: 'Ton changement n’a pas été enregistré. Réessaie.',
         );
         _notify();
