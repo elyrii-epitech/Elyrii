@@ -137,6 +137,9 @@ class MascotModelController extends Flutter3DController {
     );
   }
 
+  /// The model stays hidden (`reveal="manual"`) until the saved look is on it:
+  /// colors and finish painted, and the requested accessory variant applied.
+  /// Revealing on load showed the base skin for about a second first.
   void setAppearance(MascotAppearance appearance) {
     _sendJavascript(
       '(function(){'
@@ -144,17 +147,30 @@ class MascotModelController extends Flutter3DController {
       'if(!m)return [];'
       'var appearance=${jsonEncode(appearance.toJson())};'
       'm.elyriiAppearance=appearance;'
+      'm.elyriiReveal=function(){'
+      'if(m.elyriiRevealed)return;'
+      'm.elyriiRevealed=true;'
+      'if(m.elyriiRevealTimer){clearTimeout(m.elyriiRevealTimer);m.elyriiRevealTimer=null;}'
+      'm.dismissPoster();'
+      '};'
       'm.elyriiApplyAppearance=function(){'
       'var appearance=m.elyriiAppearance;'
       'var revision=m.elyriiAppearanceRevision=(m.elyriiAppearanceRevision||0)+1;'
       'm.updateComplete.then(async function(){'
       'if(m.elyriiAppearanceRevision!==revision)return;'
       '$mascotMaterialScript'
-      '}).catch(function(error){console.error("Elyrii appearance",error);});'
+      'if(m.elyriiAppearanceRevision!==revision)return;'
+      'if((m.variantName||null)===(m.elyriiVariantShown||null))m.elyriiReveal();'
+      '}).catch(function(error){console.error("Elyrii appearance",error);m.elyriiReveal();});'
       '};'
       'if(!m.elyriiVariantListener){'
       'm.elyriiVariantListener=true;'
-      'm.addEventListener("variant-applied",function(){m.elyriiApplyAppearance();});'
+      'm.addEventListener("variant-applied",function(){'
+      'm.elyriiVariantShown=m.variantName||null;m.elyriiApplyAppearance();'
+      '});'
+      '}'
+      'if(!m.elyriiRevealed&&!m.elyriiRevealTimer){'
+      'm.elyriiRevealTimer=setTimeout(m.elyriiReveal,2500);'
       '}'
       'if(!m.elyriiAppearanceTimer){'
       'm.elyriiAppearanceTimer=setTimeout(function(){'
@@ -295,7 +311,12 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
       src: kIsWeb && widget.src.startsWith('assets/')
           ? 'assets/${widget.src}'
           : widget.src,
-      variantName: widget.accessoryVariant,
+      // Manual reveal keeps the base skin hidden until the saved look is on
+      // the model; model-viewer only preloads a manual model when eager.
+      // The variant is set after load, once the reveal listener exists, so
+      // its `variant-applied` event is never missed.
+      reveal: Reveal.manual,
+      loading: Loading.eager,
       relatedJs: _utils.injectedJS(_id, 'flutter-3d-controller'),
       cameraControls: widget.interactive,
       disablePan: true,
@@ -323,8 +344,8 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
         if (!mounted) return;
         widget.controller.onModelLoaded.value = true;
         widget.controller.setStudioRenderQuality(widget.interactive);
-        widget.controller.setAccessoryVariant(widget.accessoryVariant);
         widget.controller.setAppearance(widget.appearance);
+        widget.controller.setAccessoryVariant(widget.accessoryVariant);
         widget.onLoad(address);
       },
       onError: (error) {
