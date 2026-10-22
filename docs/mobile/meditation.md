@@ -71,4 +71,4 @@ Exécution du 3 octobre 2026 : `bun test modules/meditation/meditation.validatio
 
 Exécution Flutter du 3 octobre 2026 : `flutter test --no-pub` — **163 tests réussis, 0 échec**. Les régressions couvrent notamment les roues, leur annulation et leur confirmation, les catégories, les annonces accessibles sans doublons, le démarrage, la pause, les réponses tardives du serveur, les deux thèmes, le contraste élevé, les petits écrans et le texte agrandi. Le bouton de lancement est vérifié au-dessus du dock à 320 × 568 et à 390 × 844 avec texte à 150 %.
 
-Le guidage écrit ne dispose pas d’un accompagnement audio. Les tests de widgets utilisent le PNG de secours de la mascotte ; le rendu 3D et le verre sur téléphone nécessitent une vérification native.
+Le guidage écrit ne dispose pas d’un accompagnement audio. Les tests de widgets affichent le placeholder chaud de la mascotte à la place du modèle 3D ; le rendu 3D et le verre sur téléphone nécessitent une vérification native.

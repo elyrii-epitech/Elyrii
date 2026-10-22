@@ -10,7 +10,6 @@ import '../services/mascot_motion_controller.dart';
 import 'mascot_model_surface.dart';
 import '../config/mascot_3d_config.dart';
 import '../config/mascot_animations.dart';
-import '../theme/app_colors.dart';
 import 'mascot_warm_placeholder.dart';
 import '../../features/mascot/data/models/mascot_appearance.dart';
 
@@ -441,20 +440,12 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
     );
   }
 
-  /// Fallback sur le PNG statique si le modèle 3D ne charge pas.
+  /// The 3D model is the only mascot: when it cannot load, the warm
+  /// placeholder stays, still, instead of an older 2D drawing.
   Widget _buildFallback() {
-    return Image.asset(
-      'assets/mascotte.png',
-      width: widget.width,
-      height: widget.height,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return Icon(
-          Icons.pets_rounded,
-          size: widget.width * 0.5,
-          color: AppColors.primary.withValues(alpha: 0.5),
-        );
-      },
+    return TickerMode(
+      enabled: false,
+      child: MascotWarmPlaceholder(width: widget.width, height: widget.height),
     );
   }
 }

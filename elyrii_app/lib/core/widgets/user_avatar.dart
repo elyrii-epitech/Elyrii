@@ -55,7 +55,7 @@ class UserAvatar extends StatelessWidget {
           child: ClipOval(
             child: useMascot
                 ? Image.asset(
-                    'assets/mascotte.png',
+                    'assets/splash_icon.png',
                     fit: BoxFit.cover,
                     cacheWidth: decodeSize,
                     cacheHeight: decodeSize,
@@ -87,7 +87,7 @@ class UserAvatar extends StatelessWidget {
                     },
                     errorBuilder: (context, error, stackTrace) {
                       return Image.asset(
-                        'assets/mascotte.png',
+                        'assets/splash_icon.png',
                         fit: BoxFit.cover,
                       );
                     },

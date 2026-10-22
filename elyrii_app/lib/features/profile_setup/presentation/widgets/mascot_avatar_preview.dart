@@ -8,9 +8,7 @@ import '../../../../core/widgets/mascot_with_accessories.dart';
 
 /// Aperçu fidèle de la mascotte 3D (thème actif + accessoires équipés)
 /// avec son ombre de contact au sol.
-///
-/// Remplace l'ancien aperçu PNG 2D (`assets/mascotte.png`) aux couleurs
-/// décalées dans l'onboarding et le sélecteur d'avatar : le rendu WebGL
+/// Utilisé dans l'onboarding et le sélecteur d'avatar : le rendu WebGL
 /// respire via son placeholder chaud puis fond en douceur (géré par le
 /// viewer core), sans barre de progression ni pop-in.
 class MascotAvatarPreview extends StatelessWidget {

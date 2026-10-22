@@ -61,8 +61,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/splash_icon.png
-    - assets/mascotte.png
-    - assets/mascotte_eyes_closed.png
     - assets/optimized/mascot.glb
     - assets/optimized/mascot_wardrobe.glb
     - assets/accessory_portraits/

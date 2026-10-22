@@ -463,7 +463,7 @@ class _PresetAvatarTile extends StatelessWidget {
             ),
             child: ClipOval(
               child: option.isMascot
-                  ? Image.asset('assets/mascotte.png', fit: BoxFit.cover)
+                  ? Image.asset('assets/splash_icon.png', fit: BoxFit.cover)
                   : Image.network(
                       option.url!,
                       fit: BoxFit.cover,
