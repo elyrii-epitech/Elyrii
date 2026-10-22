@@ -105,7 +105,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
-          // Section Apparence
           SliverToBoxAdapter(
             child: _buildSection(
               context,
@@ -131,7 +130,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-          // Section Notifications
           SliverToBoxAdapter(
             child: _buildSection(
               context,
@@ -170,7 +168,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-          // Section Compte
           SliverToBoxAdapter(
             child: _buildSection(
               context,
@@ -256,7 +253,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-          // Section À propos
           SliverToBoxAdapter(
             child: _buildSection(
               context,
@@ -304,7 +300,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-          // Section Déconnexion
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(AppDimensions.spacing20),

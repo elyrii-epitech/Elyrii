@@ -234,7 +234,6 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // The pinned bar has one row: large text keeps only the button.
               if (MediaQuery.textScalerOf(context).scale(13) <= 20) ...[
                 Text(
                   'Commencer',

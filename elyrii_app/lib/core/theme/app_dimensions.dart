@@ -3,8 +3,6 @@
 class AppDimensions {
   AppDimensions._();
 
-  // ==================== SPACING (4 pt grid) ====================
-
   static const double spacing2 = 2;
   static const double spacing4 = 4;
   static const double spacing8 = 8;
@@ -15,7 +13,6 @@ class AppDimensions {
   static const double spacing32 = 32;
   static const double spacing48 = 48;
 
-  /// Horizontal inset of every page.
   static const double pageHorizontalPadding = spacing20;
 
   // ==================== RADII ====================
@@ -29,10 +26,7 @@ class AppDimensions {
   /// Sheets and modal surfaces.
   static const double radius28 = 28;
 
-  /// Capsules and circles.
   static const double radiusPill = 999;
-
-  // ==================== SIZES ====================
 
   static const double iconSm = 20;
   static const double iconMd = 24;
@@ -43,14 +37,10 @@ class AppDimensions {
   static const double buttonHeight = 48;
   static const double maxContentWidth = 600;
 
-  // ==================== ELEVATION ====================
-
   static const double elevationSm = 2;
   static const double elevationMd = 4;
   static const double elevationLg = 8;
   static const double elevationXl = 12;
-
-  // ==================== BORDERS ====================
 
   static const double borderWidthThin = 1;
   static const double borderWidthMedium = 2;

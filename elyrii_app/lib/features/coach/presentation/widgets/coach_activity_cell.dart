@@ -14,8 +14,6 @@ class CoachActivityCell extends StatefulWidget {
   /// groupé pour aligner ses séparateurs.
   static const double iconBoxSize = 40;
 
-  /// Retrait des séparateurs du conteneur groupé : padding de cellule,
-  /// boîte d'icône puis écart jusqu'au texte.
   static const double dividerInset =
       AppDimensions.spacing16 + iconBoxSize + AppDimensions.spacing12;
 

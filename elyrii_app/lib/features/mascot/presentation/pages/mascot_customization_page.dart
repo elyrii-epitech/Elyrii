@@ -383,7 +383,6 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
             backgroundColor: dark
                 ? AppColors.scaffoldDark
                 : AppColors.scaffoldLight,
-            // The preview stays fixed above the editor, so the title does too.
             body: ElyriiFixedHeaderFrame(
               header: ElyriiPageHeader(
                 title: 'Atelier Elyrii',

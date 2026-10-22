@@ -56,8 +56,6 @@ class ElyriiPageFrame extends StatefulWidget {
 }
 
 class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
-  /// Every effect saturates by this offset, so deeper scrolling rebuilds
-  /// nothing.
   static const _collapsedAt = 56.0;
   final _offset = ValueNotifier<double>(0);
 

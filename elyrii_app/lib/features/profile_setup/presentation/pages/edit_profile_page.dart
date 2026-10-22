@@ -192,16 +192,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
               ]
             : [
-                // Avatar cliquable
                 SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
 
-                // Identite
                 SliverToBoxAdapter(child: _buildIdentitySection()),
 
-                // Bien-etre
                 SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
 
-                // Save
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(

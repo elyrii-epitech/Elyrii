@@ -21,8 +21,6 @@ class AppTextStyles {
     letterSpacing: letterSpacing,
   );
 
-  // ==================== DISPLAY & HEADLINE ====================
-
   /// The "elyrii" logotype on the launch screen: light and widely spaced.
   static TextStyle wordmark({Color? color}) =>
       _role(38, FontWeight.w500, 1.2, 3, color);
@@ -38,8 +36,6 @@ class AppTextStyles {
   /// Stat numbers, hero values and large emoji.
   static TextStyle headlineSmall({Color? color}) =>
       _role(24, FontWeight.w700, 1.25, -0.3, color);
-
-  // ==================== TITLES ====================
 
   /// Sheet and dialog titles.
   static TextStyle titleLarge({Color? color}) =>
@@ -57,8 +53,6 @@ class AppTextStyles {
   static TextStyle titleSmall({Color? color}) =>
       _role(15, FontWeight.w600, 1.4, 0, color);
 
-  // ==================== BODY ====================
-
   /// Reading text, inputs and chat messages.
   static TextStyle bodyLarge({Color? color}) =>
       _role(16, FontWeight.w400, 1.5, 0.1, color);
@@ -70,8 +64,6 @@ class AppTextStyles {
   /// thin to keep secondary greys readable on glass.
   static TextStyle bodySmall({Color? color}) =>
       _role(12, FontWeight.w500, 1.35, 0.2, color);
-
-  // ==================== LABELS ====================
 
   /// Button labels, and the default action of a dialog.
   static TextStyle labelLarge({Color? color}) =>

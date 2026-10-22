@@ -51,7 +51,6 @@ Future<AppDependencies> initializeApplication() async {
   final theme = ThemeProvider();
   AppDependencies? dependencies;
   try {
-    // Independent: the native splash stays up until all of them finish.
     await Future.wait([
       initializeDateFormatting('fr'),
       initializeDateFormatting('en'),
@@ -181,9 +180,6 @@ class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
     return LiquidGlassWidgets.wrap(
       brightnessResolver: Theme.maybeBrightnessOf,
       adaptiveQuality: true,
-      // Fast devices get promoted to premium glass (an offscreen layer and
-      // multi-pass shaders per surface); the 16 ms budget never demotes it
-      // on 120 Hz screens.
       adaptiveConfig: const GlassAdaptiveScopeConfig(
         maxQuality: GlassQuality.standard,
       ),

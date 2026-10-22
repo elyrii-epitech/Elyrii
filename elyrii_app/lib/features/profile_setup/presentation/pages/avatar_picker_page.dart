@@ -221,13 +221,10 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
           title: 'Mon avatar',
           leading: ElyriiBackButton(onPressed: _cancel),
           slivers: [
-            // Aperçu fidèle (3D avec ombre de contact ou photo)
             SliverToBoxAdapter(child: _buildPreview(isDark)),
 
-            // Import depuis galerie
             SliverToBoxAdapter(child: _buildImportCard()),
 
-            // Presets
             SliverToBoxAdapter(child: _buildPresetsHeader()),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(
@@ -266,7 +263,6 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
               ),
             ),
 
-            // Bouton confirmer
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
