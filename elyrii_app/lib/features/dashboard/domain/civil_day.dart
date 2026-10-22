@@ -6,7 +6,18 @@
 /// heure locale : un changement d'heure ne doit pas décaler un jour.
 class CivilDay implements Comparable<CivilDay> {
   static const List<int> _monthLengths = [
-    31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+    31,
+    28,
+    31,
+    30,
+    31,
+    30,
+    31,
+    31,
+    30,
+    31,
+    30,
+    31,
   ];
 
   static int _daysInMonth(int year, int month) {
@@ -16,6 +27,16 @@ class CivilDay implements Comparable<CivilDay> {
 
   static bool _isLeapYear(int year) =>
       (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
+
+  /// Comme [parse] mais renvoie null au lieu de lever, pour l'analyse
+  /// tolérante des documents locaux.
+  static CivilDay? tryParse(String isoDate) {
+    try {
+      return CivilDay.parse(isoDate);
+    } on FormatException {
+      return null;
+    }
+  }
 
   /// Analyse une date `YYYY-MM-DD` telle que renvoyée par le serveur, sans
   /// la convertir en instant : les composantes sont conservées telles
@@ -99,7 +120,8 @@ class CivilMonth {
     }
   }
 
-  factory CivilMonth.containing(CivilDay day) => CivilMonth(day.year, day.month);
+  factory CivilMonth.containing(CivilDay day) =>
+      CivilMonth(day.year, day.month);
 
   final int year;
   final int month;

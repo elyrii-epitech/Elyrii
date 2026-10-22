@@ -26,7 +26,10 @@ import 'features/settings/providers/settings_provider.dart';
 import 'features/journal/presentation/providers/journal_provider.dart';
 import 'features/chatbot/presentation/providers/chatbot_provider.dart';
 import 'features/coach/presentation/providers/coach_provider.dart';
-import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+
+import 'package:elyrii_app/features/dashboard/data/accueil_activities.dart';
+import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
+
 import 'features/gamification/presentation/providers/gamification_provider.dart';
 import 'features/mascot/presentation/providers/mascot_provider.dart';
 
@@ -201,6 +204,9 @@ class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
           ChangeNotifierProvider<CoachProvider>.value(value: services.coach),
           ChangeNotifierProvider<DashboardProvider>.value(
             value: services.dashboard,
+          ),
+          ChangeNotifierProvider<AccueilActivities>.value(
+            value: services.accueilActivities,
           ),
           ChangeNotifierProvider<GamificationProvider>.value(
             value: services.gamification,

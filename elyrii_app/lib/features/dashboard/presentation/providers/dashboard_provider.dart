@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../data/accueil_activities.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../data/models/dashboard_models.dart';
 import '../../domain/civil_day.dart';
@@ -16,6 +17,7 @@ export '../mood_presentation.dart';
 /// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
   final DashboardRepository _repository;
+  AccueilActivities? _activities;
   final bool Function()? _isDemoSession;
   int _sessionRevision = 0;
   bool _disposed = false;
@@ -127,6 +129,7 @@ class DashboardProvider extends ChangeNotifier {
   DashboardProvider({
     DashboardRepository? repository,
     ApiClient? apiClient,
+    AccueilActivities? activities,
     this._isDemoSession,
     DateTime Function()? now,
   }) : assert(
@@ -135,6 +138,7 @@ class DashboardProvider extends ChangeNotifier {
        ),
        _repository = repository ?? DashboardRepository(client: apiClient!),
        _now = now ?? DateTime.now {
+    _activities = activities;
     _initializeMascotMessage();
   }
 
@@ -200,12 +204,16 @@ class DashboardProvider extends ChangeNotifier {
     _error = null;
     _isSavingMood = !_isDemo;
     _notify();
-    if (_isDemo) return true;
+    if (_isDemo) {
+      _recordMoodLocally(mood);
+      return true;
+    }
     try {
       await _repository.logMood(mood.name);
       if (session != _sessionRevision || _disposed) return false;
       _isSavingMood = false;
       _notify();
+      _recordMoodLocally(mood);
       // A refresh failure does not undo an already acknowledged mutation.
       await loadDashboardData();
       return true;
@@ -222,6 +230,16 @@ class DashboardProvider extends ChangeNotifier {
         _notify();
       }
     }
+  }
+
+  /// L'humeur du jour confirmée est aussi un fait local du calendrier ; un
+  /// échec d'écriture locale n'annule pas l'humeur enregistrée.
+  void _recordMoodLocally(MoodType mood) {
+    final activities = _activities;
+    if (activities == null) return;
+    unawaited(
+      activities.recordMood(day: CivilDay.fromLocal(_now()), mood: mood),
+    );
   }
 
   String getGreeting() {

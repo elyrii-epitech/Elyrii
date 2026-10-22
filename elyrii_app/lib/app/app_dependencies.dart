@@ -22,6 +22,7 @@ import '../features/journal/data/repositories/journal_store.dart';
 import '../features/journal/presentation/providers/journal_provider.dart';
 import '../features/settings/providers/settings_provider.dart';
 import '../features/coach/presentation/providers/coach_provider.dart';
+import '../features/dashboard/data/accueil_activities.dart';
 import '../features/dashboard/presentation/providers/dashboard_provider.dart';
 import '../features/gamification/presentation/providers/gamification_provider.dart';
 import '../features/mascot/presentation/providers/mascot_provider.dart';
@@ -41,6 +42,7 @@ class AppDependencies {
   late final JournalProvider journal;
   late final CoachProvider coach;
   late final ChatbotProvider chat;
+  late final AccueilActivities accueilActivities;
   late final DashboardProvider dashboard;
   late final GamificationProvider gamification;
   late final MascotProvider mascot;
@@ -56,6 +58,7 @@ class AppDependencies {
     required this.theme,
   }) {
     cipher = ContentCipher(storage);
+    accueilActivities = AccueilActivities(cipher: cipher);
     journalStore = JournalStore(cipher: cipher);
     history = ChatHistoryService(cipher: cipher);
     auth = AuthProvider(client: api, storage: storage);
@@ -71,6 +74,7 @@ class AppDependencies {
     );
     dashboard = DashboardProvider(
       apiClient: api,
+      activities: accueilActivities,
       isDemoSession: () => auth.isDemoSession,
     );
     gamification = GamificationProvider(
@@ -137,8 +141,8 @@ class AppDependencies {
     user.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     coach.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     journal.onUserChanged(owner);
+    accueilActivities.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     dashboard.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
-    gamification.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     _track(
       mascot.onUserChanged(
         userId: owner,
@@ -247,6 +251,7 @@ class AppDependencies {
       AvatarFiles.deleteOwner(owner),
       journalStore.deleteOwner(owner),
       history.deleteOwner(owner),
+      accueilActivities.deleteOwner(owner),
       storage.clearProfileSetup(owner),
       cipher.deleteOwner(owner),
       () async {
@@ -309,6 +314,7 @@ class AppDependencies {
     coach.dispose();
     user.dispose();
     dashboard.dispose();
+    accueilActivities.dispose();
     gamification.dispose();
     mascot.dispose();
     auth.dispose();
