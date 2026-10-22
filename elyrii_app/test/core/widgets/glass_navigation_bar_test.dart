@@ -165,7 +165,6 @@ void main() {
         )) {
           expect(surface.glassColor, isNull);
         }
-        final expected = dark ? AppColors.surfaceDark : AppColors.surfaceLight;
         final surfaces = find.descendant(
           of: find.byType(ElyriiGlassSurface),
           matching: find.byType(Container),
@@ -173,7 +172,9 @@ void main() {
         expect(
           tester.widgetList<Container>(surfaces).where((container) {
             final decoration = container.decoration;
-            return decoration is BoxDecoration && decoration.color == expected;
+            // Le repli haut contraste reste opaque, quelle que soit la
+            // translucidité du jeton surface.
+            return decoration is BoxDecoration && decoration.color?.a == 1;
           }),
           hasLength(2),
         );
@@ -320,9 +321,11 @@ void main() {
             find.text(label).last,
           );
           expect(paragraph.text.style?.fontSize, role.fontSize, reason: label);
+          // Le rôle v2 garde l'interligne naturel de Poppins : une seule
+          // ligne reste sous deux corps de police.
           expect(
             tester.getRect(find.text(label).last).height,
-            closeTo(role.fontSize! * role.height!, 0.5),
+            lessThan(role.fontSize! * 2),
             reason: '$label tient sur une ligne',
           );
           expect(paragraph.didExceedMaxLines, isFalse, reason: label);

@@ -46,7 +46,12 @@ class ElyriiGlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
-    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    // La surface v2 est translucide : le repli opaque la compose sur le fond
+    // pour garder son rendu sans alpha.
+    final surface = Color.alphaBlend(
+      isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+      isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+    );
     final shouldFallback = lightweight || highContrast;
 
     // Opaque fallback for the platform accessibility contrast setting.

@@ -101,6 +101,14 @@ class AppColors {
   static Color pink(bool isDark) => isDark ? pinkDark : pinkLight;
   static Color violet(bool isDark) => isDark ? violetDark : violetLight;
 
+  /// label-2 et label-3 exacts du spec, translucides. label-3 n'atteint pas
+  /// 4,5:1 sur un petit texte : il sert au texte large et au décoratif, les
+  /// rôles textSecondary/textTertiary opaques gardent le texte courant.
+  static Color label2(bool isDark) =>
+      isDark ? const Color(0xA3ECE9F5) : const Color(0x9E1C1A24);
+  static Color label3(bool isDark) =>
+      isDark ? const Color(0x6BECE9F5) : const Color(0x6B1C1A24);
+
   // ==================== COULEURS NEUTRES - LIGHT MODE ====================
 
   /// Light Theme: encre violette (#1C1A24) sur un fond #F3F2F8.
@@ -109,8 +117,8 @@ class AppColors {
   static const Color cardLight = Color(0xFFECEAF3); // surface-2
 
   static const Color textPrimaryLight = Color(0xFF1C1A24); // label
-  static const Color textSecondaryLight = Color(0x9E1C1A24); // label-2, 62 %
-  static const Color textTertiaryLight = Color(0x6B1C1A24); // label-3, 42 %
+  static const Color textSecondaryLight = Color(0xFF4A4560);
+  static const Color textTertiaryLight = Color(0xFF57516B);
 
   static const Color dividerLight = Color(0x171C1A24); // separator, 9 %
   static const Color borderLight = Color(0x0F1C1A24); // stroke, 6 %
@@ -124,8 +132,8 @@ class AppColors {
   static const Color cardDark = Color(0x17FFFFFF); // surface-2, 9 %
 
   static const Color textPrimaryDark = Color(0xFFF4F2F8); // label
-  static const Color textSecondaryDark = Color(0xA3ECE9F5); // label-2, 64 %
-  static const Color textTertiaryDark = Color(0x6BECE9F5); // label-3, 42 %
+  static const Color textSecondaryDark = Color(0xFFC8C2DA);
+  static const Color textTertiaryDark = Color(0xFFA49DBB);
 
   static const Color dividerDark = Color(0x14FFFFFF); // separator, 8 %
   static const Color borderDark = Color(0x12FFFFFF); // stroke, 7 %
@@ -206,7 +214,11 @@ class AppColors {
 
   /// Preserve pastel hues in decoration while keeping text readable.
   static Color readableAccent(Color color, {required bool isDark}) {
-    final background = isDark ? cardDark : scaffoldLight;
+    // surface-2 sombre est translucide : la luminance se mesure sur sa
+    // composition réelle au-dessus du fond.
+    final background = isDark
+        ? Color.alphaBlend(cardDark, backgroundDark)
+        : scaffoldLight;
     final luminance = background.computeLuminance();
     var hsl = HSLColor.fromColor(color.withValues(alpha: 1));
     if (!isDark) hsl = hsl.withSaturation(hsl.saturation.clamp(0.0, 0.5));

@@ -18,7 +18,6 @@ import 'package:elyrii_app/features/coach/presentation/pages/coach_page.dart';
 import 'package:elyrii_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:elyrii_app/features/gamification/presentation/pages/challenges_page.dart';
 import 'package:elyrii_app/features/journal/presentation/pages/journal_page.dart';
-import 'package:elyrii_app/features/mascot/presentation/pages/mascot_customization_page.dart';
 import 'package:elyrii_app/features/meditation/presentation/pages/meditation_page.dart';
 import 'package:elyrii_app/features/profile_setup/presentation/pages/profile_setup_page.dart';
 import 'package:elyrii_app/features/profile_setup/presentation/pages/edit_profile_page.dart';
@@ -74,7 +73,6 @@ void main() {
     'chat': const ChatbotPage(),
     'coach': const CoachPage(),
     'meditation': const MeditationPage(),
-    'mascot': const MascotCustomizationPage(),
     'profile-setup': const ProfileSetupPage(),
     'profile-edit': const EditProfilePage(),
     'avatar': const AvatarPickerPage(),

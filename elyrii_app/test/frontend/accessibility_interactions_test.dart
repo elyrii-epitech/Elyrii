@@ -213,9 +213,17 @@ void main() {
         AppColors.primaryText(dark),
         AppColors.controlOutline(dark),
       ]) {
+        // surface-2 sombre est translucide : on mesure la carte rendue,
+        // composée au-dessus du fond de page.
         for (final background
             in dark
-                ? [AppColors.cardDark, AppColors.scaffoldDark]
+                ? [
+                    Color.alphaBlend(
+                      AppColors.cardDark,
+                      AppColors.scaffoldDark,
+                    ),
+                    AppColors.scaffoldDark,
+                  ]
                 : [AppColors.cardLight, AppColors.scaffoldLight]) {
           final a = color.computeLuminance();
           final b = background.computeLuminance();
