@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/elyrii_page_header.dart';
@@ -24,7 +23,7 @@ import '../widgets/journal_editor_sheet.dart';
 /// - Carte Héroïque « Espace de Réflexion » avec bento de statistiques douces
 ///   (nombre d'écrits, dernière humeur).
 /// - Passerelle d'inspiration avec le Coach IA pour stimuler l'écriture bienveillante.
-/// - Tirer-relâcher natif Cupertino ([CupertinoSliverRefreshControl]).
+/// - Tirer-relâcher natif Cupertino via [ElyriiPageFrame.onRefresh].
 /// - Cartes construites à la demande par un [SliverList].
 class JournalPage extends StatefulWidget {
   const JournalPage({super.key});
@@ -79,6 +78,7 @@ class _JournalPageState extends State<JournalPage> {
 
           return ElyriiPageFrame.tab(
             title: 'Journal',
+            onRefresh: () => provider.loadEntries(),
             actions: [
               LiquidGlassIconButton(
                 tooltip: 'Changer l’ordre des notes',
@@ -100,9 +100,6 @@ class _JournalPageState extends State<JournalPage> {
               parent: BouncingScrollPhysics(),
             ),
             slivers: [
-              CupertinoSliverRefreshControl(
-                onRefresh: () => provider.loadEntries(),
-              ),
               ..._buildContentSlivers(entries, isDark),
               if (provider.hasMore)
                 SliverToBoxAdapter(

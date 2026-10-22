@@ -1,6 +1,5 @@
 import '../../../../core/accessibility/motion.dart';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -64,11 +63,11 @@ class _CoachPageState extends State<CoachPage> {
               : AppColors.scaffoldLight,
           body: ElyriiPageFrame.tab(
             title: "Elyrii t'accompagne",
+            onRefresh: provider.loadCoachData,
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
-              CupertinoSliverRefreshControl(onRefresh: provider.loadCoachData),
               SliverPadding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppDimensions.pageHorizontalPadding,

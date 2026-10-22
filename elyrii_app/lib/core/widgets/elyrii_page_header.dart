@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/cupertino.dart' show CupertinoSliverRefreshControl;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -27,6 +28,7 @@ class ElyriiPageFrame extends StatefulWidget {
     required this.slivers,
     this.controller,
     this.physics,
+    this.onRefresh,
   }) : level = ElyriiTitleLevel.tab;
 
   const ElyriiPageFrame.detail({
@@ -37,6 +39,7 @@ class ElyriiPageFrame extends StatefulWidget {
     required this.slivers,
     this.controller,
     this.physics,
+    this.onRefresh,
   }) : level = ElyriiTitleLevel.detail,
        eyebrow = null;
 
@@ -51,12 +54,16 @@ class ElyriiPageFrame extends StatefulWidget {
   final ScrollController? controller;
   final ScrollPhysics? physics;
 
+  /// Pull-to-refresh belongs before the header spacer to receive overscroll.
+  final Future<void> Function()? onRefresh;
+
   @override
   State<ElyriiPageFrame> createState() => _ElyriiPageFrameState();
 }
 
 class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
   static const _collapsedAt = 56.0;
+  static const _barTitleStartsAt = 24.0;
   final _offset = ValueNotifier<double>(0);
 
   @override
@@ -98,12 +105,41 @@ class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
                 physics:
                     widget.physics ?? const AlwaysScrollableScrollPhysics(),
                 slivers: [
+                  if (widget.onRefresh case final onRefresh?)
+                    CupertinoSliverRefreshControl(
+                      onRefresh: onRefresh,
+                      builder:
+                          (
+                            context,
+                            state,
+                            pulledExtent,
+                            triggerDistance,
+                            indicatorExtent,
+                          ) => Transform.translate(
+                            offset: Offset(0, extent),
+                            child:
+                                CupertinoSliverRefreshControl.buildRefreshIndicator(
+                                  context,
+                                  state,
+                                  pulledExtent,
+                                  triggerDistance,
+                                  indicatorExtent,
+                                ),
+                          ),
+                    ),
                   SliverToBoxAdapter(child: SizedBox(height: extent)),
                   if (isTab)
                     SliverToBoxAdapter(
-                      child: _LargeTitle(
-                        title: widget.title,
-                        eyebrow: widget.eyebrow,
+                      child: ValueListenableBuilder<double>(
+                        valueListenable: _offset,
+                        child: _LargeTitle(
+                          title: widget.title,
+                          eyebrow: widget.eyebrow,
+                        ),
+                        builder: (context, offset, title) => ExcludeSemantics(
+                          excluding: offset > _barTitleStartsAt,
+                          child: title,
+                        ),
                       ),
                     ),
                   ...widget.slivers,
@@ -132,7 +168,8 @@ class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
                       valueListenable: _offset,
                       child: barTitle,
                       builder: (context, offset, title) {
-                        final opacity = ((offset - 24) / 24).clamp(0.0, 1.0);
+                        final opacity = ((offset - _barTitleStartsAt) / 24)
+                            .clamp(0.0, 1.0);
                         return opacity == 0
                             ? const SizedBox.shrink()
                             : Opacity(opacity: opacity, child: title);

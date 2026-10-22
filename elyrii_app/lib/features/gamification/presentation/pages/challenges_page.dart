@@ -32,7 +32,7 @@ import '../widgets/daily_streak_card.dart';
 ///   l'XP et la série de présence.
 /// - Passerelle limpide avec le Coach IA : « Le Coach sème, le Jardin fleurit ».
 /// - Deux segments clairs (« Mes Quêtes » / « Mes Succès ») avec retour haptique.
-/// - Tirer-relâcher natif Cupertino ([CupertinoSliverRefreshControl]).
+/// - Tirer-relâcher natif Cupertino via [ElyriiPageFrame.onRefresh].
 class ChallengesPage extends StatefulWidget {
   const ChallengesPage({super.key});
 
@@ -179,13 +179,11 @@ class _ChallengesPageState extends State<ChallengesPage> {
           : AppColors.scaffoldLight,
       body: ElyriiPageFrame.tab(
         title: 'Jardin',
+        onRefresh: () => provider.loadAll(force: true),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
         slivers: [
-          CupertinoSliverRefreshControl(
-            onRefresh: () => provider.loadAll(force: true),
-          ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
               AppDimensions.pageHorizontalPadding,

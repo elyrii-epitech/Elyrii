@@ -81,6 +81,7 @@ Sources : [matrice de rendu](https://github.com/elyrii-epitech/Elyrii/blob/front
 | Contrastes | Encre de statut adaptée au thème, bordures identifiables, boutons remplis opaques, aucune baisse d’opacité du texte pendant l’appui. | Contraste raster sur les états visibles et ratios de palette ≥ 4,5:1 sur fonds de page/carte dans les deux thèmes ; les limites non textuelles exigent normalement ≥ 3:1. |
 | Agrandissement | Titres et textes gardent la taille demandée, colonnes se réorganisent, en-tête peut défiler, dialogues défilent avec leurs actions, édition de mascotte reste atteignable. | 105 rendus ; dialogue long à 300 % ; alternatives de graphique et signalement IA à 300 %. |
 | Navigation | Cibles nommées et état sélectionné ; menu natif contenant les six destinations en largeur réduite ou au-delà de 150 % de texte. | Test d’accès tactile aux six destinations à 300 %, ouverture clavier et fermeture Escape ; tests de navigation au format normal. |
+| Titres de page | Un seul titre sémantique d'onglet pendant le passage du grand titre à la barre ; le titre fixe du chat reste accessible. | Test ciblé à 320 points et 150 % de texte au repos, autour du seuil de transition et après défilement, puis au retour ; contrôle du rôle de titre et du libellé complet. |
 | Graphiques | Données d’humeur consultables dans une alternative textuelle dépliable ; répartition et activité exposent valeurs et contexte. | Test d’un graphique non vide, lecture exacte date/quantité, ouverture à 300 % sans erreur ; ne dépend pas seulement de la couleur. |
 | Choix et options | Checkbox, switch, radios et segments natifs conservent leur état sémantique. | Tests de sélection, nom des cibles et taille ; signalement avec motif choisi et accusé de réception annoncé. |
 | Dialogues | Titre et route annoncés, focus demandé, actions lisibles et défilantes, fermeture Escape, animations retirées si demandé. | Test d’un dialogue long à 300 % avec fermeture clavier ; restitution du focus au lecteur d’écran reste à contrôler. |
@@ -91,6 +92,13 @@ nombre de pixels du fichier PNG. Les données de contraste raster sont des
 mesures sur les contenus effectivement visibles de la fixture : elles ne
 couvrent pas automatiquement tous les avatars, photos, états vides/erreurs et
 couleurs qu’un utilisateur peut produire.
+
+`ElyriiPageFrame.onRefresh` place le contrôle Cupertino avant l'espace réservé
+à la barre et le grand titre. Les pages Journal, Jardin, Coach et Bilan lui
+passent leur rappel d'actualisation. L'indicateur apparaît sous la barre,
+hors de la zone système supérieure. Les tests d'en-tête vérifient le geste
+de tirage, l'appel du rappel, la position de l'indicateur pendant l'attente
+et sa disparition après actualisation, pour les cadres d'onglet et de détail.
 
 ## Traçabilité des critères
 
@@ -164,6 +172,7 @@ flutter test --no-pub test/frontend/accessibility_matrix_test.dart \
   test/frontend/accessibility_interactions_test.dart \
   --dart-define=AUDIT_OUTPUT=build/a11y-evidence
 flutter test --no-pub test/core/widgets/glass_navigation_bar_test.dart
+flutter test --no-pub test/core/widgets/elyrii_page_header_test.dart
 ```
 
 Le workflow frontend exécute la suite entière et conserve les JSON et PNG.

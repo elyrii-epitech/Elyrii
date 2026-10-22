@@ -1,6 +1,5 @@
 import '../widgets/review_content.dart';
 
-import 'package:flutter/cupertino.dart' show CupertinoSliverRefreshControl;
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/elyrii_page_header.dart';
@@ -88,6 +87,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
 
           return ElyriiPageFrame.detail(
             title: 'Bilan',
+            onRefresh: _reload,
             leading: ElyriiBackButton(
               onPressed: () => Navigator.maybePop(context),
             ),
@@ -95,7 +95,6 @@ class _ReviewsPageState extends State<ReviewsPage> {
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
-              CupertinoSliverRefreshControl(onRefresh: _reload),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(
                   AppDimensions.pageHorizontalPadding,
