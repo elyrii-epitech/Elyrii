@@ -100,11 +100,11 @@ jobs:
   ios-smoke:
     name: Frontend iOS integration
     needs: quality
-    runs-on: macos-latest
+    runs-on: macos-15-intel
     timeout-minutes: 30
     env:
-      # Keep Xcode and the simulator runtime aligned when macos-latest changes.
-      DEVELOPER_DIR: /Applications/Xcode_26.4.1.app/Contents/Developer
+      # Pin the host, Xcode and runtime instead of following macos-latest.
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
     defaults:
       run:
         working-directory: elyrii_app
@@ -137,14 +137,22 @@ jobs:
           fi
           xcrun simctl bootstatus "$ELYRII_SIMULATOR_ID" -b
       - name: Bootstrap, native persistence and navigation
+        timeout-minutes: 15
         run: |
           set -o pipefail
           flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development --verbose 2>&1 | tee build/ios-integration-test.log
+      - name: Collect simulator diagnostics
+        if: failure() && env.ELYRII_SIMULATOR_ID != ''
+        timeout-minutes: 2
+        continue-on-error: true
+        run: |
+          xcrun simctl io "$ELYRII_SIMULATOR_ID" screenshot build/ios-integration-simulator.png
+          xcrun simctl spawn "$ELYRII_SIMULATOR_ID" log show --last 10m --style compact --predicate 'process == "Runner"' > build/ios-integration-simulator.log
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:
           name: frontend-ios-integration-logs
-          path: elyrii_app/build/ios-integration-*.log
+          path: elyrii_app/build/ios-integration-*
   dartdoc:
     name: Frontend API documentation
     needs: quality
