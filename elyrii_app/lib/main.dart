@@ -45,15 +45,22 @@ void main() {
 
 Future<AppDependencies> initializeApplication() async {
   AppConfig.initialize();
-  await initializeDateFormatting('fr');
-  await initializeDateFormatting('en');
-  await LiquidGlassWidgets.initialize();
   final storage = SecureStorageService();
   final api = ApiClient(storage: storage);
   final theme = ThemeProvider();
   AppDependencies? dependencies;
   try {
-    await theme.init();
+    // Independent: the native splash stays up until all of them finish.
+    await Future.wait([
+      initializeDateFormatting('fr'),
+      initializeDateFormatting('en'),
+      // Premium glass is capped off below, so its shaders are never drawn.
+      LiquidGlassWidgets.initialize(
+        warmUpMode: GlassWarmUpMode.never,
+        enablePerformanceMonitor: false,
+      ),
+      theme.init(),
+    ]);
     dependencies = AppDependencies(storage: storage, api: api, theme: theme);
     await dependencies.initialize();
     if (kDebugMode && const bool.fromEnvironment('CHECK_BACKEND_HEALTH')) {
@@ -75,8 +82,9 @@ Future<AppDependencies> initializeApplication() async {
   }
 }
 
-/// The first frame exists before plugin or storage initialization. Failures
-/// have an explicit retry path; late initialization attempts are disposed.
+/// The native launch screen stays up until startup resolves, so no default
+/// Material frame flashes between it and the launch scene. Failures have an
+/// explicit retry path; late initialization attempts are disposed.
 class ApplicationBootstrap extends StatefulWidget {
   final Future<AppDependencies> Function()? initialize;
   const ApplicationBootstrap({super.key, this.initialize});
@@ -87,11 +95,19 @@ class ApplicationBootstrap extends StatefulWidget {
 class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
   AppDependencies? _dependencies;
   bool _failed = false;
+  bool _firstFrameDeferred = true;
   int _attempt = 0;
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.deferFirstFrame();
     unawaited(_start());
+  }
+
+  void _releaseFirstFrame() {
+    if (!_firstFrameDeferred) return;
+    _firstFrameDeferred = false;
+    WidgetsBinding.instance.allowFirstFrame();
   }
 
   Future<void> _start() async {
@@ -115,12 +131,15 @@ class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
         _attempt++;
         setState(() => _failed = true);
       }
+    } finally {
+      _releaseFirstFrame();
     }
   }
 
   @override
   void dispose() {
     _attempt++;
+    _releaseFirstFrame();
     _dependencies?.dispose();
     super.dispose();
   }
@@ -131,6 +150,7 @@ class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
     if (services == null) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
         // Leave the platform's initial deep link to GoRouter after startup.
         builder: (context, _) => Scaffold(
           body: SafeArea(
@@ -160,6 +180,12 @@ class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
     return LiquidGlassWidgets.wrap(
       brightnessResolver: Theme.maybeBrightnessOf,
       adaptiveQuality: true,
+      // Fast devices get promoted to premium glass (an offscreen layer and
+      // multi-pass shaders per surface); the 16 ms budget never demotes it
+      // on 120 Hz screens.
+      adaptiveConfig: const GlassAdaptiveScopeConfig(
+        maxQuality: GlassQuality.standard,
+      ),
       child: MultiProvider(
         providers: [
           Provider<AppDependencies>.value(value: services),
