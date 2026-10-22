@@ -162,11 +162,11 @@ class AppTheme {
             width: AppDimensions.borderWidthMedium,
           ),
         ),
-        hintStyle: AppTextStyles.inputHint(),
+        hintStyle: AppTextStyles.bodyLarge(color: AppColors.textTertiaryLight),
         labelStyle: AppTextStyles.bodyMedium(
           color: AppColors.textSecondaryLight,
         ),
-        errorStyle: AppTextStyles.error(),
+        errorStyle: AppTextStyles.bodySmall(color: AppColors.error),
       ),
 
       // Bottom Navigation Bar
@@ -398,13 +398,11 @@ class AppTheme {
             width: AppDimensions.borderWidthMedium,
           ),
         ),
-        hintStyle: AppTextStyles.inputHint().copyWith(
-          color: AppColors.textTertiaryDark,
-        ),
+        hintStyle: AppTextStyles.bodyLarge(color: AppColors.textTertiaryDark),
         labelStyle: AppTextStyles.bodyMedium(
           color: AppColors.textSecondaryDark,
         ),
-        errorStyle: AppTextStyles.error(),
+        errorStyle: AppTextStyles.bodySmall(color: AppColors.errorDark),
       ),
 
       // Bottom Navigation Bar

@@ -45,7 +45,7 @@ class ConversationSuggestions extends StatelessWidget {
                 vertical: AppDimensions.spacing12,
               ),
               minimumSize: const Size(0, 44),
-              textStyle: AppTextStyles.bodyMedium(),
+              textStyle: AppTextStyles.labelMedium(),
             ),
           ),
       ],

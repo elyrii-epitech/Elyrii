@@ -209,7 +209,7 @@ class ElyriiLaunchScene extends StatelessWidget {
                                   'elyrii',
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
-                                  style: AppTextStyles.displaySmall(
+                                  style: AppTextStyles.wordmark(
                                     color: const Color(0xFFF8F2EE),
                                   ).copyWith(decoration: TextDecoration.none),
                                 ),

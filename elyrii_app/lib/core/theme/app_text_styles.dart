@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
-
 /// The only type scale of the app. Each role fixes size, weight and spacing,
 /// so screens pick a role and never tune a style.
 class AppTextStyles {
@@ -25,9 +23,9 @@ class AppTextStyles {
 
   // ==================== DISPLAY & HEADLINE ====================
 
-  /// Launch wordmark.
-  static TextStyle displaySmall({Color? color}) =>
-      _role(36, FontWeight.w600, 1.2, -0.5, color);
+  /// The "elyrii" logotype on the launch screen: light and widely spaced.
+  static TextStyle wordmark({Color? color}) =>
+      _role(38, FontWeight.w500, 1.2, 3, color);
 
   /// Root page title, rendered by `ElyriiPageFrame` only.
   static TextStyle pageTitle({Color? color}) =>
@@ -68,15 +66,20 @@ class AppTextStyles {
   static TextStyle bodyMedium({Color? color}) =>
       _role(14, FontWeight.w400, 1.45, 0.1, color);
 
-  /// Secondary and meta text.
+  /// Secondary and meta text. Medium weight: 12 pt Regular strokes are too
+  /// thin to keep secondary greys readable on glass.
   static TextStyle bodySmall({Color? color}) =>
-      _role(12, FontWeight.w400, 1.35, 0.2, color);
+      _role(12, FontWeight.w500, 1.35, 0.2, color);
 
   // ==================== LABELS ====================
 
-  /// Button labels.
+  /// Button labels, and the default action of a dialog.
   static TextStyle labelLarge({Color? color}) =>
       _role(15, FontWeight.w600, 1.33, 0.2, color);
+
+  /// The other actions of a dialog, lighter than the default one.
+  static TextStyle dialogAction({Color? color}) =>
+      _role(15, FontWeight.w400, 1.33, 0.2, color);
 
   /// Chips, short labels and small values.
   static TextStyle labelMedium({Color? color}) =>
@@ -102,16 +105,9 @@ class AppTextStyles {
     color: color,
   );
 
-  // ==================== FORM ====================
-
-  static TextStyle inputHint() => bodyLarge(color: AppColors.textTertiaryLight);
-
-  static TextStyle error() => bodySmall(color: AppColors.error);
-
   /// Material's text roles, so widgets that read `Theme.textTheme` follow
   /// the same scale.
   static TextTheme textTheme(Color primary, Color secondary) => TextTheme(
-    displaySmall: displaySmall(color: primary),
     headlineMedium: headlineMedium(color: primary),
     headlineSmall: headlineSmall(color: primary),
     titleLarge: titleLarge(color: primary),

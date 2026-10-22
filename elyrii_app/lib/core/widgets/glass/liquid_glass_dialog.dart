@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 
 import '../../glass/elyrii_glass_surface.dart';
+import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_dimensions.dart';
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -116,7 +117,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
                                 child: Text(
                                   title!,
                                   style: AppTextStyles.titleMedium(
-                                    color: isDark ? Colors.white : Colors.black,
+                                    color: context.textPrimary,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -125,9 +126,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
                             ],
                             DefaultTextStyle(
                               style: AppTextStyles.bodyMedium(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.7)
-                                    : Colors.black.withValues(alpha: 0.6),
+                                color: context.textSecondary,
                               ),
                               textAlign: TextAlign.center,
                               child: child,
@@ -224,7 +223,9 @@ class LiquidGlassDialogContent extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing12),
         child: Text(
           action.label,
-          style: AppTextStyles.labelLarge(color: textColor),
+          style: action.isDefault
+              ? AppTextStyles.labelLarge(color: textColor)
+              : AppTextStyles.dialogAction(color: textColor),
           textAlign: TextAlign.center,
         ),
       ),
