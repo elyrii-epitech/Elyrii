@@ -38,6 +38,35 @@ suite("Rolling summaries (PostgreSQL)", () => {
     });
     afterAll(async () => { await pool.end(); });
 
+    test("microsecond boundaries advance summaries and single-row pages", async () => {
+        const saved = await rows(8);
+        await database.execute(sql`UPDATE chat_messages SET created_at = '2030-01-01 00:00:00.123456'::timestamp
+            WHERE user_id = ${owner}::uuid`);
+        const first = await claim();
+        await repo.complete(result(first, saved[2]!.id));
+        const second = await claim();
+        expect(second.messages.map(m => m.id)).toEqual(saved.slice(3, 6).map(m => m.id));
+        expect(await repo.complete(result(second))).toBe("completed");
+        expect(await repo.claim()).toBeNull();
+        const page = await repo.continuity(owner, "a", 1);
+        expect(page.messages.map(m => m.id)).toEqual([saved[6]!.id]);
+        expect(page.nextCursor).not.toBeNull();
+        const last = await repo.continuity(owner, "a", 1, page.nextCursor!);
+        expect(last.messages.map(m => m.id)).toEqual([saved[7]!.id]);
+        expect(last.nextCursor).toBeNull();
+    });
+
+    test("manual boundaries follow microseconds before UUID ordering", async () => {
+        const saved = await rows(2);
+        await database.execute(sql`UPDATE chat_messages SET created_at = CASE
+            WHEN id = ${saved[0]!.id}::uuid THEN '2030-01-01 00:00:00.123900'::timestamp
+            ELSE '2030-01-01 00:00:00.123100'::timestamp END WHERE user_id = ${owner}::uuid`);
+        await repo.putManual(owner, { conversationId: "a", summary: "Earlier", throughMessageId: saved[1]!.id });
+        await repo.putManual(owner, { conversationId: "a", summary: "Later", throughMessageId: saved[0]!.id });
+        await expect(repo.putManual(owner, { conversationId: "a", summary: "Backwards", throughMessageId: saved[1]!.id }))
+            .rejects.toThrow("Summary boundary cannot move backwards");
+    });
+
     test("empty and recent-only histories create no inference job", async () => {
         expect(await repo.claim()).toBeNull();
         expect((await repo.continuity(owner, "a")).messages).toEqual([]);

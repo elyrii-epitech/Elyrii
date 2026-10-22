@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, lt, ne, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { db } from "../config/db.config";
 import { userContextFactsTable as facts, userMemoriesTable as memories, memoryEmbeddingsTable as vectors,
     conversationSummariesTable as summaries } from "../config/db/context.table";
@@ -8,6 +8,7 @@ import { ContextPolicy } from "../modules/context/context.policy";
 import type { EmbeddingModel } from "../modules/context/embedding.contracts";
 import type { RankedMemory, RetrievedContext, RetrievalConfig, RetrievalRequest } from "../modules/context/retrieval.contracts";
 
+import { historyBoundary } from "../modules/context/history-boundary";
 import { contextSourceEligible, conversationHasExpiredContext } from "../modules/context/source-eligibility";
 
 export class RetrievalRepository {
@@ -58,14 +59,12 @@ export class RetrievalRepository {
             const [storedSummary] = validCurrent ? await tx.select().from(summaries)
                 .where(and(eq(summaries.userId, userId), eq(summaries.conversationId, request.conversationId), sql`NOT ${conversationHasExpiredContext(userId, request.conversationId, now)}`)) : [];
             const [boundary] = storedSummary ? await tx.select().from(messages).where(and(scope, eq(messages.id, storedSummary.throughMessageId))) : [];
-            const beforeCurrent = (row: { createdAt: Date; id: string }) => !current ||
-                +row.createdAt < +current.createdAt || (+row.createdAt === +current.createdAt && row.id < current.id);
+            const [boundaryBeforeCurrent] = boundary && current ? await tx.select({ id: messages.id }).from(messages)
+                .where(and(scope, eq(messages.id, boundary.id), historyBoundary(current.id, "before"))) : [];
             // If an asynchronous summary already covers this input, omit it and rebuild the tail from raw history.
-            const summary = storedSummary && boundary && beforeCurrent(boundary) ? storedSummary : null;
-            const afterSummary = summary && boundary ? or(gt(messages.createdAt, boundary.createdAt),
-                and(eq(messages.createdAt, boundary.createdAt), gt(messages.id, boundary.id))) : undefined;
-            const beforeInput = current ? or(lt(messages.createdAt, current.createdAt),
-                and(eq(messages.createdAt, current.createdAt), lt(messages.id, current.id))) : undefined;
+            const summary = storedSummary && boundary && (!current || boundaryBeforeCurrent) ? storedSummary : null;
+            const afterSummary = summary && boundary ? historyBoundary(boundary.id, "after") : undefined;
+            const beforeInput = current ? historyBoundary(current.id, "before") : undefined;
             const tail = validCurrent ? await tx.select().from(messages).where(and(scope, afterSummary, beforeInput,
                 request.currentMessageId ? ne(messages.id, request.currentMessageId) : undefined))
                 .orderBy(desc(messages.createdAt), desc(messages.id)).limit(config.recentLimit + 1) : [];
@@ -84,8 +83,7 @@ export class RetrievalRepository {
                 if (summary && boundary) {
                     const covered = await tx.select({ id: messages.id }).from(messages).where(and(scope,
                         inArray(messages.id, rows.flatMap(r => r.memory.sourceMessageId ? [r.memory.sourceMessageId] : [])),
-                        or(lt(messages.createdAt, boundary.createdAt), and(eq(messages.createdAt, boundary.createdAt), eq(messages.id, boundary.id)),
-                            and(eq(messages.createdAt, boundary.createdAt), lt(messages.id, boundary.id)))));
+                        historyBoundary(boundary.id, "through")));
                     covered.forEach(m => sources.add(m.id));
                 }
                 for (const candidate of ranked) {

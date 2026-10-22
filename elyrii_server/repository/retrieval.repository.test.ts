@@ -45,6 +45,23 @@ suite("Three-layer retrieval (PostgreSQL)", () => {
     });
     afterAll(async () => { await pool.end(); });
 
+    test("microsecond summary and input boundaries preserve the exact tail", async () => {
+        const ids = [3, 2, 1].map(n => `${String(n).padStart(8, "0")}-1111-4111-8111-111111111111`);
+        for (let i = 0; i < ids.length; i++) await database.insert(schema.chatMessagesTable).values({
+            id: ids[i]!, userId: owner, conversationId: "current", role: "user", message: `Message ${i}`,
+            createdAt: sql`'2020-01-01 00:00:00.123100'::timestamp + ${i} * interval '100 microseconds'`,
+        });
+        await database.insert(schema.conversationSummariesTable).values({ userId: owner, conversationId: "current",
+            summary: "Covered first", throughMessageId: ids[0]! });
+        const context = await repo.assemble(owner, { ...query, currentMessageId: ids[2]! }, undefined, [], config);
+        expect(context.continuity.summary?.throughMessageId).toBe(ids[0]!);
+        expect(context.continuity.messages.map(m => m.id)).toEqual([ids[1]!]);
+        await database.update(schema.conversationSummariesTable).set({ throughMessageId: ids[2]! }).where(eq(schema.conversationSummariesTable.userId, owner));
+        const earlier = await repo.assemble(owner, { ...query, currentMessageId: ids[1]! }, undefined, [], config);
+        expect(earlier.continuity.summary).toBeNull();
+        expect(earlier.continuity.messages.map(m => m.id)).toEqual([ids[0]!]);
+    });
+
     test("recalls older relevant experiences, keeps unrelated preferences, isolates users and conversations", async () => {
         await database.insert(schema.userContextFactsTable).values([
             { userId: owner, key: "drink", kind: "preference", value: "tea", origin: "explicit" },

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, count, eq, gt, inArray, lte, or, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../config/db.config";
 import { summaryTasks as tasks } from "../config/db/summary.table";
@@ -10,12 +10,12 @@ import { summaryConfig, summaryConfigSchema, summaryJobSchema, summaryResultSche
 import { retryDelay } from "../modules/context/extraction.contracts";
 import { summaryInputSchema, type SummaryInput } from "../modules/context/context.candidates";
 
+import { historyBoundary } from "../modules/context/history-boundary";
 import { contextSourceEligible, conversationHasExpiredContext } from "../modules/context/source-eligibility";
 
 const scope = (table: typeof tasks | typeof summaries | typeof messages, userId: string, conversationId: string, now = new Date()) =>
     and(eq(table.userId, userId), eq(table.conversationId, conversationId), table === messages ? contextSourceEligible(now) : undefined);
-const afterBoundary = (boundary?: { createdAt: Date; id: string }) => boundary ?
-    or(gt(messages.createdAt, boundary.createdAt), and(eq(messages.createdAt, boundary.createdAt), gt(messages.id, boundary.id))) : undefined;
+const afterBoundary = (boundary?: { id: string }) => boundary ? historyBoundary(boundary.id, "after") : undefined;
 const clearJob = { jobId: null, sourceIds: null, snapshotThroughAt: null, snapshotThroughId: null, attempts: 0 };
 
 export class SummaryRepository {
@@ -148,7 +148,7 @@ export class SummaryRepository {
                 sql`NOT ${conversationHasExpiredContext(userId, conversationId, this.clock())}`));
             const [boundary] = summary ? await tx.select().from(messages).where(eq(messages.id, summary.throughMessageId)) : [];
             const rows = await tx.select().from(messages).where(and(scope(messages, userId, conversationId, this.clock()), afterBoundary(boundary),
-                cursor ? afterBoundary({ id: cursor.id, createdAt: new Date(cursor.createdAt) }) : undefined))
+                cursor ? afterBoundary({ id: cursor.id }) : undefined))
                 .orderBy(asc(messages.createdAt), asc(messages.id)).limit(limit + 1);
             const tail = rows.slice(0, limit), last = tail.at(-1);
             return { summary: summary ?? null, messages: tail, revision, historyVersion,
@@ -169,7 +169,10 @@ export class SummaryRepository {
             if (!source) throw new Error("Summary boundary is unavailable");
             const [current] = await tx.select().from(summaries).innerJoin(messages, eq(messages.id, summaries.throughMessageId))
                 .where(scope(summaries, userId, input.conversationId));
-            if (current && (+source.createdAt < +current.chat_messages.createdAt || (+source.createdAt === +current.chat_messages.createdAt && source.id < current.chat_messages.id))) {
+            const [backwards] = current ? await tx.select({ id: messages.id }).from(messages)
+                .where(and(scope(messages, userId, input.conversationId, this.clock()), eq(messages.id, source.id),
+                    historyBoundary(current.chat_messages.id, "before"))) : [];
+            if (backwards) {
                 throw new Error("Summary boundary cannot move backwards");
             }
             const [row] = await tx.insert(summaries).values({ ...input, userId, updatedAt: this.clock() })
