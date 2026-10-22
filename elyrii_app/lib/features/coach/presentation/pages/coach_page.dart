@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../data/models/coach_model.dart';
 import '../providers/coach_provider.dart';
@@ -61,18 +62,17 @@ class _CoachPageState extends State<CoachPage> {
           backgroundColor: isDark
               ? AppColors.scaffoldDark
               : AppColors.scaffoldLight,
-          // Tire-pour-rafraîchir natif iOS, plus aucun indicateur
-          // de rafraîchissement Material.
-          body: CustomScrollView(
+          body: ElyriiPageFrame.tab(
+            title: "Elyrii t'accompagne",
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
               CupertinoSliverRefreshControl(onRefresh: provider.loadCoachData),
               SliverPadding(
-                padding: EdgeInsets.fromLTRB(
+                padding: const EdgeInsets.fromLTRB(
                   AppDimensions.pageHorizontalPadding,
-                  MediaQuery.of(context).padding.top + 16,
+                  0,
                   AppDimensions.pageHorizontalPadding,
                   130,
                 ),
@@ -80,10 +80,6 @@ class _CoachPageState extends State<CoachPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeader(isDark),
-                      // ---- Zone héroïque : Elyrii en posture d'écoute ----
-                      // La mascotte porte seule la scène ; le besoin arrive
-                      // juste dessous comme une réponse naturelle.
                       const SizedBox(height: 10),
                       Center(
                         child:
@@ -153,49 +149,6 @@ class _CoachPageState extends State<CoachPage> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildHeader(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'MON COACH',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: AppColors.readableAccent(
-              isDark ? AppColors.primaryDark : AppColors.primary,
-              isDark: Theme.of(context).brightness == Brightness.dark,
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          'Elyrii t\'accompagne',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
-            height: 1.1,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Ton compagnon bien-être quotidien',
-          style: TextStyle(
-            fontSize: 15,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      ],
     );
   }
 

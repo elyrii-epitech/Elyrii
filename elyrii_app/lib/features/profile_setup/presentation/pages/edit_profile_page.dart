@@ -166,57 +166,55 @@ class _EditProfilePageState extends State<EditProfilePage> {
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: ElyriiPageFrame(
-        header: const ElyriiPageHeader(
-          title: 'Mon profil',
-          subtitle: 'Ce qu’Elyrii sait de toi.',
-          leading: ElyriiBackButton(),
-        ),
-        child: !_initialized
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (context.watch<UserProvider>().error == null)
-                      const CupertinoActivityIndicator()
-                    else ...[
-                      Text(context.watch<UserProvider>().error!),
-                      TextButton(
-                        onPressed: context.read<UserProvider>().loadProfile,
-                        child: const Text('Réessayer'),
-                      ),
-                    ],
-                  ],
-                ),
-              )
-            : CustomScrollView(
-                slivers: [
-                  // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
-
-                  // Avatar cliquable
-                  SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
-
-                  // Identite
-                  SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
-
-                  // Bien-etre
-                  SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
-
-                  // Save
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
-                      child: LiquidGlassButton(
-                        label: 'Enregistrer',
-                        icon: Icons.check_rounded,
-                        isLoading: _isSaving,
-                        isExpanded: true,
-                        onPressed: _isSaving ? null : _saveProfile,
-                      ),
+      body: ElyriiPageFrame.detail(
+        title: 'Mon profil',
+        leading: const ElyriiBackButton(),
+        slivers: !_initialized
+            ? [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (context.watch<UserProvider>().error == null)
+                          const CupertinoActivityIndicator()
+                        else ...[
+                          Text(context.watch<UserProvider>().error!),
+                          TextButton(
+                            onPressed: context.read<UserProvider>().loadProfile,
+                            child: const Text('Réessayer'),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ]
+            : [
+                // Avatar cliquable
+                SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
+
+                // Identite
+                SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
+
+                // Bien-etre
+                SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
+
+                // Save
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+                    child: LiquidGlassButton(
+                      label: 'Enregistrer',
+                      icon: Icons.check_rounded,
+                      isLoading: _isSaving,
+                      isExpanded: true,
+                      onPressed: _isSaving ? null : _saveProfile,
+                    ),
+                  ),
+                ),
+              ],
       ),
     );
   }

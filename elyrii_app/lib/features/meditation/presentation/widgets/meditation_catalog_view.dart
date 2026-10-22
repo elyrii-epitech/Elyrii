@@ -93,106 +93,61 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
         ? AppColors.textSecondaryDark
         : AppColors.textSecondaryLight;
     final accent = isDark ? AppColors.primaryDark : AppColors.primary;
-    return ElyriiPageFrame(
-      // Keep the title painted when the glass start control updates.
-      header: RepaintBoundary(child: _header(text, accent)),
-      child: ListView(
-        key: const Key('meditation-catalog-scroll'),
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          AppDimensions.pageHorizontalPadding,
-          8,
-          AppDimensions.pageHorizontalPadding,
-          MediaQuery.paddingOf(context).bottom + 24,
-        ),
-        children: [
-          _sessionCard(text, secondary, accent),
-          const SizedBox(height: 20),
-          Row(
+    return ElyriiPageFrame.tab(
+      key: const Key('meditation-catalog-scroll'),
+      title: 'Méditation',
+      actions: [_startAction(text)],
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            AppDimensions.pageHorizontalPadding,
+            8,
+            AppDimensions.pageHorizontalPadding,
+            MediaQuery.paddingOf(context).bottom + 24,
+          ),
+          sliver: SliverList.list(
             children: [
-              Expanded(
-                child: Text(
-                  'Pratiques',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: text,
+              _sessionCard(text, secondary, accent),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Pratiques',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: text,
+                      ),
+                    ),
                   ),
-                ),
+                  TextButton(
+                    key: const Key('meditation-browse'),
+                    onPressed: _choosePractice,
+                    style: TextButton.styleFrom(
+                      foregroundColor: accent,
+                      minimumSize: const Size(0, 44),
+                      visualDensity: VisualDensity.standard,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      textStyle: AppTextStyles.labelMedium(
+                        fontWeight: FontWeight.w600,
+                      ).copyWith(fontSize: 13),
+                    ),
+                    child: const Text('Tout voir'),
+                  ),
+                ],
               ),
-              TextButton(
-                key: const Key('meditation-browse'),
-                onPressed: _choosePractice,
-                style: TextButton.styleFrom(
-                  foregroundColor: accent,
-                  minimumSize: const Size(0, 44),
-                  visualDensity: VisualDensity.standard,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  textStyle: AppTextStyles.labelMedium(
-                    fontWeight: FontWeight.w600,
-                  ).copyWith(fontSize: 13),
-                ),
-                child: const Text('Tout voir'),
+              const SizedBox(height: 12),
+              MeditationPracticeGrid(
+                key: const Key('meditation-featured'),
+                exercises: _featured(controller.selectedExercise),
+                selectedId: controller.selectedExercise?.id,
+                onSelect: controller.setExercise,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          MeditationPracticeGrid(
-            key: const Key('meditation-featured'),
-            exercises: _featured(controller.selectedExercise),
-            selectedId: controller.selectedExercise?.id,
-            onSelect: controller.setExercise,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _header(Color text, Color accent) {
-    final title = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'TON ESPACE',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: accent,
-          ),
         ),
-        const SizedBox(height: 4),
-        Semantics(
-          header: true,
-          child: Text(
-            'Méditation',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.8,
-              height: 1.1,
-              color: text,
-            ),
-          ),
-        ),
-      ],
-    );
-    final start = _startAction(text);
-    if (MediaQuery.textScalerOf(context).scale(1) > 1.2) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          title,
-          const SizedBox(height: 8),
-          Align(alignment: Alignment.centerRight, child: start),
-        ],
-      );
-    }
-    return Row(
-      children: [
-        Expanded(child: title),
-        const SizedBox(width: 12),
-        start,
       ],
     );
   }
@@ -296,8 +251,9 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Flexible(
-                child: Text(
+              // The pinned bar has one row: large text keeps only the button.
+              if (MediaQuery.textScalerOf(context).scale(13) <= 20) ...[
+                Text(
                   'Commencer',
                   style: TextStyle(
                     fontSize: 13,
@@ -307,8 +263,8 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
                         : text,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
+                const SizedBox(width: 8),
+              ],
               LiquidGlassIconButton(
                 tooltip: 'Commencer la séance',
                 icon: Icons.play_arrow_rounded,

@@ -215,70 +215,63 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
         backgroundColor: isDark
             ? AppColors.scaffoldDark
             : AppColors.scaffoldLight,
-        body: ElyriiPageFrame(
-          header: ElyriiPageHeader(
-            title: 'Mon avatar',
-            subtitle: 'Choisis ton visage.',
-            leading: ElyriiBackButton(onPressed: _cancel),
-          ),
-          child: CustomScrollView(
-            slivers: [
-              // Dégagement de l'en-tête épinglé (flèche + titre + sous-titre).
+        body: ElyriiPageFrame.detail(
+          title: 'Mon avatar',
+          leading: ElyriiBackButton(onPressed: _cancel),
+          slivers: [
+            // Aperçu fidèle (3D avec ombre de contact ou photo)
+            SliverToBoxAdapter(child: _buildPreview(isDark)),
 
-              // Aperçu fidèle (3D avec ombre de contact ou photo)
-              SliverToBoxAdapter(child: _buildPreview(isDark)),
+            // Import depuis galerie
+            SliverToBoxAdapter(child: _buildImportCard(isDark)),
 
-              // Import depuis galerie
-              SliverToBoxAdapter(child: _buildImportCard(isDark)),
+            // Presets
+            SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 1,
+                ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final option = kAvatarOptions[index];
+                  final isSelected =
+                      _customImagePath == null &&
+                      _customAvatarUrl == null &&
+                      _selectedId == option.id;
+                  return _PresetAvatarTile(
+                    option: option,
+                    isSelected: isSelected,
+                    isDark: isDark,
+                    onTap: () {
+                      ElyriiHaptics.selection();
+                      setState(() {
+                        _customImagePath = null;
+                        _customAvatarUrl = null;
+                        _selectedId = option.id;
+                      });
+                    },
+                  );
+                }, childCount: kAvatarOptions.length),
+              ),
+            ),
 
-              // Presets
-              SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 1,
-                  ),
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final option = kAvatarOptions[index];
-                    final isSelected =
-                        _customImagePath == null &&
-                        _customAvatarUrl == null &&
-                        _selectedId == option.id;
-                    return _PresetAvatarTile(
-                      option: option,
-                      isSelected: isSelected,
-                      isDark: isDark,
-                      onTap: () {
-                        ElyriiHaptics.selection();
-                        setState(() {
-                          _customImagePath = null;
-                          _customAvatarUrl = null;
-                          _selectedId = option.id;
-                        });
-                      },
-                    );
-                  }, childCount: kAvatarOptions.length),
+            // Bouton confirmer
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
+                child: LiquidGlassButton(
+                  label: 'Choisir cet avatar',
+                  icon: Icons.check_rounded,
+                  isExpanded: true,
+                  onPressed: _confirm,
                 ),
               ),
-
-              // Bouton confirmer
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
-                  child: LiquidGlassButton(
-                    label: 'Choisir cet avatar',
-                    icon: Icons.check_rounded,
-                    isExpanded: true,
-                    onPressed: _confirm,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

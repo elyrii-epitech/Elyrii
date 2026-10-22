@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/glass/liquid_glass_button.dart';
 
 /// Numéros d'écoute et d'urgence santé mentale (France), tapables.
 const List<({String title, String subtitle, String tel})> kEmergencyResources =
@@ -39,17 +40,12 @@ class EmergencyResourcesButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final foreground = isDark ? AppColors.primaryDark : AppColors.primary;
     if (compact) {
-      return IconButton.filledTonal(
+      return LiquidGlassIconButton(
         tooltip: 'Aide d’urgence et numéros d’écoute',
         onPressed: () => _showEmergencyResources(context),
-        style: IconButton.styleFrom(
-          minimumSize: const Size(44, 44),
-          backgroundColor: isDark
-              ? AppColors.surfaceDark
-              : AppColors.surfaceLight,
-          foregroundColor: foreground,
-        ),
-        icon: const Icon(Icons.health_and_safety_outlined, size: 23),
+        size: 48,
+        color: foreground,
+        icon: Icons.health_and_safety_outlined,
       );
     }
     return FilledButton.tonalIcon(

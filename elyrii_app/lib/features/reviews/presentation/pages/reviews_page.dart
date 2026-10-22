@@ -84,86 +84,77 @@ class _ReviewsPageState extends State<ReviewsPage> {
               snapshot.connectionState == ConnectionState.waiting &&
               data == null;
 
-          return ElyriiPageFrame(
-            header: ElyriiPageHeader(
-              title: 'Bilan',
-              subtitle: 'Ta semaine, en un coup d’œil.',
-              leading: ElyriiBackButton(
-                onPressed: () => Navigator.maybePop(context),
-              ),
+          return ElyriiPageFrame.detail(
+            title: 'Bilan',
+            leading: ElyriiBackButton(
+              onPressed: () => Navigator.maybePop(context),
             ),
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
-              ),
-              slivers: [
-                // Dégagement de l'en-tête épinglé (flèche + titre + sous-titre).
-                CupertinoSliverRefreshControl(onRefresh: _reload),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _RangeSelector(
-                        isDark: isDark,
-                        selectedRange: _selectedRange,
-                        onSelected: _selectRange,
-                      ),
-                      const SizedBox(height: 20),
-                      if (isWaiting)
-                        ReviewSkeleton(isDark: isDark)
-                      else if (snapshot.hasError)
-                        LiquidGlassCard(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(
-                              'Impossible de charger le bilan pour le moment.',
-                              style: TextStyle(
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
-                              ),
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              CupertinoSliverRefreshControl(onRefresh: _reload),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    _RangeSelector(
+                      isDark: isDark,
+                      selectedRange: _selectedRange,
+                      onSelected: _selectRange,
+                    ),
+                    const SizedBox(height: 20),
+                    if (isWaiting)
+                      ReviewSkeleton(isDark: isDark)
+                    else if (snapshot.hasError)
+                      LiquidGlassCard(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            'Impossible de charger le bilan pour le moment.',
+                            style: TextStyle(
+                              color: isDark
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textPrimaryLight,
                             ),
                           ),
-                        )
-                      else if (data != null) ...[
-                        ReviewOverviewGrid(stats: data, isDark: isDark),
-                        const SizedBox(height: 20),
-                        ReviewSectionHeader(
-                          title: 'Tendance de l’humeur',
-                          subtitle: 'Nombre de prises d’humeur par jour',
-                          isDark: isDark,
                         ),
-                        ReviewTrendChart(stats: data, isDark: isDark),
-                        const SizedBox(height: 20),
-                        ReviewSectionHeader(
-                          title: 'Répartition',
-                          subtitle: 'Ce qui ressort le plus sur la période',
-                          isDark: isDark,
-                        ),
-                        ReviewMoodDistributionList(stats: data, isDark: isDark),
-                        const SizedBox(height: 20),
-                        ReviewSectionHeader(
-                          title: 'Activité',
-                          subtitle:
-                              'Journal et humeur sur la même ligne du temps',
-                          isDark: isDark,
-                        ),
-                        ReviewActivityTimeline(stats: data, isDark: isDark),
-                        const SizedBox(height: 140),
-                      ],
-                    ]),
-                  ),
+                      )
+                    else if (data != null) ...[
+                      ReviewOverviewGrid(stats: data, isDark: isDark),
+                      const SizedBox(height: 20),
+                      ReviewSectionHeader(
+                        title: 'Tendance de l’humeur',
+                        subtitle: 'Nombre de prises d’humeur par jour',
+                        isDark: isDark,
+                      ),
+                      ReviewTrendChart(stats: data, isDark: isDark),
+                      const SizedBox(height: 20),
+                      ReviewSectionHeader(
+                        title: 'Répartition',
+                        subtitle: 'Ce qui ressort le plus sur la période',
+                        isDark: isDark,
+                      ),
+                      ReviewMoodDistributionList(stats: data, isDark: isDark),
+                      const SizedBox(height: 20),
+                      ReviewSectionHeader(
+                        title: 'Activité',
+                        subtitle:
+                            'Journal et humeur sur la même ligne du temps',
+                        isDark: isDark,
+                      ),
+                      ReviewActivityTimeline(stats: data, isDark: isDark),
+                      const SizedBox(height: 140),
+                    ],
+                  ]),
                 ),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
     );
   }
-
-  /// En-tête épinglé : retour glass, titre et sous-titre centrés sur la
-  /// flèche — ne suivent pas le scroll.
 }
 
 /// Sélecteur de période façon iOS : segmented control coulissant natif.

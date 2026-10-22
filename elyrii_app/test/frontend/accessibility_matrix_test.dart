@@ -145,14 +145,15 @@ void main() {
           });
           await tester.pump();
           if (page.key == 'dashboard') {
-            for (final label in ['dashboard-date', 'dashboard-greeting']) {
-              final paragraph = tester.renderObject<RenderParagraph>(
-                find.byKey(ValueKey(label)),
-              );
+            for (final finder in [
+              find.textContaining('${DateTime.now().day} '),
+              find.textContaining(app.dashboard.getGreeting()),
+            ]) {
+              final paragraph = tester.renderObject<RenderParagraph>(finder);
               expect(
                 paragraph.didExceedMaxLines,
                 isFalse,
-                reason: '$label must remain fully readable at ${cfg.scale}',
+                reason: '$finder must remain fully readable at ${cfg.scale}',
               );
             }
           }

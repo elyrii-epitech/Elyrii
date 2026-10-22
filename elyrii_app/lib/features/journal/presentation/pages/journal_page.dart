@@ -76,121 +76,50 @@ class _JournalPageState extends State<JournalPage> {
         builder: (context, provider, child) {
           final entries = provider.entries;
 
-          return ElyriiPageFrame(
-            header: _buildHeader(isDark, provider),
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
+          return ElyriiPageFrame.tab(
+            title: 'Journal',
+            actions: [
+              LiquidGlassIconButton(
+                tooltip: 'Changer l’ordre des notes',
+                icon: provider.sortNewest
+                    ? Icons.arrow_downward_rounded
+                    : Icons.arrow_upward_rounded,
+                onPressed: () {
+                  ElyriiHaptics.selection();
+                  provider.toggleSort();
+                },
               ),
-              slivers: [
-                // 1. Tirer-relâcher natif Cupertino (remplace tout refresh Material)
-                CupertinoSliverRefreshControl(
-                  onRefresh: () => provider.loadEntries(),
-                ),
-
-                // 2. En-tête spatial fluide (le titre défile avec le contenu)
-                ..._buildContentSlivers(entries, isDark),
-                if (provider.hasMore)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: LiquidGlassButton(
-                        label: 'Charger les notes suivantes',
-                        isLoading: provider.loadingMore,
-                        onPressed: provider.loadingMore
-                            ? null
-                            : provider.loadMore,
-                      ),
+              LiquidGlassIconButton(
+                tooltip: 'Écrire une note',
+                icon: Icons.add_rounded,
+                onPressed: () => _showEditorSheet(),
+              ),
+            ],
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              CupertinoSliverRefreshControl(
+                onRefresh: () => provider.loadEntries(),
+              ),
+              ..._buildContentSlivers(entries, isDark),
+              if (provider.hasMore)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: LiquidGlassButton(
+                      label: 'Charger les notes suivantes',
+                      isLoading: provider.loadingMore,
+                      onPressed: provider.loadingMore
+                          ? null
+                          : provider.loadMore,
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           );
         },
       ),
-    );
-  }
-
-  /// Boutons d'actions épinglés au scroll en verre liquide (flèche de tri et +).
-  Widget _buildPinnedActions(JournalProvider provider) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Bouton de tri (récent / ancien)
-        LiquidGlassIconButton(
-          tooltip: 'Changer l’ordre des notes',
-          icon: provider.sortNewest
-              ? Icons.arrow_downward_rounded
-              : Icons.arrow_upward_rounded,
-          onPressed: () {
-            ElyriiHaptics.selection();
-            provider.toggleSort();
-          },
-        ),
-        const SizedBox(width: 8),
-
-        // Bouton nouvelle note
-        LiquidGlassIconButton(
-          tooltip: 'Écrire une note',
-          icon: Icons.add_rounded,
-          onPressed: () => _showEditorSheet(),
-        ),
-      ],
-    );
-  }
-
-  /// En-tête spatial sans vide noir : le titre glisse sous les boutons épinglés.
-  Widget _buildHeader(bool isDark, JournalProvider provider) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // Colonne titre & sur-titre
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'MES PENSÉES',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: AppColors.readableAccent(
-                    isDark ? AppColors.primaryDark : AppColors.primary,
-                    isDark: Theme.of(context).brightness == Brightness.dark,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Journal',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.8,
-                  height: 1.1,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Pose tes pensées, sans filtre.',
-                style: TextStyle(
-                  fontSize: 14,
-                  height: 1.35,
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Actions alignées à côté du titre dans l’en-tête épinglé.
-        _buildPinnedActions(provider),
-      ],
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
+import 'package:elyrii_app/core/widgets/elyrii_page_header.dart';
 import 'package:elyrii_app/features/chatbot/presentation/pages/chatbot_page.dart';
 import 'package:elyrii_app/features/chatbot/presentation/providers/chatbot_provider.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +37,11 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        expect(find.byType(ElyriiHeaderBar), findsOneWidget);
+        expect(
+          tester.getTopLeft(find.byType(SingleChildScrollView).first).dy,
+          0,
+        );
         final input = find.byType(TextField);
         final decoration = tester.widget<TextField>(input).decoration!;
         expect(decoration.filled, isFalse);

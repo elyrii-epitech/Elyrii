@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
+import 'dart:ui' show FlutterView;
 import 'dart:convert';
 import 'dart:io';
 
@@ -23,6 +24,8 @@ import 'package:elyrii_app/features/profile_setup/presentation/pages/edit_profil
 import 'package:elyrii_app/features/profile_setup/presentation/pages/avatar_picker_page.dart';
 import 'package:elyrii_app/features/reviews/presentation/pages/reviews_page.dart';
 import 'package:elyrii_app/features/settings/pages/settings_page.dart';
+
+import 'package:elyrii_app/core/widgets/elyrii_page_header.dart';
 
 import '../support/accessibility_fixture.dart';
 
@@ -57,6 +60,17 @@ class _ScrolledTapTargetGuideline extends MinimumTapTargetGuideline {
     }
     return false;
   }
+}
+
+/// Content scrolled under the glass header bar is blurred on purpose.
+class _UnoccludedTextContrastGuideline extends MinimumTextContrastGuideline {
+  const _UnoccludedTextContrastGuideline();
+  @override
+  bool isNodeOffScreen(Rect paintBounds, FlutterView window) =>
+      super.isNodeOffScreen(paintBounds, window) ||
+      paintBounds.top <
+          window.padding.top / window.devicePixelRatio +
+              ElyriiHeaderBar.rowExtent;
 }
 
 void main() {
@@ -210,7 +224,10 @@ void main() {
                   link:
                       (iOSTapTargetGuideline as MinimumTapTargetGuideline).link,
                 ),
-              textContrastGuideline,
+              if (viewport == 'top')
+                textContrastGuideline
+              else
+                const _UnoccludedTextContrastGuideline(),
             ]) {
               final check = await guideline.evaluate(tester);
               checks.add({

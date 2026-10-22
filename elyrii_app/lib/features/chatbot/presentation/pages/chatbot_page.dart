@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
+import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../providers/chatbot_provider.dart';
 import '../widgets/chat_history_sheet.dart';
 import '../widgets/chat_message_bubble.dart';
@@ -153,112 +154,94 @@ class _ChatbotPageState extends State<ChatbotPage> {
           ? const Color(0xFF141416)
           : const Color(0xFFFAFAFA),
       body: SafeArea(
+        top: false,
         bottom: false,
-        child: Column(
+        child: Stack(
           children: [
-            _buildHeader(isDark),
-            Selector<ChatbotProvider, String?>(
-              selector: (_, provider) => provider.error,
-              builder: (_, error, _) => error == null
-                  ? const SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 6,
-                      ),
-                      child: Text(
-                        error,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-            ),
-            Expanded(
-              child: Consumer<ChatbotProvider>(
-                builder: (context, provider, _) => provider.messages.isEmpty
-                    ? _buildWelcomeState(isDark, keyboardOpen)
-                    : _buildConversation(provider, isDark),
-              ),
-            ),
-            Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 780,
-                  maxHeight:
-                      (MediaQuery.sizeOf(context).height -
-                          MediaQuery.viewInsetsOf(context).bottom) *
-                      0.25,
-                ),
-                child: SingleChildScrollView(
-                  child: CrisisDetectionBanner(
-                    visible: _showCrisisBanner,
-                    onDismiss: () => setState(() => _showCrisisBanner = false),
+            Column(
+              children: [
+                Expanded(
+                  child: Consumer<ChatbotProvider>(
+                    builder: (context, provider, _) => provider.messages.isEmpty
+                        ? _buildWelcomeState(isDark, keyboardOpen)
+                        : _buildConversation(provider, isDark),
                   ),
                 ),
+                Selector<ChatbotProvider, String?>(
+                  selector: (_, provider) => provider.error,
+                  builder: (_, error, _) => error == null
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 6,
+                          ),
+                          child: Text(
+                            error,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                ),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: 780,
+                      maxHeight:
+                          (MediaQuery.sizeOf(context).height -
+                              MediaQuery.viewInsetsOf(context).bottom) *
+                          0.25,
+                    ),
+                    child: SingleChildScrollView(
+                      child: CrisisDetectionBanner(
+                        visible: _showCrisisBanner,
+                        onDismiss: () =>
+                            setState(() => _showCrisisBanner = false),
+                      ),
+                    ),
+                  ),
+                ),
+                _buildComposer(isDark, keyboardOpen ? 8 : bottomClearance + 12),
+              ],
+            ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: ElyriiHeaderBar(
+                title: 'Elyrii',
+                leading: LiquidGlassIconButton(
+                  tooltip: 'Historique des conversations',
+                  icon: Icons.menu_rounded,
+                  size: 48,
+                  onPressed: () {
+                    _focusNode.unfocus();
+                    ChatHistorySheet.show(context);
+                  },
+                ),
+                actions: const [EmergencyResourcesButton(compact: true)],
               ),
             ),
-            _buildComposer(isDark, keyboardOpen ? 8 : bottomClearance + 12),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(bool isDark) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 780),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Row(
-            children: [
-              IconButton.filledTonal(
-                tooltip: 'Historique des conversations',
-                onPressed: () {
-                  _focusNode.unfocus();
-                  ChatHistorySheet.show(context);
-                },
-                style: IconButton.styleFrom(
-                  backgroundColor: isDark
-                      ? AppColors.surfaceDark
-                      : AppColors.surfaceLight,
-                  foregroundColor: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                  minimumSize: const Size(44, 44),
-                ),
-                icon: const Icon(Icons.menu_rounded, size: 23),
-              ),
-              Expanded(
-                child: Text(
-                  'Elyrii',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.titleLarge(
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const EmergencyResourcesButton(compact: true),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildWelcomeState(bool isDark, bool keyboardOpen) {
+    final topPadding = ElyriiHeaderBar.extentOf(context) + 16;
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: EdgeInsets.fromLTRB(24, topPadding, 24, 16),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight: (constraints.maxHeight - 32).clamp(0, double.infinity),
+            minHeight: (constraints.maxHeight - topPadding - 16).clamp(
+              0,
+              double.infinity,
+            ),
           ),
           child: Center(
             child: ConstrainedBox(
@@ -344,7 +327,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
       // only the visible tail, and older pages extend the far end of the list.
       reverse: true,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      padding: const EdgeInsets.only(top: 16, bottom: 12),
+      padding: EdgeInsets.only(
+        top: ElyriiHeaderBar.extentOf(context) + 16,
+        bottom: 12,
+      ),
       itemCount: itemCount,
       findChildIndexCallback: (key) {
         if (key == const ValueKey('chat-typing')) {

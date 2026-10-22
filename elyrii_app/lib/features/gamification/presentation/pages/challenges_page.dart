@@ -11,6 +11,7 @@ import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
@@ -171,36 +172,19 @@ class _ChallengesPageState extends State<ChallengesPage> {
     const maxXp = 150;
     final stateData = _getBotanicalState(level);
 
-    final topPadding = MediaQuery.of(context).padding.top;
-
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: CustomScrollView(
+      body: ElyriiPageFrame.tab(
+        title: 'Jardin',
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
         slivers: [
-          // Tirer-relâcher natif Cupertino (aucun indicateur Material).
           CupertinoSliverRefreshControl(
             onRefresh: () => provider.loadAll(force: true),
           ),
-
-          // En-tête spatial fluide (remplace le SliverAppBar.large rigide).
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppDimensions.pageHorizontalPadding,
-                topPadding + 14,
-                AppDimensions.pageHorizontalPadding,
-                4,
-              ),
-              child: _buildHeader(isDark),
-            ),
-          ),
-
-          // Contenu principal de la page.
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
               AppDimensions.pageHorizontalPadding,
@@ -302,51 +286,6 @@ class _ChallengesPageState extends State<ChallengesPage> {
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
-    );
-  }
-
-  /// En-tête spatial sans vide noir ni coupure.
-  Widget _buildHeader(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'MON JARDIN',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: AppColors.readableAccent(
-              isDark ? AppColors.primaryDark : AppColors.primary,
-              isDark: Theme.of(context).brightness == Brightness.dark,
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Jardin',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.8,
-            height: 1.1,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Fais grandir tes habitudes, une graine à la fois.',
-          style: TextStyle(
-            fontSize: 14,
-            height: 1.35,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
-        ),
-      ],
     );
   }
 

@@ -66,122 +66,164 @@ class _DashboardPageState extends State<DashboardPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     final provider = context.read<DashboardProvider>();
+    final authProvider = context.watch<AuthProvider>();
+    final userProvider = context.watch<UserProvider>();
+    final rawName =
+        authProvider.user?.firstName?.trim() ??
+        userProvider.profile?.firstName?.trim() ??
+        '';
+    final greeting = rawName.isNotEmpty
+        ? '${provider.getGreeting()}, $rawName'
+        : provider.getGreeting();
+
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: ElyriiPageFrame(
-        header: _buildPinnedHeaderControls(
-          context.watch<AuthProvider>(),
-          context.watch<UserProvider>(),
-          isDark,
-        ),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(width: 48),
-                  Flexible(
-                    child: Selector<DashboardProvider, MoodType?>(
-                      selector: (_, p) => p.selectedMood,
-                      builder: (_, mood, _) => MascotPeek(
-                        selectedMood: mood,
-                        isDark: isDark,
-                        onTap: provider.nextMascotMessage,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 48,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: MascotCustomizeCharm(isDark: isDark),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.pageHorizontalPadding,
-                ),
-                child: Column(
-                  children: [
-                    Selector<DashboardProvider, String>(
-                      selector: (_, p) => p.mascotMessage,
-                      builder: (_, message, _) => MascotSpeechBubble(
-                        message: message,
-                        isDark: isDark,
-                        onTap: provider.nextMascotMessage,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    Selector<
-                      DashboardProvider,
-                      (MoodType?, bool, String?, DateTime?)
-                    >(
-                      selector: (_, p) =>
-                          (p.selectedMood, p.isSavingMood, p.error, p.cachedAt),
-                      builder: (_, state, _) => Column(
-                        children: [
-                          _buildMoodSection(isDark, provider),
-                          if (state.$2)
-                            const Padding(
-                              padding: EdgeInsets.all(8),
-                              child: Text('Enregistrement de ton humeur…'),
-                            ),
-                          if (state.$4 != null)
-                            const Text(
-                              'Données conservées hors ligne, datant de moins de 24 h.',
-                            ),
-                          if (state.$3 != null)
-                            Semantics(
-                              liveRegion: true,
-                              child: Text(
-                                state.$3!,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          if (state.$3 != null)
-                            TextButton(
-                              onPressed: provider.refresh,
-                              child: const Text('Actualiser'),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    Selector2<
-                      DashboardProvider,
-                      JournalProvider,
-                      (bool, int, JournalEntry?)
-                    >(
-                      selector: (_, dashboard, journal) => (
-                        dashboard.isLoading,
-                        dashboard.currentStreak,
-                        journal.entries.firstOrNull,
-                      ),
-                      builder: (context, value, _) => value.$1
-                          ? DashboardSkeleton(isDark: isDark)
-                          : _buildBentoGrid(
-                              provider,
-                              context.read<JournalProvider>(),
-                              isDark,
-                            ),
-                    ),
-                    const SizedBox(height: 130),
-                  ],
+      body: ElyriiPageFrame.tab(
+        eyebrow: _formatHeaderDate(),
+        title: greeting,
+        leading: AccessibleAction(
+          label: 'Profil utilisateur',
+          excludeChildSemantics: true,
+          onPressed: () {
+            ElyriiHaptics.light();
+            context.push(AppRoutes.editProfile);
+          },
+          child: ElyriiGlassSurface(
+            role: GlassRole.floatingControl,
+            borderRadius: BorderRadius.circular(22),
+            width: 48,
+            height: 48,
+            child: Center(
+              child: ClipOval(
+                child: UserAvatar(
+                  pfp: userProvider.profile?.pfp,
+                  size: 38,
+                  showBorder: false,
                 ),
               ),
-            ],
+            ),
           ),
         ),
+        actions: [
+          GlassSettingsButton(
+            isDark: isDark,
+            onTap: () => context.push(AppRoutes.settings),
+          ),
+        ],
+        controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 48),
+                    Flexible(
+                      child: Selector<DashboardProvider, MoodType?>(
+                        selector: (_, p) => p.selectedMood,
+                        builder: (_, mood, _) => MascotPeek(
+                          selectedMood: mood,
+                          isDark: isDark,
+                          onTap: provider.nextMascotMessage,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 48,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: MascotCustomizeCharm(isDark: isDark),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.pageHorizontalPadding,
+                  ),
+                  child: Column(
+                    children: [
+                      Selector<DashboardProvider, String>(
+                        selector: (_, p) => p.mascotMessage,
+                        builder: (_, message, _) => MascotSpeechBubble(
+                          message: message,
+                          isDark: isDark,
+                          onTap: provider.nextMascotMessage,
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Selector<
+                        DashboardProvider,
+                        (MoodType?, bool, String?, DateTime?)
+                      >(
+                        selector: (_, p) => (
+                          p.selectedMood,
+                          p.isSavingMood,
+                          p.error,
+                          p.cachedAt,
+                        ),
+                        builder: (_, state, _) => Column(
+                          children: [
+                            _buildMoodSection(isDark, provider),
+                            if (state.$2)
+                              const Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Text('Enregistrement de ton humeur…'),
+                              ),
+                            if (state.$4 != null)
+                              const Text(
+                                'Données conservées hors ligne, datant de moins de 24 h.',
+                              ),
+                            if (state.$3 != null)
+                              Semantics(
+                                liveRegion: true,
+                                child: Text(
+                                  state.$3!,
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                ),
+                              ),
+                            if (state.$3 != null)
+                              TextButton(
+                                onPressed: provider.refresh,
+                                child: const Text('Actualiser'),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+                      Selector2<
+                        DashboardProvider,
+                        JournalProvider,
+                        (bool, int, JournalEntry?)
+                      >(
+                        selector: (_, dashboard, journal) => (
+                          dashboard.isLoading,
+                          dashboard.currentStreak,
+                          journal.entries.firstOrNull,
+                        ),
+                        builder: (context, value, _) => value.$1
+                            ? DashboardSkeleton(isDark: isDark)
+                            : _buildBentoGrid(
+                                provider,
+                                context.read<JournalProvider>(),
+                                isDark,
+                              ),
+                      ),
+                      const SizedBox(height: 130),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -215,123 +257,6 @@ class _DashboardPageState extends State<DashboardPage> {
     final dayName = days[now.weekday - 1];
     final monthName = months[now.month - 1];
     return '$dayName ${now.day} $monthName';
-  }
-
-  /// Date et salutation pouvant se replier sans perdre de texte.
-  Widget _buildScrollingGreeting(
-    AuthProvider authProvider,
-    UserProvider userProvider,
-    DashboardProvider dashboardProvider,
-    bool isDark,
-  ) {
-    final rawName =
-        authProvider.user?.firstName?.trim() ??
-        userProvider.profile?.firstName?.trim() ??
-        '';
-    final greeting = rawName.isNotEmpty
-        ? '${dashboardProvider.getGreeting()}, $rawName'
-        : dashboardProvider.getGreeting();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _formatHeaderDate(),
-          key: const ValueKey('dashboard-date'),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: AppColors.readableAccent(
-              isDark ? AppColors.primaryDark : AppColors.primary,
-              isDark: Theme.of(context).brightness == Brightness.dark,
-            ),
-          ),
-        ),
-        const SizedBox(height: 2),
-        Semantics(
-          header: true,
-          child: Text(
-            greeting,
-            key: const ValueKey('dashboard-greeting'),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.5,
-              height: 1.1,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Les grands textes prennent toute la largeur sous les contrôles.
-  Widget _buildPinnedHeaderControls(
-    AuthProvider authProvider,
-    UserProvider userProvider,
-    bool isDark,
-  ) {
-    final profile = AccessibleAction(
-      label: 'Profil utilisateur',
-      excludeChildSemantics: true,
-      onPressed: () {
-        ElyriiHaptics.light();
-        context.push(AppRoutes.editProfile);
-      },
-      child: ElyriiGlassSurface(
-        role: GlassRole.floatingControl,
-        borderRadius: BorderRadius.circular(22),
-        width: 48,
-        height: 48,
-        child: Center(
-          child: ClipOval(
-            child: UserAvatar(
-              pfp: userProvider.profile?.pfp,
-              size: 38,
-              showBorder: false,
-            ),
-          ),
-        ),
-      ),
-    );
-    final settings = GlassSettingsButton(
-      isDark: isDark,
-      onTap: () => context.push(AppRoutes.settings),
-    );
-    final greeting = _buildScrollingGreeting(
-      authProvider,
-      userProvider,
-      context.read<DashboardProvider>(),
-      isDark,
-    );
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 300 ||
-            MediaQuery.textScalerOf(context).scale(16) > 24) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [profile, const Spacer(), settings]),
-              const SizedBox(height: 12),
-              greeting,
-            ],
-          );
-        }
-        return Row(
-          children: [
-            profile,
-            const SizedBox(width: 8),
-            Expanded(child: greeting),
-            const SizedBox(width: 8),
-            settings,
-          ],
-        );
-      },
-    );
   }
 
   /// Section État d'Esprit inspirée d'Apple Health State of Mind :

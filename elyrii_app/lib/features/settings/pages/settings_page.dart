@@ -73,286 +73,278 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: isDark
           ? AppColors.scaffoldDark
           : AppColors.scaffoldLight,
-      body: ElyriiPageFrame(
-        header: const ElyriiPageHeader(
-          title: 'Paramètres',
-          subtitle: 'Ajuste Elyrii à ton rythme.',
-          leading: ElyriiBackButton(),
-        ),
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            if (userProvider.error != null)
-              SliverToBoxAdapter(
-                child: Semantics(
-                  liveRegion: true,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Text(
-                          userProvider.error!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
+      body: ElyriiPageFrame.detail(
+        title: 'Paramètres',
+        leading: const ElyriiBackButton(),
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          if (userProvider.error != null)
+            SliverToBoxAdapter(
+              child: Semantics(
+                liveRegion: true,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Text(
+                        userProvider.error!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
                         ),
-                        TextButton(
-                          onPressed: userProvider.isLoading
-                              ? null
-                              : userProvider.loadSettings,
-                          child: const Text('Recharger les paramètres'),
-                        ),
-                      ],
-                    ),
+                      ),
+                      TextButton(
+                        onPressed: userProvider.isLoading
+                            ? null
+                            : userProvider.loadSettings,
+                        child: const Text('Recharger les paramètres'),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            // Titre et sous-titre : dans le scroll, la flèche reste épinglée.
-
-            // Section Apparence
-            SliverToBoxAdapter(
-              child: _buildSection(
-                context,
-                title: 'Apparence',
-                isDark: isDark,
-                children: [
-                  _SettingsCell(
-                    title: 'Mode sombre',
-                    subtitle: 'Activer le thème sombre',
-                    icon: Icons.dark_mode_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: null,
-                    trailing: Switch.adaptive(
-                      value: isDark,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (value) {
-                        final mode = value ? ThemeMode.dark : ThemeMode.light;
-                        context.read<UserProvider>().updateSettings(
-                          themeMode: _themeModeToServerValue(mode),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
             ),
-            // Section Notifications
-            SliverToBoxAdapter(
-              child: _buildSection(
-                context,
-                title: 'Notifications',
-                isDark: isDark,
-                children: [
-                  const _SettingsCell(
-                    title: 'Notifications push',
-                    subtitle: 'Les rappels ne sont pas disponibles dans cette version.',
-                    icon: Icons.notifications_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: null,
-                  ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Retour haptique',
-                    subtitle: 'Vibrations lors des interactions',
-                    icon: Icons.vibration_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: null,
-                    trailing: Switch.adaptive(
-                      value: hapticsEnabled,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (value) {
-                        setState(() => _haptics = value);
-                        ElyriiHaptics.setEnabled(value);
-                        context.read<UserProvider>().updateSettings(
-                          hapticsEnabled: value,
-                        );
-                        if (value) {
-                          ElyriiHaptics.medium();
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Section Compte
-            SliverToBoxAdapter(
-              child: _buildSection(
-                context,
-                title: 'Compte',
-                isDark: isDark,
-                children: [
-                  _SettingsCell(
-                    title: 'Profil',
-                    subtitle: 'Gère tes informations',
-                    icon: Icons.person_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: () {
-                      context.push(AppRoutes.editProfile);
-                    },
-                  ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Confidentialité stricte',
-                    subtitle: strictPrivacy
-                        ? 'Mode strict activé'
-                        : 'Limite les usages de tes données',
-                    icon: Icons.lock_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: () {
+          // Section Apparence
+          SliverToBoxAdapter(
+            child: _buildSection(
+              context,
+              title: 'Apparence',
+              isDark: isDark,
+              children: [
+                _SettingsCell(
+                  title: 'Mode sombre',
+                  subtitle: 'Activer le thème sombre',
+                  icon: Icons.dark_mode_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: null,
+                  trailing: Switch.adaptive(
+                    value: isDark,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (value) {
+                      final mode = value ? ThemeMode.dark : ThemeMode.light;
                       context.read<UserProvider>().updateSettings(
-                        privacyMode: strictPrivacy ? 'STANDARD' : 'STRICT',
-                      );
-                    },
-                    trailing: Switch.adaptive(
-                      value: strictPrivacy,
-                      activeThumbColor: AppColors.primary,
-                      onChanged: (value) {
-                        context.read<UserProvider>().updateSettings(
-                          privacyMode: value ? 'STRICT' : 'STANDARD',
-                        );
-                      },
-                    ),
-                  ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Données et stockage',
-                    subtitle: 'Comprendre les copies locales',
-                    icon: Icons.storage_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: () {
-                      _showInfoDialog(
-                        title: 'Données et stockage',
-                        message: 'Les notes enregistrées sur le serveur ont une copie locale protégée. Hors connexion, les modifications restent dans un brouillon sur cet appareil : rouvre la note et utilise Enregistrer pour réessayer. Les conversations restent sur cet appareil. Supprimer ton compte efface aussi ses données locales.',
+                        themeMode: _themeModeToServerValue(mode),
                       );
                     },
                   ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Exporter mes données',
-                    subtitle: _isExporting
-                        ? 'Préparation…'
-                        : 'Compte, notes et conversations dans un fichier JSON',
-                    icon: Icons.download_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: _isExporting ? null : _exportAccount,
-                  ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Supprimer mon compte',
-                    subtitle: 'Suppression définitive du compte',
-                    icon: Icons.delete_forever_rounded,
-                    iconColor: AppColors.error,
-                    isDestructive: true,
-                    onTap: _isDeletingAccount
-                        ? null
-                        : () => _showDeleteAccountDialog(),
-                    trailing: _isDeletingAccount
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CupertinoActivityIndicator(radius: 10),
-                          )
-                        : Icon(
-                            Icons.chevron_right_rounded,
-                            size: 20,
-                            color: AppColors.error.withValues(alpha: 0.75),
-                          ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            // Section À propos
-            SliverToBoxAdapter(
-              child: _buildSection(
-                context,
-                title: 'À propos',
-                isDark: isDark,
-                children: [
-                  _SettingsCell(
-                    title: 'Version',
-                    subtitle: _version,
-                    icon: Icons.info_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: null,
-                  ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Exporter un diagnostic technique',
-                    subtitle: 'Événements techniques sans tes contenus ni tes identifiants',
-                    icon: Icons.bug_report_outlined,
-                    iconColor: AppColors.primary,
-                    onTap: _exportDiagnostics,
-                  ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Conditions d\'utilisation',
-                    icon: Icons.description_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: () {
-                      _showInfoDialog(
-                        title: 'Conditions d\'utilisation',
-                        message: 'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+          ),
+          // Section Notifications
+          SliverToBoxAdapter(
+            child: _buildSection(
+              context,
+              title: 'Notifications',
+              isDark: isDark,
+              children: [
+                const _SettingsCell(
+                  title: 'Notifications push',
+                  subtitle:
+                      'Les rappels ne sont pas disponibles dans cette version.',
+                  icon: Icons.notifications_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: null,
+                ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Retour haptique',
+                  subtitle: 'Vibrations lors des interactions',
+                  icon: Icons.vibration_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: null,
+                  trailing: Switch.adaptive(
+                    value: hapticsEnabled,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (value) {
+                      setState(() => _haptics = value);
+                      ElyriiHaptics.setEnabled(value);
+                      context.read<UserProvider>().updateSettings(
+                        hapticsEnabled: value,
                       );
+                      if (value) {
+                        ElyriiHaptics.medium();
+                      }
                     },
                   ),
-                  _buildDivider(isDark),
-                  _SettingsCell(
-                    title: 'Politique de confidentialité',
-                    icon: Icons.privacy_tip_rounded,
-                    iconColor: AppColors.primary,
-                    onTap: () {
-                      _showInfoDialog(
-                        title: 'Politique de confidentialité',
-                        message: 'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
-                      );
-                    },
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            // Section Déconnexion
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: LiquidGlassButton(
-                  label: 'Se déconnecter',
-                  icon: Icons.logout_rounded,
-                  style: LiquidGlassButtonStyle.gray,
-                  isExpanded: true,
-                  onPressed: () {
-                    showLiquidGlassDialog(
-                      context: context,
-                      title: 'Se déconnecter',
-                      child: const Text(
-                        'Es-tu sûr de vouloir te déconnecter ?',
-                      ),
-                      actions: [
-                        LiquidGlassDialogAction(
-                          label: 'Annuler',
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                        LiquidGlassDialogAction(
-                          label: 'Déconnecter',
-                          isDestructive: true,
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            await context.read<AuthProvider>().logout();
-                            if (context.mounted) {
-                              context.go(AppRoutes.login);
-                            }
-                          },
-                        ),
-                      ],
+          ),
+          // Section Compte
+          SliverToBoxAdapter(
+            child: _buildSection(
+              context,
+              title: 'Compte',
+              isDark: isDark,
+              children: [
+                _SettingsCell(
+                  title: 'Profil',
+                  subtitle: 'Gère tes informations',
+                  icon: Icons.person_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: () {
+                    context.push(AppRoutes.editProfile);
+                  },
+                ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Confidentialité stricte',
+                  subtitle: strictPrivacy
+                      ? 'Mode strict activé'
+                      : 'Limite les usages de tes données',
+                  icon: Icons.lock_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: () {
+                    context.read<UserProvider>().updateSettings(
+                      privacyMode: strictPrivacy ? 'STANDARD' : 'STRICT',
+                    );
+                  },
+                  trailing: Switch.adaptive(
+                    value: strictPrivacy,
+                    activeThumbColor: AppColors.primary,
+                    onChanged: (value) {
+                      context.read<UserProvider>().updateSettings(
+                        privacyMode: value ? 'STRICT' : 'STANDARD',
+                      );
+                    },
+                  ),
+                ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Données et stockage',
+                  subtitle: 'Comprendre les copies locales',
+                  icon: Icons.storage_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: () {
+                    _showInfoDialog(
+                      title: 'Données et stockage',
+                      message: 'Les notes enregistrées sur le serveur ont une copie locale protégée. Hors connexion, les modifications restent dans un brouillon sur cet appareil : rouvre la note et utilise Enregistrer pour réessayer. Les conversations restent sur cet appareil. Supprimer ton compte efface aussi ses données locales.',
                     );
                   },
                 ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Exporter mes données',
+                  subtitle: _isExporting
+                      ? 'Préparation…'
+                      : 'Compte, notes et conversations dans un fichier JSON',
+                  icon: Icons.download_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: _isExporting ? null : _exportAccount,
+                ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Supprimer mon compte',
+                  subtitle: 'Suppression définitive du compte',
+                  icon: Icons.delete_forever_rounded,
+                  iconColor: AppColors.error,
+                  isDestructive: true,
+                  onTap: _isDeletingAccount
+                      ? null
+                      : () => _showDeleteAccountDialog(),
+                  trailing: _isDeletingAccount
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CupertinoActivityIndicator(radius: 10),
+                        )
+                      : Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20,
+                          color: AppColors.error.withValues(alpha: 0.75),
+                        ),
+                ),
+              ],
+            ),
+          ),
+          // Section À propos
+          SliverToBoxAdapter(
+            child: _buildSection(
+              context,
+              title: 'À propos',
+              isDark: isDark,
+              children: [
+                _SettingsCell(
+                  title: 'Version',
+                  subtitle: _version,
+                  icon: Icons.info_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: null,
+                ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Exporter un diagnostic technique',
+                  subtitle: 'Événements techniques sans tes contenus ni tes identifiants',
+                  icon: Icons.bug_report_outlined,
+                  iconColor: AppColors.primary,
+                  onTap: _exportDiagnostics,
+                ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Conditions d\'utilisation',
+                  icon: Icons.description_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: () {
+                    _showInfoDialog(
+                      title: 'Conditions d\'utilisation',
+                      message: 'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+                    );
+                  },
+                ),
+                _buildDivider(isDark),
+                _SettingsCell(
+                  title: 'Politique de confidentialité',
+                  icon: Icons.privacy_tip_rounded,
+                  iconColor: AppColors.primary,
+                  onTap: () {
+                    _showInfoDialog(
+                      title: 'Politique de confidentialité',
+                      message: 'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          // Section Déconnexion
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: LiquidGlassButton(
+                label: 'Se déconnecter',
+                icon: Icons.logout_rounded,
+                style: LiquidGlassButtonStyle.gray,
+                isExpanded: true,
+                onPressed: () {
+                  showLiquidGlassDialog(
+                    context: context,
+                    title: 'Se déconnecter',
+                    child: const Text('Es-tu sûr de vouloir te déconnecter ?'),
+                    actions: [
+                      LiquidGlassDialogAction(
+                        label: 'Annuler',
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      LiquidGlassDialogAction(
+                        label: 'Déconnecter',
+                        isDestructive: true,
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await context.read<AuthProvider>().logout();
+                          if (context.mounted) {
+                            context.go(AppRoutes.login);
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
-            // Espace en bas
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
-          ],
-        ),
+          ),
+          // Espace en bas
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+        ],
       ),
     );
   }

@@ -86,118 +86,120 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: ElyriiPageFrame(
-      header: const ElyriiPageHeader(
-        title: 'Retrouver mon compte',
-        leading: ElyriiBackButton(),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: AutofillGroup(
-          child: Form(
-            key: _form,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_status != null)
-                  Semantics(liveRegion: true, child: Text(_status!)),
-                if (_error != null) AuthErrorBanner(message: _error!),
-                const SizedBox(height: 16),
-                if (!_done && !_codeStep)
-                  GlassAuthTextField(
-                    controller: _email,
-                    label: 'Adresse email',
-                    prefixIcon: Icons.mail_outline_rounded,
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    enabled: !_busy,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _submit(),
-                    validator: (value) =>
-                        value != null &&
-                            RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                                .hasMatch(value.trim())
-                        ? null
-                        : 'Entre une adresse email valide.',
-                  ),
-                if (!_done && _codeStep) ...[
-                  GlassAuthTextField(
-                    controller: _code,
-                    label: 'Code reçu par email',
-                    prefixIcon: Icons.key_rounded,
-                    enabled: !_busy,
-                    textInputAction: TextInputAction.next,
-                    validator: (value) =>
-                        RegExp(r'^[A-Za-z0-9_-]{43}$')
-                            .hasMatch(value?.trim() ?? '')
-                        ? null
-                        : 'Colle le code complet reçu par email.',
-                  ),
-                  const SizedBox(height: 16),
-                  GlassAuthTextField(
-                    controller: _password,
-                    label: 'Nouveau mot de passe',
-                    helperText: 'Entre 12 et 128 caractères. Une phrase longue est bienvenue.',
-                    prefixIcon: Icons.lock_outline_rounded,
-                    isPassword: true,
-                    autofillHints: const [AutofillHints.newPassword],
-                    enabled: !_busy,
-                    textInputAction: TextInputAction.next,
-                    validator: (value) =>
-                        (value?.length ?? 0) >= 12 &&
-                            (value?.length ?? 0) <= 128
-                        ? null
-                        : 'Le mot de passe doit contenir entre 12 et 128 caractères.',
-                  ),
-                  const SizedBox(height: 16),
-                  GlassAuthTextField(
-                    controller: _confirmation,
-                    label: 'Confirmer le nouveau mot de passe',
-                    prefixIcon: Icons.lock_outline_rounded,
-                    isPassword: true,
-                    autofillHints: const [AutofillHints.newPassword],
-                    enabled: !_busy,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _submit(),
-                    validator: (value) => value == _password.text
-                        ? null
-                        : 'Les mots de passe doivent être identiques.',
-                  ),
-                ],
-                const SizedBox(height: 24),
-                if (!_done)
-                  LiquidGlassButton(
-                    label: _codeStep
-                        ? 'Modifier mon mot de passe'
-                        : 'Recevoir un code',
-                    isLoading: _busy,
-                    onPressed: _busy ? null : _submit,
-                  ),
-                if (!_done)
-                  TextButton(
-                    onPressed: _busy
-                        ? null
-                        : () => setState(() {
-                            _codeStep = !_codeStep;
-                            _error = null;
-                            _status = null;
-                          }),
-                    child: Text(
-                      _codeStep
-                          ? 'Demander un nouveau code'
-                          : 'J’ai déjà un code',
-                    ),
-                  ),
-                if (_done)
-                  LiquidGlassButton(
-                    label: 'Retour à la connexion',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-              ],
+    body: ElyriiPageFrame.detail(
+      title: 'Retrouver mon compte',
+      leading: const ElyriiBackButton(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: AutofillGroup(
+              child: Form(
+                key: _form,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_status != null)
+                      Semantics(liveRegion: true, child: Text(_status!)),
+                    if (_error != null) AuthErrorBanner(message: _error!),
+                    const SizedBox(height: 16),
+                    if (!_done && !_codeStep)
+                      GlassAuthTextField(
+                        controller: _email,
+                        label: 'Adresse email',
+                        prefixIcon: Icons.mail_outline_rounded,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        enabled: !_busy,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _submit(),
+                        validator: (value) =>
+                            value != null &&
+                                RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                                    .hasMatch(value.trim())
+                            ? null
+                            : 'Entre une adresse email valide.',
+                      ),
+                    if (!_done && _codeStep) ...[
+                      GlassAuthTextField(
+                        controller: _code,
+                        label: 'Code reçu par email',
+                        prefixIcon: Icons.key_rounded,
+                        enabled: !_busy,
+                        textInputAction: TextInputAction.next,
+                        validator: (value) =>
+                            RegExp(r'^[A-Za-z0-9_-]{43}$')
+                                .hasMatch(value?.trim() ?? '')
+                            ? null
+                            : 'Colle le code complet reçu par email.',
+                      ),
+                      const SizedBox(height: 16),
+                      GlassAuthTextField(
+                        controller: _password,
+                        label: 'Nouveau mot de passe',
+                        helperText: 'Entre 12 et 128 caractères. Une phrase longue est bienvenue.',
+                        prefixIcon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                        autofillHints: const [AutofillHints.newPassword],
+                        enabled: !_busy,
+                        textInputAction: TextInputAction.next,
+                        validator: (value) =>
+                            (value?.length ?? 0) >= 12 &&
+                                (value?.length ?? 0) <= 128
+                            ? null
+                            : 'Le mot de passe doit contenir entre 12 et 128 caractères.',
+                      ),
+                      const SizedBox(height: 16),
+                      GlassAuthTextField(
+                        controller: _confirmation,
+                        label: 'Confirmer le nouveau mot de passe',
+                        prefixIcon: Icons.lock_outline_rounded,
+                        isPassword: true,
+                        autofillHints: const [AutofillHints.newPassword],
+                        enabled: !_busy,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _submit(),
+                        validator: (value) => value == _password.text
+                            ? null
+                            : 'Les mots de passe doivent être identiques.',
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    if (!_done)
+                      LiquidGlassButton(
+                        label: _codeStep
+                            ? 'Modifier mon mot de passe'
+                            : 'Recevoir un code',
+                        isLoading: _busy,
+                        onPressed: _busy ? null : _submit,
+                      ),
+                    if (!_done)
+                      TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() {
+                                _codeStep = !_codeStep;
+                                _error = null;
+                                _status = null;
+                              }),
+                        child: Text(
+                          _codeStep
+                              ? 'Demander un nouveau code'
+                              : 'J’ai déjà un code',
+                        ),
+                      ),
+                    if (_done)
+                      LiquidGlassButton(
+                        label: 'Retour à la connexion',
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-      ),
+      ],
     ),
   );
 }

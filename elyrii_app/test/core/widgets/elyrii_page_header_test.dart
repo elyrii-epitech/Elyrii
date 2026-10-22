@@ -1,5 +1,6 @@
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/widgets/elyrii_page_header.dart';
+import 'package:elyrii_app/core/widgets/glass/elyrii_back_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -24,10 +25,7 @@ void main() {
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
-        const leadingKey = Key('back');
         const trailingKey = Key('reset');
-        const bodyKey = Key('body');
-        const headerKey = Key('header');
         var tapped = false;
         await tester.pumpWidget(
           MaterialApp(
@@ -40,62 +38,55 @@ void main() {
               child: child!,
             ),
             home: Scaffold(
-              body: ElyriiPageFrame(
-                header: ElyriiPageHeader(
-                  key: headerKey,
-                  title: title,
-                  subtitle: 'Thèmes et accessoires d’Elyrii.',
-                  leading: SizedBox(
-                    key: leadingKey,
-                    width: 44,
-                    height: 44,
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.arrow_back),
-                    ),
-                  ),
-                  trailing: SizedBox(
+              body: ElyriiPageFrame.detail(
+                title: title,
+                leading: ElyriiBackButton(onPressed: () {}),
+                actions: [
+                  SizedBox(
                     key: trailingKey,
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     child: IconButton(
                       onPressed: () => tapped = true,
                       icon: const Icon(Icons.refresh),
                     ),
                   ),
-                ),
-                child: ListView(
-                  key: bodyKey,
-                  children: List.generate(
-                    30,
-                    (i) => SizedBox(height: 60, child: Text('Contenu $i')),
+                ],
+                slivers: [
+                  SliverList.list(
+                    children: List.generate(
+                      40,
+                      (i) => SizedBox(height: 60, child: Text('Contenu $i')),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
         );
 
+        final back = find.byTooltip('Retour');
         final titleRect = tester.getRect(find.text(title));
-        final headerRect = tester.getRect(find.byKey(headerKey));
-        final left = tester.getRect(find.byKey(leadingKey));
+        final left = tester.getRect(back);
         final right = tester.getRect(find.byKey(trailingKey));
         expect(titleRect.left, greaterThanOrEqualTo(left.right));
         expect(titleRect.right, lessThanOrEqualTo(right.left));
+        expect(titleRect.overlaps(left), isFalse);
+        expect(titleRect.overlaps(right), isFalse);
         expect(left.center.dy, right.center.dy);
-        expect(
-          tester.getRect(find.byKey(bodyKey)).top,
-          greaterThanOrEqualTo(headerRect.bottom),
-        );
+        expect(titleRect.center.dy, closeTo(left.center.dy, 1));
         final paragraph = tester.renderObject<RenderParagraph>(
           find.text(title),
         );
         expect(paragraph.didExceedMaxLines, isFalse);
         expect(tester.takeException(), isNull);
 
-        await tester.drag(find.byKey(bodyKey), const Offset(0, -250));
+        await tester.drag(find.byType(CustomScrollView), const Offset(0, -300));
         await tester.pumpAndSettle();
-        expect(tester.getRect(find.byKey(headerKey)), headerRect);
+        expect(tester.getRect(back), left);
+        expect(left.top, greaterThanOrEqualTo(0));
+        expect(left.bottom, lessThanOrEqualTo(568));
+        expect(tester.getRect(find.text(title)), titleRect);
         await tester.tap(find.byKey(trailingKey));
         expect(tapped, isTrue);
       });
