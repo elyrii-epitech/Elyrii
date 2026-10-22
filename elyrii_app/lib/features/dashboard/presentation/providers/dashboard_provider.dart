@@ -1,15 +1,15 @@
 import 'dart:async';
+import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
-
-import 'dart:math';
 
 import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../data/models/dashboard_models.dart';
-
+import '../../domain/civil_day.dart';
 import '../mood_presentation.dart';
 export '../mood_presentation.dart';
 
@@ -43,6 +43,13 @@ class DashboardProvider extends ChangeNotifier {
 
   // Streak (série de jours consécutifs)
   int _currentStreak = 0;
+
+  // Historique typé pour le calendrier : un point par jour connu du serveur.
+  final Map<CivilDay, ActivityTimelinePoint> _history = {};
+  late final Map<CivilDay, ActivityTimelinePoint> _historyView =
+      UnmodifiableMapView(_history);
+  CalendarCoverage? _coverage;
+  int _widestDays = 30;
 
   // Messages de la mascotte Elyrii
   int _currentMascotMessageIndex = 0;
@@ -101,6 +108,13 @@ class DashboardProvider extends ChangeNotifier {
   MoodType? get selectedMood => _selectedMood;
   int get currentStreak => _currentStreak;
 
+  /// Historique serveur indexé par jour, couvrant `coverage` au plus.
+  Map<CivilDay, ActivityTimelinePoint> get history => _historyView;
+
+  /// Plage réellement chargée ; null avant le premier chargement. Un jour
+  /// hors plage est inconnu, jamais absent.
+  CalendarCoverage? get coverage => _coverage;
+
   /// Retourne le message actuel de la mascotte
   String get mascotMessage {
     if (_selectedMood != null) {
@@ -127,11 +141,16 @@ class DashboardProvider extends ChangeNotifier {
   void resetSession() {
     _sessionRevision++;
     _loadInFlight = null;
+    _loadInFlightDays = 0;
+    _queuedDays = 0;
     _selectedMood = null;
     _moodVersion++;
     _isSavingMood = false;
     _cachedAt = null;
     _currentStreak = 0;
+    _history.clear();
+    _coverage = null;
+    _widestDays = 30;
     _isLoading = false;
     _error = null;
     _notify();
@@ -142,11 +161,13 @@ class DashboardProvider extends ChangeNotifier {
     _repository.onUserChanged(userId: userId, isDemo: isDemo);
   }
 
-  void _applyDevStats() {
-    _currentStreak = DevSession.streakDays;
-    _isLoading = false;
+  void _applyDevStats(int days) {
+    _applyStats(
+      DashboardStats.fromJson(
+        DevSession.statsPayload(now: _now(), rangeDays: days),
+      ),
+    );
     _error = null;
-    _notify();
   }
 
   void _initializeMascotMessage() {
@@ -215,22 +236,74 @@ class DashboardProvider extends ChangeNotifier {
   }
 
   Future<void>? _loadInFlight;
+  int _loadInFlightDays = 0;
+  int _queuedDays = 0;
 
-  Future<void> loadDashboardData() {
-    if (_loadInFlight != null) return _loadInFlight!;
+  /// Recharge toujours la plage la plus large déjà demandée : un
+  /// rafraîchissement doit atteindre le réseau, la couverture ne le
+  /// court-circuite pas.
+  Future<void> loadDashboardData() => _startLoad(_widestDays);
+
+  /// Garantit un historique couvrant [month] : la plage demandée va du
+  /// premier jour du mois à aujourd'hui, plafonnée aux 365 jours acceptés
+  /// par l'API existante. Une plage déjà couverte ne déclenche rien.
+  Future<void> ensureCalendarHistory(CivilMonth month) {
+    final today = CivilDay.fromLocal(_now());
+    final span = month.firstDay.isAfter(today)
+        ? 30
+        : month.firstDay.daysUntil(today) + 1;
+    final days = span.clamp(30, 365);
+    if (days > _widestDays) _widestDays = days;
+    if (_coversDays(days)) return Future.value();
+    return _startLoad(days);
+  }
+
+  bool _coversDays(int days) {
+    final coverage = _coverage;
+    if (coverage == null) return false;
+    final today = CivilDay.fromLocal(_now());
+    return !coverage.firstDay.isAfter(today.addDays(-(days - 1))) &&
+        !coverage.throughDay.isBefore(today);
+  }
+
+  Future<void> _startLoad(int days) {
+    final inFlight = _loadInFlight;
+    if (inFlight != null) {
+      // La queue termine la plage la plus large demandée, sans deux
+      // requêtes simultanées du même provider.
+      if (days > _loadInFlightDays && days > _queuedDays) _queuedDays = days;
+      return inFlight;
+    }
     late final Future<void> future;
-    future = _loadDashboardData().whenComplete(() {
+    future = _runLoad(days).whenComplete(() {
       if (identical(_loadInFlight, future)) _loadInFlight = null;
     });
     _loadInFlight = future;
     return future;
   }
 
-  Future<void> _loadDashboardData() async {
+  Future<void> _runLoad(int days) async {
+    var rangeDays = days;
+    while (true) {
+      _loadInFlightDays = rangeDays;
+      try {
+        await _loadDashboardData(rangeDays);
+      } finally {
+        _loadInFlightDays = 0;
+      }
+      final queued = _queuedDays;
+      _queuedDays = 0;
+      if (queued <= rangeDays || _coversDays(queued)) return;
+      rangeDays = queued;
+    }
+  }
+
+  Future<void> _loadDashboardData(int days) async {
     if (_isDemo) {
-      _applyDevStats();
+      _applyDevStats(days);
       return;
     }
+    final range = '${days}d';
     final session = _sessionRevision;
     final moodVersion = _moodVersion;
     _isLoading = true;
@@ -242,7 +315,7 @@ class DashboardProvider extends ChangeNotifier {
     // never hold up a faster network result or replace fresher data afterward.
     unawaited(() async {
       try {
-        final cached = await _repository.getCachedDashboard();
+        final cached = await _repository.getCachedDashboard(range: range);
         if (_disposed ||
             session != _sessionRevision ||
             networkFinished ||
@@ -255,7 +328,7 @@ class DashboardProvider extends ChangeNotifier {
       }
     }());
     try {
-      final data = await _repository.getDashboard();
+      final data = await _repository.getDashboard(range: range);
       networkFinished = true;
       if (_disposed || session != _sessionRevision) return;
       _applyDashboardData(data, moodVersion);
@@ -282,7 +355,23 @@ class DashboardProvider extends ChangeNotifier {
     } else if (moodVersion == _moodVersion) {
       _selectedMood = null;
     }
-    _currentStreak = data.stats.streak;
+    _applyStats(data.stats, fetchedAt: data.cachedAt);
+  }
+
+  void _applyStats(DashboardStats stats, {DateTime? fetchedAt}) {
+    _currentStreak = stats.streak;
+    _history
+      ..clear()
+      ..addEntries(
+        stats.activityTimeline.map((point) => MapEntry(point.day, point)),
+      );
+    // La couverture est calculée côté client, depuis la plage demandée
+    // jusqu'au jour de récupération : le serveur ne déclare pas ses bornes.
+    final through = CivilDay.fromLocal(fetchedAt ?? _now());
+    _coverage = CalendarCoverage(
+      firstDay: through.addDays(-(stats.rangeDays - 1)),
+      throughDay: through,
+    );
     _isLoading = false;
     _notify();
   }

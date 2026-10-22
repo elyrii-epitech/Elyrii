@@ -1,3 +1,5 @@
+import '../../domain/civil_day.dart';
+
 class MoodTrendPoint {
   final String day;
   final int count;
@@ -27,7 +29,7 @@ class MoodDistributionItem {
 }
 
 class ActivityTimelinePoint {
-  final String day;
+  final CivilDay day;
   final int moodLogs;
   final int journalEntries;
 
@@ -39,7 +41,7 @@ class ActivityTimelinePoint {
 
   factory ActivityTimelinePoint.fromJson(Map<String, dynamic> json) {
     return ActivityTimelinePoint(
-      day: json['day'] as String? ?? '',
+      day: CivilDay.parse(json['day'] as String? ?? ''),
       moodLogs: _readInt(json['moodLogs']),
       journalEntries: _readInt(json['journalEntries']),
     );

@@ -536,12 +536,12 @@ class ReviewActivityTimeline extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         children: points.map((point) {
-          final parsedDate = DateTime.tryParse(point.day);
+          final day = point.day;
           final total = point.moodLogs + point.journalEntries;
           return Semantics(
             container: true,
             label:
-                '${point.day} : ${point.moodLogs} humeurs et ${point.journalEntries} notes, total $total',
+                '${day.isoDate} : ${point.moodLogs} humeurs et ${point.journalEntries} notes, total $total',
             excludeSemantics: true,
             child: Padding(
               padding: const EdgeInsets.only(bottom: AppDimensions.spacing16),
@@ -550,9 +550,9 @@ class ReviewActivityTimeline extends StatelessWidget {
                   SizedBox(
                     width: 88,
                     child: Text(
-                      parsedDate != null
-                          ? _shortDateLabel(parsedDate)
-                          : point.day,
+                      _shortDateLabel(
+                        DateTime(day.year, day.month, day.day),
+                      ),
                       style: AppTextStyles.labelMedium(
                         color: context.textTertiary,
                       ),

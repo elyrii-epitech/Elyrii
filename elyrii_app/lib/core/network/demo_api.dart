@@ -66,35 +66,16 @@ class DemoApi {
       return {'moodType': body['moodType'], 'createdAt': now};
     }
     if (path == '/user/dashboard' || path == '/user/stats') {
-      final stats = {
-        'rangeDays': 30,
-        'streak': DevSession.streakDays,
-        'completedChallengesCount': DevSession.completedChallengeCount,
-        'totalPoints': DevSession.totalPoints,
-        'journalEntriesCount': _journal.length,
-        'moodLogsCount': 7,
-        'moodTrend7Days': [
-          for (var i = 0; i < 7; i++)
-            {
-              'day': DateTime.now()
-                  .subtract(Duration(days: 6 - i))
-                  .toIso8601String()
-                  .split('T')
-                  .first,
-              'count': 1,
-            },
-        ],
-        'moodDistribution': [
-          {'moodType': 'happy', 'count': 7},
-        ],
-        'activityTimeline': [
-          {
-            'day': now.split('T').first,
-            'moodLogs': 1,
-            'journalEntries': _journal.length,
-          },
-        ],
-      };
+      // Same range parsing as the real controller: Nd capped at 365.
+      final requested = uri.queryParameters['range'];
+      final parsed = int.tryParse(requested?.replaceAll('d', '') ?? '');
+      final rangeDays =
+          parsed != null && parsed > 0 ? parsed.clamp(1, 365) : 7;
+      final stats = DevSession.statsPayload(
+        now: DateTime.now(),
+        journalCount: _journal.length,
+        rangeDays: rangeDays,
+      );
       return path == '/user/stats'
           ? stats
           : {

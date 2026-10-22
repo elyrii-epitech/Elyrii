@@ -79,19 +79,22 @@ class GamificationProvider extends ChangeNotifier {
 
   @visibleForTesting
   void applyDevProgress() {
-    final now = DateTime.now();
+    final now = _now();
     _completedChallenges = List.unmodifiable(
       List.generate(
         DevSession.completedChallengeCount,
-        (index) => UserChallenge(
-          id: 'demo-completed-$index',
-          userId: DevSession.userId,
-          challengeId: 'demo-challenge-$index',
-          status: 'COMPLETED',
-          createdAt: now,
-          updatedAt: now,
-          completedAt: now,
-        ),
+        (index) {
+          final completedAt = DevSession.challengeCompletedAt(index, now);
+          return UserChallenge(
+            id: 'demo-completed-$index',
+            userId: DevSession.userId,
+            challengeId: 'demo-challenge-$index',
+            status: 'COMPLETED',
+            createdAt: completedAt,
+            updatedAt: completedAt,
+            completedAt: completedAt,
+          );
+        },
       ),
     );
     _availableChallenges = const [];

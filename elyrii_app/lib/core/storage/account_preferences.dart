@@ -21,7 +21,7 @@ abstract final class AccountPreferences {
       ])
         '${base}_$owner',
       // Previous dashboard caches did not include their owner in the envelope.
-      for (final range in const ['7d', '30d', '90d'])
+      for (final range in const ['7d', '30d', '90d', '365d'])
         'cache_dashboard_data_${owner}_$range',
       'profile_setup_completed',
     };

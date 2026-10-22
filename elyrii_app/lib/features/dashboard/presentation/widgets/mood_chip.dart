@@ -23,7 +23,7 @@ class DashboardMoodChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final moodColor = mood.colorFor(
-      widget.isDark ? Brightness.dark : Brightness.light,
+      isDark ? Brightness.dark : Brightness.light,
     );
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
