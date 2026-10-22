@@ -74,7 +74,7 @@ void main() {
     FocusManager.instance.primaryFocus?.unfocus();
     await tapVisible(
       tester,
-      find.bySemanticsLabel(RegExp(r'^Onglet Méditation,')),
+      find.bySemanticsLabel(RegExp(r'^Onglet Méditer,')),
     );
     await waitFor(
       tester,

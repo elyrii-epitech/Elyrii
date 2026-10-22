@@ -48,31 +48,14 @@ class GlassNavigationBar extends StatelessWidget {
       bottom: AppDimensions.spacing20,
     ),
     this.height = 64.0,
-    this.borderRadius = AppDimensions.radiusPill, // 32.0
+    this.borderRadius = AppDimensions.radiusPill,
   });
-
-  /// Width of the widest label, so every label scales by the same factor
-  /// when the dock is too narrow and none wraps.
-  double _labelWidth(BuildContext context) {
-    var widest = 0.0;
-    for (final item in items) {
-      final painter = TextPainter(
-        text: TextSpan(text: item.label, style: AppTextStyles.labelSmall()),
-        textDirection: TextDirection.ltr,
-        textScaler: MediaQuery.textScalerOf(context),
-        maxLines: 1,
-      )..layout();
-      if (painter.width > widest) widest = painter.width;
-      painter.dispose();
-    }
-    return widest.ceilToDouble();
-  }
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
     final theme = Theme.of(context);
-    final labelWidth = _labelWidth(context);
+
     return Container(
       margin: margin,
       constraints: BoxConstraints(minHeight: height),
@@ -94,7 +77,6 @@ class GlassNavigationBar extends StatelessWidget {
                 isSelected: currentIndex == item.index,
                 isDark: isDark,
                 totalItems: items.length,
-                labelWidth: labelWidth,
                 onItemSelected: onItemSelected,
                 iconController: iconControllers[item.index],
               );
@@ -112,7 +94,6 @@ class _GlassNavItemView extends StatefulWidget {
   final bool isSelected;
   final bool isDark;
   final int totalItems;
-  final double labelWidth;
   final ValueChanged<int> onItemSelected;
   final AnimationController iconController;
 
@@ -121,7 +102,6 @@ class _GlassNavItemView extends StatefulWidget {
     required this.isSelected,
     required this.isDark,
     required this.totalItems,
-    required this.labelWidth,
     required this.onItemSelected,
     required this.iconController,
   });
@@ -265,17 +245,9 @@ class _GlassNavItemViewState extends State<_GlassNavItemView> {
                                       ? AppColors.iconDefaultDark
                                       : AppColors.iconDefaultLight),
                           ),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: SizedBox(
-                              width: widget.labelWidth,
-                              child: Text(
-                                widget.item.label,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                softWrap: false,
-                              ),
-                            ),
+                          child: Text(
+                            widget.item.label,
+                            textAlign: TextAlign.center,
                           ),
                         ),
                       ],

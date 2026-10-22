@@ -6,6 +6,7 @@ import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/widgets/glass_bubble_button.dart';
 import 'package:elyrii_app/core/widgets/glass_navigation_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,7 @@ Future<GoRouter> _pumpShell(
   bool reduceMotion = false,
   double textScale = 1.5,
   Size size = const Size(320, 568),
+  bool boldText = false,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -51,6 +53,7 @@ Future<GoRouter> _pumpShell(
           textScaler: TextScaler.linear(textScale),
           highContrast: highContrast,
           disableAnimations: reduceMotion,
+          boldText: boldText,
           padding: const EdgeInsets.only(top: 24, bottom: 20),
         ),
         child: child!,
@@ -107,7 +110,7 @@ void main() {
         'Accueil',
         'Jardin',
         'Journal',
-        'Méditation',
+        'Méditer',
         'Coach',
         'Chat Elyrii',
       ];
@@ -184,7 +187,7 @@ void main() {
   ) async {
     final semantics = tester.ensureSemantics();
     await _pumpShell(tester, highContrast: true);
-    const labels = ['Accueil', 'Jardin', 'Journal', 'Méditation', 'Coach'];
+    const labels = ['Accueil', 'Jardin', 'Journal', 'Méditer', 'Coach'];
     for (var i = 0; i < labels.length; i++) {
       final tab = find.bySemanticsLabel('Onglet ${labels[i]}, ${i + 1} sur 5');
       expect(tab, findsOneWidget);
@@ -211,7 +214,7 @@ void main() {
     await _pumpShell(tester, highContrast: true);
     await tester.tap(find.text('Branche 3 · 0'));
     await tester.pump();
-    const labels = ['Accueil', 'Jardin', 'Journal', 'Méditation', 'Coach'];
+    const labels = ['Accueil', 'Jardin', 'Journal', 'Méditer', 'Coach'];
     for (var i = 0; i < 6; i++) {
       final target = i < 5
           ? find.text(labels[i])
@@ -229,7 +232,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Branche $i · ${i == 3 ? 1 : 0}'), findsOneWidget);
     }
-    await tester.tap(find.text('Méditation'));
+    await tester.tap(find.text('Méditer'));
     await tester.pumpAndSettle();
     expect(find.text('Branche 3 · 1'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -240,7 +243,7 @@ void main() {
   ) async {
     await _pumpShell(tester, highContrast: true, reduceMotion: true);
     final gesture = await tester.startGesture(
-      tester.getCenter(find.text('Méditation')),
+      tester.getCenter(find.text('Méditer')),
     );
     await tester.pump(const Duration(milliseconds: 120));
     final scales = tester.widgetList<AnimatedScale>(
@@ -269,26 +272,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  for (final width in [375.0, 420.0]) {
-    testWidgets('les libellés du dock tiennent sur une ligne à $width px', (
-      tester,
-    ) async {
-      final loader = FontLoader('Poppins')
-        ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'));
-      await loader.load();
-      await _pumpShell(tester, textScale: 1, size: Size(width, 852));
-      const labels = ['Accueil', 'Jardin', 'Journal', 'Méditation', 'Coach'];
-      final heights = [
-        for (final label in labels)
-          tester.getRect(find.text(label).last).height,
-      ];
-      final oneLine =
-          AppTextStyles.labelSmall().fontSize! *
-          AppTextStyles.labelSmall().height!;
-      for (final height in heights) {
-        expect(height, lessThanOrEqualTo(oneLine + 0.5));
-        expect(height, closeTo(heights.first, 0.01));
-      }
-    });
+  for (final (width, bold) in [(375.0, false), (375.0, true), (420.0, false)]) {
+    testWidgets(
+      'libellés du dock à 11 pt sur une ligne, $width px, gras $bold',
+      (tester) async {
+        await (FontLoader('Poppins')
+              ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
+              ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf')))
+            .load();
+        await _pumpShell(
+          tester,
+          textScale: 1,
+          size: Size(width, 852),
+          boldText: bold,
+        );
+        final role = AppTextStyles.labelSmall();
+        for (final label in [
+          'Accueil',
+          'Jardin',
+          'Journal',
+          'Méditer',
+          'Coach',
+        ]) {
+          final paragraph = tester.renderObject<RenderParagraph>(
+            find.text(label).last,
+          );
+          expect(paragraph.text.style?.fontSize, role.fontSize, reason: label);
+          expect(
+            tester.getRect(find.text(label).last).height,
+            closeTo(role.fontSize! * role.height!, 0.5),
+            reason: '$label tient sur une ligne',
+          );
+          expect(paragraph.didExceedMaxLines, isFalse, reason: label);
+          expect(
+            paragraph.textSize.width,
+            lessThanOrEqualTo(paragraph.size.width),
+            reason: '$label n’est pas coupé',
+          );
+        }
+      },
+    );
   }
 }

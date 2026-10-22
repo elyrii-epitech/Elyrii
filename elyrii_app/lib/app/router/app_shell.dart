@@ -26,7 +26,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     GlassNavItem(icon: Icons.home_rounded, label: 'Accueil', index: 0),
     GlassNavItem(icon: Icons.yard_rounded, label: 'Jardin', index: 1),
     GlassNavItem(icon: Icons.book_rounded, label: 'Journal', index: 2),
-    GlassNavItem(icon: Icons.spa_rounded, label: 'Méditation', index: 3),
+    GlassNavItem(icon: Icons.spa_rounded, label: 'Méditer', index: 3),
     GlassNavItem(icon: Icons.person_rounded, label: 'Coach', index: 4),
   ];
 
