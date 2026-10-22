@@ -101,7 +101,7 @@ jobs:
   ios-smoke:
     name: Frontend iOS integration
     needs: quality
-    runs-on: macos-15-intel
+    runs-on: macos-15
     timeout-minutes: 30
     env:
       # Pin the host, Xcode and runtime instead of following macos-latest.
@@ -112,12 +112,12 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: ./.github/actions/setup-flutter
-      - name: Build the integration app before booting the simulator
+      - name: Prepare the integration project before booting the simulator
         run: |
           set -o pipefail
           mkdir -p build
           xcodebuild -version
-          flutter build ios --simulator --debug --no-pub --target=integration_test/frontend_flows_test.dart --dart-define=ELYRII_ENV=development --verbose 2>&1 | tee build/ios-integration-build.log
+          flutter build ios --config-only --simulator --debug --no-pub --target=integration_test/frontend_flows_test.dart --dart-define=ELYRII_ENV=development > build/ios-integration-build.log 2>&1 || { tail -n 100 build/ios-integration-build.log; exit 1; }
       - name: Select an available iPhone simulator
         run: |
           ELYRII_SIMULATOR_SDK=$(xcrun --sdk iphonesimulator --show-sdk-version)
@@ -138,12 +138,14 @@ jobs:
           fi
           xcrun simctl bootstatus "$ELYRII_SIMULATOR_ID" -b
       - name: Bootstrap, native persistence and navigation
+        id: ios-integration
         timeout-minutes: 15
         run: |
           set -o pipefail
-          flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development --verbose 2>&1 | tee build/ios-integration-test.log
+          flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development --verbose > build/ios-integration-test.log 2>&1 || { tail -n 100 build/ios-integration-test.log; exit 1; }
+          tail -n 30 build/ios-integration-test.log
       - name: Collect simulator diagnostics
-        if: failure() && env.ELYRII_SIMULATOR_ID != ''
+        if: always() && steps.ios-integration.outcome != 'success' && env.ELYRII_SIMULATOR_ID != ''
         timeout-minutes: 2
         continue-on-error: true
         run: |
