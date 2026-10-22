@@ -94,9 +94,7 @@ class LiquidGlassButton extends StatelessWidget {
                     Flexible(
                       child: Text(
                         label,
-                        style: AppTextStyles.button().copyWith(
-                          color: foreground,
-                        ),
+                        style: AppTextStyles.labelLarge(color: foreground),
                         textAlign: TextAlign.center,
                       ),
                     ),

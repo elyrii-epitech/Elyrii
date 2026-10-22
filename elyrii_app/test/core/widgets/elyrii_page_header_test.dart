@@ -12,7 +12,8 @@ void main() {
   setUpAll(() async {
     final loader = FontLoader('Poppins')
       ..addFont(rootBundle.load('assets/fonts/Poppins-Regular.ttf'))
-      ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'));
+      ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf'));
     await loader.load();
   });
 
@@ -92,4 +93,45 @@ void main() {
       });
     }
   }
+
+  testWidgets('les titres d’onglet ont la même taille, boutons ou non', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final button = SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+    );
+    final frames = {
+      'Jardin': const ElyriiPageFrame.tab(title: 'Jardin', slivers: []),
+      'Journal': ElyriiPageFrame.tab(
+        title: 'Journal',
+        actions: [button, button],
+        slivers: const [],
+      ),
+      'Bonjour': ElyriiPageFrame.tab(
+        title: 'Bonjour',
+        eyebrow: 'JEUDI 22 OCTOBRE',
+        leading: button,
+        actions: [button],
+        slivers: const [],
+      ),
+    };
+    final heights = <String, double>{};
+    for (final MapEntry(key: title, value: frame) in frames.entries) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(body: frame),
+        ),
+      );
+      heights[title] = tester.getRect(find.text(title)).height;
+    }
+    expect(heights['Journal'], closeTo(heights['Jardin']!, 0.01));
+    expect(heights['Bonjour'], closeTo(heights['Jardin']!, 0.01));
+  });
 }

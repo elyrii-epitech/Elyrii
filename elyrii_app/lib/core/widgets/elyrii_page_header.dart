@@ -77,7 +77,6 @@ class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
       title: widget.title,
       eyebrow: widget.eyebrow,
       centered: !isTab,
-      alone: widget.leading == null && widget.actions.isEmpty,
     );
     return SafeArea(
       top: false,
@@ -286,7 +285,6 @@ class _CompactTitle extends StatelessWidget {
                     color: isDark
                         ? AppColors.textPrimaryDark
                         : AppColors.textPrimaryLight,
-                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -298,21 +296,18 @@ class _CompactTitle extends StatelessWidget {
   }
 }
 
-/// Title shown in the button row before scrolling.
+/// Title shown in the button row before scrolling. Every tab uses the same
+/// large title; centered detail titles use the navigation title.
 class _RestingTitle extends StatelessWidget {
   const _RestingTitle({
     required this.title,
     this.eyebrow,
     required this.centered,
-    required this.alone,
   });
 
   final String title;
   final String? eyebrow;
   final bool centered;
-
-  /// No button shares the row, so the title takes the iOS large-title size.
-  final bool alone;
 
   @override
   Widget build(BuildContext context) {
@@ -326,28 +321,9 @@ class _RestingTitle extends StatelessWidget {
         title,
         maxLines: 1,
         textAlign: centered ? TextAlign.center : TextAlign.start,
-        style: switch ((eyebrow, alone)) {
-          (String(), _) => TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-            height: 1.1,
-            color: primary,
-          ),
-          (null, true) => TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 30,
-            fontWeight: FontWeight.w700,
-            letterSpacing: -0.9,
-            height: 1.1,
-            color: primary,
-          ),
-          (null, false) => AppTextStyles.titleLarge(
-            color: primary,
-            fontWeight: FontWeight.w600,
-          ),
-        },
+        style: centered
+            ? AppTextStyles.titleMedium(color: primary)
+            : AppTextStyles.pageTitle(color: primary),
       ),
     );
     // The row is 48 px tall: long titles and large text scale down to fit.
@@ -365,16 +341,13 @@ class _RestingTitle extends StatelessWidget {
                 children: [
                   Text(
                     eyebrow!,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 12,
+                    style: AppTextStyles.labelMedium(
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
                       color: AppColors.readableAccent(
                         isDark ? AppColors.primaryDark : AppColors.primary,
                         isDark: isDark,
                       ),
-                    ),
+                    ).copyWith(letterSpacing: 1.2, height: 1.15),
                   ),
                   const SizedBox(height: 2),
                   heading,
@@ -402,11 +375,10 @@ class _DetailTitle extends StatelessWidget {
           child: Text(
             title,
             textAlign: TextAlign.center,
-            style: AppTextStyles.titleLarge(
+            style: AppTextStyles.titleMedium(
               color: isDark
                   ? AppColors.textPrimaryDark
                   : AppColors.textPrimaryLight,
-              fontWeight: FontWeight.w600,
             ),
           ),
         ),

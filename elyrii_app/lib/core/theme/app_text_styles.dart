@@ -2,338 +2,190 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Styles de texte de l'application Elyrii
-/// Définit tous les styles typographiques pour maintenir la cohérence
+/// The only type scale of the app. Screens pick a role, never a size, so a
+/// title on one page matches the same title on every other page.
 class AppTextStyles {
-  AppTextStyles._(); // Constructeur privé
+  AppTextStyles._();
 
-  // Utilise la police Poppins embarquée localement
   static const TextStyle _baseStyle = TextStyle(fontFamily: 'Poppins');
 
-  // ==================== DISPLAY STYLES ====================
-  // Utilisés pour les titres très larges (splash, onboarding)
+  static TextStyle _role(
+    double size,
+    FontWeight weight,
+    double height,
+    double letterSpacing, {
+    Color? color,
+    FontWeight? fontWeight,
+  }) => _baseStyle.copyWith(
+    fontSize: size,
+    fontWeight: fontWeight ?? weight,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+  );
 
-  static TextStyle displayLarge({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 57,
-      fontWeight: fontWeight ?? FontWeight.w700,
-      color: color,
-      height: 1.12,
-      letterSpacing: -0.25,
-    );
-  }
+  // ==================== DISPLAY & HEADLINE ====================
 
-  static TextStyle displayMedium({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 45,
-      fontWeight: fontWeight ?? FontWeight.w700,
-      color: color,
-      height: 1.16,
-      letterSpacing: 0,
-    );
-  }
+  /// Launch wordmark and very large hero numbers.
+  static TextStyle displaySmall({Color? color, FontWeight? fontWeight}) =>
+      _role(
+        36,
+        FontWeight.w600,
+        1.2,
+        -0.5,
+        color: color,
+        fontWeight: fontWeight,
+      );
 
-  static TextStyle displaySmall({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 36,
-      fontWeight: fontWeight ?? FontWeight.w600,
-      color: color,
-      height: 1.22,
-      letterSpacing: 0,
-    );
-  }
+  /// Root page title, rendered by `ElyriiPageFrame` only.
+  static TextStyle pageTitle({Color? color, FontWeight? fontWeight}) => _role(
+    28,
+    FontWeight.w700,
+    1.1,
+    -0.6,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  // ==================== HEADLINE STYLES ====================
-  // Utilisés pour les titres de sections importantes
+  /// Auth and onboarding headings.
+  static TextStyle headlineMedium({Color? color, FontWeight? fontWeight}) =>
+      _role(
+        28,
+        FontWeight.w600,
+        1.25,
+        -0.3,
+        color: color,
+        fontWeight: fontWeight,
+      );
 
-  static TextStyle headlineLarge({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 32,
-      fontWeight: fontWeight ?? FontWeight.w600,
-      color: color,
-      height: 1.25,
-      letterSpacing: 0,
-    );
-  }
+  /// Stat numbers and hero values.
+  static TextStyle headlineSmall({Color? color, FontWeight? fontWeight}) =>
+      _role(
+        24,
+        FontWeight.w700,
+        1.25,
+        -0.3,
+        color: color,
+        fontWeight: fontWeight,
+      );
 
-  static TextStyle headlineMedium({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 28,
-      fontWeight: fontWeight ?? FontWeight.w600,
-      color: color,
-      height: 1.29,
-      letterSpacing: 0,
-    );
-  }
+  // ==================== TITLES ====================
 
-  static TextStyle headlineSmall({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 24,
-      fontWeight: fontWeight ?? FontWeight.w600,
-      color: color,
-      height: 1.33,
-      letterSpacing: 0,
-    );
-  }
+  /// Sheet and dialog titles.
+  static TextStyle titleLarge({Color? color, FontWeight? fontWeight}) => _role(
+    20,
+    FontWeight.w600,
+    1.3,
+    -0.2,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  // ==================== TITLE STYLES ====================
-  // Utilisés pour les titres de cartes, dialogs, etc.
+  /// Section titles and navigation titles.
+  static TextStyle titleMedium({Color? color, FontWeight? fontWeight}) => _role(
+    17,
+    FontWeight.w600,
+    1.35,
+    -0.1,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  static TextStyle titleLarge({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 22,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      height: 1.27,
-      letterSpacing: 0,
-    );
-  }
+  /// Card and row titles.
+  static TextStyle titleSmall({Color? color, FontWeight? fontWeight}) =>
+      _role(15, FontWeight.w600, 1.4, 0, color: color, fontWeight: fontWeight);
 
-  static TextStyle titleMedium({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 16,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      height: 1.5,
-      letterSpacing: 0.15,
-    );
-  }
+  // ==================== BODY ====================
 
-  static TextStyle titleSmall({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 14,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      height: 1.43,
-      letterSpacing: 0.1,
-    );
-  }
+  /// Reading text, inputs and chat messages.
+  static TextStyle bodyLarge({Color? color, FontWeight? fontWeight}) => _role(
+    16,
+    FontWeight.w400,
+    1.5,
+    0.1,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  // ==================== BODY STYLES ====================
-  // Utilisés pour le texte principal
+  static TextStyle bodyMedium({Color? color, FontWeight? fontWeight}) => _role(
+    14,
+    FontWeight.w400,
+    1.45,
+    0.1,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  static TextStyle bodyLarge({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 16,
-      fontWeight: fontWeight ?? FontWeight.w400,
-      color: color,
-      height: 1.5,
-      letterSpacing: 0.5,
-    );
-  }
+  /// Secondary and meta text.
+  static TextStyle bodySmall({Color? color, FontWeight? fontWeight}) => _role(
+    12,
+    FontWeight.w400,
+    1.35,
+    0.2,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  static TextStyle bodyMedium({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 14,
-      fontWeight: fontWeight ?? FontWeight.w400,
-      color: color,
-      height: 1.43,
-      letterSpacing: 0.25,
-    );
-  }
+  // ==================== LABELS ====================
 
-  static TextStyle bodySmall({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 12,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      height: 1.33,
-      letterSpacing: 0.4,
-    );
-  }
+  /// Button labels.
+  static TextStyle labelLarge({Color? color, FontWeight? fontWeight}) => _role(
+    15,
+    FontWeight.w600,
+    1.33,
+    0.2,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  // ==================== LABEL STYLES ====================
-  // Utilisés pour les boutons, chips, labels
+  /// Chips, overlines and small emphasized labels.
+  static TextStyle labelMedium({Color? color, FontWeight? fontWeight}) => _role(
+    13,
+    FontWeight.w600,
+    1.35,
+    0.2,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  static TextStyle labelLarge({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 14,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      height: 1.43,
-      letterSpacing: 0.1,
-    );
-  }
+  /// Tags and badges. 11 pt is the smallest text the app renders.
+  static TextStyle labelSmall({Color? color, FontWeight? fontWeight}) => _role(
+    11,
+    FontWeight.w500,
+    1.45,
+    0.4,
+    color: color,
+    fontWeight: fontWeight,
+  );
 
-  static TextStyle labelMedium({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 12,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      height: 1.33,
-      letterSpacing: 0.5,
-    );
-  }
+  /// Monospace debug output.
+  static TextStyle code({Color? color}) => TextStyle(
+    fontFamily: 'monospace',
+    fontSize: 12,
+    height: 1.4,
+    color: color,
+  );
 
-  static TextStyle labelSmall({Color? color, FontWeight? fontWeight}) {
-    return _baseStyle.copyWith(
-      fontSize: 11,
-      fontWeight: fontWeight ?? FontWeight.w500,
-      color: color,
-      height: 1.45,
-      letterSpacing: 0.5,
-    );
-  }
+  // ==================== FORM ====================
 
-  // ==================== STYLES SPÉCIFIQUES ====================
+  static TextStyle inputHint() => bodyLarge(color: AppColors.textTertiaryLight);
 
-  /// Style pour les messages du chatbot
-  static TextStyle chatbotMessage({bool isUser = false}) {
-    return _baseStyle.copyWith(
-      fontSize: 15,
-      fontWeight: FontWeight.w400,
-      color: isUser ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-      height: 1.5,
-      letterSpacing: 0.3,
-    );
-  }
+  static TextStyle error() => bodySmall(color: AppColors.error);
 
-  /// Style pour le contenu du journal intime
-  static TextStyle journalEntry() {
-    return _baseStyle.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textPrimaryLight,
-      height: 1.6,
-      letterSpacing: 0.3,
-    );
-  }
-
-  /// Style pour les timestamps
-  static TextStyle timestamp() {
-    return _baseStyle.copyWith(
-      fontSize: 12,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textTertiaryLight,
-      height: 1.33,
-      letterSpacing: 0.4,
-    );
-  }
-
-  /// Style pour les étiquettes d'émotions
-  static TextStyle emotionLabel() {
-    return _baseStyle.copyWith(
-      fontSize: 13,
-      fontWeight: FontWeight.w500,
-      color: AppColors.textSecondaryLight,
-      height: 1.38,
-      letterSpacing: 0.3,
-    );
-  }
-
-  /// Style pour les titres d'objectifs
-  static TextStyle objectiveTitle() {
-    return _baseStyle.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w600,
-      color: AppColors.textPrimaryLight,
-      height: 1.5,
-      letterSpacing: 0.15,
-    );
-  }
-
-  /// Style pour les badges/achievements
-  static TextStyle achievementBadge() {
-    return _baseStyle.copyWith(
-      fontSize: 11,
-      fontWeight: FontWeight.w700,
-      color: Colors.white,
-      height: 1.45,
-      letterSpacing: 0.8,
-    );
-  }
-
-  /// Style pour les statistiques numériques
-  static TextStyle statNumber() {
-    return _baseStyle.copyWith(
-      fontSize: 32,
-      fontWeight: FontWeight.w700,
-      color: AppColors.primary,
-      height: 1.25,
-      letterSpacing: -0.5,
-    );
-  }
-
-  /// Style pour les labels de statistiques
-  static TextStyle statLabel() {
-    return _baseStyle.copyWith(
-      fontSize: 13,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textSecondaryLight,
-      height: 1.38,
-      letterSpacing: 0.3,
-    );
-  }
-
-  /// Style pour les boutons principaux
-  static TextStyle button() {
-    return _baseStyle.copyWith(
-      fontSize: 15,
-      fontWeight: FontWeight.w600,
-      height: 1.33,
-      letterSpacing: 0.5,
-    );
-  }
-
-  /// Style pour les hints dans les champs de texte
-  static TextStyle inputHint() {
-    return _baseStyle.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textTertiaryLight,
-      height: 1.5,
-      letterSpacing: 0.5,
-    );
-  }
-
-  /// Style pour le texte des inputs
-  static TextStyle inputText() {
-    return _baseStyle.copyWith(
-      fontSize: 16,
-      fontWeight: FontWeight.w400,
-      color: AppColors.textPrimaryLight,
-      height: 1.5,
-      letterSpacing: 0.5,
-    );
-  }
-
-  /// Style pour les erreurs
-  static TextStyle error() {
-    return _baseStyle.copyWith(
-      fontSize: 12,
-      fontWeight: FontWeight.w400,
-      color: AppColors.error,
-      height: 1.33,
-      letterSpacing: 0.4,
-    );
-  }
-
-  /// Style pour les liens
-  static TextStyle link() {
-    return _baseStyle.copyWith(
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-      color: AppColors.primary,
-      height: 1.43,
-      letterSpacing: 0.25,
-      decoration: TextDecoration.underline,
-    );
-  }
-
-  // ==================== HELPERS ====================
-
-  /// Applique une couleur à un style existant
-  static TextStyle withColor(TextStyle style, Color color) {
-    return style.copyWith(color: color);
-  }
-
-  /// Applique un poids de police à un style existant
-  static TextStyle withWeight(TextStyle style, FontWeight weight) {
-    return style.copyWith(fontWeight: weight);
-  }
-
-  /// Applique une opacité à un style existant
-  static TextStyle withOpacity(TextStyle style, double opacity) {
-    return style.copyWith(color: style.color?.withValues(alpha: opacity));
-  }
+  /// Material's text roles, so widgets that read `Theme.textTheme` follow
+  /// the same scale.
+  static TextTheme textTheme(Color primary, Color secondary) => TextTheme(
+    displaySmall: displaySmall(color: primary),
+    headlineMedium: headlineMedium(color: primary),
+    headlineSmall: headlineSmall(color: primary),
+    titleLarge: titleLarge(color: primary),
+    titleMedium: titleMedium(color: primary),
+    titleSmall: titleSmall(color: primary),
+    bodyLarge: bodyLarge(color: primary),
+    bodyMedium: bodyMedium(color: primary),
+    bodySmall: bodySmall(color: secondary),
+    labelLarge: labelLarge(color: primary),
+    labelMedium: labelMedium(color: primary),
+    labelSmall: labelSmall(color: secondary),
+  );
 }

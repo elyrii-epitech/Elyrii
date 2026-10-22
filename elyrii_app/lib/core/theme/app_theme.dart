@@ -18,6 +18,10 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: 'Poppins',
       brightness: Brightness.light,
+      textTheme: AppTextStyles.textTheme(
+        AppColors.textPrimaryLight,
+        AppColors.textSecondaryLight,
+      ),
 
       // Couleurs principales
       primaryColor: AppColors.primary,
@@ -89,7 +93,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          textStyle: AppTextStyles.button(),
+          textStyle: AppTextStyles.labelLarge(),
         ),
       ),
 
@@ -104,14 +108,14 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          textStyle: AppTextStyles.button(),
+          textStyle: AppTextStyles.labelLarge(),
         ),
       ),
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: AppTextStyles.button(),
+          textStyle: AppTextStyles.labelLarge(),
         ),
       ),
 
@@ -251,6 +255,10 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: 'Poppins',
       brightness: Brightness.dark,
+      textTheme: AppTextStyles.textTheme(
+        AppColors.textPrimaryDark,
+        AppColors.textSecondaryDark,
+      ),
 
       // Couleurs principales
       primaryColor: AppColors
@@ -321,7 +329,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          textStyle: AppTextStyles.button(),
+          textStyle: AppTextStyles.labelLarge(),
         ),
       ),
 
@@ -336,14 +344,14 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
-          textStyle: AppTextStyles.button(),
+          textStyle: AppTextStyles.labelLarge(),
         ),
       ),
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryDark,
-          textStyle: AppTextStyles.button(),
+          textStyle: AppTextStyles.labelLarge(),
         ),
       ),
 
