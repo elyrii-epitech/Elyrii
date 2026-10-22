@@ -19,6 +19,17 @@ double _scaleOf(WidgetTester tester) {
   return transition.scale.value;
 }
 
+double _hopOf(WidgetTester tester) => tester
+    .widgetList<Transform>(
+      find.descendant(
+        of: find.byType(MascotPeek),
+        matching: find.byType(Transform),
+      ),
+    )
+    .first
+    .transform
+    .storage[13];
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -90,9 +101,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 80));
 
-      expect(_scaleOf(tester), lessThan(1.0));
+      expect(_hopOf(tester), lessThan(0));
       await tester.pumpAndSettle();
-      expect(_scaleOf(tester), moreOrLessEquals(1.0));
+      expect(_hopOf(tester), moreOrLessEquals(0));
     });
 
     testWidgets('sélection d\'humeur déclenche le rebond', (tester) async {
@@ -117,9 +128,9 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 80));
 
-      expect(_scaleOf(tester), lessThan(1.0));
+      expect(_hopOf(tester), lessThan(0));
       await tester.pumpAndSettle();
-      expect(_scaleOf(tester), moreOrLessEquals(1.0));
+      expect(_hopOf(tester), moreOrLessEquals(0));
     });
   });
 }

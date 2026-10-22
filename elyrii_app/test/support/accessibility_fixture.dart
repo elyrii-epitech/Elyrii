@@ -20,6 +20,7 @@ import 'package:elyrii_app/features/auth/presentation/providers/auth_provider.da
 import 'package:elyrii_app/features/chatbot/presentation/providers/chatbot_provider.dart';
 import 'package:elyrii_app/features/coach/presentation/providers/coach_provider.dart';
 import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:elyrii_app/features/dashboard/data/accueil_activities.dart';
 import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:elyrii_app/features/journal/presentation/providers/journal_provider.dart';
 import 'package:elyrii_app/features/journal/data/repositories/journal_repository.dart';
@@ -136,6 +137,9 @@ Widget host(
     ChangeNotifierProvider<JournalProvider>.value(value: visualJournals[app]!),
     ChangeNotifierProvider<CoachProvider>.value(value: app.coach),
     ChangeNotifierProvider<DashboardProvider>.value(value: app.dashboard),
+    ChangeNotifierProvider<AccueilActivities>.value(
+      value: app.accueilActivities,
+    ),
     ChangeNotifierProvider<GamificationProvider>.value(value: app.gamification),
     ChangeNotifierProvider<MascotProvider>.value(value: app.mascot),
   ],

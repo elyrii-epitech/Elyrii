@@ -83,4 +83,26 @@ class AppDimensions {
   /// Pop d'essayage : la preview part de 0,94, culmine à 1,03, revient à 1.
   static const double accueilPreviewPopScale = 0.94;
   static const double accueilPreviewPopPeakScale = 1.03;
+
+  static const double accueilBarHeight = 54;
+  static const double accueilHeaderControl = 44;
+  static const double accueilHeroTop = 78;
+  static const double accueilHeroSize = 230;
+  static const double accueilDressingHeroLift = 14;
+  static const double accueilSheetTop = 384;
+  static const double accueilCapsuleTop = 358;
+  static const double accueilCapsulePinnedTop = 58;
+  static const double accueilMoodFace = 50;
+  static const double accueilSectionGap = 22;
+  static const double accueilRiseDistance = 14;
+  static const double accueilCalendarRiseDistance = 6;
+  static const double accueilSheetTopPadding = 48;
+  static const double accueilDressTop = 334;
+  static const double dockHeight = 64;
+
+  static double dockBottomMargin(double safeBottom) =>
+      safeBottom > 0 ? spacing20 : spacing16;
+
+  static double accessibleDockHeight(double scaledLabelHeight) =>
+      spacing48 + scaledLabelHeight * 2;
 }

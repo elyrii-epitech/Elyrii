@@ -98,6 +98,7 @@ class GamificationProvider extends ChangeNotifier {
     _activeChallenges = const [];
     _proposals = const [];
     _isLoading = false;
+    _loadedAt = now;
     _error = null;
     _notify();
   }
@@ -108,6 +109,7 @@ class GamificationProvider extends ChangeNotifier {
   List<UserChallenge> get proposals => _proposals;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get hasLoadedData => _loadedAt != null;
 
   /// Charge toutes les données en parallèle
   Future<void> loadAll({bool force = false}) {

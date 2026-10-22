@@ -1,37 +1,50 @@
-import '../widgets/dashboard_cards.dart';
-import '../widgets/dashboard_skeleton.dart';
-import '../widgets/mood_chip.dart';
-import '../widgets/mascot_customize_charm.dart';
-import '../../../../core/widgets/accessible_action.dart';
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-
-import '../../../../core/widgets/elyrii_page_header.dart';
-
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' show DateFormat;
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../app/router/app_shell.dart';
+import '../../../../core/config/mascot_themes.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../../../core/widgets/accessible_action.dart';
+import '../../../../core/widgets/mascot_contact_shadow.dart';
 import '../../../../core/widgets/user_avatar.dart';
-import '../../../../core/glass/elyrii_glass_surface.dart';
-
-import 'package:go_router/go_router.dart';
-
+import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
 import '../../../../routes/app_routes.dart';
-import '../providers/dashboard_provider.dart';
-import '../widgets/glass_settings_button.dart';
+import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../../../journal/presentation/providers/journal_provider.dart';
-
-import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../settings/providers/settings_provider.dart';
-
-import '../widgets/mascot_peek.dart';
-import '../widgets/mascot_speech_bubble.dart';
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
-import '../../../../core/config/mascot_animations.dart';
+import '../../../journal/presentation/widgets/journal_editor_sheet.dart';
+import '../../../mascot/data/models/mascot_accessory.dart';
+import '../../../mascot/data/models/mascot_appearance.dart';
+import '../../../mascot/data/models/mascot_model.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
+import '../../../meditation/data/repositories/meditation_repository.dart';
+import '../../../meditation/domain/models/breath_phase.dart';
+import '../../../meditation/presentation/controllers/meditation_controller.dart';
+import '../../../settings/providers/settings_provider.dart';
+import '../../data/accueil_activities.dart';
+import '../../domain/accueil_content.dart';
+import '../../domain/civil_day.dart';
+import '../providers/dashboard_provider.dart';
+import '../widgets/mascot_peek.dart';
+
+part 'accueil_frame.dart';
+part 'accueil_sections.dart';
+part 'accueil_overlays.dart';
+part 'accueil_dressing.dart';
+part 'accueil_scene.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -40,538 +53,200 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
-  final ScrollController _scrollController = ScrollController();
+class _DashboardPageState extends State<DashboardPage>
+    with WidgetsBindingObserver {
+  final _scroll = ScrollController();
+  final _visuals = ValueNotifier(const _AccueilScrollVisuals(0));
+  final _preview = ValueNotifier<_LookPreview?>(null);
+  _AccueilOverlay? _overlay;
+  DateTime _now = DateTime.now();
+  Timer? _clock;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scroll.addListener(_onScroll);
+    _scheduleClock();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(0);
-      }
-      context.read<DashboardProvider>().loadDashboardData();
-      context.read<JournalProvider>().loadEntries();
+      if (!mounted) return;
+      unawaited(_refresh());
     });
+  }
+
+  void _onScroll() => _visuals.value = _AccueilScrollVisuals(_scroll.offset);
+
+  void _scheduleClock() {
+    _clock?.cancel();
+    final local = _now.toLocal();
+    final hour = local.hour < 12
+        ? 12
+        : local.hour < 18
+        ? 18
+        : 24;
+    final next = DateTime(local.year, local.month, local.day, hour);
+    _clock = Timer(next.difference(local), _updateClock);
+  }
+
+  void _updateClock() {
+    if (!mounted) return;
+    setState(() => _now = DateTime.now());
+    _scheduleClock();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _updateClock();
+  }
+
+  Future<void> _refresh() async {
+    await Future.wait([
+      context.read<DashboardProvider>().loadDashboardData(),
+      context.read<JournalProvider>().loadEntries(),
+      context.read<GamificationProvider>().loadAll(force: true),
+    ]);
+  }
+
+  Future<void> _openOverlay(_AccueilOverlay kind) async {
+    if (_overlay != null) return;
+    final dashboard = context.read<DashboardProvider>();
+    if (kind == _AccueilOverlay.calendar) {
+      unawaited(
+        dashboard.ensureCalendarHistory(
+          CivilMonth.containing(CivilDay.fromLocal(_now)),
+        ),
+      );
+    }
+    if (kind == _AccueilOverlay.dressing && _scroll.hasClients) {
+      _scroll.jumpTo(0);
+    }
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    final route = _AccueilOverlayRoute(
+      kind: kind,
+      reduced: reduced,
+      isDark: Theme.of(context).brightness == Brightness.dark,
+      now: _now,
+      onPreview: (look) => _preview.value = look,
+    );
+    setState(() => _overlay = kind);
+    ElyriiHaptics.medium();
+    final next = await Navigator.of(context, rootNavigator: true).push(route);
+    if (!mounted) return;
+    _preview.value = null;
+    setState(() => _overlay = null);
+    if (next != null) await _openOverlay(next);
+  }
+
+  Future<void> _performAction(AccueilAction action) async {
+    switch (action) {
+      case OpenChat():
+        context.go(AppRoutes.chatbot);
+      case Breathe(:final duration):
+        final controller =
+            MeditationController(
+                repository: MeditationRepository(
+                  client: context.read<ApiClient>(),
+                ),
+              )
+              ..setBreathingType(BreathingType.coherence)
+              ..setSessionDuration(duration);
+        unawaited(controller.startSession());
+        await context.push(AppRoutes.meditationSession, extra: controller);
+        controller.dispose();
+      case WriteJournal(:final initialPrompt):
+        await showLiquidGlassSheet<void>(
+          context: context,
+          initialChildSize: 0.92,
+          minChildSize: 0.92,
+          maxChildSize: 0.92,
+          useRootNavigator: true,
+          scrollableBuilder: (_, scroll) => JournalEditorSheet(
+            provider: context.read<JournalProvider>(),
+            initialPrompt: initialPrompt,
+          ),
+        );
+      case ContactSomeone():
+        final box = context.findRenderObject() as RenderBox?;
+        await SharePlus.instance.share(
+          ShareParams(
+            text: 'Je pensais à toi.',
+            sharePositionOrigin: box == null
+                ? null
+                : box.localToGlobal(Offset.zero) & box.size,
+          ),
+        );
+      case CallHelp():
+        if (!await launchUrl(Uri(scheme: 'tel', path: '3114')) && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Appelle le 3114, gratuitement, jour et nuit.'),
+            ),
+          );
+        }
+      case OpenReviews():
+        await context.push(AppRoutes.reviews);
+    }
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _clock?.cancel();
+    _scroll.dispose();
+    _visuals.dispose();
+    _preview.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  Widget build(BuildContext context) => _AccueilFrame(
+    now: _now,
+    scroll: _scroll,
+    visuals: _visuals,
+    preview: _preview,
+    calendarOpen: _overlay == _AccueilOverlay.calendar,
+    onOpen: _openOverlay,
+    onAction: _performAction,
+    onRefresh: _refresh,
+  );
+}
 
-    final provider = context.read<DashboardProvider>();
-    final authProvider = context.watch<AuthProvider>();
-    final userProvider = context.watch<UserProvider>();
-    final rawName =
-        authProvider.user?.firstName?.trim() ??
-        userProvider.profile?.firstName?.trim() ??
-        '';
-    final greeting = rawName.isNotEmpty
-        ? '${provider.getGreeting()}, $rawName'
-        : provider.getGreeting();
+final class _LookPreview {
+  final MascotModel model;
+  final MascotDecor decor;
+  final int pop;
+  const _LookPreview(this.model, this.decor, this.pop);
+}
 
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: ElyriiPageFrame.tab(
-        eyebrow: _formatHeaderDate(),
-        title: greeting,
-        leading: AccessibleAction(
-          label: 'Profil utilisateur',
-          excludeChildSemantics: true,
-          onPressed: () {
-            ElyriiHaptics.light();
-            context.push(AppRoutes.editProfile);
-          },
-          child: ElyriiGlassSurface(
-            role: GlassRole.floatingControl,
-            borderRadius: BorderRadius.circular(AppDimensions.radius20),
-            width: AppDimensions.controlSize,
-            height: AppDimensions.controlSize,
-            child: Center(
-              child: ClipOval(
-                child: UserAvatar(
-                  pfp: userProvider.profile?.pfp,
-                  size: 38,
-                  showBorder: false,
-                ),
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          GlassSettingsButton(
-            isDark: isDark,
-            onTap: () => context.push(AppRoutes.settings),
-          ),
-        ],
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(width: AppDimensions.controlSize),
-                    Flexible(
-                      child: Selector<DashboardProvider, MoodType?>(
-                        selector: (_, p) => p.selectedMood,
-                        builder: (_, mood, _) => MascotPeek(
-                          selectedMood: mood,
-                          onTap: provider.nextMascotMessage,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: AppDimensions.controlSize,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: MascotCustomizeCharm(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimensions.spacing2),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.pageHorizontalPadding,
-                  ),
-                  child: Column(
-                    children: [
-                      Selector<DashboardProvider, String>(
-                        selector: (_, p) => p.mascotMessage,
-                        builder: (_, message, _) => MascotSpeechBubble(
-                          message: message,
-                          isDark: isDark,
-                          onTap: provider.nextMascotMessage,
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.spacing24),
-                      Selector<
-                        DashboardProvider,
-                        (MoodType?, bool, String?, DateTime?)
-                      >(
-                        selector: (_, p) => (
-                          p.selectedMood,
-                          p.isSavingMood,
-                          p.error,
-                          p.cachedAt,
-                        ),
-                        builder: (_, state, _) => Column(
-                          children: [
-                            _buildMoodSection(isDark, provider),
-                            if (state.$2)
-                              const Padding(
-                                padding: EdgeInsets.all(AppDimensions.spacing8),
-                                child: Text('Enregistrement de ton humeur…'),
-                              ),
-                            if (state.$4 != null)
-                              const Text(
-                                'Données conservées hors ligne, datant de moins de 24 h.',
-                              ),
-                            if (state.$3 != null)
-                              Semantics(
-                                liveRegion: true,
-                                child: Text(
-                                  state.$3!,
-                                  style: AppTextStyles.bodyMedium(
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                ),
-                              ),
-                            if (state.$3 != null)
-                              TextButton(
-                                onPressed: provider.refresh,
-                                child: const Text('Actualiser'),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppDimensions.spacing24),
-                      Selector2<
-                        DashboardProvider,
-                        JournalProvider,
-                        (bool, int, JournalEntry?)
-                      >(
-                        selector: (_, dashboard, journal) => (
-                          dashboard.isLoading,
-                          dashboard.currentStreak,
-                          journal.entries.firstOrNull,
-                        ),
-                        builder: (context, value, _) => value.$1
-                            ? DashboardSkeleton(isDark: isDark)
-                            : _buildBentoGrid(
-                                provider,
-                                context.read<JournalProvider>(),
-                              ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+final class _AccueilScrollVisuals {
+  final double offset;
+  const _AccueilScrollVisuals(this.offset);
+  double get scrolled => math.max(0, offset);
+  double get parallax => -0.45 * scrolled;
 
-  /// Date du jour formatée en français pour le bandeau d'en-tête (ex: VENDREDI 12 SEPTEMBRE).
-  String _formatHeaderDate() {
-    final now = DateTime.now();
-    const days = [
-      'LUNDI',
-      'MARDI',
-      'MERCREDI',
-      'JEUDI',
-      'VENDREDI',
-      'SAMEDI',
-      'DIMANCHE',
-    ];
-    const months = [
-      'JANVIER',
-      'FÉVRIER',
-      'MARS',
-      'AVRIL',
-      'MAI',
-      'JUIN',
-      'JUILLET',
-      'AOÛT',
-      'SEPTEMBRE',
-      'OCTOBRE',
-      'NOVEMBRE',
-      'DÉCEMBRE',
-    ];
-    final dayName = days[now.weekday - 1];
-    final monthName = months[now.month - 1];
-    return '$dayName ${now.day} $monthName';
-  }
+  /// The hero lives in the scroll content so it receives taps through the
+  /// transparent top of the scroll; this shift brings it back to the
+  /// backdrop's parallax speed.
+  double get heroCounterShift => 0.55 * scrolled;
+  double get heroOpacity => (1 - scrolled / 260).clamp(0, 1);
+  bool get pinned =>
+      offset >=
+      AppDimensions.accueilCapsuleTop - AppDimensions.accueilCapsulePinnedTop;
+  double get capsuleTop => math.max(
+    AppDimensions.accueilCapsulePinnedTop,
+    AppDimensions.accueilCapsuleTop - offset,
+  );
+}
 
-  /// Section État d'Esprit inspirée d'Apple Health State of Mind :
-  /// 5 puces émotionnelles expressives, résonance textuelle et action immédiate.
-  Widget _buildMoodSection(bool isDark, DashboardProvider provider) {
-    final selectedMood = provider.selectedMood;
-    final moodColor =
-        selectedMood?.colorFor(
-          isDark ? Brightness.dark : Brightness.light,
-        ) ??
-        AppColors.primary;
+Duration _motion(BuildContext context, Duration duration) =>
+    MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        // Halo d'ambiance doux (effet Apple Health State of Mind)
-        if (selectedMood != null)
-          Positioned.fill(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppDimensions.radius16),
-                boxShadow: [
-                  BoxShadow(
-                    color: moodColor.withValues(alpha: isDark ? 0.22 : 0.14),
-                    blurRadius: 36,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        LiquidGlassCard(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.spacing16,
-            vertical: AppDimensions.spacing16,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // En-tête de la section
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: moodColor.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radius8,
-                      ),
-                    ),
-                    child: Icon(
-                      selectedMood?.icon ?? Icons.mood_rounded,
-                      color: moodColor,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: AppDimensions.spacing8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'État d\'esprit',
-                          style: AppTextStyles.titleSmall(
-                            color: context.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          selectedMood != null
-                              ? 'Enregistré aujourd\'hui'
-                              : 'Comment te sens-tu ce soir ?',
-                          style: AppTextStyles.bodySmall(
-                            color: context.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (selectedMood != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacing8,
-                        vertical: AppDimensions.spacing4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: moodColor.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(
-                          AppDimensions.radius8,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_rounded, size: 12, color: moodColor),
-                          const SizedBox(width: AppDimensions.spacing4),
-                          Text(
-                            selectedMood.label,
-                            style: AppTextStyles.badge(color: moodColor),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppDimensions.spacing16),
-              // Sélecteur des 5 humeurs
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: MoodType.values.map((mood) {
-                  final isSelected = selectedMood == mood;
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.spacing2,
-                      ),
-                      child: DashboardMoodChip(
-                        mood: mood,
-                        isSelected: isSelected,
-                        isDark: isDark,
-                        onTap: provider.isSavingMood
-                            ? null
-                            : () => provider.selectMood(mood),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              // Résonance émotionnelle & Action concrète (Valeur ajoutée bienveillante)
-              if (selectedMood != null) ...[
-                const SizedBox(height: AppDimensions.spacing16),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.all(AppDimensions.spacing12),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : Colors.black.withValues(alpha: 0.02),
-                    borderRadius: BorderRadius.circular(AppDimensions.radius16),
-                    border: Border.all(
-                      color: moodColor.withValues(alpha: 0.20),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            selectedMood.label,
-                            style: AppTextStyles.titleMedium(color: moodColor),
-                          ),
-                          const SizedBox(width: AppDimensions.spacing8),
-                          Text(
-                            '•',
-                            style: AppTextStyles.bodySmall(
-                              color: context.textTertiary,
-                            ),
-                          ),
-                          const SizedBox(width: AppDimensions.spacing8),
-                          Expanded(
-                            child: Text(
-                              selectedMood.subtitle,
-                              style: AppTextStyles.bodySmall(
-                                color: context.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppDimensions.spacing8),
-                      // Bouton d'action contextuel
-                      AccessibleAction(
-                        label: selectedMood.suggestedActionLabel,
-                        onPressed: () {
-                          ElyriiHaptics.light();
-                          context.read<MascotProvider>().react(
-                            MascotAnimations.invite,
-                          );
-                          context.push(selectedMood.suggestedActionRoute);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.spacing12,
-                            vertical: AppDimensions.spacing8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: moodColor.withValues(
-                              alpha: isDark ? 0.18 : 0.12,
-                            ),
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radius8,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                selectedMood.suggestedActionIcon,
-                                size: 16,
-                                color: moodColor,
-                              ),
-                              const SizedBox(width: AppDimensions.spacing8),
-                              Expanded(
-                                child: Text(
-                                  selectedMood.suggestedActionLabel,
-                                  style: AppTextStyles.labelMedium(
-                                    color: context.textPrimary,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 12,
-                                color: moodColor,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+const _weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+String _dateLabel(DateTime date) {
+  final value = DateFormat('EEE d MMMM', 'fr_FR').format(date);
+  return '${value[0].toUpperCase()}${value.substring(1)}';
+}
 
-  /// Bento Grid organisée et hiérarchisée selon les standards Apple Health & Fitness.
-  Widget _buildBentoGrid(
-    DashboardProvider provider,
-    JournalProvider journalProvider,
-  ) {
-    return Column(
-      children: [
-        // Ligne 1 : Deux cartes symétriques Bento (Série & Respiration)
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns =
-                MediaQuery.textScalerOf(context).scale(14) > 21 ||
-                    constraints.maxWidth < 260
-                ? 1
-                : 2;
-            final width =
-                (constraints.maxWidth -
-                    AppDimensions.spacing12 * (columns - 1)) /
-                columns;
-            return Wrap(
-              spacing: AppDimensions.spacing12,
-              runSpacing: AppDimensions.spacing12,
-              children: [
-                // Carte Série (Gauche)
-                SizedBox(
-                  width: width,
-                  child: DashboardStreakCard(
-                    streak: provider.currentStreak,
-                    onTap: () {
-                      ElyriiHaptics.light();
-                      final mascotProvider = context.read<MascotProvider>();
-                      if (provider.currentStreak > 1) {
-                        mascotProvider.react(MascotAnimations.celebrate);
-                      } else if (provider.currentStreak == 1) {
-                        mascotProvider.react(MascotAnimations.delight);
-                      } else {
-                        mascotProvider.react(MascotAnimations.invite);
-                      }
-                    },
-                  ),
-                ),
-
-                // Carte Respiration (Droite)
-                SizedBox(
-                  width: width,
-                  child: DashboardBreatheCard(
-                    onTap: () {
-                      ElyriiHaptics.light();
-                      context.read<MascotProvider>().react(
-                        MascotAnimations.invite,
-                      );
-                      context.go(AppRoutes.meditation);
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: AppDimensions.spacing12),
-        // Ligne 2 : Carte pleine largeur Journal Récent
-        DashboardJournalCard(
-          lastEntry: journalProvider.entries.isNotEmpty
-              ? journalProvider.entries.first
-              : null,
-          onTap: () {
-            ElyriiHaptics.light();
-            context.read<MascotProvider>().react(
-              journalProvider.entries.isNotEmpty
-                  ? MascotAnimations.cozy
-                  : MascotAnimations.invite,
-            );
-            context.go(AppRoutes.journal);
-          },
-        ),
-        const SizedBox(height: AppDimensions.spacing12),
-        // Ligne 3 : Barre Bilan & Progrès
-        DashboardReviewBar(
-          onTap: () {
-            ElyriiHaptics.light();
-            context.push(AppRoutes.reviews);
-          },
-        ),
-      ],
-    );
-  }
+extension _CivilDateFormatting on CivilDay {
+  DateTime toLocalDateTime() => DateTime(year, month, day);
 }

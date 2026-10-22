@@ -1,116 +1,220 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:material_symbols_icons/material_symbols_icons.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
-import 'package:elyrii_app/core/network/api_client.dart';
-import 'package:elyrii_app/core/services/secure_storage_service.dart';
-import 'package:elyrii_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
-import 'package:elyrii_app/features/journal/presentation/providers/journal_provider.dart';
-import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
-import 'package:elyrii_app/features/coach/presentation/providers/coach_provider.dart';
-import 'package:elyrii_app/features/settings/providers/settings_provider.dart';
-import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
+import 'package:elyrii_app/app/app_dependencies.dart';
+import 'package:elyrii_app/core/widgets/mascot_with_accessories.dart';
+import 'package:elyrii_app/core/widgets/mascot_3d_viewer.dart';
+import 'package:elyrii_app/features/dashboard/data/accueil_activities.dart';
+import 'package:elyrii_app/features/dashboard/domain/civil_day.dart';
 import 'package:elyrii_app/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-Widget _createTestApp({required Widget child}) {
-  final storage = SecureStorageService();
-  final client = ApiClient(storage: storage);
-  return MultiProvider(
-    providers: [
-      ChangeNotifierProvider(
-        create: (_) => AuthProvider(client: client, storage: storage),
-      ),
-      ChangeNotifierProvider(
-        create: (_) =>
-            DashboardProvider(apiClient: client, isDemoSession: () => true),
-      ),
-      ChangeNotifierProvider(create: (_) => JournalProvider(client: client)),
-      ChangeNotifierProvider(
-        create: (_) => GamificationProvider(client: client),
-      ),
-      ChangeNotifierProvider(create: (_) => CoachProvider(client: client)),
-      ChangeNotifierProvider(create: (_) => UserProvider(client: client)),
-      ChangeNotifierProvider(create: (_) => MascotProvider(client: client)),
-    ],
-    child: MaterialApp(home: child),
-  );
-}
+import 'support/accessibility_fixture.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
+  setUpAll(() async {
+    await initializeDateFormatting('fr_FR');
+    final fonts = FontLoader('Poppins')
+      ..addFont(rootBundle.load('assets/fonts/Poppins-Regular.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Poppins-SemiBold.ttf'))
+      ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf'));
+    await fonts.load();
   });
 
-  group('Dashboard State of Mind & Bento Grid Tests', () {
-    testWidgets(
-      'Dashboard affiche la section État d\'esprit et la Bento Grid sans glitch',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 2600);
-        tester.view.devicePixelRatio = 2.0;
-        addTearDown(() {
-          tester.view.resetPhysicalSize();
-          tester.view.resetDevicePixelRatio();
-        });
-        await tester.pumpWidget(_createTestApp(child: const DashboardPage()));
-        await tester.pump(const Duration(milliseconds: 600));
-        await tester.pump();
-        // Vérification des éléments clés de la Bento Grid
-        expect(find.text('État d\'esprit'), findsOneWidget);
-        // Tant que les données chargent, le squelette discret est affiché sans barre violette
-        expect(find.text('État d\'esprit'), findsOneWidget);
-        // Aucun message d'erreur socket brut n'apparaît
-        expect(find.textContaining('SocketException'), findsNothing);
-        expect(find.textContaining('ClientException'), findsNothing);
-      },
+  Future<AppDependencies> mount(WidgetTester tester) async {
+    tester.view.physicalSize = const Size(390, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final app = (await tester.runAsync(fixture))!;
+    await tester.pumpWidget(
+      host(app, const DashboardPage(), GlobalKey(), true, 1),
     );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox());
+      visualJournals.remove(app)?.dispose();
+      app.dispose();
+    });
+    return app;
+  }
 
-    testWidgets(
-      'Sélectionner une humeur affiche la résonance et l\'action contextuelle sans erreur',
-      (tester) async {
-        await tester.pumpWidget(_createTestApp(child: const DashboardPage()));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
+  Future<void> tap(WidgetTester tester, String label) async {
+    final target = find.bySemanticsLabel(label).first;
+    await tester.ensureVisible(target);
+    await tester.runAsync(() => tester.tap(target));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+  }
 
-        // Trouver les icônes de mood
-        final happyIcon = find.byIcon(Symbols.sentiment_satisfied_rounded);
-        expect(happyIcon, findsOneWidget);
+  Future<void> flush(WidgetTester tester, AppDependencies app) async {
+    await tester.runAsync(() async {
+      await app.accueilActivities.flushed;
+      await app.mascot.flushed;
+    });
+    await tester.pump();
+  }
 
-        // Tap sur l'humeur Serein
-        await tester.tap(happyIcon);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
+  testWidgets(
+    'le choix d’humeur change la réponse et reste enregistré après relecture',
+    (tester) async {
+      final app = await mount(tester);
+      await tap(tester, 'Vulnérable');
+      await flush(tester, app);
+      expect(find.text('Merci de me le dire.'), findsOneWidget);
+      expect(
+        app.accueilActivities.snapshot.moodDays[CivilDay.fromLocal(
+          DateTime.now(),
+        )],
+        MoodType.sad,
+      );
+      app.accueilActivities.onUserChanged(isDemo: true);
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      });
+      await tester.pump();
+      expect(
+        app.accueilActivities.snapshot.moodDays[CivilDay.fromLocal(
+          DateTime.now(),
+        )],
+        MoodType.sad,
+      );
+    },
+  );
 
-        // Vérifier que le libellé nuancé et l'action contextuelle s'affichent
-        expect(find.text('Serein'), findsWidgets);
-        expect(
-          find.textContaining('Une belle clarté d\'esprit'),
-          findsOneWidget,
-        );
-        expect(find.text('Noter ce qui m\'a fait sourire'), findsOneWidget);
+  testWidgets(
+    'une humeur éprouvée montre le 3114 et le repos sans rituels ni social',
+    (tester) async {
+      final app = await mount(tester);
+      await tap(tester, 'Éprouvé');
+      await flush(tester, app);
+      expect(find.textContaining('3114'), findsWidgets);
+      expect(find.text('Les rituels peuvent attendre'), findsOneWidget);
+      expect(find.text('Rituels du jour'), findsNothing);
+      expect(find.text('Un pas vers les autres'), findsNothing);
+    },
+  );
 
-        // Aucun message d'erreur socket brut
-        expect(find.textContaining('SocketException'), findsNothing);
-
-        // Changement vers une autre humeur : Vulnérable (sad)
-        final sadIcon = find.byIcon(Symbols.sentiment_sad_rounded);
-        await tester.tap(sadIcon);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-
-        expect(find.text('Vulnérable'), findsWidgets);
-        expect(
-          find.textContaining('Une baisse d\'énergie passagère'),
-          findsOneWidget,
-        );
-        expect(
-          find.text('Déposer mes pensées dans le journal'),
-          findsOneWidget,
-        );
-      },
+  testWidgets('un rituel coché reste fait quand la page est remontée', (
+    tester,
+  ) async {
+    final app = await mount(tester);
+    await tap(tester, 'Rayonnant');
+    await flush(tester, app);
+    await tap(tester, 'Cocher Respirer 2 minutes');
+    await flush(tester, app);
+    expect(find.text('1 sur 3'), findsOneWidget);
+    await tester.pumpWidget(host(app, const SizedBox(), GlobalKey(), true, 1));
+    await tester.pumpWidget(
+      host(app, const DashboardPage(), GlobalKey(), true, 1),
+    );
+    await tester.pump(const Duration(seconds: 1));
+    expect(
+      find.bySemanticsLabel('Décocher Respirer 2 minutes'),
+      findsOneWidget,
+    );
+    expect(
+      app
+          .accueilActivities
+          .snapshot
+          .rituals[CivilDay.fromLocal(DateTime.now())]!
+          .isDone(AccueilRitual.breathe),
+      isTrue,
     );
   });
+
+  testWidgets(
+    'la capsule ouvre Série, Fleurs et Tenue et la date ouvre le calendrier',
+    (tester) async {
+      await mount(tester);
+      for (final (label, title) in [
+        ('Ouvrir la série', 'Série'),
+        ('Ouvrir les fleurs', 'Fleurs de la semaine'),
+        ('Ouvrir la tenue', 'Tenue d’Elyrii'),
+      ]) {
+        await tap(tester, label);
+        expect(find.text(title), findsOneWidget);
+        await tester.tap(find.byTooltip('Fermer').last);
+        await tester.pump(const Duration(seconds: 1));
+      }
+      await tap(tester, 'Ouvrir le calendrier');
+      expect(find.text('Jours présents'), findsOneWidget);
+      await tester.tap(find.byTooltip('Mois précédent'));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('Jours présents'), findsOneWidget);
+      await tester.tap(find.byTooltip('Fermer'));
+      await tester.pump();
+    },
+  );
+
+  testWidgets(
+    'annuler rend le look précédent et enregistrer engage tenue et décor',
+    (tester) async {
+      final app = await mount(tester);
+      final original = app.mascot.mascot;
+      await tap(tester, 'Ouvrir la tenue');
+      final viewer = tester.state(find.byType(Mascot3DViewer).first);
+      await tap(tester, 'Astral');
+      expect(app.mascot.mascot, original);
+      expect(
+        tester
+            .widget<MascotWithAccessories>(
+              find.byType(MascotWithAccessories).first,
+            )
+            .mascot!
+            .themeId,
+        'cosmic',
+      );
+      await tester.runAsync(() => tester.tap(find.byTooltip('Fermer')));
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pumpAndSettle();
+      expect(app.mascot.mascot, original);
+      expect(
+        tester
+            .widget<MascotWithAccessories>(
+              find.byType(MascotWithAccessories).first,
+            )
+            .mascot,
+        original,
+      );
+      await tap(tester, 'Ouvrir la tenue');
+      await tap(tester, 'Astral');
+      await tap(tester, 'Décor');
+      await tap(tester, 'Collines');
+      await tester.runAsync(
+        () => tester.tap(find.byKey(const ValueKey('save_mascot_look'))),
+      );
+      await flush(tester, app);
+      await tester.pump(const Duration(seconds: 1));
+      expect(app.mascot.mascot.themeId, 'cosmic');
+      expect(app.accueilActivities.snapshot.decor, MascotDecor.hills);
+      expect(find.text('Tenue d’Elyrii'), findsNothing);
+      expect(viewer.mounted, isTrue);
+    },
+  );
+
+  testWidgets(
+    'le mouvement réduit présente les états finaux sans entrée en cours',
+    (tester) async {
+      await mount(tester);
+      expect(
+        find.text('Comment te sens-tu ce matin ?').evaluate().isNotEmpty ||
+            find
+                .text('Comment te sens-tu cet après-midi ?')
+                .evaluate()
+                .isNotEmpty ||
+            find.text('Comment te sens-tu ce soir ?').evaluate().isNotEmpty,
+        isTrue,
+      );
+      expect(tester.hasRunningAnimations, isFalse);
+      await tap(tester, 'Ouvrir la série');
+      expect(find.text('7 jours'), findsOneWidget);
+      expect(tester.hasRunningAnimations, isFalse);
+      await tester.tap(find.byTooltip('Fermer'));
+      await tester.pump();
+    },
+  );
 }

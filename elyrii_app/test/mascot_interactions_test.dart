@@ -73,14 +73,8 @@ void main() {
     testWidgets(
       'MascotPeek tap déclenche le rebond élastique et le haptique sans crash',
       (tester) async {
-        bool tapped = false;
         await tester.pumpWidget(
-          _wrap(
-            MascotPeek(
-              selectedMood: MoodType.neutral,
-              onTap: () => tapped = true,
-            ),
-          ),
+          _wrap(const MascotPeek(selectedMood: MoodType.neutral)),
         );
 
         expect(find.byType(MascotPeek), findsOneWidget);
@@ -88,9 +82,8 @@ void main() {
         // Tap sur la mascotte
         await tester.tap(find.byType(MascotPeek));
         await tester.pump();
-        expect(tapped, isTrue);
+        expect(tester.hasRunningAnimations, isTrue);
 
-        // Avancer pendant le micro-rebond (squash & stretch 550 ms)
         await tester.pump(const Duration(milliseconds: 100));
         await tester.pump(const Duration(milliseconds: 250));
         await tester.pump(const Duration(milliseconds: 300));

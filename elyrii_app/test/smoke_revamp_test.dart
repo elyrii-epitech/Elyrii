@@ -11,8 +11,6 @@ import 'package:elyrii_app/features/coach/presentation/providers/coach_provider.
 import 'package:elyrii_app/core/widgets/glass/liquid_glass_kit.dart';
 import 'package:elyrii_app/features/settings/providers/settings_provider.dart';
 import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
-import 'package:elyrii_app/features/dashboard/presentation/widgets/mascot_peek.dart';
-import 'package:elyrii_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:elyrii_app/features/journal/presentation/pages/journal_page.dart';
 import 'package:elyrii_app/features/gamification/presentation/pages/challenges_page.dart';
 import 'package:elyrii_app/features/coach/presentation/pages/coach_page.dart';
@@ -45,27 +43,6 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Smoke Test Refonte Apple HIG & Mascotte', () {
-    testWidgets(
-      'Dashboard affiche la mascotte épurée sans LinearProgressIndicator',
-      (tester) async {
-        await tester.pumpWidget(_createTestApp(child: const DashboardPage()));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
-
-        // Mascotte présente et épurée (sans ombre de contact)
-        expect(find.byType(MascotPeek), findsOneWidget);
-
-        // Aucun LinearProgressIndicator brut Material
-        expect(find.byType(LinearProgressIndicator), findsNothing);
-
-        // Aucune SnackBar
-        expect(find.byType(SnackBar), findsNothing);
-
-        // Bouton Réglages circulaire dans le bandeau supérieur
-        expect(find.byIcon(Icons.settings_rounded), findsOneWidget);
-      },
-    );
-
     testWidgets('LoginPage sans Transform.translate arbitraire ni SnackBar', (
       tester,
     ) async {

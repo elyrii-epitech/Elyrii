@@ -15,6 +15,25 @@ class AppShell extends StatefulWidget {
 
   const AppShell({super.key, required this.navigationShell});
 
+  static bool usesAccessibleDock(BuildContext context) =>
+      MediaQuery.sizeOf(context).width < 320 ||
+      MediaQuery.textScalerOf(context).scale(12) > 18;
+
+  static double dockHeightOf(BuildContext context) =>
+      usesAccessibleDock(context)
+      ? AppDimensions.accessibleDockHeight(
+          MediaQuery.textScalerOf(context).scale(16),
+        )
+      : AppDimensions.dockHeight;
+
+  static double bottomClearanceOf(BuildContext context) {
+    final bottom = MediaQuery.paddingOf(context).bottom;
+    return dockHeightOf(context) +
+        AppDimensions.dockBottomMargin(bottom) +
+        bottom +
+        AppDimensions.spacing24;
+  }
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
@@ -83,15 +102,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentIndex = widget.navigationShell.currentIndex;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-    // UIKit / liquid_glass_widgets : verticalPadding = 20.0 au-dessus du Home Indicator
-    final bottomMargin = bottomInset > 0
-        ? AppDimensions.spacing20
-        : AppDimensions.spacing16;
+    final bottomMargin = AppDimensions.dockBottomMargin(bottomInset);
     // Keep every tab at least 44 points wide on a 320-point screen.
     final compactDock = MediaQuery.sizeOf(context).width < 360;
-    final accessibleDock =
-        MediaQuery.sizeOf(context).width < 320 ||
-        MediaQuery.textScalerOf(context).scale(12) > 18;
+    final accessibleDock = AppShell.usesAccessibleDock(context);
 
     return Scaffold(
       extendBody: true,
@@ -112,31 +126,34 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
                 bottom: bottomMargin,
               ),
               child: accessibleDock
-                  ? DropdownButtonFormField<int>(
-                      key: ValueKey(currentIndex),
-                      initialValue: currentIndex,
-                      itemHeight: null,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Navigation',
-                      ),
-                      items: [
-                        for (var i = 0; i < 6; i++)
-                          DropdownMenuItem(
-                            value: i,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: AppDimensions.spacing12,
-                              ),
-                              child: Text(
-                                i == 5 ? 'Chat Elyrii' : _navItems[i].label,
+                  ? SizedBox(
+                      height: AppShell.dockHeightOf(context),
+                      child: DropdownButtonFormField<int>(
+                        key: ValueKey(currentIndex),
+                        initialValue: currentIndex,
+                        itemHeight: null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Navigation',
+                        ),
+                        items: [
+                          for (var i = 0; i < 6; i++)
+                            DropdownMenuItem(
+                              value: i,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppDimensions.spacing12,
+                                ),
+                                child: Text(
+                                  i == 5 ? 'Chat Elyrii' : _navItems[i].label,
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) _onTabSelected(value);
-                      },
+                        ],
+                        onChanged: (value) {
+                          if (value != null) _onTabSelected(value);
+                        },
+                      ),
                     )
                   : Row(
                       children: [
@@ -148,7 +165,7 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
                             iconControllers: _iconControllers,
                             isDark: isDark,
                             margin: EdgeInsets.zero,
-                            height: 64,
+                            height: AppDimensions.dockHeight,
                             borderRadius: AppDimensions.radiusPill,
                           ),
                         ),
