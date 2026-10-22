@@ -22,22 +22,34 @@ abstract final class DevSession {
   }) {
     String dayOf(DateTime date) =>
         '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    final today = dayOf(now);
+    // The streak's seven days are active, the eighth breaks it, and older
+    // days follow a fixed rhythm so the calendar shows a lived month.
+    bool active(int daysAgo) =>
+        daysAgo < streakDays || (daysAgo > streakDays && daysAgo % 4 != 1);
+    final activeDays = [
+      for (var daysAgo = rangeDays - 1; daysAgo >= 0; daysAgo--)
+        if (active(daysAgo)) daysAgo,
+    ];
     return {
       'rangeDays': rangeDays,
       'streak': streakDays,
       'completedChallengesCount': completedChallengeCount,
       'totalPoints': totalPoints,
-      'moodLogsCount': 7,
+      'moodLogsCount': activeDays.length,
       'moodTrend7Days': [
         for (var i = 0; i < 7; i++)
           {'day': dayOf(now.subtract(Duration(days: 6 - i))), 'count': 1},
       ],
       'moodDistribution': [
-        {'moodType': 'happy', 'count': 7},
+        {'moodType': 'happy', 'count': activeDays.length},
       ],
       'activityTimeline': [
-        {'day': today, 'moodLogs': 1, 'journalEntries': journalCount},
+        for (final daysAgo in activeDays)
+          {
+            'day': dayOf(DateTime(now.year, now.month, now.day - daysAgo)),
+            'moodLogs': 1,
+            'journalEntries': daysAgo == 0 ? journalCount : 0,
+          },
       ],
     };
   }
