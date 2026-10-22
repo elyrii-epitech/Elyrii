@@ -49,12 +49,8 @@ class MeditationSummaryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final textColor = context.textPrimary;
+    final subtitleColor = context.textSecondary;
     final accent = AppColors.readableAccent(
       controller.selectedExercise!.color,
       isDark: isDark,
@@ -64,11 +60,11 @@ class MeditationSummaryView extends StatelessWidget {
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.pageHorizontalPadding,
-        vertical: AppDimensions.spacingLg,
+        vertical: AppDimensions.spacing24,
       ),
       child: Column(
         children: [
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: AppDimensions.spacing16),
 
           // Mascotte apaisée
           const SizedBox(
@@ -87,20 +83,17 @@ class MeditationSummaryView extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: AppDimensions.spacingSm),
+          const SizedBox(height: AppDimensions.spacing12),
 
           Text(
                 'Bravo, c\'est terminé !',
-                style: AppTextStyles.headlineMedium(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.headlineMedium(color: textColor),
                 textAlign: TextAlign.center,
               )
               .animateRespectingMotion(context)
               .fadeIn(duration: 500.ms, delay: 200.ms),
 
-          const SizedBox(height: AppDimensions.spacingXs),
+          const SizedBox(height: AppDimensions.spacing8),
 
           Text(
                 'Tu as pris un moment pour toi,\net c\'est déjà une belle victoire.',
@@ -110,15 +103,15 @@ class MeditationSummaryView extends StatelessWidget {
               .animateRespectingMotion(context)
               .fadeIn(duration: 500.ms, delay: 400.ms),
 
-          const SizedBox(height: AppDimensions.spacingXl),
+          const SizedBox(height: AppDimensions.spacing32),
 
           // Carte de statistiques de la séance
-          _buildStatsCard(isDark, textColor, subtitleColor, accent)
+          _buildStatsCard(context, accent)
               .animateRespectingMotion(context)
               .fadeIn(duration: 500.ms, delay: 500.ms)
               .slideY(begin: 0.15, end: 0),
 
-          const SizedBox(height: AppDimensions.spacingXxl),
+          const SizedBox(height: AppDimensions.spacing48),
 
           if (controller.backendError != null) ...[
             Text(
@@ -126,27 +119,24 @@ class MeditationSummaryView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: AppTextStyles.bodySmall(color: subtitleColor),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacing16),
           ],
 
           // Question humeur après séance
           Text(
                 'Comment te sens-tu maintenant ?',
-                style: AppTextStyles.titleMedium(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.titleMedium(color: textColor),
                 textAlign: TextAlign.center,
               )
               .animateRespectingMotion(context)
               .fadeIn(duration: 500.ms, delay: 600.ms),
 
-          const SizedBox(height: AppDimensions.spacingLg),
+          const SizedBox(height: AppDimensions.spacing24),
 
           // Sélecteur d'humeur
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: AppDimensions.spacing8,
+            runSpacing: AppDimensions.spacing8,
             alignment: WrapAlignment.center,
 
             children: _moods.asMap().entries.map((entry) {
@@ -160,8 +150,8 @@ class MeditationSummaryView extends StatelessWidget {
                       duration: const Duration(milliseconds: 250),
                       curve: Curves.easeOutCubic,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
+                        horizontal: AppDimensions.spacing12,
+                        vertical: AppDimensions.spacing8,
                       ),
                       decoration: BoxDecoration(
                         color: selected
@@ -169,7 +159,9 @@ class MeditationSummaryView extends StatelessWidget {
                             : (isDark
                                   ? Colors.white.withValues(alpha: 0.04)
                                   : Colors.black.withValues(alpha: 0.02)),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius16,
+                        ),
                         border: Border.all(
                           color: selected
                               ? AppColors.primary
@@ -180,7 +172,7 @@ class MeditationSummaryView extends StatelessWidget {
                       child: Column(
                         children: [
                           Icon(mood.icon, size: 32, color: mood.color),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: AppDimensions.spacing8),
                           Text(
                             mood.label,
                             style: AppTextStyles.labelSmall(
@@ -190,9 +182,6 @@ class MeditationSummaryView extends StatelessWidget {
                                     Theme.of(context).brightness ==
                                     Brightness.dark,
                               ),
-                              fontWeight: selected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
                             ),
                           ),
                         ],
@@ -207,16 +196,16 @@ class MeditationSummaryView extends StatelessWidget {
             }).toList(),
           ),
 
-          const SizedBox(height: AppDimensions.spacingXxl),
+          const SizedBox(height: AppDimensions.spacing48),
 
           // Bouton retour au catalogue
           Center(
                 child: LiquidGlassCard(
                   onTap: () => controller.resetToSetup(),
-                  borderRadius: 30,
+                  borderRadius: AppDimensions.radius28,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 36,
-                    vertical: 14,
+                    horizontal: AppDimensions.spacing32,
+                    vertical: AppDimensions.spacing16,
                   ),
                   color: AppColors.primary.withValues(alpha: 0.22),
                   borderColor: AppColors.primary.withValues(alpha: 0.5),
@@ -228,7 +217,7 @@ class MeditationSummaryView extends StatelessWidget {
                         color: AppColors.primary,
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppDimensions.spacing8),
                       Text(
                         'Nouvelle séance',
                         style: AppTextStyles.labelLarge(
@@ -237,7 +226,6 @@ class MeditationSummaryView extends StatelessWidget {
                             isDark:
                                 Theme.of(context).brightness == Brightness.dark,
                           ),
-                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -247,23 +235,19 @@ class MeditationSummaryView extends StatelessWidget {
               .animateRespectingMotion(context)
               .fadeIn(duration: 400.ms, delay: 900.ms),
 
-          const SizedBox(height: 40),
+          const SizedBox(height: AppDimensions.spacing32),
         ],
       ),
     );
   }
 
-  Widget _buildStatsCard(
-    bool isDark,
-    Color textColor,
-    Color subtitleColor,
-    Color accent,
-  ) {
+  Widget _buildStatsCard(BuildContext context, Color accent) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.spacing20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF201E24) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radius20),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.10)
@@ -282,10 +266,10 @@ class MeditationSummaryView extends StatelessWidget {
         children: [
           Expanded(
             child: _buildStatColumn(
+              context,
               controller.selectedDurationLabel,
               'Temps total',
               accent,
-              isDark,
             ),
           ),
           Container(
@@ -295,10 +279,10 @@ class MeditationSummaryView extends StatelessWidget {
           ),
           Expanded(
             child: _buildStatColumn(
+              context,
               '${controller.isGuidedPractice ? controller.selectedExercise!.steps.length : controller.completedCycles}',
               controller.isGuidedPractice ? 'Étapes' : 'Cycles complets',
               isDark ? AppColors.primaryDark : AppColors.primary,
-              isDark,
             ),
           ),
         ],
@@ -307,10 +291,10 @@ class MeditationSummaryView extends StatelessWidget {
   }
 
   Widget _buildStatColumn(
+    BuildContext context,
     String value,
     String label,
     Color valueColor,
-    bool isDark,
   ) {
     return Column(
       children: [
@@ -319,15 +303,11 @@ class MeditationSummaryView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: AppTextStyles.headlineSmall(color: valueColor),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppDimensions.spacing2),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: AppTextStyles.bodySmall(
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ),
+          style: AppTextStyles.bodySmall(color: context.textTertiary),
         ),
       ],
     );

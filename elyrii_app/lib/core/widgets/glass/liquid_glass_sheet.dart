@@ -20,7 +20,9 @@ Future<T?> showLiquidGlassSheet<T>({
   bool isDismissible = true,
   bool enableDrag = true,
   bool useRootNavigator = false,
-  EdgeInsetsGeometry contentPadding = const EdgeInsets.all(20),
+  EdgeInsetsGeometry contentPadding = const EdgeInsets.all(
+    AppDimensions.spacing20,
+  ),
   Color? backgroundColor,
 }) {
   assert((child == null) != (scrollableBuilder == null));
@@ -63,7 +65,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
     required this.minChildSize,
     required this.maxChildSize,
     this.backgroundColor,
-    this.contentPadding = const EdgeInsets.all(20),
+    this.contentPadding = const EdgeInsets.all(AppDimensions.spacing20),
   });
 
   @override
@@ -78,7 +80,7 @@ class LiquidGlassSheetContent extends StatelessWidget {
             return ElyriiGlassSurface(
               role: GlassRole.modalSheet,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppDimensions.radiusLiquidGlassSheet),
+                top: Radius.circular(AppDimensions.radius28),
               ),
               glassColor: backgroundColor,
               child: Stack(
@@ -86,14 +88,18 @@ class LiquidGlassSheetContent extends StatelessWidget {
                   Column(
                     children: [
                       Container(
-                        margin: const EdgeInsets.only(top: 8),
+                        margin: const EdgeInsets.only(
+                          top: AppDimensions.spacing8,
+                        ),
                         width: 36,
                         height: 5,
                         decoration: BoxDecoration(
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.3)
                               : Colors.black.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(2.5),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radius4,
+                          ),
                         ),
                       ),
                       Expanded(

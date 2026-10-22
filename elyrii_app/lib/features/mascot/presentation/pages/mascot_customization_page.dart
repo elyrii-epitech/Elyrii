@@ -297,7 +297,6 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
   Future<void> _showReward(MascotAccessory piece) async {
     final progress = context.read<GamificationProvider>();
     final count = progress.completedChallenges.length;
-    final dark = Theme.of(context).brightness == Brightness.dark;
     await showLiquidGlassSheet<void>(
       context: context,
       initialChildSize: 0.68,
@@ -313,36 +312,23 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
           Text(
             piece.name,
             textAlign: TextAlign.center,
-            style: AppTextStyles.titleLarge(
-              color: dark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.titleLarge(color: context.textPrimary),
           ),
-          const SizedBox(height: AppDimensions.spacingXs),
+          const SizedBox(height: AppDimensions.spacing8),
           Text(
             piece.description,
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium(
-              color: dark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
+            style: AppTextStyles.bodyMedium(color: context.textSecondary),
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: AppDimensions.spacing16),
           Text(
             progress.error == null
                 ? 'Encore ${piece.remainingChallenges(count)} ${piece.remainingChallenges(count) == 1 ? 'défi' : 'défis'} à terminer · ${piece.unlockLabel}'
                 : 'À débloquer après ${piece.unlockLabel}',
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall(
-              color: dark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
+            style: AppTextStyles.bodySmall(color: context.textSecondary),
           ),
-          const SizedBox(height: AppDimensions.spacingLg),
+          const SizedBox(height: AppDimensions.spacing24),
           LiquidGlassButton(
             label: 'Essayer sur ma mascotte',
             icon: Icons.visibility_outlined,
@@ -352,7 +338,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
               _startTryOn(piece);
             },
           ),
-          const SizedBox(height: AppDimensions.spacingXs),
+          const SizedBox(height: AppDimensions.spacing8),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
@@ -376,15 +362,8 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         secondarySelectedColor: accent.withValues(alpha: 0.10),
         surfaceTintColor: Colors.transparent,
         showCheckmark: false,
-        labelStyle: AppTextStyles.labelMedium(
-          color: dark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-        ),
-        secondaryLabelStyle: AppTextStyles.labelMedium(
-          color: accent,
-          fontWeight: FontWeight.w600,
-        ),
+        labelStyle: AppTextStyles.labelMedium(color: context.textSecondary),
+        secondaryLabelStyle: AppTextStyles.labelMedium(color: accent),
         side: WidgetStateBorderSide.resolveWith(
           (states) => BorderSide(
             color: states.contains(WidgetState.selected)
@@ -438,14 +417,19 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                   );
                   final editor = SingleChildScrollView(
                     controller: _editorScroll,
-                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
+                    padding: const EdgeInsets.fromLTRB(
+                      0,
+                      AppDimensions.spacing8,
+                      0,
+                      AppDimensions.spacing24,
+                    ),
                     child: Column(
                       children: [
                         _tabBar(),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppDimensions.spacing12),
                         IgnorePointer(
                           ignoring: !_loaded || _saving,
-                          child: _editor(provider, progress, dark),
+                          child: _editor(provider, progress),
                         ),
                       ],
                     ),
@@ -465,7 +449,9 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Expanded(child: preview),
-                                  const SizedBox(width: 28),
+                                  const SizedBox(
+                                    width: AppDimensions.spacing24,
+                                  ),
                                   Expanded(child: editor),
                                 ],
                               )
@@ -479,8 +465,8 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                                     height: hidePreview
                                         ? 0
                                         : compact
-                                        ? 8
-                                        : 16,
+                                        ? AppDimensions.spacing8
+                                        : AppDimensions.spacing16,
                                   ),
                                   Expanded(child: editor),
                                 ],
@@ -513,11 +499,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
     },
   );
 
-  Widget _editor(
-    MascotProvider provider,
-    GamificationProvider progress,
-    bool dark,
-  ) {
+  Widget _editor(MascotProvider provider, GamificationProvider progress) {
     final progressCard = _loaded && progress.error == null
         ? MascotProgressCard(
             completedCount: progress.completedChallenges.length,
@@ -533,20 +515,14 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                   !_loaded
                       ? 'Ta collection se prépare…'
                       : 'Progression indisponible',
-                  style: AppTextStyles.titleSmall(
-                    color: dark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                  ),
+                  style: AppTextStyles.titleSmall(color: context.textPrimary),
                 ),
                 if (_loaded) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacing8),
                   Text(
                     'Tes couleurs et ton look restent disponibles. Recharge tes défis pour retrouver tes paliers.',
                     style: AppTextStyles.bodyMedium(
-                      color: dark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                      color: context.textSecondary,
                     ),
                   ),
                   TextButton(
@@ -569,9 +545,9 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           MascotStyleEditor(mascot: _draft, onChanged: _edit),
-          const SizedBox(height: 28),
+          const SizedBox(height: AppDimensions.spacing24),
           progressCard,
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
           TextButton.icon(
             onPressed: () => _edit(MascotModel.defaultMascot()),
             icon: const Icon(Icons.restart_alt_rounded, size: 18),
@@ -589,7 +565,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           progressCard,
-          const SizedBox(height: 28),
+          const SizedBox(height: AppDimensions.spacing24),
           MascotCollectionPanel(
             selection: _draft.equippedCosmetics,
             savedSelection: provider.mascot.equippedCosmetics,
@@ -613,7 +589,12 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
           ),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing8,
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing16,
+      ),
       child: Center(
         heightFactor: 1,
         child: ConstrainedBox(
@@ -638,11 +619,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                       ? 'Look disponible sur cet appareil'
                       : 'Ton look est enregistré',
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.labelSmall(
-                    color: dark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
+                  style: AppTextStyles.labelSmall(color: context.textSecondary),
                 ),
               ),
               if (provider.error != null && _loaded && !_dirty)
@@ -650,7 +627,7 @@ class _MascotCustomizationPageState extends State<MascotCustomizationPage> {
                   onPressed: provider.retrySync,
                   child: const Text('Réessayer la synchronisation'),
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacing8),
               LiquidGlassButton(
                 key: const ValueKey('save_mascot_look'),
                 label: _saving

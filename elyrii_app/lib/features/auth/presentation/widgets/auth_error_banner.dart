@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_dimensions.dart';
 
 /// Bannière d'alerte contextuelle affichée en haut de formulaire d'auth.
 ///
@@ -26,10 +27,13 @@ class AuthErrorBanner extends StatelessWidget {
       container: true,
       liveRegion: true,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing12,
+        ),
         decoration: BoxDecoration(
           color: tint.withValues(alpha: isDark ? 0.14 : 0.10),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           border: Border.all(color: tint.withValues(alpha: 0.35)),
         ),
         child: Row(
@@ -41,16 +45,11 @@ class AuthErrorBanner extends StatelessWidget {
               size: 20,
               color: tint,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppDimensions.spacing8),
             Expanded(
               child: Text(
                 message,
-                style: AppTextStyles.bodyMedium(
-                  fontWeight: FontWeight.w500,
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
+                style: AppTextStyles.bodyMedium(color: context.textPrimary),
               ),
             ),
           ],

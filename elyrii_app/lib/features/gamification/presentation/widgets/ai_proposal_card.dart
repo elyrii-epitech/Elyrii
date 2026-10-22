@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../data/models/gamification_models.dart';
@@ -34,13 +35,12 @@ class AiProposalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
       child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -48,7 +48,7 @@ class AiProposalCard extends StatelessWidget {
               children: [
                 // Icône
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppDimensions.spacing12),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
@@ -63,7 +63,7 @@ class AiProposalCard extends StatelessWidget {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppDimensions.spacing16),
 
                 // Titre + badge Elyrii
                 Expanded(
@@ -76,25 +76,24 @@ class AiProposalCard extends StatelessWidget {
                             child: Text(
                               proposal.displayTitle,
                               style: AppTextStyles.titleSmall(
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
+                                color: context.textPrimary,
                               ),
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2,
+                              horizontal: AppDimensions.spacing8,
+                              vertical: AppDimensions.spacing2,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.radius8,
+                              ),
                             ),
                             child: Text(
                               'IA',
-                              style: AppTextStyles.labelSmall(
-                                fontWeight: FontWeight.bold,
+                              style: AppTextStyles.badge(
                                 color: AppColors.readableAccent(
                                   AppColors.primary,
                                   isDark:
@@ -107,15 +106,13 @@ class AiProposalCard extends StatelessWidget {
                         ],
                       ),
                       if (proposal.displayDescription.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppDimensions.spacing4),
                         Text(
                           proposal.displayDescription,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.bodySmall(
-                            color: isDark
-                                ? AppColors.textTertiaryDark
-                                : AppColors.textTertiaryLight,
+                            color: context.textTertiary,
                           ),
                         ),
                       ],
@@ -124,7 +121,7 @@ class AiProposalCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacing16),
             // Actions : capsules tactiles coordonnées
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -137,37 +134,38 @@ class AiProposalCard extends StatelessWidget {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 7,
+                        horizontal: AppDimensions.spacing16,
+                        vertical: AppDimensions.spacing8,
                       ),
                       decoration: BoxDecoration(
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.05)
                             : Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius20,
+                        ),
                       ),
                       child: Text(
                         'Plus tard',
                         style: AppTextStyles.bodySmall(
-                          fontWeight: FontWeight.w500,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
+                          color: context.textSecondary,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacing8),
                 ],
                 isProcessing
                     ? Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 7,
+                              horizontal: AppDimensions.spacing16,
+                              vertical: AppDimensions.spacing8,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.75),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.radius20,
+                              ),
                             ),
                             child: Text(
                               'Un instant…',
@@ -191,12 +189,14 @@ class AiProposalCard extends StatelessWidget {
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 7,
+                            horizontal: AppDimensions.spacing16,
+                            vertical: AppDimensions.spacing8,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radius20,
+                            ),
                           ),
                           child: Text(
                             'Accepter',

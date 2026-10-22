@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 
@@ -19,13 +20,16 @@ class DailyStreakCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return LiquidGlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing20,
+        vertical: AppDimensions.spacing16,
+      ),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppDimensions.spacing12),
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -36,7 +40,7 @@ class DailyStreakCard extends StatelessWidget {
                   size: 22,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppDimensions.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,21 +48,16 @@ class DailyStreakCard extends StatelessWidget {
                     Text(
                       'Ton rythme cette semaine',
                       style: AppTextStyles.titleMedium(
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
+                        color: context.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppDimensions.spacing2),
                     Text(
                       streakDays > 0
                           ? 'Tu as partagé $streakDays moments ensemble'
                           : 'Chaque jour compte, à ton rythme',
                       style: AppTextStyles.bodyMedium(
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -66,7 +65,7 @@ class DailyStreakCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
@@ -106,27 +105,21 @@ class DailyStreakCard extends StatelessWidget {
                       size: 18,
                       color: wasPresent
                           ? AppColors.accent
-                          : (isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiaryLight)
-                                .withValues(alpha: 0.5),
+                          : context.textTertiary.withValues(alpha: 0.5),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppDimensions.spacing8),
                   Text(
                     dayInitial,
                     style: AppTextStyles.bodySmall(
-                      fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
               );
             }),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacing20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -135,33 +128,21 @@ class DailyStreakCard extends StatelessWidget {
                 size: 12,
                 color: AppColors.accent,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacing4),
               Text(
                 'Moments vécus',
-                style: AppTextStyles.labelSmall(
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
+                style: AppTextStyles.labelSmall(color: context.textTertiary),
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: AppDimensions.spacing24),
               Icon(
                 Icons.cloud_rounded,
                 size: 12,
-                color:
-                    (isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight)
-                        .withValues(alpha: 0.5),
+                color: context.textTertiary.withValues(alpha: 0.5),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacing4),
               Text(
                 'Repos & recharge',
-                style: AppTextStyles.labelSmall(
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
+                style: AppTextStyles.labelSmall(color: context.textTertiary),
               ),
             ],
           ),

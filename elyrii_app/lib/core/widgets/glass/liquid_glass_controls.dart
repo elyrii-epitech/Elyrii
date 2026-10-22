@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/haptics/elyrii_haptics.dart';
 import '../../theme/app_text_styles.dart';
+import '../../theme/app_dimensions.dart';
 
 class LiquidGlassSegmentedControl<T> extends StatelessWidget {
   final Map<T, String> segments;
@@ -21,8 +22,8 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     assert(segments.containsKey(selectedValue));
     return Wrap(
-      spacing: 8,
-      runSpacing: 4,
+      spacing: AppDimensions.spacing8,
+      runSpacing: AppDimensions.spacing4,
       children: [
         for (final entry in segments.entries)
           ChoiceChip(
@@ -30,7 +31,6 @@ class LiquidGlassSegmentedControl<T> extends StatelessWidget {
               entry.value,
               style: AppTextStyles.labelLarge(
                 color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
               ),
             ),
             selectedColor: Theme.of(context).colorScheme.primaryContainer,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../data/models/gamification_models.dart';
@@ -25,18 +26,15 @@ class ChallengeAvailableCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
       child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Row(
           children: [
             // Icône
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppDimensions.spacing12),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
@@ -47,7 +45,7 @@ class ChallengeAvailableCard extends StatelessWidget {
               ),
               child: Icon(challenge.icon, color: AppColors.primary, size: 20),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppDimensions.spacing16),
 
             // Titre + description
             Expanded(
@@ -56,30 +54,24 @@ class ChallengeAvailableCard extends StatelessWidget {
                 children: [
                   Text(
                     challenge.title,
-                    style: AppTextStyles.titleSmall(
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
+                    style: AppTextStyles.titleSmall(color: context.textPrimary),
                   ),
                   if (challenge.description != null &&
                       challenge.description!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppDimensions.spacing4),
                     Text(
                       challenge.description!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.bodySmall(
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
+                        color: context.textTertiary,
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacing12),
 
             // Bouton Commencer
             // Bouton Commencer : capsule pleine ; démarrage en shimmer
@@ -87,12 +79,14 @@ class ChallengeAvailableCard extends StatelessWidget {
             isStarting
                 ? Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
+                          horizontal: AppDimensions.spacing16,
+                          vertical: AppDimensions.spacing8,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radius20,
+                          ),
                         ),
                         child: Text(
                           'Un instant…',
@@ -114,12 +108,14 @@ class ChallengeAvailableCard extends StatelessWidget {
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
+                        horizontal: AppDimensions.spacing16,
+                        vertical: AppDimensions.spacing8,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius20,
+                        ),
                       ),
                       child: Text(
                         'Commencer',

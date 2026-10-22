@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../data/models/mascot_accessory.dart';
@@ -70,12 +71,6 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
               '${acc.description}'
         : '${acc.requiredChallenges == 1 ? 'Bravo pour ton premier défi terminé' : 'Bravo pour tes ${acc.unlockLabel}'} ! '
               '${acc.description}';
-    final titleColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final bodyColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
 
     const confettiColors = [
       AppColors.primary,
@@ -89,13 +84,17 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
       color: Colors.transparent,
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppDimensions.spacing24,
+          ),
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 32),
+            margin: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing32,
+            ),
             constraints: const BoxConstraints(maxWidth: 340),
             child: ElyriiGlassSurface(
               role: GlassRole.dialog,
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(AppDimensions.radius28),
               child: AnimatedBuilder(
                 animation: _shimmerCtrl,
                 builder: (context, _) {
@@ -104,21 +103,28 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                     children: [
                       // Contenu de la carte
                       Container(
-                        padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimensions.spacing24,
+                          AppDimensions.spacing32,
+                          AppDimensions.spacing24,
+                          AppDimensions.spacing24,
+                        ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             // Badge Récompense débloquée
                             Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 6,
+                                    horizontal: AppDimensions.spacing16,
+                                    vertical: AppDimensions.spacing8,
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.success.withValues(
                                       alpha: isDark ? 0.18 : 0.14,
                                     ),
-                                    borderRadius: BorderRadius.circular(999),
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimensions.radiusPill,
+                                    ),
                                     border: Border.all(
                                       color: AppColors.success.withValues(
                                         alpha: 0.4,
@@ -133,22 +139,20 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                         size: 14,
                                         color: AppColors.success,
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(
+                                        width: AppDimensions.spacing8,
+                                      ),
                                       Flexible(
                                         child: Text(
                                           widget.unlockedCount > 1
                                               ? 'RÉCOMPENSES DÉBLOQUÉES'
                                               : 'RÉCOMPENSE DÉBLOQUÉE',
                                           textAlign: TextAlign.center,
-                                          style: AppTextStyles.labelSmall(
+                                          style: AppTextStyles.badge(
                                             color: AppColors.readableAccent(
                                               AppColors.successDark,
-                                              isDark:
-                                                  Theme.of(context)
-                                                      .brightness ==
-                                                  Brightness.dark,
+                                              isDark: isDark,
                                             ),
-                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
@@ -161,7 +165,7 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                 )
                                 .fadeIn(delay: 200.ms)
                                 .slideY(begin: -0.3),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppDimensions.spacing24),
 
                             // Portrait fidèle à la pièce disponible dans l'atelier.
                             Stack(
@@ -210,13 +214,12 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                     ),
                               ],
                             ),
-                            const SizedBox(height: 20),
+                            const SizedBox(height: AppDimensions.spacing20),
 
                             Text(
                                   acc.name,
                                   style: AppTextStyles.headlineSmall(
-                                    color: titleColor,
-                                    fontWeight: FontWeight.w600,
+                                    color: context.textPrimary,
                                   ),
                                   textAlign: TextAlign.center,
                                 )
@@ -226,12 +229,12 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                 )
                                 .fadeIn(delay: 300.ms)
                                 .slideY(begin: 0.15),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: AppDimensions.spacing8),
                             Text(
                                   celebrationMessage,
                                   style: AppTextStyles.bodyMedium(
-                                    color: bodyColor,
-                                  ).copyWith(height: 1.55),
+                                    color: context.textSecondary,
+                                  ),
                                   textAlign: TextAlign.center,
                                 )
                                 .animate(
@@ -240,7 +243,7 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                 )
                                 .fadeIn(delay: 450.ms)
                                 .slideY(begin: 0.15),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: AppDimensions.spacing24),
 
                             // Bouton équiper
                             LiquidGlassButton(
@@ -255,13 +258,13 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                 )
                                 .fadeIn(delay: 600.ms)
                                 .slideY(begin: 0.2),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: AppDimensions.spacing8),
                             TextButton(
                                   onPressed: () => Navigator.pop(context),
                                   child: Text(
                                     'Plus tard',
                                     style: AppTextStyles.bodyMedium(
-                                      color: bodyColor,
+                                      color: context.textSecondary,
                                     ),
                                   ),
                                 )
@@ -306,7 +309,9 @@ class _UnlockCelebrationDialogState extends State<UnlockCelebrationDialog>
                                             : BoxShape.rectangle,
                                         borderRadius: i % 2 == 0
                                             ? null
-                                            : BorderRadius.circular(1),
+                                            : BorderRadius.circular(
+                                                AppDimensions.radius4,
+                                              ),
                                       ),
                                     )
                                     .animateRespectingMotion(

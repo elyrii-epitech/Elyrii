@@ -86,12 +86,8 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final text = context.textPrimary;
+    final secondary = context.textSecondary;
     final accent = isDark ? AppColors.primaryDark : AppColors.primary;
     return ElyriiPageFrame.tab(
       key: const Key('meditation-catalog-scroll'),
@@ -102,14 +98,14 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
         SliverPadding(
           padding: EdgeInsets.fromLTRB(
             AppDimensions.pageHorizontalPadding,
-            8,
+            AppDimensions.spacing8,
             AppDimensions.pageHorizontalPadding,
-            MediaQuery.paddingOf(context).bottom + 24,
+            MediaQuery.paddingOf(context).bottom + AppDimensions.spacing24,
           ),
           sliver: SliverList.list(
             children: [
               _sessionCard(text, secondary, accent),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppDimensions.spacing20),
               Row(
                 children: [
                   Expanded(
@@ -125,14 +121,16 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
                       foregroundColor: accent,
                       minimumSize: const Size(0, 44),
                       visualDensity: VisualDensity.standard,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.spacing8,
+                      ),
                       textStyle: AppTextStyles.labelMedium(),
                     ),
                     child: const Text('Tout voir'),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacing12),
               MeditationPracticeGrid(
                 key: const Key('meditation-featured'),
                 exercises: _featured(controller.selectedExercise),
@@ -148,7 +146,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
 
   Widget _sessionCard(Color text, Color secondary, Color accent) {
     return LiquidGlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.spacing20),
       child: Row(
         children: [
           Expanded(
@@ -158,63 +156,59 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
               children: [
                 Text(
                   controller.selectedExercise?.title ?? 'Choisis ta pratique',
-                  style: AppTextStyles.titleMedium(
-                    fontWeight: FontWeight.w700,
-                    color: text,
-                  ),
+                  style: AppTextStyles.titleMedium(color: text),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacing8),
                 _durationControl(text, secondary, accent),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacing12),
           const ExcludeSemantics(child: _MeditationMascot()),
         ],
       ),
     );
   }
 
-  Widget _durationControl(Color text, Color secondary, Color accent) =>
-      Semantics(
-        button: true,
-        excludeSemantics: true,
-        onTap: _chooseDuration,
-        label: 'Durée libre',
-        container: true,
-        value: controller.selectedDurationLabel,
-        child: TextButton(
-          key: const Key('meditation-custom-duration'),
-          onPressed: _chooseDuration,
-          style: TextButton.styleFrom(
-            foregroundColor: text,
-            minimumSize: const Size(0, 44),
-            visualDensity: VisualDensity.standard,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            alignment: Alignment.centerLeft,
-            shape: const StadiumBorder(),
+  Widget _durationControl(
+    Color text,
+    Color secondary,
+    Color accent,
+  ) => Semantics(
+    button: true,
+    excludeSemantics: true,
+    onTap: _chooseDuration,
+    label: 'Durée libre',
+    container: true,
+    value: controller.selectedDurationLabel,
+    child: TextButton(
+      key: const Key('meditation-custom-duration'),
+      onPressed: _chooseDuration,
+      style: TextButton.styleFrom(
+        foregroundColor: text,
+        minimumSize: const Size(0, 44),
+        visualDensity: VisualDensity.standard,
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing8),
+        alignment: Alignment.centerLeft,
+        shape: const StadiumBorder(),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, color: accent, size: 18),
+          const SizedBox(width: AppDimensions.spacing8),
+          Flexible(
+            child: Text(
+              controller.selectedDurationLabel,
+              style: AppTextStyles.titleSmall(color: text),
+            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.timer_outlined, color: accent, size: 18),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  controller.selectedDurationLabel,
-                  style: AppTextStyles.titleSmall(color: text),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: secondary,
-                size: 16,
-              ),
-            ],
-          ),
-        ),
-      );
+          const SizedBox(width: AppDimensions.spacing8),
+          Icon(Icons.keyboard_arrow_down_rounded, color: secondary, size: 16),
+        ],
+      ),
+    ),
+  );
 
   Widget _startAction(Color text) {
     final selected = controller.selectedExercise;
@@ -250,7 +244,7 @@ class _MeditationCatalogViewState extends State<MeditationCatalogView> {
                         : text,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacing8),
               ],
               LiquidGlassIconButton(
                 tooltip: 'Commencer la séance',

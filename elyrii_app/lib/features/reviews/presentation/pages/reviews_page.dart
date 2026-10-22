@@ -11,6 +11,7 @@ import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../dashboard/data/models/dashboard_models.dart';
@@ -96,56 +97,57 @@ class _ReviewsPageState extends State<ReviewsPage> {
             slivers: [
               CupertinoSliverRefreshControl(onRefresh: _reload),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.pageHorizontalPadding,
+                  AppDimensions.spacing4,
+                  AppDimensions.pageHorizontalPadding,
+                  0,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     _RangeSelector(
-                      isDark: isDark,
                       selectedRange: _selectedRange,
                       onSelected: _selectRange,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: AppDimensions.spacing20),
                     if (isWaiting)
                       ReviewSkeleton(isDark: isDark)
                     else if (snapshot.hasError)
                       LiquidGlassCard(
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(
+                            AppDimensions.spacing16,
+                          ),
                           child: Text(
                             'Impossible de charger le bilan pour le moment.',
                             style: AppTextStyles.bodyMedium(
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
+                              color: context.textPrimary,
                             ),
                           ),
                         ),
                       )
                     else if (data != null) ...[
-                      ReviewOverviewGrid(stats: data, isDark: isDark),
-                      const SizedBox(height: 20),
-                      ReviewSectionHeader(
+                      ReviewOverviewGrid(stats: data),
+                      const SizedBox(height: AppDimensions.spacing20),
+                      const ReviewSectionHeader(
                         title: 'Tendance de l’humeur',
                         subtitle: 'Nombre de prises d’humeur par jour',
-                        isDark: isDark,
                       ),
                       ReviewTrendChart(stats: data, isDark: isDark),
-                      const SizedBox(height: 20),
-                      ReviewSectionHeader(
+                      const SizedBox(height: AppDimensions.spacing20),
+                      const ReviewSectionHeader(
                         title: 'Répartition',
                         subtitle: 'Ce qui ressort le plus sur la période',
-                        isDark: isDark,
                       ),
                       ReviewMoodDistributionList(stats: data, isDark: isDark),
-                      const SizedBox(height: 20),
-                      ReviewSectionHeader(
+                      const SizedBox(height: AppDimensions.spacing20),
+                      const ReviewSectionHeader(
                         title: 'Activité',
                         subtitle:
                             'Journal et humeur sur la même ligne du temps',
-                        isDark: isDark,
                       ),
-                      ReviewActivityTimeline(stats: data, isDark: isDark),
-                      const SizedBox(height: 140),
+                      ReviewActivityTimeline(stats: data),
+                      const SizedBox(height: AppDimensions.pageBottomInset),
                     ],
                   ]),
                 ),
@@ -166,15 +168,10 @@ class _RangeSelector extends StatelessWidget {
     '90d': '90 jours',
   };
 
-  final bool isDark;
   final String selectedRange;
   final ValueChanged<String> onSelected;
 
-  const _RangeSelector({
-    required this.isDark,
-    required this.selectedRange,
-    required this.onSelected,
-  });
+  const _RangeSelector({required this.selectedRange, required this.onSelected});
 
   @override
   Widget build(BuildContext context) {

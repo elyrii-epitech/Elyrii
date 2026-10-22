@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../data/entities/chat_message.dart';
 
 abstract final class ChatBubbleStyles {
   static const BorderRadius userRadius = BorderRadius.only(
-    topLeft: Radius.circular(20),
-    topRight: Radius.circular(20),
-    bottomLeft: Radius.circular(20),
-    bottomRight: Radius.circular(20),
+    topLeft: Radius.circular(AppDimensions.radius20),
+    topRight: Radius.circular(AppDimensions.radius20),
+    bottomLeft: Radius.circular(AppDimensions.radius20),
+    bottomRight: Radius.circular(AppDimensions.radius20),
   );
 
   static BoxDecoration assistant(bool isDark) => BoxDecoration(
     color: isDark
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.045),
-    borderRadius: BorderRadius.circular(18),
+    borderRadius: BorderRadius.circular(AppDimensions.radius16),
   );
 }
 
@@ -46,7 +47,10 @@ class ChatMessageBubble extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 780),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing20,
+            vertical: AppDimensions.spacing8,
+          ),
           child: isUser
               ? _buildUserMessage(context, isDark)
               : _buildAssistantMessage(context, isDark),
@@ -62,7 +66,10 @@ class ChatMessageBubble extends StatelessWidget {
         constraints: BoxConstraints(
           maxWidth: (MediaQuery.sizeOf(context).width * 0.78).clamp(220, 560),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing12,
+        ),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF302C3B) : const Color(0xFFEDEAF5),
           borderRadius: ChatBubbleStyles.userRadius,
@@ -72,14 +79,10 @@ class ChatMessageBubble extends StatelessWidget {
           children: [
             Text(
               message,
-              style: AppTextStyles.bodyLarge(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ),
+              style: AppTextStyles.bodyLarge(color: context.textPrimary),
             ),
             if (delivery != MessageDelivery.delivered) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: AppDimensions.spacing8),
               Semantics(
                 liveRegion: true,
                 child: Text(
@@ -120,32 +123,26 @@ class ChatMessageBubble extends StatelessWidget {
             color: AppColors.primary,
           ),
         ),
-        const SizedBox(width: 11),
+        const SizedBox(width: AppDimensions.spacing12),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(top: 2, right: 12),
+            padding: const EdgeInsets.only(
+              top: AppDimensions.spacing2,
+              right: AppDimensions.spacing12,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Elyrii · IA',
-                  style: AppTextStyles.labelMedium(
-                    fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
+                  style: AppTextStyles.overline(color: context.textSecondary),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: AppDimensions.spacing4),
                 Semantics(
                   label: 'Réponse de l’assistant IA',
                   child: SelectableText(
                     message,
-                    style: AppTextStyles.bodyLarge(
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
+                    style: AppTextStyles.bodyLarge(color: context.textPrimary),
                   ),
                 ),
                 if (onReport != null)

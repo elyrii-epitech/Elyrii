@@ -17,14 +17,8 @@ import '../providers/dashboard_provider.dart';
 class MascotPeek extends StatefulWidget {
   final MoodType? selectedMood;
   final VoidCallback? onTap;
-  final bool isDark;
 
-  const MascotPeek({
-    super.key,
-    this.selectedMood,
-    this.onTap,
-    this.isDark = false,
-  });
+  const MascotPeek({super.key, this.selectedMood, this.onTap});
 
   @override
   State<MascotPeek> createState() => _MascotPeekState();

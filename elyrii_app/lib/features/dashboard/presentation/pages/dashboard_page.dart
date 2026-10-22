@@ -93,9 +93,9 @@ class _DashboardPageState extends State<DashboardPage> {
           },
           child: ElyriiGlassSurface(
             role: GlassRole.floatingControl,
-            borderRadius: BorderRadius.circular(22),
-            width: 48,
-            height: 48,
+            borderRadius: BorderRadius.circular(AppDimensions.radius20),
+            width: AppDimensions.controlSize,
+            height: AppDimensions.controlSize,
             child: Center(
               child: ClipOval(
                 child: UserAvatar(
@@ -122,27 +122,26 @@ class _DashboardPageState extends State<DashboardPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(width: 48),
+                    const SizedBox(width: AppDimensions.controlSize),
                     Flexible(
                       child: Selector<DashboardProvider, MoodType?>(
                         selector: (_, p) => p.selectedMood,
                         builder: (_, mood, _) => MascotPeek(
                           selectedMood: mood,
-                          isDark: isDark,
                           onTap: provider.nextMascotMessage,
                         ),
                       ),
                     ),
-                    SizedBox(
-                      width: 48,
+                    const SizedBox(
+                      width: AppDimensions.controlSize,
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: MascotCustomizeCharm(isDark: isDark),
+                        child: MascotCustomizeCharm(),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppDimensions.spacing2),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimensions.pageHorizontalPadding,
@@ -157,7 +156,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           onTap: provider.nextMascotMessage,
                         ),
                       ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: AppDimensions.spacing24),
                       Selector<
                         DashboardProvider,
                         (MoodType?, bool, String?, DateTime?)
@@ -173,7 +172,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             _buildMoodSection(isDark, provider),
                             if (state.$2)
                               const Padding(
-                                padding: EdgeInsets.all(8),
+                                padding: EdgeInsets.all(AppDimensions.spacing8),
                                 child: Text('Enregistrement de ton humeur…'),
                               ),
                             if (state.$4 != null)
@@ -198,7 +197,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 22),
+                      const SizedBox(height: AppDimensions.spacing24),
                       Selector2<
                         DashboardProvider,
                         JournalProvider,
@@ -214,10 +213,9 @@ class _DashboardPageState extends State<DashboardPage> {
                             : _buildBentoGrid(
                                 provider,
                                 context.read<JournalProvider>(),
-                                isDark,
                               ),
                       ),
-                      const SizedBox(height: 130),
+                      const SizedBox(height: AppDimensions.dockClearance),
                     ],
                   ),
                 ),
@@ -276,7 +274,7 @@ class _DashboardPageState extends State<DashboardPage> {
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                borderRadius: BorderRadius.circular(AppDimensions.radius16),
                 boxShadow: [
                   BoxShadow(
                     color: moodColor.withValues(alpha: isDark ? 0.22 : 0.14),
@@ -288,7 +286,10 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ),
         LiquidGlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing16,
+            vertical: AppDimensions.spacing16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -300,7 +301,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     height: 32,
                     decoration: BoxDecoration(
                       color: moodColor.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius8,
+                      ),
                     ),
                     child: Icon(
                       selectedMood?.icon ?? Icons.mood_rounded,
@@ -308,7 +311,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       size: 18,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppDimensions.spacing8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,9 +319,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         Text(
                           'État d\'esprit',
                           style: AppTextStyles.titleSmall(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: context.textPrimary,
                           ),
                         ),
                         Text(
@@ -326,9 +327,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               ? 'Enregistré aujourd\'hui'
                               : 'Comment te sens-tu ce soir ?',
                           style: AppTextStyles.bodySmall(
-                            color: isDark
-                                ? AppColors.textTertiaryDark
-                                : AppColors.textTertiaryLight,
+                            color: context.textTertiary,
                           ),
                         ),
                       ],
@@ -337,31 +336,30 @@ class _DashboardPageState extends State<DashboardPage> {
                   if (selectedMood != null)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: AppDimensions.spacing8,
+                        vertical: AppDimensions.spacing4,
                       ),
                       decoration: BoxDecoration(
                         color: moodColor.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius8,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.check_rounded, size: 12, color: moodColor),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppDimensions.spacing4),
                           Text(
                             selectedMood.label,
-                            style: AppTextStyles.labelSmall(
-                              fontWeight: FontWeight.w600,
-                              color: moodColor,
-                            ),
+                            style: AppTextStyles.badge(color: moodColor),
                           ),
                         ],
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppDimensions.spacing16),
               // Sélecteur des 5 humeurs
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -369,7 +367,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   final isSelected = selectedMood == mood;
                   return Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.spacing2,
+                      ),
                       child: DashboardMoodChip(
                         mood: mood,
                         isSelected: isSelected,
@@ -384,15 +384,15 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               // Résonance émotionnelle & Action concrète (Valeur ajoutée bienveillante)
               if (selectedMood != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacing16),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppDimensions.spacing12),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.04)
                         : Colors.black.withValues(alpha: 0.02),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius16),
                     border: Border.all(
                       color: moodColor.withValues(alpha: 0.20),
                       width: 1,
@@ -405,34 +405,27 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           Text(
                             selectedMood.label,
-                            style: AppTextStyles.titleSmall(
-                              fontWeight: FontWeight.w700,
-                              color: moodColor,
-                            ),
+                            style: AppTextStyles.titleMedium(color: moodColor),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: AppDimensions.spacing8),
                           Text(
                             '•',
                             style: AppTextStyles.bodySmall(
-                              color: isDark
-                                  ? AppColors.textTertiaryDark
-                                  : AppColors.textTertiaryLight,
+                              color: context.textTertiary,
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: AppDimensions.spacing8),
                           Expanded(
                             child: Text(
                               selectedMood.subtitle,
                               style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
+                                color: context.textSecondary,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppDimensions.spacing8),
                       // Bouton d'action contextuel
                       AccessibleAction(
                         label: selectedMood.suggestedActionLabel,
@@ -445,14 +438,16 @@ class _DashboardPageState extends State<DashboardPage> {
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
+                            horizontal: AppDimensions.spacing12,
+                            vertical: AppDimensions.spacing8,
                           ),
                           decoration: BoxDecoration(
                             color: moodColor.withValues(
                               alpha: isDark ? 0.18 : 0.12,
                             ),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radius8,
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -461,7 +456,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 size: 16,
                                 color: moodColor,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppDimensions.spacing8),
                               Expanded(
                                 child: Text(
                                   selectedMood.suggestedActionLabel,
@@ -496,7 +491,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildBentoGrid(
     DashboardProvider provider,
     JournalProvider journalProvider,
-    bool isDark,
   ) {
     return Column(
       children: [
@@ -508,17 +502,19 @@ class _DashboardPageState extends State<DashboardPage> {
                     constraints.maxWidth < 260
                 ? 1
                 : 2;
-            final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+            final width =
+                (constraints.maxWidth -
+                    AppDimensions.spacing12 * (columns - 1)) /
+                columns;
             return Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: AppDimensions.spacing12,
+              runSpacing: AppDimensions.spacing12,
               children: [
                 // Carte Série (Gauche)
                 SizedBox(
                   width: width,
                   child: DashboardStreakCard(
                     streak: provider.currentStreak,
-                    isDark: isDark,
                     onTap: () {
                       ElyriiHaptics.light();
                       final mascotProvider = context.read<MascotProvider>();
@@ -537,7 +533,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 SizedBox(
                   width: width,
                   child: DashboardBreatheCard(
-                    isDark: isDark,
                     onTap: () {
                       ElyriiHaptics.light();
                       context.read<MascotProvider>().react(
@@ -551,13 +546,12 @@ class _DashboardPageState extends State<DashboardPage> {
             );
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacing12),
         // Ligne 2 : Carte pleine largeur Journal Récent
         DashboardJournalCard(
           lastEntry: journalProvider.entries.isNotEmpty
               ? journalProvider.entries.first
               : null,
-          isDark: isDark,
           onTap: () {
             ElyriiHaptics.light();
             context.read<MascotProvider>().react(
@@ -568,10 +562,9 @@ class _DashboardPageState extends State<DashboardPage> {
             context.go(AppRoutes.journal);
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacing12),
         // Ligne 3 : Barre Bilan & Progrès
         DashboardReviewBar(
-          isDark: isDark,
           onTap: () {
             ElyriiHaptics.light();
             context.push(AppRoutes.reviews);

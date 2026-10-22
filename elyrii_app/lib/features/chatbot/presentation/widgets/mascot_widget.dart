@@ -5,6 +5,7 @@ import '../../../../core/config/mascot_animations.dart';
 import '../providers/chatbot_provider.dart' show ChatbotProvider;
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
@@ -140,7 +141,7 @@ class _MascotWidgetState extends State<MascotWidget> {
       height: widget.isMinimized ? 80 : maxHeight,
       child: widget.isMinimized
           ? _buildDynamicIsland(isDark, animation, isBotThinking)
-          : _buildFullMascot(maxHeight, isDark, animation),
+          : _buildFullMascot(maxHeight, animation),
     );
   }
 
@@ -162,14 +163,17 @@ class _MascotWidgetState extends State<MascotWidget> {
           duration: const Duration(milliseconds: 350),
           curve: Curves.easeOutCubic,
           height: 52,
-          padding: const EdgeInsets.only(left: 6, right: 12),
+          padding: const EdgeInsets.only(
+            left: AppDimensions.spacing8,
+            right: AppDimensions.spacing12,
+          ),
           decoration: BoxDecoration(
             // Pilule charbon profond façon Dynamic Island : discrets
             // reflets de bord, aucune couleur criarde.
             color: isDark
                 ? Colors.black.withValues(alpha: 0.55)
                 : Colors.black.withValues(alpha: 0.82),
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
             border: Border.all(
               color: Colors.white.withValues(alpha: 0.12),
               width: 1,
@@ -199,7 +203,7 @@ class _MascotWidgetState extends State<MascotWidget> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacing8),
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 switchInCurve: Curves.easeOut,
@@ -219,11 +223,10 @@ class _MascotWidgetState extends State<MascotWidget> {
                   key: ValueKey<bool>(isBotThinking),
                   style: AppTextStyles.labelMedium(
                     color: Colors.white.withValues(alpha: 0.92),
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppDimensions.spacing8),
               Icon(
                 Icons.keyboard_arrow_up_rounded,
                 size: 18,
@@ -237,17 +240,13 @@ class _MascotWidgetState extends State<MascotWidget> {
   }
 
   /// Construit la mascotte en mode plein écran.
-  Widget _buildFullMascot(
-    double maxHeight,
-    bool isDark,
-    MascotAnimation animation,
-  ) {
+  Widget _buildFullMascot(double maxHeight, MascotAnimation animation) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildMascotAvatar(widget.lottieHeight, animation),
         SizedBox(height: maxHeight * 0.04),
-        _buildMascotText(isDark),
+        _buildMascotText(),
       ],
     );
   }
@@ -273,7 +272,7 @@ class _MascotWidgetState extends State<MascotWidget> {
   }
 
   /// Construit les textes informatifs accompagnant la mascotte.
-  Widget _buildMascotText(bool isDark) {
+  Widget _buildMascotText() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -281,22 +280,13 @@ class _MascotWidgetState extends State<MascotWidget> {
         Text(
           'Discuter avec Elyrii',
           textAlign: TextAlign.center,
-          style: AppTextStyles.headlineSmall(
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.headlineSmall(color: context.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacing12),
         Text(
           'Je suis là pour t\'écouter\nsans jugement',
           textAlign: TextAlign.center,
-          style: AppTextStyles.bodyLarge(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
+          style: AppTextStyles.bodyLarge(color: context.textSecondary),
         ),
       ],
     );

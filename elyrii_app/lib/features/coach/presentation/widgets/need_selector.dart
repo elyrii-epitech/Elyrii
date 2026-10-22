@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../data/models/coach_model.dart';
@@ -32,7 +33,8 @@ class NeedSelector extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.zero,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) =>
+            const SizedBox(width: AppDimensions.spacing8),
         itemCount: needs.length,
         itemBuilder: (context, index) {
           final need = needs[index];
@@ -93,12 +95,14 @@ class _NeedChipState extends State<_NeedChip> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing16,
+            ),
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? color.withValues(alpha: 0.16)
                   : (widget.isDark ? AppColors.cardDark : AppColors.cardLight),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppDimensions.radius20),
               border: Border.all(
                 width: 1,
                 color: widget.isSelected
@@ -114,21 +118,13 @@ class _NeedChipState extends State<_NeedChip> {
                 Icon(
                   widget.need.icon,
                   size: 16,
-                  color: widget.isSelected
-                      ? color
-                      : (widget.isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight),
+                  color: widget.isSelected ? color : context.textSecondary,
                 ),
-                const SizedBox(width: 7),
+                const SizedBox(width: AppDimensions.spacing8),
                 Text(
                   widget.need.label,
                   style: AppTextStyles.labelMedium(
-                    color: widget.isSelected
-                        ? color
-                        : (widget.isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight),
+                    color: widget.isSelected ? color : context.textSecondary,
                   ),
                 ),
               ],

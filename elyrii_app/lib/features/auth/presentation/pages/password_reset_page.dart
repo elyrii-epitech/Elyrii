@@ -7,6 +7,7 @@ import '../../../../core/config/api_config.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../widgets/glass_auth_text_field.dart';
 import '../widgets/auth_error_banner.dart';
 
@@ -92,7 +93,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(AppDimensions.spacing24),
             child: AutofillGroup(
               child: Form(
                 key: _form,
@@ -102,7 +103,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                     if (_status != null)
                       Semantics(liveRegion: true, child: Text(_status!)),
                     if (_error != null) AuthErrorBanner(message: _error!),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppDimensions.spacing16),
                     if (!_done && !_codeStep)
                       GlassAuthTextField(
                         controller: _email,
@@ -133,7 +134,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                             ? null
                             : 'Colle le code complet reçu par email.',
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppDimensions.spacing16),
                       GlassAuthTextField(
                         controller: _password,
                         label: 'Nouveau mot de passe',
@@ -149,7 +150,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                             ? null
                             : 'Le mot de passe doit contenir entre 12 et 128 caractères.',
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppDimensions.spacing16),
                       GlassAuthTextField(
                         controller: _confirmation,
                         label: 'Confirmer le nouveau mot de passe',
@@ -164,7 +165,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                             : 'Les mots de passe doivent être identiques.',
                       ),
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppDimensions.spacing24),
                     if (!_done)
                       LiquidGlassButton(
                         label: _codeStep

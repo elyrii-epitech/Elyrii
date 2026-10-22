@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../providers/gamification_provider.dart';
 import 'ai_proposal_card.dart';
@@ -134,17 +135,17 @@ class ChallengeEmptyCard extends StatelessWidget {
   final String subtitle;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 24),
+    padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing24),
     child: Column(
       children: [
         const Icon(Icons.spa_rounded),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacing12),
         Text(
           title,
           textAlign: TextAlign.center,
           style: AppTextStyles.titleSmall(),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppDimensions.spacing8),
         Text(subtitle, textAlign: TextAlign.center),
       ],
     ),
@@ -156,15 +157,13 @@ class _SectionTitle extends StatelessWidget {
   final String title;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 24, bottom: 10),
+    padding: const EdgeInsets.only(
+      top: AppDimensions.spacing24,
+      bottom: AppDimensions.spacing8,
+    ),
     child: Text(
       title,
-      style: AppTextStyles.labelMedium(
-        fontWeight: FontWeight.w700,
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.textSecondaryDark
-            : AppColors.textSecondaryLight,
-      ),
+      style: AppTextStyles.overline(color: context.textSecondary),
     ),
   );
 }

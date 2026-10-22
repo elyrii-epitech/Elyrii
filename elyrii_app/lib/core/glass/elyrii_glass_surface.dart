@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
-import '../design_system/colors/elyrii_colors.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
 import '../widgets/accessible_action.dart';
 import 'glass_role.dart';
 
@@ -29,7 +30,9 @@ class ElyriiGlassSurface extends StatelessWidget {
     super.key,
     required this.child,
     required this.role,
-    this.borderRadius = const BorderRadius.all(Radius.circular(22)),
+    this.borderRadius = const BorderRadius.all(
+      Radius.circular(AppDimensions.radius20),
+    ),
     this.padding,
     this.glassColor,
     this.border,
@@ -43,9 +46,7 @@ class ElyriiGlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final highContrast = MediaQuery.maybeOf(context)?.highContrast ?? false;
-    final surface = isDark
-        ? ElyriiColors.surfaceDark
-        : ElyriiColors.surfaceLight;
+    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final shouldFallback = lightweight || highContrast;
 
     // Opaque fallback for the platform accessibility contrast setting.
@@ -66,8 +67,8 @@ class ElyriiGlassSurface extends StatelessWidget {
               border ??
               Border.all(
                 color: isDark
-                    ? ElyriiColors.glassBorderDark
-                    : ElyriiColors.glassBorderLight,
+                    ? AppColors.glassBorderDark
+                    : AppColors.glassBorderLight,
                 width: 1.0,
               ),
         ),
@@ -124,8 +125,8 @@ class ElyriiGlassSurface extends StatelessWidget {
             Border.all(
               width: 0.5,
               color: isDark
-                  ? ElyriiColors.glassBorderDark
-                  : ElyriiColors.glassBorderLight,
+                  ? AppColors.glassBorderDark
+                  : AppColors.glassBorderLight,
             ),
       ),
       child: glass,

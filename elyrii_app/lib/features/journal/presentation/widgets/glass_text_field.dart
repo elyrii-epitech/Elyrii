@@ -8,7 +8,7 @@ import '../../../../core/glass/elyrii_glass_surface.dart';
 class GlassTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
-  final bool isDark;
+
   final int? maxLines;
   final int? minLines;
   final TextStyle? style;
@@ -17,7 +17,6 @@ class GlassTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.hint,
-    required this.isDark,
     this.maxLines,
     this.minLines,
     this.style,
@@ -28,27 +27,18 @@ class GlassTextField extends StatelessWidget {
     final baseStyle = style ?? AppTextStyles.bodyLarge();
     return ElyriiGlassSurface(
       role: GlassRole.floatingControl,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      borderRadius: BorderRadius.circular(AppDimensions.radius16),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
         minLines: minLines,
-        style: baseStyle.copyWith(
-          color: isDark
-              ? AppColors.textPrimaryDark
-              : AppColors.textPrimaryLight,
-        ),
+        style: baseStyle.copyWith(color: context.textPrimary),
         decoration: InputDecoration(
           labelText: hint,
           hintText: hint,
-          hintStyle: baseStyle.copyWith(
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-            fontWeight: FontWeight.w300,
-          ),
+          hintStyle: baseStyle.copyWith(color: context.textTertiary),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.all(AppDimensions.paddingMd),
+          contentPadding: const EdgeInsets.all(AppDimensions.spacing16),
         ),
       ),
     );

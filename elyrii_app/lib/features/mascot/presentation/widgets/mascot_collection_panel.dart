@@ -22,12 +22,6 @@ class MascotProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final primary = dark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = dark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
     final accent = dark ? AppColors.primaryDark : AppColors.primary;
     final available = MascotAccessories.all
         .where(
@@ -64,31 +58,25 @@ class MascotProgressCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.auto_awesome_rounded, color: accent, size: 18),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacing8),
               Expanded(
                 child: Text(
                   'Ta collection',
-                  style: AppTextStyles.titleSmall(
-                    color: primary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.titleSmall(color: context.textPrimary),
                 ),
               ),
               Text(
                 '$available / ${MascotAccessories.all.length}',
-                style: AppTextStyles.labelMedium(
-                  color: accent,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.titleSmall(color: accent),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
           if (next != null) ...[
             Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   child: Container(
                     width: 64,
                     height: 76,
@@ -106,39 +94,42 @@ class MascotProgressCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppDimensions.spacing16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Prochain palier',
-                        style: AppTextStyles.labelSmall(color: secondary),
+                        style: AppTextStyles.labelSmall(
+                          color: context.textSecondary,
+                        ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacing4),
                       Text(
                         next.name,
                         style: AppTextStyles.titleSmall(
-                          color: primary,
-                          fontWeight: FontWeight.w600,
+                          color: context.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacing4),
                       Text(
                         'Encore ${next.remainingChallenges(completedCount)} ${next.remainingChallenges(completedCount) == 1 ? 'défi' : 'défis'} à ton rythme',
-                        style: AppTextStyles.bodySmall(color: secondary),
+                        style: AppTextStyles.bodySmall(
+                          color: context.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimensions.spacing16),
             Semantics(
               label:
                   'Prochain palier, $completedCount sur ${next.requiredChallenges} défis terminés',
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimensions.radius8),
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 5,
@@ -147,29 +138,26 @@ class MascotProgressCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppDimensions.spacing8),
             Text(
               '$completedCount / ${next.requiredChallenges} défis terminés',
-              style: AppTextStyles.labelSmall(color: secondary),
+              style: AppTextStyles.labelSmall(color: context.textSecondary),
             ),
           ] else ...[
             Text(
               'Toute la collection est à toi.',
-              style: AppTextStyles.titleMedium(
-                color: primary,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.titleMedium(color: context.textPrimary),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppDimensions.spacing8),
             Text(
               '${MascotAccessories.all.length} pièces, des centaines de looks. Compose celui qui te ressemble.',
-              style: AppTextStyles.bodySmall(color: secondary),
+              style: AppTextStyles.bodySmall(color: context.textSecondary),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacing8),
           Wrap(
-            spacing: 4,
-            runSpacing: 4,
+            spacing: AppDimensions.spacing4,
+            runSpacing: AppDimensions.spacing4,
             children: [
               TextButton.icon(
                 onPressed: onChallenges,
@@ -219,12 +207,6 @@ class _MascotCollectionPanelState extends State<MascotCollectionPanel> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final primary = dark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = dark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
     final visible = MascotAccessories.progression
         .where(
           (piece) =>
@@ -237,20 +219,17 @@ class _MascotCollectionPanelState extends State<MascotCollectionPanel> {
       children: [
         Text(
           'Les pièces de ton histoire',
-          style: AppTextStyles.titleMedium(
-            color: primary,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppDimensions.spacing8),
         Text(
           'Une pièce par zone. Combine-les pour créer ta signature.',
-          style: AppTextStyles.bodySmall(color: secondary),
+          style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppDimensions.spacing16),
         Wrap(
-          spacing: 6,
-          runSpacing: 6,
+          spacing: AppDimensions.spacing8,
+          runSpacing: AppDimensions.spacing8,
           children: [
             for (final category in const [
               'Tous',
@@ -269,7 +248,7 @@ class _MascotCollectionPanelState extends State<MascotCollectionPanel> {
                           (id) =>
                               MascotAccessories.byId(id)?.category == category,
                         )) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppDimensions.spacing8),
                       Tooltip(
                         message: 'Une pièce de cette zone est portée',
                         excludeFromSemantics: true,
@@ -289,13 +268,13 @@ class _MascotCollectionPanelState extends State<MascotCollectionPanel> {
               ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppDimensions.spacing8),
         Row(
           children: [
             Expanded(
               child: Text(
                 '${visible.length} ${visible.length == 1 ? 'pièce' : 'pièces'}',
-                style: AppTextStyles.labelSmall(color: secondary),
+                style: AppTextStyles.labelSmall(color: context.textSecondary),
               ),
             ),
             FilterChip(
@@ -305,13 +284,15 @@ class _MascotCollectionPanelState extends State<MascotCollectionPanel> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacing12),
         if (visible.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppDimensions.spacing24,
+            ),
             child: Text(
               'Tes premières pièces t’attendent. Termine des défis pour enrichir ta collection, à ton rythme.',
-              style: AppTextStyles.bodyMedium(color: secondary),
+              style: AppTextStyles.bodyMedium(color: context.textSecondary),
             ),
           ),
         LayoutBuilder(
@@ -323,8 +304,8 @@ class _MascotCollectionPanelState extends State<MascotCollectionPanel> {
                 : 2;
             final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
             return Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: AppDimensions.spacing12,
+              runSpacing: AppDimensions.spacing12,
               children: [
                 for (final piece in visible)
                   SizedBox(
@@ -366,12 +347,6 @@ class _CollectionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final primary = dark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = dark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
     final accent = dark ? AppColors.primaryDark : AppColors.primary;
     final active = equipped || trying;
     final label = trying
@@ -396,12 +371,12 @@ class _CollectionTile extends StatelessWidget {
           borderColor: active ? accent.withValues(alpha: 0.55) : null,
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppDimensions.radius20),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(AppDimensions.spacing16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -410,7 +385,9 @@ class _CollectionTile extends StatelessWidget {
                         Expanded(
                           child: Text(
                             piece.category,
-                            style: AppTextStyles.labelSmall(color: secondary),
+                            style: AppTextStyles.labelSmall(
+                              color: context.textSecondary,
+                            ),
                           ),
                         ),
                         Icon(
@@ -420,7 +397,7 @@ class _CollectionTile extends StatelessWidget {
                               ? Icons.lock_outline_rounded
                               : Icons.add_rounded,
                           size: 17,
-                          color: active ? accent : secondary,
+                          color: active ? accent : context.textSecondary,
                         ),
                       ],
                     ),
@@ -438,25 +415,26 @@ class _CollectionTile extends StatelessWidget {
                         excludeFromSemantics: true,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppDimensions.spacing8),
                     Text(
                       piece.name,
                       style: AppTextStyles.labelMedium(
-                        color: primary,
-                        fontWeight: FontWeight.w600,
+                        color: context.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppDimensions.spacing8),
                     Text(
                       label,
                       style: AppTextStyles.labelSmall(
-                        color: active ? accent : secondary,
+                        color: active ? accent : context.textSecondary,
                       ),
                     ),
                     if (locked) ...[
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppDimensions.spacing8),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius8,
+                        ),
                         child: LinearProgressIndicator(
                           value: (completedCount / piece.requiredChallenges)
                               .clamp(0, 1),

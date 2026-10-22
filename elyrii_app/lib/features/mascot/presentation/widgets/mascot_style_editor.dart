@@ -20,28 +20,19 @@ class MascotStyleEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final primary = dark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = dark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Les Esprits d’Elyrii',
-          style: AppTextStyles.titleMedium(
-            color: primary,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppDimensions.spacing8),
         Text(
           'Choisis une ambiance, puis compose ton propre look.',
-          style: AppTextStyles.bodySmall(color: secondary),
+          style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppDimensions.spacing20),
         LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth < 280
@@ -52,11 +43,11 @@ class MascotStyleEditor extends StatelessWidget {
                 : 3;
             final width =
                 (constraints.maxWidth -
-                    (columns - 1) * AppDimensions.spacingSm) /
+                    (columns - 1) * AppDimensions.spacing12) /
                 columns;
             return Wrap(
-              spacing: AppDimensions.spacingSm,
-              runSpacing: AppDimensions.spacingSm,
+              spacing: AppDimensions.spacing12,
+              runSpacing: AppDimensions.spacing12,
               children: [
                 for (final theme in MascotThemes.all)
                   SizedBox(
@@ -85,7 +76,7 @@ class MascotStyleEditor extends StatelessWidget {
                                   width: 24,
                                   height: 24,
                                   margin: const EdgeInsets.symmetric(
-                                    horizontal: 2,
+                                    horizontal: AppDimensions.spacing2,
                                   ),
                                   decoration: BoxDecoration(
                                     color: color,
@@ -107,23 +98,20 @@ class MascotStyleEditor extends StatelessWidget {
             );
           },
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: AppDimensions.spacing24),
         Text(
           'La touche finale',
-          style: AppTextStyles.titleSmall(
-            color: primary,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.overline(color: context.textPrimary),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppDimensions.spacing8),
         Text(
           'Une matière, trois façons de révéler ses couleurs.',
-          style: AppTextStyles.bodySmall(color: secondary),
+          style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppDimensions.spacing16),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: AppDimensions.spacing8,
+          runSpacing: AppDimensions.spacing8,
           children: [
             for (final finish in MascotFinish.values)
               ChoiceChip(
@@ -173,29 +161,30 @@ class _StyleTile extends StatelessWidget {
             : null,
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radius20),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing8,
+                vertical: AppDimensions.spacing12,
+              ),
               child: Column(
                 children: [
                   child,
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppDimensions.spacing8),
                   ConstrainedBox(
                     constraints: const BoxConstraints(minHeight: 32),
                     child: Text(
                       label,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.labelMedium(
-                        color: dark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
+                        color: context.textPrimary,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppDimensions.spacing8),
                   Icon(
                     selected
                         ? Icons.check_circle_rounded

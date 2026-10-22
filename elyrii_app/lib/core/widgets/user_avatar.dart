@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../constants/avatar_options.dart';
+import '../theme/app_dimensions.dart';
 
 /// Widget d'avatar utilisateur reutilisable.
 ///
@@ -45,7 +46,7 @@ class UserAvatar extends StatelessWidget {
             : null,
       ),
       child: Padding(
-        padding: EdgeInsets.all(showBorder ? 2.0 : 0),
+        padding: EdgeInsets.all(showBorder ? AppDimensions.spacing2 : 0),
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,

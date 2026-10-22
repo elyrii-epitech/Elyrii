@@ -5,8 +5,7 @@ import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../routes/app_routes.dart';
 
 class MascotCustomizeCharm extends StatelessWidget {
-  const MascotCustomizeCharm({super.key, required this.isDark});
-  final bool isDark;
+  const MascotCustomizeCharm({super.key});
 
   @override
   Widget build(BuildContext context) => LiquidGlassIconButton(

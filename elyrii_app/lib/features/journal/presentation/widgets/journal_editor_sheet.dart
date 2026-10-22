@@ -318,26 +318,35 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           _buildAppBar(isDark),
           // Contenu
           Padding(
-            padding: EdgeInsets.fromLTRB(0, 8, 0, bottomInset + 24),
+            padding: EdgeInsets.fromLTRB(
+              0,
+              AppDimensions.spacing8,
+              0,
+              bottomInset + AppDimensions.spacing24,
+            ),
             child: Column(
               children: [
                 // Badge d'inspiration
                 if (widget.initialPrompt != null && widget.entry == null)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(
+                      bottom: AppDimensions.spacing12,
+                    ),
                     child:
                         Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 6,
+                                    horizontal: AppDimensions.spacing12,
+                                    vertical: AppDimensions.spacing8,
                                   ),
                                   decoration: BoxDecoration(
                                     color: AppColors.accent.withValues(
                                       alpha: 0.15,
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimensions.radius20,
+                                    ),
                                     border: Border.all(
                                       color: AppColors.accent.withValues(
                                         alpha: 0.3,
@@ -353,10 +362,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                                         size: 14,
                                         color: AppColors.accent,
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(
+                                        width: AppDimensions.spacing8,
+                                      ),
                                       Text(
                                         'Inspiration',
-                                        style: AppTextStyles.labelSmall(
+                                        style: AppTextStyles.badge(
                                           color: AppColors.readableAccent(
                                             AppColors.accent,
                                             isDark:
@@ -378,7 +389,6 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                 GlassTextField(
                       controller: _titleController,
                       hint: 'Titre (optionnel)',
-                      isDark: isDark,
                       maxLines: 1,
                       style: AppTextStyles.titleLarge(),
                     )
@@ -394,12 +404,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                       delay: 100.ms,
                       curve: Curves.easeOutCubic,
                     ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacing16),
                 // Champ contenu
                 GlassTextField(
                       controller: _contentController,
                       hint: 'Exprime ce que tu ressens...',
-                      isDark: isDark,
                       maxLines: null,
                       minLines: 12,
                       style: AppTextStyles.bodyLarge(),
@@ -430,7 +439,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         AppDimensions.pageHorizontalPadding,
         0,
         AppDimensions.pageHorizontalPadding,
-        16,
+        AppDimensions.spacing16,
       ),
       child: Row(
         children: [
@@ -446,23 +455,21 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             },
             child: Container(
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppDimensions.spacing8),
               decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.1)
                     : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimensions.radius12),
               ),
               child: Icon(
                 Icons.close_rounded,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
+                color: context.textSecondary,
                 size: 22,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacing12),
           // Status
           Expanded(child: _buildStatusIndicator(isDark)),
           // Bouton ajouter/sauvegarder
@@ -476,10 +483,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               }
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing16,
+                vertical: AppDimensions.spacing8,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppDimensions.radius12),
               ),
               child: Text(
                 widget.entry != null ? 'Modifier' : 'Ajouter',
@@ -492,7 +502,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacing8),
           // Menu supprimer (si édition)
           if (widget.entry != null || _createdEntryId != null)
             AccessibleAction(
@@ -503,10 +513,10 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               },
               child: Container(
                 constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppDimensions.spacing8),
                 decoration: BoxDecoration(
                   color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.radius12),
                 ),
                 child: const Icon(
                   Icons.delete_outline_rounded,
@@ -535,7 +545,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       return Row(
         children: [
           const CupertinoActivityIndicator(radius: 7),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacing8),
           Flexible(
             child: Text(
               'Sauvegarde...',
@@ -562,17 +572,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacing8),
           Flexible(
             child: Text(
               _saveFailed
                   ? 'Échec de sauvegarde — réessaie'
                   : 'Modifications non sauvegardées',
-              style: AppTextStyles.labelSmall(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.labelSmall(color: context.textSecondary),
             ),
           ),
         ],
@@ -586,7 +592,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           color: AppColors.successText(isDark),
           size: 16,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppDimensions.spacing8),
         Flexible(
           child: Text(
             'Sauvegardé',

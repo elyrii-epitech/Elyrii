@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../controllers/meditation_controller.dart';
@@ -29,17 +30,13 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final textColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondaryColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final textColor = context.textPrimary;
+    final secondaryColor = context.textSecondary;
     final accent = isDark ? AppColors.primaryDark : AppColors.primary;
 
     return ElyriiGlassSurface(
       role: GlassRole.modalSheet,
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: BorderRadius.circular(AppDimensions.radius28),
       glassColor: MediaQuery.highContrastOf(context)
           ? null
           : isDark
@@ -48,7 +45,12 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.spacing24,
+            AppDimensions.spacing12,
+            AppDimensions.spacing24,
+            AppDimensions.spacing24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -58,20 +60,19 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
                   height: 4,
                   decoration: BoxDecoration(
                     color: secondaryColor.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusPill,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppDimensions.spacing16),
               Row(
                 children: [
                   Expanded(
                     child: Text(
                       'Durée',
-                      style: AppTextStyles.titleLarge(
-                        color: textColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.titleLarge(color: textColor),
                     ),
                   ),
                   IconButton(
@@ -89,7 +90,7 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
                   style: AppTextStyles.bodyMedium(color: secondaryColor),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacing12),
               Semantics(
                 label: 'Durée de la séance',
                 value: MeditationController.formatDuration(_duration),
@@ -98,11 +99,8 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
                     brightness: theme.brightness,
                     primaryColor: accent,
                     textTheme: CupertinoTextThemeData(
-                      pickerTextStyle:
-                          AppTextStyles.titleMedium(
-                            fontWeight: FontWeight.w400,
-                            color: textColor,
-                          ).copyWith(
+                      pickerTextStyle: AppTextStyles.bodyLarge(color: textColor)
+                          .copyWith(
                             fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                     ),
@@ -135,7 +133,7 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppDimensions.spacing4),
               Semantics(
                 liveRegion: true,
                 child: Text(
@@ -147,7 +145,7 @@ class _MeditationDurationSheetState extends State<MeditationDurationSheet> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppDimensions.spacing24),
               Semantics(
                 button: true,
                 enabled: _canChoose,

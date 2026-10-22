@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../glass/elyrii_glass_surface.dart';
 import '../../theme/app_text_styles.dart';
+import '../../theme/app_dimensions.dart';
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Shows an iOS 26 style dialog with liquid glass effect
@@ -87,18 +88,25 @@ class LiquidGlassDialogContent extends StatelessWidget {
         child: Center(
           child: SingleChildScrollView(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 40),
+              margin: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing32,
+              ),
               constraints: const BoxConstraints(maxWidth: 320),
               child: ElyriiGlassSurface(
                 role: GlassRole.dialog,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppDimensions.radius20),
                 child: Material(
                   color: Colors.transparent,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimensions.spacing20,
+                          AppDimensions.spacing20,
+                          AppDimensions.spacing20,
+                          AppDimensions.spacing16,
+                        ),
                         child: Column(
                           children: [
                             if (title != null) ...[
@@ -113,7 +121,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
                                   textAlign: TextAlign.center,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppDimensions.spacing8),
                             ],
                             DefaultTextStyle(
                               style: AppTextStyles.bodyMedium(
@@ -202,7 +210,10 @@ class LiquidGlassDialogContent extends StatelessWidget {
         foregroundColor: action.isDestructive
             ? Theme.of(context).colorScheme.error
             : Theme.of(context).colorScheme.primary,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing12,
+        ),
       ),
       onPressed: () {
         ElyriiHaptics.light();
@@ -210,13 +221,10 @@ class LiquidGlassDialogContent extends StatelessWidget {
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing12),
         child: Text(
           action.label,
-          style: AppTextStyles.labelLarge(
-            fontWeight: action.isDefault ? FontWeight.w600 : FontWeight.w400,
-            color: textColor,
-          ),
+          style: AppTextStyles.labelLarge(color: textColor),
           textAlign: TextAlign.center,
         ),
       ),

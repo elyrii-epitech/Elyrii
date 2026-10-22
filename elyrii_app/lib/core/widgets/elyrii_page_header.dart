@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
 import '../theme/app_text_styles.dart';
 
 /// Tabs align their title to the start, detail pages center it.
@@ -192,13 +193,13 @@ class _ButtonRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.fromLTRB(
-      20,
-      MediaQuery.paddingOf(context).top + 12,
-      20,
-      12,
+      AppDimensions.pageHorizontalPadding,
+      MediaQuery.paddingOf(context).top + AppDimensions.spacing12,
+      AppDimensions.pageHorizontalPadding,
+      AppDimensions.spacing12,
     ),
     child: SizedBox(
-      height: 48,
+      height: AppDimensions.controlSize,
       child: NavigationToolbar(
         leading: leading,
         middle: middle,
@@ -206,11 +207,11 @@ class _ButtonRow extends StatelessWidget {
             ? null
             : Row(
                 mainAxisSize: MainAxisSize.min,
-                spacing: 8,
+                spacing: AppDimensions.spacing8,
                 children: actions,
               ),
         centerMiddle: centerMiddle,
-        middleSpacing: leading == null ? 0 : 12,
+        middleSpacing: leading == null ? 0 : AppDimensions.spacing12,
       ),
     ),
   );
@@ -261,16 +262,15 @@ class _CompactTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (opacity == 0) return const SizedBox.shrink();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         _inset,
-        MediaQuery.paddingOf(context).top + 12,
+        MediaQuery.paddingOf(context).top + AppDimensions.spacing12,
         _inset,
-        12,
+        AppDimensions.spacing12,
       ),
       child: SizedBox(
-        height: 48,
+        height: AppDimensions.controlSize,
         child: Center(
           child: ExcludeSemantics(
             child: Opacity(
@@ -281,11 +281,7 @@ class _CompactTitle extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.titleMedium(
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                  ),
+                  style: AppTextStyles.navTitle(color: context.textPrimary),
                 ),
               ),
             ),
@@ -312,9 +308,7 @@ class _RestingTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primary = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
+    final primary = context.textPrimary;
     final heading = Semantics(
       header: true,
       child: Text(
@@ -322,7 +316,7 @@ class _RestingTitle extends StatelessWidget {
         maxLines: 1,
         textAlign: centered ? TextAlign.center : TextAlign.start,
         style: centered
-            ? AppTextStyles.titleMedium(color: primary)
+            ? AppTextStyles.navTitle(color: primary)
             : AppTextStyles.pageTitle(color: primary),
       ),
     );
@@ -341,15 +335,13 @@ class _RestingTitle extends StatelessWidget {
                 children: [
                   Text(
                     eyebrow!,
-                    style: AppTextStyles.labelMedium(
-                      fontWeight: FontWeight.w700,
+                    style: AppTextStyles.overline(
                       color: AppColors.readableAccent(
                         isDark ? AppColors.primaryDark : AppColors.primary,
                         isDark: isDark,
                       ),
-                    ).copyWith(letterSpacing: 1.2, height: 1.15),
+                    ),
                   ),
-                  const SizedBox(height: 2),
                   heading,
                 ],
               ),
@@ -366,7 +358,6 @@ class _DetailTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -375,23 +366,15 @@ class _DetailTitle extends StatelessWidget {
           child: Text(
             title,
             textAlign: TextAlign.center,
-            style: AppTextStyles.titleMedium(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+            style: AppTextStyles.navTitle(color: context.textPrimary),
           ),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacing4),
           Text(
             subtitle!,
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
+            style: AppTextStyles.bodySmall(color: context.textSecondary),
           ),
         ],
       ],
@@ -407,7 +390,7 @@ class ElyriiPageHeader extends StatelessWidget {
     required this.title,
     required this.leading,
     this.subtitle,
-    this.trailing = const SizedBox(width: 44),
+    this.trailing = const SizedBox(width: AppDimensions.controlSize),
   });
 
   final String title;
@@ -420,11 +403,11 @@ class ElyriiPageHeader extends StatelessWidget {
     return Row(
       children: [
         leading,
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacing8),
         Expanded(
           child: _DetailTitle(title: title, subtitle: subtitle),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppDimensions.spacing8),
         trailing,
       ],
     );
@@ -449,7 +432,12 @@ class ElyriiFixedHeaderFrame extends StatelessWidget {
     child: LayoutBuilder(
       builder: (context, constraints) {
         final title = Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing12,
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing12,
+          ),
           child: header,
         );
         if (MediaQuery.textScalerOf(context).scale(14) <= 21 &&

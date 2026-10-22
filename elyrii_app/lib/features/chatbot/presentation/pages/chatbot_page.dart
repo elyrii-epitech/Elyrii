@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
@@ -107,7 +108,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
       builder: (sheetContext) => SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.spacing8,
+            0,
+            AppDimensions.spacing8,
+            AppDimensions.spacing16,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -174,8 +180,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       ? const SizedBox.shrink()
                       : Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 6,
+                            horizontal: AppDimensions.spacing20,
+                            vertical: AppDimensions.spacing8,
                           ),
                           child: Text(
                             error,
@@ -203,7 +209,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     ),
                   ),
                 ),
-                _buildComposer(isDark, keyboardOpen ? 8 : bottomClearance + 12),
+                _buildComposer(
+                  isDark,
+                  keyboardOpen
+                      ? AppDimensions.spacing8
+                      : bottomClearance + AppDimensions.spacing12,
+                ),
               ],
             ),
             Positioned(
@@ -231,17 +242,22 @@ class _ChatbotPageState extends State<ChatbotPage> {
   }
 
   Widget _buildWelcomeState(bool isDark, bool keyboardOpen) {
-    final topPadding = ElyriiHeaderBar.extentOf(context) + 16;
+    final topPadding =
+        ElyriiHeaderBar.extentOf(context) + AppDimensions.spacing16;
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: EdgeInsets.fromLTRB(24, topPadding, 24, 16),
+        padding: EdgeInsets.fromLTRB(
+          AppDimensions.spacing24,
+          topPadding,
+          AppDimensions.spacing24,
+          AppDimensions.spacing16,
+        ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            minHeight: (constraints.maxHeight - topPadding - 16).clamp(
-              0,
-              double.infinity,
-            ),
+            minHeight:
+                (constraints.maxHeight - topPadding - AppDimensions.spacing16)
+                    .clamp(0, double.infinity),
           ),
           child: Center(
             child: ConstrainedBox(
@@ -254,39 +270,31 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     size: keyboardOpen ? 40 : 52,
                     color: isDark ? AppColors.primaryDark : AppColors.primary,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppDimensions.spacing20),
                   Text(
                     'Un moment pour toi.',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.headlineSmall(
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
+                      color: context.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppDimensions.spacing8),
                   Text(
                     'Qu’as-tu en tête aujourd’hui ?',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyLarge(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                      color: context.textSecondary,
                     ),
                   ),
                   if (!keyboardOpen) ...[
-                    const SizedBox(height: 28),
+                    const SizedBox(height: AppDimensions.spacing24),
                     ConversationSuggestions(onSuggestionTap: _useSuggestion),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: AppDimensions.spacing24),
                     Text(
                       'Un soutien au quotidien, pas un suivi médical.',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyMedium(
-                        fontWeight: FontWeight.w500,
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textSecondaryLight,
+                        color: context.textTertiary,
                       ),
                     ),
                   ],
@@ -321,8 +329,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
       reverse: true,
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: EdgeInsets.only(
-        top: ElyriiHeaderBar.extentOf(context) + 16,
-        bottom: 12,
+        top: ElyriiHeaderBar.extentOf(context) + AppDimensions.spacing16,
+        bottom: AppDimensions.spacing12,
       ),
       itemCount: itemCount,
       findChildIndexCallback: (key) {
@@ -362,7 +370,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
         return Column(
           key: ValueKey(message.id),
           children: [
-            if (showDate) _buildDateLabel(message.timestamp, isDark),
+            if (showDate) _buildDateLabel(message.timestamp),
             ChatMessageBubble(
               key: ValueKey(message.id),
               delivery: message.delivery,
@@ -403,7 +411,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
     });
   }
 
-  Widget _buildDateLabel(DateTime date, bool isDark) {
+  Widget _buildDateLabel(DateTime date) {
     final difference = DateUtils.dateOnly(DateTime.now())
         .difference(DateUtils.dateOnly(date))
         .inDays;
@@ -413,14 +421,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
         ? 'Hier'
         : '${date.day}/${date.month}/${date.year}';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
+      padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing20),
       child: Text(
         label,
-        style: AppTextStyles.bodySmall(
-          color: isDark
-              ? AppColors.textTertiaryDark
-              : AppColors.textSecondaryLight,
-        ),
+        style: AppTextStyles.bodySmall(color: context.textTertiary),
       ),
     );
   }
@@ -429,20 +433,23 @@ class _ChatbotPageState extends State<ChatbotPage> {
     final loadingSession = context.select<ChatbotProvider, bool>(
       (p) => p.loadingSession,
     );
-    final foreground = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
+    final foreground = context.textPrimary;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 780),
         child: Padding(
-          padding: EdgeInsets.fromLTRB(12, 8, 12, bottomClearance),
+          padding: EdgeInsets.fromLTRB(
+            AppDimensions.spacing12,
+            AppDimensions.spacing8,
+            AppDimensions.spacing12,
+            bottomClearance,
+          ),
           child: Container(
             key: const ValueKey('chat-composer'),
-            padding: const EdgeInsets.all(5),
+            padding: const EdgeInsets.all(AppDimensions.spacing4),
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF252527) : const Color(0xFFF0F0F2),
-              borderRadius: BorderRadius.circular(29),
+              borderRadius: BorderRadius.circular(AppDimensions.radius28),
               border: Border.all(
                 color: isDark
                     ? const Color(0xFF39393C)
@@ -496,13 +503,13 @@ class _ChatbotPageState extends State<ChatbotPage> {
                       disabledBorder: InputBorder.none,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 14,
+                        horizontal: AppDimensions.spacing8,
+                        vertical: AppDimensions.spacing16,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppDimensions.spacing8),
                 IconButton.filled(
                   onPressed: _hasText && !_submitting && !loadingSession
                       ? _sendMessage

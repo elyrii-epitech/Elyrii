@@ -136,9 +136,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final subtitleColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final subtitleColor = context.textSecondary;
     final currentPhase = widget.controller.currentPhase;
     final isPaused = widget.controller.isPaused;
     final accent = widget.controller.selectedBreathingType!.color;
@@ -147,7 +145,12 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing12,
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing16,
+          ),
           child: ElyriiPageHeader(
             title: widget.controller.selectedExercise!.title,
             subtitle: 'Respiration guidée',
@@ -183,7 +186,7 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
             horizontal: AppDimensions.pageHorizontalPadding,
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
             child: LinearProgressIndicator(
               value: widget.controller.progressRatio,
               minHeight: 5,
@@ -214,15 +217,12 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
                 children: [
                   const Spacer(flex: 1),
                   _buildBreathingOrb(isDark, accent, orbSize),
-                  const SizedBox(height: AppDimensions.spacingLg),
+                  const SizedBox(height: AppDimensions.spacing24),
                   Text(
                     isPaused ? 'En pause' : currentPhase.label,
-                    style: AppTextStyles.headlineMedium(
-                      color: ink,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppTextStyles.headlineMedium(color: ink),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacing2),
                   Text(
                     widget.controller.isBreathingRecovery
                         ? 'À ton rythme'
@@ -245,14 +245,12 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _buildStatPill(
-                isDark,
                 icon: Icons.refresh_rounded,
                 value: '${widget.controller.completedCycles}',
                 label: 'cycles',
                 color: ink,
               ),
               _buildStatPill(
-                isDark,
                 icon: Icons.timer_outlined,
                 value: widget.controller.formattedRemainingTime,
                 label: 'restant',
@@ -262,9 +260,12 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
           ),
         ),
 
-        const SizedBox(height: AppDimensions.spacingLg),
+        const SizedBox(height: AppDimensions.spacing24),
 
-        SizedBox(height: MediaQuery.of(context).padding.bottom + 28),
+        SizedBox(
+          height:
+              MediaQuery.of(context).padding.bottom + AppDimensions.spacing24,
+        ),
       ],
     );
   }
@@ -353,40 +354,33 @@ class _ActiveBreathingViewState extends State<ActiveBreathingView>
     );
   }
 
-  Widget _buildStatPill(
-    bool isDark, {
+  Widget _buildStatPill({
     required IconData icon,
     required String value,
     required String label,
     required Color color,
   }) {
     return LiquidGlassCard(
-      borderRadius: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      borderRadius: AppDimensions.radius16,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing16,
+        vertical: AppDimensions.spacing12,
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 18, color: color),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacing8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 value,
-                style: AppTextStyles.titleSmall(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.titleSmall(color: context.textPrimary),
               ),
               Text(
                 label,
-                style: AppTextStyles.labelSmall(
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
+                style: AppTextStyles.labelSmall(color: context.textTertiary),
               ),
             ],
           ),

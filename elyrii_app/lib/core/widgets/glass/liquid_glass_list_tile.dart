@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../glass/elyrii_glass_surface.dart';
 import '../../theme/app_text_styles.dart';
+import '../../theme/app_dimensions.dart';
 import '../accessible_action.dart';
 
 // =============================================================================
@@ -35,7 +36,10 @@ class LiquidGlassListTile extends StatelessWidget {
 
     final content = Container(
       constraints: const BoxConstraints(minHeight: 44),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing16,
+        vertical: AppDimensions.spacing12,
+      ),
       child: Row(
         children: [
           if (leadingIcon != null) ...[
@@ -46,7 +50,7 @@ class LiquidGlassListTile extends StatelessWidget {
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.12)
                     : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimensions.radius8),
               ),
               child: Icon(
                 leadingIcon,
@@ -54,7 +58,7 @@ class LiquidGlassListTile extends StatelessWidget {
                 color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacing12),
           ],
           Expanded(
             child: Column(
@@ -67,7 +71,7 @@ class LiquidGlassListTile extends StatelessWidget {
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacing2),
                   Text(
                     subtitle!,
                     style: AppTextStyles.bodyMedium(
@@ -128,13 +132,16 @@ class LiquidGlassChip extends StatelessWidget {
       child: AccessibleAction(
         label: label,
         onPressed: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radius20),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 44),
           child: ElyriiGlassSurface(
             role: GlassRole.floatingControl,
-            borderRadius: BorderRadius.circular(20),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            borderRadius: BorderRadius.circular(AppDimensions.radius20),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing16,
+              vertical: AppDimensions.spacing8,
+            ),
             glassColor: isSelected ? primaryColor : null,
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -149,12 +156,11 @@ class LiquidGlassChip extends StatelessWidget {
                               ? Colors.white
                               : Colors.black.withValues(alpha: 0.7)),
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppDimensions.spacing8),
                 ],
                 Text(
                   label,
                   style: AppTextStyles.labelMedium(
-                    fontWeight: FontWeight.w500,
                     color: isSelected
                         ? Colors.white
                         : (isDark

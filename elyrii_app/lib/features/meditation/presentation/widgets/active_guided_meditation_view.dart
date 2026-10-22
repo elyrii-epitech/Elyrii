@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
@@ -23,17 +24,18 @@ class ActiveGuidedMeditationView extends StatelessWidget {
     final exercise = controller.selectedExercise!;
     final step = controller.currentGuidanceStep;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final text = context.textPrimary;
+    final secondary = context.textSecondary;
     final ink = AppColors.readableAccent(exercise.color, isDark: isDark);
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing12,
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing16,
+          ),
           child: ElyriiPageHeader(
             title: exercise.title,
             subtitle: controller.isPaused
@@ -71,9 +73,11 @@ class ActiveGuidedMeditationView extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.pageHorizontalPadding,
+          ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppDimensions.radius8),
             child: LinearProgressIndicator(
               value: controller.progressRatio,
               minHeight: 5,
@@ -84,7 +88,12 @@ class ActiveGuidedMeditationView extends StatelessWidget {
         ),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.spacing24,
+              AppDimensions.spacing20,
+              AppDimensions.spacing24,
+              AppDimensions.spacing24,
+            ),
             child: Column(
               children: [
                 const SizedBox(
@@ -100,27 +109,26 @@ class ActiveGuidedMeditationView extends StatelessWidget {
                     height: 152,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimensions.spacing24),
                 Text(
                   'Étape ${controller.currentGuidanceStepIndex + 1} sur ${exercise.steps.length}',
                   style: AppTextStyles.labelMedium(color: ink),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimensions.spacing12),
                 Text(
                   step.title,
                   key: const Key('meditation-guidance-title'),
                   textAlign: TextAlign.center,
                   style: AppTextStyles.headlineSmall(color: text),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacing16),
                 Text(
                   step.instruction,
                   key: const Key('meditation-guidance-instruction'),
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyLarge(color: secondary)
-                      .copyWith(height: 1.6),
+                  style: AppTextStyles.bodyLarge(color: secondary),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimensions.spacing24),
                 Text(
                   'Ton souffle reste naturel.',
                   style: AppTextStyles.bodySmall(color: secondary),

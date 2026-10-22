@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design_system/haptics/elyrii_haptics.dart';
+import '../theme/app_dimensions.dart';
 
 /// The same action is available to touch, keyboard and assistive technologies.
 class AccessibleAction extends StatefulWidget {
@@ -8,7 +9,9 @@ class AccessibleAction extends StatefulWidget {
     super.key,
     required this.label,
     required this.onPressed,
-    this.borderRadius = const BorderRadius.all(Radius.circular(12)),
+    this.borderRadius = const BorderRadius.all(
+      Radius.circular(AppDimensions.radius12),
+    ),
     this.selected,
     this.value,
     this.hint,

@@ -16,6 +16,7 @@ import 'core/config/app_config.dart';
 import 'core/config/app_constants.dart';
 import 'core/diagnostics/app_diagnostics.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_dimensions.dart';
 import 'core/network/api_client.dart';
 import 'core/services/secure_storage_service.dart';
 import 'core/services/theme_provider.dart';
@@ -162,7 +163,7 @@ class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
                         const Text(
                           'Impossible d’ouvrir Elyrii pour le moment.',
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppDimensions.spacing16),
                         FilledButton(
                           onPressed: () => unawaited(_start()),
                           child: const Text('Réessayer'),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../mood_presentation.dart';
 
 /// Puce de mood interactive avec micro-rebond élastique Apple, haptique et halo.
@@ -39,14 +40,17 @@ class DashboardMoodChip extends StatelessWidget {
             duration: reduceMotion
                 ? Duration.zero
                 : const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing4,
+              vertical: AppDimensions.spacing12,
+            ),
             decoration: BoxDecoration(
               color: isSelected
                   ? moodColor.withValues(alpha: isDark ? 0.25 : 0.18)
                   : (isDark
                         ? Colors.white.withValues(alpha: 0.05)
                         : Colors.black.withValues(alpha: 0.03)),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppDimensions.radius16),
               border: Border.all(
                 color: isSelected
                     ? moodColor.withValues(alpha: 0.6)
@@ -68,11 +72,7 @@ class DashboardMoodChip extends StatelessWidget {
             child: Icon(
               mood.icon,
               size: isSelected ? 26 : 22,
-              color: isSelected
-                  ? moodColor
-                  : (isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight),
+              color: isSelected ? moodColor : context.textTertiary,
             ),
           ),
         ),

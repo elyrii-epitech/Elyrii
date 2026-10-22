@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -72,7 +73,7 @@ class EmptyJournalState extends StatelessWidget {
             onCreateFirst();
           },
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppDimensions.spacing20),
 
         // Séparateur d'inspirations
         Row(
@@ -85,14 +86,12 @@ class EmptyJournalState extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing16,
+              ),
               child: Text(
                 'Inspirations pour commencer',
-                style: AppTextStyles.labelMedium(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
+                style: AppTextStyles.overline(color: context.textSecondary),
               ),
             ),
             Expanded(
@@ -104,13 +103,12 @@ class EmptyJournalState extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppDimensions.spacing16),
 
         // Cartes d'inspiration
         ...prompts.map((prompt) {
           return _PromptCard(
             prompt: prompt,
-            isDark: isDark,
             onTap: () {
               if (onPromptSelected != null) {
                 onPromptSelected!(prompt);
@@ -127,14 +125,9 @@ class EmptyJournalState extends StatelessWidget {
 
 class _PromptCard extends StatefulWidget {
   final JournalPrompt prompt;
-  final bool isDark;
   final VoidCallback onTap;
 
-  const _PromptCard({
-    required this.prompt,
-    required this.isDark,
-    required this.onTap,
-  });
+  const _PromptCard({required this.prompt, required this.onTap});
 
   @override
   State<_PromptCard> createState() => _PromptCardState();
@@ -146,7 +139,7 @@ class _PromptCardState extends State<_PromptCard> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: AppDimensions.spacing8),
       child: GestureDetector(
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
@@ -159,7 +152,10 @@ class _PromptCardState extends State<_PromptCard> {
           scale: _isPressed ? 0.97 : 1.0,
           duration: const Duration(milliseconds: 100),
           child: LiquidGlassCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing16,
+              vertical: AppDimensions.spacing16,
+            ),
             child: Row(
               children: [
                 Container(
@@ -167,7 +163,7 @@ class _PromptCardState extends State<_PromptCard> {
                   height: 40,
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   ),
                   child: Center(
                     child: Icon(
@@ -177,7 +173,7 @@ class _PromptCardState extends State<_PromptCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppDimensions.spacing16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,18 +181,14 @@ class _PromptCardState extends State<_PromptCard> {
                       Text(
                         widget.prompt.title,
                         style: AppTextStyles.titleSmall(
-                          color: widget.isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
+                          color: context.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppDimensions.spacing2),
                       Text(
                         widget.prompt.subtitle,
                         style: AppTextStyles.bodySmall(
-                          color: widget.isDark
-                              ? AppColors.textTertiaryDark
-                              : AppColors.textTertiaryLight,
+                          color: context.textTertiary,
                         ),
                       ),
                     ],
@@ -205,9 +197,7 @@ class _PromptCardState extends State<_PromptCard> {
                 Icon(
                   Icons.chevron_right_rounded,
                   size: 20,
-                  color: widget.isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
+                  color: context.textTertiary,
                 ),
               ],
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../routes/app_routes.dart';
@@ -43,42 +44,31 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = widget.isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final subtitleColor = widget.isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final textColor = context.textPrimary;
+    final subtitleColor = context.textSecondary;
 
     return LiquidGlassCard(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               const Icon(Icons.auto_awesome_rounded, color: AppColors.accent),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacing8),
               Expanded(
                 child: Text(
                   'Ton dernier échange',
-                  style: AppTextStyles.titleSmall(
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextStyles.titleSmall(color: textColor),
                 ),
               ),
               Text(
                 _relativeTime(widget.session.createdAt),
-                style: AppTextStyles.labelSmall(
-                  color: widget.isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ),
+                style: AppTextStyles.labelSmall(color: context.textTertiary),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacing8),
           // Réponse bornée à cinq lignes, dépliable au tap : la page reste
           // calme, le détail reste à un geste.
           GestureDetector(
@@ -90,8 +80,7 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
               alignment: Alignment.topCenter,
               child: Text(
                 widget.session.response,
-                style: AppTextStyles.bodySmall(color: subtitleColor)
-                    .copyWith(height: 1.5),
+                style: AppTextStyles.bodySmall(color: subtitleColor),
                 maxLines: _expanded ? null : 5,
                 overflow: _expanded
                     ? TextOverflow.visible
@@ -99,7 +88,7 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppDimensions.spacing4),
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: _toggle,
@@ -110,11 +99,10 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
                   AppColors.primary,
                   isDark: Theme.of(context).brightness == Brightness.dark,
                 ),
-                fontWeight: FontWeight.w600,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacing12),
           Divider(
             height: 1,
             thickness: 0.5,
@@ -122,7 +110,7 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
                 ? AppColors.dividerDark
                 : AppColors.dividerLight,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacing12),
           // Passerelle vers la conversation continue : le coach écrit, le
           // chatbot écoute.
           Semantics(
@@ -136,26 +124,19 @@ class _LatestSessionCardState extends State<LatestSessionCard> {
                   Icon(
                     Icons.forum_rounded,
                     size: 16,
-                    color: widget.isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
+                    color: context.textSecondary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppDimensions.spacing8),
                   Expanded(
                     child: Text(
                       'Continuer la conversation',
-                      style: AppTextStyles.labelMedium(
-                        color: subtitleColor,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.labelMedium(color: subtitleColor),
                     ),
                   ),
                   Icon(
                     Icons.chevron_right_rounded,
                     size: 16,
-                    color: widget.isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
+                    color: context.textTertiary,
                   ),
                 ],
               ),

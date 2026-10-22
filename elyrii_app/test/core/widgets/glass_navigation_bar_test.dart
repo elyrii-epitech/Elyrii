@@ -1,6 +1,6 @@
 import 'package:elyrii_app/app/router/app_shell.dart';
-import 'package:elyrii_app/core/design_system/colors/elyrii_colors.dart';
 import 'package:elyrii_app/core/glass/elyrii_glass_surface.dart';
+import 'package:elyrii_app/core/theme/app_colors.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/widgets/glass_bubble_button.dart';
 import 'package:elyrii_app/core/widgets/glass_navigation_bar.dart';
@@ -160,9 +160,7 @@ void main() {
         )) {
           expect(surface.glassColor, isNull);
         }
-        final expected = dark
-            ? ElyriiColors.surfaceDark
-            : ElyriiColors.surfaceLight;
+        final expected = dark ? AppColors.surfaceDark : AppColors.surfaceLight;
         final surfaces = find.descendant(
           of: find.byType(ElyriiGlassSurface),
           matching: find.byType(Container),

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/widgets/launch_scope.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/theme/app_dimensions.dart';
 
 /// A readable brand reveal over the live router, independent of network readiness.
 /// Keeping the routed child in the same slot preserves navigation and page state.
@@ -208,18 +209,13 @@ class ElyriiLaunchScene extends StatelessWidget {
                                   'elyrii',
                                   textAlign: TextAlign.center,
                                   maxLines: 1,
-                                  style:
-                                      AppTextStyles.displaySmall(
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFFF8F2EE),
-                                      ).copyWith(
-                                        letterSpacing: 3,
-                                        decoration: TextDecoration.none,
-                                      ),
+                                  style: AppTextStyles.displaySmall(
+                                    color: const Color(0xFFF8F2EE),
+                                  ).copyWith(decoration: TextDecoration.none),
                                 ),
                               ),
                               if (!compact) ...[
-                                const SizedBox(height: 14),
+                                const SizedBox(height: AppDimensions.spacing16),
                                 Text(
                                   'Un instant pour toi.',
                                   textAlign: TextAlign.center,

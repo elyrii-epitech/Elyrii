@@ -50,7 +50,7 @@ class LiquidGlassButton extends StatelessWidget {
         scheme.onSurface.withValues(alpha: isDisabled ? 0.4 : 1),
       ),
     };
-    final radius = BorderRadius.circular(AppDimensions.radiusMd);
+    final radius = BorderRadius.circular(AppDimensions.radius12);
     return AccessibleAction(
       label: label,
       value: isLoading ? 'En cours' : null,
@@ -64,7 +64,10 @@ class LiquidGlassButton extends StatelessWidget {
         role: GlassRole.floatingControl,
         borderRadius: radius,
         width: isExpanded ? double.infinity : null,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing20,
+          vertical: AppDimensions.spacing16,
+        ),
         glassColor: background,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 20),
@@ -89,7 +92,7 @@ class LiquidGlassButton extends StatelessWidget {
                   children: [
                     if (icon != null) ...[
                       Icon(icon, size: AppDimensions.iconSm, color: foreground),
-                      const SizedBox(width: AppDimensions.spacingXs),
+                      const SizedBox(width: AppDimensions.spacing8),
                     ],
                     Flexible(
                       child: Text(

@@ -125,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
+            padding: const EdgeInsets.all(AppDimensions.spacing24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
@@ -154,42 +154,34 @@ class _RegisterPageState extends State<RegisterPage> {
                       .fadeIn(duration: 600.ms)
                       .slideY(begin: 0.2, end: 0),
 
-                  const SizedBox(height: 45),
+                  const SizedBox(height: AppDimensions.spacing48),
 
                   Text(
                     'Créer un compte',
-                    style:
-                        AppTextStyles.headlineMedium(
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
-                        ).copyWith(
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: -0.8,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: AppDimensions.spacingMd),
-
-                  Text(
-                    'Rejoins la communauté Elyrii',
-                    style: AppTextStyles.bodyMedium(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                    style: AppTextStyles.headlineMedium(
+                      color: context.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: AppDimensions.spacingXl),
+                  const SizedBox(height: AppDimensions.spacing16),
+
+                  Text(
+                    'Rejoins la communauté Elyrii',
+                    style: AppTextStyles.bodyMedium(
+                      color: context.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: AppDimensions.spacing32),
 
                   if (_errorBanner != null) ...[
                     AuthErrorBanner(
                       message: _errorBanner!,
                       isSuccess: _errorBannerIsSuccess,
                     ),
-                    const SizedBox(height: AppDimensions.spacingLg),
+                    const SizedBox(height: AppDimensions.spacing24),
                   ],
 
                   AutofillGroup(
@@ -201,13 +193,11 @@ class _RegisterPageState extends State<RegisterPage> {
                               // Name Field
                               Text(
                                 'Prénom',
-                                style: AppTextStyles.bodyMedium(
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ).copyWith(fontWeight: FontWeight.w600),
+                                style: AppTextStyles.labelMedium(
+                                  color: context.textPrimary,
+                                ),
                               ),
-                              const SizedBox(height: AppDimensions.spacingXs),
+                              const SizedBox(height: AppDimensions.spacing8),
                               GlassAuthTextField(
                                 controller: _nameController,
                                 label: 'Prénom',
@@ -226,18 +216,16 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: AppDimensions.spacingMd),
+                              const SizedBox(height: AppDimensions.spacing16),
 
                               // Email Field
                               Text(
                                 'Adresse email',
-                                style: AppTextStyles.bodyMedium(
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ).copyWith(fontWeight: FontWeight.w600),
+                                style: AppTextStyles.labelMedium(
+                                  color: context.textPrimary,
+                                ),
                               ),
-                              const SizedBox(height: AppDimensions.spacingXs),
+                              const SizedBox(height: AppDimensions.spacing8),
                               GlassAuthTextField(
                                 controller: _emailController,
                                 label: 'Adresse email',
@@ -256,18 +244,16 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: AppDimensions.spacingMd),
+                              const SizedBox(height: AppDimensions.spacing16),
 
                               // Password Field
                               Text(
                                 'Mot de passe',
-                                style: AppTextStyles.bodyMedium(
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ).copyWith(fontWeight: FontWeight.w600),
+                                style: AppTextStyles.labelMedium(
+                                  color: context.textPrimary,
+                                ),
                               ),
-                              const SizedBox(height: AppDimensions.spacingXs),
+                              const SizedBox(height: AppDimensions.spacing8),
                               GlassAuthTextField(
                                 controller: _passwordController,
                                 label: 'Mot de passe',
@@ -294,18 +280,16 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: AppDimensions.spacingMd),
+                              const SizedBox(height: AppDimensions.spacing16),
 
                               // Confirm Password Field
                               Text(
                                 'Confirmer le mot de passe',
-                                style: AppTextStyles.bodyMedium(
-                                  color: isDark
-                                      ? AppColors.textPrimaryDark
-                                      : AppColors.textPrimaryLight,
-                                ).copyWith(fontWeight: FontWeight.w600),
+                                style: AppTextStyles.labelMedium(
+                                  color: context.textPrimary,
+                                ),
                               ),
-                              const SizedBox(height: AppDimensions.spacingXs),
+                              const SizedBox(height: AppDimensions.spacing8),
                               GlassAuthTextField(
                                 controller: _confirmPasswordController,
                                 label: 'Confirmer le mot de passe',
@@ -330,7 +314,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 },
                               ),
 
-                              const SizedBox(height: AppDimensions.spacingLg),
+                              const SizedBox(height: AppDimensions.spacing24),
 
                               CheckboxListTile(
                                 value: _acceptTerms,
@@ -347,7 +331,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                               ),
 
-                              const SizedBox(height: AppDimensions.spacingXl),
+                              const SizedBox(height: AppDimensions.spacing32),
 
                               // Register Button
                               LiquidGlassButton(
@@ -357,7 +341,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 onPressed: _handleRegister,
                               ),
 
-                              const SizedBox(height: AppDimensions.spacingSm),
+                              const SizedBox(height: AppDimensions.spacing12),
                               LiquidGlassButton(
                                 label: 'Découvrir Elyrii',
                                 icon: Icons.bolt_rounded,
@@ -374,7 +358,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   context.go(AppRoutes.home);
                                 },
                               ),
-                              const SizedBox(height: AppDimensions.spacingXl),
+                              const SizedBox(height: AppDimensions.spacing32),
 
                               // Login Link
                               Wrap(
@@ -384,9 +368,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   Text(
                                     'Déjà un compte ? ',
                                     style: AppTextStyles.bodySmall(
-                                      color: isDark
-                                          ? AppColors.textSecondaryDark
-                                          : AppColors.textSecondaryLight,
+                                      color: context.textSecondary,
                                     ),
                                   ),
                                   TextButton(
@@ -401,14 +383,14 @@ class _RegisterPageState extends State<RegisterPage> {
                                     ),
                                     child: Text(
                                       'Se connecter',
-                                      style: AppTextStyles.bodySmall(
+                                      style: AppTextStyles.labelMedium(
                                         color: AppColors.readableAccent(
                                           AppColors.primary,
                                           isDark:
                                               Theme.of(context).brightness ==
                                               Brightness.dark,
                                         ),
-                                      ).copyWith(fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ),
                                 ],

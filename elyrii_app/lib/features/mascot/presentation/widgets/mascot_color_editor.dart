@@ -112,32 +112,23 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final primary = dark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = dark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
     final hsv = HSVColor.fromColor(_color);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Ta palette, sans limites',
-          style: AppTextStyles.titleMedium(
-            color: primary,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppDimensions.spacing8),
         Text(
           'Chaque détail a sa couleur. Toutes les nuances sont libres.',
-          style: AppTextStyles.bodySmall(color: secondary),
+          style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacing16),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: AppDimensions.spacing8,
+          runSpacing: AppDimensions.spacing8,
           children: [
             for (final entry in _labels.entries)
               ChoiceChip(
@@ -152,7 +143,7 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
               ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppDimensions.spacing16),
         LiquidGlassCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,11 +161,13 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppDimensions.spacing12),
                   Expanded(
                     child: Text(
                       _labels[_part]!,
-                      style: AppTextStyles.titleSmall(color: primary),
+                      style: AppTextStyles.titleSmall(
+                        color: context.textPrimary,
+                      ),
                     ),
                   ),
                   TextButton(
@@ -196,10 +189,10 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppDimensions.spacing16),
               Wrap(
-                spacing: 6,
-                runSpacing: 6,
+                spacing: AppDimensions.spacing8,
+                runSpacing: AppDimensions.spacing8,
                 children: [
                   for (final entry in _swatches.entries)
                     _ColorSwatch(
@@ -210,13 +203,13 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
                     ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppDimensions.spacing20),
               _slider(
                 'Teinte',
                 hsv.hue,
                 360,
                 (value) => _change(_toHex(hsv.withHue(value).toColor())),
-                primary,
+                context.textPrimary,
                 gradient: const [
                   Colors.red,
                   Colors.yellow,
@@ -232,16 +225,16 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
                 hsv.saturation,
                 1,
                 (value) => _change(_toHex(hsv.withSaturation(value).toColor())),
-                primary,
+                context.textPrimary,
               ),
               _slider(
                 'Luminosité',
                 hsv.value,
                 1,
                 (value) => _change(_toHex(hsv.withValue(value).toColor())),
-                primary,
+                context.textPrimary,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppDimensions.spacing12),
               TextField(
                 key: const ValueKey('mascot_hex_color'),
                 controller: _hex,
@@ -250,7 +243,7 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
                 autocorrect: false,
                 enableSuggestions: false,
                 maxLength: 7,
-                style: AppTextStyles.bodyMedium(color: primary),
+                style: AppTextStyles.bodyMedium(color: context.textPrimary),
                 onSubmitted: (_) => _applyHex(),
                 decoration: InputDecoration(
                   labelText: 'Code couleur',
@@ -258,7 +251,7 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
                   counterText: '',
                   errorText: _error,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   ),
                   suffixIcon: IconButton(
                     tooltip: 'Appliquer la couleur',
@@ -268,10 +261,10 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
                 ),
               ),
               if (_part == MascotColorPart.accessories) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimensions.spacing12),
                 Text(
                   'La teinte s’applique aux tissus et aux surfaces colorées. Les détails dorés et les montures gardent leur contraste.',
-                  style: AppTextStyles.bodySmall(color: secondary),
+                  style: AppTextStyles.bodySmall(color: context.textSecondary),
                 ),
               ],
             ],
@@ -310,11 +303,15 @@ class _MascotColorEditorState extends State<MascotColorEditor> {
             children: [
               if (gradient != null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.spacing24,
+                  ),
                   child: Container(
                     height: 6,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius8,
+                      ),
                       gradient: LinearGradient(colors: gradient),
                     ),
                   ),
@@ -380,7 +377,7 @@ class _ColorSwatch extends StatelessWidget {
               customBorder: const CircleBorder(),
               onTap: onTap,
               child: Padding(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(AppDimensions.spacing4),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,

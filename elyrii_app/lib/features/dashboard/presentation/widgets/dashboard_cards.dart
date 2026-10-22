@@ -3,20 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../journal/data/models/journal_entry_model.dart';
 
 class DashboardStreakCard extends StatelessWidget {
   final int streak;
-  final bool isDark;
   final VoidCallback? onTap;
 
-  const DashboardStreakCard({
-    super.key,
-    required this.streak,
-    required this.isDark,
-    this.onTap,
-  });
+  const DashboardStreakCard({super.key, required this.streak, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -26,14 +21,14 @@ class DashboardStreakCard extends StatelessWidget {
       label: 'Ouvrir mes rituels',
       onPressed: onTap,
       child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppDimensions.spacing8),
                   decoration: BoxDecoration(
                     color: coral.withValues(alpha: 0.14),
                     shape: BoxShape.circle,
@@ -44,38 +39,24 @@ class DashboardStreakCard extends StatelessWidget {
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppDimensions.spacing8),
                 Flexible(
                   child: Text(
                     'SÉRIE',
-                    style: AppTextStyles.labelSmall(
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
-                    ).copyWith(letterSpacing: 0.8),
+                    style: AppTextStyles.badge(color: context.textTertiary),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppDimensions.spacing16),
             Text(
               '$streak ${streak > 1 ? 'jours' : 'jour'}',
-              style: AppTextStyles.headlineSmall(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ),
+              style: AppTextStyles.headlineSmall(color: context.textPrimary),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppDimensions.spacing4),
             Text(
               streak > 0 ? 'Tu tiens le rythme !' : 'Commence aujourd\'hui',
-              style: AppTextStyles.bodySmall(
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.bodySmall(color: context.textSecondary),
             ),
           ],
         ),
@@ -86,14 +67,9 @@ class DashboardStreakCard extends StatelessWidget {
 
 /// Carte Bento Pause Respiration avec bouton d'accès rapide.
 class DashboardBreatheCard extends StatelessWidget {
-  final bool isDark;
   final VoidCallback? onTap;
 
-  const DashboardBreatheCard({
-    super.key,
-    required this.isDark,
-    required this.onTap,
-  });
+  const DashboardBreatheCard({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -103,18 +79,18 @@ class DashboardBreatheCard extends StatelessWidget {
       label: 'Ouvrir les exercices de respiration',
       onPressed: onTap,
       child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 4,
-              runSpacing: 6,
+              spacing: AppDimensions.spacing4,
+              runSpacing: AppDimensions.spacing8,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppDimensions.spacing8),
                   decoration: BoxDecoration(
                     color: lavender.withValues(alpha: 0.14),
                     shape: BoxShape.circle,
@@ -128,24 +104,21 @@ class DashboardBreatheCard extends StatelessWidget {
 
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: AppDimensions.spacing8,
+                    vertical: AppDimensions.spacing2,
                   ),
                   decoration: BoxDecoration(
                     color: lavender.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius8),
                   ),
                   child: Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       Text(
                         'Démarrer',
-                        style: AppTextStyles.labelSmall(
-                          fontWeight: FontWeight.w700,
-                          color: lavender,
-                        ),
+                        style: AppTextStyles.badge(color: lavender),
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: AppDimensions.spacing2),
                       const Icon(
                         Icons.play_arrow_rounded,
                         size: 12,
@@ -156,24 +129,15 @@ class DashboardBreatheCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppDimensions.spacing16),
             Text(
               '2 min',
-              style: AppTextStyles.headlineSmall(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ),
+              style: AppTextStyles.headlineSmall(color: context.textPrimary),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppDimensions.spacing4),
             Text(
               'Cohérence cardiaque',
-              style: AppTextStyles.bodySmall(
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.bodySmall(color: context.textSecondary),
             ),
           ],
         ),
@@ -185,13 +149,11 @@ class DashboardBreatheCard extends StatelessWidget {
 /// Carte Bento Pleine Largeur : Dernière entrée de journal.
 class DashboardJournalCard extends StatelessWidget {
   final JournalEntryModel? lastEntry;
-  final bool isDark;
   final VoidCallback? onTap;
 
   const DashboardJournalCard({
     super.key,
     required this.lastEntry,
-    required this.isDark,
     required this.onTap,
   });
 
@@ -201,14 +163,14 @@ class DashboardJournalCard extends StatelessWidget {
       label: 'Ouvrir mon journal',
       onPressed: onTap,
       child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppDimensions.spacing8),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.14),
                     shape: BoxShape.circle,
@@ -219,58 +181,41 @@ class DashboardJournalCard extends StatelessWidget {
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppDimensions.spacing8),
                 Expanded(
                   child: Text(
                     'Dernière réflexion',
-                    style: AppTextStyles.titleSmall(
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
+                    style: AppTextStyles.titleSmall(color: context.textPrimary),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppDimensions.spacing8),
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 12,
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
+                  color: context.textTertiary,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacing12),
             if (lastEntry != null) ...[
               Text(
                 lastEntry!.title.isNotEmpty ? lastEntry!.title : 'Sans titre',
-                style: AppTextStyles.titleSmall(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
+                style: AppTextStyles.titleSmall(color: context.textPrimary),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppDimensions.spacing4),
               Text(
                 lastEntry!.content ?? '',
-                style: AppTextStyles.bodyMedium(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ),
+                style: AppTextStyles.bodyMedium(color: context.textSecondary),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ] else ...[
               Text(
                 'Prends un instant pour poser tes pensées...',
-                style: AppTextStyles.bodyMedium(
-                  color: isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight,
-                ).copyWith(fontStyle: FontStyle.italic),
+                style: AppTextStyles.bodyMedium(color: context.textTertiary)
+                    .copyWith(fontStyle: FontStyle.italic),
               ),
             ],
           ],
@@ -282,14 +227,9 @@ class DashboardJournalCard extends StatelessWidget {
 
 /// Barre Bento Bilan & Progrès.
 class DashboardReviewBar extends StatelessWidget {
-  final bool isDark;
   final VoidCallback? onTap;
 
-  const DashboardReviewBar({
-    super.key,
-    required this.isDark,
-    required this.onTap,
-  });
+  const DashboardReviewBar({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -297,14 +237,17 @@ class DashboardReviewBar extends StatelessWidget {
       label: 'Ouvrir mon bilan',
       onPressed: onTap,
       child: LiquidGlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing16,
+        ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppDimensions.spacing8),
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppDimensions.radius8),
               ),
               child: const Icon(
                 Icons.insights_rounded,
@@ -312,23 +255,14 @@ class DashboardReviewBar extends StatelessWidget {
                 size: 18,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacing12),
             Expanded(
               child: Text(
                 'Consulter mon bilan & progression',
-                style: AppTextStyles.titleSmall(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ),
+                style: AppTextStyles.titleSmall(color: context.textPrimary),
               ),
             ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
+            Icon(Icons.chevron_right_rounded, color: context.textTertiary),
           ],
         ),
       ),

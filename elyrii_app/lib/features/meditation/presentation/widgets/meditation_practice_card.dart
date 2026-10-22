@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../domain/models/meditation_exercise.dart';
@@ -27,10 +28,12 @@ class MeditationPracticeGrid extends StatelessWidget {
               MediaQuery.textScalerOf(context).scale(1) <= 1.2
           ? 2
           : 1;
-      final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+      final width =
+          (constraints.maxWidth - AppDimensions.spacing12 * (columns - 1)) /
+          columns;
       return Wrap(
-        spacing: 12,
-        runSpacing: 12,
+        spacing: AppDimensions.spacing12,
+        runSpacing: AppDimensions.spacing12,
         children: [
           for (final exercise in exercises)
             SizedBox(
@@ -66,19 +69,15 @@ class MeditationPracticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = isDark
-        ? AppColors.textTertiaryDark
-        : AppColors.textTertiaryLight;
+    final text = context.textPrimary;
+    final tertiary = context.textTertiary;
     final ink = AppColors.readableAccent(exercise.color, isDark: isDark);
     final icon = Container(
       width: 38,
       height: 38,
       decoration: BoxDecoration(
         color: exercise.color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppDimensions.radius8),
       ),
       child: Icon(exercise.icon, size: 18, color: ink),
     );
@@ -87,10 +86,10 @@ class MeditationPracticeCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(exercise.title, style: AppTextStyles.titleSmall(color: text)),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppDimensions.spacing4),
         Text(
           exercise.subtitle,
-          style: AppTextStyles.bodySmall(color: secondary),
+          style: AppTextStyles.bodySmall(color: tertiary),
         ),
       ],
     );
@@ -117,19 +116,19 @@ class MeditationPracticeCard extends StatelessWidget {
         borderColor: selected ? ink.withValues(alpha: 0.55) : null,
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppDimensions.radius20),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: select,
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppDimensions.spacing16),
               child: compact
                   ? Row(
                       children: [
                         icon,
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppDimensions.spacing12),
                         Expanded(child: copy),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppDimensions.spacing8),
                         check,
                       ],
                     )
@@ -139,7 +138,7 @@ class MeditationPracticeCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(children: [icon, const Spacer(), check]),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppDimensions.spacing12),
                           copy,
                         ],
                       ),

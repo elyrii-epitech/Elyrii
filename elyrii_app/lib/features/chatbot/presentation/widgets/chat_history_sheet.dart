@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
 import '../../data/entities/chat_session.dart';
@@ -46,16 +47,19 @@ class ChatHistorySheet extends StatelessWidget {
               const SliverToBoxAdapter(child: LinearProgressIndicator()),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.spacing20,
+                  AppDimensions.spacing8,
+                  AppDimensions.spacing20,
+                  0,
+                ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
                         'Historique',
                         style: AppTextStyles.titleLarge(
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
+                          color: context.textPrimary,
                         ),
                       ),
                     ),
@@ -85,7 +89,7 @@ class ChatHistorySheet extends StatelessWidget {
             if (provider.error != null)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(AppDimensions.spacing20),
                   child: Text(provider.error!),
                 ),
               ),
@@ -98,13 +102,19 @@ class ChatHistorySheet extends StatelessWidget {
                 ),
               ),
             if (sessions.isEmpty)
-              SliverToBoxAdapter(child: _buildEmptyState(isDark))
+              SliverToBoxAdapter(child: _buildEmptyState(context))
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.spacing20,
+                  AppDimensions.spacing16,
+                  AppDimensions.spacing20,
+                  AppDimensions.spacing24,
+                ),
                 sliver: SliverList.separated(
                   itemCount: sessions.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppDimensions.spacing8),
                   itemBuilder: (context, index) {
                     final session = sessions[index];
                     final isActive = session.id == activeId;
@@ -127,7 +137,9 @@ class ChatHistorySheet extends StatelessWidget {
               ),
             SliverToBoxAdapter(
               child: SizedBox(
-                height: MediaQuery.paddingOf(context).bottom + 16,
+                height:
+                    MediaQuery.paddingOf(context).bottom +
+                    AppDimensions.spacing16,
               ),
             ),
           ],
@@ -162,29 +174,22 @@ class ChatHistorySheet extends StatelessWidget {
     if (confirmed == true) await provider.importLegacyHistory();
   }
 
-  Widget _buildEmptyState(bool isDark) {
+  Widget _buildEmptyState(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 56, 24, 72),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing24,
+        vertical: AppDimensions.spacing48,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.forum_outlined,
-            size: 44,
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ),
-          const SizedBox(height: 12),
+          Icon(Icons.forum_outlined, size: 44, color: context.textTertiary),
+          const SizedBox(height: AppDimensions.spacing12),
           Text(
             'Aucune conversation pour l\'instant.\n'
             'Écris ton premier message à Elyrii.',
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
+            style: AppTextStyles.bodyMedium(color: context.textSecondary),
           ),
         ],
       ),
@@ -216,15 +221,18 @@ class ChatHistorySheet extends StatelessWidget {
                   final selected = await provider.loadSession(session.id);
                   if (selected && context.mounted) Navigator.pop(context);
                 },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radius16),
           child: ElyriiGlassSurface(
             lightweight: true,
             role: GlassRole.dialog,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppDimensions.radius16),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing16,
+                vertical: AppDimensions.spacing12,
+              ),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppDimensions.radius16),
                 border: isActive
                     ? Border.all(
                         color: AppColors.primary.withValues(alpha: 0.4),
@@ -242,7 +250,7 @@ class ChatHistorySheet extends StatelessWidget {
                               ? AppColors.iconDefaultDark
                               : AppColors.iconDefaultLight),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppDimensions.spacing12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,18 +260,14 @@ class ChatHistorySheet extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.titleSmall(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: context.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppDimensions.spacing2),
                         Text(
                           '$subtitle · ${session.messageCount} messages',
                           style: AppTextStyles.bodySmall(
-                            color: isDark
-                                ? AppColors.textTertiaryDark
-                                : AppColors.textTertiaryLight,
+                            color: context.textTertiary,
                           ),
                         ),
                       ],
@@ -273,9 +277,7 @@ class ChatHistorySheet extends StatelessWidget {
                     icon: Icon(
                       Icons.delete_outline_rounded,
                       size: 20,
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
+                      color: context.textTertiary,
                     ),
                     tooltip: 'Supprimer la conversation',
                     onPressed: () =>

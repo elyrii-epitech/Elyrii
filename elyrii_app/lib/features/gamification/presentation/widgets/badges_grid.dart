@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
@@ -31,11 +32,13 @@ class BadgesGrid extends StatelessWidget {
         1,
         3,
       );
-      final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
+      final width =
+          (constraints.maxWidth - (columns - 1) * AppDimensions.spacing8) /
+          columns;
       final colors = Theme.of(context).colorScheme;
       return Wrap(
-        spacing: 10,
-        runSpacing: 10,
+        spacing: AppDimensions.spacing8,
+        runSpacing: AppDimensions.spacing8,
         children: [
           for (final badge in badges)
             SizedBox(
@@ -56,7 +59,7 @@ class BadgesGrid extends StatelessWidget {
                         color: colors.onSurfaceVariant,
                         size: 28,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppDimensions.spacing8),
                       Text(
                         badge.title,
                         textAlign: TextAlign.center,
@@ -64,7 +67,7 @@ class BadgesGrid extends StatelessWidget {
                           color: colors.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacing4),
                       Text(
                         badge.isUnlocked ? 'Débloqué' : 'À débloquer',
                         textAlign: TextAlign.center,

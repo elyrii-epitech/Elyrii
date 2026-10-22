@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
 class ConversationSuggestions extends StatelessWidget {
@@ -12,8 +13,8 @@ class ConversationSuggestions extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppDimensions.spacing8,
+      runSpacing: AppDimensions.spacing8,
       children: [
         for (final suggestion in const [
           (
@@ -32,18 +33,19 @@ class ConversationSuggestions extends StatelessWidget {
             icon: Icon(suggestion.icon, size: 17),
             label: Text(suggestion.label),
             style: OutlinedButton.styleFrom(
-              foregroundColor: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
+              foregroundColor: context.textSecondary,
               side: BorderSide(
                 color: isDark
                     ? const Color(0xFF373739)
                     : const Color(0xFFE2E2E6),
               ),
               shape: const StadiumBorder(),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing16,
+                vertical: AppDimensions.spacing12,
+              ),
               minimumSize: const Size(0, 44),
-              textStyle: AppTextStyles.bodyMedium(fontWeight: FontWeight.w500),
+              textStyle: AppTextStyles.bodyMedium(),
             ),
           ),
       ],

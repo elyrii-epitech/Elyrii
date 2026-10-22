@@ -189,7 +189,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(
               AppDimensions.pageHorizontalPadding,
-              12,
+              AppDimensions.spacing12,
               AppDimensions.pageHorizontalPadding,
               0,
             ),
@@ -207,11 +207,11 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     streakDays: streakDays,
                     completedCount: completedCount,
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AppDimensions.spacing16),
 
                   // 2. Bannière de synergie Coach IA
                   _buildCoachSynergyBanner(isDark),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppDimensions.spacing20),
 
                   // 3. Sélecteur segmenté principal iOS
                   _segmentedControl(
@@ -221,7 +221,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     onValueChanged: (value) =>
                         setState(() => _mainSegment = value),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: AppDimensions.spacing16),
                 ],
               ),
             ),
@@ -229,7 +229,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
           if (provider.error != null)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppDimensions.spacing20),
                 child: Semantics(
                   liveRegion: true,
                   child: Text(
@@ -274,7 +274,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
                               setState(() => _successesSubSegment = value),
                         ),
                       ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: AppDimensions.spacing12),
+                      ),
                       if (_successesSubSegment == 0)
                         SliverToBoxAdapter(
                           child: _buildBadgesView(isDark, streakDays),
@@ -284,7 +286,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
                     ],
                   ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 120)),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AppDimensions.dockClearance),
+          ),
         ],
       ),
     );
@@ -303,7 +307,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
     final progress = (currentXp / maxXp).clamp(0.0, 1.0);
 
     return LiquidGlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.spacing20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -335,38 +339,36 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDimensions.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      runSpacing: 4,
+                      spacing: AppDimensions.spacing8,
+                      runSpacing: AppDimensions.spacing4,
                       children: [
                         Text(
                           stateData.label,
                           style: AppTextStyles.titleMedium(
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: context.textPrimary,
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
+                            horizontal: AppDimensions.spacing8,
+                            vertical: AppDimensions.spacing2,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radius8,
+                            ),
                           ),
                           child: Text(
                             'Étape $level',
-                            style: AppTextStyles.labelSmall(
-                              fontWeight: FontWeight.w600,
+                            style: AppTextStyles.badge(
                               color: AppColors.readableAccent(
                                 AppColors.primary,
                                 isDark:
@@ -378,14 +380,11 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppDimensions.spacing2),
                     Text(
                       stateData.desc,
                       style: AppTextStyles.bodyMedium(
-                        fontWeight: FontWeight.w500,
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -393,7 +392,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppDimensions.spacing16),
 
           // Jauge de floraison / sérénité
           Column(
@@ -401,22 +400,19 @@ class _ChallengesPageState extends State<ChallengesPage> {
             children: [
               Wrap(
                 alignment: WrapAlignment.spaceBetween,
-                spacing: 12,
-                runSpacing: 4,
+                spacing: AppDimensions.spacing12,
+                runSpacing: AppDimensions.spacing4,
 
                 children: [
                   Text(
                     'Floraison du sanctuaire',
                     style: AppTextStyles.labelMedium(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                      color: context.textSecondary,
                     ),
                   ),
                   Text(
                     '$currentXp / $maxXp pts',
-                    style: AppTextStyles.labelMedium(
-                      fontWeight: FontWeight.w700,
+                    style: AppTextStyles.titleSmall(
                       color: AppColors.readableAccent(
                         AppColors.primary,
                         isDark: Theme.of(context).brightness == Brightness.dark,
@@ -425,9 +421,9 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacing8),
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimensions.radius8),
                 child: Stack(
                   children: [
                     Container(
@@ -453,7 +449,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
 
           // Bento statistiques douces
           Row(
@@ -461,14 +457,14 @@ class _ChallengesPageState extends State<ChallengesPage> {
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: AppDimensions.spacing12,
+                    vertical: AppDimensions.spacing8,
                   ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.04)
                         : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   ),
                   child: Row(
                     children: [
@@ -477,26 +473,21 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         color: Color(0xFFFF9500),
                         size: 18,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppDimensions.spacing8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               '$streakDays ${streakDays > 1 ? "jours" : "jour"}',
-                              style: AppTextStyles.labelMedium(
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
+                              style: AppTextStyles.titleSmall(
+                                color: context.textPrimary,
                               ),
                             ),
                             Text(
                               'Série active',
                               style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiaryLight,
+                                color: context.textTertiary,
                               ),
                             ),
                           ],
@@ -506,18 +497,18 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppDimensions.spacing8),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: AppDimensions.spacing12,
+                    vertical: AppDimensions.spacing8,
                   ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.04)
                         : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   ),
                   child: Row(
                     children: [
@@ -526,26 +517,21 @@ class _ChallengesPageState extends State<ChallengesPage> {
                         color: Color(0xFF34C759),
                         size: 18,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppDimensions.spacing8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               '$completedCount ${completedCount > 1 ? "fleuris" : "fleuri"}',
-                              style: AppTextStyles.labelMedium(
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
+                              style: AppTextStyles.titleSmall(
+                                color: context.textPrimary,
                               ),
                             ),
                             Text(
                               'Rituels clos',
                               style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiaryLight,
+                                color: context.textTertiary,
                               ),
                             ),
                           ],
@@ -570,10 +556,13 @@ class _ChallengesPageState extends State<ChallengesPage> {
         context.go(AppRoutes.coach);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing16,
+        ),
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.07),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radius16),
           border: Border.all(
             color: AppColors.primary.withValues(alpha: 0.20),
             width: 0.8,
@@ -582,7 +571,7 @@ class _ChallengesPageState extends State<ChallengesPage> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppDimensions.spacing8),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.20),
                 shape: BoxShape.circle,
@@ -593,33 +582,26 @@ class _ChallengesPageState extends State<ChallengesPage> {
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacing12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Semer une graine avec le Coach IA',
-                    style: AppTextStyles.labelMedium(
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
+                    style: AppTextStyles.titleSmall(color: context.textPrimary),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacing2),
                   Text(
                     'Besoin d\'un rituel guidé sur-mesure ? Ton coach t\'écoute.',
                     style: AppTextStyles.labelSmall(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                      color: context.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacing8),
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
@@ -649,25 +631,22 @@ class _ChallengesPageState extends State<ChallengesPage> {
           children: [
             Text(
               'Badges de sérénité',
-              style: AppTextStyles.labelMedium(
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.overline(color: context.textSecondary),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing8,
+                vertical: AppDimensions.spacing2,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(
                   alpha: isDark ? 0.15 : 0.08,
                 ),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppDimensions.radius8),
               ),
               child: Text(
                 '$unlockedCount / $totalCount débloqués',
-                style: AppTextStyles.labelSmall(
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.badge(
                   color: AppColors.readableAccent(
                     AppColors.primary,
                     isDark: Theme.of(context).brightness == Brightness.dark,
@@ -677,34 +656,26 @@ class _ChallengesPageState extends State<ChallengesPage> {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppDimensions.spacing8),
         BadgesGrid(
           badges: _badges,
           onBadgeTap: (badge) => _showBadgeDetails(context, badge),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppDimensions.spacing8),
         Text(
           'Chaque badge fleuri témoigne d\'un pas vers la sérénité.',
           textAlign: TextAlign.center,
-          style: AppTextStyles.labelSmall(
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ).copyWith(fontStyle: FontStyle.italic),
+          style: AppTextStyles.labelSmall(color: context.textTertiary)
+              .copyWith(fontStyle: FontStyle.italic),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: AppDimensions.spacing16),
 
         // Trophée de constance (volet Trophées du segment)
         Text(
           'Constance & rythme',
-          style: AppTextStyles.labelMedium(
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
+          style: AppTextStyles.overline(color: context.textSecondary),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppDimensions.spacing8),
         DailyStreakCard(
           streakDays: streakDays,
           weekHistory: List.generate(7, (i) => i < streakDays),
@@ -719,12 +690,8 @@ class _ChallengesPageState extends State<ChallengesPage> {
     required Map<int, String> labels,
     required ValueChanged<int> onValueChanged,
   }) {
-    final selectedColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final unselectedColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final selectedColor = context.textPrimary;
+    final unselectedColor = context.textSecondary;
 
     return SizedBox(
       width: double.infinity,
@@ -734,11 +701,13 @@ class _ChallengesPageState extends State<ChallengesPage> {
             ? Colors.white.withValues(alpha: 0.08)
             : Colors.black.withValues(alpha: 0.05),
         thumbColor: isDark ? const Color(0xFF3A3A3C) : Colors.white,
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.all(AppDimensions.spacing2),
         children: {
           for (final entry in labels.entries)
             entry.key: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                vertical: AppDimensions.spacing8,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minHeight: 48),
                 child: Center(
@@ -799,15 +768,11 @@ class _ChallengesPageState extends State<ChallengesPage> {
                   : AppColors.textTertiaryLight,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
           Text(
             '${badge.requirement}. ${badge.isUnlocked ? 'Objectif atteint !' : 'À ton rythme.'}',
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
+            style: AppTextStyles.bodyMedium(color: context.textSecondary),
           ),
         ],
       ),
@@ -842,13 +807,15 @@ class _ChallengesSkeleton extends StatelessWidget {
       children: List.generate(
         3,
         (i) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
           child:
               Container(
                     height: 80,
                     decoration: BoxDecoration(
                       color: shimmerBase,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius16,
+                      ),
                     ),
                   )
                   .animateRespectingMotion(

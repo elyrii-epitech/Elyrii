@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/app_dimensions.dart';
 import '../../routes/app_routes.dart';
 
 class GlobalErrorBoundary extends StatefulWidget {
@@ -77,7 +78,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
       child: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(AppDimensions.spacing24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -86,7 +87,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   color: AppColors.primary.withValues(alpha: 0.6),
                   size: 64,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimensions.spacing24),
                 Text(
                   'Oups, un petit souci...',
                   style: AppTextStyles.headlineSmall(
@@ -94,7 +95,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacing16),
                 Text(
                   'Ce n\'est rien de grave. On recommence ensemble ?',
                   style: AppTextStyles.bodyMedium(
@@ -102,7 +103,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppDimensions.spacing32),
                 ElevatedButton(
                   onPressed: () async {
                     await context.read<AuthProvider>().clearLocalSession();
@@ -112,17 +113,19 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                      horizontal: AppDimensions.spacing32,
+                      vertical: AppDimensions.spacing16,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius16,
+                      ),
                     ),
                   ),
                   child: const Text('Recommencer'),
                 ),
                 if (kDebugMode && details.exceptionAsString().isNotEmpty) ...[
-                  const SizedBox(height: 48),
+                  const SizedBox(height: AppDimensions.spacing48),
                   ExpansionTile(
                     title: Text(
                       'Détails techniques (Debug only)',
@@ -132,10 +135,12 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                     ),
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppDimensions.spacing16),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radius12,
+                          ),
                           border: Border.all(
                             color: Theme.of(context).dividerColor,
                           ),

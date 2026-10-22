@@ -7,6 +7,6 @@ cd -- "$FRONTEND_APP_DIR"
 
 flutter pub get --enforce-lockfile
 dart format --output=none --set-exit-if-changed lib test tool integration_test
-tool/check_typography.sh
+dart run tool/check_design_tokens.dart
 flutter analyze --no-pub
 flutter test --no-pub --coverage

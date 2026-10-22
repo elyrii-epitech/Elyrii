@@ -63,7 +63,7 @@ class GlassJournalCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF201E24) : Colors.white,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          borderRadius: BorderRadius.circular(AppDimensions.radius16),
           border: Border.all(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.10)
@@ -80,7 +80,7 @@ class GlassJournalCard extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -91,17 +91,13 @@ class GlassJournalCard extends StatelessWidget {
                   Text(
                     _formatDate(createdAt),
                     style: AppTextStyles.labelSmall(
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
+                      color: context.textTertiary,
                     ),
                   ),
                   Text(
                     ' · $timeStr',
                     style: AppTextStyles.labelSmall(
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
+                      color: context.textTertiary,
                     ),
                   ),
                   const Spacer(),
@@ -111,14 +107,10 @@ class GlassJournalCard extends StatelessWidget {
 
               // Titre hiérarchisé (si renseigné)
               if (entry.title.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: AppDimensions.spacing8),
                 Text(
                   entry.title,
-                  style: AppTextStyles.titleMedium(
-                    color: isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                  ),
+                  style: AppTextStyles.titleMedium(color: context.textPrimary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -126,14 +118,10 @@ class GlassJournalCard extends StatelessWidget {
 
               // Aperçu du contenu (2-3 lignes avec troncature élégante)
               if ((entry.content ?? '').trim().isNotEmpty) ...[
-                SizedBox(height: entry.title.isNotEmpty ? 6 : 8),
+                const SizedBox(height: AppDimensions.spacing8),
                 Text(
                   entry.content!.trim(),
-                  style: AppTextStyles.bodyMedium(
-                    color: isDark
-                        ? AppColors.textSecondaryDark
-                        : AppColors.textSecondaryLight,
-                  ),
+                  style: AppTextStyles.bodyMedium(color: context.textSecondary),
                   maxLines: entry.title.isNotEmpty ? 2 : 3,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -148,10 +136,13 @@ class GlassJournalCard extends StatelessWidget {
   /// Pastille d'humeur subtile au style iOS (couleur mood + libellé)
   Widget _buildMoodBadge(_MoodBadgeInfo moodInfo, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing8,
+        vertical: AppDimensions.spacing2,
+      ),
       decoration: BoxDecoration(
         color: moodInfo.color.withValues(alpha: isDark ? 0.18 : 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radius12),
         border: Border.all(
           color: moodInfo.color.withValues(alpha: isDark ? 0.35 : 0.25),
           width: 0.5,
@@ -168,13 +159,10 @@ class GlassJournalCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: AppDimensions.spacing4),
           Text(
             moodInfo.label,
-            style: AppTextStyles.labelSmall(
-              fontWeight: FontWeight.w600,
-              color: moodInfo.color,
-            ),
+            style: AppTextStyles.badge(color: moodInfo.color),
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../domain/models/meditation_exercise.dart';
@@ -28,9 +29,7 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
+    final text = context.textPrimary;
     final exercises = MeditationExercises.all
         .where(
           (exercise) => _category == null || exercise.category == _category,
@@ -41,7 +40,12 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
       key: const Key('meditation-library'),
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing16,
+            AppDimensions.pageHorizontalPadding,
+            AppDimensions.spacing12,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -50,7 +54,7 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
                   style: AppTextStyles.titleLarge(color: text),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacing8),
               Semantics(
                 key: const Key('meditation-library-close'),
                 container: true,
@@ -72,18 +76,18 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
             controller: widget.scrollController,
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
-              20,
-              8,
-              20,
-              MediaQuery.paddingOf(context).bottom + 24,
+              AppDimensions.pageHorizontalPadding,
+              AppDimensions.spacing8,
+              AppDimensions.pageHorizontalPadding,
+              MediaQuery.paddingOf(context).bottom + AppDimensions.spacing24,
             ),
             children: [
               Theme(
                 data: Theme.of(context)
                     .copyWith(canvasColor: Colors.transparent),
                 child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+                  spacing: AppDimensions.spacing8,
+                  runSpacing: AppDimensions.spacing8,
                   children: [
                     _filter('Tout', null, isDark),
                     for (final category in MeditationCategory.values)
@@ -91,7 +95,7 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppDimensions.spacing20),
               MeditationPracticeGrid(
                 exercises: exercises,
                 selectedId: widget.selectedExercise?.id,
@@ -114,12 +118,7 @@ class _MeditationLibrarySheetState extends State<MeditationLibrarySheet> {
       visualDensity: VisualDensity.standard,
       materialTapTargetSize: MaterialTapTargetSize.padded,
       labelStyle: AppTextStyles.labelMedium(
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-        color: selected
-            ? accent
-            : isDark
-            ? AppColors.textSecondaryDark
-            : AppColors.textSecondaryLight,
+        color: selected ? accent : context.textSecondary,
       ),
       backgroundColor: Colors.transparent,
       selectedColor: accent.withValues(alpha: 0.10),

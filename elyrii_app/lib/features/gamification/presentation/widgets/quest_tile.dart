@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_card.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
@@ -36,7 +37,7 @@ class QuestTile extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
       child: GestureDetector(
         onTap: () {
           if (onTap != null) {
@@ -48,7 +49,7 @@ class QuestTile extends StatelessWidget {
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
           child: LiquidGlassCard(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppDimensions.spacing16),
             color: isCompleted
                 ? (isDark
                       ? AppColors.accentDark.withValues(alpha: 0.12)
@@ -61,7 +62,7 @@ class QuestTile extends StatelessWidget {
               children: [
                 // Left icon circle
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppDimensions.spacing12),
                   decoration: BoxDecoration(
                     color: isCompleted
                         ? AppColors.accent.withValues(alpha: 0.15)
@@ -76,15 +77,9 @@ class QuestTile extends StatelessWidget {
                           color: AppColors.accent,
                           size: 20,
                         )
-                      : Icon(
-                          icon,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
-                          size: 20,
-                        ),
+                      : Icon(icon, color: context.textSecondary, size: 20),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppDimensions.spacing16),
 
                 // Title, Subtitle, and Progress Bar
                 Expanded(
@@ -94,12 +89,10 @@ class QuestTile extends StatelessWidget {
                       Text(
                         title,
                         style: AppTextStyles.titleSmall(
-                          color: isDark
-                              ? AppColors.textPrimaryDark
-                              : AppColors.textPrimaryLight,
+                          color: context.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppDimensions.spacing4),
                       Row(
                         children: [
                           Flexible(
@@ -107,22 +100,22 @@ class QuestTile extends StatelessWidget {
                               isCompleted ? 'Ce moment a été vécu' : subtitle,
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiaryLight,
+                                color: context.textTertiary,
                               ),
                             ),
                           ),
                           if (xpReward > 0 && !isCompleted) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppDimensions.spacing8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
+                                horizontal: AppDimensions.spacing8,
+                                vertical: AppDimensions.spacing2,
                               ),
                               decoration: BoxDecoration(
                                 color: AppColors.xpBar.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.radius8,
+                                ),
                                 border: Border.all(
                                   color: AppColors.xpBar.withValues(alpha: 0.4),
                                   width: 0.5,
@@ -130,8 +123,7 @@ class QuestTile extends StatelessWidget {
                               ),
                               child: Text(
                                 '+$xpReward XP',
-                                style: AppTextStyles.labelSmall(
-                                  fontWeight: FontWeight.bold,
+                                style: AppTextStyles.badge(
                                   color: isDark
                                       ? Colors.amber[200]
                                       : Colors.amber[800],
@@ -143,7 +135,7 @@ class QuestTile extends StatelessWidget {
                       ),
                       // Progress bar (if provided)
                       if (progressFraction != null && !isCompleted) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppDimensions.spacing8),
                         Row(
                           children: [
                             Expanded(
@@ -153,10 +145,14 @@ class QuestTile extends StatelessWidget {
                                   color: isDark
                                       ? Colors.white.withValues(alpha: 0.08)
                                       : Colors.black.withValues(alpha: 0.06),
-                                  borderRadius: BorderRadius.circular(999),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusPill,
+                                  ),
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(999),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusPill,
+                                  ),
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: FractionallySizedBox(
@@ -167,7 +163,7 @@ class QuestTile extends StatelessWidget {
                                         decoration: BoxDecoration(
                                           color: AppColors.primary,
                                           borderRadius: BorderRadius.circular(
-                                            999,
+                                            AppDimensions.radiusPill,
                                           ),
                                         ),
                                       ),
@@ -179,15 +175,14 @@ class QuestTile extends StatelessWidget {
                             if (progressText != null &&
                                 progressText!.isNotEmpty)
                               Padding(
-                                padding: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.only(
+                                  left: AppDimensions.spacing8,
+                                ),
                                 child: Text(
                                   progressText!,
                                   overflow: TextOverflow.clip,
-                                  style: AppTextStyles.labelSmall(
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? AppColors.textTertiaryDark
-                                        : AppColors.textTertiaryLight,
+                                  style: AppTextStyles.labelMedium(
+                                    color: context.textTertiary,
                                   ),
                                 ),
                               ),
@@ -197,16 +192,14 @@ class QuestTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppDimensions.spacing12),
 
                 // Right arrow (if tappable and not completed)
                 if (!isCompleted && progressFraction == null && onTap != null)
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 16,
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
+                    color: context.textTertiary,
                   ),
               ],
             ),

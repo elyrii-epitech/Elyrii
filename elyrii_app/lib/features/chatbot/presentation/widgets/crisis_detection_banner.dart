@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
@@ -92,10 +93,17 @@ class CrisisDetectionBanner extends StatelessWidget {
   Widget _buildBannerContent(BuildContext context, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacing20,
+        AppDimensions.spacing16,
+        AppDimensions.spacing20,
+        AppDimensions.spacing16,
+      ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF2C2218) : const Color(0xFFFFF7ED),
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(AppDimensions.radius16),
+        ),
         border: Border.all(
           color: AppColors.warning.withValues(alpha: isDark ? 0.35 : 0.25),
           width: 0.8,
@@ -117,18 +125,13 @@ class CrisisDetectionBanner extends StatelessWidget {
             size: 28,
             color: isDark ? AppColors.warningLight : AppColors.warningDark,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppDimensions.spacing8),
           Text(
             'On dirait que tu traverses un moment difficile. Tu n\'es pas seul(e).',
-            style: AppTextStyles.bodyLarge(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTextStyles.bodyLarge(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
 
           // Emergency numbers
           _buildPhoneRow(
@@ -137,14 +140,14 @@ class CrisisDetectionBanner extends StatelessWidget {
             label: 'SOS Amitié',
             number: '09 72 39 40 50',
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacing8),
           _buildPhoneRow(
             context,
             isDark,
             label: 'Prévention suicide',
             number: '3114',
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
 
           // Action buttons
           LiquidGlassButton(
@@ -152,9 +155,9 @@ class CrisisDetectionBanner extends StatelessWidget {
             icon: Icons.phone_in_talk_rounded,
             style: LiquidGlassButtonStyle.filled,
             isExpanded: true,
-            onPressed: () => _showHelpDialog(context, isDark),
+            onPressed: () => _showHelpDialog(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppDimensions.spacing8),
           LiquidGlassButton(
             label: 'Ça va, merci',
             style: LiquidGlassButtonStyle.plain,
@@ -173,12 +176,15 @@ class CrisisDetectionBanner extends StatelessWidget {
     required String number,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing16,
+        vertical: AppDimensions.spacing8,
+      ),
       decoration: BoxDecoration(
         color: (isDark ? AppColors.cardDark : AppColors.cardLight).withValues(
           alpha: 0.5,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radius12),
         border: Border.all(
           color: AppColors.warning.withValues(alpha: 0.15),
           width: 0.5,
@@ -192,16 +198,11 @@ class CrisisDetectionBanner extends StatelessWidget {
             size: 16,
             color: isDark ? AppColors.warningLight : AppColors.warningDark,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacing8),
           Flexible(
             child: Text(
               '$label : $number',
-              style: AppTextStyles.bodyMedium(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.bodyMedium(color: context.textSecondary),
               textAlign: TextAlign.center,
             ),
           ),
@@ -210,7 +211,7 @@ class CrisisDetectionBanner extends StatelessWidget {
     );
   }
 
-  void _showHelpDialog(BuildContext context, bool isDark) {
+  void _showHelpDialog(BuildContext context) {
     showLiquidGlassDialog(
       context: context,
       title: 'Tu n\'es pas seul(e)',
@@ -221,34 +222,22 @@ class CrisisDetectionBanner extends StatelessWidget {
             'Voici les numéros que tu peux appeler dès maintenant :',
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
           Text(
             'SOS Amitié\n09 72 39 40 50',
-            style: AppTextStyles.titleSmall(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+            style: AppTextStyles.titleSmall(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacing12),
           Text(
             'Numéro national de prévention du suicide\n3114',
-            style: AppTextStyles.titleSmall(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+            style: AppTextStyles.titleSmall(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacing12),
           Text(
             'Urgence vitale : 15 ou 112',
-            style: AppTextStyles.titleSmall(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+            style: AppTextStyles.titleSmall(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
         ],

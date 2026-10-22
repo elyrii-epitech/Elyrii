@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/config/mascot_animations.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/mascot_contact_shadow.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 
@@ -48,7 +49,7 @@ class MascotAvatarPreview extends StatelessWidget {
           // Ombre d'occlusion ambiante au sol : mascotte posée (elevation 0),
           // ombre serrée et marquée — ancrage physique sans cage circulaire.
           Padding(
-            padding: const EdgeInsets.only(bottom: 2),
+            padding: const EdgeInsets.only(bottom: AppDimensions.spacing2),
             child: MascotContactShadow(
               width: width * 0.6,
               elevation: 0,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import 'chat_message_bubble.dart' show ChatBubbleStyles;
 
 /// Indicateur de frappe intégré à une bulle assistante, façon iMessage :
@@ -85,7 +86,10 @@ class _TypingIndicatorState extends State<TypingIndicator>
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 780),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing16,
+            vertical: AppDimensions.spacing8,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -105,16 +109,17 @@ class _TypingIndicatorState extends State<TypingIndicator>
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: AppDimensions.spacing12),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 13,
+                  horizontal: AppDimensions.spacing16,
+                  vertical: AppDimensions.spacing12,
                 ),
                 decoration: ChatBubbleStyles.assistant(isDark),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
+                  spacing: AppDimensions.spacing8,
                   children: List.generate(
                     3,
                     (index) => _buildDot(index, isDark),
@@ -136,7 +141,6 @@ class _TypingIndicatorState extends State<TypingIndicator>
         return Transform.translate(
           offset: Offset(0, -3.0 * t),
           child: Container(
-            margin: EdgeInsets.only(right: index < 2 ? 6 : 0),
             width: 8,
             height: 8,
             decoration: BoxDecoration(

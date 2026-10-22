@@ -3,6 +3,8 @@ import '../../../../core/accessibility/motion.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_dimensions.dart';
+
 class DashboardSkeleton extends StatelessWidget {
   final bool isDark;
 
@@ -18,7 +20,7 @@ class DashboardSkeleton extends StatelessWidget {
         height: height,
         decoration: BoxDecoration(
           color: surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radius16),
         ),
       );
       return box
@@ -39,11 +41,11 @@ class DashboardSkeleton extends StatelessWidget {
         Row(
           children: [
             Expanded(child: block(92)),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacing12),
             Expanded(child: block(92)),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacing12),
         block(72),
       ],
     );

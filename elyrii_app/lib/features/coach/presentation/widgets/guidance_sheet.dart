@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../data/models/coach_model.dart';
@@ -20,7 +21,6 @@ class GuidanceSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = activity.category.color;
 
     return Consumer<CoachProvider>(
@@ -30,7 +30,6 @@ class GuidanceSheet extends StatelessWidget {
         final body = provider.isCreatingSession
             ? const _PreparingBody()
             : _ResponseBody(
-                isDark: isDark,
                 response: session?.response ?? '',
                 isPlaceholder: isPlaceholder,
               );
@@ -43,7 +42,7 @@ class GuidanceSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: AppDimensions.spacing8),
               Row(
                 children: [
                   Container(
@@ -51,32 +50,28 @@ class GuidanceSheet extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(13),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius12,
+                      ),
                     ),
                     child: Center(
                       child: Icon(activity.icon, size: 22, color: color),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppDimensions.spacing12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Séance guidée',
-                          style: AppTextStyles.labelMedium(
-                            color: color,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.labelMedium(color: color),
                         ),
-                        const SizedBox(height: 1),
+                        const SizedBox(height: AppDimensions.spacing2),
                         Text(
                           activity.title,
                           style: AppTextStyles.titleMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                            fontWeight: FontWeight.w700,
+                            color: context.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -86,7 +81,7 @@ class GuidanceSheet extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppDimensions.spacing16),
               body,
             ],
           ),
@@ -113,7 +108,7 @@ class _PreparingBody extends StatelessWidget {
       width: width,
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radius12),
       ),
     );
 
@@ -122,18 +117,16 @@ class _PreparingBody extends StatelessWidget {
       children: [
         Text(
           'Elyrii prépare ta séance…',
-          style: AppTextStyles.bodySmall(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppDimensions.spacing16),
         ...List.generate(3, (i) {
           final widths = [null, 320.0, 220.0];
+          final isLast = i == 2;
           return Padding(
-            padding: EdgeInsets.only(bottom: i < 2 ? 10 : 0),
+            padding: EdgeInsets.only(
+              bottom: isLast ? 0 : AppDimensions.spacing8,
+            ),
             child: block(14, width: widths[i])
                 .animateRespectingMotion(
                   context,
@@ -156,15 +149,10 @@ class _PreparingBody extends StatelessWidget {
 /// Réponse : le texte de la séance, relu à hauteur d'homme. Quand il s'agit
 /// d'un placeholder local, une légende honnête l'annonce.
 class _ResponseBody extends StatelessWidget {
-  final bool isDark;
   final String response;
   final bool isPlaceholder;
 
-  const _ResponseBody({
-    required this.isDark,
-    required this.response,
-    required this.isPlaceholder,
-  });
+  const _ResponseBody({required this.response, required this.isPlaceholder});
 
   @override
   Widget build(BuildContext context) {
@@ -175,38 +163,28 @@ class _ResponseBody extends StatelessWidget {
           response.isEmpty
               ? 'Ta séance est prête. À toi de jouer, je reste là.'
               : response,
-          style: AppTextStyles.bodyMedium(
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ).copyWith(height: 1.6),
+          style: AppTextStyles.bodyMedium(color: context.textPrimary),
         ),
         if (isPlaceholder) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacing12),
           Row(
             children: [
               Icon(
                 Icons.auto_awesome_rounded,
                 size: 13,
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
+                color: context.textTertiary,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppDimensions.spacing8),
               Expanded(
                 child: Text(
                   'Aperçu du coach — le contenu personnalisé arrive bientôt.',
-                  style: AppTextStyles.labelSmall(
-                    color: isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
+                  style: AppTextStyles.labelSmall(color: context.textTertiary),
                 ),
               ),
             ],
           ),
         ],
-        const SizedBox(height: 18),
+        const SizedBox(height: AppDimensions.spacing16),
         LiquidGlassButton(
           label: 'Merci, c\'est noté',
           icon: Icons.check_rounded,

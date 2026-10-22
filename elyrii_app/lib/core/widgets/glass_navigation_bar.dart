@@ -42,9 +42,13 @@ class GlassNavigationBar extends StatelessWidget {
     this.scaleAnimation,
     this.isDark = false,
     this.pressedIndex = -1,
-    this.margin = const EdgeInsets.only(left: 16, right: 16, bottom: 20),
+    this.margin = const EdgeInsets.only(
+      left: AppDimensions.spacing16,
+      right: AppDimensions.spacing16,
+      bottom: AppDimensions.spacing20,
+    ),
     this.height = 64.0,
-    this.borderRadius = AppDimensions.radiusLiquidGlassNav, // 32.0
+    this.borderRadius = AppDimensions.radiusPill, // 32.0
   });
 
   @override
@@ -189,8 +193,8 @@ class _GlassNavItemViewState extends State<_GlassNavItemView> {
                     duration: duration,
                     curve: Curves.easeOutCubic,
                     margin: const EdgeInsets.symmetric(
-                      horizontal: 2,
-                      vertical: 4,
+                      horizontal: AppDimensions.spacing2,
+                      vertical: AppDimensions.spacing4,
                     ),
                     decoration: BoxDecoration(
                       color: widget.isSelected
@@ -198,7 +202,9 @@ class _GlassNavItemViewState extends State<_GlassNavItemView> {
                               alpha: widget.isDark ? 0.065 : 0.055,
                             )
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius28,
+                      ),
                       border: Border.all(
                         color: _showFocus
                             ? primaryColor
@@ -228,13 +234,10 @@ class _GlassNavItemViewState extends State<_GlassNavItemView> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        const SizedBox(height: AppDimensions.spacing2),
                         AnimatedDefaultTextStyle(
                           duration: duration,
                           style: AppTextStyles.labelSmall(
-                            fontWeight: widget.isSelected
-                                ? FontWeight.w600
-                                : null,
                             color: widget.isSelected
                                 ? primaryColor
                                 : (widget.isDark

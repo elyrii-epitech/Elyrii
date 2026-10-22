@@ -141,8 +141,8 @@ class AppColors {
   static const Color glassBackgroundDarkEnd = Color(0x0DFFFFFF); // 5% opacity
 
   /// Glass borders
-  static const Color glassBorderLight = Color(0x99FFFFFF); // 60% opacity
-  static const Color glassBorderDark = Color(0x1FFFFFFF); // 12% opacity
+  static const Color glassBorderLight = Color(0x4DFFFFFF); // 30% opacity
+  static const Color glassBorderDark = Color(0x26FFFFFF); // 15% opacity
 
   /// Couleurs lavande pour effets spéciaux
   static const Color glassLavender = Color(0xFFF5F3FF);
@@ -183,4 +183,19 @@ class AppColors {
     }
     return isDark ? textPrimaryDark : textPrimaryLight;
   }
+}
+
+/// Text colors for the current theme, so screens stop repeating the
+/// light/dark choice.
+extension AppTextColors on BuildContext {
+  bool get _isDark => Theme.of(this).brightness == Brightness.dark;
+
+  Color get textPrimary =>
+      _isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+
+  Color get textSecondary =>
+      _isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
+  Color get textTertiary =>
+      _isDark ? AppColors.textTertiaryDark : AppColors.textTertiaryLight;
 }

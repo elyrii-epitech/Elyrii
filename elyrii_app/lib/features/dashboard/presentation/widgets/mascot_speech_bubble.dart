@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
 /// Widget de bulle de dialogue avec effet glassmorphism et animation de typing.
@@ -121,7 +122,10 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble> {
             // Bulle principale — verre doux à deux ombres (ambiante +
             // contact), la hiérarchie d'une surface matérielle premium.
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.spacing16,
+                vertical: AppDimensions.spacing12,
+              ),
               constraints: const BoxConstraints(maxWidth: 300, minHeight: 44),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -137,7 +141,7 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble> {
                           AppColors.primaryLight.withValues(alpha: 0.7),
                         ],
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppDimensions.radius20),
                 border: Border.all(
                   color: widget.isDark
                       ? AppColors.primary.withValues(alpha: 0.28)
@@ -170,10 +174,7 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble> {
                     child: Text(
                       _displayedText,
                       style: AppTextStyles.bodyMedium(
-                        fontWeight: FontWeight.w500,
-                        color: widget.isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
+                        color: context.textPrimary,
                       ),
                     ),
                   ),
@@ -195,7 +196,7 @@ class _MascotSpeechBubbleState extends State<MascotSpeechBubble> {
                   height: 8,
                   decoration: BoxDecoration(
                     color: tailColor,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius4),
                   ),
                 ),
               ),
@@ -260,12 +261,12 @@ class _TypingCursorState extends State<_TypingCursor>
           child: Container(
             width: 2,
             height: 16,
-            margin: const EdgeInsets.only(left: 2),
+            margin: const EdgeInsets.only(left: AppDimensions.spacing2),
             decoration: BoxDecoration(
               color: widget.isDark
                   ? AppColors.primary
                   : AppColors.primary.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(1),
+              borderRadius: BorderRadius.circular(AppDimensions.radius4),
             ),
           ),
         );

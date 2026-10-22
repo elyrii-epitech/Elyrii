@@ -139,7 +139,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radius12),
           ),
         ),
       );
@@ -151,7 +151,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppDimensions.radius12),
           ),
         ),
       );
@@ -196,7 +196,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 SliverToBoxAdapter(child: _buildAvatarSection(isDark)),
 
                 // Identite
-                SliverToBoxAdapter(child: _buildIdentitySection(isDark)),
+                SliverToBoxAdapter(child: _buildIdentitySection()),
 
                 // Bien-etre
                 SliverToBoxAdapter(child: _buildWellnessSection(isDark)),
@@ -204,7 +204,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 // Save
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimensions.pageHorizontalPadding,
+                      AppDimensions.spacing24,
+                      AppDimensions.pageHorizontalPadding,
+                      AppDimensions.pageBottomInset,
+                    ),
                     child: LiquidGlassButton(
                       label: 'Enregistrer',
                       icon: Icons.check_rounded,
@@ -223,7 +228,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildAvatarSection(bool isDark) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 24),
+        padding: const EdgeInsets.only(
+          top: AppDimensions.spacing8,
+          bottom: AppDimensions.spacing24,
+        ),
         child: Column(
           children: [
             AccessibleAction(
@@ -264,14 +272,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   begin: const Offset(0.85, 0.85),
                   end: const Offset(1, 1),
                 ),
-            const SizedBox(height: AppDimensions.spacingSm),
+            const SizedBox(height: AppDimensions.spacing12),
             Text(
               'Touche pour changer',
-              style: AppTextStyles.bodySmall(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.bodySmall(color: context.textSecondary),
             ),
           ],
         ),
@@ -279,35 +283,37 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildSectionHeader(String title, bool isDark) {
+  Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing16,
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing8,
+      ),
       child: Text(
         title,
-        style: AppTextStyles.labelMedium(
-          fontWeight: FontWeight.w700,
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-        ),
+        style: AppTextStyles.overline(color: context.textSecondary),
       ),
     );
   }
 
-  Widget _buildIdentitySection(bool isDark) {
+  Widget _buildIdentitySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Identite', isDark),
+        _buildSectionHeader('Identite'),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.pageHorizontalPadding,
+          ),
           child: LiquidGlassCard(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppDimensions.spacing20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildLabel('Prénom *', isDark),
-                const SizedBox(height: AppDimensions.spacingXs),
+                _buildLabel('Prénom *'),
+                const SizedBox(height: AppDimensions.spacing8),
                 GlassAuthTextField(
                   controller: _firstNameController,
                   label: 'Prénom',
@@ -317,9 +323,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   keyboardType: TextInputType.name,
                   textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(height: AppDimensions.spacingMd),
-                _buildLabel('Nom', isDark),
-                const SizedBox(height: AppDimensions.spacingXs),
+                const SizedBox(height: AppDimensions.spacing16),
+                _buildLabel('Nom'),
+                const SizedBox(height: AppDimensions.spacing8),
                 GlassAuthTextField(
                   controller: _lastNameController,
                   label: 'Nom (optionnel)',
@@ -329,9 +335,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   keyboardType: TextInputType.name,
                   textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(height: AppDimensions.spacingMd),
-                _buildLabel('Age', isDark),
-                const SizedBox(height: AppDimensions.spacingXs),
+                const SizedBox(height: AppDimensions.spacing16),
+                _buildLabel('Age'),
+                const SizedBox(height: AppDimensions.spacing8),
                 GlassAuthTextField(
                   controller: _ageController,
                   label: 'Âge (optionnel)',
@@ -340,9 +346,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   keyboardType: TextInputType.number,
                   textInputAction: TextInputAction.next,
                 ),
-                const SizedBox(height: AppDimensions.spacingMd),
-                _buildLabel('Pronoms', isDark),
-                const SizedBox(height: AppDimensions.spacingXs),
+                const SizedBox(height: AppDimensions.spacing16),
+                _buildLabel('Pronoms'),
+                const SizedBox(height: AppDimensions.spacing8),
                 GlassAuthTextField(
                   controller: _pronounsController,
                   label: 'Pronoms (optionnels)',
@@ -363,20 +369,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Bien-etre', isDark),
+        _buildSectionHeader('Bien-etre'),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.pageHorizontalPadding,
+          ),
           child: LiquidGlassCard(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(AppDimensions.spacing20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildLabel('Quelques mots sur toi', isDark),
-                const SizedBox(height: AppDimensions.spacingXs),
+                _buildLabel('Quelques mots sur toi'),
+                const SizedBox(height: AppDimensions.spacing8),
                 _BioTextField(controller: _bioController, isDark: isDark),
-                const SizedBox(height: AppDimensions.spacingMd),
-                _buildLabel('Genre', isDark),
-                const SizedBox(height: AppDimensions.spacingXs),
+                const SizedBox(height: AppDimensions.spacing16),
+                _buildLabel('Genre'),
+                const SizedBox(height: AppDimensions.spacing8),
                 _DropdownField(
                   value: _selectedGender,
                   hint: 'Optionnel',
@@ -385,9 +393,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   isDark: isDark,
                   onChanged: (v) => setState(() => _selectedGender = v),
                 ),
-                const SizedBox(height: AppDimensions.spacingMd),
-                _buildLabel('Ton objectif bien-être', isDark),
-                const SizedBox(height: AppDimensions.spacingXs),
+                const SizedBox(height: AppDimensions.spacing16),
+                _buildLabel('Ton objectif bien-être'),
+                const SizedBox(height: AppDimensions.spacing8),
                 _DropdownField(
                   value: _selectedWellnessGoal,
                   hint: 'Qu\'est-ce qui t\'amène ici ?',
@@ -404,13 +412,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildLabel(String text, bool isDark) {
+  Widget _buildLabel(String text) {
     return Text(
       text,
-      style: AppTextStyles.bodyMedium(
-        fontWeight: FontWeight.w600,
-        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-      ),
+      style: AppTextStyles.labelMedium(color: context.textPrimary),
     );
   }
 }
@@ -430,7 +435,7 @@ class _BioTextField extends StatelessWidget {
         color: isDark
             ? Colors.white.withValues(alpha: 0.06)
             : Colors.black.withValues(alpha: 0.035),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(AppDimensions.radius16),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
@@ -459,8 +464,8 @@ class _BioTextField extends StatelessWidget {
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingMd,
-            vertical: 14,
+            horizontal: AppDimensions.spacing16,
+            vertical: AppDimensions.spacing16,
           ),
           counterStyle: AppTextStyles.bodySmall(
             color: isDark
@@ -495,12 +500,12 @@ class _DropdownField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacing16),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.06)
             : Colors.black.withValues(alpha: 0.035),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+        borderRadius: BorderRadius.circular(AppDimensions.radius16),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
@@ -511,7 +516,7 @@ class _DropdownField extends StatelessWidget {
       child: Row(
         children: [
           Icon(icon, size: 20, color: AppColors.primary),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacing12),
           Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(

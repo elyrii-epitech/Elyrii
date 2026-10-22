@@ -58,7 +58,7 @@ class _ReviewSkeletonState extends State<ReviewSkeleton>
       height: height,
       decoration: BoxDecoration(
         color: blockColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppDimensions.radius20),
       ),
     );
 
@@ -73,10 +73,11 @@ class _ReviewSkeletonState extends State<ReviewSkeleton>
           // Tuiles de synthèse (2 colonnes)
           LayoutBuilder(
             builder: (context, constraints) {
-              final tileWidth = (constraints.maxWidth - 12) / 2;
+              final tileWidth =
+                  (constraints.maxWidth - AppDimensions.spacing12) / 2;
               return Wrap(
-                spacing: 12,
-                runSpacing: 12,
+                spacing: AppDimensions.spacing12,
+                runSpacing: AppDimensions.spacing12,
                 children: [
                   for (var i = 0; i < 4; i++)
                     SizedBox(width: tileWidth, child: block(height: 134)),
@@ -84,10 +85,10 @@ class _ReviewSkeletonState extends State<ReviewSkeleton>
               );
             },
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacing20),
           // Graphique de tendance
           block(height: 212),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppDimensions.spacing20),
           // Répartition des humeurs
           block(height: 150),
         ],
@@ -98,23 +99,18 @@ class _ReviewSkeletonState extends State<ReviewSkeleton>
 
 class ReviewOverviewGrid extends StatelessWidget {
   final DashboardStats stats;
-  final bool isDark;
 
-  const ReviewOverviewGrid({
-    super.key,
-    required this.stats,
-    required this.isDark,
-  });
+  const ReviewOverviewGrid({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final tileWidth = (constraints.maxWidth - 12) / 2;
+        final tileWidth = (constraints.maxWidth - AppDimensions.spacing12) / 2;
 
         return Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: AppDimensions.spacing12,
+          runSpacing: AppDimensions.spacing12,
           children: [
             _SummaryTile(
               width: tileWidth,
@@ -122,7 +118,6 @@ class ReviewOverviewGrid extends StatelessWidget {
               label: 'Série',
               value: '${stats.streak}',
               color: AppColors.secondary,
-              isDark: isDark,
             ),
             _SummaryTile(
               width: tileWidth,
@@ -130,7 +125,6 @@ class ReviewOverviewGrid extends StatelessWidget {
               label: 'Humeurs',
               value: '${stats.moodLogsCount}',
               color: AppColors.primary,
-              isDark: isDark,
             ),
             _SummaryTile(
               width: tileWidth,
@@ -138,7 +132,6 @@ class ReviewOverviewGrid extends StatelessWidget {
               label: 'Journal',
               value: '${stats.journalEntriesCount}',
               color: AppColors.accent,
-              isDark: isDark,
             ),
             _SummaryTile(
               width: tileWidth,
@@ -146,7 +139,6 @@ class ReviewOverviewGrid extends StatelessWidget {
               label: 'Points',
               value: '${stats.totalPoints}',
               color: AppColors.success,
-              isDark: isDark,
             ),
             _SummaryTile(
               width: tileWidth,
@@ -155,7 +147,6 @@ class ReviewOverviewGrid extends StatelessWidget {
               value:
                   '${stats.completedChallengesCount}/${stats.activeChallengesCount + stats.completedChallengesCount}',
               color: AppColors.warning,
-              isDark: isDark,
             ),
             _SummaryTile(
               width: tileWidth,
@@ -163,7 +154,6 @@ class ReviewOverviewGrid extends StatelessWidget {
               label: 'Méditation',
               value: '${stats.meditationSessionsCount}',
               color: AppColors.info,
-              isDark: isDark,
             ),
             _SummaryTile(
               width: tileWidth,
@@ -171,7 +161,6 @@ class ReviewOverviewGrid extends StatelessWidget {
               label: 'Taux',
               value: '${(stats.completionRate * 100).round()}%',
               color: AppColors.successDark,
-              isDark: isDark,
             ),
           ],
         );
@@ -186,7 +175,6 @@ class _SummaryTile extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  final bool isDark;
 
   const _SummaryTile({
     required this.width,
@@ -194,7 +182,6 @@ class _SummaryTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
-    required this.isDark,
   });
 
   @override
@@ -202,7 +189,7 @@ class _SummaryTile extends StatelessWidget {
     return SizedBox(
       width: width,
       child: LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -211,28 +198,19 @@ class _SummaryTile extends StatelessWidget {
               height: 42,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                borderRadius: BorderRadius.circular(AppDimensions.radius8),
               ),
               child: Icon(icon, color: color),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spacing12),
             Text(
               value,
-              style: AppTextStyles.headlineSmall(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ),
+              style: AppTextStyles.headlineSmall(color: context.textPrimary),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppDimensions.spacing2),
             Text(
               label,
-              style: AppTextStyles.bodySmall(
-                fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
-              ),
+              style: AppTextStyles.bodySmall(color: context.textTertiary),
             ),
           ],
         ),
@@ -244,39 +222,31 @@ class _SummaryTile extends StatelessWidget {
 class ReviewSectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
-  final bool isDark;
 
   const ReviewSectionHeader({
     super.key,
     required this.title,
     required this.subtitle,
-    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 10),
+      padding: const EdgeInsets.only(
+        left: AppDimensions.spacing4,
+        bottom: AppDimensions.spacing8,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: AppTextStyles.labelMedium(
-              fontWeight: FontWeight.w700,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
+            style: AppTextStyles.overline(color: context.textSecondary),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppDimensions.spacing2),
           Text(
             subtitle,
-            style: AppTextStyles.bodySmall(
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
+            style: AppTextStyles.bodySmall(color: context.textTertiary),
           ),
         ],
       ),
@@ -299,14 +269,10 @@ class ReviewTrendChart extends StatelessWidget {
     final points = stats.moodTrend7Days;
     if (points.isEmpty) {
       return LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Text(
           'Aucune humeur enregistrée sur cette période.',
-          style: AppTextStyles.bodyMedium(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
+          style: AppTextStyles.bodyMedium(color: context.textSecondary),
         ),
       );
     }
@@ -317,7 +283,7 @@ class ReviewTrendChart extends StatelessWidget {
         .clamp(1, 9999)
         .toDouble();
     final chart = LiquidGlassCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: SizedBox(
         height: 140 + MediaQuery.textScalerOf(context).scale(14) * 4,
         child: SingleChildScrollView(
@@ -339,12 +305,10 @@ class ReviewTrendChart extends StatelessWidget {
                     Text(
                       '${point.count}',
                       style: AppTextStyles.labelMedium(
-                        color: isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
+                        color: context.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppDimensions.spacing8),
                     Container(
                       height: 108,
                       alignment: Alignment.bottomCenter,
@@ -356,19 +320,19 @@ class ReviewTrendChart extends StatelessWidget {
                         height: barHeight.clamp(6, 104).toDouble(),
                         decoration: BoxDecoration(
                           color: accent,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radius8,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppDimensions.spacing8),
                     Text(
                       parsedDate != null
                           ? _shortDateLabel(parsedDate)
                           : point.day,
                       style: AppTextStyles.labelSmall(
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
+                        color: context.textTertiary,
                       ),
                     ),
                   ],
@@ -466,14 +430,10 @@ class ReviewMoodDistributionList extends StatelessWidget {
     final items = stats.moodDistribution;
     if (items.isEmpty) {
       return LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Text(
           'Aucune répartition disponible.',
-          style: AppTextStyles.bodyMedium(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
+          style: AppTextStyles.bodyMedium(color: context.textSecondary),
         ),
       );
     }
@@ -481,7 +441,7 @@ class ReviewMoodDistributionList extends StatelessWidget {
     final total = items.fold<int>(0, (sum, item) => sum + item.count);
 
     return LiquidGlassCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         children: items.map((item) {
           final percentage = total == 0 ? 0.0 : item.count / total;
@@ -491,7 +451,7 @@ class ReviewMoodDistributionList extends StatelessWidget {
                 '${_moodLabel(item.moodType)} : ${item.count} humeurs, ${(percentage * 100).round()} pour cent',
             excludeSemantics: true,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
               child: Row(
                 children: [
                   Container(
@@ -502,7 +462,7 @@ class ReviewMoodDistributionList extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppDimensions.spacing8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,16 +470,16 @@ class ReviewMoodDistributionList extends StatelessWidget {
                         Text(
                           _moodLabel(item.moodType),
                           style: AppTextStyles.labelMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: context.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppDimensions.spacing8),
                         // Barre de progression déterminée : simple bloc coloré,
                         // sans LinearProgressIndicator Material.
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusPill,
+                          ),
                           child: Container(
                             height: 8,
                             color: isDark
@@ -539,15 +499,10 @@ class ReviewMoodDistributionList extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppDimensions.spacing8),
                   Text(
                     '${item.count}',
-                    style: AppTextStyles.labelMedium(
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
+                    style: AppTextStyles.titleSmall(color: context.textPrimary),
                   ),
                 ],
               ),
@@ -561,33 +516,24 @@ class ReviewMoodDistributionList extends StatelessWidget {
 
 class ReviewActivityTimeline extends StatelessWidget {
   final DashboardStats stats;
-  final bool isDark;
 
-  const ReviewActivityTimeline({
-    super.key,
-    required this.stats,
-    required this.isDark,
-  });
+  const ReviewActivityTimeline({super.key, required this.stats});
 
   @override
   Widget build(BuildContext context) {
     final points = stats.activityTimeline;
     if (points.isEmpty) {
       return LiquidGlassCard(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
         child: Text(
           'Aucune activité à afficher sur cette période.',
-          style: AppTextStyles.bodyMedium(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-          ),
+          style: AppTextStyles.bodyMedium(color: context.textSecondary),
         ),
       );
     }
 
     return LiquidGlassCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
       child: Column(
         children: points.map((point) {
           final parsedDate = DateTime.tryParse(point.day);
@@ -598,7 +544,7 @@ class ReviewActivityTimeline extends StatelessWidget {
                 '${point.day} : ${point.moodLogs} humeurs et ${point.journalEntries} notes, total $total',
             excludeSemantics: true,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.only(bottom: AppDimensions.spacing16),
               child: Row(
                 children: [
                   SizedBox(
@@ -608,9 +554,7 @@ class ReviewActivityTimeline extends StatelessWidget {
                           ? _shortDateLabel(parsedDate)
                           : point.day,
                       style: AppTextStyles.labelMedium(
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
+                        color: context.textTertiary,
                       ),
                     ),
                   ),
@@ -621,12 +565,10 @@ class ReviewActivityTimeline extends StatelessWidget {
                         Text(
                           'Humeurs ${point.moodLogs}  Journal ${point.journalEntries}  Total $total',
                           style: AppTextStyles.bodySmall(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: context.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppDimensions.spacing8),
                         Row(
                           children: [
                             Expanded(
@@ -637,11 +579,13 @@ class ReviewActivityTimeline extends StatelessWidget {
                                   color: AppColors.primary.withValues(
                                     alpha: 0.75,
                                   ),
-                                  borderRadius: BorderRadius.circular(999),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusPill,
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppDimensions.spacing8),
                             Expanded(
                               flex: point.journalEntries == 0
                                   ? 1
@@ -652,7 +596,9 @@ class ReviewActivityTimeline extends StatelessWidget {
                                   color: AppColors.accent.withValues(
                                     alpha: 0.75,
                                   ),
-                                  borderRadius: BorderRadius.circular(999),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusPill,
+                                  ),
                                 ),
                               ),
                             ),

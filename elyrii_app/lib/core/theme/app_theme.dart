@@ -77,10 +77,10 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: AppDimensions.elevationSm,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          borderRadius: BorderRadius.circular(AppDimensions.radius16),
         ),
         color: AppColors.cardLight,
-        margin: const EdgeInsets.all(AppDimensions.spacingSm),
+        margin: const EdgeInsets.all(AppDimensions.spacing12),
       ),
 
       // Boutons
@@ -91,7 +91,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(AppDimensions.radius12),
           ),
           textStyle: AppTextStyles.labelLarge(),
         ),
@@ -106,7 +106,7 @@ class AppTheme {
             width: AppDimensions.borderWidthMedium,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(AppDimensions.radius12),
           ),
           textStyle: AppTextStyles.labelLarge(),
         ),
@@ -124,39 +124,39 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surfaceLight,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingMd,
-          vertical: AppDimensions.paddingMd,
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing16,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.borderLight,
             width: AppDimensions.borderWidthThin,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.borderLight,
             width: AppDimensions.borderWidthThin,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.primary,
             width: AppDimensions.borderWidthMedium,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.error,
             width: AppDimensions.borderWidthThin,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.error,
             width: AppDimensions.borderWidthMedium,
@@ -192,7 +192,7 @@ class AppTheme {
         backgroundColor: AppColors.surfaceLight,
         elevation: AppDimensions.elevationXl,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          borderRadius: BorderRadius.circular(AppDimensions.radius20),
         ),
         titleTextStyle: AppTextStyles.titleLarge(
           color: AppColors.textPrimaryLight,
@@ -207,7 +207,7 @@ class AppTheme {
         backgroundColor: AppColors.textPrimaryLight,
         contentTextStyle: AppTextStyles.bodyMedium(color: Colors.white),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          borderRadius: BorderRadius.circular(AppDimensions.radius8),
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -216,7 +216,7 @@ class AppTheme {
       dividerTheme: const DividerThemeData(
         color: AppColors.dividerLight,
         thickness: AppDimensions.dividerThickness,
-        space: AppDimensions.spacingMd,
+        space: AppDimensions.spacing16,
       ),
 
       // Chips
@@ -227,11 +227,11 @@ class AppTheme {
           color: AppColors.textPrimaryLight,
         ),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingSm,
-          vertical: AppDimensions.paddingXs,
+          horizontal: AppDimensions.spacing12,
+          vertical: AppDimensions.spacing8,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCircular),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
         ),
       ),
 
@@ -313,10 +313,10 @@ class AppTheme {
       cardTheme: CardThemeData(
         elevation: AppDimensions.elevationSm,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          borderRadius: BorderRadius.circular(AppDimensions.radius16),
         ),
         color: AppColors.cardDark,
-        margin: const EdgeInsets.all(AppDimensions.spacingSm),
+        margin: const EdgeInsets.all(AppDimensions.spacing12),
       ),
 
       // Boutons
@@ -327,7 +327,7 @@ class AppTheme {
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(AppDimensions.radius12),
           ),
           textStyle: AppTextStyles.labelLarge(),
         ),
@@ -342,7 +342,7 @@ class AppTheme {
             width: AppDimensions.borderWidthMedium,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: BorderRadius.circular(AppDimensions.radius12),
           ),
           textStyle: AppTextStyles.labelLarge(),
         ),
@@ -360,39 +360,39 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.surfaceDark,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingMd,
-          vertical: AppDimensions.paddingMd,
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing16,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.borderDark,
             width: AppDimensions.borderWidthThin,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.borderDark,
             width: AppDimensions.borderWidthThin,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.primary,
             width: AppDimensions.borderWidthMedium,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.error,
             width: AppDimensions.borderWidthThin,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
           borderSide: const BorderSide(
             color: AppColors.error,
             width: AppDimensions.borderWidthMedium,
@@ -430,7 +430,7 @@ class AppTheme {
         backgroundColor: AppColors.surfaceDark,
         elevation: AppDimensions.elevationXl,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          borderRadius: BorderRadius.circular(AppDimensions.radius20),
         ),
         titleTextStyle: AppTextStyles.titleLarge(
           color: AppColors.textPrimaryDark,
@@ -447,7 +447,7 @@ class AppTheme {
           color: AppColors.textPrimaryDark,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          borderRadius: BorderRadius.circular(AppDimensions.radius8),
         ),
         behavior: SnackBarBehavior.floating,
       ),
@@ -456,7 +456,7 @@ class AppTheme {
       dividerTheme: const DividerThemeData(
         color: AppColors.dividerDark,
         thickness: AppDimensions.dividerThickness,
-        space: AppDimensions.spacingMd,
+        space: AppDimensions.spacing16,
       ),
 
       // Chips
@@ -465,11 +465,11 @@ class AppTheme {
         deleteIconColor: AppColors.textSecondaryDark,
         labelStyle: AppTextStyles.labelMedium(color: AppColors.textPrimaryDark),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingSm,
-          vertical: AppDimensions.paddingXs,
+          horizontal: AppDimensions.spacing12,
+          vertical: AppDimensions.spacing8,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusCircular),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
         ),
       ),
 

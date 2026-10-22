@@ -88,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppDimensions.paddingLg),
+                padding: const EdgeInsets.all(AppDimensions.spacing24),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
                   child: Column(
@@ -117,27 +117,21 @@ class _LoginPageState extends State<LoginPage> {
                           .fadeIn(duration: 600.ms)
                           .slideY(begin: 0.2, end: 0),
 
-                      const SizedBox(height: 50),
+                      const SizedBox(height: AppDimensions.spacing48),
 
                       Text(
                         'Connexion à Elyrii',
-                        style:
-                            AppTextStyles.headlineMedium(
-                              color: isDark
-                                  ? AppColors.textPrimaryDark
-                                  : AppColors.textPrimaryLight,
-                            ).copyWith(
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: -0.8,
-                            ),
+                        style: AppTextStyles.headlineMedium(
+                          color: context.textPrimary,
+                        ),
                         textAlign: TextAlign.center,
                       ),
 
-                      const SizedBox(height: AppDimensions.spacingXl),
+                      const SizedBox(height: AppDimensions.spacing32),
 
                       if (_errorBanner != null) ...[
                         AuthErrorBanner(message: _errorBanner!),
-                        const SizedBox(height: AppDimensions.spacingLg),
+                        const SizedBox(height: AppDimensions.spacing24),
                       ],
 
                       AutofillGroup(
@@ -149,14 +143,12 @@ class _LoginPageState extends State<LoginPage> {
                                   // Email Field
                                   Text(
                                     'Adresse email',
-                                    style: AppTextStyles.bodyMedium(
-                                      color: isDark
-                                          ? AppColors.textPrimaryDark
-                                          : AppColors.textPrimaryLight,
-                                    ).copyWith(fontWeight: FontWeight.w600),
+                                    style: AppTextStyles.labelMedium(
+                                      color: context.textPrimary,
+                                    ),
                                   ),
                                   const SizedBox(
-                                    height: AppDimensions.spacingXs,
+                                    height: AppDimensions.spacing8,
                                   ),
                                   GlassAuthTextField(
                                     controller: _emailController,
@@ -176,7 +168,7 @@ class _LoginPageState extends State<LoginPage> {
                                     },
                                   ),
                                   const SizedBox(
-                                    height: AppDimensions.spacingLg,
+                                    height: AppDimensions.spacing24,
                                   ),
 
                                   // Password Field
@@ -187,11 +179,9 @@ class _LoginPageState extends State<LoginPage> {
                                     children: [
                                       Text(
                                         'Mot de passe',
-                                        style: AppTextStyles.bodyMedium(
-                                          color: isDark
-                                              ? AppColors.textPrimaryDark
-                                              : AppColors.textPrimaryLight,
-                                        ).copyWith(fontWeight: FontWeight.w600),
+                                        style: AppTextStyles.labelMedium(
+                                          color: context.textPrimary,
+                                        ),
                                       ),
                                       TextButton(
                                         onPressed: () => context.push(
@@ -206,16 +196,14 @@ class _LoginPageState extends State<LoginPage> {
                                         child: Text(
                                           'Mot de passe oublié ?',
                                           style: AppTextStyles.bodySmall(
-                                            color: isDark
-                                                ? AppColors.textTertiaryDark
-                                                : AppColors.textTertiaryLight,
+                                            color: context.textTertiary,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(
-                                    height: AppDimensions.spacingXs,
+                                    height: AppDimensions.spacing8,
                                   ),
                                   GlassAuthTextField(
                                     controller: _passwordController,
@@ -242,7 +230,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
 
                                   const SizedBox(
-                                    height: AppDimensions.spacingXl,
+                                    height: AppDimensions.spacing32,
                                   ),
 
                                   // Login Button
@@ -254,7 +242,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
 
                                   const SizedBox(
-                                    height: AppDimensions.spacingSm,
+                                    height: AppDimensions.spacing12,
                                   ),
                                   LiquidGlassButton(
                                     label: 'Découvrir Elyrii',
@@ -276,7 +264,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
 
                                   const SizedBox(
-                                    height: AppDimensions.spacingXl,
+                                    height: AppDimensions.spacing32,
                                   ),
 
                                   // Divider
@@ -291,14 +279,12 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: AppDimensions.paddingMd,
+                                          horizontal: AppDimensions.spacing16,
                                         ),
                                         child: Text(
                                           'ou',
                                           style: AppTextStyles.bodySmall(
-                                            color: isDark
-                                                ? AppColors.textSecondaryDark
-                                                : AppColors.textSecondaryLight,
+                                            color: context.textSecondary,
                                           ),
                                         ),
                                       ),
@@ -313,7 +299,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
 
                                   const SizedBox(
-                                    height: AppDimensions.spacingXl,
+                                    height: AppDimensions.spacing32,
                                   ),
 
                                   // Social Buttons (Stacked)
@@ -323,7 +309,7 @@ class _LoginPageState extends State<LoginPage> {
                                     isDark,
                                   ),
                                   const SizedBox(
-                                    height: AppDimensions.spacingMd,
+                                    height: AppDimensions.spacing16,
                                   ),
                                   _buildSocialButtonFull(
                                     'Apple bientôt disponible',
@@ -332,7 +318,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
 
                                   const SizedBox(
-                                    height: AppDimensions.spacingXl,
+                                    height: AppDimensions.spacing32,
                                   ),
 
                                   // Register Link
@@ -344,9 +330,7 @@ class _LoginPageState extends State<LoginPage> {
                                       Text(
                                         'Nouveau sur Elyrii ? ',
                                         style: AppTextStyles.bodySmall(
-                                          color: isDark
-                                              ? AppColors.textSecondaryDark
-                                              : AppColors.textSecondaryLight,
+                                          color: context.textSecondary,
                                         ),
                                       ),
                                       TextButton(
@@ -361,18 +345,15 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                         child: Text(
                                           'Créer un compte',
-                                          style:
-                                              AppTextStyles.bodySmall(
-                                                color: AppColors.readableAccent(
-                                                  AppColors.primary,
-                                                  isDark:
-                                                      Theme.of(context)
-                                                          .brightness ==
-                                                      Brightness.dark,
-                                                ),
-                                              ).copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                          style: AppTextStyles.labelMedium(
+                                            color: AppColors.readableAccent(
+                                              AppColors.primary,
+                                              isDark:
+                                                  Theme.of(context)
+                                                      .brightness ==
+                                                  Brightness.dark,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -409,26 +390,19 @@ class _LoginPageState extends State<LoginPage> {
           ? Colors.white.withValues(alpha: 0.1)
           : Colors.white.withValues(alpha: 0.6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing12,
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              fallbackIcon,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-              size: 20,
-            ),
-            const SizedBox(width: AppDimensions.spacingMd),
+            Icon(fallbackIcon, color: context.textPrimary, size: 20),
+            const SizedBox(width: AppDimensions.spacing16),
             Flexible(
               child: Text(
                 text,
-                style: AppTextStyles.bodyMedium(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ).copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.labelLarge(color: context.textPrimary),
               ),
             ),
           ],

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../design_system/haptics/elyrii_haptics.dart';
 import '../../glass/elyrii_glass_surface.dart';
+import '../../theme/app_dimensions.dart';
 
 class LiquidGlassCard extends StatelessWidget {
   final Widget child;
@@ -19,7 +20,7 @@ class LiquidGlassCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.onTap,
-    this.borderRadius = 20,
+    this.borderRadius = AppDimensions.radius20,
     this.color,
     this.borderColor,
   });
@@ -29,7 +30,7 @@ class LiquidGlassCard extends StatelessWidget {
     return ElyriiGlassSurface(
       role: GlassRole.floatingControl,
       borderRadius: BorderRadius.circular(borderRadius),
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: padding ?? const EdgeInsets.all(AppDimensions.spacing16),
       glassColor: color,
       border: borderColor == null
           ? null

@@ -22,6 +22,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
@@ -224,17 +225,22 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
             SliverToBoxAdapter(child: _buildPreview(isDark)),
 
             // Import depuis galerie
-            SliverToBoxAdapter(child: _buildImportCard(isDark)),
+            SliverToBoxAdapter(child: _buildImportCard()),
 
             // Presets
-            SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
+            SliverToBoxAdapter(child: _buildPresetsHeader()),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.pageHorizontalPadding,
+                AppDimensions.spacing8,
+                AppDimensions.pageHorizontalPadding,
+                0,
+              ),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
+                  mainAxisSpacing: AppDimensions.spacing16,
+                  crossAxisSpacing: AppDimensions.spacing16,
                   childAspectRatio: 1,
                 ),
                 delegate: SliverChildBuilderDelegate((context, index) {
@@ -263,7 +269,12 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
             // Bouton confirmer
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.pageHorizontalPadding,
+                  AppDimensions.spacing32,
+                  AppDimensions.pageHorizontalPadding,
+                  AppDimensions.pageBottomInset,
+                ),
                 child: LiquidGlassButton(
                   label: 'Choisir cet avatar',
                   icon: Icons.check_rounded,
@@ -286,7 +297,10 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(top: 12, bottom: 24),
+        padding: const EdgeInsets.only(
+          top: AppDimensions.spacing12,
+          bottom: AppDimensions.spacing24,
+        ),
         child: SizedBox(
           height: 220,
           child: Center(
@@ -329,7 +343,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.all(AppDimensions.spacing2),
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -353,9 +367,7 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
                             child: Icon(
                               Icons.person_rounded,
                               size: 48,
-                              color: isDark
-                                  ? AppColors.textSecondaryDark
-                                  : AppColors.textSecondaryLight,
+                              color: context.textSecondary,
                             ),
                           ),
                         )
@@ -366,9 +378,14 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
     );
   }
 
-  Widget _buildImportCard(bool isDark) {
+  Widget _buildImportCard() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.pageHorizontalPadding,
+        0,
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing24,
+      ),
       child: LiquidGlassCard(
         padding: EdgeInsets.zero,
         child: LiquidGlassListTile(
@@ -384,17 +401,17 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
     );
   }
 
-  Widget _buildPresetsHeader(bool isDark) {
+  Widget _buildPresetsHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 10),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.pageHorizontalPadding,
+        0,
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing8,
+      ),
       child: Text(
         'Avatars Elyrii',
-        style: AppTextStyles.labelMedium(
-          fontWeight: FontWeight.w700,
-          color: isDark
-              ? AppColors.textSecondaryDark
-              : AppColors.textSecondaryLight,
-        ),
+        style: AppTextStyles.overline(color: context.textSecondary),
       ),
     );
   }
@@ -460,9 +477,7 @@ class _PresetAvatarTile extends StatelessWidget {
                             : AppColors.surfaceLight,
                         child: Icon(
                           Icons.person_rounded,
-                          color: isDark
-                              ? AppColors.textSecondaryDark
-                              : AppColors.textSecondaryLight,
+                          color: context.textSecondary,
                         ),
                       ),
                     ),

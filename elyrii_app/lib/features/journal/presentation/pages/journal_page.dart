@@ -107,7 +107,7 @@ class _JournalPageState extends State<JournalPage> {
               if (provider.hasMore)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(AppDimensions.spacing20),
                     child: LiquidGlassButton(
                       label: 'Charger les notes suivantes',
                       isLoading: provider.loadingMore,
@@ -130,7 +130,7 @@ class _JournalPageState extends State<JournalPage> {
     final latestMood = count > 0 ? _formatMoodEmoji(entries.first.mood) : '🌱';
 
     return LiquidGlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.spacing20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -163,39 +163,37 @@ class _JournalPageState extends State<JournalPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppDimensions.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: AppDimensions.spacing8,
+                      runSpacing: AppDimensions.spacing8,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           'Refuge de l\'esprit',
                           style: AppTextStyles.titleMedium(
-                            fontWeight: FontWeight.w700,
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
+                            color: context.textPrimary,
                           ),
                         ),
 
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
+                            horizontal: AppDimensions.spacing8,
+                            vertical: AppDimensions.spacing2,
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radius8,
+                            ),
                           ),
                           child: Text(
                             'Privé & Sûr',
-                            style: AppTextStyles.labelSmall(
-                              fontWeight: FontWeight.w600,
+                            style: AppTextStyles.badge(
                               color: AppColors.readableAccent(
                                 AppColors.primary,
                                 isDark:
@@ -207,13 +205,11 @@ class _JournalPageState extends State<JournalPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppDimensions.spacing2),
                     Text(
                       'Tes pensées sont un sanctuaire d\'apaisement.',
                       style: AppTextStyles.bodySmall(
-                        color: isDark
-                            ? AppColors.textSecondaryDark
-                            : AppColors.textSecondaryLight,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -221,7 +217,7 @@ class _JournalPageState extends State<JournalPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppDimensions.spacing16),
 
           // Bento statistiques douces
           Row(
@@ -229,42 +225,37 @@ class _JournalPageState extends State<JournalPage> {
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: AppDimensions.spacing12,
+                    vertical: AppDimensions.spacing8,
                   ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.04)
                         : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.edit_note_rounded,
                         color: AppColors.primary,
-                        size: 20,
+                        size: AppDimensions.iconSm,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppDimensions.spacing8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               '$count ${count > 1 ? "réflexions" : "réflexion"}',
-                              style: AppTextStyles.labelMedium(
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
+                              style: AppTextStyles.titleSmall(
+                                color: context.textPrimary,
                               ),
                             ),
                             Text(
                               'Déposées',
                               style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiaryLight,
+                                color: context.textTertiary,
                               ),
                             ),
                           ],
@@ -274,51 +265,52 @@ class _JournalPageState extends State<JournalPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppDimensions.spacing8),
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+                    horizontal: AppDimensions.spacing12,
+                    vertical: AppDimensions.spacing8,
                   ),
                   decoration: BoxDecoration(
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.04)
                         : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   ),
                   child: Row(
                     children: [
-                      Semantics(
-                        label: count > 0
-                            ? 'Dernière humeur : ${entries.first.mood ?? 'non renseignée'}'
-                            : null,
-                        excludeSemantics: true,
-                        child: Text(
-                          latestMood,
-                          style: AppTextStyles.titleMedium(),
+                      SizedBox(
+                        width: AppDimensions.iconSm,
+                        height: AppDimensions.iconSm,
+                        child: Center(
+                          child: Semantics(
+                            label: count > 0
+                                ? 'Dernière humeur : ${entries.first.mood ?? 'non renseignée'}'
+                                : null,
+                            excludeSemantics: true,
+                            child: Text(
+                              latestMood,
+                              style: AppTextStyles.titleMedium(),
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppDimensions.spacing8),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               count > 0 ? 'Dernier écho' : 'Prendre racine',
-                              style: AppTextStyles.labelMedium(
-                                fontWeight: FontWeight.w700,
-                                color: isDark
-                                    ? AppColors.textPrimaryDark
-                                    : AppColors.textPrimaryLight,
+                              style: AppTextStyles.titleSmall(
+                                color: context.textPrimary,
                               ),
                             ),
                             Text(
                               count > 0 ? 'Ton humeur' : 'Commence ici',
                               style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textTertiaryDark
-                                    : AppColors.textTertiaryLight,
+                                color: context.textTertiary,
                               ),
                             ),
                           ],
@@ -345,10 +337,13 @@ class _JournalPageState extends State<JournalPage> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing16,
+        ),
         decoration: BoxDecoration(
           color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.07),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppDimensions.radius16),
           border: Border.all(
             color: AppColors.primary.withValues(alpha: 0.20),
             width: 0.8,
@@ -357,7 +352,7 @@ class _JournalPageState extends State<JournalPage> {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppDimensions.spacing8),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.20),
                 shape: BoxShape.circle,
@@ -368,33 +363,26 @@ class _JournalPageState extends State<JournalPage> {
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacing12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Inspiration guidée du moment',
-                    style: AppTextStyles.labelMedium(
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ),
+                    style: AppTextStyles.titleSmall(color: context.textPrimary),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacing2),
                   Text(
                     '« Qu\'est-ce qui occupe mes pensées en ce moment ? »',
                     style: AppTextStyles.labelSmall(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                      color: context.textSecondary,
                     ).copyWith(fontStyle: FontStyle.italic),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppDimensions.spacing8),
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
@@ -411,12 +399,17 @@ class _JournalPageState extends State<JournalPage> {
     const horizontal = AppDimensions.pageHorizontalPadding;
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(horizontal, 12, horizontal, 24),
+        padding: const EdgeInsets.fromLTRB(
+          horizontal,
+          AppDimensions.spacing12,
+          horizontal,
+          AppDimensions.spacing24,
+        ),
         sliver: SliverToBoxAdapter(
           child: Column(
             children: [
               _buildJournalHeroCard(entries, isDark),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppDimensions.spacing16),
               _buildInspirationBanner(isDark),
             ],
           ),
@@ -429,16 +422,16 @@ class _JournalPageState extends State<JournalPage> {
         )
       else ...[
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(horizontal + 4, 0, horizontal, 10),
+          padding: const EdgeInsets.fromLTRB(
+            horizontal + AppDimensions.spacing4,
+            0,
+            horizontal,
+            AppDimensions.spacing8,
+          ),
           sliver: SliverToBoxAdapter(
             child: Text(
               'Mes réflexions (${entries.length})',
-              style: AppTextStyles.labelMedium(
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.overline(color: context.textSecondary),
             ),
           ),
         ),
@@ -451,7 +444,7 @@ class _JournalPageState extends State<JournalPage> {
               final entry = entries[index];
               return Padding(
                 key: ValueKey(entry.id),
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
                 child: GlassJournalCard(
                   entry: entry,
                   isDark: isDark,
@@ -463,7 +456,11 @@ class _JournalPageState extends State<JournalPage> {
         ),
       ],
       SliverToBoxAdapter(
-        child: SizedBox(height: MediaQuery.paddingOf(context).bottom + 150),
+        child: SizedBox(
+          height:
+              MediaQuery.paddingOf(context).bottom +
+              AppDimensions.dockClearance,
+        ),
       ),
     ];
   }

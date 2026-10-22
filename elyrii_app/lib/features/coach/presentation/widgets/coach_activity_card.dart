@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../data/models/coach_model.dart';
@@ -50,7 +51,7 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
           scale: _isPressed ? 0.95 : 1.0,
           duration: const Duration(milliseconds: 100),
           child: LiquidGlassCard(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(AppDimensions.spacing16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -61,7 +62,9 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                       height: 38,
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius8,
+                        ),
                       ),
                       child: Center(
                         child: Icon(widget.activity.icon, size: 18, color: ink),
@@ -70,12 +73,14 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
+                        horizontal: AppDimensions.spacing8,
+                        vertical: AppDimensions.spacing2,
                       ),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius8,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -86,43 +91,32 @@ class _CoachActivityCardState extends State<CoachActivityCard> {
                               size: 11,
                               color: ink,
                             ),
-                            const SizedBox(width: 2),
+                            const SizedBox(width: AppDimensions.spacing2),
                           ],
                           Text(
                             '${widget.activity.durationMinutes} min',
-                            style: AppTextStyles.labelSmall(
-                              fontWeight: FontWeight.w600,
-                              color: ink,
-                            ),
+                            style: AppTextStyles.badge(color: ink),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppDimensions.spacing12),
                 Text(
                   widget.activity.title,
-                  style: AppTextStyles.titleSmall(
-                    color: widget.isDark
-                        ? AppColors.textPrimaryDark
-                        : AppColors.textPrimaryLight,
-                  ),
+                  style: AppTextStyles.titleSmall(color: context.textPrimary),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppDimensions.spacing4),
                 Text(
                   widget.activity.description,
-                  style: AppTextStyles.bodySmall(
-                    color: widget.isDark
-                        ? AppColors.textTertiaryDark
-                        : AppColors.textTertiaryLight,
-                  ),
+                  style: AppTextStyles.bodySmall(color: context.textTertiary),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppDimensions.spacing8),
                 Row(
                   children: [
                     Icon(widget.activity.category.icon, size: 12, color: color),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppDimensions.spacing4),
                     Expanded(
                       child: Text(
                         widget.activity.category.label,

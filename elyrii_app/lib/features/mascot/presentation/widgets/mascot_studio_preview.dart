@@ -38,19 +38,13 @@ class MascotStudioPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final primary = dark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final secondary = dark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
     final theme = MascotThemes.getById(mascot.themeId);
     final hex = mascot.appearance.colors['body'];
     final accent = hex == null
         ? theme.accentColor
         : Color(int.parse(hex.substring(1), radix: 16) + 0xFF000000);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+      borderRadius: BorderRadius.circular(AppDimensions.radius20),
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -60,20 +54,27 @@ class MascotStudioPreview extends StatelessWidget {
                 ? [AppColors.surfaceDark, AppColors.scaffoldDark]
                 : [AppColors.surfaceLight, AppColors.cardLight],
           ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+          borderRadius: BorderRadius.circular(AppDimensions.radius20),
           border: Border.all(color: dark ? Colors.white12 : Colors.white),
         ),
         child: Column(
           children: [
             if (!compact)
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.spacing20,
+                  AppDimensions.spacing16,
+                  AppDimensions.spacing20,
+                  0,
+                ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
                         'Ton Elyrii',
-                        style: AppTextStyles.labelSmall(color: secondary),
+                        style: AppTextStyles.labelSmall(
+                          color: context.textSecondary,
+                        ),
                       ),
                     ),
                     Icon(
@@ -81,10 +82,12 @@ class MascotStudioPreview extends StatelessWidget {
                       size: 15,
                       color: AppColors.readableAccent(accent, isDark: dark),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppDimensions.spacing8),
                     Text(
                       'Aperçu 3D',
-                      style: AppTextStyles.labelSmall(color: secondary),
+                      style: AppTextStyles.labelSmall(
+                        color: context.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -132,7 +135,12 @@ class MascotStudioPreview extends StatelessWidget {
             ),
             if (!compact)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.spacing16,
+                  0,
+                  AppDimensions.spacing16,
+                  AppDimensions.spacing12,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 280),
@@ -148,7 +156,12 @@ class MascotStudioPreview extends StatelessWidget {
             if (tryOn != null)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.spacing16,
+                  AppDimensions.spacing8,
+                  AppDimensions.spacing8,
+                  AppDimensions.spacing8,
+                ),
                 color: dark
                     ? Colors.white.withValues(alpha: 0.06)
                     : Colors.white.withValues(alpha: 0.65),
@@ -157,13 +170,15 @@ class MascotStudioPreview extends StatelessWidget {
                     Icon(
                       Icons.lock_outline_rounded,
                       size: 17,
-                      color: secondary,
+                      color: context.textSecondary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppDimensions.spacing8),
                     Expanded(
                       child: Text(
                         'Essai · ${tryOn!.name}\nÀ débloquer avec tes défis',
-                        style: AppTextStyles.labelSmall(color: primary),
+                        style: AppTextStyles.labelSmall(
+                          color: context.textPrimary,
+                        ),
                       ),
                     ),
                     IconButton(

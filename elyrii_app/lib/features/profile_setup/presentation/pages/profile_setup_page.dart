@@ -206,12 +206,12 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   onPageChanged: (page) => setState(() => _currentStep = page),
                   children: [
                     _buildAvatarStep(isDark),
-                    _buildIdentityStep(isDark),
+                    _buildIdentityStep(),
                     _buildWelcomeStep(isDark),
                   ],
                 ),
               ),
-              _buildFooter(isDark),
+              _buildFooter(),
             ],
           ),
         ),
@@ -223,7 +223,12 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   Widget _buildProgressHeader(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacing20,
+        AppDimensions.spacing16,
+        AppDimensions.spacing20,
+        AppDimensions.spacing8,
+      ),
       child: SizedBox(
         height: 48,
         child: Stack(
@@ -245,11 +250,13 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 final isActive = index <= _currentStep;
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.spacing4,
+                  ),
                   width: isActive ? 28 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppDimensions.radius4),
                     color: isActive
                         ? AppColors.primary
                         : (isDark
@@ -274,8 +281,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       child: SingleChildScrollView(
         key: const ValueKey(0),
         padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLg,
-          vertical: AppDimensions.paddingMd,
+          horizontal: AppDimensions.spacing24,
+          vertical: AppDimensions.spacing16,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -324,29 +331,21 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 .animateRespectingMotion(context)
                 .fadeIn(duration: 400.ms)
                 .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1)),
-            const SizedBox(height: AppDimensions.spacingLg),
+            const SizedBox(height: AppDimensions.spacing24),
             Text(
               'Choisis ton avatar',
-              style: AppTextStyles.headlineSmall(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ).copyWith(fontWeight: FontWeight.bold),
+              style: AppTextStyles.headlineSmall(color: context.textPrimary),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppDimensions.spacingSm),
+            const SizedBox(height: AppDimensions.spacing12),
             Text(
               'Une presence douce pour t\'accompagner. '
               'Tu pourras le changer quand tu veux, '
               'ou importer ta propre photo.',
-              style: AppTextStyles.bodyMedium(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.bodyMedium(color: context.textSecondary),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: AppDimensions.spacingLg),
+            const SizedBox(height: AppDimensions.spacing24),
             LiquidGlassButton(
               label: 'Personnaliser mon avatar',
               icon: Icons.palette_rounded,
@@ -362,12 +361,12 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   // ---- Step 1 : Identite + preferences ----
 
-  Widget _buildIdentityStep(bool isDark) {
+  Widget _buildIdentityStep() {
     return SingleChildScrollView(
       key: const ValueKey(1),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingMd,
+        horizontal: AppDimensions.spacing24,
+        vertical: AppDimensions.spacing16,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -377,31 +376,23 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             size: 48,
             color: AppColors.primary,
           ).animateRespectingMotion(context).fadeIn(duration: 400.ms),
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: AppDimensions.spacing16),
           Text(
             'Dis-m\'en un peu plus',
-            style: AppTextStyles.headlineSmall(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ).copyWith(fontWeight: FontWeight.bold),
+            style: AppTextStyles.headlineSmall(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppDimensions.spacingSm),
+          const SizedBox(height: AppDimensions.spacing12),
           Text(
             'Tout est optionnel. Ces infos aident a personnaliser '
             'ton accompagnement.',
-            style: AppTextStyles.bodyMedium(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
+            style: AppTextStyles.bodyMedium(color: context.textSecondary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppDimensions.spacingXl),
+          const SizedBox(height: AppDimensions.spacing32),
 
-          _buildLabel('Prénom', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
+          _buildLabel('Prénom'),
+          const SizedBox(height: AppDimensions.spacing8),
           GlassAuthTextField(
             controller: _firstNameController,
             label: 'Prénom',
@@ -411,10 +402,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             keyboardType: TextInputType.name,
             textInputAction: TextInputAction.next,
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: AppDimensions.spacing16),
 
-          _buildLabel('Nom', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
+          _buildLabel('Nom'),
+          const SizedBox(height: AppDimensions.spacing8),
           GlassAuthTextField(
             controller: _lastNameController,
             label: 'Nom (optionnel)',
@@ -424,10 +415,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             keyboardType: TextInputType.name,
             textInputAction: TextInputAction.next,
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: AppDimensions.spacing16),
 
-          _buildLabel('Age', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
+          _buildLabel('Age'),
+          const SizedBox(height: AppDimensions.spacing8),
           GlassAuthTextField(
             controller: _ageController,
             label: 'Âge (optionnel)',
@@ -436,13 +427,12 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.next,
           ),
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: AppDimensions.spacing16),
 
-          _buildLabel('Ton objectif bien-être', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
+          _buildLabel('Ton objectif bien-être'),
+          const SizedBox(height: AppDimensions.spacing8),
           _GoalSelector(
             value: _selectedWellnessGoal,
-            isDark: isDark,
             onChanged: (v) => setState(() => _selectedWellnessGoal = v),
           ),
         ],
@@ -456,8 +446,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     return SingleChildScrollView(
       key: const ValueKey(2),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: 16,
+        horizontal: AppDimensions.spacing24,
+        vertical: AppDimensions.spacing16,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -487,28 +477,20 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   end: const Offset(1, 1),
                   curve: Curves.easeOutBack,
                 ),
-          const SizedBox(height: AppDimensions.spacingXl),
+          const SizedBox(height: AppDimensions.spacing32),
           Text(
                 'Ton espace est prêt',
-                style: AppTextStyles.headlineMedium(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                ).copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.headlineMedium(color: context.textPrimary),
                 textAlign: TextAlign.center,
               )
               .animateRespectingMotion(context)
               .fadeIn(duration: 500.ms, delay: 200.ms),
-          const SizedBox(height: AppDimensions.spacingMd),
+          const SizedBox(height: AppDimensions.spacing16),
           Text(
                 'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
                 'explore à ton rythme et n\'oublie pas : chaque petit pas '
                 'compte vers ton bien-être.',
-                style: AppTextStyles.bodyMedium(
-                  color: isDark
-                      ? AppColors.textSecondaryDark
-                      : AppColors.textSecondaryLight,
-                ).copyWith(height: 1.6),
+                style: AppTextStyles.bodyMedium(color: context.textSecondary),
                 textAlign: TextAlign.center,
               )
               .animateRespectingMotion(context)
@@ -520,19 +502,22 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   // ==================== Helpers ====================
 
-  Widget _buildLabel(String text, bool isDark) {
+  Widget _buildLabel(String text) {
     return Text(
       text,
-      style: AppTextStyles.bodyMedium(
-        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-      ).copyWith(fontWeight: FontWeight.w600),
+      style: AppTextStyles.labelMedium(color: context.textPrimary),
     );
   }
 
-  Widget _buildFooter(bool isDark) {
+  Widget _buildFooter() {
     final isLastStep = _currentStep == 2;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacing12,
+        AppDimensions.spacing8,
+        AppDimensions.spacing12,
+        AppDimensions.spacing16,
+      ),
       child: Column(
         children: [
           _ProfileSetupGlassButton(
@@ -544,7 +529,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             onPressed: _isSaving ? null : _nextStep,
           ),
           if (!isLastStep) ...[
-            const SizedBox(height: AppDimensions.spacingSm),
+            const SizedBox(height: AppDimensions.spacing12),
             _ProfileSetupGlassButton(
               label: 'Passer pour l\'instant',
               onPressed: _isSaving ? null : _skipStep,
@@ -597,20 +582,15 @@ class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
 
 class _GoalSelector extends StatelessWidget {
   final String? value;
-  final bool isDark;
   final ValueChanged<String?> onChanged;
 
-  const _GoalSelector({
-    required this.value,
-    required this.isDark,
-    required this.onChanged,
-  });
+  const _GoalSelector({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: AppDimensions.spacing8,
+      runSpacing: AppDimensions.spacing8,
       children: _wellnessGoals.map((goal) {
         final isSelected = value == goal;
         return ChoiceChip(

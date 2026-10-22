@@ -74,13 +74,13 @@ class _CoachPageState extends State<CoachPage> {
                   AppDimensions.pageHorizontalPadding,
                   0,
                   AppDimensions.pageHorizontalPadding,
-                  130,
+                  AppDimensions.dockClearance,
                 ),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppDimensions.spacing8),
                       Center(
                         child:
                             CoachMascot(
@@ -98,30 +98,29 @@ class _CoachPageState extends State<CoachPage> {
                       ),
 
                       // ---- Routage par besoin immédiat ----
-                      const SizedBox(height: 30),
+                      const SizedBox(height: AppDimensions.spacing32),
                       _buildSectionTitle(
                         'De quoi as-tu besoin ?',
                         'Dis-le-moi, je m\'occupe du reste.',
-                        isDark,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppDimensions.spacing12),
                       NeedSelector(
                         needs: CoachNeed.values,
                         selected: provider.selectedNeed,
                         onSelect: provider.selectNeed,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppDimensions.spacing24),
                       _buildHighlightedActivities(provider, isDark),
 
                       // ---- Conseil du jour ----
                       if (provider.todayAdvice != null) ...[
-                        const SizedBox(height: 30),
-                        _buildAdviceCard(provider.todayAdvice!, isDark),
+                        const SizedBox(height: AppDimensions.spacing32),
+                        _buildAdviceCard(provider.todayAdvice!),
                       ],
 
                       // ---- Dernier échange avec le coach IA ----
                       if (provider.latestSession != null) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppDimensions.spacing16),
                         LatestSessionCard(
                           session: provider.latestSession!,
                           isDark: isDark,
@@ -129,13 +128,12 @@ class _CoachPageState extends State<CoachPage> {
                       ],
 
                       // ---- Catalogue exploratoire ----
-                      const SizedBox(height: 30),
+                      const SizedBox(height: AppDimensions.spacing32),
                       _buildSectionTitle(
                         'Toutes les activités',
                         'Explore à ton rythme',
-                        isDark,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppDimensions.spacing12),
                       _buildCategoryGrid(
                         context,
                         provider.allActivities,
@@ -152,27 +150,18 @@ class _CoachPageState extends State<CoachPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title, String subtitle, bool isDark) {
+  Widget _buildSectionTitle(String title, String subtitle) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: AppTextStyles.titleMedium(
-            fontWeight: FontWeight.w700,
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppDimensions.spacing4),
         Text(
           subtitle,
-          style: AppTextStyles.bodySmall(
-            color: isDark
-                ? AppColors.textTertiaryDark
-                : AppColors.textTertiaryLight,
-          ),
+          style: AppTextStyles.bodySmall(color: context.textTertiary),
         ),
       ],
     );
@@ -198,13 +187,12 @@ class _CoachPageState extends State<CoachPage> {
           selectedNeed != null
               ? 'Choisi pour ce moment précis'
               : 'Trois façons simples de commencer',
-          isDark,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppDimensions.spacing12),
         Container(
           decoration: BoxDecoration(
             color: isDark ? AppColors.cardDark : AppColors.cardLight,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+            borderRadius: BorderRadius.circular(AppDimensions.radius16),
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -229,9 +217,10 @@ class _CoachPageState extends State<CoachPage> {
                       delay: (i * 45).ms,
                     ),
                 if (i < activities.length - 1)
-                  // Séparateur inseté après l'icône (padding 14 + icône 40 + écart 12).
                   Padding(
-                    padding: const EdgeInsets.only(left: 66),
+                    padding: const EdgeInsets.only(
+                      left: CoachActivityCell.dividerInset,
+                    ),
                     child: Container(height: 0.5, color: separatorColor),
                   ),
               ],
@@ -242,23 +231,23 @@ class _CoachPageState extends State<CoachPage> {
     );
   }
 
-  Widget _buildAdviceCard(DailyAdvice advice, bool isDark) {
+  Widget _buildAdviceCard(DailyAdvice advice) {
     return LiquidGlassCard(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppDimensions.spacing20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppDimensions.spacing8),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.radius12),
                 ),
                 child: Icon(advice.icon, color: AppColors.primary, size: 20),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacing12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,9 +265,7 @@ class _CoachPageState extends State<CoachPage> {
                     Text(
                       advice.source,
                       style: AppTextStyles.labelSmall(
-                        color: isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
+                        color: context.textTertiary,
                       ),
                     ),
                   ],
@@ -286,14 +273,10 @@ class _CoachPageState extends State<CoachPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
           Text(
             advice.text,
-            style: AppTextStyles.bodyMedium(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ).copyWith(height: 1.6),
+            style: AppTextStyles.bodyMedium(color: context.textPrimary),
           ),
           if (advice.sourceUrl != null)
             TextButton.icon(
@@ -330,10 +313,12 @@ class _CoachPageState extends State<CoachPage> {
                 MediaQuery.textScalerOf(context).scale(1) <= 1.2
             ? 2
             : 1;
-        final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+        final width =
+            (constraints.maxWidth - AppDimensions.spacing12 * (columns - 1)) /
+            columns;
         return Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: AppDimensions.spacing12,
+          runSpacing: AppDimensions.spacing12,
           children: activities
               .map(
                 (activity) => SizedBox(

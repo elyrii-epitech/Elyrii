@@ -10,6 +10,15 @@ import '../../data/models/coach_model.dart';
 /// distingue ce que fait le tap — lecture guidée (chevron) ou lancement
 /// immédiat d'une expérience native (lecture).
 class CoachActivityCell extends StatefulWidget {
+  /// Taille de la boîte d'icône d'une cellule, partagée avec le conteneur
+  /// groupé pour aligner ses séparateurs.
+  static const double iconBoxSize = 40;
+
+  /// Retrait des séparateurs du conteneur groupé : padding de cellule,
+  /// boîte d'icône puis écart jusqu'au texte.
+  static const double dividerInset =
+      AppDimensions.spacing16 + iconBoxSize + AppDimensions.spacing12;
+
   final CoachActivity activity;
   final bool isDark;
   final VoidCallback onTap;
@@ -56,21 +65,24 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                     ? Colors.white.withValues(alpha: 0.05)
                     : Colors.black.withValues(alpha: 0.04))
               : Colors.transparent,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing16,
+            vertical: AppDimensions.spacing12,
+          ),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: CoachActivityCell.iconBoxSize,
+                height: CoachActivityCell.iconBoxSize,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppDimensions.radius12),
                 ),
                 child: Center(
                   child: Icon(widget.activity.icon, size: 20, color: color),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppDimensions.spacing12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,52 +90,41 @@ class _CoachActivityCellState extends State<CoachActivityCell> {
                     Text(
                       widget.activity.title,
                       style: AppTextStyles.titleSmall(
-                        color: widget.isDark
-                            ? AppColors.textPrimaryDark
-                            : AppColors.textPrimaryLight,
+                        color: context.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppDimensions.spacing2),
                     Text(
                       widget.activity.description,
                       style: AppTextStyles.bodySmall(
-                        color: widget.isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight,
+                        color: context.textTertiary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppDimensions.spacing8),
               // Badge de durée en pilule arrondie, à gauche du glyphe.
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                  horizontal: AppDimensions.spacing8,
+                  vertical: AppDimensions.spacing4,
                 ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(
-                    AppDimensions.radiusCircular,
-                  ),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
                 ),
                 child: Text(
                   '${widget.activity.durationMinutes} min',
-                  style: AppTextStyles.labelMedium(color: ink),
+                  style: AppTextStyles.badge(color: ink),
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppDimensions.spacing4),
               Icon(
                 launchesExperience
                     ? Icons.play_arrow_rounded
                     : Icons.chevron_right_rounded,
-                size: launchesExperience ? 22 : 18,
-                color: launchesExperience
-                    ? ink
-                    : (widget.isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight),
+                color: launchesExperience ? ink : context.textTertiary,
               ),
             ],
           ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../core/widgets/glass_bubble_button.dart';
 import '../../core/widgets/glass_navigation_bar.dart';
+import '../../core/theme/app_dimensions.dart';
 
 /// Shell principal hébergeant les branches d'onglets persistantes sous GoRouter.
 ///
@@ -83,7 +84,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
     final currentIndex = widget.navigationShell.currentIndex;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     // UIKit / liquid_glass_widgets : verticalPadding = 20.0 au-dessus du Home Indicator
-    final bottomMargin = bottomInset > 0 ? 20.0 : 16.0;
+    final bottomMargin = bottomInset > 0
+        ? AppDimensions.spacing20
+        : AppDimensions.spacing16;
     // Keep every tab at least 44 points wide on a 320-point screen.
     final compactDock = MediaQuery.sizeOf(context).width < 360;
     final accessibleDock =
@@ -100,8 +103,12 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
           ? null
           : Container(
               margin: EdgeInsets.only(
-                left: compactDock ? 8 : 16,
-                right: compactDock ? 8 : 16,
+                left: compactDock
+                    ? AppDimensions.spacing8
+                    : AppDimensions.spacing16,
+                right: compactDock
+                    ? AppDimensions.spacing8
+                    : AppDimensions.spacing16,
                 bottom: bottomMargin,
               ),
               child: accessibleDock
@@ -118,7 +125,9 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
                           DropdownMenuItem(
                             value: i,
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppDimensions.spacing12,
+                              ),
                               child: Text(
                                 i == 5 ? 'Chat Elyrii' : _navItems[i].label,
                               ),
@@ -140,10 +149,10 @@ class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
                             isDark: isDark,
                             margin: EdgeInsets.zero,
                             height: 64,
-                            borderRadius: 32,
+                            borderRadius: AppDimensions.radiusPill,
                           ),
                         ),
-                        SizedBox(width: compactDock ? 8 : 10),
+                        const SizedBox(width: AppDimensions.spacing8),
                         GlassBubbleButtonStateful(
                           icon: Icons.chat_bubble_rounded,
                           onTap: () => _onTabSelected(5),

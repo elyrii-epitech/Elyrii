@@ -24,6 +24,7 @@ import 'package:provider/provider.dart';
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../core/widgets/glass/elyrii_back_button.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_dimensions.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../routes/app_routes.dart';
@@ -84,7 +85,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Semantics(
                 liveRegion: true,
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(AppDimensions.spacing20),
                   child: Column(
                     children: [
                       Text(
@@ -109,7 +110,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: _buildSection(
               context,
               title: 'Apparence',
-              isDark: isDark,
               children: [
                 _SettingsCell(
                   title: 'Mode sombre',
@@ -136,7 +136,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: _buildSection(
               context,
               title: 'Notifications',
-              isDark: isDark,
               children: [
                 const _SettingsCell(
                   title: 'Notifications push',
@@ -176,7 +175,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: _buildSection(
               context,
               title: 'Compte',
-              isDark: isDark,
               children: [
                 _SettingsCell(
                   title: 'Profil',
@@ -263,7 +261,6 @@ class _SettingsPageState extends State<SettingsPage> {
             child: _buildSection(
               context,
               title: 'À propos',
-              isDark: isDark,
               children: [
                 _SettingsCell(
                   title: 'Version',
@@ -310,7 +307,7 @@ class _SettingsPageState extends State<SettingsPage> {
           // Section Déconnexion
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppDimensions.spacing20),
               child: LiquidGlassButton(
                 label: 'Se déconnecter',
                 icon: Icons.logout_rounded,
@@ -344,7 +341,9 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           // Espace en bas
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: AppDimensions.pageBottomInset),
+          ),
         ],
       ),
     );
@@ -421,24 +420,26 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildSection(
     BuildContext context, {
     required String title,
-    required bool isDark,
     required List<Widget> children,
   }) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.pageHorizontalPadding,
+        AppDimensions.spacing24,
+        AppDimensions.pageHorizontalPadding,
+        0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 10),
+            padding: const EdgeInsets.only(
+              left: AppDimensions.spacing4,
+              bottom: AppDimensions.spacing8,
+            ),
             child: Text(
               title,
-              style: AppTextStyles.labelMedium(
-                fontWeight: FontWeight.w700,
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
+              style: AppTextStyles.overline(color: context.textSecondary),
             ),
           ),
           LiquidGlassCard(
@@ -524,21 +525,21 @@ class _SettingsPageState extends State<SettingsPage> {
                 textAlign: TextAlign.center,
                 style: AppTextStyles.bodyMedium(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppDimensions.spacing16),
               CupertinoTextField(
                 controller: passwordController,
                 obscureText: true,
                 textInputAction: TextInputAction.done,
                 placeholder: 'Mot de passe',
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
+                  horizontal: AppDimensions.spacing16,
+                  vertical: AppDimensions.spacing12,
                 ),
                 decoration: BoxDecoration(
                   color: isDark
                       ? Colors.white.withValues(alpha: 0.06)
                       : Colors.black.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppDimensions.radius8),
                   border: Border.all(
                     color: errorText == null
                         ? Colors.transparent
@@ -552,7 +553,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 onSubmitted: (_) => submit(),
               ),
               if (errorText != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: AppDimensions.spacing8),
                 Text(
                   errorText,
                   style: AppTextStyles.bodySmall(
@@ -653,11 +654,14 @@ class _SettingsCell extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final titleColor = isDestructive
         ? Theme.of(context).colorScheme.error
-        : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight);
+        : context.textPrimary;
 
     final content = Container(
       color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing16,
+        vertical: AppDimensions.spacing12,
+      ),
       child: Row(
         children: [
           // Pastille douce monotone : une seule teinte d'accent, ton apaisé.
@@ -666,32 +670,28 @@ class _SettingsCell extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: iconColor.withValues(alpha: isDark ? 0.20 : 0.12),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppDimensions.radius12),
             ),
             child: Icon(icon, size: 18, color: iconColor),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppDimensions.spacing12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(title, style: AppTextStyles.titleSmall(color: titleColor)),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppDimensions.spacing2),
                   Text(
                     subtitle!,
-                    style: AppTextStyles.bodySmall(
-                      color: isDark
-                          ? AppColors.textTertiaryDark
-                          : AppColors.textTertiaryLight,
-                    ),
+                    style: AppTextStyles.bodySmall(color: context.textTertiary),
                   ),
                 ],
               ],
             ),
           ),
           if (trailing != null) ...[
-            const SizedBox(width: 12),
+            const SizedBox(width: AppDimensions.spacing12),
             trailing!,
           ] else if (onTap != null)
             Icon(

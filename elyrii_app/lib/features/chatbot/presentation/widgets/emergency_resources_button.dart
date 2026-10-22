@@ -57,9 +57,7 @@ class EmergencyResourcesButton extends StatelessWidget {
         backgroundColor: isDark
             ? AppColors.surfaceDark
             : AppColors.primaryLight,
-        foregroundColor: isDark
-            ? AppColors.textPrimaryDark
-            : AppColors.textPrimaryLight,
+        foregroundColor: context.textPrimary,
         textStyle: AppTextStyles.labelLarge(),
       ),
     );
@@ -78,7 +76,7 @@ class EmergencyResourcesButton extends StatelessWidget {
       ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXl),
+          top: Radius.circular(AppDimensions.radius28),
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -99,10 +97,8 @@ class _EmergencyResourcesSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final ink = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
-    final secondary = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
+    final ink = context.textPrimary;
+    final secondary = context.textSecondary;
     final accent = isDark ? AppColors.primaryDark : AppColors.primary;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final divider = isDark ? AppColors.dividerDark : AppColors.dividerLight;
@@ -119,17 +115,17 @@ class _EmergencyResourcesSheet extends StatelessWidget {
             Container(
               width: 36,
               height: 4,
-              margin: const EdgeInsets.only(top: AppDimensions.spacingSm),
+              margin: const EdgeInsets.only(top: AppDimensions.spacing12),
               decoration: BoxDecoration(
                 color: divider,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
               ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppDimensions.spacingLg,
-                AppDimensions.spacingSm,
-                AppDimensions.spacingMd,
+                AppDimensions.spacing24,
+                AppDimensions.spacing12,
+                AppDimensions.spacing16,
                 0,
               ),
               child: Row(
@@ -137,10 +133,7 @@ class _EmergencyResourcesSheet extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Besoin d’aide ?',
-                      style: AppTextStyles.titleLarge(
-                        color: ink,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.titleLarge(color: ink),
                     ),
                   ),
                   IconButton(
@@ -155,10 +148,10 @@ class _EmergencyResourcesSheet extends StatelessWidget {
             Flexible(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.spacingLg,
-                  AppDimensions.spacingXs,
-                  AppDimensions.spacingLg,
-                  AppDimensions.spacingLg,
+                  AppDimensions.spacing24,
+                  AppDimensions.spacing8,
+                  AppDimensions.spacing24,
+                  AppDimensions.spacing24,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,11 +160,11 @@ class _EmergencyResourcesSheet extends StatelessWidget {
                       'Tu n’es pas seul(e). Ces lignes sont là pour t’écouter et t’orienter.',
                       style: AppTextStyles.bodyMedium(color: ink),
                     ),
-                    const SizedBox(height: AppDimensions.spacingLg),
+                    const SizedBox(height: AppDimensions.spacing24),
                     Material(
                       color: surface,
                       borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusLg,
+                        AppDimensions.radius16,
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: Column(
@@ -186,7 +179,7 @@ class _EmergencyResourcesSheet extends StatelessWidget {
                                 onTap: () => _callNumber(context, resource.tel),
                                 child: Padding(
                                   padding: const EdgeInsets.all(
-                                    AppDimensions.spacingMd,
+                                    AppDimensions.spacing16,
                                   ),
                                   child: Row(
                                     children: [
@@ -198,7 +191,7 @@ class _EmergencyResourcesSheet extends StatelessWidget {
                                         color: accent,
                                       ),
                                       const SizedBox(
-                                        width: AppDimensions.spacingMd,
+                                        width: AppDimensions.spacing16,
                                       ),
                                       Expanded(
                                         child: Column(
@@ -209,11 +202,10 @@ class _EmergencyResourcesSheet extends StatelessWidget {
                                               resource.title,
                                               style: AppTextStyles.titleSmall(
                                                 color: ink,
-                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                             const SizedBox(
-                                              height: AppDimensions.spacingXxs,
+                                              height: AppDimensions.spacing4,
                                             ),
                                             Text(
                                               resource.subtitle,
@@ -225,7 +217,7 @@ class _EmergencyResourcesSheet extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(
-                                        width: AppDimensions.spacingXs,
+                                        width: AppDimensions.spacing8,
                                       ),
                                       Icon(
                                         Icons.chevron_right_rounded,
@@ -241,14 +233,14 @@ class _EmergencyResourcesSheet extends StatelessWidget {
                               Divider(
                                 height: 1,
                                 color: divider,
-                                indent: AppDimensions.spacingMd,
-                                endIndent: AppDimensions.spacingMd,
+                                indent: AppDimensions.spacing16,
+                                endIndent: AppDimensions.spacing16,
                               ),
                           ],
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.spacingMd),
+                    const SizedBox(height: AppDimensions.spacing16),
                     Text(
                       'Choisis un contact pour ouvrir l’appel.',
                       style: AppTextStyles.bodyMedium(color: ink),
