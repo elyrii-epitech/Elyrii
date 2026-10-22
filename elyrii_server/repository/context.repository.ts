@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../config/db.config";
-import { userTable } from "../config/db/user.table";
+import { userTable, moodLogsTable } from "../config/db/user.table";
 import { chatMessagesTable as messages } from "../config/db/chat.table";
 import { userContextFactsTable as facts, userMemoriesTable as memories,
     conversationSummariesTable as summaries, memoryEmbeddingsTable as embeddings } from "../config/db/context.table";
@@ -53,6 +53,7 @@ export class ContextRepository {
             await tx.update(userTable).set({ contextGeneration: sql`${userTable.contextGeneration} + 1` }).where(eq(userTable.id, this.userId));
             await tx.update(extractionKeys).set({ suppressed: true }).where(eq(extractionKeys.userId, this.userId));
             await tx.update(messages).set({ contextSuppressed: true }).where(eq(messages.userId, this.userId));
+            await tx.update(moodLogsTable).set({ contextSuppressed: true }).where(eq(moodLogsTable.userId, this.userId));
             await tx.delete(facts).where(eq(facts.userId, this.userId));
             await tx.delete(memories).where(eq(memories.userId, this.userId));
             await tx.delete(summaries).where(eq(summaries.userId, this.userId));

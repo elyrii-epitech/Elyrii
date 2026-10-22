@@ -31,6 +31,7 @@ export const moodLogsTable = pgTable("mood_logs", {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
     moodType: text("mood_type").notNull(),
+    contextSuppressed: boolean("context_suppressed").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [
     index("idx_mood_logs_user_id").on(table.userId),
