@@ -65,6 +65,9 @@ class _NightPainter extends CustomPainter {
 }
 
 class _ScenePainter extends CustomPainter {
+  /// Art line kept at its phone-frame height when a wide column makes the art
+  /// overflow vertically, so the moon and the ground both stay in view.
+  static const _horizon = 300.0;
   final MascotDecor decor;
   final bool dark;
   final bool thumbnail;
@@ -87,7 +90,7 @@ class _ScenePainter extends CustomPainter {
           : (size.width - 390 * scale) / 2,
       thumbnail
           ? (size.height - 230 * scale) / 2 - 150 * scale
-          : size.height - 470 * scale,
+          : size.height * _horizon / 470 - _horizon * scale,
     );
     canvas.scale(scale);
     final paint = Paint();
