@@ -54,7 +54,9 @@ void main() {
       expect(shadows[1].elevation, 1.0);
     });
 
-    testWidgets('MascotWarmPlaceholder reste plate et immobile', (tester) async {
+    testWidgets('MascotWarmPlaceholder reste plate et immobile', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: MascotWarmPlaceholder(width: 150, height: 150)),

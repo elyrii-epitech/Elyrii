@@ -9,7 +9,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _RangeRepository extends DashboardRepository {
-  _RangeRepository() : super(client: ApiClient(storage: SecureStorageService()));
+  _RangeRepository()
+    : super(client: ApiClient(storage: SecureStorageService()));
   final ranges = <String>[];
 
   @override
@@ -118,9 +119,12 @@ void main() {
   group('DashboardProvider.ensureCalendarHistory', () {
     test('le calendrier charge la plage du mois puis reste en cache', () async {
       final repository = _RangeRepository();
-      final provider = DashboardProvider(repository: repository, now: () {
-        return DateTime(2026, 10, 22, 9);
-      });
+      final provider = DashboardProvider(
+        repository: repository,
+        now: () {
+          return DateTime(2026, 10, 22, 9);
+        },
+      );
       addTearDown(provider.dispose);
       provider.onUserChanged(userId: 'alice');
 
@@ -131,48 +135,58 @@ void main() {
         provider.coverage!.firstDay,
         CivilDay(2026, 9, 23),
       ); // 30 jours bornés à aujourd'hui
-      expect(
-        provider.history[CivilDay(2026, 10, 22)]!.moodLogs,
-        2,
-      );
+      expect(provider.history[CivilDay(2026, 10, 22)]!.moodLogs, 2);
 
+      // Le mois courant tient dans la plage de 30 jours déjà chargée.
       await provider.ensureCalendarHistory(CivilMonth(2026, 10));
-      expect(repository.ranges, ['30d', '365d']);
-      expect(provider.coverage!.firstDay, CivilDay(2025, 10, 23));
+      expect(repository.ranges, ['30d']);
+
+      // Un mois ancien force exactement la plage dont il a besoin.
+      await provider.ensureCalendarHistory(CivilMonth(2026, 2));
+      expect(repository.ranges, ['30d', '264d']);
+      expect(provider.coverage!.firstDay, CivilDay(2026, 2, 1));
 
       // Déjà couvert : aucune nouvelle requête.
       await provider.ensureCalendarHistory(CivilMonth(2026, 6));
-      expect(repository.ranges, ['30d', '365d']);
+      expect(repository.ranges, ['30d', '264d']);
 
       // Un refresh conserve la plage large déjà demandée.
       await provider.refresh();
-      expect(repository.ranges, ['30d', '365d', '365d']);
+      expect(repository.ranges, ['30d', '264d', '264d']);
     });
 
     test('un mois ancien au-delà de 365 jours reste plafonné', () async {
       final repository = _RangeRepository();
-      final provider = DashboardProvider(repository: repository, now: () {
-        return DateTime(2026, 10, 22, 9);
-      });
+      final provider = DashboardProvider(
+        repository: repository,
+        now: () {
+          return DateTime(2026, 10, 22, 9);
+        },
+      );
       addTearDown(provider.dispose);
       provider.onUserChanged(userId: 'alice');
       await provider.ensureCalendarHistory(CivilMonth(2024, 1));
       expect(repository.ranges, ['365d']);
     });
 
-    test('une demande plus large pendant un vol n’émet qu’une requête de plus',
-        () async {
-      final repository = _RangeRepository();
-      final provider = DashboardProvider(repository: repository, now: () {
-        return DateTime(2026, 10, 22, 9);
-      });
-      addTearDown(provider.dispose);
-      provider.onUserChanged(userId: 'alice');
-      final first = provider.loadDashboardData();
-      await provider.ensureCalendarHistory(CivilMonth(2026, 10));
-      await first;
-      expect(repository.ranges, ['30d', '365d']);
-    });
+    test(
+      'une demande plus large pendant un vol n’émet qu’une requête de plus',
+      () async {
+        final repository = _RangeRepository();
+        final provider = DashboardProvider(
+          repository: repository,
+          now: () {
+            return DateTime(2026, 10, 22, 9);
+          },
+        );
+        addTearDown(provider.dispose);
+        provider.onUserChanged(userId: 'alice');
+        final first = provider.loadDashboardData();
+        await provider.ensureCalendarHistory(CivilMonth(2026, 2));
+        await first;
+        expect(repository.ranges, ['30d', '264d']);
+      },
+    );
 
     test('la démo expose le même mois sans toucher au dépôt', () async {
       final repository = _RangeRepository();
@@ -188,10 +202,7 @@ void main() {
       expect(provider.currentStreak, DevSession.streakDays);
       expect(provider.coverage!.throughDay, CivilDay(2026, 10, 22));
       expect(provider.coverage!.firstDay, CivilDay(2026, 9, 23));
-      expect(
-        provider.history[CivilDay(2026, 10, 22)]!.moodLogs,
-        1,
-      );
+      expect(provider.history[CivilDay(2026, 10, 22)]!.moodLogs, 1);
     });
   });
 }

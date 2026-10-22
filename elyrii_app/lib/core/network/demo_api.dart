@@ -69,8 +69,7 @@ class DemoApi {
       // Same range parsing as the real controller: Nd capped at 365.
       final requested = uri.queryParameters['range'];
       final parsed = int.tryParse(requested?.replaceAll('d', '') ?? '');
-      final rangeDays =
-          parsed != null && parsed > 0 ? parsed.clamp(1, 365) : 7;
+      final rangeDays = parsed != null && parsed > 0 ? parsed.clamp(1, 365) : 7;
       final stats = DevSession.statsPayload(
         now: DateTime.now(),
         journalCount: _journal.length,

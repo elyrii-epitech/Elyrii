@@ -550,9 +550,7 @@ class ReviewActivityTimeline extends StatelessWidget {
                   SizedBox(
                     width: 88,
                     child: Text(
-                      _shortDateLabel(
-                        DateTime(day.year, day.month, day.day),
-                      ),
+                      _shortDateLabel(DateTime(day.year, day.month, day.day)),
                       style: AppTextStyles.labelMedium(
                         color: context.textTertiary,
                       ),
