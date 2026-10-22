@@ -1,5 +1,3 @@
-import '../../../../core/data/json_contract.dart';
-
 class MoodTrendPoint {
   final String day;
   final int count;
@@ -147,32 +145,18 @@ class DashboardData {
   final String? latestMood;
   final DateTime? cachedAt;
   final DashboardStats stats;
-  final List<dynamic> activeChallenges;
-  final List<dynamic> pendingChallenges;
 
-  DashboardData({
-    this.cachedAt,
-    required this.latestMood,
-    required this.stats,
-    required List<dynamic> activeChallenges,
-    required List<dynamic> pendingChallenges,
-  }) : activeChallenges = freezeJson(activeChallenges) as List<dynamic>,
-       pendingChallenges = freezeJson(pendingChallenges) as List<dynamic>;
+  DashboardData({this.cachedAt, required this.latestMood, required this.stats});
 
   factory DashboardData.fromJson(
     Map<String, dynamic> json, {
     DateTime? cachedAt,
   }) {
-    final challenges = json['challenges'] as Map? ?? const {};
     return DashboardData(
       cachedAt: cachedAt,
       latestMood: json['latestMood'] as String?,
       stats: DashboardStats.fromJson(
         json['stats'] as Map<String, dynamic>? ?? json,
-      ),
-      activeChallenges: List<dynamic>.from(challenges['active'] as List? ?? []),
-      pendingChallenges: List<dynamic>.from(
-        challenges['pending'] as List? ?? [],
       ),
     );
   }

@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 /// Enum représentant les différents moods disponibles
 enum MoodType { verySad, sad, neutral, happy, veryHappy }
 
-/// Enum pour les types d'objectifs quotidiens
-enum GoalType { journal, meditation, breathing, gratitude }
-
 /// Extension pour obtenir les propriétés du mood
 extension MoodTypeExtension on MoodType {
   IconData get icon {
@@ -110,48 +107,6 @@ extension MoodTypeExtension on MoodType {
         return '/journal';
       case MoodType.veryHappy:
         return '/journal';
-    }
-  }
-}
-
-/// Extension pour les propriétés des objectifs
-extension GoalTypeExtension on GoalType {
-  String get title {
-    switch (this) {
-      case GoalType.journal:
-        return 'Écrire dans ton journal';
-      case GoalType.meditation:
-        return '5 minutes de méditation';
-      case GoalType.breathing:
-        return 'Exercice de respiration';
-      case GoalType.gratitude:
-        return 'Noter 3 gratitudes';
-    }
-  }
-
-  IconData get icon {
-    switch (this) {
-      case GoalType.journal:
-        return Icons.edit_note_rounded;
-      case GoalType.meditation:
-        return Icons.self_improvement_rounded;
-      case GoalType.breathing:
-        return Icons.air_rounded;
-      case GoalType.gratitude:
-        return Icons.favorite_rounded;
-    }
-  }
-
-  String get completedMessage {
-    switch (this) {
-      case GoalType.journal:
-        return 'Bravo ! Tu as pris le temps d\'écrire';
-      case GoalType.meditation:
-        return 'Magnifique ! Ton esprit te remercie';
-      case GoalType.breathing:
-        return 'Super ! Tu respires la sérénité';
-      case GoalType.gratitude:
-        return 'Génial ! La gratitude illumine ta journée';
     }
   }
 }

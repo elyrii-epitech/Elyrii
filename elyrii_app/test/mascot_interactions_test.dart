@@ -54,7 +54,7 @@ void main() {
       expect(shadows[1].elevation, 1.0);
     });
 
-    testWidgets('MascotWarmPlaceholder pulse sans crash', (tester) async {
+    testWidgets('MascotWarmPlaceholder reste plate et immobile', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: MascotWarmPlaceholder(width: 150, height: 150)),
@@ -62,8 +62,9 @@ void main() {
       );
 
       expect(find.byType(MascotWarmPlaceholder), findsOneWidget);
-      await tester.pump(const Duration(milliseconds: 600));
+
       await tester.pump(const Duration(milliseconds: 1200));
+      expect(tester.hasRunningAnimations, isFalse);
       expect(find.byType(Container), findsWidgets);
     });
 

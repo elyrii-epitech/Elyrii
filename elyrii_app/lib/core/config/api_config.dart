@@ -67,7 +67,6 @@ class ApiConfig {
   static String get userAvatarUrl => '$_baseUrl/user/avatar';
   static String get userAccountUrl => '$_baseUrl/user/account';
   static String get logMoodUrl => '$_baseUrl/user/mood';
-  static String get latestMoodUrl => '$_baseUrl/user/mood/latest';
 
   // ==================== Coach ====================
   static String get coachSessionsUrl => '$_baseUrl/coach/sessions';

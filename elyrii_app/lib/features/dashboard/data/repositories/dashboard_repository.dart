@@ -139,10 +139,6 @@ class DashboardRepository {
         ),
         DashboardStats.fromJson,
       );
-  Future<String?> getLatestMood() async =>
-      (await _client.get(ApiConfig.latestMoodUrl)
-              as Map<String, dynamic>)['moodType']
-          as String?;
   Future<void> logMood(String moodType) async {
     await _client.post(ApiConfig.logMoodUrl, body: {'moodType': moodType});
   }

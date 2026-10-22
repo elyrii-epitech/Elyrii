@@ -138,7 +138,6 @@ void main() {
       pending.complete(http.Response('{"message":"rejected"}', 400));
       expect(await save, isFalse);
       expect(provider.selectedMood, MoodType.happy);
-      expect(provider.moodHistory[DateTime(2026, 10, 6)], isNull);
       expect(provider.error, isNotNull);
       expect(writes, 1);
       expect(await provider.selectMood(MoodType.sad), isTrue);

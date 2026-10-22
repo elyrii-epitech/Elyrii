@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:flutter/material.dart';
 
@@ -41,33 +40,9 @@ class DashboardProvider extends ChangeNotifier {
 
   // Mood du jour
   MoodType? _selectedMood;
-  final Map<DateTime, MoodType> _moodHistory = {};
-  late final Map<DateTime, MoodType> _historyView = UnmodifiableMapView(
-    _moodHistory,
-  );
 
   // Streak (série de jours consécutifs)
   int _currentStreak = 0;
-  int _activeChallengesCount = 0;
-  int _journalEntriesCount = 0;
-  int _completedChallengesCount = 0;
-  int _totalPoints = 0;
-  int _meditationSessionsCount = 0;
-  int _coachSessionsCount = 0;
-  int _moodLogsCount = 0;
-
-  // Quote du jour
-  int _currentQuoteIndex = 0;
-  final List<String> _quotes = [
-    "La patience est l'art d'espérer.",
-    "Chaque jour est une nouvelle chance de changer ta vie.",
-    "Le bonheur n'est pas une destination, c'est un voyage.",
-    "Prends soin de toi, tu es la personne avec qui tu passeras le plus de temps.",
-    "Les petits pas mènent aux grandes destinations.",
-    "Respire. Tout va bien se passer.",
-    "Tu es plus fort(e) que tu ne le penses.",
-    "Aujourd'hui est un bon jour pour être heureux.",
-  ];
 
   // Messages de la mascotte Elyrii
   int _currentMascotMessageIndex = 0;
@@ -118,13 +93,6 @@ class DashboardProvider extends ChangeNotifier {
     ],
   };
 
-  // Objectif du jour
-  GoalType _dailyGoal = GoalType.journal;
-  bool _goalCompleted = false;
-
-  // Nom utilisateur (à récupérer depuis l'auth plus tard)
-  String _userName = '';
-
   // Getters
   bool get isSavingMood => _isSavingMood;
   DateTime? get cachedAt => _cachedAt;
@@ -132,18 +100,6 @@ class DashboardProvider extends ChangeNotifier {
   String? get error => _error;
   MoodType? get selectedMood => _selectedMood;
   int get currentStreak => _currentStreak;
-  int get activeChallengesCount => _activeChallengesCount;
-  int get journalEntriesCount => _journalEntriesCount;
-  int get completedChallengesCount => _completedChallengesCount;
-  int get totalPoints => _totalPoints;
-  int get meditationSessionsCount => _meditationSessionsCount;
-  int get coachSessionsCount => _coachSessionsCount;
-  int get moodLogsCount => _moodLogsCount;
-  String get userName => _userName;
-  String get currentQuote => _quotes[_currentQuoteIndex];
-  Map<DateTime, MoodType> get moodHistory => _historyView;
-  GoalType get dailyGoal => _dailyGoal;
-  bool get goalCompleted => _goalCompleted;
 
   /// Retourne le message actuel de la mascotte
   String get mascotMessage {
@@ -165,8 +121,6 @@ class DashboardProvider extends ChangeNotifier {
        ),
        _repository = repository ?? DashboardRepository(client: apiClient!),
        _now = now ?? DateTime.now {
-    _initializeQuoteOfTheDay();
-    _initializeDailyGoal();
     _initializeMascotMessage();
   }
 
@@ -177,17 +131,7 @@ class DashboardProvider extends ChangeNotifier {
     _moodVersion++;
     _isSavingMood = false;
     _cachedAt = null;
-    _moodHistory.clear();
     _currentStreak = 0;
-    _activeChallengesCount = 0;
-    _journalEntriesCount = 0;
-    _completedChallengesCount = 0;
-    _totalPoints = 0;
-    _meditationSessionsCount = 0;
-    _coachSessionsCount = 0;
-    _moodLogsCount = 0;
-    _goalCompleted = false;
-    _userName = '';
     _isLoading = false;
     _error = null;
     _notify();
@@ -200,23 +144,9 @@ class DashboardProvider extends ChangeNotifier {
 
   void _applyDevStats() {
     _currentStreak = DevSession.streakDays;
-    _completedChallengesCount = DevSession.completedChallengeCount;
-    _totalPoints = DevSession.totalPoints;
-    _userName = DevSession.firstName;
     _isLoading = false;
     _error = null;
     _notify();
-  }
-
-  void _initializeQuoteOfTheDay() {
-    final now = _now();
-    _currentQuoteIndex = (now.day + now.month) % _quotes.length;
-  }
-
-  void _initializeDailyGoal() {
-    final now = _now();
-    final goalIndex = (now.day + now.month + now.year) % GoalType.values.length;
-    _dailyGoal = GoalType.values[goalIndex];
   }
 
   void _initializeMascotMessage() {
@@ -242,11 +172,7 @@ class DashboardProvider extends ChangeNotifier {
     final session = _sessionRevision;
     _moodVersion++;
     final previous = _selectedMood;
-    final now = _now();
-    final today = DateTime(now.year, now.month, now.day);
-    final previousHistory = _moodHistory[today];
     _selectedMood = mood;
-    _moodHistory[today] = mood;
     _currentMascotMessageIndex = Random().nextInt(
       _moodMascotMessages[mood]!.length,
     );
@@ -265,11 +191,6 @@ class DashboardProvider extends ChangeNotifier {
     } catch (error) {
       if (session != _sessionRevision || _disposed) return false;
       _selectedMood = previous;
-      if (previousHistory == null) {
-        _moodHistory.remove(today);
-      } else {
-        _moodHistory[today] = previousHistory;
-      }
       _error = error is ApiException
           ? error.message
           : 'Ton humeur n’a pas été enregistrée. Réessaie.';
@@ -282,11 +203,6 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
-  void completeGoal() {
-    _goalCompleted = true;
-    _notify();
-  }
-
   String getGreeting() {
     final hour = _now().hour;
     if (hour < 12) {
@@ -295,24 +211,6 @@ class DashboardProvider extends ChangeNotifier {
       return 'Bon après-midi';
     } else {
       return 'Bonsoir';
-    }
-  }
-
-  String getMoodMessage() {
-    if (_selectedMood == null) {
-      return 'Comment te sens-tu aujourd\'hui ?';
-    }
-    switch (_selectedMood!) {
-      case MoodType.verySad:
-        return 'Je suis là pour toi. Veux-tu en parler ?';
-      case MoodType.sad:
-        return 'Les jours difficiles passent aussi.';
-      case MoodType.neutral:
-        return 'Une journée tranquille, c\'est bien aussi.';
-      case MoodType.happy:
-        return 'Super ! Continue sur cette lancée !';
-      case MoodType.veryHappy:
-        return 'Quelle belle énergie !';
     }
   }
 
@@ -384,25 +282,12 @@ class DashboardProvider extends ChangeNotifier {
     } else if (moodVersion == _moodVersion) {
       _selectedMood = null;
     }
-    final stats = data.stats;
-    _currentStreak = stats.streak;
-    _activeChallengesCount = stats.activeChallengesCount;
-    _journalEntriesCount = stats.journalEntriesCount;
-    _completedChallengesCount = stats.completedChallengesCount;
-    _totalPoints = stats.totalPoints;
-    _meditationSessionsCount = stats.meditationSessionsCount;
-    _coachSessionsCount = stats.coachSessionsCount;
-    _moodLogsCount = stats.moodLogsCount;
+    _currentStreak = data.stats.streak;
     _isLoading = false;
     _notify();
   }
 
   Future<void> refresh() async {
     await loadDashboardData();
-  }
-
-  void setUserName(String name) {
-    _userName = name;
-    _notify();
   }
 }

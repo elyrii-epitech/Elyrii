@@ -145,22 +145,20 @@ void main() {
       addTearDown(provider.dispose);
       provider.onUserChanged(userId: DevSession.userId, isDemo: true);
       await provider.loadDashboardData();
-      await provider.selectMood(MoodType.happy);
-      expect(
-        provider.completedChallengesCount,
-        DevSession.completedChallengeCount,
-      );
-      expect(provider.totalPoints, DevSession.totalPoints);
+      expect(provider.currentStreak, DevSession.streakDays);
+      expect(await provider.selectMood(MoodType.happy), isTrue);
+      expect(provider.selectedMood, MoodType.happy);
+      expect(provider.isSavingMood, isFalse);
       expect(repository.reads, 0);
       expect(repository.moodWrites, 0);
       demo = false;
       provider.onUserChanged(userId: 'bob');
       expect(provider.selectedMood, isNull);
-      expect(provider.moodHistory, isEmpty);
-      expect(provider.completedChallengesCount, 0);
+      expect(provider.currentStreak, 0);
       await provider.loadDashboardData();
-      expect(provider.completedChallengesCount, 4);
-      expect(provider.totalPoints, 200);
+      expect(repository.reads, 1);
+      expect(provider.error, isNull);
+      expect(provider.isLoading, isFalse);
     },
   );
 
@@ -183,14 +181,11 @@ void main() {
       stale.complete(
         DashboardData.fromJson({
           'latestMood': 'sad',
-          'stats': {'completedChallengesCount': 1},
+          'stats': {'streak': 1},
         }),
       );
       await loading;
-      expect(
-        provider.completedChallengesCount,
-        DevSession.completedChallengeCount,
-      );
+      expect(provider.currentStreak, DevSession.streakDays);
       expect(provider.selectedMood, isNull);
       expect(provider.isLoading, isFalse);
     },
