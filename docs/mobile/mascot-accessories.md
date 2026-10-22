@@ -1,4 +1,4 @@
-# Atelier Elyrii — personnalisation et collection
+# Tenue d'Elyrii et collection
 
 La collection part du véritable ourson 3D : tête ronde très volumineuse, grandes
 oreilles roses, yeux prune, museau et ventre blancs, matière crème mate. Les
@@ -32,40 +32,35 @@ retire. Les quinze pièces permettent 320 tenues, ourson sans accessoire compris
 | Pendentif feuille | `leaf_pendant` | 30 |
 | Petit sac à dos | `mini_backpack` | 36 |
 
-L’onglet Collection affiche les portraits des vraies pièces, leurs descriptions,
-les paliers et la progression. Les filtres Tous, Tête, Visage, Cou, Dos et
-Disponibles facilitent la composition. Le prochain palier indique combien de
-défis restent à terminer et propose d’essayer la récompense sur l’ourson.
-L’essai d’une pièce verrouillée est temporaire et ne rejoint jamais la tenue
-enregistrée. Une célébration regroupe les nouveaux déblocages et respecte la
-préférence système de réduction des animations.
+Le dressing s'ouvre depuis **Tenue** dans la capsule de l'Accueil.
+L'onglet **Accessoires** filtre les portraits par Tête, Visage, Cou et Dos.
+Une pièce verrouillée affiche son palier et explique les défis restants.
+Elle ne modifie pas l'aperçu. La progression reste indisponible tant que
+les défis n'ont pas été chargés.
 
 `MascotProvider` vérifie les nouveaux équipements lors de l’enregistrement.
 Une pièce déjà portée et restaurée reste retirable même si la progression est
 indisponible. Cette vérification reste côté client ; le serveur n’ajoute pas
 de système d’inventaire. Les paliers existants sont conservés.
 
-## Studio et sauvegarde
+## Dressing et sauvegarde
 
-L’aperçu 3D reste visible pendant la navigation entre Style, Couleurs et
-Collection. Il permet la rotation tactile et les vues Face, 3/4 et Dos.
-Sur grand écran, l’aperçu et les réglages occupent deux colonnes. Sur mobile,
-les réglages défilent sous l’aperçu ; le clavier laisse la place à la saisie.
+Le dressing partage le même modèle 3D que l'Accueil. Les onglets **Couleurs**,
+**Accessoires** et **Décor** défilent sous l'aperçu, qui reste monté.
+Une fermeture abandonne le brouillon. **Enregistrer** sauvegarde la tenue,
+puis le décor local. Si le décor ne peut pas être écrit, le dressing restaure
+la tenue précédente et reste ouvert avec une erreur.
 
-Huit palettes servent de base : Elyrii Originel, Astral, Esprit Zen, Sakura
-Céleste, Automne Cuivré, Panda Mystique, Noël et Océan. Leurs nuanciers montrent
-les couleurs réellement appliquées. Le corps, les détails clairs, les oreilles
-et joues, les yeux et les accessoires possèdent ensuite leurs propres couleurs : nuancier, teinte,
-saturation, luminosité et code hexadécimal. Les finitions Velours, Satin et
-Porcelaine ajustent les matériaux. Les touches dorées et les montures prune
-des accessoires conservent leur contraste.
+Les huit palettes de `MascotThemes.all` recolorent les matériaux du modèle.
+Les finitions Velours, Satin et Porcelaine ajustent leur rendu. Les couleurs
+libres d'une tenue existante restent conservées jusqu'au choix d'une palette.
+**Revenir au look d'origine** rétablit le modèle par défaut dans le brouillon.
 
-Les changements forment un brouillon avec annulation et retour au look
-d’origine. Le bouton Enregistrer applique la tenue à la mascotte globale.
-Un glissement de curseur correspond à une seule action d’annulation, avec
-recoloration pendant le réglage.
-Quitter avec des changements propose de poursuivre, d’enregistrer ou de
-quitter sans enregistrer.
+Les décors Arches, Collines et Vagues sont disponibles immédiatement.
+Clairière demande dix défis terminés. Collines affiche une aube en thème clair.
+`AccueilActivities` chiffre le décor dans un document propre au compte.
+Le décor n'est pas transmis au serveur, qui ne connaît pas ce champ.
+
 
 La sauvegarde locale utilise `elyrii_mascot_theme_<userId>`,
 `elyrii_mascot_customization_<userId>` et `elyrii_mascot_appearance_<userId>`.
@@ -75,7 +70,7 @@ restaurée peut migrer les anciennes clés globales une seule fois ;
 identifiants d’accessoires de Lucas sont normalisés sans perdre la tenue.
 Un cache de son studio local est synchronisé avant de lire un éventuel look
 serveur par défaut ; `elyrii_mascot_schema_version_<userId>` marque cette migration.
-Les célébrations déjà vues sont également conservées par compte.
+L'ancien écran Atelier et sa route `/mascot-customization` sont supprimés.
 Le serveur stocke les couleurs et la finition dans
 `personality.customization`, validé par `modules/user/mascot.validation.ts`.
 Les autres traits de personnalité sont conservés par la fusion existante.
@@ -88,8 +83,8 @@ synchronisation, également retentée au chargement.
 Un changement de session invalide les chargements, brouillons et synchronisations
 en attente de l’ancien compte. La progression des défis et les statistiques
 du dashboard sont réinitialisées ; le cache du dashboard est aussi isolé par
-compte. Le mode démo débloque toute la collection localement, sans requête de
-mascotte, défis ou dashboard au serveur, et sans modifier la progression réelle.
+compte. Le mode démo fournit une progression locale, sans modifier
+la progression réelle ni envoyer les choix au serveur.
 
 ## Intégration du travail de Lucas
 
@@ -101,11 +96,10 @@ trois modèles distinctifs : diplômé, laurier et éclat lumineux. Les accessoi
 et déplacé sur la joue pour préserver le regard ; le laurier est simplifié
 pour le budget mobile, avec des normales adaptées aux feuilles aplaties.
 
-Le studio conserve ses brouillons, l’annulation, les couleurs libres, les
-finitions, l’aperçu persistant et les tenues multizones. Le rendu utilise l’API
-publique de model-viewer et un seul modèle animé. Les modifications de ports,
-Docker, chat et autres changements de la branche du collègue sont hors de cette
-intégration.
+Le dressing conserve les finitions, l'aperçu persistant et les tenues multizones.
+Le rendu utilise l'API publique de model-viewer et un seul modèle animé.
+Les couleurs libres et l'historique d'annulation de l'ancien Atelier ne font
+plus partie des contrôles présentés.
 
 ## Modèles et rendu
 
@@ -145,9 +139,7 @@ lecture. Trois textures canvas réutilisables limitent la mémoire pendant les
 réglages. La finition ajuste rugosité, relief et clearcoat, dont l’extension
 est présente dans le modèle assemblé. L’outil local de revue utilise le même
 script model-viewer embarqué que les plateformes natives.
-Le studio maintient un seuil de résolution de 75 % via l’API publique
-`minimumRenderScale` ; le seuil précédent est rétabli à la sortie. L’adaptation
-automatique reste disponible au-dessus de ce seuil pour les appareils plus lents.
+Le dressing de l'Accueil garde la qualité adaptative du viewer partagé.
 
 ## Reconstruction et vérification
 
@@ -177,27 +169,13 @@ python3 scripts/mascot/serve_studio.py
 # http://127.0.0.1:8766/wardrobe
 ```
 
-Une entrée dédiée permet de vérifier les widgets de production sans compte :
+La démo de l'application permet d'ouvrir le dressing depuis l'Accueil.
+L'ancien outil `preview_mascot_studio.dart` est supprimé avec l'Atelier.
+Les portraits livrés sont dans `elyrii_app/assets/accessory_portraits/`.
+Les images de revue générées dans `scripts/mascot/previews/` restent locales.
 
-```sh
-cd elyrii_app
-flutter run -d DEVICE_ID -t tool/preview_mascot_studio.dart
-# --dart-define=PREVIEW_CHALLENGES=36 déverrouille la collection pour la revue.
-```
-
-Utiliser un émulateur ou appareil iOS/Android de développement. Les portraits
-livrés sont dans `elyrii_app/assets/accessory_portraits/` ; les images de revue
-générées dans `scripts/mascot/previews/` restent locales et ignorées par Git.
-
-Les tests `mascot_wardrobe_asset_test.dart` relient chaque identifiant et tenue
-au catalogue, vérifient les ancrages animés, matériaux masqués, skins, clips et
-budgets. Les tests du provider et de la page couvrent les brouillons, couleurs,
-quatre zones, filtres, essais verrouillés, sauvegarde, restauration hors ligne
-et ordre des synchronisations. Les tests de session vérifient la migration des
-identifiants de Lucas, l’isolation des comptes et de la démo, les réponses
-réseau tardives, les écritures invalidées et le refus d’un ancien brouillon.
-Le test widget du rendu vérifie la conservation
-de la scène. Les écrans compacts avec texte agrandi et les célébrations sans
-animation sont vérifiés en thèmes clair et sombre.
-Les filtres de zones conservent leur nom accessible lorsqu’un indicateur de
-pièce équipée est visible.
+`test/dashboard_mood_system_test.dart` couvre l'annulation, l'aperçu et la
+sauvegarde de la tenue et du décor. Les tests du provider couvrent la
+restauration hors ligne, les sessions et l'ordre des synchronisations.
+Les tests des activités locales couvrent le verrou Clairière et la
+persistance par compte. Les tests d'assets contrôlent les variantes du modèle.

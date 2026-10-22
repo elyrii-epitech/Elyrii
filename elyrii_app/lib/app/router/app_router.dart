@@ -10,7 +10,6 @@ import '../../features/coach/presentation/pages/coach_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/gamification/presentation/pages/challenges_page.dart';
 import '../../features/journal/presentation/pages/journal_page.dart';
-import '../../features/mascot/presentation/pages/mascot_customization_page.dart';
 import '../../features/meditation/presentation/pages/meditation_page.dart';
 import '../../features/meditation/presentation/pages/meditation_session_page.dart';
 import '../../features/profile_setup/presentation/pages/avatar_picker_page.dart';
@@ -185,14 +184,6 @@ abstract final class AppRouter {
             key: state.pageKey,
             name: state.name,
             child: const ReviewsPage(),
-          ),
-        ),
-        GoRoute(
-          path: AppRoutes.mascotCustomization,
-          pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(
-            key: state.pageKey,
-            name: state.name,
-            child: const MascotCustomizationPage(),
           ),
         ),
         GoRoute(
