@@ -47,7 +47,7 @@ docker run --rm --network "container:$container" -e DB_HOST=127.0.0.1 \
     -e DB_USER=context_test -e DB_PASSWORD=test -e DB_NAME=fresh -e CONTEXT_DB_TEST=1 \
     "${evaluation_mount[@]}" -v "$PWD/modules/chat:/app/modules/chat:ro" -v "$PWD/repository:/app/repository:ro" -v "$PWD/modules/context:/app/modules/context:ro" \
     -v "$PWD/middleware:/app/middleware:ro" -v "$PWD/utils:/app/utils:ro" -v "$PWD/config:/app/config:ro" -v "$PWD/../elyrii_ai/test/fixtures:/elyrii_ai/test/fixtures:ro" "$image" \
-    bun test modules/context modules/chat/context-dispatch.test.ts repository/context.repository.test.ts repository/extraction.repository.test.ts repository/summary.repository.test.ts repository/embedding.repository.test.ts repository/retrieval.repository.test.ts repository/mood.repository.test.ts repository/context-lifecycle.repository.test.ts repository/context-rollout.test.ts
+    bun test modules/context modules/chat/context-dispatch.test.ts repository/context.repository.test.ts repository/extraction.repository.test.ts repository/summary.repository.test.ts repository/embedding.repository.test.ts repository/retrieval.repository.test.ts repository/mood.repository.test.ts repository/context-source.repository.test.ts repository/context-lifecycle.repository.test.ts repository/context-rollout.test.ts
 psql_test fresh < scripts/test-context-schema.sql
 
 psql_test fresh -c 'CREATE DATABASE upgraded'
@@ -58,6 +58,13 @@ run upgraded bun run db:baseline
 run upgraded bun run db:migrate
 psql_test upgraded -c "DO \$\$ BEGIN IF (SELECT count(*) FROM chat_messages WHERE message = 'Preserve this message') <> 1 THEN RAISE EXCEPTION 'Existing history lost'; END IF; END \$\$"
 psql_test upgraded < scripts/test-context-schema.sql
+
+# Verify already-populated chat provenance and old journal timestamps across 0007.
+psql_test fresh -c 'CREATE DATABASE source_upgrade'
+for migration in migrations/000[0-6]_*.sql; do psql_test source_upgrade < "$migration"; done
+psql_test source_upgrade < scripts/test-source-upgrade.sql
+psql_test source_upgrade < migrations/0007_journal_source_foundation.sql
+psql_test source_upgrade < scripts/test-source-upgrade-check.sql
 
 psql_test fresh -c 'CREATE DATABASE drifted'
 psql_test drifted < migrations/0000_existing_schema.sql
