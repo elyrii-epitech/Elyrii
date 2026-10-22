@@ -1,6 +1,5 @@
 import 'package:elyrii_app/app/router/app_shell.dart';
 import 'package:elyrii_app/core/glass/elyrii_glass_surface.dart';
-import 'package:elyrii_app/core/theme/app_colors.dart';
 import 'package:elyrii_app/core/theme/app_text_styles.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/widgets/glass_bubble_button.dart';
