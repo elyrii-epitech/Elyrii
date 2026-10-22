@@ -10,6 +10,7 @@ export const extractionJobs = pgTable("context_extraction_jobs", {
     userId: uuid("user_id").notNull().references(() => userTable.id, { onDelete: "cascade" }),
     conversationId: text("conversation_id").notNull(),
     sourceMessageId: uuid("source_message_id").notNull(),
+    sourceRevision: integer("source_revision").notNull().default(1),
     requestId: uuid("request_id").notNull(),
     extractorVersion: text("extractor_version").notNull().default("v1"),
     generation: integer("generation").notNull(),

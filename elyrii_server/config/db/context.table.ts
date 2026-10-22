@@ -4,6 +4,7 @@ import {
     primaryKey, text, timestamp, uniqueIndex, uuid,
 } from "drizzle-orm/pg-core";
 import { chatMessagesTable } from "./chat.table";
+import { contextSourceVersions } from "./context-source.table";
 import { userTable } from "./user.table";
 
 export const contextStatus = pgEnum("context_status", ["active", "superseded", "deleted"]);
@@ -30,7 +31,10 @@ export const userContextFactsTable = pgTable("user_context_facts", {
     kind: contextFactKind("kind").notNull(),
     value: jsonb("value").notNull(),
     origin: contextOrigin("origin").notNull(),
-    sourceMessageId: uuid("source_message_id"),
+    sourceMessageId: uuid("source_message_id"), // Legacy chat-only alias.
+    sourceKind: text("source_kind").$type<"chat" | "journal">(),
+    sourceId: uuid("source_id"),
+    sourceRevision: integer("source_revision"),
     status: contextStatus("status").notNull().default("active"),
     validFrom: timestamp("valid_from", { withTimezone: true }).notNull().defaultNow(),
     validUntil: timestamp("valid_until", { withTimezone: true }),
@@ -43,6 +47,12 @@ export const userContextFactsTable = pgTable("user_context_facts", {
     index("user_context_facts_source_idx").on(table.userId, table.sourceMessageId),
     foreignKey({ name: "user_context_facts_source_fk", columns: [table.userId, table.sourceMessageId],
         foreignColumns: [chatMessagesTable.userId, chatMessagesTable.id] }).onDelete("cascade"),
+    foreignKey({ name: "user_context_facts_version_fk", columns: [table.userId, table.sourceKind, table.sourceId, table.sourceRevision],
+        foreignColumns: [contextSourceVersions.userId, contextSourceVersions.kind, contextSourceVersions.sourceId, contextSourceVersions.revision] }).onDelete("cascade"),
+    check("user_context_facts_provenance_check", sql`(${table.sourceKind} IS NULL AND ${table.sourceId} IS NULL AND ${table.sourceRevision} IS NULL AND ${table.sourceMessageId} IS NULL) OR
+        (${table.sourceKind} IS NOT NULL AND ${table.sourceKind} IN ('chat', 'journal') AND ${table.sourceId} IS NOT NULL AND ${table.sourceRevision} > 0 AND ${table.sourceRevision} IS NOT NULL
+         AND ((${table.sourceKind} = 'chat' AND ${table.sourceMessageId} IS NOT NULL AND ${table.sourceMessageId} = ${table.sourceId}) OR
+              (${table.sourceKind} = 'journal' AND ${table.sourceMessageId} IS NULL)))`),
     check("user_context_facts_key_check", sql`length(btrim(${table.key})) > 0`),
     check("user_context_facts_validity_check", sql`${table.validUntil} IS NULL OR ${table.validUntil} > ${table.validFrom}`),
 ]);
@@ -71,7 +81,10 @@ export const userMemoriesTable = pgTable("user_memories", {
     content: text("content").notNull(),
     contentRevision: integer("content_revision").notNull().default(1),
     origin: contextOrigin("origin").notNull(),
-    sourceMessageId: uuid("source_message_id"),
+    sourceMessageId: uuid("source_message_id"), // Legacy chat-only alias.
+    sourceKind: text("source_kind").$type<"chat" | "journal">(),
+    sourceId: uuid("source_id"),
+    sourceRevision: integer("source_revision"),
     retention: memoryRetention("retention").notNull(),
     status: contextStatus("status").notNull().default("active"),
     eventAt: timestamp("event_at", { withTimezone: true }),
@@ -86,6 +99,12 @@ export const userMemoriesTable = pgTable("user_memories", {
     index("user_memories_source_idx").on(table.userId, table.sourceMessageId),
     foreignKey({ name: "user_memories_source_fk", columns: [table.userId, table.sourceMessageId],
         foreignColumns: [chatMessagesTable.userId, chatMessagesTable.id] }).onDelete("cascade"),
+    foreignKey({ name: "user_memories_version_fk", columns: [table.userId, table.sourceKind, table.sourceId, table.sourceRevision],
+        foreignColumns: [contextSourceVersions.userId, contextSourceVersions.kind, contextSourceVersions.sourceId, contextSourceVersions.revision] }).onDelete("cascade"),
+    check("user_memories_provenance_check", sql`(${table.sourceKind} IS NULL AND ${table.sourceId} IS NULL AND ${table.sourceRevision} IS NULL AND ${table.sourceMessageId} IS NULL) OR
+        (${table.sourceKind} IS NOT NULL AND ${table.sourceKind} IN ('chat', 'journal') AND ${table.sourceId} IS NOT NULL AND ${table.sourceRevision} > 0 AND ${table.sourceRevision} IS NOT NULL
+         AND ((${table.sourceKind} = 'chat' AND ${table.sourceMessageId} IS NOT NULL AND ${table.sourceMessageId} = ${table.sourceId}) OR
+              (${table.sourceKind} = 'journal' AND ${table.sourceMessageId} IS NULL)))`),
     check("user_memories_content_check", sql`length(btrim(${table.content})) > 0`),
     check("user_memories_short_term_expiry_check", sql`${table.retention} <> 'short_term' OR ${table.expiresAt} IS NOT NULL`),
     check("user_memories_expiry_check", sql`${table.expiresAt} IS NULL OR ${table.expiresAt} > ${table.createdAt}`),

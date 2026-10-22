@@ -14,3 +14,11 @@ export function conversationHasExpiredContext(userId: string, conversationId: st
         AND source.user_id = expiring.user_id WHERE expiring.user_id = ${userId}::uuid AND source.conversation_id = ${conversationId}
         AND (expiring.expires_at <= ${now} OR expiring.valid_until <= ${now}))`;
 }
+
+/** Revision validity is independent from exclusion of future automatic processing. */
+export function derivedSourceEligible(table: { userId: import("drizzle-orm/pg-core").AnyPgColumn; sourceKind: import("drizzle-orm/pg-core").AnyPgColumn;
+    sourceId: import("drizzle-orm/pg-core").AnyPgColumn; sourceRevision: import("drizzle-orm/pg-core").AnyPgColumn }) {
+    return sql`(${table.sourceKind} IS NULL OR EXISTS (SELECT 1 FROM context_source_versions provenance
+        WHERE provenance.user_id = ${table.userId} AND provenance.kind = ${table.sourceKind}
+        AND provenance.source_id = ${table.sourceId} AND provenance.revision = ${table.sourceRevision} AND provenance.active))`;
+}

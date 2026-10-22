@@ -9,9 +9,11 @@ import {
     type JournalTag,
     type NewJournalEntry,
 } from "../config/db/journal.table";
+import { userTable } from "../config/db/user.table";
 import { eq, and, gte, lte, isNull } from "drizzle-orm";
 
 class JournalRepository {
+    constructor(private readonly database: typeof db = db) {}
     private normalizeTagName(name: string): string {
         return name.trim().toLowerCase();
     }
@@ -33,17 +35,17 @@ class JournalRepository {
             conditions.push(lte(journalEntriesTable.createdAt, endDate));
         }
 
-        const entries = await db.select().from(journalEntriesTable).where(and(...conditions));
+        const entries = await this.database.select().from(journalEntriesTable).where(and(...conditions));
         return entries || [];
     }
 
     public async getEntryById(_id: string): Promise<JournalEntry | null> {
-        const [entry] = await db.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, _id)).limit(1);
+        const [entry] = await this.database.select().from(journalEntriesTable).where(eq(journalEntriesTable.id, _id)).limit(1);
         return entry || null;
     }
 
     public async getEntryByIdForUser(_id: string, userId: string): Promise<JournalEntry | null> {
-        const [entry] = await db
+        const [entry] = await this.database
             .select()
             .from(journalEntriesTable)
             .where(and(
@@ -60,7 +62,8 @@ class JournalRepository {
             throw new Error('User ID and title are required');
         }
 
-        const entry = await db.transaction(async (tx) => {
+        const entry = await this.database.transaction(async (tx) => {
+            await tx.select({ id: userTable.id }).from(userTable).where(eq(userTable.id, data.userId)).for("update");
             const result = await tx.insert(journalEntriesTable).values(data).returning();
             if (!result || result.length === 0) {
                 tx.rollback();
@@ -85,7 +88,8 @@ class JournalRepository {
             throw new Error('User ID and title are required');
         }
 
-        const entry = await db.transaction(async (tx) => {
+        const entry = await this.database.transaction(async (tx) => {
+            await tx.select({ id: userTable.id }).from(userTable).where(eq(userTable.id, data.userId)).for("update");
             const result = await tx.insert(journalEntriesTable).values({
                 userId: data.userId,
                 title: data.title,
@@ -113,10 +117,10 @@ class JournalRepository {
     }
 
     async updateEntry(_id: string, data: Partial<JournalEntry>): Promise<JournalEntry> {
-        return await db.transaction(async (tx) => {
+        return await this.database.transaction(async (tx) => {
             const [existing] = await tx.select().from(journalEntriesTable)
                 .where(eq(journalEntriesTable.id, _id))
-                .limit(1);
+                .limit(1).for("update");
 
             if (!existing) {
                 tx.rollback();
@@ -133,7 +137,7 @@ class JournalRepository {
             if (data.deletedAt !== undefined && data.deletedAt !== existing.deletedAt)
                 updatePayload.deletedAt = data.deletedAt;
 
-            if (Object.keys(updatePayload).length === 1 && data.deletedAt === undefined) {
+            if (Object.keys(updatePayload).length === 0 && data.deletedAt === undefined) {
                 return existing as JournalEntry;
             }
 
@@ -152,7 +156,8 @@ class JournalRepository {
     }
 
     async updateEntryForUser(_id: string, userId: string, data: Partial<JournalEntry>): Promise<JournalEntry> {
-        return await db.transaction(async (tx) => {
+        return await this.database.transaction(async (tx) => {
+            await tx.select({ id: userTable.id }).from(userTable).where(eq(userTable.id, userId)).for("update");
             const [existing] = await tx
                 .select()
                 .from(journalEntriesTable)
@@ -161,7 +166,7 @@ class JournalRepository {
                     eq(journalEntriesTable.userId, userId),
                     isNull(journalEntriesTable.deletedAt),
                 ))
-                .limit(1);
+                .limit(1).for("update");
 
             if (!existing) {
                 tx.rollback();
@@ -206,7 +211,8 @@ class JournalRepository {
         data: Partial<JournalEntry>,
         tags?: string[] | null,
     ): Promise<JournalEntry> {
-        return await db.transaction(async (tx) => {
+        return await this.database.transaction(async (tx) => {
+            await tx.select({ id: userTable.id }).from(userTable).where(eq(userTable.id, userId)).for("update");
             const [existing] = await tx
                 .select()
                 .from(journalEntriesTable)
@@ -215,7 +221,7 @@ class JournalRepository {
                     eq(journalEntriesTable.userId, userId),
                     isNull(journalEntriesTable.deletedAt),
                 ))
-                .limit(1);
+                .limit(1).for("update");
 
             if (!existing) {
                 tx.rollback();
@@ -262,7 +268,7 @@ class JournalRepository {
         entryId: string,
         userId: string,
         tags: string[] | null,
-        tx: any = db,
+        tx: any = this.database,
     ): Promise<void> {
         const [entry] = await tx
             .select({ id: journalEntriesTable.id })
@@ -315,7 +321,7 @@ class JournalRepository {
     }
 
     async getTagsForUser(userId: string): Promise<JournalTag[]> {
-        return db
+        return this.database
             .select()
             .from(journalTagsTable)
             .where(eq(journalTagsTable.userId, userId));
@@ -327,7 +333,7 @@ class JournalRepository {
             throw new Error("Tag name is required");
         }
 
-        const [existing] = await db
+        const [existing] = await this.database
             .select()
             .from(journalTagsTable)
             .where(and(
@@ -338,7 +344,7 @@ class JournalRepository {
 
         if (existing) return existing;
 
-        const [created] = await db
+        const [created] = await this.database
             .insert(journalTagsTable)
             .values({ userId, name: normalized })
             .returning();
@@ -355,7 +361,7 @@ class JournalRepository {
             throw new Error("Tag name is required");
         }
 
-        const [updated] = await db
+        const [updated] = await this.database
             .update(journalTagsTable)
             .set({ name: normalized })
             .where(and(
@@ -371,7 +377,7 @@ class JournalRepository {
     }
 
     async deleteTagForUser(tagId: string, userId: string): Promise<void> {
-        const [tag] = await db
+        const [tag] = await this.database
             .select({ id: journalTagsTable.id })
             .from(journalTagsTable)
             .where(and(
@@ -384,12 +390,12 @@ class JournalRepository {
             throw new Error("Tag not found");
         }
 
-        await db.delete(journalEntryTagsTable).where(eq(journalEntryTagsTable.tagId, tagId));
-        await db.delete(journalTagsTable).where(eq(journalTagsTable.id, tagId));
+        await this.database.delete(journalEntryTagsTable).where(eq(journalEntryTagsTable.tagId, tagId));
+        await this.database.delete(journalTagsTable).where(eq(journalTagsTable.id, tagId));
     }
 
     async addMediaForEntry(entryId: string, userId: string, url: string, type?: string): Promise<JournalMedia> {
-        const [entry] = await db
+        const [entry] = await this.database
             .select({ id: journalEntriesTable.id })
             .from(journalEntriesTable)
             .where(and(
@@ -403,7 +409,7 @@ class JournalRepository {
             throw new Error("Journal entry not found");
         }
 
-        const [created] = await db
+        const [created] = await this.database
             .insert(journalMediaTable)
             .values({ entryId, url, type: type ?? null })
             .returning();
@@ -415,7 +421,7 @@ class JournalRepository {
     }
 
     async listMediaForEntry(entryId: string, userId: string): Promise<JournalMedia[]> {
-        const [entry] = await db
+        const [entry] = await this.database
             .select({ id: journalEntriesTable.id })
             .from(journalEntriesTable)
             .where(and(
@@ -429,14 +435,14 @@ class JournalRepository {
             throw new Error("Journal entry not found");
         }
 
-        return db
+        return this.database
             .select()
             .from(journalMediaTable)
             .where(eq(journalMediaTable.entryId, entryId));
     }
 
     async deleteMediaForEntry(entryId: string, userId: string, mediaId: string): Promise<void> {
-        const [entry] = await db
+        const [entry] = await this.database
             .select({ id: journalEntriesTable.id })
             .from(journalEntriesTable)
             .where(and(
@@ -450,7 +456,7 @@ class JournalRepository {
             throw new Error("Journal entry not found");
         }
 
-        const [deleted] = await db
+        const [deleted] = await this.database
             .delete(journalMediaTable)
             .where(and(
                 eq(journalMediaTable.id, mediaId),
@@ -464,7 +470,7 @@ class JournalRepository {
     }
     
     async softDeleteEntry(_id: string): Promise<boolean> {
-        return await db.transaction(async (tx) => {
+        return await this.database.transaction(async (tx) => {
             const [updated] = await tx.update(journalEntriesTable)
                 .set({ deletedAt: new Date() })
                 .where(eq(journalEntriesTable.id, _id))
@@ -479,7 +485,8 @@ class JournalRepository {
     }
 
     async softDeleteEntryForUser(_id: string, userId: string): Promise<boolean> {
-        return await db.transaction(async (tx) => {
+        return await this.database.transaction(async (tx) => {
+            await tx.select({ id: userTable.id }).from(userTable).where(eq(userTable.id, userId)).for("update");
             const [updated] = await tx
                 .update(journalEntriesTable)
                 .set({ deletedAt: new Date() })

@@ -1,6 +1,8 @@
 import { and, asc, eq, gt, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../config/db.config";
+import { sourceReference } from "../modules/context/source.contracts";
+import { journalEntriesTable as journals } from "../config/db/journal.table";
 import { userTable as users } from "../config/db/user.table";
 import { chatMessagesTable as messages } from "../config/db/chat.table";
 import { userContextFactsTable as facts, userMemoriesTable as memories } from "../config/db/context.table";
@@ -24,14 +26,15 @@ export class ContextLifecycleRepository {
             or(isNull(table.validUntil), gt(table.validUntil, now)),
             kind === "memories" ? or(isNull(memories.expiresAt), gt(memories.expiresAt, now)) : undefined))
             .orderBy(asc(table.id)).limit(page.limit + 1);
-        const items = rows.slice(0, page.limit);
+        const items = rows.slice(0, page.limit).map(row => ({ ...row, source: sourceReference(row) }));
         return { items, nextCursor: rows.length > page.limit ? items.at(-1)!.id : null };
     }
-    private async suppress(tx: Tx, userId: string, targetId: string, sourceId: string | null, factKey?: string) {
+    private async suppress(tx: Tx, userId: string, targetId: string, sourceId: string | null, factKey?: string, journalId?: string | null) {
         if (factKey) await tx.insert(keys).values({ userId, key: `fact:${factKey}`, targetId, sequence: 0n, suppressed: true })
             .onConflictDoUpdate({ target: [keys.userId, keys.key], set: { suppressed: true } });
         await tx.update(users).set({ contextGeneration: sql`${users.contextGeneration} + 1` }).where(eq(users.id, userId));
         await tx.update(keys).set({ suppressed: true }).where(and(eq(keys.userId, userId), eq(keys.targetId, targetId)));
+        if (journalId) await tx.update(journals).set({ contextSuppressed: true }).where(and(eq(journals.userId, userId), eq(journals.id, journalId)));
         if (sourceId) {
             // Conversation-wide source suppression prevents assistant paraphrases and
             // contextual later messages from reintroducing a forgotten assertion.
@@ -55,15 +58,15 @@ export class ContextLifecycleRepository {
             const now = this.clock();
             if (row.status !== "active" || (row.validUntil && row.validUntil <= now) || ("expiresAt" in row && row.expiresAt && row.expiresAt <= now))
                 throw new ContextConflictError("Context is no longer active");
-            await this.suppress(tx, userId, row.id, row.sourceMessageId, "key" in row ? row.key : undefined);
+            await this.suppress(tx, userId, row.id, row.sourceMessageId, "key" in row ? row.key : undefined, row.sourceKind === "journal" ? row.sourceId : null);
             if (kind === "facts") {
                 const [updated] = await tx.update(facts).set({ value: (input as z.infer<typeof correctFactSchema>).value,
                     origin: "explicit", updatedAt: now }).where(and(eq(facts.id, targetId), eq(facts.userId, userId))).returning();
-                return updated;
+                return updated ? { ...updated, source: sourceReference(updated) } : updated;
             }
             const [updated] = await tx.update(memories).set({ content: (input as z.infer<typeof correctMemorySchema>).content,
                 origin: "explicit", updatedAt: now }).where(and(eq(memories.id, targetId), eq(memories.userId, userId))).returning();
-            return updated;
+            return updated ? { ...updated, source: sourceReference(updated) } : updated;
         });
     }
     async forget(userId: string, kind: "facts" | "memories", targetId: string) {
@@ -73,7 +76,7 @@ export class ContextLifecycleRepository {
             const table = kind === "facts" ? facts : memories;
             const [row] = await tx.select().from(table).where(and(eq(table.userId, userId), eq(table.id, targetId)));
             if (!row) return; // Foreign and missing IDs have the same idempotent response.
-            await this.suppress(tx, userId, row.id, row.sourceMessageId, "key" in row ? row.key : undefined);
+            await this.suppress(tx, userId, row.id, row.sourceMessageId, "key" in row ? row.key : undefined, row.sourceKind === "journal" ? row.sourceId : null);
             // A source may have produced several interpretations of the same assertion.
             if (row.sourceMessageId) {
                 const related = await tx.select({ id: memories.id }).from(memories).where(and(eq(memories.userId, userId), eq(memories.sourceMessageId, row.sourceMessageId)));
@@ -81,6 +84,9 @@ export class ContextLifecycleRepository {
                 await tx.update(keys).set({ suppressed: true }).where(and(eq(keys.userId, userId), inArray(keys.targetId, [...related, ...relatedFacts].map(r => r.id))));
                 await tx.delete(facts).where(and(eq(facts.userId, userId), eq(facts.sourceMessageId, row.sourceMessageId)));
                 await tx.delete(memories).where(and(eq(memories.userId, userId), eq(memories.sourceMessageId, row.sourceMessageId)));
+            } else if (row.sourceKind === "journal" && row.sourceId) {
+                await tx.delete(facts).where(and(eq(facts.userId, userId), eq(facts.sourceKind, "journal"), eq(facts.sourceId, row.sourceId)));
+                await tx.delete(memories).where(and(eq(memories.userId, userId), eq(memories.sourceKind, "journal"), eq(memories.sourceId, row.sourceId)));
             } else await tx.delete(table).where(and(eq(table.userId, userId), eq(table.id, targetId)));
         });
     }
@@ -107,7 +113,7 @@ export class ContextLifecycleRepository {
             const [row] = await tx.select().from(memories).where(and(eq(memories.id, candidate.id), eq(memories.userId, owner.id),
                 or(lte(memories.expiresAt, this.clock()), lte(memories.validUntil, this.clock()))));
             if (!row) return;
-            await this.suppress(tx, owner.id, row.id, row.sourceMessageId);
+            await this.suppress(tx, owner.id, row.id, row.sourceMessageId, undefined, row.sourceKind === "journal" ? row.sourceId : null);
             await tx.delete(memories).where(and(eq(memories.id, row.id), eq(memories.userId, owner.id)));
             removed++;
         });

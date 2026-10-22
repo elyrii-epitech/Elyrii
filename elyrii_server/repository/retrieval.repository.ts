@@ -49,7 +49,7 @@ export class RetrievalRepository {
                          THEN 1 - (e.embedding <=> ${JSON.stringify(vector)}::vector) ELSE NULL END AS similarity
                 FROM user_memories m JOIN memory_embeddings e ON e.memory_id = m.id
                 JOIN embedding_models model ON model.id = e.model
-                WHERE m.user_id = ${userId}::uuid AND m.status = 'active'
+                WHERE m.user_id = ${userId}::uuid AND m.status = 'active' AND (m.source_kind IS NULL OR m.source_kind = 'chat')
                     AND m.valid_from <= ${now} AND (m.valid_until IS NULL OR m.valid_until > ${now})
                     AND (m.expires_at IS NULL OR m.expires_at > ${now})
                     AND e.model = ${spec.id} AND e.dimensions = ${spec.dimensions}
@@ -93,12 +93,12 @@ export class RetrievalRepository {
                 request.currentMessageId ? ne(messages.id, request.currentMessageId) : undefined))
                 .orderBy(desc(messages.createdAt), desc(messages.id)).limit(config.recentLimit + 1) : [];
             const recent = tail.slice(0, config.recentLimit).reverse();
-            const stable = await tx.select().from(facts).where(policy.factsEligible(userId)).orderBy(asc(facts.key), asc(facts.id));
+            const stable = await tx.select().from(facts).where(and(policy.factsEligible(userId), sql`(${facts.sourceKind} IS NULL OR ${facts.sourceKind} = 'chat')`)).orderBy(asc(facts.key), asc(facts.id));
             const selected: RetrievedContext["memories"] = [];
             if (spec && ranked.length) {
                 const rows = await tx.select({ memory: memories, vectorUpdatedAt: sql<string>`${vectors.updatedAt}::text` })
                     .from(memories).innerJoin(vectors, eq(vectors.memoryId, memories.id)).innerJoin(models, eq(models.id, vectors.model))
-                    .where(and(policy.memoriesEligible(userId), inArray(memories.id, ranked.map(r => r.id)),
+                    .where(and(policy.memoriesEligible(userId), sql`(${memories.sourceKind} IS NULL OR ${memories.sourceKind} = 'chat')`, inArray(memories.id, ranked.map(r => r.id)),
                         eq(vectors.model, spec.id), eq(vectors.dimensions, spec.dimensions), eq(models.enabled, true),
                         eq(vectors.contentRevision, memories.contentRevision)));
                 const sources = new Set([...recent.map(m => m.id), ...stable.flatMap(f => f.sourceMessageId ? [f.sourceMessageId] : []),

@@ -1,4 +1,5 @@
 import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
+import { derivedSourceEligible } from "./source-eligibility";
 import { z } from "zod";
 import { userContextFactsTable as facts, userMemoriesTable as memories } from "../../config/db/context.table";
 import type { ParsedMemoryCandidate } from "./context.candidates";
@@ -44,12 +45,22 @@ export class ContextPolicy {
         }
         return { ...this.validity(input, now), expiresAt, eventAt: input.eventAt ?? null };
     }
+    /** Delayed work uses the original observation/event time, never processing/edit time. */
+    sourceMemoryTimes(input: ParsedMemoryCandidate, now: Date, sourceCreatedAt: Date) {
+        if (!Number.isFinite(+sourceCreatedAt) || sourceCreatedAt > now) return null;
+        if (input.retention !== "short_term") return this.memoryTimes(input, now);
+        const anchor = new Date(Math.min(+sourceCreatedAt, +(input.eventAt ?? sourceCreatedAt)));
+        const expiresAt = new Date(+anchor + this.retention.defaultMs);
+        if (expiresAt <= now) return null;
+        // Less than minMs may remain: do not grant an old observation a new minimum lifetime.
+        return { ...this.validity(input, now), expiresAt, eventAt: input.eventAt ?? null };
+    }
     factsEligible(userId: string, now = this.now()) {
-        return and(eq(facts.userId, userId), eq(facts.status, "active"), lte(facts.validFrom, now),
+        return and(derivedSourceEligible(facts), eq(facts.userId, userId), eq(facts.status, "active"), lte(facts.validFrom, now),
             or(isNull(facts.validUntil), gt(facts.validUntil, now)));
     }
     memoriesEligible(userId: string, now = this.now()) {
-        return and(eq(memories.userId, userId), eq(memories.status, "active"), lte(memories.validFrom, now),
+        return and(derivedSourceEligible(memories), eq(memories.userId, userId), eq(memories.status, "active"), lte(memories.validFrom, now),
             or(isNull(memories.validUntil), gt(memories.validUntil, now)),
             or(isNull(memories.expiresAt), gt(memories.expiresAt, now)));
     }

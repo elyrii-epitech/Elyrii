@@ -27,7 +27,7 @@ class ChatRepository {
                 const eligible = extractionMessageSchema.safeParse({ id: row.id, role: "user", content: row.message,
                     messageAt: row.createdAt.toISOString() }).success && row.conversationId.length <= 200 && row.conversationId.length > 0;
                 await tx.insert(extractionJobs).values({ userId: row.userId, conversationId: row.conversationId,
-                    sourceMessageId: row.id, requestId, generation: owner.contextGeneration, timezone,
+                    sourceMessageId: row.id, sourceRevision: row.contextRevision, requestId, generation: owner.contextGeneration, timezone,
                     status: eligible ? "pending" : "failed", lastError: eligible ? null : "invalid_input" });
             }
             return row;
