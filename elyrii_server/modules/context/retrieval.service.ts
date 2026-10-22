@@ -1,3 +1,4 @@
+import { moodConfig } from "./mood.contracts";
 import { z } from "zod";
 import { RetrievalRepository } from "../../repository/retrieval.repository";
 import { embeddingConfig, embeddingModelSchema, type EmbeddingModel } from "./embedding.contracts";
@@ -32,12 +33,26 @@ export class ContextRetrievalService {
                 ranked = await this.repository.search(userId, spec, vector, this.config);
             } finally { clearTimeout(timer); controller.abort(); }
         } catch { semanticStatus = "unavailable"; ranked = []; }
+        let context: RetrievedContext;
         try {
-            return { ...await this.repository.assemble(userId, request, spec, ranked, this.config), semanticStatus };
+            context = { ...await this.repository.assemble(userId, request, spec, ranked, this.config), semanticStatus };
         } catch (error) {
             if (!ranked.length) throw error;
             // A failed vector lookup must not remove directly loaded facts and continuity.
-            return { ...await this.repository.assemble(userId, request, undefined, [], this.config), semanticStatus: "unavailable" };
+            context = { ...await this.repository.assemble(userId, request, undefined, [], this.config), semanticStatus: "unavailable" };
         }
+        // Read after slow embedding/assembly, including on every prompt-time refresh.
+        // No queued mood fallback and no dependency on semantic retrieval availability.
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+            const policy = moodConfig();
+            if (policy.enabled) {
+                const observation = await Promise.race([this.repository.moodObservation(userId, policy.freshnessHours),
+                    new Promise<undefined>(resolve => { timer = setTimeout(() => resolve(undefined), 250); })]);
+                if (observation) context.moodObservation = observation;
+            }
+        } catch { /* Optional source unavailable or misconfigured: preserve other context. */ }
+        finally { clearTimeout(timer); }
+        return context;
     }
 }

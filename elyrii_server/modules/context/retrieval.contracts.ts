@@ -24,6 +24,7 @@ export const retrievalRequestSchema = z.strictObject({
 export type RetrievalRequest = z.infer<typeof retrievalRequestSchema>;
 export type RankedMemory = { id: string; contentRevision: number; similarity: number; vectorUpdatedAt: string };
 export type RetrievedContext = {
+    moodObservation?: import("./mood.contracts").MoodObservation;
     facts: UserContextFact[];
     continuity: { summary: ConversationSummary | null; messages: (typeof chatMessagesTable.$inferSelect)[]; truncated: boolean };
     memories: (UserMemory & { similarity: number; model: string })[];

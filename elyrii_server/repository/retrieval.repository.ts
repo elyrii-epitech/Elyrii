@@ -8,11 +8,35 @@ import { ContextPolicy } from "../modules/context/context.policy";
 import type { EmbeddingModel } from "../modules/context/embedding.contracts";
 import type { RankedMemory, RetrievedContext, RetrievalConfig, RetrievalRequest } from "../modules/context/retrieval.contracts";
 
+import { moodObservationSchema } from "../modules/context/mood.contracts";
 import { historyBoundary } from "../modules/context/history-boundary";
 import { contextSourceEligible, conversationHasExpiredContext } from "../modules/context/source-eligibility";
 
 export class RetrievalRepository {
     constructor(private readonly database: typeof db = db, private readonly clock = () => new Date()) {}
+
+    /** Independent read: a mood failure must never abort the context transaction. */
+    async moodObservation(userId: string, freshnessHours: number) {
+        const now = this.clock().toISOString();
+        const result = await this.database.execute(sql`
+            SELECT id AS "logId", user_id AS "userId", 'mood_logs' AS source,
+                CASE lower(btrim(mood_type)) WHEN 'verysad' THEN 'verySad'
+                    WHEN 'veryhappy' THEN 'veryHappy' ELSE lower(btrim(mood_type)) END AS mood,
+                to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "observedAt",
+                to_char(created_at + ${freshnessHours} * interval '1 hour', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS "freshUntil",
+                (SELECT timezone FROM users WHERE users.id = ${userId}::uuid) AS timezone
+            FROM mood_logs WHERE user_id = ${userId}::uuid AND NOT context_suppressed
+                AND NOT EXISTS (SELECT 1 FROM user_settings WHERE user_settings.user_id = ${userId}::uuid AND privacy_mode = 'STRICT')
+                AND isfinite(created_at) AND created_at <= ${now}::timestamp
+                AND created_at > ${now}::timestamp - ${freshnessHours} * interval '1 hour'
+                AND lower(btrim(mood_type)) IN ('verysad', 'sad', 'neutral', 'happy', 'veryhappy')
+            ORDER BY created_at DESC, id DESC LIMIT 1`);
+        const row = result.rows[0];
+        if (!row) return undefined;
+        let timezone = "UTC";
+        try { timezone = new Intl.DateTimeFormat("en", { timeZone: String(row.timezone || "UTC") }).resolvedOptions().timeZone; } catch { /* UTC display fallback. */ }
+        return moodObservationSchema.parse({ ...row, timezone });
+    }
 
     async search(userId: string, spec: EmbeddingModel, vector: number[], config: RetrievalConfig): Promise<RankedMemory[]> {
         const now = this.clock();
