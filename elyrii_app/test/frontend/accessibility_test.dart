@@ -29,7 +29,7 @@ void main() {
           home: MediaQuery(
             data: const MediaQueryData(highContrast: true),
             child: ElyriiGlassSurface(
-              role: GlassRole.dialog,
+              role: GlassRole.floatingControl,
               glassColor: AppColors.primary.withValues(alpha: .2),
               child: const Text('Content'),
             ),

@@ -188,7 +188,7 @@ class _ChallengesPageState extends State<ChallengesPage>
       Navigator.of(context, rootNavigator: true).push<void>(
         AppSheetRoute<void>(
           reduced: MediaQuery.disableAnimationsOf(context),
-          builder: (context) => _GardenSheet(title: title, child: child),
+          builder: (context) => AppSheetPanel(title: title, child: child),
         ),
       );
 

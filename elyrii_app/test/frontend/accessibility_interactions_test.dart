@@ -14,7 +14,7 @@ import 'package:elyrii_app/features/chatbot/presentation/widgets/ai_report_sheet
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/theme/app_colors.dart';
 import 'package:elyrii_app/core/widgets/accessible_action.dart';
-import 'package:elyrii_app/core/widgets/glass/liquid_glass_dialog.dart';
+import 'package:elyrii_app/core/widgets/app_dialog.dart';
 import 'package:elyrii_app/features/profile_setup/presentation/widgets/profile_controls.dart';
 import 'package:elyrii_app/features/auth/presentation/widgets/arrival_widgets.dart';
 
@@ -369,7 +369,7 @@ void main() {
           home: Scaffold(
             body: Builder(
               builder: (context) => TextButton(
-                onPressed: () => showLiquidGlassDialog<void>(
+                onPressed: () => showAppDialog<void>(
                   context: context,
                   title: 'Confirmer les modifications',
                   child: Text(
@@ -379,11 +379,11 @@ void main() {
                     ).join(' '),
                   ),
                   actions: [
-                    LiquidGlassDialogAction(
+                    AppDialogAction(
                       label: 'Annuler',
                       onPressed: () => Navigator.pop(context),
                     ),
-                    LiquidGlassDialogAction(
+                    AppDialogAction(
                       label: 'Enregistrer les modifications',
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -399,7 +399,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       final scroll = find.descendant(
-        of: find.byType(LiquidGlassDialogContent),
+        of: find.byType(AppDialogContent),
         matching: find.byType(SingleChildScrollView),
       );
       expect(scroll, findsOneWidget);
@@ -407,7 +407,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      expect(find.byType(LiquidGlassDialogContent), findsNothing);
+      expect(find.byType(AppDialogContent), findsNothing);
     },
   );
 }

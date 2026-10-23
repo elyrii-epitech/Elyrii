@@ -1,5 +1,6 @@
 import 'package:elyrii_app/core/theme/app_colors.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
+import 'package:elyrii_app/core/widgets/app_sheet_route.dart';
 import 'package:elyrii_app/features/chatbot/presentation/widgets/emergency_resources_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,12 +38,13 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(
-          tester
-              .widget<Material>(
-                find.byKey(const ValueKey('emergency-sheet-surface')),
-              )
-              .color,
-          dark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Material &&
+                widget.color ==
+                    (dark ? AppColors.sheetDark : AppColors.sheetLight),
+          ),
+          findsOneWidget,
         );
         expect(
           tester.widget<Text>(find.text('Besoin d’aide ?')).style?.fontFamily,
@@ -54,12 +56,13 @@ void main() {
             : Brightness.dark;
         await tester.pumpAndSettle();
         expect(
-          tester
-              .widget<Material>(
-                find.byKey(const ValueKey('emergency-sheet-surface')),
-              )
-              .color,
-          dark ? AppColors.scaffoldLight : AppColors.scaffoldDark,
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is Material &&
+                widget.color ==
+                    (dark ? AppColors.sheetLight : AppColors.sheetDark),
+          ),
+          findsOneWidget,
         );
         expect(
           tester.widget<Text>(find.text('Besoin d’aide ?')).style?.color,
@@ -75,7 +78,7 @@ void main() {
         expect(find.text('Urgence vitale').hitTestable(), findsOneWidget);
         await tester.tap(find.byTooltip('Fermer'));
         await tester.pumpAndSettle();
-        expect(find.byType(BottomSheet), findsNothing);
+        expect(find.byType(AppSheetPanel), findsNothing);
       },
     );
   }

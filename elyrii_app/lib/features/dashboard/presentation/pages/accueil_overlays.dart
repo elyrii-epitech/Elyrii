@@ -2,11 +2,6 @@ part of 'dashboard_page.dart';
 
 enum _AccueilOverlay { calendar, streak, flowers, dressing }
 
-final _sheetGlassFilter = ui.ImageFilter.compose(
-  outer: ColorFilter.saturation(1.7),
-  inner: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-);
-
 Widget _accueilOverlayPanel(
   BuildContext context, {
   required _AccueilOverlay kind,
@@ -26,16 +21,21 @@ Widget _accueilOverlayPanel(
   final maxHeight = calendar
       ? math.max(0.0, screen.height - top - dock - AppDimensions.spacing12)
       : dressing
-      ? screen.height - top - safe.bottom - AppDimensions.spacing8
+      ? screen.height - top
       : screen.height - safe.top - AppDimensions.spacing24;
+  final radius = calendar
+      ? BorderRadius.circular(AppDimensions.radius30)
+      : const BorderRadius.vertical(
+          top: Radius.circular(AppDimensions.radius38),
+        );
   final panel = Align(
     alignment: calendar ? Alignment.topCenter : Alignment.bottomCenter,
+    heightFactor: calendar ? null : 1,
     child: Padding(
       padding: EdgeInsets.only(
         top: calendar ? top : 0,
-        left: AppDimensions.spacing8,
-        right: AppDimensions.spacing8,
-        bottom: calendar ? 0 : safe.bottom + AppDimensions.spacing8,
+        left: calendar ? AppDimensions.spacing8 : 0,
+        right: calendar ? AppDimensions.spacing8 : 0,
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
@@ -56,42 +56,11 @@ Widget _accueilOverlayPanel(
               _AccueilOverlay.dressing => 'Tenue d’Elyrii',
             },
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(
-                calendar ? AppDimensions.radius30 : AppDimensions.radius38,
-              ),
-              child: BackdropFilter(
-                enabled: !dressing && !calendar,
-                filter: _sheetGlassFilter,
-                child: Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Color(
-                            dressing
-                                ? 0xF51E1B2A
-                                : calendar
-                                ? 0xF71E1B2A
-                                : 0xE61E1B2A,
-                          )
-                        : Color(
-                            dressing
-                                ? 0xF7FAF9FD
-                                : calendar
-                                ? 0xFAFFFFFF
-                                : 0xBDFAF9FD,
-                          ),
-                    borderRadius: BorderRadius.circular(
-                      calendar
-                          ? AppDimensions.radius30
-                          : AppDimensions.radius38,
-                    ),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.glassBorderDark
-                          : AppColors.glassBorderLight,
-                      width: .5,
-                    ),
-                  ),
+              borderRadius: radius,
+              child: ColoredBox(
+                color: AppColors.sheetSurface(isDark),
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: calendar ? 0 : safe.bottom),
                   child: switch (kind) {
                     _AccueilOverlay.calendar => _CalendarPanel(now: now),
                     _AccueilOverlay.streak => _StreakSheet(now: now),
@@ -118,38 +87,42 @@ class _SheetHeader extends StatelessWidget {
   final bool closeEnabled;
   const _SheetHeader(this.title, {this.trailing, this.closeEnabled = true});
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Container(
-        width: 36,
-        height: 5,
-        margin: const EdgeInsets.only(
-          top: AppDimensions.spacing8,
-          bottom: AppDimensions.spacing12,
-        ),
-        decoration: BoxDecoration(
-          color: context.textTertiary.withValues(alpha: .5),
-          borderRadius: BorderRadius.circular(AppDimensions.radius4),
-        ),
-      ),
-      Row(
-        children: [
-          IconButton(
-            tooltip: 'Fermer',
-            onPressed: closeEnabled ? () => Navigator.of(context).pop() : null,
-            icon: const Icon(Symbols.close_rounded),
+  Widget build(BuildContext context) => AppSheetDragHandle(
+    child: Column(
+      children: [
+        Container(
+          width: 36,
+          height: 5,
+          margin: const EdgeInsets.only(
+            top: AppDimensions.spacing8,
+            bottom: AppDimensions.spacing12,
           ),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.sheetTitle(color: context.textPrimary),
+          decoration: BoxDecoration(
+            color: context.textTertiary.withValues(alpha: .5),
+            borderRadius: BorderRadius.circular(AppDimensions.radius4),
+          ),
+        ),
+        Row(
+          children: [
+            IconButton(
+              tooltip: 'Fermer',
+              onPressed: closeEnabled
+                  ? () => Navigator.of(context).pop()
+                  : null,
+              icon: const Icon(Symbols.close_rounded),
             ),
-          ),
-          trailing ?? const SizedBox(width: AppDimensions.controlSize),
-        ],
-      ),
-    ],
+            Expanded(
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.sheetTitle(color: context.textPrimary),
+              ),
+            ),
+            trailing ?? const SizedBox(width: AppDimensions.controlSize),
+          ],
+        ),
+      ],
+    ),
   );
 }
 

@@ -162,8 +162,6 @@ class AppColors {
       dark ? const Color(0xFF2D2331) : const Color(0xFFF6EDF4);
   static Color journalEntryBorder(bool dark) =>
       dark ? const Color(0xFF503A53) : const Color(0xFFDAC4D6);
-  static Color journalEditor(bool dark) =>
-      dark ? const Color(0xFF14111E) : Colors.white;
   static Color journalPrompt(bool dark) =>
       dark ? const Color(0xFF322538) : const Color(0xFFF0E3ED);
   static Color journalMark(bool dark) =>
@@ -320,9 +318,9 @@ class AppColors {
           ),
         ];
 
-  /// Standard v2 sheet glass (`rgba(30,27,42,.9)` dark).
-  static Color sheetGlass(bool dark) =>
-      dark ? const Color(0xE61E1B2A) : glassBackgroundLight;
+  static const sheetDark = Color(0xFF1E1B2A);
+  static const sheetLight = Color(0xFFFAF9FD);
+  static Color sheetSurface(bool dark) => dark ? sheetDark : sheetLight;
 
   /// Couleurs lavande pour effets spéciaux
   static const Color glassLavender = Color(0xFFF5F3FF);

@@ -1,7 +1,7 @@
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../theme/app_colors.dart';
@@ -18,6 +18,7 @@ class AppSheetRoute<T> extends PopupRoute<T> {
   /// Previews such as the dressing keep the page visible behind the sheet.
   final bool transparentVeil;
   final bool calendar;
+  final bool dragDismissible;
   final bool Function()? canDismiss;
   final Rect? cardOrigin;
 
@@ -26,6 +27,7 @@ class AppSheetRoute<T> extends PopupRoute<T> {
     required this.reduced,
     this.transparentVeil = false,
     this.calendar = false,
+    this.dragDismissible = true,
     this.canDismiss,
     this.cardOrigin,
   });
@@ -64,7 +66,16 @@ class AppSheetRoute<T> extends PopupRoute<T> {
         : (dark ? .42 : .20);
     return AnimatedBuilder(
       animation: animation,
-      child: Builder(builder: builder),
+      child: calendar || !dragDismissible
+          ? Builder(builder: builder)
+          : Align(
+              alignment: Alignment.bottomCenter,
+              child: _SheetDragDismiss(
+                reduced: reduced,
+                canDismiss: canDismiss,
+                child: Builder(builder: builder),
+              ),
+            ),
       builder: (context, child) {
         final k = animation.value;
         final rise = AppMotion.accueilRise.transform(k);
@@ -142,123 +153,254 @@ class AppSheetRoute<T> extends PopupRoute<T> {
   ) => child;
 }
 
-final _glass = ui.ImageFilter.compose(
-  outer: ColorFilter.saturation(1.7),
-  inner: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-);
+class _SheetDragDismiss extends StatefulWidget {
+  final Widget child;
+  final bool reduced;
+  final bool Function()? canDismiss;
 
-/// The standard glass sheet of the v2 boards: grabber, title, close button.
+  const _SheetDragDismiss({
+    required this.child,
+    required this.reduced,
+    this.canDismiss,
+  });
+
+  @override
+  State<_SheetDragDismiss> createState() => _SheetDragDismissState();
+}
+
+class _SheetDragDismissState extends State<_SheetDragDismiss>
+    with SingleTickerProviderStateMixin {
+  final _panel = GlobalKey();
+  late final _offset = AnimationController.unbounded(vsync: this);
+  int? _pointer;
+  Offset _start = Offset.zero;
+  VelocityTracker? _velocity;
+  bool _blocked = false;
+  bool _dragging = false;
+
+  @override
+  void dispose() {
+    _offset.dispose();
+    super.dispose();
+  }
+
+  void _down(PointerDownEvent event) {
+    if (_pointer != null) return;
+    _offset.stop();
+    _pointer = event.pointer;
+    _start = event.position - Offset(0, _offset.value);
+    _blocked = false;
+    _dragging = false;
+    _velocity = VelocityTracker.withKind(event.kind)
+      ..addPosition(event.timeStamp, event.position);
+  }
+
+  void _move(PointerMoveEvent event) {
+    if (event.pointer != _pointer) return;
+    _velocity?.addPosition(event.timeStamp, event.position);
+    final distance = event.position - _start;
+    if (_blocked ||
+        (!_dragging &&
+            (distance.dy <= kTouchSlop ||
+                distance.dx.abs() > distance.dy.abs()))) {
+      return;
+    }
+    _dragging = true;
+    _offset.value = math.max(0, distance.dy);
+  }
+
+  void _restore() {
+    if (widget.reduced) {
+      _offset.value = 0;
+    } else {
+      _offset.animateTo(
+        0,
+        duration: AppMotion.sheetEnter,
+        curve: AppMotion.accueilRise,
+      );
+    }
+  }
+
+  Future<void> _up(PointerUpEvent event) async {
+    if (event.pointer != _pointer) return;
+    _pointer = null;
+    final route = ModalRoute.of(context);
+    final height = _panel.currentContext?.size?.height ?? double.infinity;
+    final velocity = _velocity?.getVelocity().pixelsPerSecond.dy ?? 0;
+    final dismiss =
+        _dragging &&
+        (_offset.value >= height * AppDimensions.sheetDismissFraction ||
+            velocity >= AppDimensions.sheetDismissVelocity);
+    if (dismiss && (widget.canDismiss?.call() ?? true)) {
+      await Navigator.of(context).maybePop();
+    }
+    if (mounted && route?.isActive == true) _restore();
+  }
+
+  bool _scroll(ScrollNotification notification) {
+    if (_pointer != null && notification is ScrollStartNotification) {
+      // A scroll that starts below the top must never dismiss its sheet.
+      _blocked =
+          notification.metrics.axis != Axis.vertical ||
+          notification.metrics.extentBefore > 0;
+      if (_blocked) {
+        _dragging = false;
+        _offset.value = 0;
+      }
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) => Listener(
+    onPointerDown: _down,
+    onPointerMove: _move,
+    onPointerUp: _up,
+    onPointerCancel: (event) {
+      if (event.pointer != _pointer) return;
+      _pointer = null;
+      _restore();
+    },
+    child: NotificationListener<ScrollNotification>(
+      onNotification: _scroll,
+      child: AnimatedBuilder(
+        animation: _offset,
+        child: KeyedSubtree(key: _panel, child: widget.child),
+        builder: (context, child) =>
+            Transform.translate(offset: Offset(0, _offset.value), child: child),
+      ),
+    ),
+  );
+}
+
+class AppSheetDragHandle extends StatelessWidget {
+  final Widget child;
+  const AppSheetDragHandle({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onVerticalDragStart: (_) {
+      context.findAncestorStateOfType<_SheetDragDismissState>()?._blocked =
+          false;
+    },
+    child: child,
+  );
+}
+
+/// The standard opaque sheet with safe content above the home indicator.
 class AppSheetPanel extends StatelessWidget {
   final String title;
   final Widget child;
-  const AppSheetPanel({super.key, required this.title, required this.child});
+  final bool scrollable;
+  const AppSheetPanel({
+    super.key,
+    required this.title,
+    required this.child,
+    this.scrollable = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final safe = MediaQuery.paddingOf(context);
-    final radius = BorderRadius.circular(AppDimensions.radius38);
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          AppDimensions.spacing8,
-          0,
-          AppDimensions.spacing8,
-          safe.bottom + AppDimensions.spacing8,
-        ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: AppDimensions.maxContentWidth,
-            maxHeight:
-                MediaQuery.sizeOf(context).height -
-                safe.top -
-                AppDimensions.spacing24,
+    const radius = BorderRadius.vertical(
+      top: Radius.circular(AppDimensions.radius38),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: 1,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: Semantics(
-              scopesRoute: true,
-              namesRoute: true,
-              explicitChildNodes: true,
-              label: title,
-              child: ClipRRect(
-                borderRadius: radius,
-                child: BackdropFilter(
-                  filter: _glass,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: AppColors.sheetGlass(dark),
-                      borderRadius: radius,
-                      border: Border.all(
-                        color: dark
-                            ? AppColors.glassBorderDark
-                            : AppColors.glassBorderLight,
-                        width: .5,
-                      ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: AppDimensions.maxContentWidth,
+              maxHeight:
+                  constraints.maxHeight -
+                  safe.top -
+                  MediaQuery.viewInsetsOf(context).bottom -
+                  AppDimensions.spacing24,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Semantics(
+                scopesRoute: true,
+                namesRoute: true,
+                explicitChildNodes: true,
+                label: title,
+                child: Material(
+                  color: AppColors.sheetSurface(dark),
+                  borderRadius: radius,
+                  clipBehavior: Clip.antiAlias,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppDimensions.spacing20,
+                      AppDimensions.spacing8,
+                      AppDimensions.spacing20,
+                      safe.bottom + AppDimensions.spacing24,
                     ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppDimensions.spacing20,
-                        AppDimensions.spacing8,
-                        AppDimensions.spacing20,
-                        AppDimensions.spacing24,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: AppDimensions.grabberWidth,
-                              height: AppDimensions.grabberHeight,
-                              decoration: BoxDecoration(
-                                color: context.textTertiary.withValues(
-                                  alpha: .5,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppDimensions.radius4,
-                                ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: AppDimensions.grabberWidth,
+                            height: AppDimensions.grabberHeight,
+                            decoration: BoxDecoration(
+                              color: context.textTertiary.withValues(alpha: .5),
+                              borderRadius: BorderRadius.circular(
+                                AppDimensions.radius4,
                               ),
                             ),
                           ),
-                          const SizedBox(height: AppDimensions.spacing8),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              minHeight: AppDimensions.accueilHeaderControl,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    title,
-                                    style: AppTextStyles.titleLarge(
-                                      color: context.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  tooltip: 'Fermer',
-                                  onPressed: () =>
-                                      Navigator.of(context).maybePop(),
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: dark
-                                        ? AppColors.cardDark
-                                        : AppColors.cardLight,
-                                  ),
-                                  icon: Icon(
-                                    Symbols.close_rounded,
-                                    size: AppDimensions.iconSm,
-                                    color: context.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ),
+                        const SizedBox(height: AppDimensions.spacing8),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            minHeight: AppDimensions.accueilHeaderControl,
                           ),
-                          const SizedBox(height: AppDimensions.spacing16),
-                          child,
-                        ],
-                      ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  style: AppTextStyles.titleLarge(
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Fermer',
+                                onPressed: () =>
+                                    Navigator.of(context).maybePop(),
+                                style: IconButton.styleFrom(
+                                  backgroundColor: dark
+                                      ? AppColors.cardDark
+                                      : AppColors.cardLight,
+                                ),
+                                icon: Icon(
+                                  Symbols.close_rounded,
+                                  size: AppDimensions.iconSm,
+                                  color: context.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppDimensions.spacing16),
+                        Flexible(
+                          child: scrollable
+                              ? SingleChildScrollView(
+                                  physics: const ClampingScrollPhysics(),
+                                  child: child,
+                                )
+                              : child,
+                        ),
+                      ],
                     ),
                   ),
                 ),

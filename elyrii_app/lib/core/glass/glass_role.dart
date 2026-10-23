@@ -9,13 +9,7 @@ enum GlassRole {
   navigation(blur: AppDimensions.navigationBlur, opacity: 0.66, refraction: 0),
 
   /// Commandes flottantes (bouton mascotte, actions d'en-tête)
-  floatingControl(blur: 16.0, opacity: 0.75, refraction: 0.08),
-
-  /// Modales et feuilles inférieures (Bottom Sheets)
-  modalSheet(blur: 24.0, opacity: 0.82, refraction: 0.12),
-
-  /// Dialogues contextuels
-  dialog(blur: 20.0, opacity: 0.85, refraction: 0.10);
+  floatingControl(blur: 16.0, opacity: 0.75, refraction: 0.08);
 
   final double blur;
   final double opacity;

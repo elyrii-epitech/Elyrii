@@ -11,7 +11,7 @@ import '../../../../core/localization/app_dates.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../../../core/widgets/app_dialog.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../../domain/journal_feed.dart';
@@ -264,23 +264,23 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         _contentController.text.trim().isEmpty) {
       return true;
     }
-    final result = await showLiquidGlassDialog<String>(
+    final result = await showAppDialog<String>(
       context: context,
       title: 'Modifications non sauvegardées',
       child: const Text(
         'Veux-tu sauvegarder tes modifications avant de fermer ?',
       ),
       actions: [
-        LiquidGlassDialogAction(
+        AppDialogAction(
           label: 'Annuler',
           onPressed: () => Navigator.pop(context, 'cancel'),
         ),
-        LiquidGlassDialogAction(
+        AppDialogAction(
           label: 'Abandonner les modifications',
           isDestructive: true,
           onPressed: () => Navigator.pop(context, 'discard'),
         ),
-        LiquidGlassDialogAction(
+        AppDialogAction(
           label: 'Sauvegarder',
           isDefault: true,
           onPressed: () => Navigator.pop(context, 'save'),
@@ -363,7 +363,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               maxWidth: AppDimensions.maxContentWidth,
             ),
             child: Material(
-              color: AppColors.journalEditor(dark),
+              color: AppColors.sheetSurface(dark),
               shape: RoundedRectangleBorder(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(AppDimensions.radius30),

@@ -48,7 +48,7 @@ class _MeditationLibraryState extends State<MeditationLibrary> {
     final box = source.findRenderObject()! as RenderBox;
     final origin = box.localToGlobal(Offset.zero) & box.size;
     final duration = _duration;
-    final start = await Navigator.of(context).push<bool>(
+    final start = await Navigator.of(context, rootNavigator: true).push<bool>(
       AppSheetRoute<bool>(
         reduced: MediaQuery.disableAnimationsOf(context),
         cardOrigin: origin,

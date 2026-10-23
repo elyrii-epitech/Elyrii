@@ -80,7 +80,7 @@ class _MeditationSessionPageState extends State<MeditationSessionPage>
       _exitOpen = false;
       return;
     }
-    final leave = await Navigator.of(context).push<bool>(
+    final leave = await Navigator.of(context, rootNavigator: true).push<bool>(
       AppSheetRoute<bool>(
         reduced: MediaQuery.disableAnimationsOf(context),
         builder: (sheetContext) => AppSheetPanel(
@@ -135,7 +135,7 @@ class _MeditationSessionPageState extends State<MeditationSessionPage>
   Future<void> _showSummary() async {
     if (_summaryOpen || !mounted) return;
     _summaryOpen = true;
-    final done = await Navigator.of(context).push<bool>(
+    final done = await Navigator.of(context, rootNavigator: true).push<bool>(
       AppSheetRoute<bool>(
         reduced: MediaQuery.disableAnimationsOf(context),
         builder: (_) => MeditationSummarySheet(controller: widget.controller),

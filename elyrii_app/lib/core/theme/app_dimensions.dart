@@ -196,7 +196,6 @@ class AppDimensions {
   static const double meditationBandIcon = 38;
   static const double meditationFeaturedArtWidth = 190;
   static const double meditationFeaturedArtHeight = 170;
-  static const double meditationPreviewWidth = 360;
 
   static const double profileTop = 94;
   static const double profileHeaderTop = 122;
@@ -242,6 +241,9 @@ class AppDimensions {
   static const double arrivalAuthThreshold = 240;
   static const double arrivalStepThreshold = 220;
   static const double arrivalGoalThreshold = 80;
+
+  static const double sheetDismissFraction = .25;
+  static const double sheetDismissVelocity = 700;
 
   static double dockBottomMargin(double safeBottom) => spacing20;
 

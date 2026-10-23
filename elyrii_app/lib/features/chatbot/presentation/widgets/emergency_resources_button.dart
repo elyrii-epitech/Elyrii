@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
 
 /// Numéros d'écoute et d'urgence santé mentale (France), tapables.
 const List<({String title, String subtitle, String tel})> kEmergencyResources =
@@ -65,27 +66,10 @@ class EmergencyResourcesButton extends StatelessWidget {
 
   void _showEmergencyResources(BuildContext context) {
     FocusManager.instance.primaryFocus?.unfocus();
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      useSafeArea: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      constraints: const BoxConstraints(
-        maxWidth: AppDimensions.maxContentWidth,
-      ),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radius28),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      builder: (sheetContext) => Material(
-        key: const ValueKey('emergency-sheet-surface'),
-        color: Theme.of(sheetContext).brightness == Brightness.dark
-            ? AppColors.scaffoldDark
-            : AppColors.scaffoldLight,
-        child: const _EmergencyResourcesSheet(),
+    Navigator.of(context, rootNavigator: true).push<void>(
+      AppSheetRoute<void>(
+        reduced: MediaQuery.disableAnimationsOf(context),
+        builder: (_) => const _EmergencyResourcesSheet(),
       ),
     );
   }
@@ -103,154 +87,89 @@ class _EmergencyResourcesSheet extends StatelessWidget {
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final divider = isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.88,
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 4,
-              margin: const EdgeInsets.only(top: AppDimensions.spacing12),
-              decoration: BoxDecoration(
-                color: divider,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimensions.spacing24,
-                AppDimensions.spacing12,
-                AppDimensions.spacing16,
-                0,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Besoin d’aide ?',
-                      style: AppTextStyles.titleLarge(color: ink),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Fermer',
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
-                    color: secondary,
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.spacing24,
-                  AppDimensions.spacing8,
-                  AppDimensions.spacing24,
-                  AppDimensions.spacing24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Tu n’es pas seul(e). Ces lignes sont là pour t’écouter et t’orienter.',
-                      style: AppTextStyles.bodyMedium(color: ink),
-                    ),
-                    const SizedBox(height: AppDimensions.spacing24),
-                    Material(
-                      color: surface,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radius16,
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        children: [
-                          for (final (index, resource)
-                              in kEmergencyResources.indexed) ...[
-                            Semantics(
-                              button: true,
-                              label:
-                                  'Appeler ${resource.title}, ${resource.tel}',
-                              child: InkWell(
-                                onTap: () => _callNumber(context, resource.tel),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(
-                                    AppDimensions.spacing16,
+    return AppSheetPanel(
+      title: 'Besoin d’aide ?',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tu n’es pas seul(e). Ces lignes sont là pour t’écouter et t’orienter.',
+            style: AppTextStyles.bodyMedium(color: ink),
+          ),
+          const SizedBox(height: AppDimensions.spacing24),
+          Material(
+            color: surface,
+            borderRadius: BorderRadius.circular(AppDimensions.radius16),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                for (final (index, resource)
+                    in kEmergencyResources.indexed) ...[
+                  Semantics(
+                    button: true,
+                    label: 'Appeler ${resource.title}, ${resource.tel}',
+                    child: InkWell(
+                      onTap: () => _callNumber(context, resource.tel),
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppDimensions.spacing16),
+                        child: Row(
+                          children: [
+                            Icon(
+                              index == 3
+                                  ? Icons.health_and_safety_outlined
+                                  : Icons.phone_outlined,
+                              size: 22,
+                              color: accent,
+                            ),
+                            const SizedBox(width: AppDimensions.spacing16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    resource.title,
+                                    style: AppTextStyles.titleSmall(color: ink),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        index == 3
-                                            ? Icons.health_and_safety_outlined
-                                            : Icons.phone_outlined,
-                                        size: 22,
-                                        color: accent,
-                                      ),
-                                      const SizedBox(
-                                        width: AppDimensions.spacing16,
-                                      ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              resource.title,
-                                              style: AppTextStyles.titleSmall(
-                                                color: ink,
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              height: AppDimensions.spacing4,
-                                            ),
-                                            Text(
-                                              resource.subtitle,
-                                              style: AppTextStyles.bodyMedium(
-                                                color: secondary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: AppDimensions.spacing8,
-                                      ),
-                                      Icon(
-                                        Icons.chevron_right_rounded,
-                                        size: 20,
-                                        color: secondary,
-                                      ),
-                                    ],
+                                  const SizedBox(
+                                    height: AppDimensions.spacing4,
                                   ),
-                                ),
+                                  Text(
+                                    resource.subtitle,
+                                    style: AppTextStyles.bodyMedium(
+                                      color: secondary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            if (index < kEmergencyResources.length - 1)
-                              Divider(
-                                height: 1,
-                                color: divider,
-                                indent: AppDimensions.spacing16,
-                                endIndent: AppDimensions.spacing16,
-                              ),
+                            const SizedBox(width: AppDimensions.spacing8),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 20,
+                              color: secondary,
+                            ),
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.spacing16),
-                    Text(
-                      'Choisis un contact pour ouvrir l’appel.',
-                      style: AppTextStyles.bodyMedium(color: ink),
+                  ),
+                  if (index < kEmergencyResources.length - 1)
+                    Divider(
+                      height: 1,
+                      color: divider,
+                      indent: AppDimensions.spacing16,
+                      endIndent: AppDimensions.spacing16,
                     ),
-                  ],
-                ),
-              ),
+                ],
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          Text(
+            'Choisis un contact pour ouvrir l’appel.',
+            style: AppTextStyles.bodyMedium(color: ink),
+          ),
+        ],
       ),
     );
   }

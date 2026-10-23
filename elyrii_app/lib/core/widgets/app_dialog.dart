@@ -1,21 +1,16 @@
-// iOS 26 Liquid Glass Dialog
-// Part of the Liquid Glass Widget Kit
-
 import 'package:flutter/material.dart';
 
-import '../../glass/elyrii_glass_surface.dart';
-import '../../theme/app_colors.dart';
-import '../../theme/app_text_styles.dart';
-import '../../theme/app_dimensions.dart';
-import '../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
+import '../theme/app_dimensions.dart';
+import '../design_system/haptics/elyrii_haptics.dart';
 
-/// Shows an iOS 26 style dialog with liquid glass effect
-Future<T?> showLiquidGlassDialog<T>({
+Future<T?> showAppDialog<T>({
   required BuildContext context,
   required Widget child,
   bool barrierDismissible = true,
   String? title,
-  List<LiquidGlassDialogAction>? actions,
+  List<AppDialogAction>? actions,
 }) {
   ElyriiHaptics.medium();
 
@@ -29,11 +24,7 @@ Future<T?> showLiquidGlassDialog<T>({
         ? Duration.zero
         : const Duration(milliseconds: 300),
     pageBuilder: (context, animation, secondaryAnimation) {
-      return LiquidGlassDialogContent(
-        title: title,
-        actions: actions,
-        child: child,
-      );
+      return AppDialogContent(title: title, actions: actions, child: child);
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
       final curvedAnimation = CurvedAnimation(
@@ -51,13 +42,13 @@ Future<T?> showLiquidGlassDialog<T>({
   );
 }
 
-class LiquidGlassDialogAction {
+class AppDialogAction {
   final String label;
   final VoidCallback onPressed;
   final bool isDestructive;
   final bool isDefault;
 
-  const LiquidGlassDialogAction({
+  const AppDialogAction({
     required this.label,
     required this.onPressed,
     this.isDestructive = false,
@@ -65,12 +56,12 @@ class LiquidGlassDialogAction {
   });
 }
 
-class LiquidGlassDialogContent extends StatelessWidget {
+class AppDialogContent extends StatelessWidget {
   final String? title;
   final Widget child;
-  final List<LiquidGlassDialogAction>? actions;
+  final List<AppDialogAction>? actions;
 
-  const LiquidGlassDialogContent({
+  const AppDialogContent({
     super.key,
     this.title,
     required this.child,
@@ -93,58 +84,56 @@ class LiquidGlassDialogContent extends StatelessWidget {
                 horizontal: AppDimensions.spacing32,
               ),
               constraints: const BoxConstraints(maxWidth: 320),
-              child: ElyriiGlassSurface(
-                role: GlassRole.dialog,
+              child: Material(
+                color: AppColors.sheetSurface(isDark),
                 borderRadius: BorderRadius.circular(AppDimensions.radius20),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppDimensions.spacing20,
-                          AppDimensions.spacing20,
-                          AppDimensions.spacing20,
-                          AppDimensions.spacing16,
-                        ),
-                        child: Column(
-                          children: [
-                            if (title != null) ...[
-                              Semantics(
-                                header: true,
-                                namesRoute: true,
-                                child: Text(
-                                  title!,
-                                  style: AppTextStyles.titleMedium(
-                                    color: context.textPrimary,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimensions.spacing8),
-                            ],
-                            DefaultTextStyle(
-                              style: AppTextStyles.bodyMedium(
-                                color: context.textSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                              child: child,
-                            ),
-                          ],
-                        ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimensions.spacing20,
+                        AppDimensions.spacing20,
+                        AppDimensions.spacing20,
+                        AppDimensions.spacing16,
                       ),
-                      if (actions != null && actions!.isNotEmpty) ...[
-                        Divider(
-                          height: 0.5,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.15)
-                              : Colors.black.withValues(alpha: 0.1),
-                        ),
-                        _buildActions(context, isDark),
-                      ],
+                      child: Column(
+                        children: [
+                          if (title != null) ...[
+                            Semantics(
+                              header: true,
+                              namesRoute: true,
+                              child: Text(
+                                title!,
+                                style: AppTextStyles.titleMedium(
+                                  color: context.textPrimary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: AppDimensions.spacing8),
+                          ],
+                          DefaultTextStyle(
+                            style: AppTextStyles.bodyMedium(
+                              color: context.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                            child: child,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (actions != null && actions!.isNotEmpty) ...[
+                      Divider(
+                        height: 0.5,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.1),
+                      ),
+                      _buildActions(context, isDark),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -196,7 +185,7 @@ class LiquidGlassDialogContent extends StatelessWidget {
 
   Widget _buildActionButton(
     BuildContext context,
-    LiquidGlassDialogAction action,
+    AppDialogAction action,
     bool isDark,
   ) {
     final textColor = action.isDestructive

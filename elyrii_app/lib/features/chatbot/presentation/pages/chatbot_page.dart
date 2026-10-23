@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/elyrii_page_header.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../providers/chatbot_provider.dart';
 import '../widgets/chat_history_sheet.dart';
@@ -100,20 +101,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
   void _showActions() {
     _focusNode.unfocus();
     final provider = context.read<ChatbotProvider>();
-    showModalBottomSheet<void>(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (sheetContext) => SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.spacing8,
-            0,
-            AppDimensions.spacing8,
-            AppDimensions.spacing16,
-          ),
+    Navigator.of(context, rootNavigator: true).push<void>(
+      AppSheetRoute<void>(
+        reduced: MediaQuery.disableAnimationsOf(context),
+        builder: (sheetContext) => AppSheetPanel(
+          title: 'Conversation',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -376,15 +368,15 @@ class _ChatbotPageState extends State<ChatbotPage> {
               delivery: message.delivery,
               onReport: message.isUser
                   ? null
-                  : () => showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      useSafeArea: true,
-                      builder: (_) => AiReportSheet(
-                        message: message,
-                        conversationId:
-                            context.read<ChatbotProvider>().activeSessionId ??
-                            'default',
+                  : () => Navigator.of(context, rootNavigator: true).push<void>(
+                      AppSheetRoute<void>(
+                        reduced: MediaQuery.disableAnimationsOf(context),
+                        builder: (_) => AiReportSheet(
+                          message: message,
+                          conversationId:
+                              context.read<ChatbotProvider>().activeSessionId ??
+                              'default',
+                        ),
                       ),
                     ),
               onRetry: () =>

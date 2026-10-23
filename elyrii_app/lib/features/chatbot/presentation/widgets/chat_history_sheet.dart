@@ -5,11 +5,10 @@ import '../../../../core/localization/app_dates.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
-import '../../../../core/glass/elyrii_glass_surface.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
 import '../../data/entities/chat_session.dart';
 import '../providers/chatbot_provider.dart';
 
@@ -17,17 +16,22 @@ import '../providers/chatbot_provider.dart';
 /// (titre, date relative, taille du fil), reprise au tap, suppression
 /// à l'icône corbeille, et démarrage d'une nouvelle conversation.
 class ChatHistorySheet extends StatelessWidget {
-  const ChatHistorySheet({super.key, this.scrollController});
-  final ScrollController? scrollController;
+  const ChatHistorySheet({super.key});
 
   /// Ouvre la feuille au-dessus de la page chat.
   static Future<void> show(BuildContext context) {
-    return showLiquidGlassSheet(
-      context: context,
-      useRootNavigator: true,
-      initialChildSize: 0.7,
-      scrollableBuilder: (context, controller) =>
-          ChatHistorySheet(scrollController: controller),
+    return Navigator.of(context, rootNavigator: true).push<void>(
+      AppSheetRoute<void>(
+        reduced: MediaQuery.disableAnimationsOf(context),
+        builder: (context) => AppSheetPanel(
+          title: 'Historique',
+          scrollable: false,
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * .7,
+            child: const ChatHistorySheet(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -41,7 +45,7 @@ class ChatHistorySheet extends StatelessWidget {
         final activeId = provider.activeSessionId;
 
         return CustomScrollView(
-          controller: scrollController,
+          physics: const ClampingScrollPhysics(),
           slivers: [
             if (provider.loadingSession)
               const SliverToBoxAdapter(child: LinearProgressIndicator()),
@@ -222,9 +226,8 @@ class ChatHistorySheet extends StatelessWidget {
                   if (selected && context.mounted) Navigator.pop(context);
                 },
           borderRadius: BorderRadius.circular(AppDimensions.radius16),
-          child: ElyriiGlassSurface(
-            lightweight: true,
-            role: GlassRole.dialog,
+          child: Material(
+            color: isDark ? AppColors.cardDark : AppColors.cardLight,
             borderRadius: BorderRadius.circular(AppDimensions.radius16),
             child: Container(
               padding: const EdgeInsets.symmetric(

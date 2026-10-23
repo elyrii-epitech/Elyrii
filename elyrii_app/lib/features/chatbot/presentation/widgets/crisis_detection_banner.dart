@@ -4,7 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
-import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
+import '../../../../core/widgets/app_dialog.dart';
 
 /// Conservative French cues for offering help, not a clinical assessment.
 /// Ordinary verbs such as “sauter” and “avaler” are not distress signals alone.
@@ -212,7 +212,7 @@ class CrisisDetectionBanner extends StatelessWidget {
   }
 
   void _showHelpDialog(BuildContext context) {
-    showLiquidGlassDialog(
+    showAppDialog(
       context: context,
       title: 'Tu n\'es pas seul(e)',
       child: Column(
@@ -243,7 +243,7 @@ class CrisisDetectionBanner extends StatelessWidget {
         ],
       ),
       actions: [
-        LiquidGlassDialogAction(
+        AppDialogAction(
           label: 'Fermer',
           onPressed: () => Navigator.pop(context),
         ),

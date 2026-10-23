@@ -15,7 +15,7 @@ import '../../../dashboard/data/accueil_activities.dart';
 import '../../../mascot/data/models/mascot_model.dart';
 
 Future<void> showArrivalInfo(BuildContext context, String title, String copy) =>
-    Navigator.of(context).push<void>(
+    Navigator.of(context, rootNavigator: true).push<void>(
       AppSheetRoute<void>(
         reduced: MediaQuery.disableAnimationsOf(context),
         builder: (sheetContext) => AppSheetPanel(

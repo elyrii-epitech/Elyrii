@@ -205,6 +205,7 @@ Future<void> confirmAccountDeletion(BuildContext context) async {
   final route = AppSheetRoute<_DeletionChoice>(
     reduced: MediaQuery.disableAnimationsOf(context),
     canDismiss: () => allowClose,
+    dragDismissible: false,
     cardOrigin: Offset.zero & MediaQuery.sizeOf(context),
     builder: (dialog) => Center(
       child: Padding(
@@ -216,7 +217,7 @@ Future<void> confirmAccountDeletion(BuildContext context) async {
           child: Material(
             color: Colors.transparent,
             child: ProfileCard(
-              color: AppColors.profileAlert(
+              color: AppColors.sheetSurface(
                 Theme.of(dialog).brightness == Brightness.dark,
               ),
               radius: AppDimensions.radius28,

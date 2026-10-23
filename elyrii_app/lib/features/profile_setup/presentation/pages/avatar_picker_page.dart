@@ -7,12 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart'
-    show
-        CupertinoActivityIndicator,
-        CupertinoAlertDialog,
-        CupertinoDialogAction,
-        showCupertinoDialog;
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/accessible_action.dart';
@@ -162,19 +157,17 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
       }
     } catch (e) {
       if (mounted) {
-        // Dialogue d'alerte iOS en cas d'échec de sélection/recadrage.
-        showCupertinoDialog<void>(
+        showDialog<void>(
           context: context,
           barrierDismissible: true,
-          builder: (dialogContext) => CupertinoAlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('Image indisponible'),
             content: const Text(
               'Impossible de charger l\'image sélectionnée. '
               'Essaie avec une autre photo.',
             ),
             actions: [
-              CupertinoDialogAction(
-                isDefaultAction: true,
+              TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('OK'),
               ),

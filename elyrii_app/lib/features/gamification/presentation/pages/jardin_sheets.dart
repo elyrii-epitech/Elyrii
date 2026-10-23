@@ -1,96 +1,5 @@
 part of 'challenges_page.dart';
 
-class _GardenSheet extends StatelessWidget {
-  final String title;
-  final Widget child;
-  const _GardenSheet({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final safe = MediaQuery.paddingOf(context);
-    return SafeArea(
-      child: Align(
-        alignment: Alignment.bottomCenter,
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.spacing8),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: AppDimensions.maxContentWidth,
-              maxHeight:
-                  MediaQuery.sizeOf(context).height -
-                  safe.top -
-                  safe.bottom -
-                  AppDimensions.spacing16,
-            ),
-            child: Material(
-              color: dark
-                  ? AppColors.sectionBody(true)
-                  : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(AppDimensions.radius28),
-              clipBehavior: Clip.antiAlias,
-              child: Semantics(
-                scopesRoute: true,
-                namesRoute: true,
-                explicitChildNodes: true,
-                label: title,
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimensions.spacing20,
-                      AppDimensions.spacing12,
-                      AppDimensions.spacing20,
-                      AppDimensions.spacing32,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: AppDimensions.spacing32,
-                            height: AppDimensions.spacing4,
-                            decoration: BoxDecoration(
-                              color: AppColors.track(dark),
-                              borderRadius: BorderRadius.circular(
-                                AppDimensions.radiusPill,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: AppDimensions.spacing12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                title,
-                                style: AppTextStyles.titleLarge(
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              tooltip: 'Fermer',
-                              icon: const Icon(Symbols.close_rounded),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppDimensions.spacing16),
-                        child,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _PeriodSheet extends StatefulWidget {
   final CivilMonth month;
   final ValueChanged<CivilMonth> onMonth;
@@ -286,10 +195,10 @@ class _FlowerSheet extends StatelessWidget {
             ),
             subtitle: const Text('Dans ton journal'),
             trailing: const Icon(Symbols.arrow_forward_rounded),
-            onTap: () => Navigator.of(context).push<void>(
+            onTap: () => Navigator.of(context, rootNavigator: true).push<void>(
               AppSheetRoute<void>(
                 reduced: MediaQuery.disableAnimationsOf(context),
-                builder: (context) => _GardenSheet(
+                builder: (context) => AppSheetPanel(
                   title: entry.title,
                   child: SelectableText(
                     entry.content ?? '',

@@ -11,6 +11,7 @@ Future<void> pumpLibrary(
   WidgetTester tester,
   MeditationController controller, {
   double textScale = 1,
+  VoidCallback? onDock,
 }) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1;
@@ -23,7 +24,22 @@ Future<void> pumpLibrary(
             .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: Scaffold(body: MeditationLibrary(controller: controller)),
+      home: Scaffold(
+        extendBody: true,
+        body: onDock == null
+            ? MeditationLibrary(controller: controller)
+            : Navigator(
+                onGenerateRoute: (_) => MaterialPageRoute<void>(
+                  builder: (_) => MeditationLibrary(controller: controller),
+                ),
+              ),
+        bottomNavigationBar: onDock == null
+            ? null
+            : SizedBox(
+                height: 80,
+                child: TextButton(onPressed: onDock, child: const Text('Dock')),
+              ),
+      ),
     ),
   );
 }
@@ -37,6 +53,19 @@ void main() {
       ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf'));
     await loader.load();
   });
+  testWidgets('l’aperçu recouvre le dock du navigateur parent', (tester) async {
+    final controller = MeditationController();
+    addTearDown(controller.dispose);
+    var dockTaps = 0;
+    await pumpLibrary(tester, controller, onDock: () => dockTaps++);
+    await tester.tap(find.byKey(const Key('meditation-featured')));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(195, 838));
+    await tester.pump();
+    expect(dockTaps, 0);
+    expect(find.byType(MeditationPracticePreview), findsOneWidget);
+  });
+
   testWidgets('la durée filtre les pratiques et la mise en avant', (
     tester,
   ) async {
@@ -67,7 +96,7 @@ void main() {
   });
 
   testWidgets(
-    'la carte centrée conserve le rythme réel et la durée de la capsule',
+    'la feuille ancrée conserve le rythme réel et la durée de la capsule',
     (tester) async {
       final controller = MeditationController();
       addTearDown(controller.dispose);
@@ -87,13 +116,13 @@ void main() {
       );
       expect(
         tester
-            .getCenter(
+            .getRect(
               find
                   .descendant(of: preview, matching: find.byType(Material))
                   .first,
             )
-            .dy,
-        422,
+            .bottom,
+        844,
       );
       await tester.tap(find.text('Commencer · 15 min'));
       await tester.pumpAndSettle();
@@ -112,7 +141,7 @@ void main() {
     await pumpLibrary(tester, controller, textScale: 1.5);
     await tester.tap(find.byKey(const Key('meditation-featured')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip("Fermer l'aperçu"));
+    await tester.tap(find.byTooltip('Fermer'));
     await tester.pumpAndSettle();
     expect(controller.isSetup, isTrue);
     expect(controller.selectedExercise, isNull);

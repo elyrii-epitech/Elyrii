@@ -7,6 +7,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
 import '../../data/entities/chat_message.dart';
 
 class AiReportSheet extends StatefulWidget {
@@ -83,81 +84,66 @@ class _AiReportSheetState extends State<AiReportSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        AppDimensions.spacing24,
-        AppDimensions.spacing24,
-        AppDimensions.spacing24,
-        AppDimensions.spacing24 + MediaQuery.viewInsetsOf(context).bottom,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+  Widget build(BuildContext context) => AppSheetPanel(
+    title: 'Signaler une réponse IA',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_sent)
           Semantics(
-            header: true,
-            child: Text(
-              'Signaler une réponse IA',
-              style: AppTextStyles.titleLarge(),
+            liveRegion: true,
+            child: const Text(
+              'Signalement enregistré pour examen. En cas d’urgence, utilise les ressources d’aide.',
+            ),
+          )
+        else ...[
+          const Text(
+            'Seule la réponse sélectionnée, son motif et les identifiants nécessaires sont transmis à l’équipe de modération. Cela ne déclenche pas une aide d’urgence.',
+          ),
+          if (widget.message.content.length > 16000)
+            const Text(
+              'La réponse est très longue : seuls ses 16 000 premiers caractères seront transmis.',
+            ),
+          const SizedBox(height: AppDimensions.spacing16),
+          RadioGroup<String>(
+            groupValue: _reason,
+            onChanged: (value) {
+              if (!_sending && value != null) setState(() => _reason = value);
+            },
+            child: Column(
+              children: [
+                for (final reason in reasons.entries)
+                  RadioListTile<String>(
+                    title: Text(reason.value),
+                    value: reason.key,
+                    enabled: !_sending,
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: AppDimensions.spacing16),
-          if (_sent)
+          if (_error != null)
             Semantics(
               liveRegion: true,
-              child: const Text(
-                'Signalement enregistré pour examen. En cas d’urgence, utilise les ressources d’aide.',
-              ),
-            )
-          else ...[
-            const Text(
-              'Seule la réponse sélectionnée, son motif et les identifiants nécessaires sont transmis à l’équipe de modération. Cela ne déclenche pas une aide d’urgence.',
-            ),
-            if (widget.message.content.length > 16000)
-              const Text(
-                'La réponse est très longue : seuls ses 16 000 premiers caractères seront transmis.',
-              ),
-            const SizedBox(height: AppDimensions.spacing16),
-            RadioGroup<String>(
-              groupValue: _reason,
-              onChanged: (value) {
-                if (!_sending && value != null) setState(() => _reason = value);
-              },
-              child: Column(
-                children: [
-                  for (final reason in reasons.entries)
-                    RadioListTile<String>(
-                      title: Text(reason.value),
-                      value: reason.key,
-                      enabled: !_sending,
-                    ),
-                ],
-              ),
-            ),
-            if (_error != null)
-              Semantics(
-                liveRegion: true,
-                child: Text(
-                  _error!,
-                  style: AppTextStyles.bodySmall(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+              child: Text(
+                _error!,
+                style: AppTextStyles.bodySmall(
+                  color: Theme.of(context).colorScheme.error,
                 ),
               ),
-            const SizedBox(height: AppDimensions.spacing16),
-            LiquidGlassButton(
-              label: 'Envoyer le signalement',
-              isLoading: _sending,
-              onPressed: _sending ? null : _send,
             ),
-          ],
-          TextButton(
-            onPressed: _sending ? null : () => Navigator.pop(context),
-            child: Text(_sent ? 'Fermer' : 'Annuler'),
+          const SizedBox(height: AppDimensions.spacing16),
+          LiquidGlassButton(
+            label: 'Envoyer le signalement',
+            isLoading: _sending,
+            onPressed: _sending ? null : _send,
           ),
         ],
-      ),
+        TextButton(
+          onPressed: _sending ? null : () => Navigator.pop(context),
+          child: Text(_sent ? 'Fermer' : 'Annuler'),
+        ),
+      ],
     ),
   );
 }

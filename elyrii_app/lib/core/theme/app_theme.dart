@@ -187,9 +187,21 @@ class AppTheme {
         elevation: AppDimensions.elevationLg,
       ),
 
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.sheetLight,
+        surfaceTintColor: Colors.transparent,
+        constraints: BoxConstraints(maxWidth: AppDimensions.maxContentWidth),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radius28),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+      ),
+
       // Dialogs
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceLight,
+        backgroundColor: AppColors.sheetLight,
         elevation: AppDimensions.elevationXl,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radius20),
@@ -423,9 +435,21 @@ class AppTheme {
         elevation: AppDimensions.elevationLg,
       ),
 
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.sheetDark,
+        surfaceTintColor: Colors.transparent,
+        constraints: BoxConstraints(maxWidth: AppDimensions.maxContentWidth),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radius28),
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+      ),
+
       // Dialogs
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: AppColors.sheetDark,
         elevation: AppDimensions.elevationXl,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radius20),
