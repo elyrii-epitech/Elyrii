@@ -122,9 +122,6 @@ void main() {
     expect(find.text('Choisir un défi'), findsNothing);
     expect(find.text('Commencer'), findsNothing);
     expect(garden.completedChallenges, isEmpty);
-    await tester.tap(find.text('Semaine'));
-    await tester.pumpAndSettle();
-    expect(find.text('Respirer 2 min'), findsNothing);
     expect(store.snapshot.rituals[today]!.isDone(AccueilRitual.water), isTrue);
     await tester.pumpWidget(const SizedBox());
   });
@@ -229,15 +226,7 @@ void main() {
     repository.unavailable = true;
     await open(tester);
     if (yesterday.civilMonth != today.civilMonth) {
-      final month = AppDates.format(
-        DateTime(today.year, today.month),
-        'MMMM yyyy',
-      );
-      await tester.tap(find.widgetWithText(TextButton, month).first);
-      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Mois précédent'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Voir le mois'));
       await tester.pumpAndSettle();
     }
     await openDay(tester, yesterday);
@@ -251,33 +240,44 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('period navigation stays accessible after scrolling', (
-    tester,
-  ) async {
-    await open(tester);
-    await tester.tap(find.text('Semaine'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Mois'));
-    await tester.pumpAndSettle();
-    await Scrollable.ensureVisible(
-      tester.element(find.text('Prochaines récompenses')),
-      alignment: .5,
-    );
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Choisir une période'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Mois précédent'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Voir le mois'));
-    await tester.pumpAndSettle();
-    final today = CivilDay.fromLocal(DateTime.now());
-    final previous = today.civilMonth.shifted(-1);
-    final label = AppDates.format(
-      DateTime(previous.year, previous.month),
-      'MMMM yyyy',
-    );
-    expect(find.text(label), findsWidgets);
-    expect(find.byTooltip('Choisir une période'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox());
-  });
+  testWidgets(
+    'monthly navigation stays accessible after scrolling and blocks future months',
+    (tester) async {
+      await open(tester);
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Prochaines récompenses')),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
+      final prevButton = find.byTooltip('Mois précédent');
+      await Scrollable.ensureVisible(tester.element(prevButton), alignment: .5);
+      await tester.pumpAndSettle();
+      await tester.tap(prevButton);
+      await tester.pumpAndSettle();
+      final today = CivilDay.fromLocal(DateTime.now());
+      final previous = today.civilMonth.shifted(-1);
+      final label = AppDates.format(
+        DateTime(previous.year, previous.month),
+        'MMMM yyyy',
+      );
+      expect(find.text(label), findsWidgets);
+      final nextButton = find.byTooltip('Mois suivant');
+      await tester.tap(nextButton);
+      await tester.pumpAndSettle();
+      final currentLabel = AppDates.format(
+        DateTime(today.year, today.month),
+        'MMMM yyyy',
+      );
+      expect(find.text(currentLabel), findsWidgets);
+      expect(
+        tester
+            .widget<IconButton>(
+              find.widgetWithIcon(IconButton, Symbols.chevron_right_rounded),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }

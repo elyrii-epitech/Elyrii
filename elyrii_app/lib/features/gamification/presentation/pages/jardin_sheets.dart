@@ -1,94 +1,17 @@
 part of 'challenges_page.dart';
 
-class _PeriodSheet extends StatefulWidget {
-  final CivilMonth month;
-  final ValueChanged<CivilMonth> onMonth;
-  final VoidCallback onWeek;
-  const _PeriodSheet({
-    required this.month,
-    required this.onMonth,
-    required this.onWeek,
-  });
-  @override
-  State<_PeriodSheet> createState() => _PeriodSheetState();
-}
-
-class _PeriodSheetState extends State<_PeriodSheet> {
-  late CivilMonth _month;
-  @override
-  void initState() {
-    super.initState();
-    _month = widget.month;
-  }
-
-  @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    spacing: AppDimensions.spacing12,
-    children: [
-      Row(
-        children: [
-          IconButton(
-            onPressed: () => setState(() => _month = _month.shifted(-1)),
-            tooltip: 'Mois précédent',
-            icon: const Icon(Symbols.chevron_left_rounded),
-          ),
-          Expanded(
-            child: Text(
-              _monthLabel(_month),
-              textAlign: TextAlign.center,
-              style: AppTextStyles.titleSmall(color: context.textPrimary),
-            ),
-          ),
-          IconButton(
-            onPressed: () => setState(() => _month = _month.shifted(1)),
-            tooltip: 'Mois suivant',
-            icon: const Icon(Symbols.chevron_right_rounded),
-          ),
-        ],
-      ),
-      Text(
-        'Du 1 au ${_month.lastDay.day} ${_monthLabel(_month)}',
-        textAlign: TextAlign.center,
-        style: AppTextStyles.bodySmall(color: context.textSecondary),
-      ),
-      FilledButton.tonal(
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.tintSoft(
-            Theme.of(context).brightness == Brightness.dark,
-          ),
-          foregroundColor: AppColors.primaryText(
-            Theme.of(context).brightness == Brightness.dark,
-          ),
-        ),
-        onPressed: () {
-          widget.onMonth(_month);
-          Navigator.of(context).pop();
-        },
-        child: const Text('Voir le mois'),
-      ),
-      TextButton(
-        onPressed: () {
-          widget.onWeek();
-          Navigator.of(context).pop();
-        },
-        child: const Text('Cette semaine'),
-      ),
-    ],
-  );
-}
-
 class _FlowerSheet extends StatelessWidget {
   final CivilDay day;
   final RitualDay? rituals;
-  final List<WeekFlower> flowers;
+  final List<UserChallenge> completedChallenges;
+  final GardenDayProgress? progress;
   final bool flowersKnown;
   final MoodType? mood;
   const _FlowerSheet({
     required this.day,
     required this.rituals,
-    required this.flowers,
+    required this.completedChallenges,
+    required this.progress,
     required this.flowersKnown,
     required this.mood,
   });
@@ -115,7 +38,7 @@ class _FlowerSheet extends StatelessWidget {
           ),
           child: Row(
             children: [
-              if (flowers.isNotEmpty)
+              if (completedChallenges.isNotEmpty)
                 _GardenFlower(
                   size: AppDimensions.gardenRewardHeight,
                   color:
@@ -140,8 +63,8 @@ class _FlowerSheet extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      flowers.isNotEmpty
-                          ? '${flowers.length} ${flowers.length == 1 ? 'fleur a poussé' : 'fleurs ont poussé'} ce jour-là.'
+                      completedChallenges.isNotEmpty
+                          ? '${completedChallenges.length} ${completedChallenges.length == 1 ? 'défi terminé a fleuri' : 'défis terminés ont fleuri'} ce jour-là.'
                           : rituals?.completedAt.isNotEmpty == true
                           ? 'Tes petits gestes sont enregistrés.'
                           : 'Aucun geste enregistré sur cet appareil ce jour-là.',
@@ -157,25 +80,66 @@ class _FlowerSheet extends StatelessWidget {
         ),
         if (!flowersKnown)
           Text(
-            'Les fleurs de cette journée ne sont pas disponibles. Tes gestes locaux restent consultables.',
+            'Les défis de cette journée ne sont pas disponibles. Tes gestes locaux restent consultables.',
             style: AppTextStyles.bodySmall(color: context.textSecondary),
+          )
+        else if (progress != null)
+          Container(
+            padding: const EdgeInsets.all(AppDimensions.spacing12),
+            decoration: BoxDecoration(
+              color: AppColors.gardenGroup(dark),
+              borderRadius: BorderRadius.circular(AppDimensions.radius16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: AppDimensions.spacing4,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Symbols.insights_rounded,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.green(dark),
+                    ),
+                    const SizedBox(width: AppDimensions.spacing8),
+                    Expanded(
+                      child: Text(
+                        progress!.total > 0
+                            ? '${progress!.completed} sur ${progress!.total} défis terminés (${(progress!.completionRate! * 100).round()}%)'
+                            : "Aucun défi n'était proposé ce jour-là",
+                        style: AppTextStyles.titleSmall(
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  'Défis terminés ce jour ÷ défis créés au plus tard ce jour et non terminés avant ce jour.',
+                  style: AppTextStyles.bodySmall(
+                    color: context.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
-        if (flowers.isNotEmpty)
+        if (completedChallenges.isNotEmpty) ...[
           Text(
             'Tes défis terminés',
             style: AppTextStyles.titleMedium(color: context.textPrimary),
           ),
-        for (final flower in flowers)
-          ListTile(
-            leading: Icon(
-              Symbols.local_florist_rounded,
-              color: AppColors.green(dark),
+          for (final challenge in completedChallenges)
+            ListTile(
+              leading: Icon(
+                Symbols.local_florist_rounded,
+                color: AppColors.green(dark),
+              ),
+              title: Text(
+                challenge.displayTitle,
+                style: AppTextStyles.titleSmall(color: context.textPrimary),
+              ),
             ),
-            title: Text(
-              flower.title,
-              style: AppTextStyles.titleSmall(color: context.textPrimary),
-            ),
-          ),
+        ],
         if (rituals?.completedAt.isNotEmpty == true)
           Text(
             'Tes petits gestes',

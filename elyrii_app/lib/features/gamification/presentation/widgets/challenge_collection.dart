@@ -60,6 +60,10 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
         spacing: AppDimensions.spacing16,
         children: [
           Text(
+            'Défis à réaliser',
+            style: AppTextStyles.titleLarge(color: context.textPrimary),
+          ),
+          Text(
             'Un petit pas à ton rythme. Les défis terminés font pousser les fleurs de ton jardin.',
             style: AppTextStyles.bodyMedium(color: context.textSecondary),
           ),
@@ -146,31 +150,56 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                   ],
                 ),
               ),
-            Text(
-              'Idées de défis',
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
-            if (provider.availableChallenges.isEmpty)
+            if (provider.availableChallenges.isEmpty) ...[
+              Text(
+                'Idées de défis',
+                style: AppTextStyles.titleMedium(color: context.textPrimary),
+              ),
               Text(
                 'Les prochains défis apparaîtront ici.',
                 style: AppTextStyles.bodySmall(color: context.textSecondary),
               ),
-            for (final challenge in provider.availableChallenges)
-              _ChallengeIdea(
-                title: challenge.title,
-                description: challenge.description ?? '',
-                action: TextButton.icon(
-                  onPressed: commandsDisabled
-                      ? null
-                      : () => _perform(
-                          () => provider.startChallenge(challenge.id),
-                          'Ton défi est en cours.',
+            ] else
+              Theme(
+                data: Theme.of(context).copyWith(
+                  dividerColor: Colors.transparent,
+                ),
+                child: ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  childrenPadding: EdgeInsets.zero,
+                  initiallyExpanded: true,
+                  title: Text(
+                    'Idées de défis (${provider.availableChallenges.length})',
+                    style: AppTextStyles.titleMedium(
+                      color: context.textPrimary,
+                    ),
+                  ),
+                  children: [
+                    for (final challenge in provider.availableChallenges)
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          bottom: AppDimensions.spacing8,
                         ),
-                  icon: const Icon(Symbols.add_rounded),
-                  label: const Text('Commencer'),
+                        child: _ChallengeIdea(
+                          title: challenge.title,
+                          description: challenge.description ?? '',
+                          action: TextButton.icon(
+                            onPressed: commandsDisabled
+                                ? null
+                                : () => _perform(
+                                    () => provider.startChallenge(
+                                      challenge.id,
+                                    ),
+                                    'Ton défi est en cours.',
+                                  ),
+                            icon: const Icon(Symbols.add_rounded),
+                            label: const Text('Commencer'),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-          ],
         ],
       );
     },
