@@ -69,7 +69,9 @@ class AppSheetRoute<T> extends PopupRoute<T> {
       child: calendar || !dragDismissible
           ? Builder(builder: builder)
           : Align(
-              alignment: Alignment.bottomCenter,
+              alignment: cardOrigin == null
+                  ? Alignment.bottomCenter
+                  : Alignment.center,
               child: _SheetDragDismiss(
                 reduced: reduced,
                 canDismiss: canDismiss,

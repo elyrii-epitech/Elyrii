@@ -1,9 +1,11 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';
+import '../theme/app_motion.dart';
 import '../theme/app_text_styles.dart';
 
 enum SectionSkyScene { garden, window, water, arches }
@@ -75,6 +77,99 @@ class SectionSkyHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class SectionSkyBar extends StatelessWidget {
+  final ScrollController scroll;
+  final String title;
+  final Widget trailing;
+
+  const SectionSkyBar({
+    super.key,
+    required this.scroll,
+    required this.title,
+    required this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: AnimatedBuilder(
+        animation: scroll,
+        builder: (context, child) {
+          final compact =
+              scroll.hasClients &&
+              scroll.offset > AppDimensions.sectionScrollThreshold;
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    opacity: compact ? 1 : 0,
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : AppMotion.bandFade,
+                    curve: AppMotion.accueilEase,
+                    child: ClipRect(
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: dark
+                                ? AppColors.glassBackgroundDark
+                                : AppColors.glassBackgroundLight,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: dark
+                                    ? AppColors.dividerDark
+                                    : AppColors.dividerLight,
+                                width: .5,
+                              ),
+                            ),
+                          ),
+                          child: SafeArea(
+                            bottom: false,
+                            child: Center(
+                              child: Text(
+                                title,
+                                style: AppTextStyles.navTitle(
+                                  color: context.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SafeArea(
+                bottom: false,
+                child: SizedBox(
+                  height: AppDimensions.accueilBarHeight,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.pageHorizontalPadding,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [child!],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+        child: trailing,
       ),
     );
   }

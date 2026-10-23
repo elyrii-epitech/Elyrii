@@ -516,59 +516,13 @@ class _ChallengesPageState extends State<ChallengesPage>
                   ),
                 ],
               ),
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: AnimatedBuilder(
-                  animation: _scroll,
-                  builder: (context, child) {
-                    final compact =
-                        _scroll.hasClients &&
-                        _scroll.offset > AppDimensions.sectionScrollThreshold;
-                    return SafeArea(
-                      bottom: false,
-                      child: AnimatedContainer(
-                        duration: MediaQuery.disableAnimationsOf(context)
-                            ? Duration.zero
-                            : AppMotion.bandFade,
-                        curve: AppMotion.accueilEase,
-                        color: compact
-                            ? (dark
-                                  ? AppColors.glassBackgroundDark
-                                  : AppColors.glassBackgroundLight)
-                            : Colors.transparent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.spacing20,
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: AnimatedOpacity(
-                                opacity: compact ? 1 : 0,
-                                duration:
-                                    MediaQuery.disableAnimationsOf(context)
-                                    ? Duration.zero
-                                    : AppMotion.bandFade,
-                                curve: AppMotion.accueilEase,
-                                child: Text(
-                                  'Jardin',
-                                  style: AppTextStyles.navTitle(
-                                    color: context.textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: _period,
-                              tooltip: 'Choisir une période',
-                              icon: const Icon(Symbols.calendar_month_rounded),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+              SectionSkyBar(
+                scroll: _scroll,
+                title: 'Jardin',
+                trailing: IconButton(
+                  onPressed: _period,
+                  tooltip: 'Choisir une période',
+                  icon: const Icon(Symbols.calendar_month_rounded),
                 ),
               ),
               Positioned(

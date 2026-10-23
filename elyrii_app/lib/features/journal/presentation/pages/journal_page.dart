@@ -9,7 +9,6 @@ import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/localization/app_dates.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../../core/widgets/section_sky_header.dart';
@@ -276,70 +275,15 @@ class _TopBar extends StatelessWidget {
   const _TopBar({required this.scroll, required this.onSearch});
 
   @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final duration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : AppMotion.bandFade;
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: AnimatedBuilder(
-        animation: scroll,
-        builder: (context, child) {
-          final compact =
-              scroll.hasClients &&
-              scroll.offset > AppDimensions.sectionScrollThreshold;
-          return AnimatedContainer(
-            duration: duration,
-            curve: AppMotion.accueilEase,
-            color: compact
-                ? (dark
-                      ? AppColors.glassBackgroundDark
-                      : AppColors.glassBackgroundLight)
-                : Colors.transparent,
-            child: SafeArea(
-              bottom: false,
-              child: SizedBox(
-                height: AppDimensions.accueilBarHeight,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacing12,
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: AppDimensions.controlSize),
-                      Expanded(
-                        child: AnimatedOpacity(
-                          opacity: compact ? 1 : 0,
-                          duration: duration,
-                          curve: AppMotion.accueilEase,
-                          child: Text(
-                            'Journal',
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.navTitle(
-                              color: context.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      child!,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-        child: JournalBarButton(
-          icon: Symbols.search_rounded,
-          tooltip: 'Rechercher dans le journal',
-          onPressed: onSearch,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SectionSkyBar(
+    scroll: scroll,
+    title: 'Journal',
+    trailing: JournalBarButton(
+      icon: Symbols.search_rounded,
+      tooltip: 'Rechercher dans le journal',
+      onPressed: onSearch,
+    ),
+  );
 }
 
 class _Composer extends StatelessWidget {

@@ -96,7 +96,7 @@ void main() {
   });
 
   testWidgets(
-    'la feuille ancrée conserve le rythme réel et la durée de la capsule',
+    'la carte centrée conserve le rythme réel et la durée de la capsule',
     (tester) async {
       final controller = MeditationController();
       addTearDown(controller.dispose);
@@ -121,8 +121,8 @@ void main() {
                   .descendant(of: preview, matching: find.byType(Material))
                   .first,
             )
-            .bottom,
-        844,
+            .center,
+        const Offset(195, 422),
       );
       await tester.tap(find.text('Commencer · 15 min'));
       await tester.pumpAndSettle();
@@ -135,13 +135,48 @@ void main() {
     },
   );
 
+  testWidgets('la carte grandit depuis la pratique et reste dismissible', (
+    tester,
+  ) async {
+    final controller = MeditationController();
+    addTearDown(controller.dispose);
+    await pumpLibrary(tester, controller);
+    final featured = find.byKey(const Key('meditation-featured'));
+    final origin = tester.getRect(featured);
+    await tester.tap(featured);
+    await tester.pump();
+    final surface = find
+        .descendant(
+          of: find.byType(MeditationPracticePreview),
+          matching: find.byType(Material),
+        )
+        .first;
+    final initial = tester.getRect(surface);
+    expect(initial.center.dx, closeTo(origin.center.dx, .01));
+    expect(initial.center.dy, closeTo(origin.center.dy, .01));
+    await tester.pumpAndSettle();
+    final expanded = tester.getRect(surface);
+    expect(expanded.center, const Offset(195, 422));
+    expect(initial.width, lessThan(expanded.width));
+    expect(tester.widget<Material>(surface).color!.a, 1);
+    await tester.tapAt(const Offset(195, 820));
+    await tester.pumpAndSettle();
+    expect(find.byType(MeditationPracticePreview), findsNothing);
+    await tester.tap(featured);
+    await tester.pumpAndSettle();
+    await tester.fling(surface, const Offset(0, 160), 900);
+    await tester.pumpAndSettle();
+    expect(find.byType(MeditationPracticePreview), findsNothing);
+    expect(controller.isSetup, isTrue);
+  });
+
   testWidgets('fermer l’aperçu ne démarre pas de séance', (tester) async {
     final controller = MeditationController();
     addTearDown(controller.dispose);
     await pumpLibrary(tester, controller, textScale: 1.5);
     await tester.tap(find.byKey(const Key('meditation-featured')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('Fermer'));
+    await tester.tap(find.byTooltip("Fermer l'aperçu"));
     await tester.pumpAndSettle();
     expect(controller.isSetup, isTrue);
     expect(controller.selectedExercise, isNull);

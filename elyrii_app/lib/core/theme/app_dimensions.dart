@@ -194,6 +194,7 @@ class AppDimensions {
   static const double meditationButtonHeight = 50;
   static const double meditationIcon = 28;
   static const double meditationBandIcon = 38;
+  static const double meditationPreviewWidth = 360;
   static const double meditationFeaturedArtWidth = 190;
   static const double meditationFeaturedArtHeight = 170;
 

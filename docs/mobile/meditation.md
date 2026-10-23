@@ -2,6 +2,8 @@
 
 La bibliothèque présente un lac sous le ciel violet, quatre durées et trois rayons éditoriaux. La capsule **3, 5, 10 ou 15 min** flotte sur le lac à la jonction du contenu. Au défilement, elle reste épinglée sous le titre compact, comme la capsule Série, Fleurs et Tenue de l’Accueil. Elle filtre la pratique mise en avant, les rayons et la liste complète. Toucher un exercice agrandit sa carte vers le centre de l’écran. Cet aperçu présente le nom, le rythme réel et les conseils. **Commencer** lance la séance avec la durée de la capsule, sans demander de la choisir à nouveau et sans audio.
 
+L’aperçu est une carte opaque, arrondie sur les quatre côtés. Un tap hors de la carte, sa croix ou un glissement vers le bas la ferme sans démarrer de séance. Les autres présentations conservent leur ancrage en bas de l’écran.
+
 La bibliothèque affiche neuf pratiques. Écoute des sons, Bienveillance et Auto-compassion restent dans le domaine et dans le contrat serveur, mais ne figurent pas dans cette présentation. La ligne **Reprendre** est absente, car aucune position de séance interrompue n’est enregistrée.
 
 La séance s’ouvre hors du dock. Le lac conserve une échelle uniforme, sans étirer la lune. Le cercle et la pose d’Elyrii suivent les phases de la pratique et se figent en pause. Elyrii conserve la tenue de l’utilisateur, sans accessoire verrouillé ajouté. Le mouvement réduit fixe le cercle et la pose, sans arrêter le minuteur.
