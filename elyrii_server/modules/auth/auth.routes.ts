@@ -21,14 +21,29 @@ class AuthRoutes {
         this.router.post('/password-reset/request', bodyLimit({maxSize: 1024}), resetRateLimit(10), ...this.passwordReset.request);
         this.router.post('/password-reset/confirm', bodyLimit({maxSize: 4096}), resetRateLimit(30), ...this.passwordReset.confirm);
         this.router.post('/login', ...this.controller.login);
-        this.router.post('/register', ...this.controller.register);
+        this.router.post('/register', bodyLimit({maxSize: 8192}), resetRateLimit(10), ...this.controller.register);
         this.router.post('/oauth/google', ...this.controller.googleOAuth);
         this.router.post('/oauth/apple', ...this.controller.appleOAuth);
-        this.router.post('/verify-email', ...this.controller.verifyEmail);
-        this.router.post('/resend-verification', ...this.controller.resendVerification);
-        this.router.post('/logout', ...this.controller.logout);
+        this.router.post('/verify-email', bodyLimit({maxSize: 1024}), resetRateLimit(30), ...this.controller.verifyEmail);
+        this.router.post('/resend-verification', bodyLimit({maxSize: 1024}), resetRateLimit(10), ...this.controller.resendVerification);
+        this.router.get('/verify-email', c => {
+            c.header('Cache-Control', 'no-store');
+            c.header('Referrer-Policy', 'no-referrer');
+            const nonce = crypto.randomUUID();
+            c.header('Content-Security-Policy', `default-src 'none'; script-src 'nonce-${nonce}'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'`);
+            return c.html(`<!doctype html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Activation Elyrii</title><style>body{font:18px system-ui;max-width:32rem;margin:15vh auto;padding:24px;background:#fafafa;color:#242426}h1{font-size:28px}</style><h1>Elyrii</h1><p id="status" role="status">Confirmation de ton adresse…</p><script nonce="${nonce}">
+            const token = location.hash.slice(1); history.replaceState(null, '', location.pathname);
+            (async () => { try {
+                if (!token) throw new Error();
+                const response = await fetch(location.pathname, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
+                if (!response.ok) throw new Error();
+                document.getElementById('status').textContent = 'Adresse confirmée. Tu peux revenir dans Elyrii et te connecter.';
+            } catch { document.getElementById('status').textContent = 'Ce lien est invalide ou expiré. Demande un nouveau lien depuis Elyrii.'; } })();
+            </script></html>`);
+        });
+        this.router.post('/logout', bodyLimit({ maxSize: 8192 }), ...this.controller.logout);
         this.router.get('/refresh', ...this.controller.refreshToken);
-        this.router.post('/refresh', ...this.controller.refreshTokenPost);
+        this.router.post('/refresh', bodyLimit({ maxSize: 8192 }), ...this.controller.refreshTokenPost);
         
         this.router.get("/openapi.json", openAPIRouteHandler(this.router, {
             documentation: {

@@ -8,6 +8,8 @@ import JournalRepository from '../../repository/journal.repository';
 import AccountController from './account.controller';
 import PasswordResetController from '../auth/password-reset.controller';
 import {resetHash} from '../auth/password-reset.service';
+import AuthController from '../auth/auth.controller';
+import AuthRepository from '../../repository/auth.repository';
 
 const integration = Bun.env.FRONTEND_DB_INTEGRATION === '1' ? describe : describe.skip;
 integration('frontend corrections against a disposable PostgreSQL database', () => {
@@ -132,5 +134,49 @@ integration('frontend corrections against a disposable PostgreSQL database', () 
     const [user] = await db.select().from(tables.userTable).where(eq(tables.userTable.id, owner));
     expect(await Bun.password.verify('une phrase secrète de test longue', user!.password)).toBe(true);
     expect((await db.select().from(tables.passwordResetTable).where(eq(tables.passwordResetTable.userId, owner))).length).toBe(0);
+  });
+
+  test('a failed email delivery only discards its own token, not a newer resend', async () => {
+    const auth = new AuthRepository();
+    const failedToken = await auth.createEmailVerificationToken(other);
+    const newerToken = await auth.createEmailVerificationToken(other);
+    await auth.discardEmailVerificationToken(other, failedToken);
+    expect(await auth.consumeEmailVerificationToken(failedToken)).toBeUndefined();
+    expect((await auth.consumeEmailVerificationToken(newerToken))?.id).toBe(other);
+  });
+
+  test('email activation delivers a usable token, retries failed delivery and consumes once', async () => {
+    const previous = Bun.env.REQUIRE_EMAIL_VERIFICATION;
+    Bun.env.REQUIRE_EMAIL_VERIFICATION = 'true';
+    const email = `verification-${crypto.randomUUID()}@example.test`;
+    let token = '';
+    let failDelivery = true;
+    const auth = new AuthController({available: () => true, send: async (_email, value) => {
+      if (failDelivery) throw new Error('Fixture mail unavailable');
+      token = value;
+    }});
+    const router = new Hono();
+    router.post('/register', ...auth.register);
+    router.post('/login', ...auth.login);
+    router.post('/verify', ...auth.verifyEmail);
+    const signup = {email, password: 'A fixture password 2026!', firstName: 'Email', lastName: 'Fixture'};
+    try {
+      expect((await router.request('/register', json(signup))).status).toBe(503);
+      failDelivery = false;
+      const response = await router.request('/register', json(signup));
+      expect(response.status).toBe(201);
+      expect(await response.json()).toMatchObject({emailVerificationRequired: true});
+      expect(token).not.toBe('');
+      expect((await router.request('/login', json(signup))).status).toBe(403);
+      const results = await Promise.all([router.request('/verify', json({token})), router.request('/verify', json({token}))]);
+      expect(results.map(r => r.status).sort()).toEqual([200, 400]);
+      const login = await router.request('/login', json(signup));
+      expect(login.status).toBe(200);
+      expect(await login.json()).toHaveProperty('refreshToken');
+    } finally {
+      await db.delete(tables.userTable).where(eq(tables.userTable.email, email));
+      if (previous === undefined) delete Bun.env.REQUIRE_EMAIL_VERIFICATION;
+      else Bun.env.REQUIRE_EMAIL_VERIFICATION = previous;
+    }
   });
 });

@@ -36,6 +36,7 @@ export class JwtUtils {
         try {
             return await sign({
                 ...payload,
+                jti: crypto.randomUUID(),
                 exp: Math.floor(Date.now() / 1000) + this.REFRESH_TOKEN_EXP,
                 iat: Math.floor(Date.now() / 1000)
             }, Bun.env.REFRESH_SECRET_KEY, "HS256");
