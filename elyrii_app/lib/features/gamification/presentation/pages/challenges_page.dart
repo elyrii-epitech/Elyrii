@@ -1,38 +1,75 @@
-import '../../../../core/accessibility/motion.dart';
+import 'dart:async';
+import 'dart:math' as math;
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../app/router/app_routes.dart';
-import '../../../../core/config/mascot_animations.dart';
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../app/router/app_shell.dart';
+import '../../../../core/localization/app_dates.dart';
+import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/elyrii_page_header.dart';
-import '../../../../core/widgets/glass/liquid_glass_card.dart';
-import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
-import '../../../dashboard/presentation/providers/dashboard_provider.dart';
+import '../../../../core/widgets/mascot_with_accessories.dart';
+import '../../../../core/widgets/section_sky_header.dart';
+import '../../../dashboard/data/accueil_activities.dart';
+import '../../../dashboard/domain/accueil_content.dart';
+import '../../../dashboard/domain/civil_day.dart';
+import '../../../dashboard/presentation/mood_presentation.dart';
+import '../../../journal/presentation/providers/journal_provider.dart';
+import '../../../mascot/data/models/mascot_model.dart';
+import '../../../mascot/data/models/mascot_accessory.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../providers/gamification_provider.dart';
-import '../widgets/challenge_sections.dart';
-import '../widgets/badges_grid.dart';
-import '../widgets/daily_streak_card.dart';
 
-/// Jardin — Sanctuaire de progression visuelle, rituels et réussites.
-///
-/// Refonte Apple HIG & Liquid Glass (Septembre 2026) :
-/// - Suppression de [SliverAppBar.large] et de son vide supérieur noir.
-/// - En-tête spatial fluide avec micro-sur-titre « MON JARDIN », grand titre
-///   « Jardin » et pilule de floraison interactive.
-/// - Carte Héroïque « Jardin Intérieur » affichant l'éveil botanique, le niveau,
-///   l'XP et la série de présence.
-/// - Passerelle limpide avec le Coach IA : « Le Coach sème, le Jardin fleurit ».
-/// - Deux segments clairs (« Mes Quêtes » / « Mes Succès ») avec retour haptique.
-/// - Tirer-relâcher natif Cupertino via [ElyriiPageFrame.onRefresh].
+part 'jardin_calendar.dart';
+part 'jardin_sheets.dart';
+
+const _extraRituals = [
+  AccueilRitualInfo(
+    ritual: AccueilRitual.reachOut,
+    title: 'Écrire à un proche',
+    pendingDetail: 'Lien · 2 min',
+    icon: Symbols.favorite_rounded,
+    color: AppColors.pink,
+  ),
+  AccueilRitualInfo(
+    ritual: AccueilRitual.water,
+    title: "Boire un verre d'eau",
+    pendingDetail: 'Corps · 1 min',
+    icon: Symbols.water_drop_rounded,
+    color: AppColors.teal,
+  ),
+  AccueilRitualInfo(
+    ritual: AccueilRitual.music,
+    title: 'Écouter une chanson calme',
+    pendingDetail: 'Calme · 4 min',
+    icon: Symbols.music_note_rounded,
+    color: AppColors.violet,
+  ),
+];
+final _gardenRituals = List<AccueilRitualInfo>.unmodifiable([
+  ...accueilRituals,
+  ..._extraRituals,
+]);
+const _ritualCategories = {
+  AccueilRitual.breathe: 'Calme',
+  AccueilRitual.gratitude: 'Écriture',
+  AccueilRitual.walk: 'Corps',
+  AccueilRitual.reachOut: 'Lien',
+  AccueilRitual.water: 'Corps',
+  AccueilRitual.music: 'Calme',
+};
+
+String _dayLabel(CivilDay day) =>
+    AppDates.format(DateTime(day.year, day.month, day.day), 'EEEE d MMMM yyyy');
+String _monthLabel(CivilMonth month) =>
+    AppDates.format(DateTime(month.year, month.month), 'MMMM yyyy');
+
+enum _GardenView { week, month }
+
 class ChallengesPage extends StatefulWidget {
   const ChallengesPage({super.key});
 
@@ -40,786 +77,792 @@ class ChallengesPage extends StatefulWidget {
   State<ChallengesPage> createState() => _ChallengesPageState();
 }
 
-class _ChallengesPageState extends State<ChallengesPage> {
-  String? _startingChallengeId;
-  String? _processingProposalId;
-  GamificationProvider? _observedGamificationProvider;
-  int _lastCompletedCount = -1;
-
-  /// Segment principal : 0 = Mes Quêtes, 1 = Mes Succès.
-  int _mainSegment = 0;
-
-  /// Sous-segment Succès : 0 = Badges & Trophées, 1 = Historique.
-  int _successesSubSegment = 0;
-
-  List<BadgeItem> get _badges {
-    final completed = context
-        .watch<GamificationProvider>()
-        .completedChallenges
-        .length;
-    const milestones = [1, 3, 7, 12, 24, 36];
-    const titles = [
-      'Premier pas',
-      'Explorateur',
-      'Persévérance',
-      'Élan',
-      'Épanouissement',
-      'Jardin accompli',
-    ];
-    return List.generate(
-      milestones.length,
-      (i) => BadgeItem(
-        id: '${milestones[i]}',
-        title: titles[i],
-        icon: Icons.emoji_events_rounded,
-        requirement:
-            '${milestones[i]} défi${milestones[i] == 1 ? '' : 's'} terminé${milestones[i] == 1 ? '' : 's'}',
-        isUnlocked: completed >= milestones[i],
-      ),
-    );
-  }
-
-  static const _botanicalStates = <({String label, String emoji, String desc})>[
-    (
-      label: 'Éveil',
-      emoji: '🌱',
-      desc: 'Les premières pousses prennent racine',
-    ),
-    (
-      label: 'Épanouissement',
-      emoji: '🌿',
-      desc: 'Ton feuillage grandit doucement',
-    ),
-    (label: 'Sérénité', emoji: '🌸', desc: 'Les fleurs de paix s’ouvrent'),
-    (label: 'Harmonie', emoji: '🦋', desc: 'La vie s’aligne en équilibre'),
-    (label: 'Lumière intérieure', emoji: '✨', desc: 'Ton sanctuaire rayonne'),
-  ];
+class _ChallengesPageState extends State<ChallengesPage>
+    with WidgetsBindingObserver {
+  final _scroll = ScrollController();
+  final _todayKey = GlobalKey();
+  final _periodKey = GlobalKey();
+  final _frameKey = GlobalKey();
+  double? _periodOrigin;
+  _GardenView _view = _GardenView.month;
+  late CivilDay _today;
+  late CivilMonth _month;
+  late CivilDay _monday;
+  Timer? _midnight;
+  bool _celebrating = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _today = CivilDay.fromLocal(DateTime.now());
+    _month = _today.civilMonth;
+    _monday = AccueilActivities.mondayOf(_today);
+    _scheduleMidnight();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final provider = context.read<GamificationProvider>();
-      _observedGamificationProvider = provider;
-      provider.addListener(_onGamificationChanged);
-      _onGamificationChanged();
-      provider.loadAll();
+      if (mounted) unawaited(context.read<GamificationProvider>().loadAll());
     });
   }
 
-  void _onGamificationChanged() {
-    if (!mounted || _observedGamificationProvider == null) return;
-    final completedCount =
-        _observedGamificationProvider!.completedChallenges.length;
-    if (_lastCompletedCount >= 0 && completedCount > _lastCompletedCount) {
-      // Le provider réseau peut notifier plusieurs fois pendant un refresh :
-      // le delta garantit une seule célébration par nouvelle réussite.
-      context.read<MascotProvider>().react(MascotAnimations.celebrate);
-      ElyriiHaptics.success();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final period =
+          _periodKey.currentContext?.findRenderObject() as RenderBox?;
+      final frame = _frameKey.currentContext?.findRenderObject() as RenderBox?;
+      if (period == null || frame == null) return;
+      final origin =
+          period.localToGlobal(Offset.zero, ancestor: frame).dy +
+          _scroll.offset;
+      if (_periodOrigin != origin) setState(() => _periodOrigin = origin);
+    });
+  }
+
+  bool get _periodPinned =>
+      _periodOrigin != null &&
+      _scroll.hasClients &&
+      _scroll.offset >=
+          _periodOrigin! -
+              MediaQuery.paddingOf(context).top -
+              AppDimensions.sectionPeriodTop;
+
+  Widget _periodButton() => TextButton.icon(
+    onPressed: _period,
+    icon: const Icon(Symbols.expand_more_rounded),
+    iconAlignment: IconAlignment.end,
+    label: Text(
+      _view == _GardenView.month
+          ? _monthLabel(_month)
+          : '${_monday.day} – ${_monday.addDays(6).day} ${_monthLabel(_monday.civilMonth)}',
+    ),
+  );
+
+  void _scheduleMidnight() {
+    _midnight?.cancel();
+    final now = DateTime.now();
+    _midnight = Timer(
+      DateTime(now.year, now.month, now.day + 1).difference(now),
+      _updateDay,
+    );
+  }
+
+  void _updateDay() {
+    final next = CivilDay.fromLocal(DateTime.now());
+    if (next != _today) {
+      setState(() {
+        if (_month == _today.civilMonth) _month = next.civilMonth;
+        if (_monday == AccueilActivities.mondayOf(_today)) {
+          _monday = AccueilActivities.mondayOf(next);
+        }
+        _today = next;
+      });
     }
-    _lastCompletedCount = completedCount;
+    _scheduleMidnight();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _updateDay();
   }
 
   @override
   void dispose() {
-    _observedGamificationProvider?.removeListener(_onGamificationChanged);
+    WidgetsBinding.instance.removeObserver(this);
+    _midnight?.cancel();
+    _scroll.dispose();
     super.dispose();
   }
 
-  Future<void> _handleStart(String challengeId) async {
-    setState(() => _startingChallengeId = challengeId);
-    final success = await context.read<GamificationProvider>().startChallenge(
-      challengeId,
+  void _toast(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text), duration: AppMotion.gardenToast),
+      snackBarAnimationStyle: AnimationStyle.noAnimation,
     );
-    if (success && mounted) {
-      context.read<MascotProvider>().react(MascotAnimations.invite);
-    }
-    if (mounted) setState(() => _startingChallengeId = null);
   }
 
-  Future<void> _handleAcceptProposal(String proposalId) async {
-    setState(() => _processingProposalId = proposalId);
-    final success = await context.read<GamificationProvider>().acceptChallenge(
-      proposalId,
-    );
-    if (success && mounted) {
-      context.read<MascotProvider>().react(MascotAnimations.invite);
-    }
-    if (mounted) setState(() => _processingProposalId = null);
-  }
+  Future<void> _show(String title, Widget child) => Navigator.of(
+    context,
+    rootNavigator: true,
+  ).push<void>(_GardenSheetRoute(title: title, child: child));
 
-  Future<void> _handleRejectProposal(String proposalId) async {
-    setState(() => _processingProposalId = proposalId);
-    await context.read<GamificationProvider>().rejectChallenge(proposalId);
-    if (mounted) setState(() => _processingProposalId = null);
-  }
-
-  ({String label, String emoji, String desc}) _getBotanicalState(int level) {
-    final index = (level - 1).clamp(0, _botanicalStates.length - 1);
-    return _botanicalStates[index];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final provider = context.watch<GamificationProvider>();
-    final dashboardProvider = context.watch<DashboardProvider>();
-
-    final streakDays = dashboardProvider.currentStreak;
-    final completedCount = provider.completedChallenges.length;
-    final level = 1 + (completedCount ~/ 3);
-    final currentXp = (completedCount * 50) % 150;
-    const maxXp = 150;
-    final stateData = _getBotanicalState(level);
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: ElyriiPageFrame.tab(
-        title: 'Jardin',
-        onRefresh: () => provider.loadAll(force: true),
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
-        ),
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.pageHorizontalPadding,
-              AppDimensions.spacing12,
-              AppDimensions.pageHorizontalPadding,
-              0,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 1. Carte Héroïque du Jardin Intérieur
-                  _buildGardenHeroCard(
-                    isDark: isDark,
-                    stateData: stateData,
-                    level: level,
-                    currentXp: currentXp,
-                    maxXp: maxXp,
-                    streakDays: streakDays,
-                    completedCount: completedCount,
-                  ),
-                  const SizedBox(height: AppDimensions.spacing16),
-
-                  // 2. Bannière de synergie Coach IA
-                  _buildCoachSynergyBanner(isDark),
-                  const SizedBox(height: AppDimensions.spacing20),
-
-                  // 3. Sélecteur segmenté principal iOS
-                  _segmentedControl(
-                    isDark: isDark,
-                    groupValue: _mainSegment,
-                    labels: const {0: 'Mes Quêtes', 1: 'Mes Succès'},
-                    onValueChanged: (value) =>
-                        setState(() => _mainSegment = value),
-                  ),
-                  const SizedBox(height: AppDimensions.spacing16),
-                ],
-              ),
-            ),
-          ),
-          if (provider.error != null)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimensions.spacing20),
-                child: Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    provider.error!,
-                    style: AppTextStyles.bodyMedium(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.pageHorizontalPadding,
-            ),
-            sliver: _mainSegment == 0
-                ? provider.isLoading &&
-                          provider.activeChallenges.isEmpty &&
-                          provider.availableChallenges.isEmpty
-                      ? SliverToBoxAdapter(
-                          child: _ChallengesSkeleton(isDark: isDark),
-                        )
-                      : ChallengeQuestsSliver(
-                          provider: provider,
-                          startingId: _startingChallengeId,
-                          processingId: _processingProposalId,
-                          onStart: _handleStart,
-                          onAccept: _handleAcceptProposal,
-                          onReject: _handleRejectProposal,
-                        )
-                : SliverMainAxisGroup(
-                    slivers: [
-                      SliverToBoxAdapter(
-                        child: _segmentedControl(
-                          isDark: isDark,
-                          groupValue: _successesSubSegment,
-                          labels: const {
-                            0: 'Badges & Trophées',
-                            1: 'Historique des fleurs',
-                          },
-                          onValueChanged: (value) =>
-                              setState(() => _successesSubSegment = value),
-                        ),
-                      ),
-                      const SliverToBoxAdapter(
-                        child: SizedBox(height: AppDimensions.spacing12),
-                      ),
-                      if (_successesSubSegment == 0)
-                        SliverToBoxAdapter(
-                          child: _buildBadgesView(isDark, streakDays),
-                        )
-                      else
-                        ChallengeHistorySliver(provider: provider),
-                    ],
-                  ),
-          ),
-        ],
+  void _period() {
+    _show(
+      'Choisir une période',
+      _PeriodSheet(
+        month: _month,
+        onMonth: (month) {
+          setState(() {
+            _month = month;
+            _view = _GardenView.month;
+          });
+        },
+        onWeek: () {
+          setState(() {
+            _monday = AccueilActivities.mondayOf(_today);
+            _view = _GardenView.week;
+          });
+        },
       ),
     );
   }
 
-  /// Carte Héroïque du Jardin Intérieur (style Apple Health / Fitness).
-  Widget _buildGardenHeroCard({
-    required bool isDark,
-    required ({String label, String emoji, String desc}) stateData,
-    required int level,
-    required int currentXp,
-    required int maxXp,
-    required int streakDays,
-    required int completedCount,
-  }) {
-    final progress = (currentXp / maxXp).clamp(0.0, 1.0);
+  void _goToToday() {
+    final target = _todayKey.currentContext;
+    if (target == null) return;
+    Scrollable.ensureVisible(
+      target,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : AppMotion.gardenTodayScroll,
+      curve: Curves.easeInOut,
+    );
+  }
 
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(AppDimensions.spacing20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Future<void> _toggle(AccueilRitual ritual, bool done) async {
+    final store = context.read<AccueilActivities>();
+    final snapshot = store.snapshot;
+    if (snapshot.isLoading || snapshot.isWriting || snapshot.error != null) {
+      return;
+    }
+    final garden = context.read<GamificationProvider>();
+    final known = garden.hasLoadedData && garden.error == null;
+    final before = garden.completedChallenges
+        .map((challenge) => challenge.id)
+        .toSet();
+    final day = _today;
+    final saved = await store.setRitualDone(
+      day: day,
+      ritual: ritual,
+      done: done,
+    );
+    if (!saved || !done) return;
+    await garden.loadAll(force: true);
+    final newFlower = garden.completedChallenges.any(
+      (challenge) => !before.contains(challenge.id),
+    );
+    if (!mounted ||
+        !known ||
+        garden.error != null ||
+        !newFlower ||
+        _celebrating ||
+        day != _today) {
+      return;
+    }
+    _celebrating = true;
+    final count = garden.completedChallenges.length;
+    await _show(
+      'Une nouvelle fleur !',
+      Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
+          const _GardenFlower(
+            size: AppDimensions.gardenBloomSize,
+            color: AppColors.yellowDark,
+          ),
+          Text(
+            'Ton jardin en compte $count.',
+            style: AppTextStyles.bodyMedium(color: context.textSecondary),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          Text(
+            "Tu as pris un moment pour toi.\nC'est ça qui compte.",
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall(color: context.textSecondary),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          FilledButton(
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+            child: const Text('Voir mon jardin'),
+          ),
+        ],
+      ),
+    );
+    _celebrating = false;
+  }
+
+  void _openDay(
+    CivilDay day,
+    AccueilActivitySnapshot snapshot,
+    List<WeekFlower> flowers,
+  ) {
+    final done = snapshot.rituals[day];
+    if (flowers.isNotEmpty || done?.completedAt.isNotEmpty == true) {
+      _show(
+        _dayLabel(day),
+        _FlowerSheet(
+          day: day,
+          rituals: done,
+          flowers: flowers,
+          mood: snapshot.moodDays[day],
+        ),
+      );
+    } else if (day == _today) {
+      _goToToday();
+    } else if (day.isAfter(_today)) {
+      _toast(
+        'Cette journée est encore à venir. Ton jardin grandira à ton rythme.',
+      );
+    } else if (day.isBefore(_today.addDays(-370))) {
+      _toast("L'historique local de cette journée n'est plus disponible.");
+    } else {
+      _toast(
+        'Pas de défi terminé ce jour-là. Tu peux reprendre quand tu veux.',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final store = context.watch<AccueilActivities>();
+    final snapshot = store.snapshot;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final bottom = AppShell.bottomClearanceOf(context);
+    final garden = context.watch<GamificationProvider>();
+    final known =
+        garden.hasLoadedData && !garden.isLoading && garden.error == null;
+    final flowers = buildGardenFlowers(
+      completedChallenges: garden.completedChallenges,
+      activities: snapshot,
+      start: _view == _GardenView.month ? _month.firstDay : _monday,
+      end: _view == _GardenView.month ? _month.lastDay : _monday.addDays(6),
+    );
+    return Scaffold(
+      backgroundColor: AppColors.sectionBody(dark),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppDimensions.maxContentWidth,
+          ),
+          child: Stack(
+            key: _frameKey,
             children: [
-              // Cercle botanique en halo doux
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.25),
-                      AppColors.secondary.withValues(alpha: 0.15),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.35),
-                    width: 1,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    stateData.emoji,
-                    style: AppTextStyles.headlineSmall(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppDimensions.spacing16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: AppDimensions.spacing8,
-                      runSpacing: AppDimensions.spacing4,
+              CustomScrollView(
+                controller: _scroll,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Stack(
                       children: [
-                        Text(
-                          stateData.label,
-                          style: AppTextStyles.titleMedium(
-                            color: context.textPrimary,
-                          ),
+                        const SectionSkyHeader(
+                          title: 'Jardin',
+                          subtitle: 'Tes petits gestes prennent des couleurs.',
+                          scene: SectionSkyScene.garden,
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.spacing8,
-                            vertical: AppDimensions.spacing2,
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top:
+                                AppDimensions.sectionSkyHeight -
+                                AppDimensions.sectionBodyOverlap,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radius8,
-                            ),
-                          ),
-                          child: Text(
-                            'Étape $level',
-                            style: AppTextStyles.badge(
-                              color: AppColors.readableAccent(
-                                AppColors.primary,
-                                isDark:
-                                    Theme.of(context).brightness ==
-                                    Brightness.dark,
-                              ),
+                          child: SectionSkyBody(
+                            bottomPadding: bottom + AppDimensions.spacing32,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              spacing: AppDimensions.spacing16,
+                              children: [
+                                _segments(dark),
+                                AnimatedBuilder(
+                                  animation: _scroll,
+                                  child: Align(
+                                    key: _periodKey,
+                                    child: _periodButton(),
+                                  ),
+                                  builder: (context, child) => IgnorePointer(
+                                    ignoring: _periodPinned,
+                                    child: Opacity(
+                                      opacity: _periodPinned ? 0 : 1,
+                                      child: child,
+                                    ),
+                                  ),
+                                ),
+                                if (snapshot.isLoading)
+                                  const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                else if (snapshot.error != null)
+                                  _localError(snapshot.error!)
+                                else ...[
+                                  if (!known)
+                                    Column(
+                                      children: [
+                                        Text(
+                                          garden.error ??
+                                              'Chargement de ton jardin…',
+                                          style: AppTextStyles.bodyMedium(
+                                            color: context.textSecondary,
+                                          ),
+                                        ),
+                                        if (garden.error != null)
+                                          TextButton(
+                                            onPressed: () =>
+                                                garden.loadAll(force: true),
+                                            child: const Text('Réessayer'),
+                                          ),
+                                      ],
+                                    )
+                                  else ...[
+                                    _GardenCalendar(
+                                      today: _today,
+                                      month: _month,
+                                      monday: _monday,
+                                      week: _view == _GardenView.week,
+                                      snapshot: snapshot,
+                                      flowers: flowers,
+                                      onDay: (day) => _openDay(
+                                        day,
+                                        snapshot,
+                                        flowers
+                                            .where(
+                                              (flower) => flower.day == day,
+                                            )
+                                            .toList(),
+                                      ),
+                                    ),
+                                    if (_view == _GardenView.month)
+                                      Text(
+                                        '${flowers.length} fleurs en ${_monthLabel(_month)}',
+                                        textAlign: TextAlign.center,
+                                        style: AppTextStyles.bodySmall(
+                                          color: AppColors.gardenNote(dark),
+                                        ),
+                                      ),
+                                    if (_view == _GardenView.week)
+                                      _weekAnswer(flowers.length, dark),
+                                  ],
+                                  _rituals(snapshot, dark),
+                                ],
+                                _rewards(dark),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Symbols.eco_rounded,
+                                      color: AppColors.green(dark),
+                                      size: AppDimensions.iconSm,
+                                    ),
+                                    const SizedBox(
+                                      width: AppDimensions.spacing8,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        'Un jour plus doux ? Repose-toi.\nTon jardin grandit à ton rythme.',
+                                        style: AppTextStyles.bodySmall(
+                                          color: context.textSecondary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppDimensions.spacing2),
-                    Text(
-                      stateData.desc,
-                      style: AppTextStyles.bodyMedium(
-                        color: context.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimensions.spacing16),
-
-          // Jauge de floraison / sérénité
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                spacing: AppDimensions.spacing12,
-                runSpacing: AppDimensions.spacing4,
-
-                children: [
-                  Text(
-                    'Floraison du sanctuaire',
-                    style: AppTextStyles.labelMedium(
-                      color: context.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    '$currentXp / $maxXp pts',
-                    style: AppTextStyles.titleSmall(
-                      color: AppColors.readableAccent(
-                        AppColors.primary,
-                        isDark: Theme.of(context).brightness == Brightness.dark,
-                      ),
-                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppDimensions.spacing8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppDimensions.radius8),
-                child: Stack(
-                  children: [
-                    Container(
-                      height: 8,
-                      width: double.infinity,
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.06),
-                    ),
-                    FractionallySizedBox(
-                      widthFactor: progress == 0 ? 0.04 : progress,
-                      child: Container(
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.primary, AppColors.secondary],
-                          ),
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: AnimatedBuilder(
+                  animation: _scroll,
+                  builder: (context, child) {
+                    final compact =
+                        _scroll.hasClients &&
+                        _scroll.offset > AppDimensions.sectionScrollThreshold;
+                    return SafeArea(
+                      bottom: false,
+                      child: AnimatedContainer(
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : AppMotion.bandFade,
+                        curve: AppMotion.accueilEase,
+                        color: compact
+                            ? (dark
+                                  ? AppColors.glassBackgroundDark
+                                  : AppColors.glassBackgroundLight)
+                            : Colors.transparent,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.spacing20,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: AnimatedOpacity(
+                                opacity: compact ? 1 : 0,
+                                duration:
+                                    MediaQuery.disableAnimationsOf(context)
+                                    ? Duration.zero
+                                    : AppMotion.bandFade,
+                                curve: AppMotion.accueilEase,
+                                child: Text(
+                                  'Jardin',
+                                  style: AppTextStyles.navTitle(
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _period,
+                              tooltip: 'Choisir une période',
+                              icon: const Icon(Symbols.calendar_month_rounded),
+                            ),
+                          ],
                         ),
                       ),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                top:
+                    MediaQuery.paddingOf(context).top +
+                    AppDimensions.sectionPeriodTop,
+                left: AppDimensions.spacing20,
+                right: AppDimensions.spacing20,
+                child: AnimatedBuilder(
+                  animation: _scroll,
+                  builder: (context, child) => Offstage(
+                    offstage: !_periodPinned,
+                    child: Align(
+                      child: Material(
+                        color: dark
+                            ? AppColors.glassBackgroundDark
+                            : AppColors.glassBackgroundLight,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusPill,
+                        ),
+                        child: _periodButton(),
+                      ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppDimensions.spacing16),
+        ),
+      ),
+    );
+  }
 
-          // Bento statistiques douces
-          Row(
-            children: [
-              Expanded(
-                child: Container(
+  Widget _segments(bool dark) => Container(
+    padding: const EdgeInsets.all(AppDimensions.spacing4),
+    decoration: BoxDecoration(
+      color: dark ? AppColors.cardDark : AppColors.cardLight,
+      borderRadius: BorderRadius.circular(AppDimensions.radius12),
+    ),
+    child: Row(
+      children: [
+        for (final view in _GardenView.values)
+          Expanded(
+            child: Semantics(
+              selected: _view == view,
+              child: InkWell(
+                onTap: () => setState(() => _view = view),
+                borderRadius: BorderRadius.circular(AppDimensions.radius8),
+                child: AnimatedContainer(
+                  constraints: const BoxConstraints(
+                    minHeight: AppDimensions.controlSize,
+                  ),
+                  alignment: Alignment.center,
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : AppMotion.gardenSegment,
+                  curve: AppMotion.accueilEase,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacing12,
                     vertical: AppDimensions.spacing8,
                   ),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
+                    color: _view == view
+                        ? AppColors.primaryText(dark)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppDimensions.radius8),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.local_fire_department_rounded,
-                        color: Color(0xFFFF9500),
-                        size: 18,
-                      ),
-                      const SizedBox(width: AppDimensions.spacing8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$streakDays ${streakDays > 1 ? "jours" : "jour"}',
-                              style: AppTextStyles.titleSmall(
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'Série active',
-                              style: AppTextStyles.bodySmall(
-                                color: context.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    view == _GardenView.week ? 'Semaine' : 'Mois',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.labelMedium(
+                      color: _view == view
+                          ? AppColors.onTint(dark)
+                          : context.textSecondary,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: AppDimensions.spacing8),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacing12,
-                    vertical: AppDimensions.spacing8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.spa_rounded,
-                        color: Color(0xFF34C759),
-                        size: 18,
-                      ),
-                      const SizedBox(width: AppDimensions.spacing8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$completedCount ${completedCount > 1 ? "fleuris" : "fleuri"}',
-                              style: AppTextStyles.titleSmall(
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'Rituels clos',
-                              style: AppTextStyles.bodySmall(
-                                color: context.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
+          ),
+      ],
+    ),
+  );
+
+  Widget _localError(String error) => Column(
+    children: [
+      Text(
+        error,
+        style: AppTextStyles.bodyMedium(
+          color: AppColors.errorText(
+            Theme.of(context).brightness == Brightness.dark,
+          ),
+        ),
+      ),
+      TextButton(
+        onPressed: () => context.read<AccueilActivities>().reload(),
+        child: const Text('Réessayer'),
+      ),
+    ],
+  );
+
+  Widget _weekAnswer(int count, bool dark) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      decoration: BoxDecoration(
+        color: AppColors.gardenGroup(dark),
+        borderRadius: BorderRadius.circular(AppDimensions.radius20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$count fleurs cette semaine. Chaque petit geste compte.',
+            style: AppTextStyles.bodyMedium(color: context.textPrimary),
+          ),
+          TextButton.icon(
+            onPressed: () =>
+                _show('Respirer 2 minutes', const _GardenBreathing()),
+            icon: const Icon(Symbols.air_rounded),
+            label: const Text('Respirer 2 min'),
           ),
         ],
       ),
     );
   }
 
-  /// Passerelle poétique vers le Coach IA : « Le Coach sème, le Jardin fleurit ».
-  Widget _buildCoachSynergyBanner(bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        ElyriiHaptics.light();
-        context.go(AppRoutes.coach);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing16,
-          vertical: AppDimensions.spacing16,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.07),
-          borderRadius: BorderRadius.circular(AppDimensions.radius16),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.20),
-            width: 0.8,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.spacing8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.20),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.psychology_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: AppDimensions.spacing12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Semer une graine avec le Coach IA',
-                    style: AppTextStyles.titleSmall(color: context.textPrimary),
-                  ),
-                  const SizedBox(height: AppDimensions.spacing2),
-                  Text(
-                    'Besoin d\'un rituel guidé sur-mesure ? Ton coach t\'écoute.',
-                    style: AppTextStyles.labelSmall(
-                      color: context.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppDimensions.spacing8),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: AppColors.primary.withValues(alpha: 0.7),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ============================================================
-  // Vue « Mes Quêtes »
-  // ============================================================
-
-  Widget _buildBadgesView(bool isDark, int streakDays) {
-    final unlockedCount = _badges.where((b) => b.isUnlocked).length;
-    final totalCount = _badges.length;
-
+  Widget _rituals(AccueilActivitySnapshot snapshot, bool dark) {
+    final selected = _gardenRituals
+        .where(
+          (info) =>
+              accueilRituals.contains(info) ||
+              snapshot.addedRituals.contains(info.ritual),
+        )
+        .toList();
+    final done =
+        snapshot.rituals[_today]?.completedAt ??
+        const <AccueilRitual, DateTime>{};
     return Column(
-      key: const ValueKey('badges_subview'),
+      key: _todayKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // En-tête des badges avec compteur
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          spacing: AppDimensions.spacing8,
+          runSpacing: AppDimensions.spacing8,
           children: [
             Text(
-              'Badges de sérénité',
-              style: AppTextStyles.overline(color: context.textSecondary),
+              "Aujourd'hui",
+              style: AppTextStyles.titleMedium(color: context.textPrimary),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacing8,
-                vertical: AppDimensions.spacing2,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(
-                  alpha: isDark ? 0.15 : 0.08,
-                ),
-                borderRadius: BorderRadius.circular(AppDimensions.radius8),
-              ),
-              child: Text(
-                '$unlockedCount / $totalCount débloqués',
-                style: AppTextStyles.badge(
-                  color: AppColors.readableAccent(
-                    AppColors.primary,
-                    isDark: Theme.of(context).brightness == Brightness.dark,
-                  ),
-                ),
-              ),
+            Text(
+              '${selected.where((info) => done.containsKey(info.ritual)).length} sur ${selected.length}',
+              style: AppTextStyles.bodySmall(color: context.textSecondary),
             ),
           ],
         ),
-        const SizedBox(height: AppDimensions.spacing8),
-        BadgesGrid(
-          badges: _badges,
-          onBadgeTap: (badge) => _showBadgeDetails(context, badge),
-        ),
-        const SizedBox(height: AppDimensions.spacing8),
-        Text(
-          'Chaque badge fleuri témoigne d\'un pas vers la sérénité.',
-          textAlign: TextAlign.center,
-          style: AppTextStyles.labelSmall(color: context.textTertiary)
-              .copyWith(fontStyle: FontStyle.italic),
-        ),
-        const SizedBox(height: AppDimensions.spacing16),
-
-        // Trophée de constance (volet Trophées du segment)
-        Text(
-          'Constance & rythme',
-          style: AppTextStyles.overline(color: context.textSecondary),
-        ),
-        const SizedBox(height: AppDimensions.spacing8),
-        DailyStreakCard(
-          streakDays: streakDays,
-          weekHistory: List.generate(7, (i) => i < streakDays),
+        const SizedBox(height: AppDimensions.spacing12),
+        Material(
+          color: AppColors.gardenGroup(dark),
+          borderRadius: BorderRadius.circular(AppDimensions.radius20),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (final info in selected)
+                _RitualRow(
+                  info: info,
+                  detail: ritualDetail(info, done[info.ritual]),
+                  trailing: Checkbox(
+                    value: done.containsKey(info.ritual),
+                    semanticLabel: info.title,
+                    onChanged: snapshot.isWriting
+                        ? null
+                        : (value) => _toggle(info.ritual, value!),
+                  ),
+                ),
+              ListTile(
+                leading: Icon(
+                  Symbols.add_rounded,
+                  color: AppColors.primaryText(dark),
+                ),
+                title: Text(
+                  'Ajouter un rituel',
+                  style: AppTextStyles.titleSmall(
+                    color: AppColors.primaryText(dark),
+                  ),
+                ),
+                onTap: snapshot.isWriting
+                    ? null
+                    : () => _show(
+                        'Ajouter un rituel',
+                        _AddRitualSheet(
+                          store: context.read<AccueilActivities>(),
+                        ),
+                      ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _segmentedControl({
-    required bool isDark,
-    required int groupValue,
-    required Map<int, String> labels,
-    required ValueChanged<int> onValueChanged,
-  }) {
-    final selectedColor = context.textPrimary;
-    final unselectedColor = context.textSecondary;
-
-    return SizedBox(
-      width: double.infinity,
-      child: CupertinoSlidingSegmentedControl<int>(
-        groupValue: groupValue,
-        backgroundColor: isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.05),
-        thumbColor: isDark ? const Color(0xFF3A3A3C) : Colors.white,
-        padding: const EdgeInsets.all(AppDimensions.spacing2),
-        children: {
-          for (final entry in labels.entries)
-            entry.key: Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: AppDimensions.spacing8,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: 48),
-                child: Center(
-                  child: Text(
-                    entry.value,
-                    style: AppTextStyles.labelMedium(
-                      color: entry.key == groupValue
-                          ? selectedColor
-                          : unselectedColor,
+  Widget _rewards(bool dark) {
+    final garden = context.watch<GamificationProvider>();
+    final known = garden.hasLoadedData && garden.error == null;
+    final count = garden.completedChallenges.length;
+    final rewards = [
+      'flower_crown',
+      'star_crown',
+    ].map((id) => MascotAccessories.byId(id)!).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Prochaines récompenses',
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
+        ),
+        const SizedBox(height: AppDimensions.spacing12),
+        if (!known)
+          Text(
+            garden.error ?? 'Chargement des récompenses…',
+            style: AppTextStyles.bodySmall(color: context.textSecondary),
+          ),
+        if (garden.error != null)
+          TextButton(
+            onPressed: () => garden.loadAll(force: true),
+            child: const Text('Réessayer'),
+          ),
+        if (known)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              spacing: AppDimensions.spacing12,
+              children: [
+                for (final reward in rewards)
+                  SizedBox(
+                    width: AppDimensions.gardenRewardWidth,
+                    child: Material(
+                      color: AppColors.gardenReward(dark),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius20,
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius20,
+                        ),
+                        onTap: () => _show(
+                          'Une tenue pour Elyrii',
+                          _RewardSheet(
+                            reward: reward,
+                            count: count,
+                            mascot: context
+                                .read<MascotProvider>()
+                                .mascot
+                                .copyWith(equippedCosmetics: [reward.id]),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(
+                            AppDimensions.spacing12,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: AppDimensions.spacing8,
+                            children: [
+                              Container(
+                                height: AppDimensions.gardenRewardHeight,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: AppColors.gardenRewardThumb(dark),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radius12,
+                                  ),
+                                ),
+                                child: Image.asset(
+                                  'assets/accessory_portraits/${reward.id}.png',
+                                  height: AppDimensions.gardenRewardHeight,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                              Text(
+                                reward.name,
+                                style: AppTextStyles.titleSmall(
+                                  color: context.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                '${math.min(count, reward.requiredChallenges)} sur ${reward.requiredChallenges} défis',
+                                style: AppTextStyles.bodySmall(
+                                  color: context.textSecondary,
+                                ),
+                              ),
+                              LinearProgressIndicator(
+                                value: (count / reward.requiredChallenges)
+                                    .clamp(0, 1),
+                                color: AppColors.green(dark),
+                                backgroundColor: AppColors.track(dark),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-        },
-        onValueChanged: (value) {
-          if (value == null || value == groupValue) return;
-          ElyriiHaptics.selection();
-          onValueChanged(value);
-        },
-      ),
-    );
-  }
-
-  void _showBadgeDetails(BuildContext context, BadgeItem badge) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final mascot = context.read<MascotProvider>();
-    if (badge.isUnlocked) {
-      ElyriiHaptics.success();
-      mascot.react(MascotAnimations.celebrate);
-    } else {
-      ElyriiHaptics.light();
-      mascot.react(MascotAnimations.curious);
-    }
-
-    showLiquidGlassDialog(
-      context: context,
-      title: badge.title,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: badge.isUnlocked
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : (isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.03)),
-            ),
-            child: Icon(
-              badge.isUnlocked ? badge.icon : Icons.hourglass_empty_rounded,
-              size: 28,
-              color: badge.isUnlocked
-                  ? AppColors.primary
-                  : context.textTertiary,
+              ],
             ),
           ),
-          const SizedBox(height: AppDimensions.spacing16),
-          Text(
-            '${badge.requirement}. ${badge.isUnlocked ? 'Objectif atteint !' : 'À ton rythme.'}',
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium(color: context.textSecondary),
-          ),
-        ],
-      ),
-      actions: [
-        LiquidGlassDialogAction(
-          label: 'Merci',
-          isDefault: true,
-          onPressed: () => Navigator.pop(context),
-        ),
       ],
     );
   }
 }
 
-/// Squelette de chargement discret (shimmer doux).
-class _ChallengesSkeleton extends StatelessWidget {
-  final bool isDark;
-
-  const _ChallengesSkeleton({required this.isDark});
+class _RitualRow extends StatelessWidget {
+  final AccueilRitualInfo info;
+  final String detail;
+  final Widget trailing;
+  const _RitualRow({
+    required this.info,
+    required this.detail,
+    required this.trailing,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final shimmerBase = isDark
-        ? Colors.white.withValues(alpha: 0.04)
-        : Colors.black.withValues(alpha: 0.03);
-    final shimmerHighlight = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.06);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: List.generate(
-        3,
-        (i) => Padding(
-          padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
-          child:
-              Container(
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: shimmerBase,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radius16,
-                      ),
-                    ),
-                  )
-                  .animateRespectingMotion(
-                    context,
-                    onPlay: (controller) => controller.repeat(reverse: true),
-                  )
-                  .shimmer(duration: 1400.ms, color: shimmerHighlight),
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final color = info.color(dark);
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(AppDimensions.spacing4),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(AppDimensions.radius8),
+        ),
+        child: Icon(
+          info.icon,
+          color: AppColors.onTint(true),
+          size: AppDimensions.iconSm,
         ),
       ),
+      title: Text(
+        info.title,
+        style: AppTextStyles.titleSmall(color: context.textPrimary),
+      ),
+      subtitle: Text(
+        detail,
+        style: AppTextStyles.bodySmall(color: context.textSecondary),
+      ),
+      trailing: trailing,
     );
   }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:elyrii_app/core/storage/content_cipher.dart';
+import 'package:elyrii_app/features/dashboard/data/accueil_activities.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
@@ -27,6 +30,10 @@ Widget _createTestApp({required Widget child}) {
       ChangeNotifierProvider(
         create: (_) => DashboardProvider(apiClient: client),
       ),
+      ChangeNotifierProvider(
+        create: (_) =>
+            AccueilActivities(cipher: ContentCipher(storage))..onUserChanged(),
+      ),
       ChangeNotifierProvider(create: (_) => JournalProvider(client: client)),
       ChangeNotifierProvider(
         create: (_) => GamificationProvider(client: client),
@@ -41,6 +48,7 @@ Widget _createTestApp({required Widget child}) {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  setUpAll(() => initializeDateFormatting('fr'));
 
   group('Smoke Test Refonte Apple HIG & Mascotte', () {
     testWidgets('LoginPage sans Transform.translate arbitraire ni SnackBar', (
@@ -76,7 +84,7 @@ void main() {
 
       // Plus aucun RefreshIndicator Material
       expect(find.byType(RefreshIndicator), findsNothing);
-      expect(find.text('Mes Quêtes'), findsOneWidget);
+      expect(find.text('Semaine'), findsOneWidget);
     });
 
     testWidgets(

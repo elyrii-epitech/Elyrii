@@ -5,9 +5,6 @@ import 'package:elyrii_app/core/services/secure_storage_service.dart';
 import 'package:elyrii_app/features/gamification/data/models/gamification_models.dart';
 import 'package:elyrii_app/features/gamification/data/repositories/gamification_repository.dart';
 import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
-import 'package:elyrii_app/features/gamification/presentation/widgets/challenge_sections.dart';
-import 'package:elyrii_app/features/gamification/presentation/widgets/quest_tile.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _Repository extends GamificationRepository {
@@ -40,48 +37,31 @@ class _Repository extends GamificationRepository {
 }
 
 void main() {
-  testWidgets(
-    '1000 completed challenges stay lazy and concurrent loads are shared',
-    (tester) async {
-      final repository = _Repository();
-      final provider = GamificationProvider(repository: repository)
-        ..onUserChanged(userId: 'alice');
-      final first = provider.loadAll();
-      final second = provider.loadAll();
-      expect(identical(first, second), isTrue);
-      expect(repository.loads, 4);
-      repository.history.complete(
-        List.generate(
-          1000,
-          (index) => UserChallenge(
-            id: 'challenge-$index',
-            userId: 'alice',
-            challengeId: 'template-$index',
-            status: 'COMPLETED',
-            createdAt: DateTime(2026),
-            updatedAt: DateTime(2026),
-          ),
+  test('1000 completed challenges retain their data and concurrent loads are shared', () async {
+    final repository = _Repository();
+    final provider = GamificationProvider(repository: repository)
+      ..onUserChanged(userId: 'alice');
+    addTearDown(provider.dispose);
+    final first = provider.loadAll();
+    final second = provider.loadAll();
+    expect(identical(first, second), isTrue);
+    expect(repository.loads, 4);
+    repository.history.complete(
+      List.generate(
+        1000,
+        (index) => UserChallenge(
+          id: 'challenge-$index',
+          userId: 'alice',
+          challengeId: 'template-$index',
+          status: 'COMPLETED',
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
         ),
-      );
-      await Future.wait([first, second]);
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomScrollView(
-              slivers: [ChallengeHistorySliver(provider: provider)],
-            ),
-          ),
-        ),
-      );
-      expect(find.byType(QuestTile).evaluate().length, lessThan(20));
-      expect(find.byKey(const ValueKey('challenge-0')), findsOneWidget);
-      expect(find.byKey(const ValueKey('challenge-999')), findsNothing);
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -1000));
-      await tester.pumpAndSettle();
-      expect(find.byType(QuestTile).evaluate().length, lessThan(25));
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox());
-      provider.dispose();
-    },
-  );
+      ),
+    );
+    await Future.wait([first, second]);
+    expect(provider.completedChallenges, hasLength(1000));
+    expect(provider.completedChallenges.first.id, 'challenge-0');
+    expect(provider.completedChallenges.last.id, 'challenge-999');
+  });
 }
