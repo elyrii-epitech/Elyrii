@@ -109,14 +109,11 @@ class AuthProvider extends ChangeNotifier {
     final token =
         '${encode({'alg': 'none', 'typ': 'JWT'})}.${encode({'sub': DevSession.userId, 'exp': exp})}.demo';
     try {
-      if (await _commit(
+      await _commit(
         revision,
         AuthResult(token: token, user: _demoUser, message: 'Demo'),
-      )) {
-        await _credentials(() async {
-          if (_current(revision)) await _storage.setProfileSetupCompleted();
-        });
-      }
+        completeProfileSetup: true,
+      );
     } catch (e) {
       _fail(revision, e);
     }
@@ -187,7 +184,11 @@ class AuthProvider extends ChangeNotifier {
     return revision;
   }
 
-  Future<bool> _commit(int revision, AuthResult result) async {
+  Future<bool> _commit(
+    int revision,
+    AuthResult result, {
+    bool completeProfileSetup = false,
+  }) async {
     if (!_current(revision)) return false;
     if (result.verificationRequired) {
       _status = AuthStatus.unauthenticated;
@@ -209,6 +210,10 @@ class AuthProvider extends ChangeNotifier {
       await _storage.saveAccessToken(result.token);
       if (!_current(revision)) return false;
       await _storage.saveUserId(result.user!.id);
+      if (!_current(revision)) return false;
+      // Authentication can replace the login route immediately. Finish every
+      // native write before publishing it so the caller can enter onboarding.
+      if (completeProfileSetup) await _storage.setProfileSetupCompleted();
       return _current(revision);
     });
     if (!committed || !_current(revision)) return false;

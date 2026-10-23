@@ -9,6 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 class _Storage extends SecureStorageService {
   String? token;
   String? userId;
+  Completer<void>? profileSetupGate;
+  final profileSetupStarted = Completer<void>();
+  bool profileSetupCompleted = false;
   @override
   Future<void> saveAccessToken(String value) async {
     token = value;
@@ -24,7 +27,12 @@ class _Storage extends SecureStorageService {
   @override
   Future<String?> getUserId() async => userId;
   @override
-  Future<void> setProfileSetupCompleted() async {}
+  Future<void> setProfileSetupCompleted() async {
+    profileSetupStarted.complete();
+    await profileSetupGate?.future;
+    profileSetupCompleted = true;
+  }
+
   @override
   Future<void> clearAuthData() async {
     token = null;
@@ -59,6 +67,34 @@ class _Client extends ApiClient {
 }
 
 void main() {
+  test(
+    'la démo ne publie pas la session avant la fin des écritures natives',
+    () async {
+      final storage = _Storage()..profileSetupGate = Completer<void>();
+      final provider = AuthProvider(client: _Client(storage), storage: storage);
+      addTearDown(provider.dispose);
+      final observedSetupStates = <bool>[];
+      provider.addListener(() {
+        if (provider.isAuthenticated) {
+          observedSetupStates.add(storage.profileSetupCompleted);
+        }
+      });
+      final starting = provider.startDemoSession();
+      await storage.profileSetupStarted.future;
+      try {
+        expect(provider.isAuthenticated, isFalse);
+        expect(provider.isLoading, isTrue);
+        expect(observedSetupStates, isEmpty);
+      } finally {
+        storage.profileSetupGate!.complete();
+        await starting;
+      }
+      expect(provider.isDemoSession, isTrue);
+      expect(storage.profileSetupCompleted, isTrue);
+      expect(observedSetupStates, [true]);
+    },
+  );
+
   test('une démo restaurée reste authentifiée sans requête backend', () async {
     final storage = _Storage();
     final client = _Client(storage);
