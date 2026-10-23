@@ -44,4 +44,6 @@ jobs:
       - name: Prepare disposable schema
         run: bun x drizzle-kit push --force
       - run: bun test
+      - name: Validate real HTTP contracts used by mobile
+        run: bun run test:mobile
       - run: bun run build

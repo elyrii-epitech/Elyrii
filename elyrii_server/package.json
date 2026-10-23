@@ -11,6 +11,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "test:mobile": "bash scripts/test-mobile-api.sh",
     "docs:build": "cd scripts && ./generate-docs.sh build",
     "docs:serve": "cd scripts && ./generate-docs.sh serve"
   },
