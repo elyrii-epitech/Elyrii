@@ -146,6 +146,7 @@ class _ChallengesPageState extends State<ChallengesPage>
     required bool progressKnown,
   }) {
     final hasFacts =
+        (progressKnown && progress.total > 0) ||
         completedOnDay.isNotEmpty ||
         (snapshot.rituals[day]?.completedAt.isNotEmpty == true);
     if (day.isAfter(_today)) {
@@ -216,12 +217,10 @@ class _ChallengesPageState extends State<ChallengesPage>
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               spacing: AppDimensions.spacing16,
                               children: [
-                                // 1. Actionable challenges first
                                 ChallengeCollection(provider: garden),
 
                                 const Divider(height: AppDimensions.spacing32),
 
-                                // 2. Stats then meadow and completed challenges history
                                 if (snapshot.isLoading)
                                   const Center(
                                     child: CircularProgressIndicator(),
@@ -233,7 +232,12 @@ class _ChallengesPageState extends State<ChallengesPage>
                                   const SizedBox(
                                     height: AppDimensions.spacing8,
                                   ),
-                                  // 3. Daily completion calendar
+                                  Text(
+                                    'Complétion quotidienne',
+                                    style: AppTextStyles.titleMedium(
+                                      color: context.textPrimary,
+                                    ),
+                                  ),
                                   _GardenCalendar(
                                     today: _today,
                                     month: _month,
@@ -242,23 +246,17 @@ class _ChallengesPageState extends State<ChallengesPage>
                                     progressList: progressList,
                                     progressKnown: known,
                                     onDay: (day) {
-                                      final progress = progressList.firstWhere(
-                                        (p) => p.day == day,
-                                        orElse: () => GardenDayProgress(
-                                          day: day,
-                                          completed: 0,
-                                          total: 0,
-                                        ),
-                                      );
+                                      final progress =
+                                          progressList[day.day - 1];
                                       final completedOnDay = garden
                                           .completedChallenges
                                           .where((c) {
                                             final completedAt = c.completedAt;
                                             return completedAt != null &&
                                                 CivilDay.fromLocal(
-                                                  completedAt,
-                                                ) ==
-                                                day;
+                                                      completedAt,
+                                                    ) ==
+                                                    day;
                                           })
                                           .toList();
                                       _openDay(
@@ -278,10 +276,8 @@ class _ChallengesPageState extends State<ChallengesPage>
 
                                 const Divider(height: AppDimensions.spacing32),
 
-                                // 4. Rewards last
                                 _rewards(dark),
 
-                                // Mindful note
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -315,6 +311,7 @@ class _ChallengesPageState extends State<ChallengesPage>
               SectionSkyBar(
                 scroll: _scroll,
                 title: 'Jardin',
+                trailing: const SizedBox(width: AppDimensions.controlSize),
               ),
             ],
           ),
@@ -400,7 +397,9 @@ class _ChallengesPageState extends State<ChallengesPage>
               completed.isEmpty
                   ? '0 fleur'
                   : '${completed.length} ${completed.length == 1 ? 'fleur' : 'fleurs'}',
-              style: AppTextStyles.labelMedium(color: AppColors.green(dark)),
+              style: AppTextStyles.labelMedium(
+                color: AppColors.successText(dark),
+              ),
             ),
           ],
         ),

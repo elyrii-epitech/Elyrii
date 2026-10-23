@@ -95,7 +95,6 @@ class _MeditationLibraryState extends State<MeditationLibrary> {
                     children: [
                       SectionSkyHeader(
                         title: 'Méditer',
-                        subtitle: 'Un souffle, puis le calme.',
                         scene: SectionSkyScene.water,
                         height: headerHeight,
                         titleBottom:
@@ -141,7 +140,7 @@ class _MeditationLibraryState extends State<MeditationLibrary> {
                                   Text(
                                     '${practices.length}',
                                     style: AppTextStyles.bodySmall(
-                                      color: context.textTertiary,
+                                      color: context.textSecondary,
                                     ),
                                   ),
                                 ],

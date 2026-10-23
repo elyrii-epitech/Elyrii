@@ -4,13 +4,12 @@ class _RingPainter extends CustomPainter {
   final double rate;
   final Color trackColor;
   final Color progressColor;
-  final double strokeWidth;
+  static const strokeWidth = 2.5;
 
   const _RingPainter({
     required this.rate,
     required this.trackColor,
     required this.progressColor,
-    this.strokeWidth = 2.5,
   });
 
   @override
@@ -61,10 +60,11 @@ class _GardenMeadow extends StatelessWidget {
     return Semantics(
       label: count == 0
           ? "Prairie du jardin sans fleur pour l'instant."
-          : "Prairie du jardin avec $count ${count == 1 ? 'fleur épanouie' : 'fleurs épanouies'}.",
+          : 'Prairie illustrant $count défis terminés.',
       image: true,
       child: Container(
-        height: 180,
+        height: count == 0 ? null : 180,
+        constraints: const BoxConstraints(minHeight: 180),
         decoration: BoxDecoration(
           color: dark ? AppColors.cardDark : AppColors.cardLight,
           borderRadius: BorderRadius.circular(AppDimensions.radius20),
@@ -92,7 +92,7 @@ class _GardenMeadow extends StatelessWidget {
                     children: [
                       Icon(
                         Symbols.potted_plant_rounded,
-                        size: AppDimensions.iconLg,
+                        size: AppDimensions.iconMd,
                         color: AppColors.green(dark).withValues(alpha: 0.6),
                       ),
                       const SizedBox(height: AppDimensions.spacing8),
@@ -133,7 +133,6 @@ class _MeadowPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // Rolling hill 1 (back)
     final backHillPaint = Paint()
       ..color = AppColors.green(dark).withValues(alpha: dark ? 0.22 : 0.18)
       ..style = PaintingStyle.fill;
@@ -145,7 +144,6 @@ class _MeadowPainter extends CustomPainter {
       ..close();
     canvas.drawPath(backHill, backHillPaint);
 
-    // Rolling hill 2 (front)
     final frontHillPaint = Paint()
       ..color = AppColors.green(dark).withValues(alpha: dark ? 0.38 : 0.32)
       ..style = PaintingStyle.fill;
@@ -166,23 +164,8 @@ class _MeadowPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    final petalColors = dark
-        ? const [
-            Color(0xFFEF9A9A),
-            Color(0xFFCE93D8),
-            Color(0xFFFFCC80),
-            Color(0xFF90CAF9),
-            Color(0xFFA5D6A7),
-            Color(0xFFFFF59D),
-          ]
-        : const [
-            Color(0xFFE57373),
-            Color(0xFFBA68C8),
-            Color(0xFFFFB74D),
-            Color(0xFF64B5F6),
-            Color(0xFF81C784),
-            Color(0xFFFFD54F),
-          ];
+    final petalPaint = Paint();
+    final centerPaint = Paint()..color = AppColors.xpBar;
 
     for (var i = 0; i < displayCount; i++) {
       final challenge = challenges[i];
@@ -208,9 +191,14 @@ class _MeadowPainter extends CustomPainter {
         );
       canvas.drawPath(stemPath, stemPaint);
 
-      // Blossom
-      final color = petalColors[seed % petalColors.length];
-      final petalPaint = Paint()..color = color;
+      petalPaint.color = switch (seed % 6) {
+        0 => AppColors.pink(dark),
+        1 => AppColors.violet(dark),
+        2 => AppColors.orange(dark),
+        3 => AppColors.teal(dark),
+        4 => AppColors.green(dark),
+        _ => AppColors.yellow(dark),
+      };
       final petalCount = 5 + (seed % 2);
       const petalRadius = 6.0;
       for (var p = 0; p < petalCount; p++) {
@@ -219,11 +207,7 @@ class _MeadowPainter extends CustomPainter {
         final py = blossomY + math.sin(angle) * petalRadius;
         canvas.drawCircle(Offset(px, py), 4.2, petalPaint);
       }
-      canvas.drawCircle(
-        Offset(x, blossomY),
-        3.2,
-        Paint()..color = AppColors.xpBar,
-      );
+      canvas.drawCircle(Offset(x, blossomY), 3.2, centerPaint);
     }
   }
 
@@ -269,18 +253,21 @@ class _CompletedChallengesHistoryState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppDimensions.spacing8,
       children: [
-        Row(
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppDimensions.spacing8,
           children: [
-            Expanded(
-              child: Text(
-                'Défis terminés (${all.length})',
-                style: AppTextStyles.titleSmall(color: context.textPrimary),
-              ),
+            Text(
+              'Défis terminés (${all.length})',
+              style: AppTextStyles.titleSmall(color: context.textPrimary),
             ),
             if (all.length > 3)
               TextButton(
                 onPressed: () => setState(() => _expanded = !_expanded),
-                child: Text(_expanded ? 'Réduire' : 'Voir tout (${all.length})'),
+                child: Text(
+                  _expanded ? 'Réduire' : 'Voir tout (${all.length})',
+                ),
               ),
           ],
         ),
@@ -337,17 +324,22 @@ class _GardenCalendar extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final ink = AppColors.gardenInk(dark);
+    final textScale = MediaQuery.textScalerOf(context);
+    final cellWidth = math.max(
+      AppDimensions.controlSize,
+      textScale.scale(AppDimensions.controlSize),
+    );
     final firstOffset = month.firstDay.weekday - 1;
     final rowCount = (firstOffset + progressList.length + 6) ~/ 7;
-    final canGoNext = month.isBefore(today.civilMonth);
+    final canGoNext = month.firstDay.isBefore(today.civilMonth.firstDay);
 
     return LayoutBuilder(
       builder: (context, constraints) => SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
           width: math.max(
-            AppDimensions.gardenCalendarMinWidth,
             constraints.maxWidth,
+            7 * cellWidth + 2 * AppDimensions.gardenTouchPadding,
           ),
           child: Container(
             padding: const EdgeInsets.all(AppDimensions.gardenTouchPadding),
@@ -492,11 +484,10 @@ class _GardenCalendar extends StatelessWidget {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  '—',
-                                  style: AppTextStyles.gardenCaption(
-                                    color: ink,
-                                  ),
+                                Icon(
+                                  Symbols.remove_rounded,
+                                  size: AppDimensions.iconXs,
+                                  color: ink,
                                 ),
                                 const SizedBox(width: AppDimensions.spacing4),
                                 Text(
@@ -538,12 +529,7 @@ class _GardenCalendar extends StatelessWidget {
     );
   }
 
-  Widget _cell(
-    BuildContext context,
-    int index,
-    bool dark,
-    Color ink,
-  ) {
+  Widget _cell(BuildContext context, int index, bool dark, Color ink) {
     if (index < 0 || index >= progressList.length) {
       return const SizedBox(height: AppDimensions.controlSize);
     }
@@ -555,9 +541,11 @@ class _GardenCalendar extends StatelessWidget {
 
     final rateDesc = isFuture
         ? 'à venir'
+        : !progressKnown
+        ? 'défis indisponibles'
         : progress.total == 0
-            ? 'aucun défi'
-            : '${progress.completed} sur ${progress.total} défis (${(rate! * 100).round()}%)';
+        ? 'aucun défi'
+        : '${progress.completed} sur ${progress.total} défis (${(rate! * 100).round()}%)';
     final gesturesCount = facts?.completedAt.length ?? 0;
     final gesturesDesc = gesturesCount > 0
         ? '$gesturesCount ${gesturesCount == 1 ? 'geste enregistré' : 'gestes enregistrés'}'
@@ -568,8 +556,7 @@ class _GardenCalendar extends StatelessWidget {
         Semantics(
           button: true,
           onTap: () => onDay(day),
-          label:
-              '${_dayLabel(day)}, $rateDesc, $gesturesDesc${progressKnown ? '' : ', fleurs non chargées'}',
+          label: '${_dayLabel(day)}, $rateDesc, $gesturesDesc',
           excludeSemantics: true,
           child: Material(
             color: Colors.transparent,
@@ -579,14 +566,19 @@ class _GardenCalendar extends StatelessWidget {
                 AppDimensions.gardenPlotRadius,
               ),
               child: SizedBox(
-                height: AppDimensions.controlSize,
+                height: math.max(
+                  AppDimensions.controlSize + AppDimensions.spacing24,
+                  MediaQuery.textScalerOf(context)
+                          .scale(AppDimensions.controlSize) +
+                      AppDimensions.spacing24,
+                ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimensions.spacing4,
                     vertical: AppDimensions.gardenPlotInset,
                   ),
                   child: Material(
-                    color: rate != null && rate > 0
+                    color: progressKnown && rate != null && rate > 0
                         ? AppColors.gardenPlot(dark)
                         : AppColors.gardenEmptyPlot(dark),
                     shape: RoundedRectangleBorder(
@@ -602,57 +594,42 @@ class _GardenCalendar extends StatelessWidget {
                     ),
                     child: SizedBox(
                       width: double.infinity,
-                      child: Stack(
-                        alignment: Alignment.center,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        spacing: AppDimensions.spacing4,
                         children: [
-                          if (isFuture)
-                            Text(
-                              '${day.day}',
-                              style: AppTextStyles.labelSmall(
-                                color: ink.withValues(alpha: 0.35),
-                              ),
-                            )
-                          else if (progress.total == 0)
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${day.day}',
-                                  style: AppTextStyles.labelSmall(color: ink),
+                          Text(
+                            '${day.day}',
+                            style: AppTextStyles.labelSmall(color: ink),
+                          ),
+                          if (!isFuture && progressKnown && rate != null)
+                            SizedBox.square(
+                              dimension: MediaQuery.textScalerOf(context)
+                                  .scale(34),
+                              child: CustomPaint(
+                                painter: _RingPainter(
+                                  rate: rate,
+                                  trackColor: AppColors.track(dark),
+                                  progressColor: AppColors.green(dark),
                                 ),
-                                Text(
-                                  '—',
-                                  style: AppTextStyles.gardenCaption(
-                                    color: ink.withValues(alpha: 0.5),
+                                child: Center(
+                                  child: Text(
+                                    '${(rate * 100).round()}%',
+                                    style: AppTextStyles.gardenCaption(
+                                      color: ink,
+                                    ),
                                   ),
                                 ),
-                              ],
+                              ),
                             )
                           else
-                            SizedBox.square(
-                              dimension: 34,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  CustomPaint(
-                                    size: const Size(34, 34),
-                                    painter: _RingPainter(
-                                      rate: rate ?? 0.0,
-                                      trackColor: AppColors.track(dark),
-                                      progressColor: AppColors.green(dark),
-                                      strokeWidth: 2.5,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${day.day}',
-                                    style: AppTextStyles.labelSmall(
-                                      color: dark
-                                          ? Colors.white
-                                          : context.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            Text(
+                              isFuture
+                                  ? '·'
+                                  : !progressKnown
+                                  ? '?'
+                                  : '—',
+                              style: AppTextStyles.gardenCaption(color: ink),
                             ),
                         ],
                       ),

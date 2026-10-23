@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -183,7 +184,7 @@ void main() {
       await open(tester);
       await openDay(tester, CivilDay.fromLocal(now));
       expect(find.text('Tes défis terminés'), findsOneWidget);
-      expect(find.text('Un moment pour écrire'), findsOneWidget);
+      expect(find.text('Un moment pour écrire').hitTestable(), findsOneWidget);
       await tester.tap(find.byTooltip('Fermer'));
       await tester.pumpAndSettle();
       expect(find.text('1 sur 5 défis'), findsOneWidget);

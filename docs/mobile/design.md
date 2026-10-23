@@ -46,6 +46,9 @@ passe de `dialogAction` à `labelLarge`. Un onglet commence par son grand titre
 la taille de texte et passe à la ligne au lieu de rétrécir. En défilant, le
 même titre apparaît centré dans la barre en `navTitle`, comme le titre des
 pages poussées et du chat. Un titre de barre trop long finit par une ellipse.
+Les en-têtes de page ne comportent pas de sous-titre promotionnel.
+`SectionSkyHeader` conserve le titre, son décor et les éventuelles commandes,
+comme la pastille de confidentialité du Journal.
 
 | Rôle | Taille et graisse | Usage |
 | --- | --- | --- |

@@ -91,7 +91,6 @@ class _JournalPageState extends State<JournalPage> {
                       children: [
                         SectionSkyHeader(
                           title: 'Journal',
-                          subtitle: 'Quelques mots, juste pour toi.',
                           scene: SectionSkyScene.window,
                           titleTrailing: _PrivatePill(
                             onTap: () => showJournalPrivacy(context, provider),

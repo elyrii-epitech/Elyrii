@@ -10,7 +10,7 @@ locales sont rattachées au compte ; la démo utilise une session isolée.
 | Dashboard et bilan | Humeur, bilan hebdomadaire, mensuel et trimestriel, raccourcis | Historique serveur pour le journal ; humeurs locales ; séances terminées pour les minutes de calme |
 | Journal | Fil des jours, écriture et modification, humeur par entrée, lecture, suppression, recherche locale et export texte | API et SQLite paginés par 100 ; brouillons chiffrés par compte ; question du jour choisie enregistrée localement |
 | Chat | Conversations, réponses corrélées, reprise d’envoi, copie et signalement | WebSocket Bearer ; historique SQLite chiffré, pages de 50 |
-| Jardin | Calendrier semaine/mois, fleurs datées et gestes enregistrés en consultation seule | Défis terminés de l’API et activités locales existantes ; aucune validation depuis le Jardin |
+| Jardin | Défis à réaliser, prairie, historique des défis terminés et calendrier de complétion quotidienne | Défis actifs, propositions, catalogue et défis terminés de l’API ; gestes locaux en consultation seule |
 | Parcours | Choix volontaire, étapes ordonnées, pause/reprise et accès secondaire aux défis existants | Catalogue éditorial local ; progression chiffrée par compte sur cet appareil, sans nouvelle API ni synchronisation entre appareils |
 | Méditation | 12 pratiques, durée de 1 à 1 439 minutes, pause/reprise et bilan | Contrôleur monotone et synchronisation des séances avec l’API |
 | Mascotte | Couleurs, finitions, 15 accessoires répartis sur quatre zones, sauvegarde explicite | Scène GLB partagée ; préférences et progression par compte |
@@ -41,9 +41,23 @@ Le remplacement d’un parcours demande confirmation ; l’annulation conserve
 sa position. La pause n’entraîne ni échéance ni pénalité. La progression
 reste locale, y compris dans la session de démo isolée. Elle accompagne
 l’export des données et la purge locale du compte.
-Les défis actifs, propositions à accepter/refuser et idées disponibles
-restent dans **Mes défis**. Seuls les défis réellement terminés produisent
-les fleurs existantes. Une étape de Parcours n’en crée pas.
+Les défis actifs, propositions à accepter ou refuser et idées disponibles
+apparaissent en premier dans le Jardin, et restent accessibles depuis **Mes défis**
+dans Parcours. Les catalogues se déplient sans masquer les statistiques.
+Seuls les défis réellement terminés produisent les fleurs.
+Une étape de Parcours n’en crée pas.
+
+Le Jardin réunit les défis et les statistiques sur une seule page, sans onglets
+semaine et mois. La prairie illustre les réussites avec au plus trente fleurs
+dessinées ; le compteur et la liste des défis terminés conservent le total.
+Le calendrier mensuel affiche le taux de chaque jour et ouvre son détail.
+Le taux correspond aux défis terminés ce jour divisés par les défis créés au
+plus tard ce jour et non terminés avant ce jour. Il repose sur `createdAt` et
+`completedAt`, sans inventer une date d’acceptation absente des données.
+Les défis terminés sans date de complétion restent dans le total, mais pas dans
+les taux historiques. Un jour sans défi, un taux de 0 %, une donnée indisponible
+et un jour futur ont des états distincts. Les gestes locaux ne modifient pas
+ces taux et restent consultables dans la limite de leur rétention de 370 jours.
 
 Le Journal utilise une couleur prune, sans halo ni verre dans les cartes.
 La recherche porte sur les entrées chargées et indique cette limite quand

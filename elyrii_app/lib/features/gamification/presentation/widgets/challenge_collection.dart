@@ -63,10 +63,6 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
             'Défis à réaliser',
             style: AppTextStyles.titleLarge(color: context.textPrimary),
           ),
-          Text(
-            'Un petit pas à ton rythme. Les défis terminés font pousser les fleurs de ton jardin.',
-            style: AppTextStyles.bodyMedium(color: context.textSecondary),
-          ),
           if (_feedback != null && provider.error == null)
             Semantics(
               liveRegion: true,
@@ -93,13 +89,17 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
             ),
           ],
           if (provider.hasLoadedData) ...[
-            Text(
-              'En cours',
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
+            if (provider.activeChallenges.isNotEmpty)
+              Text(
+                'En cours',
+                style: AppTextStyles.titleMedium(color: context.textPrimary),
+              ),
             if (provider.activeChallenges.isEmpty)
               Text(
-                'Aucun défi en cours. Choisis une idée qui te fait du bien.',
+                provider.proposals.isEmpty &&
+                        provider.availableChallenges.isEmpty
+                    ? 'Aucun défi à réaliser pour le moment.'
+                    : 'Aucun défi en cours. Choisis une idée qui te fait du bien.',
                 style: AppTextStyles.bodySmall(color: context.textSecondary),
               ),
             for (final challenge in provider.activeChallenges)
@@ -108,66 +108,59 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                 description: challenge.displayDescription,
                 progress: challenge,
               ),
-            Text(
-              'Les idées d’Elyrii',
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
-            if (provider.proposals.isEmpty)
-              Text(
-                'Pas de proposition pour le moment.',
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
-              ),
-            for (final proposal in provider.proposals)
-              _ChallengeIdea(
-                title: proposal.displayTitle,
-                description: proposal.displayDescription,
-                action: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: AppDimensions.spacing8,
-                  children: [
-                    TextButton(
-                      onPressed: commandsDisabled
-                          ? null
-                          : () => _perform(
-                              () => provider.rejectChallenge(proposal.id),
-                              'La proposition a été retirée.',
+            if (provider.proposals.isNotEmpty)
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                childrenPadding: EdgeInsets.zero,
+                initiallyExpanded: provider.proposals.length <= 3,
+                title: Text(
+                  'Les idées d’Elyrii (${provider.proposals.length})',
+                  style: AppTextStyles.titleMedium(color: context.textPrimary),
+                ),
+                children: [
+                  for (final proposal in provider.proposals)
+                    _ChallengeIdea(
+                      title: proposal.displayTitle,
+                      description: proposal.displayDescription,
+                      action: Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: AppDimensions.spacing8,
+                        children: [
+                          TextButton(
+                            onPressed: commandsDisabled
+                                ? null
+                                : () => _perform(
+                                    () => provider.rejectChallenge(proposal.id),
+                                    'La proposition a été retirée.',
+                                  ),
+                            child: const Text('Refuser'),
+                          ),
+                          FilledButton.tonal(
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.primaryText(dark),
+                              foregroundColor: AppColors.onTint(dark),
                             ),
-                      child: const Text('Refuser'),
-                    ),
-                    FilledButton.tonal(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primaryText(dark),
-                        foregroundColor: AppColors.onTint(dark),
+                            onPressed: commandsDisabled
+                                ? null
+                                : () => _perform(
+                                    () => provider.acceptChallenge(proposal.id),
+                                    'Ton défi est en cours.',
+                                  ),
+                            child: const Text('Accepter'),
+                          ),
+                        ],
                       ),
-                      onPressed: commandsDisabled
-                          ? null
-                          : () => _perform(
-                              () => provider.acceptChallenge(proposal.id),
-                              'Ton défi est en cours.',
-                            ),
-                      child: const Text('Accepter'),
                     ),
-                  ],
-                ),
+                ],
               ),
-            if (provider.availableChallenges.isEmpty) ...[
-              Text(
-                'Idées de défis',
-                style: AppTextStyles.titleMedium(color: context.textPrimary),
-              ),
-              Text(
-                'Les prochains défis apparaîtront ici.',
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
-              ),
-            ] else
+            if (provider.availableChallenges.isNotEmpty)
               Theme(
-                data: Theme.of(context).copyWith(
-                  dividerColor: Colors.transparent,
-                ),
+                data: Theme.of(context)
+                    .copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: EdgeInsets.zero,
-                  initiallyExpanded: true,
+                  initiallyExpanded: false,
                   title: Text(
                     'Idées de défis (${provider.availableChallenges.length})',
                     style: AppTextStyles.titleMedium(
@@ -187,9 +180,7 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                             onPressed: commandsDisabled
                                 ? null
                                 : () => _perform(
-                                    () => provider.startChallenge(
-                                      challenge.id,
-                                    ),
+                                    () => provider.startChallenge(challenge.id),
                                     'Ton défi est en cours.',
                                   ),
                             icon: const Icon(Symbols.add_rounded),
@@ -200,6 +191,7 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                   ],
                 ),
               ),
+          ],
         ],
       );
     },

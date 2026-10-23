@@ -349,12 +349,10 @@ class ElyriiPageHeader extends StatelessWidget {
     super.key,
     required this.title,
     required this.leading,
-    this.subtitle,
     this.trailing = const SizedBox(width: AppDimensions.controlSize),
   });
 
   final String title;
-  final String? subtitle;
   final Widget leading;
   final Widget trailing;
 
@@ -365,26 +363,13 @@ class ElyriiPageHeader extends StatelessWidget {
         leading,
         const SizedBox(width: AppDimensions.spacing8),
         Expanded(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.navTitle(color: context.textPrimary),
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: AppDimensions.spacing4),
-                Text(
-                  subtitle!,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodySmall(color: context.textSecondary),
-                ),
-              ],
-            ],
+          child: Semantics(
+            header: true,
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.navTitle(color: context.textPrimary),
+            ),
           ),
         ),
         const SizedBox(width: AppDimensions.spacing8),

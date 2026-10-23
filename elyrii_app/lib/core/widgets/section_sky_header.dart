@@ -12,7 +12,6 @@ enum SectionSkyScene { garden, window, water, arches }
 
 class SectionSkyHeader extends StatelessWidget {
   final String title;
-  final String subtitle;
   final SectionSkyScene scene;
 
   /// A control beside the title, such as the Journal « Privé » pill.
@@ -23,7 +22,6 @@ class SectionSkyHeader extends StatelessWidget {
   const SectionSkyHeader({
     super.key,
     required this.title,
-    required this.subtitle,
     required this.scene,
     this.titleTrailing,
     this.height = AppDimensions.sectionSkyHeight,
@@ -63,15 +61,6 @@ class SectionSkyHeader extends StatelessWidget {
                     ),
                     ?titleTrailing,
                   ],
-                ),
-                const SizedBox(height: AppDimensions.spacing4),
-                Text(
-                  subtitle,
-                  style: AppTextStyles.bodyMedium(
-                    color: dark
-                        ? Colors.white.withValues(alpha: .78)
-                        : context.textSecondary,
-                  ),
                 ),
               ],
             ),

@@ -85,7 +85,6 @@ class _ParcoursPageState extends State<ParcoursPage> {
                     children: [
                       const SectionSkyHeader(
                         title: 'Parcours',
-                        subtitle: 'Un chemin choisi. À ton rythme.',
                         scene: SectionSkyScene.arches,
                       ),
                       Padding(

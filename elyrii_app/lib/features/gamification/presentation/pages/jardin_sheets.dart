@@ -116,9 +116,7 @@ class _FlowerSheet extends StatelessWidget {
                 ),
                 Text(
                   'Défis terminés ce jour ÷ défis créés au plus tard ce jour et non terminés avant ce jour.',
-                  style: AppTextStyles.bodySmall(
-                    color: context.textSecondary,
-                  ),
+                  style: AppTextStyles.bodySmall(color: context.textSecondary),
                 ),
               ],
             ),

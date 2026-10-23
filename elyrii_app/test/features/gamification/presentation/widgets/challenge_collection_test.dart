@@ -135,6 +135,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> revealIdeas(WidgetTester tester) =>
+      tap(tester, find.textContaining('Idées de défis ('));
+
   testWidgets(
     'shows server progress and starts, accepts or refuses challenges',
     (tester) async {
@@ -172,6 +175,7 @@ void main() {
             .value,
         closeTo(2 / 7, .0001),
       );
+      await revealIdeas(tester);
       await tap(tester, find.text('Commencer'));
       expect(repository.commands, ['start:journal']);
       expect(provider.availableChallenges, isEmpty);
@@ -215,6 +219,7 @@ void main() {
     repository.available = [_idea('journal', 'Un moment pour écrire')];
     await tap(tester, find.text('Réessayer'));
     expect(find.text('Défis indisponibles'), findsNothing);
+    await revealIdeas(tester);
     expect(find.text('Un moment pour écrire'), findsOneWidget);
     expect(find.text('Commencer'), findsOneWidget);
     expect(repository.commands, isEmpty);
@@ -237,6 +242,7 @@ void main() {
     repository.available = [_idea('journal', 'Un moment pour écrire')];
     repository.startError = true;
     await open(tester);
+    await revealIdeas(tester);
     await tap(tester, find.text('Commencer'));
     expect(find.text('Défi non enregistré'), findsOneWidget);
     expect(find.text('Marcher à mon rythme'), findsOneWidget);
@@ -286,6 +292,7 @@ void main() {
     ];
     repository.startGate = Completer<void>();
     await open(tester);
+    await revealIdeas(tester);
     await Scrollable.ensureVisible(
       tester.element(find.text('Commencer')),
       alignment: .5,
