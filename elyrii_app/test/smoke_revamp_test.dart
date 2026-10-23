@@ -11,10 +11,8 @@ import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_p
 import 'package:elyrii_app/features/journal/presentation/providers/journal_provider.dart';
 import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:elyrii_app/features/coach/presentation/providers/coach_provider.dart';
-import 'package:elyrii_app/core/widgets/glass/liquid_glass_kit.dart';
 import 'package:elyrii_app/features/settings/providers/settings_provider.dart';
 import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
-import 'package:elyrii_app/features/journal/presentation/pages/journal_page.dart';
 import 'package:elyrii_app/features/gamification/presentation/pages/challenges_page.dart';
 import 'package:elyrii_app/features/coach/presentation/pages/coach_page.dart';
 import 'package:elyrii_app/features/auth/presentation/pages/login_page.dart';
@@ -61,19 +59,6 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
       expect(find.text('Connexion à Elyrii'), findsOneWidget);
     });
-
-    testWidgets(
-      'JournalPage sans bandeau sombre avec boutons flottants en verre liquide',
-      (tester) async {
-        await tester.pumpWidget(_createTestApp(child: const JournalPage()));
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 500));
-
-        expect(find.byType(CustomScrollView), findsWidgets);
-        expect(find.byType(LiquidGlassIconButton), findsWidgets);
-        expect(find.text('Journal'), findsWidgets);
-      },
-    );
 
     testWidgets('Jardin (ChallengesPage) sans RefreshIndicator Material', (
       tester,

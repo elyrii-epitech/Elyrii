@@ -105,6 +105,10 @@ class AppColors {
       dark ? const Color(0xFF15121F) : const Color(0xFFF4F3F8);
   static Color sectionSky(bool dark) =>
       dark ? const Color(0xFF1B1538) : const Color(0xFFE9E4FB);
+
+  /// The clay pot on the Journal window shelf.
+  static const Color journalPot = Color(0xFFC97A4A);
+
   static Color gardenBoard(bool dark) =>
       dark ? const Color(0xFF23794D) : const Color(0xFFE3F4EA);
   static Color gardenBorder(bool dark) =>
@@ -128,6 +132,48 @@ class AppColors {
   /// the light soft-pink card.
   static Color helpInk(bool isDark) =>
       isDark ? pinkDark : const Color(0xFFBC4159);
+
+  // ==================== JOURNAL ====================
+
+  /// Deep blue gives the Journal its own color without a bright yellow fill.
+  static Color journalPaper(bool dark) =>
+      dark ? const Color(0xFF254A8A) : const Color(0xFF315FAE);
+  static Color journalQuestionInk(bool dark) =>
+      dark ? const Color(0xFFE7F0FF) : const Color(0xFFF3F7FF);
+  static Color journalToolInk(bool dark) =>
+      dark ? const Color(0xFFE7F0FF) : Colors.white;
+
+  static const Color journalSquareInk = Color(0xFF30263A);
+  static Color journalPlaceholder(bool dark) =>
+      dark ? const Color(0xFFD1DFF5) : const Color(0xFFE3EDFF);
+  static Color journalTool(bool dark) =>
+      dark ? const Color(0xFF3A5D99) : const Color(0xFF4775BE);
+  static Color journalPrivatePill(bool dark) =>
+      dark ? const Color(0xFF39305C) : const Color(0xB8FFFFFF);
+  static Color journalPrivateInk(bool dark) =>
+      dark ? const Color(0xFFE6E0F6) : primary;
+  static Color journalThread(bool dark) =>
+      dark ? const Color(0xFF3B5278) : const Color(0xFFB8CBE8);
+
+  /// Day numbers, memory labels, writing prompts and search highlights.
+  static Color journalAccent(bool dark) =>
+      dark ? const Color(0xFF94B9F5) : const Color(0xFF315FAE);
+  static Color journalEntry(bool dark) =>
+      dark ? const Color(0xFF1B253B) : const Color(0xFFEBF2FC);
+  static Color journalEntryBorder(bool dark) =>
+      dark ? const Color(0xFF30476C) : const Color(0xFFC8D8EE);
+  static Color journalEditor(bool dark) =>
+      dark ? const Color(0xFF14111E) : Colors.white;
+  static Color journalPrompt(bool dark) =>
+      dark ? const Color(0xFF202D48) : const Color(0xFFE5EDFA);
+  static Color journalMark(bool dark) =>
+      dark ? const Color(0xFF2B4268) : const Color(0xFFDCE8FA);
+  static Color journalToast(bool dark) =>
+      dark ? const Color(0xFF302A40) : Colors.white;
+
+  /// The board's rose: destructive labels and the delete row.
+  static Color rose(bool dark) =>
+      dark ? const Color(0xFFF08BA0) : const Color(0xFFC9506A);
 
   /// label-2 et label-3 exacts du spec, translucides. label-3 n'atteint pas
   /// 4,5:1 sur un petit texte : il sert au texte large et au décoratif, les

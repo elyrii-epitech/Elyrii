@@ -22,11 +22,10 @@ import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/app_sheet_route.dart';
 import '../../../../core/widgets/mascot_contact_shadow.dart';
 import '../../../../core/widgets/user_avatar.dart';
-import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../../../journal/presentation/providers/journal_provider.dart';
-import '../../../journal/presentation/widgets/journal_editor_sheet.dart';
+import '../../../journal/presentation/widgets/journal_sheets.dart';
 import '../../../mascot/data/models/mascot_accessory.dart';
 import '../../../mascot/data/models/mascot_appearance.dart';
 import '../../../mascot/data/models/mascot_model.dart';
@@ -162,16 +161,10 @@ class _DashboardPageState extends State<DashboardPage>
         await context.push(AppRoutes.meditationSession, extra: controller);
         controller.dispose();
       case WriteJournal(:final initialPrompt):
-        await showLiquidGlassSheet<void>(
-          context: context,
-          initialChildSize: 0.92,
-          maxChildSize: 0.92,
-          minChildSize: 0.5,
-          useRootNavigator: true,
-          child: JournalEditorSheet(
-            provider: context.read<JournalProvider>(),
-            initialPrompt: initialPrompt,
-          ),
+        await showJournalEditor(
+          context,
+          provider: context.read<JournalProvider>(),
+          initialPrompt: initialPrompt,
         );
       case ContactSomeone():
         final box = context.findRenderObject() as RenderBox?;

@@ -100,11 +100,14 @@ class AppSheetRoute<T> extends PopupRoute<T> {
         return Stack(
           children: [
             Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => Navigator.of(context).maybePop(),
-                child: ColoredBox(
-                  color: Colors.black.withValues(alpha: veilAlpha * veil),
+              child: Semantics(
+                label: barrierLabel,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.of(context).maybePop(),
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: veilAlpha * veil),
+                  ),
                 ),
               ),
             ),

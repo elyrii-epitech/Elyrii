@@ -30,6 +30,9 @@ abstract final class AppMotion {
   static const Duration gardenSegment = Duration(milliseconds: 150);
   static const Duration gardenTodayScroll = Duration(milliseconds: 445);
   static const Duration gardenToast = Duration(milliseconds: 2500);
+
+  /// Journal confirmations stay 3 s, then disappear without a fade.
+  static const Duration journalToast = Duration(seconds: 3);
   static const Duration gardenBreathPhase = Duration(seconds: 4);
   static const Duration gardenBreathSession = Duration(minutes: 2);
 

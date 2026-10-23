@@ -1,30 +1,29 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-
-import '../../../../core/widgets/elyrii_page_header.dart';
-
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../app/router/app_shell.dart';
+import '../../../../core/config/mascot_3d_config.dart';
+import '../../../../core/localization/app_dates.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../../../core/widgets/mascot_with_accessories.dart';
+import '../../../../core/widgets/section_sky_header.dart';
+import '../../../dashboard/data/accueil_activities.dart';
+import '../../../dashboard/domain/civil_day.dart';
+import '../../../dashboard/presentation/mood_presentation.dart';
+import '../../domain/journal_feed.dart';
 import '../providers/journal_provider.dart';
-import '../widgets/empty_journal_state.dart';
-import '../widgets/glass_journal_card.dart';
-import '../widgets/journal_editor_sheet.dart';
+import '../widgets/journal_entry_card.dart';
+import '../widgets/journal_sheets.dart';
+import 'journal_entry_page.dart';
+import 'journal_search_page.dart';
 
-/// Page principale du Journal intime suivant la philosophie Apple HIG.
-///
-/// Refonte Apple HIG & Liquid Glass (Septembre 2026) :
-/// - Suppression des boutons isolés flottant maladroitement au-dessus de la vue.
-/// - En-tête spatial fluide avec micro-sur-titre « MES PENSÉES », grand titre
-///   « Journal » et boutons d'action intégrés en verre liquide.
-/// - Carte Héroïque « Espace de Réflexion » avec bento de statistiques douces
-///   (nombre d'écrits, dernière humeur).
-/// - Passerelle d'inspiration avec le Coach IA pour stimuler l'écriture bienveillante.
-/// - Tirer-relâcher natif Cupertino via [ElyriiPageFrame.onRefresh].
-/// - Cartes construites à la demande par un [SliverList].
+/// The Journal tab: a page to write on, then the thread of the days with entries.
 class JournalPage extends StatefulWidget {
   const JournalPage({super.key});
 
@@ -33,288 +32,434 @@ class JournalPage extends StatefulWidget {
 }
 
 class _JournalPageState extends State<JournalPage> {
-  JournalProvider get _provider => context.read<JournalProvider>();
-  bool _initialized = false;
+  final _scroll = ScrollController();
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_initialized) {
-      _initialized = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _provider.loadEntries();
-        }
-      });
+  void initState() {
+    super.initState();
+    _scroll.addListener(_loadMoreNearEnd);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(context.read<JournalProvider>().loadEntries());
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _loadMoreNearEnd() {
+    final provider = context.read<JournalProvider>();
+    if (_scroll.position.extentAfter < AppDimensions.sectionSkyHeight &&
+        provider.hasMore &&
+        !provider.loadingMore) {
+      unawaited(provider.loadMore());
     }
   }
 
-  void _showEditorSheet({JournalEntry? entry, String? initialPrompt}) {
-    ElyriiHaptics.light();
-    showLiquidGlassSheet(
-      context: context,
-      initialChildSize: 0.92,
-      maxChildSize: 0.92,
-      minChildSize: 0.5,
-      child: JournalEditorSheet(
-        provider: _provider,
-        entry: entry,
-        initialPrompt: initialPrompt,
-      ),
-    );
-  }
+  JournalProvider get _provider => context.read<JournalProvider>();
+
+  void _write({String? prompt, MoodType? mood}) => showJournalEditor(
+    context,
+    provider: _provider,
+    initialPrompt: prompt,
+    initialMood: mood,
+  );
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final provider = context.watch<JournalProvider>();
+    final activities = context.watch<AccueilActivities?>();
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final today = CivilDay.fromLocal(DateTime.now());
+    final entries = provider.entries;
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: Consumer<JournalProvider>(
-        builder: (context, provider, child) {
-          final entries = provider.entries;
-
-          return ElyriiPageFrame.tab(
-            title: 'Journal',
-            onRefresh: () => provider.loadEntries(),
-            actions: [
-              LiquidGlassIconButton(
-                tooltip: 'Changer l’ordre des notes',
-                icon: provider.sortNewest
-                    ? Icons.arrow_downward_rounded
-                    : Icons.arrow_upward_rounded,
-                onPressed: () {
-                  ElyriiHaptics.selection();
-                  provider.toggleSort();
-                },
-              ),
-              LiquidGlassIconButton(
-                tooltip: 'Écrire une note',
-                icon: Icons.add_rounded,
-                onPressed: () => _showEditorSheet(),
-              ),
-            ],
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              ..._buildContentSlivers(entries, isDark),
-              if (provider.hasMore)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.spacing20),
-                    child: LiquidGlassButton(
-                      label: 'Charger les notes suivantes',
-                      isLoading: provider.loadingMore,
-                      onPressed: provider.loadingMore
-                          ? null
-                          : provider.loadMore,
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  /// Carte Héroïque de l'espace d'expression intime.
-  Widget _buildJournalHeroCard(List<JournalEntry> entries, bool isDark) {
-    final count = entries.length;
-    final latestMood = count > 0 ? _formatMoodEmoji(entries.first.mood) : '🌱';
-
-    return LiquidGlassCard(
-      padding: const EdgeInsets.all(AppDimensions.spacing20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      backgroundColor: AppColors.sectionBody(dark),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppDimensions.maxContentWidth,
+          ),
+          child: Stack(
             children: [
-              // Cercle décoratif en halo doux
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.25),
-                      AppColors.secondary.withValues(alpha: 0.15),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.35),
-                    width: 1,
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.auto_stories_rounded,
-                    color: AppColors.primary,
-                    size: 24,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppDimensions.spacing16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Wrap(
-                      spacing: AppDimensions.spacing8,
-                      runSpacing: AppDimensions.spacing8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          'Refuge de l\'esprit',
-                          style: AppTextStyles.titleMedium(
-                            color: context.textPrimary,
-                          ),
-                        ),
-
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.spacing8,
-                            vertical: AppDimensions.spacing2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radius8,
+              RefreshIndicator(
+                onRefresh: provider.loadEntries,
+                edgeOffset: MediaQuery.paddingOf(context).top,
+                child: CustomScrollView(
+                  controller: _scroll,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Stack(
+                        children: [
+                          SectionSkyHeader(
+                            title: 'Journal',
+                            subtitle: 'Quelques mots, juste pour toi.',
+                            scene: SectionSkyScene.window,
+                            titleTrailing: _PrivatePill(
+                              onTap: () =>
+                                  showJournalPrivacy(context, provider),
                             ),
                           ),
-                          child: Text(
-                            'Privé & Sûr',
-                            style: AppTextStyles.badge(
-                              color: AppColors.readableAccent(
-                                AppColors.primary,
-                                isDark:
-                                    Theme.of(context).brightness ==
-                                    Brightness.dark,
-                              ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top:
+                                  AppDimensions.sectionSkyHeight -
+                                  AppDimensions.sectionBodyOverlap,
+                            ),
+                            child: SectionSkyBody(
+                              bottomPadding:
+                                  AppShell.bottomClearanceOf(context) +
+                                  AppDimensions.spacing24,
+                              child: entries.isEmpty
+                                  ? _withoutEntries(provider)
+                                  : _feed(provider, activities, today, dark),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppDimensions.spacing2),
-                    Text(
-                      'Tes pensées sont un sanctuaire d\'apaisement.',
-                      style: AppTextStyles.bodySmall(
-                        color: context.textSecondary,
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              _TopBar(
+                scroll: _scroll,
+                onSearch: () =>
+                    pushJournalPage(context, const JournalSearchPage()),
+              ),
             ],
           ),
-          const SizedBox(height: AppDimensions.spacing16),
+        ),
+      ),
+    );
+  }
 
-          // Bento statistiques douces
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacing12,
-                    vertical: AppDimensions.spacing8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.edit_note_rounded,
-                        color: AppColors.primary,
-                        size: AppDimensions.iconSm,
-                      ),
-                      const SizedBox(width: AppDimensions.spacing8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$count ${count > 1 ? "réflexions" : "réflexion"}',
-                              style: AppTextStyles.titleSmall(
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              'Déposées',
-                              style: AppTextStyles.bodySmall(
-                                color: context.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+  Widget _withoutEntries(JournalProvider provider) {
+    if (provider.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.all(AppDimensions.spacing48),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (provider.error case final error?) {
+      return Column(
+        spacing: AppDimensions.spacing12,
+        children: [
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodyMedium(color: context.textSecondary),
+          ),
+          TextButton(
+            onPressed: provider.loadEntries,
+            child: const Text('Réessayer'),
+          ),
+        ],
+      );
+    }
+    return _FirstDay(onWrite: (prompt) => _write(prompt: prompt));
+  }
+
+  Widget _feed(
+    JournalProvider provider,
+    AccueilActivities? activities,
+    CivilDay today,
+    bool dark,
+  ) {
+    final question =
+        journalQuestions[activities?.snapshot.journalQuestionIndex(
+              today,
+              journalQuestions.length,
+            ) ??
+            CivilDay(1970, 1, 1).daysUntil(today) % journalQuestions.length];
+    final memory = journalMemory(provider.entries, today);
+    final months = groupJournalMonths(provider.entries);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppDimensions.accueilSectionGap,
+      children: [
+        _Composer(
+          question: question,
+          onWrite: () => _write(prompt: question),
+          onNextQuestion: activities == null
+              ? null
+              : () => activities.nextJournalQuestion(
+                  day: today,
+                  count: journalQuestions.length,
                 ),
+          onMood: () async {
+            final mood = await showJournalMoodPicker(context);
+            if (mood != null && mounted) _write(prompt: question, mood: mood);
+          },
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: AppDimensions.journalMonthGap,
+          children: [
+            for (final month in months)
+              _MonthSection(
+                month: month,
+                memory:
+                    memory != null &&
+                        CivilDay.fromLocal(memory.createdAt).civilMonth ==
+                            month.month
+                    ? memory
+                    : null,
+                onOpen: (entry) => openJournalEntry(context, entry),
               ),
-              const SizedBox(width: AppDimensions.spacing8),
-              Expanded(
-                child: Container(
+          ],
+        ),
+        if (provider.loadingMore)
+          const Center(child: CircularProgressIndicator())
+        else if (provider.error case final error?)
+          Column(
+            children: [
+              Text(
+                error,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodySmall(color: context.textSecondary),
+              ),
+              TextButton(
+                onPressed: provider.hasMore
+                    ? provider.loadMore
+                    : provider.loadEntries,
+                child: const Text('Réessayer'),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class _PrivatePill extends StatelessWidget {
+  final VoidCallback onTap;
+  const _PrivatePill({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = AppColors.journalPrivateInk(dark);
+    return Semantics(
+      button: true,
+      label: 'Confidentialité du journal',
+      excludeSemantics: true,
+      child: Material(
+        color: AppColors.journalPrivatePill(dark),
+        borderRadius: BorderRadius.circular(AppDimensions.radius12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppDimensions.radius12),
+          child: Container(
+            height: AppDimensions.journalPill,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.spacing8,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: AppDimensions.spacing4,
+              children: [
+                Icon(
+                  Symbols.lock_rounded,
+                  size: AppDimensions.iconXs,
+                  color: ink,
+                ),
+                Text('Privé', style: AppTextStyles.pillLabel(color: ink)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  final ScrollController scroll;
+  final VoidCallback onSearch;
+  const _TopBar({required this.scroll, required this.onSearch});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : AppMotion.bandFade;
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: AnimatedBuilder(
+        animation: scroll,
+        builder: (context, child) {
+          final compact =
+              scroll.hasClients &&
+              scroll.offset > AppDimensions.sectionScrollThreshold;
+          return AnimatedContainer(
+            duration: duration,
+            curve: AppMotion.accueilEase,
+            color: compact
+                ? (dark
+                      ? AppColors.glassBackgroundDark
+                      : AppColors.glassBackgroundLight)
+                : Colors.transparent,
+            child: SafeArea(
+              bottom: false,
+              child: SizedBox(
+                height: AppDimensions.accueilBarHeight,
+                child: Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppDimensions.spacing12,
-                    vertical: AppDimensions.spacing8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.04)
-                        : Colors.black.withValues(alpha: 0.03),
-                    borderRadius: BorderRadius.circular(AppDimensions.radius12),
                   ),
                   child: Row(
                     children: [
-                      SizedBox(
-                        width: AppDimensions.iconSm,
-                        height: AppDimensions.iconSm,
-                        child: Center(
-                          child: Semantics(
-                            label: count > 0
-                                ? 'Dernière humeur : ${entries.first.mood ?? 'non renseignée'}'
-                                : null,
-                            excludeSemantics: true,
-                            child: Text(
-                              latestMood,
-                              style: AppTextStyles.titleMedium(),
+                      const SizedBox(width: AppDimensions.controlSize),
+                      Expanded(
+                        child: AnimatedOpacity(
+                          opacity: compact ? 1 : 0,
+                          duration: duration,
+                          curve: AppMotion.accueilEase,
+                          child: Text(
+                            'Journal',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.navTitle(
+                              color: context.textPrimary,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: AppDimensions.spacing8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              count > 0 ? 'Dernier écho' : 'Prendre racine',
-                              style: AppTextStyles.titleSmall(
-                                color: context.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              count > 0 ? 'Ton humeur' : 'Commence ici',
-                              style: AppTextStyles.bodySmall(
-                                color: context.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      child!,
                     ],
                   ),
+                ),
+              ),
+            ),
+          );
+        },
+        child: JournalBarButton(
+          icon: Symbols.search_rounded,
+          tooltip: 'Rechercher dans le journal',
+          onPressed: onSearch,
+        ),
+      ),
+    );
+  }
+}
+
+class _Composer extends StatelessWidget {
+  final String question;
+  final VoidCallback onWrite;
+  final VoidCallback? onNextQuestion;
+  final VoidCallback onMood;
+  const _Composer({
+    required this.question,
+    required this.onWrite,
+    required this.onNextQuestion,
+    required this.onMood,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.spacing16),
+      decoration: BoxDecoration(
+        color: AppColors.journalPaper(dark),
+        borderRadius: BorderRadius.circular(AppDimensions.radius20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: AppDimensions.spacing12,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: AppDimensions.spacing8,
+            children: [
+              Expanded(
+                child: Semantics(
+                  button: true,
+                  child: GestureDetector(
+                    onTap: onWrite,
+                    child: Text(
+                      question,
+                      style: AppTextStyles.journalLine(
+                        color: AppColors.journalQuestionInk(dark),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (onNextQuestion != null)
+                IconButton(
+                  tooltip: 'Changer la question',
+                  onPressed: onNextQuestion,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints.tightFor(
+                    width: AppDimensions.journalRefresh,
+                    height: AppDimensions.journalRefresh,
+                  ),
+                  icon: Icon(
+                    Symbols.refresh_rounded,
+                    size: AppDimensions.iconSm,
+                    color: AppColors.journalQuestionInk(dark),
+                  ),
+                ),
+            ],
+          ),
+          Semantics(
+            button: true,
+            child: InkWell(
+              onTap: onWrite,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minHeight: AppDimensions.spacing32,
+                ),
+                child: Text(
+                  'Écris ce que tu ressens…',
+                  style: AppTextStyles.bodyLarge(
+                    color: AppColors.journalPlaceholder(dark),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                tooltip: 'Ajouter une humeur',
+                onPressed: onMood,
+                constraints: const BoxConstraints.tightFor(
+                  width: AppDimensions.journalTool,
+                  height: AppDimensions.journalTool,
+                ),
+                padding: EdgeInsets.zero,
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.journalTool(dark),
+                ),
+                icon: Icon(
+                  Symbols.sentiment_calm_rounded,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.journalToolInk(dark),
+                ),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: onWrite,
+                icon: const Icon(
+                  Symbols.edit_rounded,
+                  size: AppDimensions.iconSm,
+                ),
+                label: const Text('Écrire'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, AppDimensions.journalTool),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.spacing16,
+                  ),
+                  backgroundColor: AppColors.primaryText(dark),
+                  foregroundColor: AppColors.onTint(dark),
+                  textStyle: AppTextStyles.buttonSmall(),
+                  shape: const StadiumBorder(),
                 ),
               ),
             ],
@@ -323,168 +468,274 @@ class _JournalPageState extends State<JournalPage> {
       ),
     );
   }
+}
 
-  /// Bannière d'inspiration pour stimuler l'écriture libre ou guidée.
-  Widget _buildInspirationBanner(bool isDark) {
-    return GestureDetector(
-      onTap: () {
-        ElyriiHaptics.light();
-        _showEditorSheet(
-          initialPrompt: 'Qu\'est-ce qui occupe mes pensées en ce moment ?',
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.spacing16,
-          vertical: AppDimensions.spacing16,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: isDark ? 0.12 : 0.07),
-          borderRadius: BorderRadius.circular(AppDimensions.radius16),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.20),
-            width: 0.8,
+class _MonthSection extends StatelessWidget {
+  final JournalMonth month;
+  final JournalEntry? memory;
+  final ValueChanged<JournalEntry> onOpen;
+  const _MonthSection({
+    required this.month,
+    required this.memory,
+    required this.onOpen,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final name = AppDates.format(
+      DateTime(month.month.year, month.month.month),
+      'MMMM',
+    );
+    final days = [
+      for (final entry in month.entries) CivilDay.fromLocal(entry.createdAt),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppDimensions.spacing16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Semantics(
+                header: true,
+                child: Text(
+                  '${name[0].toUpperCase()}${name.substring(1)}',
+                  style: AppTextStyles.titleMedium(color: context.textPrimary),
+                ),
+              ),
+              Text(
+                '${month.month.year}',
+                style: AppTextStyles.bodySmall(color: context.textSecondary),
+              ),
+            ],
           ),
         ),
-        child: Row(
+        if (memory case final memory?) ...[
+          _Memory(entry: memory, onOpen: () => onOpen(memory)),
+          const SizedBox(height: AppDimensions.spacing20),
+        ],
+        Stack(
           children: [
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.spacing8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.20),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.lightbulb_rounded,
-                color: AppColors.primary,
-                size: 20,
+            Positioned(
+              left: AppDimensions.journalThreadInset,
+              top: AppDimensions.journalThreadTop,
+              bottom: AppDimensions.journalThreadBottom,
+              child: SizedBox(
+                width: AppDimensions.dividerThickness,
+                child: ColoredBox(color: AppColors.journalThread(dark)),
               ),
             ),
-            const SizedBox(width: AppDimensions.spacing12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Inspiration guidée du moment',
-                    style: AppTextStyles.titleSmall(color: context.textPrimary),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: AppDimensions.spacing20,
+              children: [
+                for (final (index, entry) in month.entries.indexed)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: AppDimensions.spacing12,
+                    children: [
+                      SizedBox(
+                        width: AppDimensions.journalDayColumn,
+                        child: index == 0 || days[index] != days[index - 1]
+                            ? _DayStamp(entry.createdAt.toLocal())
+                            : null,
+                      ),
+                      Expanded(
+                        child: JournalEntryCard(
+                          entry: entry,
+                          onTap: () => onOpen(entry),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppDimensions.spacing2),
-                  Text(
-                    '« Qu\'est-ce qui occupe mes pensées en ce moment ? »',
-                    style: AppTextStyles.labelSmall(
-                      color: context.textSecondary,
-                    ).copyWith(fontStyle: FontStyle.italic),
-                  ),
-                ],
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DayStamp extends StatelessWidget {
+  final DateTime date;
+  const _DayStamp(this.date);
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return ColoredBox(
+      color: AppColors.sectionBody(dark),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppDimensions.spacing4),
+        child: Column(
+          spacing: AppDimensions.spacing2,
+          children: [
+            Text(
+              '${date.day}',
+              style: AppTextStyles.headlineSmall(
+                color: AppColors.journalAccent(dark),
               ),
             ),
-            const SizedBox(width: AppDimensions.spacing8),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: AppColors.primary.withValues(alpha: 0.7),
+            Text(
+              AppDates.format(date, 'E'),
+              style: AppTextStyles.moodLabel(color: context.textTertiary),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  /// Build journal cards only when they enter the viewport.
-  List<Widget> _buildContentSlivers(List<JournalEntry> entries, bool isDark) {
-    const horizontal = AppDimensions.pageHorizontalPadding;
-    return [
-      SliverPadding(
-        padding: const EdgeInsets.fromLTRB(
-          horizontal,
-          AppDimensions.spacing12,
-          horizontal,
-          AppDimensions.spacing24,
-        ),
-        sliver: SliverToBoxAdapter(
-          child: Column(
-            children: [
-              _buildJournalHeroCard(entries, isDark),
-              const SizedBox(height: AppDimensions.spacing16),
-              _buildInspirationBanner(isDark),
-            ],
-          ),
-        ),
+class _Memory extends StatelessWidget {
+  final JournalEntry entry;
+  final VoidCallback onOpen;
+  const _Memory({required this.entry, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final quote = (entry.content ?? '').trim();
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: AppDimensions.journalDayColumn + AppDimensions.spacing12,
       ),
-      if (entries.isEmpty)
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: horizontal),
-          sliver: SliverToBoxAdapter(child: _buildEmptyState(isDark)),
-        )
-      else ...[
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            horizontal + AppDimensions.spacing4,
-            0,
-            horizontal,
-            AppDimensions.spacing8,
+      child: Container(
+        padding: const EdgeInsets.all(AppDimensions.spacing16),
+        decoration: BoxDecoration(
+          color: AppColors.journalEntry(dark),
+          borderRadius: BorderRadius.circular(AppDimensions.radius20),
+          border: Border.all(
+            color: AppColors.journalEntryBorder(dark),
+            width: .5,
           ),
-          sliver: SliverToBoxAdapter(
-            child: Text(
-              'Mes réflexions (${entries.length})',
-              style: AppTextStyles.overline(color: context.textSecondary),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: AppDimensions.spacing8,
+          children: [
+            Text(
+              'Il y a un mois',
+              style: AppTextStyles.bodySmall(
+                color: AppColors.journalAccent(dark),
+              ),
             ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: horizontal),
-          sliver: SliverList.builder(
-            key: const ValueKey('journal_entries_list'),
-            itemCount: entries.length,
-            itemBuilder: (context, index) {
-              final entry = entries[index];
-              return Padding(
-                key: ValueKey(entry.id),
-                padding: const EdgeInsets.only(bottom: AppDimensions.spacing12),
-                child: GlassJournalCard(
-                  entry: entry,
-                  isDark: isDark,
-                  onTap: () => _showEditorSheet(entry: entry),
+            if (quote.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.only(left: AppDimensions.spacing8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(
+                      color: AppColors.journalAccent(dark),
+                      width: AppDimensions.borderWidthMedium,
+                    ),
+                  ),
                 ),
-              );
-            },
-          ),
+                child: Text(
+                  '« $quote »',
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodyMedium(color: context.textSecondary),
+                ),
+              ),
+            TextButton.icon(
+              onPressed: onOpen,
+              iconAlignment: IconAlignment.end,
+              icon: const Icon(
+                Symbols.arrow_forward_rounded,
+                size: AppDimensions.iconSm,
+              ),
+              label: const Text('Relire ce moment'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                foregroundColor: AppColors.primaryText(dark),
+                textStyle: AppTextStyles.buttonSmall(),
+              ),
+            ),
+          ],
         ),
-      ],
-    ];
-  }
-
-  /// Vue de l'état vide bienveillant quand aucune note n'est encore écrite.
-  Widget _buildEmptyState(bool isDark) {
-    return KeyedSubtree(
-      key: const ValueKey('journal_empty_state'),
-      child: EmptyJournalState(
-        onCreateFirst: () => _showEditorSheet(),
-        onPromptSelected: (prompt) =>
-            _showEditorSheet(initialPrompt: prompt.title),
-        isDark: isDark,
       ),
     );
   }
+}
 
-  String _formatMoodEmoji(String? mood) {
-    if (mood == null) return '🌱';
-    switch (mood.toLowerCase()) {
-      case 'happy':
-      case 'joyeux':
-        return '☀️';
-      case 'calm':
-      case 'paisible':
-        return '🌸';
-      case 'sad':
-      case 'triste':
-        return '🌧️';
-      case 'anxious':
-      case 'anxieux':
-        return '⚡';
-      default:
-        return '🌱';
-    }
+class _FirstDay extends StatelessWidget {
+  final ValueChanged<String?> onWrite;
+  const _FirstDay({required this.onWrite});
+
+  static const _icons = [
+    Symbols.wb_twilight_rounded,
+    Symbols.psychology_rounded,
+    Symbols.favorite_rounded,
+    Symbols.edit_note_rounded,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppDimensions.spacing16,
+      children: [
+        Row(
+          spacing: AppDimensions.spacing12,
+          children: [
+            Semantics(
+              image: true,
+              label: 'Elyrii',
+              child: const MascotWithAccessories(
+                config: Mascot3DConfig(
+                  interactionEnabled: false,
+                  autoRotate: false,
+                ),
+                width: AppDimensions.journalMascotWidth,
+                height: AppDimensions.journalMascotHeight,
+              ),
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: AppDimensions.spacing4,
+                children: [
+                  Text(
+                    'Ici, personne d’autre ne lit.',
+                    style: AppTextStyles.titleSmall(color: context.textPrimary),
+                  ),
+                  Text(
+                    'Quelques mots, même en vrac.\nTu peux commencer comme tu es.',
+                    style: AppTextStyles.bodyMedium(
+                      color: context.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        JournalRowGroup(
+          children: [
+            for (final (index, prompt) in journalPrompts.indexed)
+              JournalRow(
+                label: prompt,
+                minHeight: AppDimensions.journalPromptRowHeight,
+                leading: JournalSquare(
+                  _icons[index],
+                  color: AppColors.journalPaper(dark),
+                ),
+                onTap: () => onWrite(prompt),
+              ),
+          ],
+        ),
+        JournalButton(
+          label: 'Écrire librement',
+          background: AppColors.primaryText(dark),
+          foreground: AppColors.onTint(dark),
+          onPressed: () => onWrite(null),
+        ),
+      ],
+    );
   }
 }

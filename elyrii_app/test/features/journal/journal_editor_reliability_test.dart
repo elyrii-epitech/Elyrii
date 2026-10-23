@@ -27,6 +27,7 @@ class _Repository extends JournalRepository {
   bool fail = false;
   Completer<void>? gate;
   final List<String?> saved = [];
+  final List<String?> moods = [];
   @override
   Future<JournalEntryModel> updateEntry({
     required String id,
@@ -35,6 +36,7 @@ class _Repository extends JournalRepository {
     String? mood,
   }) async {
     saved.add(content);
+    moods.add(mood);
     await gate?.future;
     if (fail) throw const SocketException('Offline');
     return _entry;
@@ -54,9 +56,7 @@ Future<void> _mount(WidgetTester tester, _Repository repository) async {
       child: MaterialApp(
         theme: AppTheme.lightTheme,
         home: Scaffold(
-          body: SingleChildScrollView(
-            child: JournalEditorSheet(provider: provider, entry: _entry),
-          ),
+          body: JournalEditorSheet(provider: provider, entry: _entry),
         ),
       ),
     ),
@@ -75,7 +75,7 @@ void main() {
       await tester.pump();
       expect(repository.saved, ['Mon brouillon']);
       expect(find.text('Échec de sauvegarde — réessaie'), findsOneWidget);
-      expect(find.text('Sauvegardé'), findsNothing);
+      expect(find.text('Enregistré automatiquement'), findsNothing);
       expect(find.text('Mon brouillon'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
@@ -94,12 +94,37 @@ void main() {
       expect(repository.saved, ['Version un']);
       gate.complete();
       await tester.pump();
-      expect(find.text('Sauvegardé'), findsNothing);
+      expect(find.text('Enregistré automatiquement'), findsNothing);
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump();
       expect(repository.saved, ['Version un', 'Version deux']);
-      expect(find.text('Sauvegardé'), findsOneWidget);
+      expect(find.text('Enregistré automatiquement'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets('moving focus does not save an unchanged entry', (tester) async {
+    final repository = _Repository();
+    await _mount(tester, repository);
+    await tester.tap(find.byType(TextField).last);
+    await tester.pump(const Duration(seconds: 3));
+    expect(repository.saved, isEmpty);
+    expect(find.text('Modifications non sauvegardées'), findsNothing);
+    expect(find.text('Enregistré automatiquement'), findsOneWidget);
+  });
+
+  testWidgets('the mood chosen in the editor is saved with the entry', (
+    tester,
+  ) async {
+    final repository = _Repository();
+    await _mount(tester, repository);
+    await tester.tap(find.text('Humeur'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.bySemanticsLabel('Paisible'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(seconds: 2));
+    expect(repository.moods, ['neutral']);
+  });
 }

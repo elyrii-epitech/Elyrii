@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as paths;
 import 'package:path_provider/path_provider.dart';
@@ -56,6 +57,43 @@ abstract final class PrivateExport {
       await file.delete();
       return const ShareResult('', ShareResultStatus.dismissed);
     }
+    return _share(
+      context,
+      XFile(file.path, mimeType: 'application/json'),
+      title,
+      onError: file.delete,
+    );
+  }
+
+  /// A readable text file, written by the share sheet under the export
+  /// prefix so [cleanup] removes it with the others.
+  static Future<ShareResult> shareText(
+    BuildContext context,
+    String text, {
+    required String title,
+    bool Function()? isCurrentOwner,
+  }) async {
+    if (!kIsWeb) await cleanup();
+    if (!context.mounted || isCurrentOwner?.call() == false) {
+      return const ShareResult('', ShareResultStatus.dismissed);
+    }
+    return _share(
+      context,
+      XFile.fromData(
+        utf8.encode(text),
+        mimeType: 'text/plain',
+        name: 'elyrii-export-mon-journal.txt',
+      ),
+      title,
+    );
+  }
+
+  static Future<ShareResult> _share(
+    BuildContext context,
+    XFile file,
+    String title, {
+    Future<void> Function()? onError,
+  }) async {
     final box = context.findRenderObject();
     final origin = box is RenderBox && box.hasSize
         ? box.localToGlobal(Offset.zero) & box.size
@@ -63,13 +101,14 @@ abstract final class PrivateExport {
     try {
       return await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(file.path, mimeType: 'application/json')],
+          files: [file],
+          fileNameOverrides: [file.name],
           title: title,
           sharePositionOrigin: origin,
         ),
       );
     } catch (_) {
-      await file.delete();
+      await onError?.call();
       rethrow;
     }
   }

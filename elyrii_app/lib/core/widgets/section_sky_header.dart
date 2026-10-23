@@ -13,11 +13,15 @@ class SectionSkyHeader extends StatelessWidget {
   final String subtitle;
   final SectionSkyScene scene;
 
+  /// A control beside the title, such as the Journal « Privé » pill.
+  final Widget? titleTrailing;
+
   const SectionSkyHeader({
     super.key,
     required this.title,
     required this.subtitle,
     required this.scene,
+    this.titleTrailing,
   });
 
   @override
@@ -39,14 +43,22 @@ class SectionSkyHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Semantics(
-                  header: true,
-                  child: Text(
-                    title,
-                    style: AppTextStyles.pageTitle(
-                      color: dark ? Colors.white : context.textPrimary,
+                Wrap(
+                  spacing: AppDimensions.spacing12,
+                  runSpacing: AppDimensions.spacing4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        title,
+                        style: AppTextStyles.pageTitle(
+                          color: dark ? Colors.white : context.textPrimary,
+                        ),
+                      ),
                     ),
-                  ),
+                    ?titleTrailing,
+                  ],
                 ),
                 const SizedBox(height: AppDimensions.spacing4),
                 Text(
@@ -106,10 +118,9 @@ class _SkyPainter extends CustomPainter {
     canvas.save();
     canvas.clipRect(Offset.zero & size);
     final scale = math.max(size.width / 390, size.height / 470);
-    canvas.translate(
-      (size.width - 390 * scale) / 2,
-      (size.height - 470 * scale) / 2,
-    );
+    // The board's scenes use `xMidYMax slice`: the ground stays at the
+    // bottom edge and the sky is cropped from the top.
+    canvas.translate((size.width - 390 * scale) / 2, size.height - 470 * scale);
     canvas.scale(scale);
     final paint = Paint();
     Color color(int night, int light) => Color(dark ? night : light);
@@ -117,10 +128,20 @@ class _SkyPainter extends CustomPainter {
         canvas.drawPath(path, paint..color = color(night, light));
     canvas.drawRect(
       const Rect.fromLTWH(0, 0, 390, 470),
-      paint..color = AppColors.sectionSky(dark),
+      paint
+        ..color = scene == SectionSkyScene.window
+            ? color(0xFF1F1940, 0xFFEDE8FA)
+            : AppColors.sectionSky(dark),
     );
-    if (dark) {
-      for (final (x, y, r) in [
+    void stars(List<(double, double, double)> points) {
+      if (!dark) return;
+      for (final (x, y, r) in points) {
+        canvas.drawCircle(Offset(x, y), r, paint..color = Colors.white);
+      }
+    }
+
+    if (scene != SectionSkyScene.window) {
+      stars(const [
         (40.0, 70.0, 1.3),
         (150.0, 60.0, 1.5),
         (214.0, 96.0, 1.0),
@@ -130,9 +151,7 @@ class _SkyPainter extends CustomPainter {
         (300.0, 180.0, 1.0),
         (24.0, 236.0, 1.0),
         (352.0, 232.0, 1.2),
-      ]) {
-        canvas.drawCircle(Offset(x, y), r, paint..color = Colors.white);
-      }
+      ]);
     }
     switch (scene) {
       case SectionSkyScene.garden:
@@ -291,18 +310,23 @@ class _SkyPainter extends CustomPainter {
           0xFF171233,
           0xFFDDE7FB,
         );
+        stars(const [
+          (140.0, 140.0, 1.3),
+          (250.0, 120.0, 1.1),
+          (214.0, 200.0, 1.0),
+          (150.0, 230.0, 1.2),
+          (268.0, 250.0, 1.0),
+        ]);
         canvas.drawCircle(
           const Offset(238, 168),
           16,
           paint..color = color(0xFFF1E6D2, 0xFFFFD7B0),
         );
-        if (dark) {
-          canvas.drawCircle(
-            const Offset(247, 162),
-            14,
-            paint..color = const Color(0xFF171233),
-          );
-        }
+        canvas.drawCircle(
+          const Offset(247, 162),
+          14,
+          paint..color = color(0xFF171233, 0xFFDDE7FB),
+        );
         canvas.drawRect(
           const Rect.fromLTWH(194, 76, 2, 276),
           paint..color = color(0xFF2E2768, 0xFFCFC3F3),
@@ -311,9 +335,52 @@ class _SkyPainter extends CustomPainter {
           const Rect.fromLTWH(97, 250, 196, 2),
           paint..color = color(0xFF2E2768, 0xFFCFC3F3),
         );
-        canvas.drawRect(
-          const Rect.fromLTWH(40, 360, 310, 10),
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            const Rect.fromLTWH(40, 360, 310, 10),
+            const Radius.circular(AppDimensions.radius4),
+          ),
           paint..color = color(0xFF3A2F7C, 0xFFC2B4F0),
+        );
+        canvas.drawRect(
+          const Rect.fromLTWH(0, 370, 390, 100),
+          paint..color = color(0xFF251E52, 0xFFDCD3F7),
+        );
+        canvas.drawPath(
+          Path()
+            ..moveTo(318, 360)
+            ..relativeLineTo(22, 0)
+            ..relativeLineTo(-3, -24)
+            ..relativeLineTo(-16, 0)
+            ..close(),
+          paint..color = AppColors.journalPot,
+        );
+        canvas.drawPath(
+          Path()
+            ..moveTo(329, 336)
+            ..relativeQuadraticBezierTo(-14, -20, -4, -36)
+            ..relativeQuadraticBezierTo(8, 14, 4, 36)
+            ..close()
+            ..moveTo(329, 336)
+            ..relativeQuadraticBezierTo(14, -18, 6, -32)
+            ..relativeQuadraticBezierTo(-10, 12, -6, 32)
+            ..close(),
+          paint..color = AppColors.greenDark,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            const Rect.fromLTWH(58, 338, 14, 22),
+            const Radius.circular(AppDimensions.radius4),
+          ),
+          paint..color = color(0xFFF1E6D2, 0xFFFFD7B0),
+        );
+        canvas.drawPath(
+          Path()
+            ..moveTo(65, 336)
+            ..relativeQuadraticBezierTo(-5, -8, 0, -14)
+            ..relativeQuadraticBezierTo(5, 6, 0, 14)
+            ..close(),
+          paint..color = AppColors.yellowDark,
         );
     }
     canvas.restore();

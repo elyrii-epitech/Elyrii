@@ -1,42 +1,52 @@
-import '../../../../core/widgets/accessible_action.dart';
-import '../../../../core/accessibility/motion.dart';
-
-import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
-import 'package:flutter/material.dart';
-
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:flutter_animate/flutter_animate.dart';
-
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/config/mascot_animations.dart';
-import '../../../mascot/presentation/providers/mascot_provider.dart';
-import '../../../../core/widgets/glass/liquid_glass_kit.dart';
-
-import 'package:provider/provider.dart';
-
-import '../../../dashboard/presentation/providers/dashboard_provider.dart';
-import '../providers/journal_provider.dart';
-import 'glass_text_field.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../../../../core/localization/app_dates.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/glass/liquid_glass_kit.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
+import '../../domain/journal_feed.dart';
+import '../providers/journal_provider.dart';
+import 'journal_sheets.dart';
 
-/// Bottom sheet modal pour créer/éditer une entrée du journal
+/// The board's writing fields have no box, fill or underline.
+InputDecoration _bare(String hint, TextStyle hintStyle) => InputDecoration(
+  hintText: hint,
+  hintStyle: hintStyle,
+  isCollapsed: true,
+  filled: false,
+  border: InputBorder.none,
+  enabledBorder: InputBorder.none,
+  focusedBorder: InputBorder.none,
+  contentPadding: EdgeInsets.zero,
+);
+
+/// The only Journal editor: the Journal, the Accueil and the Coach open it
+/// with [showJournalEditor]. It autosaves, keeps an encrypted draft per
+/// account and creates each entry once.
 class JournalEditorSheet extends StatefulWidget {
   final JournalProvider provider;
   final JournalEntry? entry;
 
-  /// Prompt d'inspiration optionnel pour pré-remplir le titre.
+  /// The writing prompt shown above the page of a new entry.
   final String? initialPrompt;
+  final MoodType? initialMood;
 
   const JournalEditorSheet({
     super.key,
     required this.provider,
     this.entry,
     this.initialPrompt,
+    this.initialMood,
   });
 
   @override
@@ -44,21 +54,27 @@ class JournalEditorSheet extends StatefulWidget {
 }
 
 class _JournalEditorSheetState extends State<JournalEditorSheet> {
-  late TextEditingController _titleController;
-  late TextEditingController _contentController;
+  late final TextEditingController _titleController;
+  late final TextEditingController _contentController;
+  late String _lastTitle;
+  late String _lastContent;
   Timer? _autoSaveTimer;
   Timer? _draftTimer;
   String _clientRequestId = const Uuid().v4();
-  bool _deleting = false;
   bool _hasChanges = false;
   bool _isSaving = false;
   String? _createdEntryId;
   Future<void>? _saveInFlight;
   bool _saveFailed = false;
   int _revision = 0;
+  late String? _prompt = widget.initialPrompt;
+  MoodType? _mood;
+  bool _moodResolved = false;
   String get _draftKey => widget.entry?.id ?? 'new';
   late final String? _draftOwner;
   bool get _sameAccount => widget.provider.owner == _draftOwner;
+  bool get _isNew => widget.entry == null;
+
   Future<void> _persistDraft() async {
     if (!_sameAccount) return;
     try {
@@ -67,6 +83,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         'content': _contentController.text,
         'entryId': _createdEntryId,
         'clientRequestId': _clientRequestId,
+        'mood': _mood?.name,
+        'prompt': _prompt,
       });
     } catch (_) {
       if (mounted) setState(() => _saveFailed = true);
@@ -77,11 +95,16 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     try {
       final draft = await widget.provider.readDraft(_draftKey);
       if (!mounted || !_sameAccount || _revision != 0 || draft == null) return;
-      _titleController.text = draft['title'] as String? ?? '';
-      _contentController.text = draft['content'] as String? ?? '';
+      final title = draft['title'] as String? ?? '';
+      final content = draft['content'] as String? ?? '';
+      if (title.isEmpty && content.isEmpty) return;
+      _titleController.text = title;
+      _contentController.text = content;
       _createdEntryId = draft['entryId'] as String?;
       _clientRequestId =
           draft['clientRequestId'] as String? ?? _clientRequestId;
+      _mood = parseJournalMood(draft['mood'] as String?) ?? _mood;
+      _prompt = draft['prompt'] as String? ?? _prompt;
       setState(() => _hasChanges = true);
     } catch (_) {
       if (mounted) setState(() => _saveFailed = true);
@@ -93,33 +116,50 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     super.initState();
     final entry = widget.entry;
     _draftOwner = widget.provider.owner;
-    _titleController = TextEditingController(
-      text: entry?.title ?? widget.initialPrompt ?? '',
-    );
+    _titleController = TextEditingController(text: entry?.title ?? '');
     _contentController = TextEditingController(text: entry?.content ?? '');
-
+    _lastTitle = _titleController.text;
+    _lastContent = _contentController.text;
     _titleController.addListener(_onTextChanged);
     _contentController.addListener(_onTextChanged);
     unawaited(_restoreDraft());
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_moodResolved) return;
+    _moodResolved = true;
+    _mood = widget.entry != null
+        ? parseJournalMood(widget.entry!.mood)
+        : widget.initialMood ??
+              context.read<DashboardProvider?>()?.selectedMood;
+  }
+
+  @override
   void dispose() {
     _autoSaveTimer?.cancel();
     _draftTimer?.cancel();
-    if (_hasChanges && !_deleting) unawaited(_persistDraft());
+    if (_hasChanges) unawaited(_persistDraft());
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
 
   void _onTextChanged() {
+    final title = _titleController.text;
+    final content = _contentController.text;
+    if (title == _lastTitle && content == _lastContent) return;
+    _lastTitle = title;
+    _lastContent = content;
+    _onChanged();
+  }
+
+  void _onChanged() {
     _revision++;
     _draftTimer?.cancel();
     _draftTimer = Timer(const Duration(milliseconds: 200), _persistDraft);
-    if (!_hasChanges) {
-      setState(() => _hasChanges = true);
-    }
+    if (!_hasChanges) setState(() => _hasChanges = true);
     _autoSaveTimer?.cancel();
     _autoSaveTimer = Timer(const Duration(seconds: 2), _autoSave);
   }
@@ -127,9 +167,14 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   Future<void> _autoSave() =>
       _saveInFlight ??= _save().whenComplete(() => _saveInFlight = null);
 
+  String get _effectiveTitle {
+    final title = _titleController.text.trim();
+    if (title.isNotEmpty) return title;
+    return _isNew ? (_prompt ?? journalFallbackTitle) : widget.entry!.title;
+  }
+
   Future<void> _save() async {
     if (!_sameAccount ||
-        _deleting ||
         !_hasChanges ||
         _contentController.text.trim().isEmpty) {
       return;
@@ -138,31 +183,27 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     bool success;
     setState(() => _isSaving = true);
 
-    final title = _titleController.text.trim();
+    final title = _effectiveTitle;
     final content = _contentController.text.trim();
-    final dashboardProvider = context.read<DashboardProvider>();
-    final currentMood = dashboardProvider.selectedMood?.name;
+    // An unknown historical mood stays as written until the user picks one.
+    final mood = _mood?.name ?? widget.entry?.mood;
 
-    if (widget.entry != null) {
+    final id = widget.entry?.id ?? _createdEntryId;
+    if (id != null) {
       success = await widget.provider.updateEntry(
-        widget.entry!.id,
+        id,
         title: title,
         content: content,
-        mood: currentMood,
-      );
-    } else if (_createdEntryId != null) {
-      success = await widget.provider.updateEntry(
-        _createdEntryId!,
-        title: title,
-        content: content,
-        mood: currentMood,
+        mood: mood,
       );
     } else {
       try {
         await widget.provider.saveDraft(_draftKey, {
-          'title': title,
+          'title': _titleController.text,
           'content': content,
           'clientRequestId': _clientRequestId,
+          'mood': _mood?.name,
+          'prompt': _prompt,
         });
       } catch (_) {
         if (mounted) {
@@ -177,21 +218,19 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         clientRequestId: _clientRequestId,
         title: title,
         content: content,
-        mood: currentMood,
+        mood: mood,
       );
       _createdEntryId = created?.id;
       success = created != null;
       // A retried creation may return the earlier acknowledged snapshot.
       // Subsequent edits must be patched before reporting the draft as saved.
       if (created != null &&
-          (created.content != content ||
-              created.title != (title.isEmpty ? 'Sans titre' : title))) {
+          (created.content != content || created.title != title)) {
         _revision++;
       }
       if (created != null && mounted) {
-        // Le premier enregistrement est une petite victoire : la mascotte du
-        // dashboard pourra jouer ce moment même si l'utilisateur ferme la
-        // feuille avant d'y revenir.
+        // The first save is a small victory the Accueil mascot can play even
+        // after the sheet closes.
         context.read<MascotProvider>().react(MascotAnimations.cozy);
       }
     }
@@ -219,13 +258,12 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     }
   }
 
-  Future<bool> _onWillPop() async {
+  Future<bool> _confirmClose() async {
     if (!_sameAccount ||
         !_hasChanges ||
         _contentController.text.trim().isEmpty) {
       return true;
     }
-
     final result = await showLiquidGlassDialog<String>(
       context: context,
       title: 'Modifications non sauvegardées',
@@ -249,7 +287,6 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         ),
       ],
     );
-
     if (result == 'save') await _autoSave();
     if (result == 'discard') {
       _hasChanges = false;
@@ -260,348 +297,330 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     return (result == 'save' && !_hasChanges) || result == 'discard';
   }
 
-  void _deleteEntry() {
-    showLiquidGlassDialog(
-      context: context,
-      title: 'Supprimer cette note ?',
-      child: const Text('Cette action est irréversible.'),
-      actions: [
-        LiquidGlassDialogAction(
-          label: 'Annuler',
-          onPressed: () => Navigator.pop(context),
-        ),
-        LiquidGlassDialogAction(
-          label: 'Supprimer',
-          isDestructive: true,
-          onPressed: () async {
-            final idToDelete = widget.entry?.id ?? _createdEntryId;
-            Navigator.pop(context);
-            if (idToDelete == null || !_sameAccount) return;
-            _deleting = true;
-            _autoSaveTimer?.cancel();
-            _draftTimer?.cancel();
-            await _saveInFlight;
-            if (!mounted || !_sameAccount) return;
-            final deleted = await widget.provider.deleteEntry(idToDelete);
-            if (!mounted || !_sameAccount) return;
-            if (deleted) {
-              await widget.provider.deleteDraft(_draftKey);
-              if (mounted) Navigator.pop(context);
-            } else {
-              _deleting = false;
-              setState(() => _saveFailed = true);
-            }
-          },
-        ),
-      ],
-    );
+  Future<void> _close() async {
+    ElyriiHaptics.light();
+    if (await _confirmClose() && mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _done() async {
+    ElyriiHaptics.light();
+    if (_contentController.text.trim().isEmpty) {
+      Navigator.of(context).pop();
+      return;
+    }
+    await _autoSave();
+    // A save already in flight leaves the newest words for one more pass.
+    if (mounted && _hasChanges && !_saveFailed) await _autoSave();
+    if (!mounted || _hasChanges) return;
+    final navigator = Navigator.of(context);
+    if (_createdEntryId != null || widget.entry != null) {
+      showJournalToast(
+        context,
+        _isNew
+            ? 'Ton entrée est enregistrée.'
+            : 'Tes changements sont enregistrés.',
+      );
+    }
+    navigator.pop();
+  }
+
+  Future<void> _pickMood() async {
+    final mood = await showJournalMoodPicker(context);
+    if (mood == null || !mounted) return;
+    setState(() => _mood = mood);
+    _onChanged();
+  }
+
+  Future<void> _pickPrompt() async {
+    final prompt = await showJournalPromptPicker(context);
+    if (prompt != null && mounted) setState(() => _prompt = prompt);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final media = MediaQuery.of(context);
+    final date = AppDates.format(
+      (widget.entry?.createdAt ?? DateTime.now()).toLocal(),
+      'EEEE d MMMM',
+    );
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        final canPop = await _onWillPop();
-        if (canPop && context.mounted) {
+        if (await _confirmClose() && context.mounted) {
           Navigator.of(context).pop();
         }
       },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // AppBar
-          _buildAppBar(isDark),
-          // Contenu
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              0,
-              AppDimensions.spacing8,
-              0,
-              bottomInset + AppDimensions.spacing24,
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: media.padding.top + AppDimensions.accueilBarHeight,
+        ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppDimensions.maxContentWidth,
             ),
-            child: Column(
-              children: [
-                // Badge d'inspiration
-                if (widget.initialPrompt != null && widget.entry == null)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: AppDimensions.spacing12,
-                    ),
-                    child:
-                        Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: AppDimensions.spacing12,
-                                    vertical: AppDimensions.spacing8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    borderRadius: BorderRadius.circular(
-                                      AppDimensions.radius20,
-                                    ),
-                                    border: Border.all(
-                                      color: AppColors.accent.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.lightbulb_rounded,
-                                        size: 14,
-                                        color: AppColors.accent,
-                                      ),
-                                      const SizedBox(
-                                        width: AppDimensions.spacing8,
-                                      ),
-                                      Text(
-                                        'Inspiration',
-                                        style: AppTextStyles.badge(
-                                          color: AppColors.readableAccent(
-                                            AppColors.accent,
-                                            isDark:
-                                                Theme.of(context).brightness ==
-                                                Brightness.dark,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            )
-                            .animateRespectingMotion(context)
-                            .fadeIn(duration: 200.ms)
-                            .slideY(begin: 0.1),
+            child: Material(
+              color: AppColors.journalEditor(dark),
+              shape: RoundedRectangleBorder(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppDimensions.radius30),
+                ),
+                side: dark
+                    ? BorderSide.none
+                    : const BorderSide(color: AppColors.borderLight),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Semantics(
+                scopesRoute: true,
+                namesRoute: true,
+                explicitChildNodes: true,
+                label: 'Écrire dans le journal',
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppDimensions.spacing20,
+                    AppDimensions.spacing8,
+                    AppDimensions.spacing20,
+                    media.viewInsets.bottom +
+                        media.padding.bottom +
+                        AppDimensions.spacing24,
                   ),
-                // Champ titre
-                GlassTextField(
-                      controller: _titleController,
-                      hint: 'Titre (optionnel)',
-                      maxLines: 1,
-                      style: AppTextStyles.titleLarge(),
-                    )
-                    .animateRespectingMotion(context)
-                    .fadeIn(
-                      duration: 300.ms,
-                      delay: 100.ms,
-                      curve: Curves.easeOutCubic,
-                    )
-                    .slideY(
-                      begin: 0.1,
-                      duration: 300.ms,
-                      delay: 100.ms,
-                      curve: Curves.easeOutCubic,
-                    ),
-                const SizedBox(height: AppDimensions.spacing16),
-                // Champ contenu
-                GlassTextField(
-                      controller: _contentController,
-                      hint: 'Exprime ce que tu ressens...',
-                      maxLines: null,
-                      minLines: 12,
-                      style: AppTextStyles.bodyLarge(),
-                    )
-                    .animateRespectingMotion(context)
-                    .fadeIn(
-                      duration: 300.ms,
-                      delay: 200.ms,
-                      curve: Curves.easeOutCubic,
-                    )
-                    .slideY(
-                      begin: 0.1,
-                      duration: 300.ms,
-                      delay: 200.ms,
-                      curve: Curves.easeOutCubic,
-                    ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppBar(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.pageHorizontalPadding,
-        0,
-        AppDimensions.pageHorizontalPadding,
-        AppDimensions.spacing16,
-      ),
-      child: Row(
-        children: [
-          // Bouton fermer
-          AccessibleAction(
-            label: 'Fermer la note',
-            onPressed: () async {
-              ElyriiHaptics.light();
-              final canPop = await _onWillPop();
-              if (canPop && mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-            child: Container(
-              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-              padding: const EdgeInsets.all(AppDimensions.spacing8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(AppDimensions.radius12),
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                color: context.textSecondary,
-                size: 22,
-              ),
-            ),
-          ),
-          const SizedBox(width: AppDimensions.spacing12),
-          // Status
-          Expanded(child: _buildStatusIndicator(isDark)),
-          // Bouton ajouter/sauvegarder
-          AccessibleAction(
-            label: 'Enregistrer la note',
-            onPressed: () async {
-              ElyriiHaptics.light();
-              if (_contentController.text.trim().isNotEmpty && !_isSaving) {
-                await _autoSave();
-                if (mounted && !_hasChanges) Navigator.of(context).pop();
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.spacing16,
-                vertical: AppDimensions.spacing8,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppDimensions.radius12),
-              ),
-              child: Text(
-                widget.entry != null ? 'Modifier' : 'Ajouter',
-                style: AppTextStyles.labelMedium(
-                  color: AppColors.readableAccent(
-                    AppColors.primary,
-                    isDark: Theme.of(context).brightness == Brightness.dark,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    spacing: AppDimensions.spacing8,
+                    children: [
+                      const JournalGrabber(),
+                      _head(dark, date),
+                      if (_isNew) _promptChip(dark),
+                      Expanded(child: _page(dark)),
+                      _toolbar(dark),
+                      _status(dark),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: AppDimensions.spacing8),
-          // Menu supprimer (si édition)
-          if (widget.entry != null || _createdEntryId != null)
-            AccessibleAction(
-              label: 'Supprimer la note',
-              onPressed: () {
-                ElyriiHaptics.light();
-                _deleteEntry();
-              },
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                padding: const EdgeInsets.all(AppDimensions.spacing8),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppDimensions.radius12),
-                ),
-                child: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: AppColors.error,
-                  size: 22,
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatusIndicator(bool isDark) {
-    final warning = widget.provider.storageWarning;
-    if (warning != null) {
-      return Semantics(
-        liveRegion: true,
+  Widget _head(bool dark, String date) => Row(
+    spacing: AppDimensions.spacing4,
+    children: [
+      IconButton(
+        tooltip: 'Fermer l’éditeur',
+        onPressed: _close,
+        constraints: const BoxConstraints.tightFor(
+          width: AppDimensions.journalTool,
+          height: AppDimensions.journalTool,
+        ),
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(
+          backgroundColor: dark ? AppColors.cardDark : AppColors.cardLight,
+        ),
+        icon: Icon(
+          Symbols.close_rounded,
+          size: AppDimensions.iconSm,
+          color: context.textPrimary,
+        ),
+      ),
+      Expanded(
         child: Text(
-          warning,
-          style: AppTextStyles.labelSmall(color: AppColors.primaryText(isDark)),
+          '${date[0].toUpperCase()}${date.substring(1)}',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.editorDate(color: context.textPrimary),
         ),
-      );
-    }
-    if (_isSaving) {
-      return Row(
+      ),
+      TextButton(
+        onPressed: _done,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing4,
+          ),
+          foregroundColor: AppColors.primaryText(dark),
+          textStyle: AppTextStyles.buttonSmall(),
+        ),
+        child: const Text('Terminé'),
+      ),
+    ],
+  );
+
+  Widget _promptChip(bool dark) => Material(
+    color: AppColors.journalPrompt(dark),
+    borderRadius: BorderRadius.circular(AppDimensions.radius14),
+    child: InkWell(
+      onTap: _pickPrompt,
+      borderRadius: BorderRadius.circular(AppDimensions.radius14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing12,
+          vertical: AppDimensions.spacing8,
+        ),
+        child: Row(
+          spacing: AppDimensions.spacing8,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Symbols.lightbulb_rounded,
+              size: AppDimensions.iconSm,
+              color: AppColors.journalAccent(dark),
+            ),
+            Expanded(
+              child: Text(
+                _prompt ?? journalFreePrompt,
+                style: AppTextStyles.promptChip(
+                  color: AppColors.journalAccent(dark),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget _page(bool dark) {
+    final hint = context.textTertiary;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(top: AppDimensions.spacing16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const CupertinoActivityIndicator(radius: 7),
-          const SizedBox(width: AppDimensions.spacing8),
-          Flexible(
-            child: Text(
-              'Sauvegarde...',
-              style: AppTextStyles.labelMedium(
-                color: AppColors.readableAccent(
-                  AppColors.primary,
-                  isDark: Theme.of(context).brightness == Brightness.dark,
+          Semantics(
+            label: 'Titre optionnel',
+            child: TextField(
+              controller: _titleController,
+              textCapitalization: TextCapitalization.sentences,
+              style: AppTextStyles.titleLarge(color: context.textPrimary),
+              cursorColor: AppColors.primaryText(dark),
+              decoration: _bare(
+                'Titre (optionnel)',
+                AppTextStyles.bodyLarge(color: hint),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spacing20),
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppDimensions.journalBodyMinHeight,
+            ),
+            child: Semantics(
+              label: 'Ton entrée',
+              child: TextField(
+                controller: _contentController,
+                autofocus: _isNew,
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                style: AppTextStyles.writingBody(color: context.textPrimary),
+                cursorColor: AppColors.primaryText(dark),
+                decoration: _bare(
+                  'Exprime ce que tu ressens…',
+                  AppTextStyles.writingBody(color: hint),
                 ),
               ),
             ),
           ),
         ],
-      );
-    }
+      ),
+    );
+  }
 
-    if (_hasChanges) {
-      return Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Colors.orange,
-              shape: BoxShape.circle,
+  Widget _toolbar(bool dark) {
+    final mood = _mood;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: dark
+            ? AppColors.glassBackgroundDark
+            : AppColors.glassBackgroundLight,
+        borderRadius: BorderRadius.circular(AppDimensions.radius24),
+        border: Border.all(
+          color: dark ? AppColors.glassBorderDark : AppColors.borderLight,
+          width: .5,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing8,
+          vertical: AppDimensions.spacing4,
+        ),
+        child: Row(
+          children: [
+            ActionChip(
+              onPressed: _pickMood,
+              tooltip: 'Choisir une humeur',
+              avatar: mood == null
+                  ? Icon(
+                      Symbols.sentiment_calm_rounded,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.primaryText(dark),
+                    )
+                  : JournalMoodDot(mood),
+              label: Text(mood?.label ?? 'Humeur'),
+              labelStyle: AppTextStyles.labelMedium(color: context.textPrimary),
+              backgroundColor: dark ? AppColors.cardDark : AppColors.cardLight,
+              side: BorderSide.none,
+              shape: const StadiumBorder(),
             ),
-          ),
-          const SizedBox(width: AppDimensions.spacing8),
-          Flexible(
-            child: Text(
-              _saveFailed
-                  ? 'Échec de sauvegarde — réessaie'
-                  : 'Modifications non sauvegardées',
-              style: AppTextStyles.labelSmall(color: context.textSecondary),
+            const Spacer(),
+            ValueListenableBuilder(
+              valueListenable: _contentController,
+              builder: (context, value, _) {
+                final words = journalWordCount(value.text);
+                return Text(
+                  '$words ${words == 1 ? 'mot' : 'mots'}',
+                  style: AppTextStyles.labelSmall(color: context.textTertiary),
+                );
+              },
+            ),
+            const SizedBox(width: AppDimensions.spacing8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _status(bool dark) {
+    final warning = widget.provider.storageWarning;
+    final saved =
+        !_hasChanges && (widget.entry != null || _createdEntryId != null);
+    final text =
+        warning ??
+        (_isSaving
+            ? 'Enregistrement…'
+            : _hasChanges && _saveFailed
+            ? 'Échec de sauvegarde — réessaie'
+            : _hasChanges
+            ? 'Modifications non sauvegardées'
+            : saved
+            ? 'Enregistré automatiquement'
+            : '');
+    return Semantics(
+      liveRegion: true,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: AppDimensions.spacing4,
+        children: [
+          if (saved && warning == null && !_isSaving)
+            Icon(
+              Symbols.check_circle_rounded,
+              size: AppDimensions.spacing16,
+              color: context.textTertiary,
+            ),
+          Text(
+            text,
+            style: AppTextStyles.labelSmall(
+              color: _saveFailed
+                  ? AppColors.errorText(dark)
+                  : context.textTertiary,
             ),
           ),
         ],
-      );
-    }
-
-    return Row(
-      children: [
-        Icon(
-          Icons.check_circle_rounded,
-          color: AppColors.successText(isDark),
-          size: 16,
-        ),
-        const SizedBox(width: AppDimensions.spacing8),
-        Flexible(
-          child: Text(
-            'Sauvegardé',
-            style: AppTextStyles.labelMedium(
-              color: AppColors.successText(isDark),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

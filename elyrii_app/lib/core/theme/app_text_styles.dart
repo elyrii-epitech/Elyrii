@@ -79,6 +79,30 @@ class AppTextStyles {
   static TextStyle bodySmall({Color? color}) =>
       _role(12, FontWeight.w500, 1.35, 0, color);
 
+  /// The composer question, entry excerpts and search notes (14/1.5).
+  static TextStyle journalLine({Color? color}) =>
+      _role(14, FontWeight.w400, 1.5, 0, color);
+
+  /// A Journal entry read in full (16/1.7).
+  static TextStyle readingBody({Color? color}) =>
+      _role(16, FontWeight.w400, 1.7, 0, color);
+
+  /// The body being written in the editor (16/1.75).
+  static TextStyle writingBody({Color? color}) =>
+      _role(16, FontWeight.w400, 1.75, 0, color);
+
+  /// The date at the top of the editor (14/600).
+  static TextStyle editorDate({Color? color}) =>
+      _role(14, FontWeight.w600, null, 0, color);
+
+  /// Small pills: « Privé », the month filter, the reading mood (12/600).
+  static TextStyle pillLabel({Color? color}) =>
+      _role(12, FontWeight.w600, null, 0, color);
+
+  /// The writing prompt chip of the editor (12/500, interligne 1,5).
+  static TextStyle promptChip({Color? color}) =>
+      _role(12, FontWeight.w500, 1.5, 0, color);
+
   /// Button labels, and the default action of a dialog (bouton).
   static TextStyle labelLarge({Color? color}) =>
       _role(15, FontWeight.w600, null, 0.2, color);

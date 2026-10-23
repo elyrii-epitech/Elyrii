@@ -10,7 +10,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../routes/app_routes.dart';
 import '../../journal/presentation/providers/journal_provider.dart';
-import '../../journal/presentation/widgets/journal_editor_sheet.dart';
+import '../../journal/presentation/widgets/journal_sheets.dart';
 import '../../mascot/presentation/providers/mascot_provider.dart';
 import '../../meditation/data/repositories/meditation_repository.dart';
 import '../../meditation/domain/models/breath_phase.dart';
@@ -89,15 +89,10 @@ Future<void> _launchBreathing(
 void _launchJournal(BuildContext context, CoachActivity activity) {
   context.read<MascotProvider>().react(MascotAnimations.attentive);
 
-  showLiquidGlassSheet(
-    context: context,
-    initialChildSize: 0.92,
-    maxChildSize: 0.92,
-    minChildSize: 0.5,
-    child: JournalEditorSheet(
-      provider: context.read<JournalProvider>(),
-      initialPrompt: activity.journalPrompt,
-    ),
+  showJournalEditor(
+    context,
+    provider: context.read<JournalProvider>(),
+    initialPrompt: activity.journalPrompt,
   );
 }
 

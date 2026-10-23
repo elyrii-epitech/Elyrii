@@ -45,7 +45,14 @@ class AppDimensions {
   static const double grabberWidth = 36;
   static const double grabberHeight = 5;
 
+  /// Journal writing prompt chip.
+  static const double radius14 = 14;
+
+  /// Glass toolbar of the Journal editor.
+  static const double radius24 = 24;
+
   static const double iconSm = 20;
+  static const double iconXs = 14;
   static const double iconMd = 24;
 
   /// Tap target of the glass buttons, and the width that balances them.
@@ -128,6 +135,34 @@ class AppDimensions {
   static const double gardenRewardHeight = 84;
   static const double gardenPreviewHeight = 208;
   static const double gardenBloomSize = 112;
+
+  // ==================== JOURNAL ====================
+
+  /// Day stamp column; the thread runs at [journalThreadInset] from the left.
+  static const double journalDayColumn = 49;
+  static const double journalThreadInset = 24;
+  static const double journalThreadTop = 12;
+  static const double journalThreadBottom = 36;
+  static const double journalMonthGap = 40;
+
+  /// Round tools of the composer, filters and the editor close button.
+  static const double journalTool = 36;
+  static const double journalRefresh = 30;
+  static const double journalMoodDot = 8;
+  static const double journalFilterDot = 12;
+  static const double journalPill = 24;
+  static const double journalSquare = 32;
+  static const double journalSquareRadius = 9;
+  static const double journalShield = 44;
+  static const double journalRowHeight = 56;
+  static const double journalPromptRowHeight = 58;
+  static const double journalBigButton = 50;
+  static const double journalMoodColumn = 58;
+  static const double journalMascotWidth = 94;
+  static const double journalMascotHeight = 114;
+  static const double journalBodyMinHeight = 220;
+  static const double journalToastTop = 112;
+  static const double journalSearchField = 40;
 
   static double dockBottomMargin(double safeBottom) =>
       safeBottom > 0 ? spacing20 : spacing16;
