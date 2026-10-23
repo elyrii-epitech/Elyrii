@@ -16,6 +16,20 @@ locales sont rattachées au compte ; la démo utilise une session isolée.
 | Mascotte | Couleurs, finitions, 15 accessoires répartis sur quatre zones, sauvegarde explicite | Scène GLB partagée ; préférences et progression par compte |
 | Réglages | Apparence sombre, claire ou automatique, haptique, confidentialité, export, diagnostics et suppression du compte | Préférences, version installée, API et partage natif volontaire |
 
+L’arrivée présente Elyrii dans le décor Arches, puis donne accès à la connexion,
+à l’inscription et à **Découvrir sans compte**. La découverte traverse quatre
+questions courtes avant l’Accueil. Le prénom et l’objectif unique utilisent le
+profil existant. La première humeur emprunte le même enregistrement que
+l’Accueil. Le décor est conservé localement par compte après la sauvegarde
+de la tenue. Le choix d’avatar reste dans le Profil.
+
+L’inscription conserve le consentement obligatoire, les règles de mot de passe
+et le message de vérification email. La récupération utilise le code réellement
+envoyé par le serveur, puis un nouveau mot de passe de 12 à 128 caractères.
+Les boutons Google et Apple ne sont pas affichés car le client n’implémente
+pas leur connexion. Les liens légaux signalent que les textes complets ne sont
+pas encore publiés. Leur publication reste nécessaire avant une mise en production.
+
 Le chat expose les ressources d’urgence indépendamment de sa détection locale
 de détresse. Cette heuristique ne remplace pas une évaluation professionnelle.
 Les séances de méditation utilisent des consignes écrites et ne fournissent

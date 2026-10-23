@@ -16,7 +16,7 @@ import 'package:elyrii_app/core/theme/app_colors.dart';
 import 'package:elyrii_app/core/widgets/accessible_action.dart';
 import 'package:elyrii_app/core/widgets/glass/liquid_glass_dialog.dart';
 import 'package:elyrii_app/features/profile_setup/presentation/widgets/profile_controls.dart';
-import 'package:elyrii_app/features/auth/presentation/widgets/glass_auth_text_field.dart';
+import 'package:elyrii_app/features/auth/presentation/widgets/arrival_widgets.dart';
 
 void main() {
   setUpAll(() async {
@@ -197,19 +197,19 @@ void main() {
               key: form,
               child: Column(
                 children: [
-                  GlassAuthTextField(
+                  ArrivalField(
                     controller: email,
                     label: 'Adresse email',
-                    prefixIcon: Icons.email_outlined,
+                    icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
                     validator: (_) => 'Entre une adresse email valide.',
                   ),
-                  GlassAuthTextField(
+                  ArrivalField(
                     controller: password,
                     label: 'Mot de passe',
-                    prefixIcon: Icons.lock_outline_rounded,
-                    isPassword: true,
+                    icon: Icons.lock_outline_rounded,
+                    password: true,
                     autofillHints: const [AutofillHints.password],
                   ),
                 ],

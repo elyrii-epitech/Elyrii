@@ -11,7 +11,6 @@ import 'package:go_router/go_router.dart';
 
 import 'app/app_dependencies.dart';
 import 'app/router/app_router.dart';
-import 'app/launch/elyrii_launch.dart';
 import 'core/config/app_config.dart';
 import 'core/config/app_constants.dart';
 import 'core/diagnostics/app_diagnostics.dart';
@@ -279,7 +278,7 @@ class _MyAppState extends State<MyApp> {
             statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
             statusBarBrightness: dark ? Brightness.dark : Brightness.light,
           ),
-          child: ElyriiLaunch(child: GlobalErrorBoundary(child: child!)),
+          child: GlobalErrorBoundary(child: child!),
         );
       },
     );

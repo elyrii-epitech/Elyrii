@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:elyrii_app/core/widgets/launch_scope.dart';
+import 'package:elyrii_app/features/auth/presentation/pages/login_page.dart';
+import 'package:elyrii_app/features/profile_setup/presentation/pages/profile_setup_page.dart';
 import 'package:elyrii_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:elyrii_app/main.dart' as app;
 
@@ -38,26 +39,32 @@ Future<void> tapVisible(WidgetTester tester, Finder target) async {
   await tester.pump();
 }
 
-/// Uses the real bootstrap and demo button, including the launch overlay and
-/// scrolling needed to reach the button on smaller native screens.
+/// Uses the real bootstrap and guest onboarding on native screens.
 Future<void> startDemoApp(WidgetTester tester) async {
-  bool launchFinished() => find
-      .byType(LaunchScope)
-      .evaluate()
-      .any((element) => !(element.widget as LaunchScope).isRevealing);
-
   app.main();
   await waitFor(
     tester,
-    launchFinished,
-    description: 'native bootstrap and launch reveal',
+    () =>
+        find.byType(LoginPage).evaluate().isNotEmpty ||
+        find.byType(DashboardPage).evaluate().isNotEmpty,
+    description: 'native bootstrap',
   );
   if (find.byType(DashboardPage).evaluate().isEmpty) {
-    await tapVisible(tester, find.text('Découvrir Elyrii'));
+    await tapVisible(tester, find.bySemanticsLabel('Entrer dans Elyrii'));
+    await tapVisible(tester, find.text('Découvrir sans compte'));
+    await waitFor(
+      tester,
+      () => find.byType(ProfileSetupPage).evaluate().isNotEmpty,
+      description: 'guest onboarding',
+    );
+    for (var step = 0; step < 3; step++) {
+      await tapVisible(tester, find.text('Passer'));
+    }
+    await tapVisible(tester, find.text('Entrer dans Elyrii'));
   }
   await waitFor(
     tester,
-    () => find.byType(DashboardPage).evaluate().isNotEmpty && launchFinished(),
+    () => find.byType(DashboardPage).evaluate().isNotEmpty,
     description: 'the interactive demo dashboard',
   );
 }

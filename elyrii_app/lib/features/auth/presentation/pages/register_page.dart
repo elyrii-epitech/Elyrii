@@ -1,410 +1,257 @@
-import '../../../../core/widgets/accessible_action.dart';
-import '../../../../core/accessibility/motion.dart';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-import '../../../../core/utils/validators.dart';
-
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/glass/liquid_glass_kit.dart';
-import '../widgets/glass_auth_text_field.dart';
-import '../widgets/auth_error_banner.dart';
-
-import 'package:flutter_animate/flutter_animate.dart';
-
+import '../../../../core/utils/validators.dart';
 import '../../../../routes/app_routes.dart';
-import '../providers/auth_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
-import '../../../../core/config/mascot_3d_config.dart';
-import '../../../../core/widgets/mascot_3d_viewer.dart';
-import '../../../../core/config/mascot_animations.dart';
-import '../../../../core/design_system/haptics/elyrii_haptics.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/arrival_widgets.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
-
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _acceptTerms = false;
-  String? _errorBanner;
-  bool _errorBannerIsSuccess = false;
-  MascotAnimation _mascotAnimation = MascotAnimations.greet;
-  int _mascotTrigger = 0;
-  bool get _isLoading => context.watch<AuthProvider>().isLoading;
-
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  final _form = GlobalKey<FormState>();
+  bool _consent = false;
+  String? _message;
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _name.dispose();
+    _email.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  Future<void> _handleRegister() async {
-    if (context.read<AuthProvider>().isLoading) return;
-    if (!_formKey.currentState!.validate()) return;
-    if (!_acceptTerms) {
-      setState(() {
-        _errorBannerIsSuccess = false;
-        _errorBanner = 'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.';
-      });
-      return;
+  Future<void> _register() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.isLoading) return;
+    final valid = _form.currentState!.validate();
+    if (!_consent) {
+      setState(
+        () => _message = 'Accepte les conditions pour créer ton espace.',
+      );
     }
-    final nameParts = _nameController.text.trim().split(' ');
-    final firstName = nameParts.first;
-    final lastName = nameParts.length > 1
-        ? nameParts.sublist(1).join(' ')
-        : firstName;
-    final authProvider = context.read<AuthProvider>();
-    final userProvider = context.read<UserProvider>();
-    final success = await authProvider.register(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      firstName: firstName,
-      lastName: lastName,
+    if (!valid || !_consent) return;
+    setState(() => _message = null);
+    final user = context.read<UserProvider>();
+    final name = _name.text.trim();
+    final success = await auth.register(
+      firstName: name,
+      lastName: name,
+      email: _email.text.trim(),
+      password: _password.text,
     );
     if (!mounted) return;
     if (success) {
-      setState(() {
-        _mascotAnimation = MascotAnimations.celebrate;
-        _mascotTrigger++;
-      });
-      // Charger le profil pour pre-remplir l'onboarding
-      await userProvider.loadProfile();
-      if (!mounted) return;
-      context.go(AppRoutes.profileSetup);
+      await user.loadProfile();
+      if (mounted) context.go(AppRoutes.profileSetup);
+      return;
+    }
+    final error =
+        auth.error ?? 'La création du compte n’a pas abouti. Réessaie.';
+    final normalized = error.toLowerCase();
+    if (normalized.contains('verification required') ||
+        normalized.contains('activate your account')) {
+      await showArrivalInfo(
+        context,
+        'Vérifie ton email',
+        'Ton compte attend sa vérification. Ouvre le message reçu par email pour l’activer, puis connecte-toi.',
+      );
+      if (mounted) context.go(AppRoutes.login);
     } else {
-      final error = authProvider.error?.toLowerCase() ?? '';
-      final isVerificationMessage =
-          error.contains('verification required') ||
-          error.contains('activate your account');
-
-      // Bannière contextuelle en haut de formulaire (pas de SnackBar).
-      setState(() {
-        _errorBannerIsSuccess = isVerificationMessage;
-        _errorBanner =
-            authProvider.error ??
-            'Oops, petit souci lors de la création. Réessaie quand tu es prêt.';
-        _mascotAnimation = isVerificationMessage
-            ? MascotAnimations.delight
-            : MascotAnimations.reassure;
-        _mascotTrigger++;
-      });
-      if (isVerificationMessage) {
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.pop(context); // Retour à la connexion
-          }
-        });
-      }
+      setState(() => _message = error);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.spacing24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    final busy = context.watch<AuthProvider>().isLoading;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final password = _password.text;
+    final strength =
+        (password.length >= 8 ? 1 : 0) +
+        (RegExp(r'[A-Z]').hasMatch(password) &&
+                RegExp(r'[a-z]').hasMatch(password)
+            ? 1
+            : 0) +
+        (RegExp(r'[0-9]|[^a-zA-Z]').hasMatch(password) ? 1 : 0);
+    return ArrivalFrame(
+      title: 'Créer ton compte',
+      bubble: 'On crée ton espace ?',
+      onBack: () => context.go(AppRoutes.login),
+      onInfo: () => showArrivalInfo(
+        context,
+        'Un compte, ou juste un premier pas',
+        'Ton compte te permet de retrouver ton espace. Tu peux aussi découvrir Elyrii sans compte et décider plus tard.',
+      ),
+      child: AutofillGroup(
+        child: Form(
+          key: _form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ArrivalField(
+                controller: _name,
+                label: 'Prénom',
+                icon: Icons.person_outline_rounded,
+                enabled: !busy,
+                autofillHints: const [AutofillHints.givenName],
+                validator: (value) => (value?.trim().isEmpty ?? true)
+                    ? 'Comment peut-on t’appeler ?'
+                    : null,
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
+              ArrivalField(
+                controller: _email,
+                label: 'Email',
+                icon: Icons.mail_outline_rounded,
+                enabled: !busy,
+                autofillHints: const [AutofillHints.email],
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) =>
+                    Validators.isValidEmail(value?.trim() ?? '')
+                    ? null
+                    : 'Entre une adresse email valide.',
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
+              ArrivalField(
+                controller: _password,
+                label: 'Mot de passe',
+                icon: Icons.lock_outline_rounded,
+                password: true,
+                enabled: !busy,
+                autofillHints: const [AutofillHints.newPassword],
+                textInputAction: TextInputAction.done,
+                onChanged: (_) => setState(() {}),
+                onSubmitted: (_) => _register(),
+                validator: (value) {
+                  if ((value?.length ?? 0) < 8) {
+                    return 'Utilise au moins 8 caractères.';
+                  }
+                  if (!RegExp(r'[A-Z]').hasMatch(value!)) {
+                    return 'Ajoute une majuscule.';
+                  }
+                  if (!RegExp(r'[0-9]').hasMatch(value)) {
+                    return 'Ajoute au moins un chiffre.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppDimensions.spacing8),
+              Row(
                 children: [
-                  // Mascotte cadrée par la caméra (cameraTarget du config
-                  // authPage) — aucun décalage de layout.
-                  AccessibleAction(
-                        label: 'Faire réagir la mascotte Elyrii',
-                        onPressed: () {
-                          ElyriiHaptics.light();
-                          setState(() {
-                            _mascotAnimation = MascotAnimations.greet;
-                            _mascotTrigger++;
-                          });
-                        },
-                        child: Mascot3DViewer(
-                          config: const Mascot3DConfig.authPage(),
-                          animation: _mascotAnimation,
-                          animationTrigger: _mascotTrigger,
-                          width: 250,
-                          height: 250,
+                  for (var i = 0; i < 3; i++)
+                    Expanded(
+                      child: Container(
+                        height: AppDimensions.arrivalProgressHeight,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.spacing2,
                         ),
-                      )
-                      .animateRespectingMotion(context)
-                      .fadeIn(duration: 600.ms)
-                      .slideY(begin: 0.2, end: 0),
-
-                  const SizedBox(height: AppDimensions.spacing48),
-
-                  Text(
-                    'Créer un compte',
-                    style: AppTextStyles.headlineMedium(
-                      color: context.textPrimary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: AppDimensions.spacing16),
-
-                  Text(
-                    'Rejoins la communauté Elyrii',
-                    style: AppTextStyles.bodyMedium(
-                      color: context.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: AppDimensions.spacing32),
-
-                  if (_errorBanner != null) ...[
-                    AuthErrorBanner(
-                      message: _errorBanner!,
-                      isSuccess: _errorBannerIsSuccess,
-                    ),
-                    const SizedBox(height: AppDimensions.spacing24),
-                  ],
-
-                  AutofillGroup(
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Name Field
-                              Text(
-                                'Prénom',
-                                style: AppTextStyles.labelMedium(
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimensions.spacing8),
-                              GlassAuthTextField(
-                                controller: _nameController,
-                                label: 'Prénom',
-                                autofillHints: const [AutofillHints.givenName],
-                                hint: '',
-                                prefixIcon: Icons.person_outline,
-                                keyboardType: TextInputType.name,
-                                textInputAction: TextInputAction.next,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Entre ton prénom';
-                                  }
-                                  if (value.length < 2) {
-                                    return 'Le prénom doit contenir au moins 2 caractères';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppDimensions.spacing16),
-
-                              // Email Field
-                              Text(
-                                'Adresse email',
-                                style: AppTextStyles.labelMedium(
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimensions.spacing8),
-                              GlassAuthTextField(
-                                controller: _emailController,
-                                label: 'Adresse email',
-                                autofillHints: const [AutofillHints.email],
-                                hint: '',
-                                prefixIcon: Icons.email_outlined,
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Entre ton email';
-                                  }
-                                  if (!Validators.isValidEmail(value)) {
-                                    return 'Email invalide';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppDimensions.spacing16),
-
-                              // Password Field
-                              Text(
-                                'Mot de passe',
-                                style: AppTextStyles.labelMedium(
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimensions.spacing8),
-                              GlassAuthTextField(
-                                controller: _passwordController,
-                                label: 'Mot de passe',
-                                autofillHints: const [
-                                  AutofillHints.newPassword,
-                                ],
-                                hint: '',
-                                prefixIcon: Icons.lock_outline,
-                                isPassword: true,
-                                textInputAction: TextInputAction.next,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Entre ton mot de passe';
-                                  }
-                                  if (value.length < 8) {
-                                    return 'Le mot de passe doit contenir au moins 8 caractères';
-                                  }
-                                  if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                                    return 'Le mot de passe doit contenir au moins une majuscule';
-                                  }
-                                  if (!RegExp(r'[0-9]').hasMatch(value)) {
-                                    return 'Le mot de passe doit contenir au moins un chiffre';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: AppDimensions.spacing16),
-
-                              // Confirm Password Field
-                              Text(
-                                'Confirmer le mot de passe',
-                                style: AppTextStyles.labelMedium(
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimensions.spacing8),
-                              GlassAuthTextField(
-                                controller: _confirmPasswordController,
-                                label: 'Confirmer le mot de passe',
-                                onSubmitted: (_) {
-                                  _handleRegister();
-                                },
-                                autofillHints: const [
-                                  AutofillHints.newPassword,
-                                ],
-                                hint: '',
-                                prefixIcon: Icons.lock_outline,
-                                isPassword: true,
-                                textInputAction: TextInputAction.done,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Confirme ton mot de passe';
-                                  }
-                                  if (value != _passwordController.text) {
-                                    return 'Les mots de passe ne correspondent pas';
-                                  }
-                                  return null;
-                                },
-                              ),
-
-                              const SizedBox(height: AppDimensions.spacing24),
-
-                              CheckboxListTile(
-                                value: _acceptTerms,
-                                onChanged: _isLoading
-                                    ? null
-                                    : (value) => setState(
-                                        () => _acceptTerms = value ?? false,
-                                      ),
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                contentPadding: EdgeInsets.zero,
-                                title: const Text(
-                                  "J'accepte les conditions d'utilisation",
-                                ),
-                              ),
-
-                              const SizedBox(height: AppDimensions.spacing32),
-
-                              // Register Button
-                              LiquidGlassButton(
-                                label: 'Créer mon compte',
-                                isLoading: _isLoading,
-                                isExpanded: true,
-                                onPressed: _handleRegister,
-                              ),
-
-                              const SizedBox(height: AppDimensions.spacing12),
-                              LiquidGlassButton(
-                                label: 'Découvrir Elyrii',
-                                icon: Icons.bolt_rounded,
-                                style: LiquidGlassButtonStyle.tinted,
-                                isExpanded: true,
-                                onPressed: () async {
-                                  ElyriiHaptics.medium();
-                                  await context
-                                      .read<AuthProvider>()
-                                      .startDemoSession();
-                                  if (!context.mounted) return;
-                                  context.read<ValueNotifier<bool>>().value =
-                                      true;
-                                  context.go(AppRoutes.home);
-                                },
-                              ),
-                              const SizedBox(height: AppDimensions.spacing32),
-
-                              // Login Link
-                              Wrap(
-                                alignment: WrapAlignment.center,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Text(
-                                    'Déjà un compte ? ',
-                                    style: AppTextStyles.bodySmall(
-                                      color: context.textSecondary,
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    style: TextButton.styleFrom(
-                                      padding: EdgeInsets.zero,
-                                      minimumSize: Size.zero,
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                    child: Text(
-                                      'Se connecter',
-                                      style: AppTextStyles.labelMedium(
-                                        color: AppColors.readableAccent(
-                                          AppColors.primary,
-                                          isDark:
-                                              Theme.of(context).brightness ==
-                                              Brightness.dark,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                        decoration: BoxDecoration(
+                          color: i < strength
+                              ? (dark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primary)
+                              : AppColors.track(dark),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radius4,
                           ),
                         ),
-                      )
-                      .animateRespectingMotion(context)
-                      .fadeIn(duration: 800.ms, delay: 200.ms)
-                      .slideY(begin: 0.2, end: 0),
+                      ),
+                    ),
                 ],
               ),
-            ),
+              const SizedBox(height: AppDimensions.spacing8),
+              Text(
+                strength == 3
+                    ? 'Solide. Au moins 8 caractères, pour toi seulement.'
+                    : 'Au moins 8 caractères, une majuscule et un chiffre.',
+                style: AppTextStyles.bodySmall(color: context.textSecondary),
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Checkbox(
+                    value: _consent,
+                    shape: const CircleBorder(),
+                    semanticLabel:
+                        'Accepter les conditions et la confidentialité',
+                    onChanged: busy
+                        ? null
+                        : (value) => setState(() => _consent = value ?? false),
+                  ),
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'J’accepte les ',
+                          style: AppTextStyles.bodySmall(
+                            color: context.textSecondary,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => showArrivalInfo(
+                            context,
+                            'Conditions',
+                            'Les conditions d’utilisation complètes ne sont pas encore publiées dans cette version. Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé.',
+                          ),
+                          child: const Text('conditions'),
+                        ),
+                        Text(
+                          'et la ',
+                          style: AppTextStyles.bodySmall(
+                            color: context.textSecondary,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => showArrivalInfo(
+                            context,
+                            'Politique de confidentialité',
+                            'La politique de confidentialité complète n’est pas encore publiée dans cette version. Tu peux consulter, exporter et supprimer tes données depuis les réglages.',
+                          ),
+                          child: const Text('politique de confidentialité'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              ArrivalFeedback(_message),
+              ArrivalButton(
+                label: 'Créer mon compte',
+                busy: busy,
+                onPressed: _register,
+              ),
+              const SizedBox(height: AppDimensions.spacing16),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    'Déjà un compte ?',
+                    style: AppTextStyles.bodySmall(
+                      color: context.textSecondary,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: busy ? null : () => context.go(AppRoutes.login),
+                    child: const Text('Se connecter'),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

@@ -14,7 +14,6 @@ import 'package:flutter_3d_controller/src/data/datasources/i_flutter_3d_datasour
 import 'package:flutter_3d_controller/src/data/repositories/flutter_3d_repository.dart';
 import 'package:flutter_3d_controller/src/utils/utils.dart';
 
-import 'launch_scope.dart';
 import '../diagnostics/app_diagnostics.dart';
 import '../../features/mascot/data/models/mascot_appearance.dart';
 import 'mascot_material_script.dart';
@@ -299,11 +298,6 @@ class _MascotModelSurfaceState extends State<MascotModelSurface> {
 
   @override
   Widget build(BuildContext context) {
-    // Native WebViews / web platform views do not reliably blend with a
-    // Flutter opacity overlay. Do not create the surface until the splash
-    // has fully faded; the Flutter placeholder covers loading afterwards.
-    if (LaunchScope.isRevealingOf(context)) return const SizedBox.shrink();
-
     return ModelViewer(
       id: _id,
       // Flutter places asset keys under an additional assets/ directory on
