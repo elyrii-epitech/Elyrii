@@ -39,6 +39,8 @@ Les opérations par compte capturent une révision de session. Les repositories
 valident le JSON externe via `decodeResponse` / `decodeListResponse` et réservent
 les replis hors ligne aux erreurs typées admises. Un 401, une réponse invalide
 ou une mutation refusée ne deviennent pas un succès issu du cache.
+Les défis du Jardin et les déblocages de la tenue sont réinitialisés lors
+d’un changement de compte, d’un passage en démo ou d’une déconnexion.
 
 Journal/brouillons et messages/titres chat utilisent SQLite et AES-GCM. Les
 clés sont conservées via Keychain/Keystore. L’adaptateur de test injecte SQLite

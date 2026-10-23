@@ -145,6 +145,7 @@ class AppDependencies {
     journal.onUserChanged(owner);
     accueilActivities.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     dashboard.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
+    gamification.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     _track(
       mascot.onUserChanged(
         userId: owner,

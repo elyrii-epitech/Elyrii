@@ -4,6 +4,11 @@ Ce guide complète les [contrôles CI/CD](ci-cd.md) et le
 [protocole d’accessibilité](accessibility.md). Les tests locaux ne remplacent pas
 la configuration des services et les vérifications natives avant distribution.
 
+La PR frontend ne livre pas les évolutions du serveur décrites ci-dessous.
+La récupération de mot de passe, l’export du compte, les signalements, la
+pagination du journal et la corrélation du chat exigent un backend compatible.
+Vérifier ces contrats sur la gateway cible avant de distribuer l’application.
+
 ## Migration et ordre de livraison
 
 1. Sauvegarder la base et tester la restauration en staging ; mesurer la durée
@@ -12,9 +17,9 @@ la configuration des services et les vérifications natives avant distribution.
 2. Appliquer
    [`20261010_frontend_reliability.sql`](https://github.com/elyrii-epitech/Elyrii/blob/frontend/elyrii_server/migrations/20261010_frontend_reliability.sql)
    par le mécanisme de migration du déploiement avant d’activer le nouveau
-   backend. La migration est additive et a été rejouée deux fois sur une base
-   PostgreSQL 16 jetable. Ne jamais utiliser le `drizzle-kit push --force` de la
-   CI de test comme procédure de migration de production.
+   backend. La migration est additive. Ne jamais utiliser le
+   `drizzle-kit push --force` de la CI de test comme procédure de migration
+   de production.
 3. Livrer le backend, vérifier les routes existantes puis les nouvelles avec
    des comptes de staging. L’absence de paramètres de pagination conserve
    l’ancien format tableau du journal ; les nouveaux clients demandent des
@@ -134,9 +139,9 @@ privé. Ne pas ajouter de payloads de chat/journal ou de secrets aux logs.
 ## Dépendances et builds
 
 Le workflow frontend impose le lockfile, l’analyse, les tests et les builds
-techniques ; le workflow serveur vérifie TypeScript, les tests PostgreSQL et
-le build Bun sur une base jetable. Les actions sont épinglées par SHA et
-Dependabot ouvre les mises à jour compatibles. Les mises à jour majeures, en
+techniques. Les contrats serveur se vérifient séparément avant livraison.
+Les actions sont épinglées par SHA et Dependabot ouvre les mises à jour compatibles.
+Les mises à jour majeures, en
 particulier du renderer 3D dont certains internes sont utilisés, exigent une
 revue des contrats et des tests natifs.
 
@@ -166,11 +171,13 @@ les fichiers temporaires de signature. Le job iOS produit un artefact
 technique release sans signature ; une distribution iOS demande encore les
 certificats, profiles, capabilities et la validation Xcode de l’organisation.
 
-Cet environnement Linux ne dispose pas d’Android SDK, Xcode, appareil ni
-secrets de distribution. La politique réseau ne permet pas tous les dépôts
-natifs nécessaires. Les workflows n’ont pas été déclenchés et les nouveaux
-binaires natifs n’ont donc pas été validés ici. Les fixtures ELF prouvent le
-comportement du contrôle, pas la compatibilité de l’APK final.
+L’identité iOS versionnée reste celle de `dev`, `com.eip.elyrii`.
+Une identité personnelle de test doit rester dans une configuration locale.
+
+La validation navigateur et les tests Flutter sur hôte ne vérifient pas les
+binaires natifs ni la signature. Le workflow de livraison doit être exécuté
+séparément avec les outils et secrets nécessaires. Les fixtures ELF prouvent
+le comportement du contrôle, pas la compatibilité de l’APK final.
 
 ## Vérifications sur appareils
 

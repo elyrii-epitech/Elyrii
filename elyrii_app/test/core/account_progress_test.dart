@@ -1,4 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
+
+import 'package:elyrii_app/app/app_dependencies.dart';
+import 'package:elyrii_app/core/services/theme_provider.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import 'package:elyrii_app/core/network/api_exception.dart';
 
@@ -91,6 +98,90 @@ class _Dashboard extends DashboardRepository {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('la composition isole les défis entre comptes, démo et déconnexion', () async {
+    FlutterSecureStorage.setMockInitialValues({});
+    String token(String owner) =>
+        'header.${base64Url.encode(utf8.encode(jsonEncode({'sub': owner, 'exp': 4102444800})))}.signature';
+    final aliceToken = token('alice');
+    final storage = SecureStorageService();
+    final api = ApiClient(
+      storage: storage,
+      client: MockClient((request) async {
+        final owner = request.headers['authorization'] == 'Bearer $aliceToken'
+            ? 'alice'
+            : 'bob';
+        if (request.url.path == '/user/me') {
+          return http.Response(
+            jsonEncode({'id': owner, 'email': '$owner@example.test'}),
+            200,
+          );
+        }
+        if (request.url.path == '/user/settings') {
+          return http.Response('{}', 200);
+        }
+        if (request.url.path == '/user/mascot') {
+          return http.Response('{"appearance":"nature"}', 200);
+        }
+        if (request.url.path == '/challenge/completed' && owner == 'alice') {
+          return http.Response(
+            jsonEncode([
+              {
+                'id': 'alice-completed',
+                'userId': 'alice',
+                'challengeId': 'challenge-a',
+                'status': 'COMPLETED',
+                'createdAt': '2026-10-01T12:00:00Z',
+                'updatedAt': '2026-10-01T12:00:00Z',
+                'completedAt': '2026-10-01T12:00:00Z',
+              },
+            ]),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      }),
+    );
+    final app = AppDependencies(
+      storage: storage,
+      api: api,
+      theme: ThemeProvider(),
+    );
+    addTearDown(() async {
+      await app.chat.ready;
+      await app.mascot.flushed;
+      app.dispose();
+      await app.chat.flushed;
+      await app.history.close();
+      await app.journalStore.close();
+    });
+    await app.chat.ready;
+    Future<void> restore(String owner) async {
+      await storage.saveAccessToken(token(owner));
+      await storage.saveUserId(owner);
+      await app.auth.restoreLocalSession();
+      await app.gamification.loadAll();
+      await app.chat.ready;
+    }
+
+    await restore('alice');
+    expect(app.gamification.completedChallenges.map((item) => item.id), [
+      'alice-completed',
+    ]);
+    await restore('bob');
+    expect(app.auth.accountId, 'bob');
+    expect(app.gamification.completedChallenges, isEmpty);
+    await app.auth.startDemoSession();
+    await app.gamification.loadAll();
+    await app.chat.ready;
+    expect(
+      app.gamification.completedChallenges.map((item) => item.userId).toSet(),
+      {DevSession.userId},
+    );
+    await app.auth.clearLocalSession();
+    expect(app.gamification.completedChallenges, isEmpty);
+    await app.chat.ready;
+  });
 
   test('la démo débloque la collection localement et un vrai compte garde sa progression', () async {
     final repository = _Challenges();
