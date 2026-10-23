@@ -112,6 +112,25 @@ void main() {
     },
   );
 
+  test(
+    'la question du Journal reste par compte et se réinitialise chaque jour',
+    () async {
+      final day = CivilDay(2026, 10, 22);
+      store.onUserChanged(userId: 'alice');
+      await Future<void>.delayed(Duration.zero);
+      await store.nextJournalQuestion(day: day, count: 3);
+      await store.nextJournalQuestion(day: day, count: 3);
+      expect(store.snapshot.journalQuestionIndex(day, 3), 2);
+      await store.reload();
+      expect(store.snapshot.journalQuestionIndex(day, 3), 2);
+      expect(store.snapshot.journalQuestionIndex(day.addDays(1), 3), 1);
+      store.onUserChanged(userId: 'bob');
+      await Future<void>.delayed(Duration.zero);
+      expect(store.snapshot.journalQuestion, isNull);
+      expect(store.snapshot.journalQuestionIndex(day, 3), 0);
+    },
+  );
+
   test('les jours de plus de 370 jours sont élagués, pas mis à zéro', () async {
     store.onUserChanged(userId: 'alice');
     final old = CivilDay(2024, 1, 2);

@@ -74,6 +74,14 @@ class JournalProvider extends ChangeNotifier {
     if (owner != null) await _repository.store.deleteDraft(owner, key);
   }
 
+  Future<List<Map<String, dynamic>>> exportDrafts() async {
+    final session = _sessionVersion;
+    final owner = _owner ?? await _repository.currentOwner;
+    if (owner == null || session != _sessionVersion) return const [];
+    final drafts = await _repository.store.exportDrafts(owner);
+    return session == _sessionVersion ? drafts : const [];
+  }
+
   @override
   void dispose() {
     _disposed = true;
@@ -169,7 +177,9 @@ class JournalProvider extends ChangeNotifier {
       notifyListeners();
       final entries = await pending;
       if (version != _loadVersion || mutation != _mutationVersion) return;
-      _entries = entries;
+      // Decoded pages are unmodifiable; creation, edits and deletion patch
+      // this list in place.
+      _entries = List.of(entries);
       _updateSortedEntries();
       _isLoading = false;
       notifyListeners();

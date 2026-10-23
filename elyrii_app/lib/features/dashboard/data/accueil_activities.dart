@@ -69,6 +69,13 @@ class ThreadAnswer {
   });
 }
 
+/// The Journal question the user picked with « Changer la question ».
+class JournalQuestionPick {
+  final CivilDay day;
+  final int index;
+  const JournalQuestionPick({required this.day, required this.index});
+}
+
 /// Photographie gelée des faits locaux d'Accueil. Une lecture manquante
 /// reste `isLoading` ou porte une erreur : aucun zéro de complaisance.
 class AccueilActivitySnapshot {
@@ -78,6 +85,7 @@ class AccueilActivitySnapshot {
   final Map<CivilDay, MoodType> moodDays;
   final MascotDecor decor;
   final Set<AccueilRitual> addedRituals;
+  final JournalQuestionPick? journalQuestion;
   final bool isLoading;
   final bool isWriting;
   final String? error;
@@ -89,6 +97,7 @@ class AccueilActivitySnapshot {
     Map<CivilDay, MoodType>? moodDays,
     this.decor = MascotDecor.arches,
     Set<AccueilRitual>? addedRituals,
+    this.journalQuestion,
     this.isLoading = false,
     this.isWriting = false,
     this.error,
@@ -97,6 +106,14 @@ class AccueilActivitySnapshot {
        socialWeeks = Map.unmodifiable(socialWeeks ?? const {}),
        threadAnswers = Map.unmodifiable(threadAnswers ?? const {}),
        moodDays = Map.unmodifiable(moodDays ?? const {});
+
+  /// The question shown on [day]: the user's pick of that day, otherwise
+  /// a rotation derived from the date.
+  int journalQuestionIndex(CivilDay day, int count) {
+    final pick = journalQuestion;
+    if (pick != null && pick.day == day) return pick.index % count;
+    return CivilDay(1970, 1, 1).daysUntil(day) % count;
+  }
 }
 
 /// Faits locaux mutables, copiés depuis une photographie puis regelés.
@@ -107,6 +124,7 @@ class _Facts {
   final Map<CivilDay, MoodType> moodDays = {};
   MascotDecor decor = MascotDecor.arches;
   final Set<AccueilRitual> addedRituals = {};
+  JournalQuestionPick? journalQuestion;
 
   _Facts();
 
@@ -128,6 +146,7 @@ class _Facts {
     moodDays.addAll(snapshot.moodDays);
     decor = snapshot.decor;
     addedRituals.addAll(snapshot.addedRituals);
+    journalQuestion = snapshot.journalQuestion;
   }
 
   AccueilActivitySnapshot snapshot({bool isWriting = false, String? error}) =>
@@ -138,13 +157,15 @@ class _Facts {
         moodDays: moodDays,
         decor: decor,
         addedRituals: addedRituals,
+        journalQuestion: journalQuestion,
         isWriting: isWriting,
         error: error,
       );
 }
 
 /// Seul propriétaire des faits locaux d'Accueil : rituels cochés, pas
-/// sociaux, réponses au fil, humeurs notées sur cet appareil et décor.
+/// sociaux, réponses au fil, humeurs notées sur cet appareil, décor et
+/// question du Journal choisie pour le jour.
 ///
 /// Le document est chiffré par compte (`accueil-activities:v1`), jamais
 /// synchronisé au serveur, et les jours de plus de 370 jours sont élagués :
@@ -233,7 +254,8 @@ class AccueilActivities extends ChangeNotifier {
         ..socialWeeks.addAll(_parseSocialWeeks(document['socialWeeks']))
         ..threadAnswers.addAll(_parseThreadAnswers(document['threadAnswers']))
         ..moodDays.addAll(_parseMoodDays(document['moodDays']))
-        ..decor = parseDecor(document['decor']);
+        ..decor = parseDecor(document['decor'])
+        ..journalQuestion = _parseJournalQuestion(document['journalQuestion']);
       final added = document['addedRituals'];
       if (added is List) {
         facts.addedRituals.addAll(
@@ -344,6 +366,14 @@ class AccueilActivities extends ChangeNotifier {
     return moods;
   }
 
+  JournalQuestionPick? _parseJournalQuestion(dynamic raw) {
+    if (raw is! Map) return null;
+    final day = CivilDay.tryParse(raw['day'] as String? ?? '');
+    final index = raw['index'];
+    if (day == null || index is! int || index < 0) return null;
+    return JournalQuestionPick(day: day, index: index);
+  }
+
   /// État souhaité d'un rituel. Cocher deux fois garde la première heure ;
   /// décocher puis recocher constitue une nouvelle réalisation.
   Future<bool> setRitualDone({
@@ -446,6 +476,19 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
+  /// Shows the next Journal question for [day], among [count] questions.
+  Future<bool> nextJournalQuestion({
+    required CivilDay day,
+    required int count,
+  }) {
+    final facts = _Facts.of(_snapshot);
+    facts.journalQuestion = JournalQuestionPick(
+      day: day,
+      index: (_snapshot.journalQuestionIndex(day, count) + 1) % count,
+    );
+    return _commit(facts);
+  }
+
   /// Le lundi de la semaine ISO de [day], clé des pas sociaux.
   static CivilDay mondayOf(CivilDay day) => day.addDays(-(day.weekday - 1));
 
@@ -492,6 +535,8 @@ class AccueilActivities extends ChangeNotifier {
       },
       'decor': facts.decor.name,
       'addedRituals': facts.addedRituals.map((ritual) => ritual.name).toList(),
+      if (facts.journalQuestion case final pick?)
+        'journalQuestion': {'day': pick.day.isoDate, 'index': pick.index},
     };
   }
 

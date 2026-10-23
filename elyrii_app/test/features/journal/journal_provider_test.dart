@@ -92,4 +92,20 @@ void main() {
       expect(provider.entries, isEmpty);
     },
   );
+
+  test(
+    'an entry can be written after a page decoded from the server',
+    () async {
+      final repo = _Repository();
+      final provider = JournalProvider(repository: repo);
+      addTearDown(provider.dispose);
+      final load = provider.loadEntries();
+      repo.loads.single.complete(List.unmodifiable([_entry('older')]));
+      await load;
+      final save = provider.createEntry(content: 'Nouvelle page');
+      repo.created.complete(_entry('newer'));
+      expect((await save)?.id, 'newer');
+      expect(provider.entries.map((entry) => entry.id), contains('newer'));
+    },
+  );
 }
