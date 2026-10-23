@@ -219,6 +219,10 @@ class AppColors {
   static const Color glassBorderLight = Color(0xE6FFFFFF); // 90 %
   static const Color glassBorderDark = Color(0x1AFFFFFF); // 10 %
 
+  /// Standard v2 sheet glass (`rgba(30,27,42,.9)` dark).
+  static Color sheetGlass(bool dark) =>
+      dark ? const Color(0xE61E1B2A) : glassBackgroundLight;
+
   /// Couleurs lavande pour effets spéciaux
   static const Color glassLavender = Color(0xFFF5F3FF);
   static const Color glassLavenderBorder = Color(0xFFE0D4FF);

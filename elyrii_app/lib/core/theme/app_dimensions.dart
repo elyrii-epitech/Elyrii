@@ -41,6 +41,10 @@ class AppDimensions {
 
   static const double radiusPill = 999;
 
+  /// Sheet grabber (36 × 5).
+  static const double grabberWidth = 36;
+  static const double grabberHeight = 5;
+
   static const double iconSm = 20;
   static const double iconMd = 24;
 

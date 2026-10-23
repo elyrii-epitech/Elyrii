@@ -1,25 +1,12 @@
 part of 'challenges_page.dart';
 
-class _GardenSheetRoute extends PopupRoute<void> {
+class _GardenSheet extends StatelessWidget {
   final String title;
   final Widget child;
-  _GardenSheetRoute({required this.title, required this.child});
+  const _GardenSheet({required this.title, required this.child});
 
   @override
-  Color get barrierColor => AppColors.scrim;
-  @override
-  bool get barrierDismissible => true;
-  @override
-  String get barrierLabel => 'Fermer la présentation';
-  @override
-  Duration get transitionDuration => Duration.zero;
-
-  @override
-  Widget buildPage(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-  ) {
+  Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final safe = MediaQuery.paddingOf(context);
     return SafeArea(
@@ -300,11 +287,14 @@ class _FlowerSheet extends StatelessWidget {
             subtitle: const Text('Dans ton journal'),
             trailing: const Icon(Symbols.arrow_forward_rounded),
             onTap: () => Navigator.of(context).push<void>(
-              _GardenSheetRoute(
-                title: entry.title,
-                child: SelectableText(
-                  entry.content ?? '',
-                  style: AppTextStyles.bodyLarge(color: context.textPrimary),
+              AppSheetRoute<void>(
+                reduced: MediaQuery.disableAnimationsOf(context),
+                builder: (context) => _GardenSheet(
+                  title: entry.title,
+                  child: SelectableText(
+                    entry.content ?? '',
+                    style: AppTextStyles.bodyLarge(color: context.textPrimary),
+                  ),
                 ),
               ),
             ),

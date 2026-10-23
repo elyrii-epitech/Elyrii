@@ -19,6 +19,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/accessible_action.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
 import '../../../../core/widgets/mascot_contact_shadow.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/widgets/glass/liquid_glass_sheet.dart';
@@ -120,13 +121,20 @@ class _DashboardPageState extends State<DashboardPage>
     if (kind == _AccueilOverlay.dressing && _scroll.hasClients) {
       _scroll.jumpTo(0);
     }
-    final reduced = MediaQuery.disableAnimationsOf(context);
-    final route = _AccueilOverlayRoute(
-      kind: kind,
-      reduced: reduced,
-      isDark: Theme.of(context).brightness == Brightness.dark,
-      now: _now,
-      onPreview: (look) => _preview.value = look,
+    var saving = false;
+    final route = AppSheetRoute<_AccueilOverlay>(
+      reduced: MediaQuery.disableAnimationsOf(context),
+      calendar: kind == _AccueilOverlay.calendar,
+      transparentVeil: kind == _AccueilOverlay.dressing,
+      canDismiss: () => !saving,
+      builder: (context) => _accueilOverlayPanel(
+        context,
+        kind: kind,
+        isDark: Theme.of(context).brightness == Brightness.dark,
+        now: _now,
+        onPreview: (look) => _preview.value = look,
+        onBusy: (value) => saving = value,
+      ),
     );
     setState(() => _overlay = kind);
     ElyriiHaptics.medium();

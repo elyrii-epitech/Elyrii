@@ -13,6 +13,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
 import '../../../../core/widgets/section_sky_header.dart';
 import '../../../dashboard/data/accueil_activities.dart';
 import '../../../dashboard/domain/accueil_content.dart';
@@ -183,10 +184,13 @@ class _ChallengesPageState extends State<ChallengesPage>
     );
   }
 
-  Future<void> _show(String title, Widget child) => Navigator.of(
-    context,
-    rootNavigator: true,
-  ).push<void>(_GardenSheetRoute(title: title, child: child));
+  Future<void> _show(String title, Widget child) =>
+      Navigator.of(context, rootNavigator: true).push<void>(
+        AppSheetRoute<void>(
+          reduced: MediaQuery.disableAnimationsOf(context),
+          builder: (context) => _GardenSheet(title: title, child: child),
+        ),
+      );
 
   void _period() {
     _show(

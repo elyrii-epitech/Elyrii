@@ -7,216 +7,109 @@ final _sheetGlassFilter = ui.ImageFilter.compose(
   inner: ui.ImageFilter.blur(sigmaX: 30, sigmaY: 30),
 );
 
-class _AccueilOverlayRoute extends PopupRoute<_AccueilOverlay> {
-  final _AccueilOverlay kind;
-  final bool reduced;
-  final bool isDark;
-  final DateTime now;
-  final ValueChanged<_LookPreview?> onPreview;
-  bool _saving = false;
-
-  @override
-  bool didPop(_AccueilOverlay? result) => !_saving && super.didPop(result);
-  _AccueilOverlayRoute({
-    required this.kind,
-    required this.reduced,
-    required this.isDark,
-    required this.now,
-    required this.onPreview,
-  });
-
-  @override
-  Color? get barrierColor => Colors.transparent;
-  @override
-  bool get barrierDismissible => true;
-  @override
-  String get barrierLabel => 'Fermer la présentation';
-  @override
-  Duration get transitionDuration => reduced
-      ? Duration.zero
-      : kind == _AccueilOverlay.calendar
-      ? AppMotion.calendarTransform
-      : AppMotion.sheetEnter;
-  @override
-  Duration get reverseTransitionDuration => transitionDuration;
-
-  @override
-  Widget buildPage(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-  ) {
-    final calendar = kind == _AccueilOverlay.calendar;
-    final dressing = kind == _AccueilOverlay.dressing;
-    final safe = MediaQuery.paddingOf(context);
-    final dock = AppShell.bottomClearanceOf(context) - AppDimensions.spacing24;
-    final screen = MediaQuery.sizeOf(context);
-    final top = calendar
-        ? safe.top + AppDimensions.accueilBarHeight
-        : math.min(
-            safe.top + AppDimensions.accueilDressTop,
-            screen.height * .46,
-          );
-    final maxHeight = calendar
-        ? math.max(0.0, screen.height - top - dock - AppDimensions.spacing12)
-        : dressing
-        ? screen.height - top - safe.bottom - AppDimensions.spacing8
-        : screen.height - safe.top - AppDimensions.spacing24;
-    final panel = Align(
-      alignment: calendar ? Alignment.topCenter : Alignment.bottomCenter,
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: calendar ? top : 0,
-          left: AppDimensions.spacing8,
-          right: AppDimensions.spacing8,
-          bottom: calendar ? 0 : safe.bottom + AppDimensions.spacing8,
+Widget _accueilOverlayPanel(
+  BuildContext context, {
+  required _AccueilOverlay kind,
+  required bool isDark,
+  required DateTime now,
+  required ValueChanged<_LookPreview?> onPreview,
+  required ValueChanged<bool> onBusy,
+}) {
+  final calendar = kind == _AccueilOverlay.calendar;
+  final dressing = kind == _AccueilOverlay.dressing;
+  final safe = MediaQuery.paddingOf(context);
+  final dock = AppShell.bottomClearanceOf(context) - AppDimensions.spacing24;
+  final screen = MediaQuery.sizeOf(context);
+  final top = calendar
+      ? safe.top + AppDimensions.accueilBarHeight
+      : math.min(safe.top + AppDimensions.accueilDressTop, screen.height * .46);
+  final maxHeight = calendar
+      ? math.max(0.0, screen.height - top - dock - AppDimensions.spacing12)
+      : dressing
+      ? screen.height - top - safe.bottom - AppDimensions.spacing8
+      : screen.height - safe.top - AppDimensions.spacing24;
+  final panel = Align(
+    alignment: calendar ? Alignment.topCenter : Alignment.bottomCenter,
+    child: Padding(
+      padding: EdgeInsets.only(
+        top: calendar ? top : 0,
+        left: AppDimensions.spacing8,
+        right: AppDimensions.spacing8,
+        bottom: calendar ? 0 : safe.bottom + AppDimensions.spacing8,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: AppDimensions.maxContentWidth,
+          maxHeight: maxHeight,
+          minHeight: dressing ? maxHeight : 0,
         ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: AppDimensions.maxContentWidth,
-            maxHeight: maxHeight,
-            minHeight: dressing ? maxHeight : 0,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: Semantics(
-              scopesRoute: true,
-              namesRoute: true,
-              explicitChildNodes: true,
-              label: switch (kind) {
-                _AccueilOverlay.calendar => 'Calendrier',
-                _AccueilOverlay.streak => 'Série',
-                _AccueilOverlay.flowers => 'Fleurs de la semaine',
-                _AccueilOverlay.dressing => 'Tenue d’Elyrii',
-              },
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(
-                  calendar ? AppDimensions.radius30 : AppDimensions.radius38,
-                ),
-                child: BackdropFilter(
-                  enabled: !dressing && !calendar,
-                  filter: _sheetGlassFilter,
-                  child: Container(
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Color(
-                              dressing
-                                  ? 0xF51E1B2A
-                                  : calendar
-                                  ? 0xF71E1B2A
-                                  : 0xE61E1B2A,
-                            )
-                          : Color(
-                              dressing
-                                  ? 0xF7FAF9FD
-                                  : calendar
-                                  ? 0xFAFFFFFF
-                                  : 0xBDFAF9FD,
-                            ),
-                      borderRadius: BorderRadius.circular(
-                        calendar
-                            ? AppDimensions.radius30
-                            : AppDimensions.radius38,
-                      ),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.glassBorderDark
-                            : AppColors.glassBorderLight,
-                        width: .5,
-                      ),
+        child: Material(
+          color: Colors.transparent,
+          child: Semantics(
+            scopesRoute: true,
+            namesRoute: true,
+            explicitChildNodes: true,
+            label: switch (kind) {
+              _AccueilOverlay.calendar => 'Calendrier',
+              _AccueilOverlay.streak => 'Série',
+              _AccueilOverlay.flowers => 'Fleurs de la semaine',
+              _AccueilOverlay.dressing => 'Tenue d’Elyrii',
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(
+                calendar ? AppDimensions.radius30 : AppDimensions.radius38,
+              ),
+              child: BackdropFilter(
+                enabled: !dressing && !calendar,
+                filter: _sheetGlassFilter,
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Color(
+                            dressing
+                                ? 0xF51E1B2A
+                                : calendar
+                                ? 0xF71E1B2A
+                                : 0xE61E1B2A,
+                          )
+                        : Color(
+                            dressing
+                                ? 0xF7FAF9FD
+                                : calendar
+                                ? 0xFAFFFFFF
+                                : 0xBDFAF9FD,
+                          ),
+                    borderRadius: BorderRadius.circular(
+                      calendar
+                          ? AppDimensions.radius30
+                          : AppDimensions.radius38,
                     ),
-                    child: switch (kind) {
-                      _AccueilOverlay.calendar => _CalendarPanel(now: now),
-                      _AccueilOverlay.streak => _StreakSheet(now: now),
-                      _AccueilOverlay.flowers => _FlowersSheet(now: now),
-                      _AccueilOverlay.dressing => _Dressing(
-                        onPreview: onPreview,
-                        onBusy: (value) => _saving = value,
-                      ),
-                    },
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.glassBorderDark
+                          : AppColors.glassBorderLight,
+                      width: .5,
+                    ),
                   ),
+                  child: switch (kind) {
+                    _AccueilOverlay.calendar => _CalendarPanel(now: now),
+                    _AccueilOverlay.streak => _StreakSheet(now: now),
+                    _AccueilOverlay.flowers => _FlowersSheet(now: now),
+                    _AccueilOverlay.dressing => _Dressing(
+                      onPreview: onPreview,
+                      onBusy: onBusy,
+                    ),
+                  },
                 ),
               ),
             ),
           ),
         ),
       ),
-    );
-    return AnimatedBuilder(
-      animation: animation,
-      child: panel,
-      builder: (context, child) {
-        final k = animation.value;
-        final rise = AppMotion.accueilRise.transform(k);
-        final veilDuration = calendar
-            ? AppMotion.calendarFade
-            : AppMotion.sheetVeil;
-        final veil = AppMotion.accueilEase.transform(
-          (k *
-                  transitionDuration.inMicroseconds /
-                  math.max(1, veilDuration.inMicroseconds))
-              .clamp(0, 1),
-        );
-        final panelFade = calendar
-            ? AppMotion.accueilEase.transform(
-                (k *
-                        AppMotion.calendarTransform.inMicroseconds /
-                        AppMotion.calendarFade.inMicroseconds)
-                    .clamp(0, 1),
-              )
-            : 1.0;
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => Navigator.of(context).pop(),
-                child: ColoredBox(
-                  color: Colors.black.withValues(
-                    alpha: dressing
-                        ? 0
-                        : (calendar
-                                  ? (isDark ? .35 : .15)
-                                  : (isDark ? .42 : .20)) *
-                              veil,
-                  ),
-                ),
-              ),
-            ),
-            if (calendar)
-              Transform.translate(
-                offset: Offset(
-                  0,
-                  -AppDimensions.accueilCalendarRiseDistance * (1 - rise),
-                ),
-                child: Transform.scale(
-                  scale: .94 + .06 * rise,
-                  alignment: Alignment.topCenter,
-                  child: Opacity(
-                    opacity: reduced ? 1 : panelFade,
-                    child: child,
-                  ),
-                ),
-              )
-            else
-              FractionalTranslation(
-                translation: Offset(0, reduced ? 0 : 1.05 * (1 - rise)),
-                child: child,
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  @override
-  Widget buildTransitions(
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) => child;
+    ),
+  );
+  return panel;
 }
 
 class _SheetHeader extends StatelessWidget {
