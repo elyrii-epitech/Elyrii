@@ -9,7 +9,7 @@ import 'package:elyrii_app/features/dashboard/presentation/widgets/mascot_peek.d
 import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
 import 'package:elyrii_app/features/meditation/domain/models/breath_phase.dart';
 import 'package:elyrii_app/features/meditation/presentation/controllers/meditation_controller.dart';
-import 'package:elyrii_app/features/meditation/presentation/widgets/active_breathing_view.dart';
+import 'package:elyrii_app/features/meditation/presentation/widgets/meditation_session_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -210,10 +210,7 @@ void main() {
         )..setBreathingType(type);
         await controller.startSession();
         await tester.pumpWidget(
-          wrap(
-            ActiveBreathingView(controller: controller, onRequestExit: () {}),
-            mascot,
-          ),
+          wrap(MeditationBreathingCircle(controller: controller), mascot),
         );
         final breath = tester
             .widget<MascotWithAccessories>(find.byType(MascotWithAccessories))
@@ -236,7 +233,7 @@ void main() {
         }
         await tester.pumpWidget(
           wrap(
-            ActiveBreathingView(controller: controller, onRequestExit: () {}),
+            MeditationBreathingCircle(controller: controller),
             mascot,
             reduced: true,
           ),

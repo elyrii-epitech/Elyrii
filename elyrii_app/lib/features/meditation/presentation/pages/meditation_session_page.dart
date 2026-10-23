@@ -1,27 +1,22 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/config/mascot_animations.dart';
-import '../../../mascot/presentation/providers/mascot_provider.dart';
-
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
+import '../../../../core/widgets/section_sky_header.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../controllers/meditation_controller.dart';
-import '../widgets/active_breathing_view.dart';
-import '../widgets/active_guided_meditation_view.dart';
-import '../widgets/meditation_summary_view.dart';
+import '../widgets/meditation_session_view.dart';
+import '../widgets/meditation_summary_sheet.dart';
 
-/// Page immersive pour une respiration ou une pratique à guidage écrit.
-///
-/// Hors du shell de navigation : aucun dock, aucune distraction.
-/// - Fond radial teinté par la technique active (ambiance apaisante).
-/// - Retour système bloqué pendant la séance (confirmation bienveillante).
-/// - Retour automatique au catalogue dès que la session se termine ou est
-///   interrompue (état `setup`).
 class MeditationSessionPage extends StatefulWidget {
   final MeditationController controller;
-
   const MeditationSessionPage({super.key, required this.controller});
 
   @override
@@ -30,37 +25,41 @@ class MeditationSessionPage extends StatefulWidget {
 
 class _MeditationSessionPageState extends State<MeditationSessionPage>
     with WidgetsBindingObserver {
-  bool _hasReactedFinished = false;
-  late MeditationSessionState _observedState = widget.controller.sessionState;
-  late final _exercise = widget.controller.selectedExercise!;
+  bool _summaryOpen = false;
+  bool _exitOpen = false;
+  bool _finishedObserved = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    widget.controller.addListener(_onControllerChanged);
+    widget.controller.addListener(_onChanged);
+    if (widget.controller.isFinished) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onChanged());
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    widget.controller.removeListener(_onControllerChanged);
+    widget.controller.removeListener(_onChanged);
     super.dispose();
   }
 
-  void _onControllerChanged() {
+  void _onChanged() {
     if (!mounted) return;
-    if (_observedState != widget.controller.sessionState) {
-      setState(() => _observedState = widget.controller.sessionState);
+    if (widget.controller.isSetup) {
+      if (context.canPop()) context.pop();
+      return;
     }
-    if (widget.controller.isFinished && !_hasReactedFinished) {
-      _hasReactedFinished = true;
+    if (widget.controller.isFinished && !_finishedObserved) {
+      _finishedObserved = true;
       context.read<MascotProvider>().react(MascotAnimations.settle);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showSummary();
+      });
     }
-    // Fin ou interruption : la session redevient `setup` → retour au catalogue.
-    if (widget.controller.isSetup && context.canPop()) {
-      context.pop();
-    }
+    setState(() {});
   }
 
   @override
@@ -68,96 +67,109 @@ class _MeditationSessionPageState extends State<MeditationSessionPage>
     if (state != AppLifecycleState.resumed) widget.controller.pauseSession();
   }
 
-  /// Confirmation bienveillante avant d'interrompre la séance.
-  void _confirmExit() {
+  Future<void> _confirmExit() async {
+    if (_exitOpen) return;
+    if (widget.controller.isFinished) {
+      widget.controller.resetToSetup();
+      return;
+    }
+    _exitOpen = true;
+    final wasRunning = widget.controller.isRunning;
     widget.controller.pauseSession();
-    showCupertinoModalPopup<bool>(
-      context: context,
-      builder: (modalContext) => CupertinoActionSheet(
-        title: const Text('Quitter la séance ?'),
-        message: const Text(
-          'La séance en cours sera interrompue et non comptabilisée.',
-        ),
-        cancelButton: CupertinoActionSheetAction(
-          onPressed: () {
-            Navigator.pop(modalContext, true);
-            widget.controller.resumeSession();
-          },
-          child: const Text('Reprendre la séance'),
-        ),
-        actions: [
-          CupertinoActionSheetAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(modalContext, false);
-              widget.controller.stopSession(finished: false);
-            },
-            child: const Text('Interrompre'),
-          ),
-        ],
-      ),
-    ).then((result) {
-      // Rejet hors boutons (tap à l'extérieur) : la séance reprend.
-      if (mounted && result == null && widget.controller.isPaused) {
-        widget.controller.resumeSession();
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = _exercise.color;
-    final isFinished = widget.controller.isFinished;
-
-    return PopScope(
-      // Retour autorisé uniquement sur l'écran de synthèse.
-      canPop: isFinished,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _confirmExit();
-      },
-      child: Scaffold(
-        backgroundColor: isDark
-            ? AppColors.scaffoldDark
-            : AppColors.scaffoldLight,
-        body: AnimatedContainer(
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              center: const Alignment(0, -0.35),
-              radius: 1.2,
-              colors: [
-                accent.withValues(alpha: isDark ? 0.14 : 0.09),
-                isDark ? AppColors.scaffoldDark : AppColors.scaffoldLight,
-              ],
-              stops: const [0.0, 1.0],
-            ),
-          ),
-          child: SafeArea(
-            bottom: false,
-            child: ListenableBuilder(
-              listenable: widget.controller,
-              builder: (context, _) {
-                if (widget.controller.isSetup) return const SizedBox.shrink();
-                if (widget.controller.isFinished) {
-                  return MeditationSummaryView(controller: widget.controller);
-                }
-                if (widget.controller.isGuidedPractice) {
-                  return ActiveGuidedMeditationView(
-                    controller: widget.controller,
-                    onRequestExit: _confirmExit,
-                  );
-                }
-                return ActiveBreathingView(
-                  controller: widget.controller,
-                  onRequestExit: _confirmExit,
-                );
-              },
-            ),
+    if (widget.controller.isFinished) {
+      _exitOpen = false;
+      return;
+    }
+    final leave = await Navigator.of(context).push<bool>(
+      AppSheetRoute<bool>(
+        reduced: MediaQuery.disableAnimationsOf(context),
+        builder: (sheetContext) => AppSheetPanel(
+          title: 'Quitter la séance ?',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'La séance en cours sera interrompue et non comptabilisée.',
+                style: AppTextStyles.bodyMedium(
+                  color: sheetContext.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.spacing20),
+              FilledButton(
+                onPressed: () => Navigator.of(sheetContext).pop(false),
+                child: const Text('Reprendre la séance'),
+              ),
+              const SizedBox(height: AppDimensions.spacing8),
+              TextButton(
+                onPressed: () => Navigator.of(sheetContext).pop(true),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.errorText(
+                    Theme.of(sheetContext).brightness == Brightness.dark,
+                  ),
+                ),
+                child: const Text('Interrompre'),
+              ),
+            ],
           ),
         ),
       ),
     );
+    _exitOpen = false;
+    if (!mounted) return;
+    if (leave == true) {
+      await widget.controller.stopSession();
+    } else if (wasRunning) {
+      widget.controller.resumeSession();
+    }
   }
+
+  void _finish() {
+    if (widget.controller.isFinished) {
+      _showSummary();
+    } else {
+      widget.controller.pauseSession();
+      unawaited(widget.controller.stopSession(finished: true));
+    }
+  }
+
+  Future<void> _showSummary() async {
+    if (_summaryOpen || !mounted) return;
+    _summaryOpen = true;
+    final done = await Navigator.of(context).push<bool>(
+      AppSheetRoute<bool>(
+        reduced: MediaQuery.disableAnimationsOf(context),
+        builder: (_) => MeditationSummarySheet(controller: widget.controller),
+      ),
+    );
+    _summaryOpen = false;
+    if (mounted && done == true) widget.controller.resetToSetup();
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+    canPop: widget.controller.isFinished,
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) _confirmExit();
+    },
+    child: Scaffold(
+      backgroundColor: AppColors.sectionSky(
+        Theme.of(context).brightness == Brightness.dark,
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: SectionSkyBackdrop(scene: SectionSkyScene.water),
+          ),
+          if (!widget.controller.isSetup)
+            Positioned.fill(
+              child: MeditationSessionView(
+                controller: widget.controller,
+                onExit: _confirmExit,
+                onFinish: _finish,
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }

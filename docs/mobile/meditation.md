@@ -1,30 +1,26 @@
-# Méditation : durées libres et catalogue
+# Méditer
 
-La préparation de séance présente un en-tête simple, la mascotte sans halo ni décor derrière elle et un catalogue calme. Le bouton `i` en haut à droite et les liens « Conseils et références » sont retirés de l’interface. Les références éditoriales restent conservées dans cette documentation et dans les données des exercices.
+La bibliothèque présente un lac sous le ciel violet, quatre durées et trois rayons éditoriaux. La capsule **3, 5, 10 ou 15 min** flotte sur le lac à la jonction du contenu. Au défilement, elle reste épinglée sous le titre compact, comme la capsule Série, Fleurs et Tenue de l’Accueil. Elle filtre la pratique mise en avant, les rayons et la liste complète. Toucher un exercice agrandit sa carte vers le centre de l’écran. Cet aperçu présente le nom, le rythme réel et les conseils. **Commencer** lance la séance avec la durée de la capsule, sans demander de la choisir à nouveau et sans audio.
 
-La durée se choisit librement à la minute, de **1 minute à 23 h 59 (1 439 minutes)**, avec deux roues heures/minutes en français. Aucun raccourci de durée prédéfinie n’est proposé. Le choix s’applique à la confirmation de la feuille ; annuler conserve la durée précédente. Une durée nulle ne permet pas de confirmer.
+La bibliothèque affiche neuf pratiques. Écoute des sons, Bienveillance et Auto-compassion restent dans le domaine et dans le contrat serveur, mais ne figurent pas dans cette présentation. La ligne **Reprendre** est absente, car aucune position de séance interrompue n’est enregistrée.
 
-Le catalogue contient 12 exercices, filtrables par respiration, présence, corps et bienveillance. Le choix d’un exercice conserve la durée choisie. La hiérarchie distingue l’accueil, la durée, les catégories et les pratiques. Le bouton de lancement reste accessible pendant le défilement et dégagé du dock.
+La séance s’ouvre hors du dock. Le lac conserve une échelle uniforme, sans étirer la lune. Le cercle et la pose d’Elyrii suivent les phases de la pratique et se figent en pause. Elyrii conserve la tenue de l’utilisateur, sans accessoire verrouillé ajouté. Le mouvement réduit fixe le cercle et la pose, sans arrêter le minuteur.
 
-Le verre est réservé aux commandes et à la navigation. Les descriptions et les exercices utilisent des surfaces de contenu sobres. Le dock et sa bulle de chat utilisent une teinte plus transparente qui laisse transparaître le fond des pages, sans modifier les matériaux de verre des autres composants. Le mode de contraste élevé conserve un fond opaque pour la lisibilité.
+La fermeture d’une séance en cours demande confirmation. **Terminer la séance** enregistre la fin et ouvre un bilan avec le temps réellement écoulé, les cycles complets et cinq ressentis. Fermer le bilan ne relance pas une séance déjà enregistrée. **Voir le résumé** permet de le rouvrir. La série de jours n’est pas affichée dans ce bilan, faute de confirmation fraîche après l’enregistrement.
 
-## Choix du sélecteur et du verre
-
-Les [recommandations Apple sur les pickers](https://developer.apple.com/design/human-interface-guidelines/pickers) décrivent un sélecteur de compte à rebours à roues heures/minutes, limité à 23 h 59. Les valeurs suivent un ordre prévisible. La feuille reste à proximité de la valeur éditée et propose toutes les minutes. La [documentation `countDownDuration`](https://developer.apple.com/documentation/uikit/uidatepicker/countdownduration) confirme la limite de 86 340 secondes, soit 1 439 minutes.
-
-Les [recommandations Apple sur les matériaux](https://developer.apple.com/design/human-interface-guidelines/materials) réservent Liquid Glass aux commandes et à la navigation au-dessus du contenu, avec un usage mesuré. Elles motivent l’allègement du dock et des surfaces du catalogue. Les [recommandations sur les boutons](https://developer.apple.com/design/human-interface-guidelines/buttons) demandent une action principale identifiable et une zone d’interaction d’au moins 44 × 44 points.
+La bibliothèque propose uniquement les quatre durées de la capsule. Il n’y a pas de saisie de durée personnalisée. Les durées de l’Accueil et du Coach restent prises en charge, notamment les séances de une et deux minutes. Le contrôleur conserve sa plage de **1 à 1 439 minutes**. Toutes les feuilles partagent `AppSheetRoute`.
 
 ## Pratiques et séance
 
 | Pratique | Guidage |
 | --- | --- |
 | Découverte | Souffle 3–3, sans rétention |
-| Équilibre | Souffle 5–5, six respirations par minute |
-| Ralentir | Expiration prolongée, repère 4–6 |
-| Ventre détendu | Attention au ventre, repère 4–6 sans rétention |
-| Focus | Respiration carrée 4–4–4–4 |
-| Pause 4–7–8 | Jusqu’à quatre cycles, puis souffle naturel jusqu’à la fin du temps choisi |
-| Souffle océan | Inspiration du yoga, repère 6–6 |
+| Cohérence cardiaque | Souffle 5–5, six respirations par minute |
+| Expiration longue | Expiration prolongée, repère 4–6 |
+| Diaphragmatique | Attention au ventre, repère 4–6 sans rétention |
+| Focus | Respiration carrée 4–4–4–4, avec **Pause** après l’expiration |
+| Relaxation 4-7-8 | Jusqu’à quatre cycles, puis souffle naturel jusqu’à la fin du temps choisi |
+| Ujjayi | Inspiration du yoga, repère 6–6 |
 | Souffle conscient | Consignes écrites, respiration naturelle |
 | Scan corporel | Consignes écrites, déplacement de l’attention dans le corps |
 | Écoute des sons | Consignes écrites, attention au présent |
@@ -33,7 +29,7 @@ Les [recommandations Apple sur les matériaux](https://developer.apple.com/desig
 
 Les cinq pratiques écrites ont des étapes pondérées. Le contrôleur répartit chaque étape sur une proportion de la durée totale, en incluant l’installation et le retour final. Il n’impose pas de cadence respiratoire à ces pratiques. La pause fige le temps et l’étape ; la reprise continue au même endroit. Il n’y a pas de piste audio enregistrée.
 
-Les titres des séances restent entre les commandes d’interruption et de pause. Les longues consignes peuvent défiler. Le bilan distingue les cycles respiratoires des étapes d’une pratique guidée.
+Les titres des séances restent entre les commandes d’interruption et de pause. Les longues consignes peuvent défiler. Le bilan affiche zéro cycle respiratoire pour une pratique à guidage écrit.
 
 ## Références et statut de la revue
 
@@ -53,22 +49,20 @@ Les textes français sont des scripts originaux d’Elyrii. Les rythmes numériq
 | [NCCIH : méditation et pleine conscience](https://www.nccih.nih.gov/health/meditation-and-mindfulness-effectiveness-and-safety) | Contexte général ; aucune promesse de traitement dans les descriptions |
 | [NCCIH : yoga](https://www.nccih.nih.gov/health/yoga-what-you-need-to-know) | Contexte général du yoga ; ne valide pas le rythme 6–6 ni une instruction Ujjayi spécifique |
 
-**Revue des références de pratique incomplète.** La revue précédente du 3 octobre 2026 signalait des refus HTTP 403 lors de la consultation des sources professionnelles. Cette refonte de l’interface ne revalide pas ces références : leur contenu actuel et leur disponibilité restent à contrôler. Les captures ne constituent pas une validation éditoriale par ces organismes ou par un professionnel. Les sources Apple ci-dessus ont été consultées pour le sélecteur et le design.
+**Revue des références de pratique incomplète.** La revue précédente du 3 octobre 2026 signalait des refus HTTP 403 lors de la consultation des sources professionnelles. Cette refonte ne revalide pas ces références. Les captures ne constituent pas une validation éditoriale par ces organismes ou par un professionnel.
 
 ## API et compatibilité
 
-`POST /meditation/sessions/start` reconnaît les 12 identifiants natifs du catalogue et accepte une durée entière de **1 à 1 439 minutes**, pour tous les exercices. Le catalogue publie les mêmes bornes dans `minDurationMinutes` et `maxDurationMinutes`. `durationMinutes` dans le catalogue serveur reste une suggestion ; cette métadonnée ne produit pas de choix prédéfinis dans la page. Les identifiants historiques `breathing-5m`, `body-scan-10m` et `grounding-15m` restent acceptés.
+`POST /meditation/sessions/start` reconnaît les 12 identifiants natifs du catalogue et accepte une durée entière de **1 à 1 439 minutes**, pour tous les exercices. Le catalogue publie les mêmes bornes dans `minDurationMinutes` et `maxDurationMinutes`. La curation de la bibliothèque est locale. Les identifiants historiques `breathing-5m`, `body-scan-10m` et `grounding-15m` restent acceptés.
 
 Le client envoie l’identifiant de l’exercice et la durée choisie. La fin de séance est enregistrée même sans sélection d’un ressenti. Une sélection ultérieure met à jour ce ressenti. Une réponse de création arrivée après une interruption est annulée ; arrivée après la fin, elle est complétée. Une synchronisation échouée est signalée dans le bilan.
 
 Le contrat utilise toujours `durationMinutes` et la base conserve sa colonne entière `duration_minutes`. Aucune migration de base n’est nécessaire. Le serveur doit être déployé avec cette version de l’app pour que les durées supérieures à l’ancienne borne de 180 minutes soient acceptées par une API distante.
 
-## Vérification de la refonte
+## Vérification
 
-Le test de contrat serveur compare les identifiants Flutter au catalogue serveur. Il couvre les douze exercices avec des durées arbitraires, les 1 439 minutes disponibles, les bornes du catalogue, les anciens identifiants et le rejet de zéro, des nombres non entiers, des types incorrects et des durées supérieures à 23 h 59.
+Les tests Flutter couvrent les filtres de durée, la capsule épinglée, l’ouverture et l’annulation de la carte centrée, le démarrage avec la durée choisie, les étapes écrites, la pause et la confirmation de sortie. Ils vérifient aussi les quatre cycles du 4-7-8, le libellé **Pause**, les chiffres réels du bilan et le choix d’un ressenti. Les tests du contrôleur et du cycle de vie serveur restent en place.
 
-Exécution du 3 octobre 2026 : `bun test modules/meditation/meditation.validation.test.ts` dans `elyrii_server` — **6 tests réussis, 0 échec**. Les dépendances ont été restaurées avec `bun install --frozen-lockfile`, sans modification du verrouillage.
+Le test de contrat serveur compare les douze identifiants Flutter au catalogue serveur. Cette refonte frontend ne modifie ni le serveur ni ses données.
 
-Exécution Flutter du 3 octobre 2026 : `flutter test --no-pub` — **163 tests réussis, 0 échec**. Les régressions couvrent notamment les roues, leur annulation et leur confirmation, les catégories, les annonces accessibles sans doublons, le démarrage, la pause, les réponses tardives du serveur, les deux thèmes, le contraste élevé, les petits écrans et le texte agrandi. Le bouton de lancement est vérifié au-dessus du dock à 320 × 568 et à 390 × 844 avec texte à 150 %.
-
-Le guidage écrit ne dispose pas d’un accompagnement audio. Les tests de widgets affichent le placeholder chaud de la mascotte à la place du modèle 3D ; le rendu 3D et le verre sur téléphone nécessitent une vérification native.
+Les tests de widgets remplacent le modèle 3D par sa surface de test. Le rendu 3D, le lac et les feuilles sont aussi contrôlés dans le navigateur.

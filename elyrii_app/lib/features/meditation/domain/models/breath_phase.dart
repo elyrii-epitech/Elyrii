@@ -149,13 +149,3 @@ enum BreathingType {
   /// Durée totale d'un cycle complet en secondes.
   int get cycleDuration => phases.fold(0, (prev, p) => prev + p.seconds);
 }
-
-/// Choix de ressenti proposé à la fin d'une session.
-class MoodOption {
-  const MoodOption(this.icon, this.label, this.backendKey, this.color);
-
-  final IconData icon;
-  final String label;
-  final String backendKey;
-  final Color color;
-}
