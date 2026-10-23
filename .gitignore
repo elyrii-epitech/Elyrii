@@ -70,14 +70,10 @@ tmp/
 /BETA_ROADMAP_ISSUES.md
 /conductor/
 
-# Local Android export
-/elyrii_server/app-release.apk
-
 # Generated mascot review images (runtime portraits live in app assets).
 /scripts/mascot/previews/
 
-# Existing local migration snapshot, unrelated to the frontend/chat changes.
-# Keep these exclusions specific; future migrations must remain reviewable.
-/elyrii_server/.drizzle/0000_soft_hercules.sql
-/elyrii_server/.drizzle/meta/0000_snapshot.json
-/elyrii_server/.drizzle/meta/_journal.json
+/.audit/
+/export-elyrii-redesign/
+/export-elyrii-redesign.zip
+

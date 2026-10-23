@@ -60,9 +60,10 @@ dart pub global run dartdoc --output doc/api
 `bash scripts/flutter_ci_check.sh`, depuis la racine du dépôt, exécute la
 résolution verrouillée, le formatage sans mutation, l’analyse et les tests.
 
-Android exige son SDK et iOS Xcode sur macOS. L’environnement Linux de
-l’intervention ne possède ni Android SDK, ni Xcode : les builds natifs et les
-tests d’émulateur/simulateur sont vérifiés sur les runners GitHub Actions.
+Sur ce poste, vérifier d’abord les parcours dans le navigateur. Ne pas lancer
+de simulateur ou d’émulateur local. Un build ou une installation sur téléphone
+demande une autorisation explicite après la revue navigateur.
+Les jobs natifs GitHub Actions ne constituent une preuve qu’après leur exécution.
 
 ## Distribution
 

@@ -12,16 +12,16 @@ Liquid Glass communs. Les thèmes clair, sombre et système sont fournis par
 | `core/theme/app_text_styles.dart` | Rôles typographiques Poppins |
 | `core/theme/app_dimensions.dart` | Grille d’espacement, rayons et tailles |
 | `core/glass/elyrii_glass_surface.dart` et `glass_role.dart` | Matériau partagé et rôles du verre |
-| `core/widgets/glass/liquid_glass_kit.dart` | Boutons, cartes, contrôles, listes, dialogues et feuilles |
+| `core/widgets/glass/liquid_glass_button.dart` | Boutons partagés |
 | `core/widgets/accessible_action.dart` | Activation clavier, focus et état d’action |
 | `core/widgets/elyrii_page_header.dart` | Cadre et en-tête de page défilant |
 | `core/accessibility/motion.dart` | Extension `animateRespectingMotion` |
 | `app/router/app_shell.dart` | Navigation persistante et dock |
 
-Importer les contrôles via :
+Importer les boutons directement :
 
 ```dart
-import 'package:elyrii_app/core/widgets/glass/liquid_glass_kit.dart';
+import 'package:elyrii_app/core/widgets/glass/liquid_glass_button.dart';
 ```
 
 `LiquidGlassWidgets.initialize()` et `LiquidGlassWidgets.wrap` sont configurés
