@@ -1,5 +1,7 @@
 import 'package:elyrii_app/app/router/app_shell.dart';
 import 'package:elyrii_app/core/glass/elyrii_glass_surface.dart';
+import 'package:elyrii_app/core/theme/app_colors.dart';
+import 'package:elyrii_app/core/theme/app_dimensions.dart';
 import 'package:elyrii_app/core/theme/app_text_styles.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/widgets/glass_bubble_button.dart';
@@ -9,15 +11,14 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 Future<GoRouter> _pumpShell(
   WidgetTester tester, {
   bool dark = false,
   bool highContrast = false,
   bool reduceMotion = false,
-  double textScale = 1.5,
-  Size size = const Size(320, 568),
+  double textScale = 1,
+  Size size = const Size(390, 844),
   bool boldText = false,
 }) async {
   tester.view.physicalSize = size;
@@ -88,6 +89,13 @@ class _BranchViewState extends State<_BranchView> {
 }
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await (FontLoader('Poppins')
+          ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
+          ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf')))
+        .load();
+  });
   testWidgets(
     'six destinations remain reachable in the 300 percent navigation selector',
     (tester) async {
@@ -105,24 +113,22 @@ void main() {
       expect(find.byType(ModalBarrier), findsWidgets);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      const labels = [
-        'Accueil',
-        'Jardin',
-        'Journal',
-        'Méditer',
-        'Coach',
-        'Chat Elyrii',
-      ];
-      for (var i = 0; i < labels.length; i++) {
+      for (var i = 0; i < 6; i++) {
         await tester.tap(find.byType(DropdownButtonFormField<int>));
         await tester.pumpAndSettle();
+        final item = find.byWidgetPredicate(
+          (widget) => widget is DropdownMenuItem<int> && widget.value == i,
+        );
+        final label = find
+            .descendant(of: item.last, matching: find.byType(Text))
+            .last;
         await tester.scrollUntilVisible(
-          find.text(labels[i]),
+          label,
           i < (i == 0 ? 3 : i - 1) ? -100 : 100,
           scrollable: find.byType(Scrollable).last,
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.text(labels[i]).last);
+        await tester.tap(label);
         await tester.pumpAndSettle();
         expect(
           find.text('Branche $i · 0'),
@@ -142,14 +148,25 @@ void main() {
       tester,
     ) async {
       await _pumpShell(tester, dark: dark);
-      final glasses = tester.widgetList<GlassContainer>(
-        find.byType(GlassContainer),
+      final glasses = tester.widgetList<BackdropFilter>(
+        find.byType(BackdropFilter),
       );
       expect(glasses, hasLength(2));
-      for (final glass in glasses) {
-        expect(glass.useOwnLayer, isTrue);
-        expect(glass.settings?.glassColor.a, lessThan(0.25));
-        expect(glass.settings?.blur, greaterThan(0));
+      for (final surface in tester.widgetList<ElyriiGlassSurface>(
+        find.byType(ElyriiGlassSurface),
+      )) {
+        final container = tester.widget<Container>(
+          find
+              .descendant(
+                of: find.byWidget(surface),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        expect(
+          (container.decoration! as BoxDecoration).color,
+          dark ? AppColors.glassBackgroundDark : AppColors.glassBackgroundLight,
+        );
       }
       expect(tester.takeException(), isNull);
     });
@@ -158,7 +175,12 @@ void main() {
       'contraste élevé opaque en thème ${dark ? "sombre" : "clair"}',
       (tester) async {
         await _pumpShell(tester, dark: dark, highContrast: true);
-        expect(find.byType(GlassContainer), findsNothing);
+        expect(
+          tester
+              .widgetList<BackdropFilter>(find.byType(BackdropFilter))
+              .every((filter) => !filter.enabled),
+          isTrue,
+        );
         for (final surface in tester.widgetList<ElyriiGlassSurface>(
           find.byType(ElyriiGlassSurface),
         )) {
@@ -182,22 +204,22 @@ void main() {
     );
   }
 
-  testWidgets('six destinations accessibles à 320 px et texte à 150 %', (
+  testWidgets('six destinations accessibles avec des cibles de 48 px', (
     tester,
   ) async {
-    await (FontLoader('Poppins')
-          ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
-          ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf')))
-        .load();
     final semantics = tester.ensureSemantics();
     await _pumpShell(tester, highContrast: true);
-    const labels = ['Accueil', 'Jardin', 'Journal', 'Méditer', 'Coach'];
+    final labels = tester
+        .widget<GlassNavigationBar>(find.byType(GlassNavigationBar))
+        .items
+        .map((item) => item.label)
+        .toList();
     for (var i = 0; i < labels.length; i++) {
       final tab = find.bySemanticsLabel('Onglet ${labels[i]}, ${i + 1} sur 5');
       expect(tab, findsOneWidget);
       final target = tester.getSize(tab);
-      expect(target.width, greaterThanOrEqualTo(44));
-      expect(target.height, greaterThanOrEqualTo(44));
+      expect(target.width, greaterThanOrEqualTo(48));
+      expect(target.height, greaterThanOrEqualTo(48));
       final paragraph = tester.renderObject<RenderParagraph>(
         find.text(labels[i]).last,
       );
@@ -222,7 +244,7 @@ void main() {
     }
     final chat = find.bySemanticsLabel('Chat Elyrii');
     expect(chat, findsOneWidget);
-    expect(tester.getSize(chat).shortestSide, greaterThanOrEqualTo(44));
+    expect(tester.getSize(chat).shortestSide, greaterThanOrEqualTo(48));
     await tester.tap(chat);
     await tester.pumpAndSettle();
     expect(find.text('Branche 5 · 0'), findsOneWidget);
@@ -236,7 +258,11 @@ void main() {
     await _pumpShell(tester, highContrast: true);
     await tester.tap(find.text('Branche 3 · 0'));
     await tester.pump();
-    const labels = ['Accueil', 'Jardin', 'Journal', 'Méditer', 'Coach'];
+    final labels = tester
+        .widget<GlassNavigationBar>(find.byType(GlassNavigationBar))
+        .items
+        .map((item) => item.label)
+        .toList();
     for (var i = 0; i < 6; i++) {
       final target = i < 5
           ? find.text(labels[i])
@@ -298,24 +324,18 @@ void main() {
     testWidgets(
       'libellés du dock à 11 pt sur une ligne, $width px, gras $bold',
       (tester) async {
-        await (FontLoader('Poppins')
-              ..addFont(rootBundle.load('assets/fonts/Poppins-Medium.ttf'))
-              ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf')))
-            .load();
         await _pumpShell(
           tester,
           textScale: 1,
           size: Size(width, 852),
           boldText: bold,
         );
-        final role = AppTextStyles.labelSmall();
-        for (final label in [
-          'Accueil',
-          'Jardin',
-          'Journal',
-          'Méditer',
-          'Coach',
-        ]) {
+        final role = AppTextStyles.dockLabel();
+        final labels = tester
+            .widget<GlassNavigationBar>(find.byType(GlassNavigationBar))
+            .items
+            .map((item) => item.label);
+        for (final label in labels) {
           final paragraph = tester.renderObject<RenderParagraph>(
             find.text(label).last,
           );
@@ -337,4 +357,29 @@ void main() {
       },
     );
   }
+
+  testWidgets('dock centered inside the desktop content column', (
+    tester,
+  ) async {
+    await _pumpShell(tester, size: const Size(1440, 900));
+    final tabs = tester.getRect(find.byType(GlassNavigationBar));
+    final bubble = tester.getRect(find.byType(GlassBubbleButton));
+    expect(tabs.left, (1440 - AppDimensions.maxContentWidth) / 2 + 16);
+    expect(bubble.right, (1440 + AppDimensions.maxContentWidth) / 2 - 16);
+    expect(bubble.size, const Size(64, 64));
+    expect(tabs.height, 64);
+  });
+
+  testWidgets('narrow screens and large text use the navigation selector', (
+    tester,
+  ) async {
+    for (final (size, scale) in [
+      (const Size(320, 568), 1.0),
+      (const Size(390, 844), 1.5),
+    ]) {
+      await _pumpShell(tester, size: size, textScale: scale);
+      expect(find.byType(DropdownButtonFormField<int>), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+  });
 }

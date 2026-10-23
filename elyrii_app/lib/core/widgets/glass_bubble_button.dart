@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../design_system/haptics/elyrii_haptics.dart';
 import '../glass/elyrii_glass_surface.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
+import '../theme/app_motion.dart';
 
 /// Bouton en forme de bulle avec effet iOS 26 Liquid Glass
 /// Peut être réutilisé pour chatbot, settings, notifications, etc.
@@ -15,9 +17,7 @@ class GlassBubbleButton extends StatelessWidget {
   final bool isSelected;
   final String? tooltip;
 
-  /// Asset optionnel affiché à la place de [icon] et teinté comme une icône
-  /// Material. Les variations d'alpha de l'asset peuvent conserver des détails
-  /// internes tout en restant monochromes.
+  /// Full-color avatar, cropped to the mockup's circular chat image.
   final String? iconAsset;
   final double iconAssetSize;
 
@@ -37,7 +37,6 @@ class GlassBubbleButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final tint =
         iconColor ??
         (isSelected
@@ -46,23 +45,22 @@ class GlassBubbleButton extends StatelessWidget {
                   ? AppColors.iconDefaultDark
                   : AppColors.iconDefaultLight));
     final Widget buttonContent = ElyriiGlassSurface(
-      role: GlassRole.floatingControl,
+      role: GlassRole.navigation,
       borderRadius: BorderRadius.circular(size / 2),
       width: size,
       height: size,
-      // The bubble shares the navigation material instead of remaining filled.
-      glassColor: media.highContrast
-          ? null
-          : scheme.surface.withValues(alpha: isDark ? 0.20 : 0.16),
       border: isSelected
-          ? Border.all(color: tint.withValues(alpha: 0.5), width: 1)
+          ? Border.all(color: tint, width: AppDimensions.borderWidthMedium)
           : null,
       child: Center(
         child: iconAsset != null
-            ? ImageIcon(
-                AssetImage(iconAsset!),
-                size: iconAssetSize,
-                color: tint,
+            ? ClipOval(
+                child: Image.asset(
+                  iconAsset!,
+                  width: iconAssetSize,
+                  height: iconAssetSize,
+                  fit: BoxFit.cover,
+                ),
               )
             : Icon(icon, size: 26, color: tint),
       ),
@@ -192,8 +190,8 @@ class _GlassBubbleInteractionState extends State<_GlassBubbleInteraction> {
             scale: _isPressed && !widget.reduceMotion ? 0.96 : 1.0,
             duration: widget.reduceMotion
                 ? Duration.zero
-                : const Duration(milliseconds: 100),
-            curve: Curves.easeOutCubic,
+                : AppMotion.dockBubblePress,
+            curve: AppMotion.dockPressCurve,
             child: DecoratedBox(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,

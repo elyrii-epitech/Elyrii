@@ -117,6 +117,17 @@ class AppDimensions {
   static const double accueilSheetTopPadding = 48;
   static const double accueilDressTop = 334;
   static const double dockHeight = 64;
+  static const double dockIcon = 23;
+  static const double dockAvatar = 44;
+  static const double dockItemGap = 1;
+  static const double dockItemPadding = 5;
+  static const double dockItemHeight = 48;
+  static const double dockItemWidth = 58;
+  static const double dockMinWidth = 360;
+  static const double dockMaxLabelSize = 13.2;
+  static const double glassStroke = 0.5;
+  static const double navigationBlur = 22;
+  static const double navigationSaturation = 1.7;
 
   static const double sectionSkyHeight = 290;
   static const double sectionBodyOverlap = 30;
@@ -232,8 +243,7 @@ class AppDimensions {
   static const double arrivalStepThreshold = 220;
   static const double arrivalGoalThreshold = 80;
 
-  static double dockBottomMargin(double safeBottom) =>
-      safeBottom > 0 ? spacing20 : spacing16;
+  static double dockBottomMargin(double safeBottom) => spacing20;
 
   static double accessibleDockHeight(double scaledLabelHeight) =>
       spacing48 + scaledLabelHeight * 2;

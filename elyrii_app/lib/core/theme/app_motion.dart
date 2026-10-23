@@ -29,6 +29,10 @@ abstract final class AppMotion {
   /// Opacité de la bande de verre supérieure.
   static const Duration bandFade = Duration(milliseconds: 200);
 
+  static const Duration dockPress = Duration(milliseconds: 180);
+  static const Duration dockBubblePress = Duration(milliseconds: 100);
+  static const Curve dockPressCurve = Curves.easeOutCubic;
+
   static const Duration gardenSegment = Duration(milliseconds: 150);
   static const Duration gardenTodayScroll = Duration(milliseconds: 445);
   static const Duration gardenToast = Duration(milliseconds: 2500);

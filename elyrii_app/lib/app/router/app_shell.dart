@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 import '../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../core/widgets/glass_bubble_button.dart';
 import '../../core/widgets/glass_navigation_bar.dart';
 import '../../core/theme/app_dimensions.dart';
 
-/// Shell principal hébergeant les branches d'onglets persistantes sous GoRouter.
-///
-/// Contrairement à l'ancien `HomeNavigation` qui détruisait les pages lors du changement d'onglet,
-/// [StatefulNavigationShell] préserve l'arbre d'état complet, le scroll et la mémoire de chaque vue.
-class AppShell extends StatefulWidget {
+class AppShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
-
   const AppShell({super.key, required this.navigationShell});
 
   static bool usesAccessibleDock(BuildContext context) =>
-      MediaQuery.sizeOf(context).width < 320 ||
-      MediaQuery.textScalerOf(context).scale(12) > 18;
+      MediaQuery.sizeOf(context).width < AppDimensions.dockMinWidth ||
+      MediaQuery.textScalerOf(context).scale(11) >
+          AppDimensions.dockMaxLabelSize;
 
   static double dockHeightOf(BuildContext context) =>
       usesAccessibleDock(context)
@@ -34,156 +31,111 @@ class AppShell extends StatefulWidget {
         AppDimensions.spacing24;
   }
 
-  @override
-  State<AppShell> createState() => _AppShellState();
-}
-
-class _AppShellState extends State<AppShell> with TickerProviderStateMixin {
-  late List<AnimationController> _iconControllers;
-
   final List<GlassNavItem> _navItems = const [
-    GlassNavItem(icon: Icons.home_rounded, label: 'Accueil', index: 0),
-    GlassNavItem(icon: Icons.yard_rounded, label: 'Jardin', index: 1),
-    GlassNavItem(icon: Icons.book_rounded, label: 'Journal', index: 2),
-    GlassNavItem(icon: Icons.spa_rounded, label: 'Méditer', index: 3),
+    GlassNavItem(icon: Symbols.home_rounded, label: 'Accueil', index: 0),
+    GlassNavItem(icon: Symbols.yard_rounded, label: 'Jardin', index: 1),
+    GlassNavItem(icon: Symbols.book_2_rounded, label: 'Journal', index: 2),
+    GlassNavItem(icon: Symbols.spa_rounded, label: 'Méditer', index: 3),
     GlassNavItem(icon: Icons.person_rounded, label: 'Coach', index: 4),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _iconControllers = List.generate(
-      _navItems.length,
-      (i) => AnimationController(
-        duration: const Duration(milliseconds: 200),
-        vsync: this,
-      ),
-    );
-
-    final currentIndex = widget.navigationShell.currentIndex;
-    if (currentIndex < _iconControllers.length) {
-      _iconControllers[currentIndex].value = 1.0;
-    }
-  }
-
-  @override
-  void didUpdateWidget(AppShell oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final oldIdx = oldWidget.navigationShell.currentIndex;
-    final newIdx = widget.navigationShell.currentIndex;
-    if (oldIdx != newIdx) {
-      if (oldIdx < _iconControllers.length) {
-        _iconControllers[oldIdx].reverse();
-      }
-      if (newIdx < _iconControllers.length) {
-        _iconControllers[newIdx].forward();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    for (final c in _iconControllers) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
   void _onTabSelected(int index) {
     ElyriiHaptics.selection();
-    widget.navigationShell.goBranch(
+    navigationShell.goBranch(
       index,
-      initialLocation: index == widget.navigationShell.currentIndex,
+      initialLocation: index == navigationShell.currentIndex,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final currentIndex = widget.navigationShell.currentIndex;
+    final currentIndex = navigationShell.currentIndex;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final bottomMargin = AppDimensions.dockBottomMargin(bottomInset);
-    // Keep every tab at least 44 points wide on a 320-point screen.
-    final compactDock = MediaQuery.sizeOf(context).width < 360;
     final accessibleDock = AppShell.usesAccessibleDock(context);
 
     return Scaffold(
       extendBody: true,
       // Chat owns keyboard avoidance so nested scaffolds do not resize twice.
       resizeToAvoidBottomInset: currentIndex != 5,
-      body: widget.navigationShell,
+      body: navigationShell,
       bottomNavigationBar:
           currentIndex == 5 && MediaQuery.viewInsetsOf(context).bottom > 0
           ? null
-          : Container(
-              margin: EdgeInsets.only(
-                left: compactDock
-                    ? AppDimensions.spacing8
-                    : AppDimensions.spacing16,
-                right: compactDock
-                    ? AppDimensions.spacing8
-                    : AppDimensions.spacing16,
-                bottom: bottomMargin,
-              ),
-              child: accessibleDock
-                  ? SizedBox(
-                      height: AppShell.dockHeightOf(context),
-                      child: DropdownButtonFormField<int>(
-                        key: ValueKey(currentIndex),
-                        initialValue: currentIndex,
-                        itemHeight: null,
-                        isExpanded: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Navigation',
-                        ),
-                        items: [
-                          for (var i = 0; i < 6; i++)
-                            DropdownMenuItem(
-                              value: i,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: AppDimensions.spacing12,
+          : Align(
+              heightFactor: 1,
+              alignment: Alignment.bottomCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: AppDimensions.maxContentWidth,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppDimensions.spacing16,
+                    0,
+                    AppDimensions.spacing16,
+                    bottomMargin,
+                  ),
+                  child: accessibleDock
+                      ? SizedBox(
+                          height: AppShell.dockHeightOf(context),
+                          child: DropdownButtonFormField<int>(
+                            key: ValueKey(currentIndex),
+                            initialValue: currentIndex,
+                            itemHeight: null,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Navigation',
+                            ),
+                            items: [
+                              for (var i = 0; i < 6; i++)
+                                DropdownMenuItem(
+                                  value: i,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: AppDimensions.spacing12,
+                                    ),
+                                    child: Text(
+                                      i == 5
+                                          ? 'Chat Elyrii'
+                                          : _navItems[i].label,
+                                    ),
+                                  ),
                                 ),
-                                child: Text(
-                                  i == 5 ? 'Chat Elyrii' : _navItems[i].label,
-                                ),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) _onTabSelected(value);
+                            },
+                          ),
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: GlassNavigationBar(
+                                items: _navItems,
+                                currentIndex: currentIndex < 5
+                                    ? currentIndex
+                                    : -1,
+                                onItemSelected: _onTabSelected,
+                                isDark: isDark,
                               ),
                             ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) _onTabSelected(value);
-                        },
-                      ),
-                    )
-                  : Row(
-                      children: [
-                        Expanded(
-                          child: GlassNavigationBar(
-                            items: _navItems,
-                            currentIndex: currentIndex < 5 ? currentIndex : -1,
-                            onItemSelected: _onTabSelected,
-                            iconControllers: _iconControllers,
-                            isDark: isDark,
-                            margin: EdgeInsets.zero,
-                            height: AppDimensions.dockHeight,
-                            borderRadius: AppDimensions.radiusPill,
-                          ),
+                            const SizedBox(width: AppDimensions.spacing8),
+                            GlassBubbleButtonStateful(
+                              icon: Icons.chat_bubble_rounded,
+                              onTap: () => _onTabSelected(5),
+                              size: AppDimensions.dockHeight,
+                              isDark: isDark,
+                              isSelected: currentIndex == 5,
+                              tooltip: 'Chat Elyrii',
+                              iconAsset: 'assets/splash_icon.png',
+                              iconAssetSize: AppDimensions.dockAvatar,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: AppDimensions.spacing8),
-                        GlassBubbleButtonStateful(
-                          icon: Icons.chat_bubble_rounded,
-                          onTap: () => _onTabSelected(5),
-                          size: compactDock ? 56 : 64,
-                          isDark: isDark,
-                          isSelected: currentIndex == 5,
-                          tooltip: 'Chat Elyrii',
-                          // Marque vectorielle aplatie : même poids et même teinte
-                          // que les pictogrammes des autres onglets.
-                          iconAsset: 'assets/brand/logo_monochrome.png',
-                          iconAssetSize: 26,
-                        ),
-                      ],
-                    ),
+                ),
+              ),
             ),
     );
   }

@@ -286,6 +286,9 @@ class AppColors {
   static const Color glassBorderLight = Color(0xE6FFFFFF); // 90 %
   static const Color glassBorderDark = Color(0x1AFFFFFF); // 10 %
 
+  static Color dockSelection(bool dark) =>
+      dark ? const Color(0x11FFFFFF) : const Color(0x0E1C1A24);
+
   /// Standard v2 sheet glass (`rgba(30,27,42,.9)` dark).
   static Color sheetGlass(bool dark) =>
       dark ? const Color(0xE61E1B2A) : glassBackgroundLight;

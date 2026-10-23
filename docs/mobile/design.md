@@ -64,12 +64,24 @@ pages poussées et du chat. Un titre de barre trop long finit par une ellipse.
 | `dialogAction` | 15, w400 | Autres actions d’un dialogue |
 | `labelMedium` | 13, w600 | Puces et libellés courts |
 | `overline` | 13, w700 | Libellé au-dessus d’un groupe, date de l’accueil |
-| `labelSmall` | 11, w500 | Légendes et dock, taille minimale |
+| `labelSmall` | 11, w500 | Légendes, taille minimale |
 | `badge` | 11, w700 | Étiquettes et pastilles |
+| `dockLabel` | 11, w500 | Onglets du dock, tracking nul |
 
-Les libellés du dock s’affichent à leur taille réelle. Ils tiennent sur une
-ligne dès 375 px ; un texte agrandi les fait passer à la ligne plutôt que de
-les réduire.
+Le dock mesure 64 points de haut, avec une bulle de chat circulaire de 64
+et un avatar couleur de 44. Il reste centré dans la colonne de contenu de
+600 points, avec des marges latérales de 16 et une marge basse de 20.
+Le rôle navigation de `ElyriiGlassSurface` applique le verre v2, flou 22,
+saturation 1,7 et filet de 0,5, sans réfraction, ombre, halo ni gradient.
+Les quatre premiers onglets utilisent Material Symbols Rounded, remplis
+uniquement en sélection. La destination du cinquième onglet reste définie
+par `AppShell`.
+
+Les cibles font au moins 48 points. Sous 360 points de largeur ou au-delà
+de 120 % de taille de texte, un sélecteur déroulant donne accès aux six
+destinations sans réduire les libellés. La pression conserve une échelle
+de 0,96, sans mouvement lorsque les animations sont désactivées. Le dock
+n'a ni rebond de sélection ni animation autonome.
 
 Les couleurs de texte viennent de `context.textPrimary`, `textSecondary` et
 `textTertiary`, qui suivent le thème courant.

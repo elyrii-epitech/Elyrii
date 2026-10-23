@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
@@ -7,6 +9,14 @@ import '../widgets/accessible_action.dart';
 import 'glass_role.dart';
 
 export 'glass_role.dart';
+
+final _navigationFilter = ui.ImageFilter.compose(
+  outer: ColorFilter.saturation(AppDimensions.navigationSaturation),
+  inner: ui.ImageFilter.blur(
+    sigmaX: AppDimensions.navigationBlur,
+    sigmaY: AppDimensions.navigationBlur,
+  ),
+);
 
 /// Primitive Liquid Glass unifiée et performante pour Elyrii.
 ///
@@ -53,6 +63,52 @@ class ElyriiGlassSurface extends StatelessWidget {
       isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
     );
     final shouldFallback = lightweight || highContrast;
+
+    if (role == GlassRole.navigation) {
+      final tint =
+          glassColor ??
+          (isDark
+              ? AppColors.glassBackgroundDark
+              : AppColors.glassBackgroundLight);
+      Widget content = RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: BackdropFilter(
+            enabled: !shouldFallback,
+            filter: _navigationFilter,
+            child: Container(
+              width: width,
+              height: height,
+              padding: padding,
+              decoration: BoxDecoration(
+                color: highContrast
+                    ? Color.alphaBlend(tint, surface).withValues(alpha: 1)
+                    : tint,
+                borderRadius: borderRadius,
+                border:
+                    border ??
+                    Border.all(
+                      color: isDark
+                          ? AppColors.glassBorderDark
+                          : AppColors.glassBorderLight,
+                      width: AppDimensions.glassStroke,
+                    ),
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      );
+      if (onTap != null) {
+        content = AccessibleAction(
+          label: null,
+          onPressed: onTap,
+          borderRadius: borderRadius,
+          child: content,
+        );
+      }
+      return content;
+    }
 
     // Opaque fallback for the platform accessibility contrast setting.
     if (shouldFallback) {
