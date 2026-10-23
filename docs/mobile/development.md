@@ -13,7 +13,7 @@ flutter doctor -v
 flutter run -d DEVICE_ID
 ```
 
-En debug, l’environnement par défaut est `development`, gateway port **3001**.
+En debug, l’environnement par défaut est `development`, gateway port **3000**.
 L’émulateur Android utilise `10.0.2.2` et le simulateur iOS `localhost`.
 Sur un téléphone physique, utiliser une gateway accessible en HTTPS :
 

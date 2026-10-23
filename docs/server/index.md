@@ -10,6 +10,9 @@ This repository contains the Elyrii server with microservices architecture and a
 
 ## Documentation
 
+For the current mobile API contracts, local integration tests, native session
+renewal, and VPS configuration, see [Mobile/backend connection](mobile-connection.md).
+
 ### Generating Documentation
 
 To generate the complete documentation for all services:

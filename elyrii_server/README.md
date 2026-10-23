@@ -14,6 +14,11 @@ The server is built using **Hono** and **Bun**, organized into modular component
 
 ## Documentation
 
+For local mobile testing, native session renewal, and production VPS mail
+configuration, see [Mobile/backend connection](../docs/server/mobile-connection.md).
+`bun run test:mobile` runs the connected HTTP contract suite against a disposable
+local `elyrii_frontend_test` database.
+
 ### Generating Documentation
 
 Documentation is auto-generated using **TypeDoc**. To generate the complete API reference:

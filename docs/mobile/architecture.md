@@ -53,12 +53,12 @@ cesse ses animations hors écran et libère son viewer après 15 secondes.
 ## Configuration réseau
 
 Ordre de résolution : argument explicite, `ELYRII_API_URL`, ancien `BASE_URL`,
-puis adresse locale uniquement en développement. Les autres environnements exigent une URL HTTPS explicite. Le port local par défaut est **3001** et peut être remplacé
+puis adresse locale uniquement en développement. Les autres environnements exigent une URL HTTPS explicite. Le port local par défaut est **3000** et peut être remplacé
 avec `ELYRII_API_PORT`. Android emulator utilise `10.0.2.2` ; iOS utilise
 `localhost`. Fournir explicitement l’URL adaptée à l’environnement :
 
 ```bash
-flutter run --dart-define=ELYRII_API_URL=http://127.0.0.1:3001
+flutter run --dart-define=ELYRII_API_URL=http://127.0.0.1:3000
 ```
 
 Tous les services REST passent par la gateway. Le chat ouvre `/chat/ws`.
@@ -132,8 +132,10 @@ La reconstruction de la scène est décrite dans le [guide des accessoires](masc
 
 ## Limites à ne pas confondre avec des garanties
 
-- Pas de refresh token automatique ; un 401 de la session courante ferme
-  localement cette session, sans affecter un compte connecté ultérieurement.
+- Le renouvellement du token est partagé entre les requêtes HTTP et les
+  ouvertures WebSocket. Les tokens tournants sont conservés dans le stockage
+  sécurisé ; un refresh refusé ferme uniquement la session concernée. Les
+  réponses d’une ancienne session ne peuvent pas restaurer ses identifiants.
 - Les tests de widget et le simulateur ne mesurent pas les FPS, la consommation
   ou la mémoire GPU d’un appareil réel.
 - Le chat IA réel, Android sur appareil et les services distants ne sont pas

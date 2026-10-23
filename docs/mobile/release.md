@@ -68,8 +68,8 @@ Le code est issu de 256 bits aléatoires, stocké uniquement sous forme de
 SHA-256, valable 15 minutes et consommé atomiquement une seule fois. Le
 nouveau mot de passe est borné à 12–128 caractères et hashé par Argon2id. La
 confirmation supprime les refresh sessions du compte ; les access tokens
-existants peuvent continuer jusqu’à leur expiration. Leur renouvellement et
-les parcours d’activation email restent volontairement hors périmètre.
+existants peuvent continuer jusqu’à leur expiration. Le renouvellement natif et
+l’activation email sont décrits dans le [guide de connexion au backend](../server/mobile-connection.md).
 
 Exécuter en staging : adresse inconnue, livraison réussie, indisponibilité du
 webhook, code expiré, deux confirmations concurrentes, demandes répétées et
