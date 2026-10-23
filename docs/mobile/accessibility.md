@@ -96,6 +96,7 @@ couleurs qu’un utilisateur peut produire.
 Les pages utilisent un défilement borné, sans rebond ni geste d’actualisation.
 Un contenu plus court que l’écran reste immobile. Le chargement à l’ouverture
 et à la reprise de l’application conserve son comportement existant.
+Parcours propose une reprise explicite après erreur du stockage local.
 Les tests d’en-tête vérifient que les gestes aux deux extrémités ne déplacent
 pas le contenu au-delà de ses limites, pour les cadres d’onglet et de détail.
 Les feuilles et les dialogues utilisent des surfaces v2 opaques. Les feuilles

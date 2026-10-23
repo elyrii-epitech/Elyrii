@@ -21,7 +21,7 @@ elyrii_app/lib/
     theme/                 # charte graphique
     glass/ et widgets/     # composants partagés, surfaces, rendu 3D
   features/
-    auth/ chatbot/ coach/ dashboard/ gamification/
+    auth/ chatbot/ parcours/ dashboard/ gamification/
     journal/ mascot/ meditation/ settings/ …
 ```
 
@@ -43,10 +43,10 @@ timeout. Le chat utilise un WebSocket authentifié vers la gateway.
    est recréé au changement de compte et libéré avec son propriétaire.
 
 Providers globaux : thème, authentification, journal, chat, gamification,
-profil/réglages, mascotte, dashboard et coach.
+profil/réglages, mascotte, dashboard et parcours.
 
 `AppRouter` utilise `StatefulShellRoute.indexedStack` pour les six branches
-Accueil, Jardin, Journal, Méditation, Coach et Chat. Les guards gèrent la
+Accueil, Jardin, Journal, Méditation, Parcours et Chat. Les guards gèrent la
 connexion et la complétion du profil. L’état d’onglet est conservé ; la mascotte
 cesse ses animations hors écran et libère son viewer après 15 secondes.
 
@@ -91,6 +91,17 @@ flutter run --dart-define=CHECK_BACKEND_HEALTH=true
   saisie pendant la requête reste à sauvegarder. Un échec ne produit pas le
   statut « Sauvegardé ».
 - **Préférences** : thème et personnalisation utilisent SharedPreferences.
+- **Parcours** : catalogue éditorial dans `features/parcours/data/journey_catalog.dart`.
+  `JourneyProvider` conserve un seul parcours actif, en pause ou terminé.
+  `JourneyRepository` enregistre un document SharedPreferences chiffré par
+  `ContentCipher`, avec propriétaire, version et photographie des étapes.
+  Le provider ne confirme la progression qu’après l’écriture locale réussie ;
+  une erreur conserve le dernier état confirmé et demande une relecture.
+  Les changements de compte invalident les publications tardives. La démo
+  utilise son propre document. La purge attend les écritures puis retire
+  le document du propriétaire. Aucun endpoint ni schéma serveur n’est ajouté.
+  La progression n’est pas synchronisée entre appareils et ne promet pas
+  d’atomicité entre plusieurs onglets de navigateur.
 
 Les titres/messages du chat et les entrées/brouillons du journal sont chiffrés
 avec AES-GCM et une clé par compte dans le stockage sécurisé, avec authentification

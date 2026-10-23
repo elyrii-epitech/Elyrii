@@ -10,8 +10,8 @@ locales sont rattachées au compte ; la démo utilise une session isolée.
 | Dashboard et bilan | Humeur, bilan hebdomadaire, mensuel et trimestriel, raccourcis | Historique serveur pour le journal ; humeurs locales ; séances terminées pour les minutes de calme |
 | Journal | Fil des jours, écriture et modification, humeur par entrée, lecture, suppression, recherche locale et export texte | API et SQLite paginés par 100 ; brouillons chiffrés par compte ; question du jour choisie enregistrée localement |
 | Chat | Conversations, réponses corrélées, reprise d’envoi, copie et signalement | WebSocket Bearer ; historique SQLite chiffré, pages de 50 |
-| Jardin | Défis disponibles/actifs/terminés, propositions IA et badges | API ; fraîcheur de 30 secondes, actualisation explicite et après commande |
-| Coach | Conseils, besoins et activités ouvrant le journal, une séance ou le guidage | Catalogue local et sessions du repository coach |
+| Jardin | Calendrier semaine/mois, fleurs datées et gestes enregistrés en consultation seule | Défis terminés de l’API et activités locales existantes ; aucune validation depuis le Jardin |
+| Parcours | Choix volontaire, étapes ordonnées, pause/reprise et accès secondaire aux défis existants | Catalogue éditorial local ; progression chiffrée par compte sur cet appareil, sans nouvelle API ni synchronisation entre appareils |
 | Méditation | 12 pratiques, durée de 1 à 1 439 minutes, pause/reprise et bilan | Contrôleur monotone et synchronisation des séances avec l’API |
 | Mascotte | Couleurs, finitions, 15 accessoires répartis sur quatre zones, sauvegarde explicite | Scène GLB partagée ; préférences et progression par compte |
 | Réglages | Apparence sombre, claire ou automatique, haptique, confidentialité, export, diagnostics et suppression du compte | Préférences, version installée, API et partage natif volontaire |
@@ -35,13 +35,23 @@ de détresse. Cette heuristique ne remplace pas une évaluation professionnelle.
 Les séances de méditation utilisent des consignes écrites et ne fournissent
 pas de piste audio enregistrée.
 
+Parcours remplace Coach dans la navigation, à la route `/parcours`.
+Le choix d’un parcours et la réalisation d’une étape sont explicites.
+Le remplacement d’un parcours demande confirmation ; l’annulation conserve
+sa position. La pause n’entraîne ni échéance ni pénalité. La progression
+reste locale, y compris dans la session de démo isolée. Elle accompagne
+l’export des données et la purge locale du compte.
+Les défis actifs, propositions à accepter/refuser et idées disponibles
+restent dans **Mes défis**. Seuls les défis réellement terminés produisent
+les fleurs existantes. Une étape de Parcours n’en crée pas.
+
 Le Journal utilise une couleur prune, sans halo ni verre dans les cartes.
 La recherche porte sur les entrées chargées et indique cette limite quand
 l’historique contient d’autres pages. L’export texte charge l’historique et
 inclut les brouillons locaux. Le même éditeur à sauvegarde automatique s’ouvre
-depuis le Journal, l’Accueil et le Coach. Les outils de dictée, photo et mot-clé
-ne sont pas proposés sans service réel. Aucune entrée n’est envoyée à Elyrii
-ou au coach.
+depuis le Journal, l’Accueil et les étapes de Parcours. Les outils de dictée,
+photo et mot-clé ne sont pas proposés sans service réel. Ouvrir ou fermer
+l’éditeur ne valide pas automatiquement une étape.
 
 L’avatar de l’Accueil ouvre le Profil. **Tenue d’Elyrii** retourne au dressing
 de l’Accueil, sans second catalogue. Le choix d’avatar depuis le Profil est

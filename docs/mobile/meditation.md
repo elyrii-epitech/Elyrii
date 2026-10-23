@@ -10,7 +10,7 @@ La séance s’ouvre hors du dock. Le lac conserve une échelle uniforme, sans �
 
 La fermeture d’une séance en cours demande confirmation. **Terminer la séance** enregistre la fin et ouvre un bilan avec le temps réellement écoulé, les cycles complets et cinq ressentis. Fermer le bilan ne relance pas une séance déjà enregistrée. **Voir le résumé** permet de le rouvrir. La série de jours n’est pas affichée dans ce bilan, faute de confirmation fraîche après l’enregistrement.
 
-La bibliothèque propose uniquement les quatre durées de la capsule. Il n’y a pas de saisie de durée personnalisée. Les durées de l’Accueil et du Coach restent prises en charge, notamment les séances de une et deux minutes. Le contrôleur conserve sa plage de **1 à 1 439 minutes**. Toutes les feuilles partagent `AppSheetRoute`.
+La bibliothèque propose uniquement les quatre durées de la capsule. Il n’y a pas de saisie de durée personnalisée. Les durées de l’Accueil et des étapes de Parcours restent prises en charge par le contrôleur dans sa plage de **1 à 1 439 minutes**. Une étape Parcours ouvre l’aperçu de la pratique et une durée proposée par cette pratique. Toutes les feuilles partagent `AppSheetRoute`.
 
 ## Pratiques et séance
 

@@ -19,7 +19,7 @@ de l'aperçu de personnalisation.
 | `breathe` | 2 s normalisées | Pose du buste et des pattes pilotée par la progression de l'exercice. Jamais une boucle de deux secondes pendant une séance. |
 | `curious` | 7,2 s | Regarde des deux côtés, penche la tête. Variation de repos et interaction. |
 | `cozy` | 8 s | Relâche les épaules et ferme longuement les yeux. Variation de repos et première note de journal enregistrée. |
-| `acknowledge` | 2,6 s | Signe de tête. Réponse reçue, humeur neutre, toucher ou conseil du Coach enregistré. |
+| `acknowledge` | 2,6 s | Signe de tête. Réponse reçue, humeur neutre ou toucher. |
 | `reassure` | 4,8 s | S'approche et ouvre doucement une patte. Humeur difficile ou déconnexion du chat. |
 | `delight` | 3,6 s | Deux accents de joie contenus. Humeur positive ou toucher. |
 | `nuzzle` | 4 s | Penche la tête vers l'utilisateur, yeux fermés. Appui prolongé sur l'accueil. |
@@ -45,9 +45,9 @@ automatique de lecture. Il sert le GLB de l'application, pas une copie.
 `MascotProvider` expose une petite file de réactions (`react`) partagée par
 les onglets persistants. Le dashboard consomme le compteur de déclenchement et
 reprend le geste au retour d'un onglet : démarrer ou accepter un défi déclenche
-`invite`, une nouvelle réussite déclenche `celebrate`, la première note
-enregistrée déclenche `cozy` et un conseil du Coach validé déclenche
-`acknowledge`. Une clé d'événement peut dédupliquer les flux réseau ; les
+`invite`, une nouvelle réussite déclenche `celebrate` et la première note
+enregistrée déclenche `cozy`. L’ancien déclencheur lié au conseil du Coach
+a disparu avec cette page. Une clé d'événement peut dédupliquer les flux réseau ; les
 interactions directes restent rejouables.
 
 ## Enchaînement et accessibilité
