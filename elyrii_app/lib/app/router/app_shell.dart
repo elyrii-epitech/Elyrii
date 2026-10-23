@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../core/widgets/glass_bubble_button.dart';
 import '../../core/widgets/glass_navigation_bar.dart';
 import '../../core/theme/app_dimensions.dart';
+import '../../features/gamification/presentation/providers/gamification_provider.dart';
 
 class AppShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -39,12 +43,15 @@ class AppShell extends StatelessWidget {
     GlassNavItem(icon: Icons.route_rounded, label: 'Parcours', index: 4),
   ];
 
-  void _onTabSelected(int index) {
+  void _onTabSelected(BuildContext context, int index) {
     ElyriiHaptics.selection();
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
     );
+    if (index == 1) {
+      unawaited(context.read<GamificationProvider>().loadAll(force: true));
+    }
   }
 
   @override
@@ -105,7 +112,9 @@ class AppShell extends StatelessWidget {
                                 ),
                             ],
                             onChanged: (value) {
-                              if (value != null) _onTabSelected(value);
+                              if (value != null) {
+                                _onTabSelected(context, value);
+                              }
                             },
                           ),
                         )
@@ -117,14 +126,15 @@ class AppShell extends StatelessWidget {
                                 currentIndex: currentIndex < 5
                                     ? currentIndex
                                     : -1,
-                                onItemSelected: _onTabSelected,
+                                onItemSelected: (index) =>
+                                    _onTabSelected(context, index),
                                 isDark: isDark,
                               ),
                             ),
                             const SizedBox(width: AppDimensions.spacing8),
                             GlassBubbleButtonStateful(
                               icon: Icons.chat_bubble_rounded,
-                              onTap: () => _onTabSelected(5),
+                              onTap: () => _onTabSelected(context, 5),
                               size: AppDimensions.dockHeight,
                               isDark: isDark,
                               isSelected: currentIndex == 5,

@@ -10,7 +10,8 @@ import 'package:elyrii_app/features/gamification/data/models/gamification_models
 import 'package:elyrii_app/features/gamification/data/repositories/gamification_repository.dart';
 import 'package:elyrii_app/features/gamification/presentation/pages/challenges_page.dart';
 import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
-import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
+import 'package:elyrii_app/features/gamification/presentation/widgets/challenge_collection.dart';
+import 'package:elyrii_app/features/gamification/presentation/widgets/monthly_garden.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,7 +44,6 @@ class _GardenRepository extends GamificationRepository {
 void main() {
   late AccueilActivities store;
   late GamificationProvider garden;
-  late MascotProvider mascot;
   late _GardenRepository repository;
 
   setUp(() async {
@@ -58,24 +58,21 @@ void main() {
     repository = _GardenRepository(client);
     garden = GamificationProvider(repository: repository)
       ..onUserChanged(userId: 'alice');
-    mascot = MascotProvider();
   });
 
   tearDown(() {
     store.dispose();
     garden.dispose();
-    mascot.dispose();
   });
 
-  Future<void> open(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
+  Future<void> open(WidgetTester tester, {double height = 844}) async {
+    await tester.binding.setSurfaceSize(Size(390, height));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider<AccueilActivities>.value(value: store),
           ChangeNotifierProvider<GamificationProvider>.value(value: garden),
-          ChangeNotifierProvider<MascotProvider>.value(value: mascot),
         ],
         child: MaterialApp(
           theme: AppTheme.darkTheme,
@@ -83,18 +80,6 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> openDay(WidgetTester tester, CivilDay day) async {
-    final date = AppDates.format(
-      DateTime(day.year, day.month, day.day),
-      'EEEE d MMMM yyyy',
-    );
-    final cell = find.bySemanticsLabel(RegExp('^${RegExp.escape(date)},'));
-    await Scrollable.ensureVisible(tester.element(cell), alignment: .5);
-    await tester.pumpAndSettle();
-    await tester.tap(cell);
     await tester.pumpAndSettle();
   }
 
@@ -109,6 +94,49 @@ void main() {
     expect(saved, isTrue);
     await tester.runAsync(store.reload);
   }
+
+  UserChallenge challenge(
+    String id, {
+    DateTime? completedAt,
+    DateTime? createdAt,
+    String? title,
+  }) {
+    final created = createdAt ?? DateTime(2020);
+    return UserChallenge(
+      id: id,
+      userId: 'alice',
+      challengeId: 'template-$id',
+      status: 'COMPLETED',
+      createdAt: created,
+      updatedAt: DateTime(2020),
+      completedAt: completedAt,
+      template: ChallengeTemplate(
+        id: 'template-$id',
+        title: title ?? 'Défi $id',
+        source: 'SYSTEM',
+        rewardPoints: 0,
+        aggregator: 'ALL',
+        createdAt: created,
+        updatedAt: created,
+      ),
+    );
+  }
+
+  DateTime at(CivilDay day, [int hour = 12]) =>
+      DateTime(day.year, day.month, day.day, hour);
+
+  Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
+  List<String> flowerIds(WidgetTester tester) => tester
+      .widget<MonthlyGarden>(find.byType(MonthlyGarden))
+      .flowers
+      .map((flower) => flower.challengeId)
+      .toList();
 
   testWidgets('saved local gestures are read-only and do not create flowers', (
     tester,
@@ -127,71 +155,144 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('a recorded day without a flower opens its saved gestures', (
-    tester,
-  ) async {
-    final today = CivilDay.fromLocal(DateTime.now());
-    final day = today.day == 1 ? today : today.addDays(-1);
-    await record(tester, day, AccueilRitual.reachOut);
-    await open(tester);
-    await openDay(tester, day);
-    expect(find.text('Tes petits gestes'), findsOneWidget);
-    expect(find.text('Écrire à un proche'), findsWidgets);
-    expect(find.text('Tes défis terminés'), findsNothing);
-    expect(find.byType(Checkbox), findsNothing);
-    expect(garden.completedChallenges, isEmpty);
-    await tester.pumpWidget(const SizedBox());
-  });
-
-  testWidgets('empty today opens an honest read-only day detail', (
+  testWidgets('today follows the challenges and precedes the monthly garden', (
     tester,
   ) async {
     await open(tester);
-    await openDay(tester, CivilDay.fromLocal(DateTime.now()));
-    expect(find.byTooltip('Fermer'), findsOneWidget);
-    expect(find.text('Tes petits gestes sont enregistrés.'), findsNothing);
-    expect(find.text('Tes défis terminés'), findsNothing);
-    expect(find.byType(Checkbox), findsNothing);
-    expect(store.snapshot.rituals, isEmpty);
-    expect(tester.takeException(), isNull);
+    final challenges = tester.getRect(find.byType(ChallengeCollection));
+    final today = tester.getRect(find.text("Aujourd'hui"));
+    final monthly = tester.getRect(find.byType(MonthlyGarden));
+    expect(challenges.bottom, lessThanOrEqualTo(today.top));
+    expect(today.bottom, lessThanOrEqualTo(monthly.top));
+    expect(find.text('Prochaines récompenses'), findsNothing);
+    expect(find.text('Complétion quotidienne'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets(
-    'completed challenge flowers retain their date and reward count',
+    'each month lists its own completed challenges by completion date',
     (tester) async {
-      final now = DateTime.now();
+      final today = CivilDay.fromLocal(DateTime.now());
+      final previous = today.civilMonth.shifted(-1);
       repository.completed = [
-        UserChallenge(
-          id: 'flower',
-          userId: 'alice',
-          challengeId: 'journal',
-          status: 'COMPLETED',
-          createdAt: now,
-          updatedAt: now,
-          completedAt: now,
-          template: ChallengeTemplate(
-            id: 'journal',
-            title: 'Un moment pour écrire',
-            source: 'SYSTEM',
-            rewardPoints: 0,
-            aggregator: 'ALL',
-            createdAt: now,
-            updatedAt: now,
-          ),
+        challenge(
+          'now',
+          completedAt: at(today),
+          createdAt: at(previous.firstDay),
         ),
+        challenge('now', completedAt: at(today)),
+        challenge(
+          'edge',
+          completedAt: at(previous.lastDay, 23),
+          createdAt: at(today),
+        ),
+        challenge('mid', completedAt: at(previous.firstDay.addDays(14))),
+        challenge('future', completedAt: at(today.addDays(1))),
+        challenge('undated'),
       ];
       await open(tester);
-      await openDay(tester, CivilDay.fromLocal(now));
-      expect(find.text('Tes défis terminés'), findsOneWidget);
-      expect(find.text('Un moment pour écrire').hitTestable(), findsOneWidget);
-      await tester.tap(find.byTooltip('Fermer'));
-      await tester.pumpAndSettle();
-      expect(find.text('1 sur 5 défis'), findsOneWidget);
-      expect(garden.completedChallenges, hasLength(1));
+
+      expect(flowerIds(tester), ['now']);
+      expect(find.widgetWithText(ListTile, 'Défi now'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, 'Défi edge'), findsNothing);
+      expect(find.textContaining("n'a pas de date"), findsOneWidget);
+
+      await tapVisible(tester, find.byTooltip('Mois précédent'));
+      expect(flowerIds(tester), ['mid', 'edge']);
+      expect(find.widgetWithText(ListTile, 'Défi edge'), findsOneWidget);
+      expect(find.widgetWithText(ListTile, 'Défi now'), findsNothing);
+
+      await tapVisible(tester, find.byTooltip('Mois suivant'));
+      expect(flowerIds(tester), ['now']);
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  testWidgets('a challenge completed after a refresh becomes a new flower', (
+    tester,
+  ) async {
+    final today = CivilDay.fromLocal(DateTime.now());
+    repository.completed = [challenge('old', completedAt: at(today, 8))];
+    await open(tester);
+    final element = tester.element(find.byType(MonthlyGarden));
+    expect(flowerIds(tester), ['old']);
+
+    repository.completed = [
+      challenge('old', completedAt: at(today, 8)),
+      challenge('new', completedAt: at(today, 9)),
+    ];
+    await tester.runAsync(() => garden.loadAll(force: true));
+    await tester.pump();
+    expect(flowerIds(tester), unorderedEquals(['old', 'new']));
+    expect(tester.element(find.byType(MonthlyGarden)), same(element));
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('pulling down refreshes the garden from the server', (
+    tester,
+  ) async {
+    final today = CivilDay.fromLocal(DateTime.now());
+    await open(tester);
+    expect(flowerIds(tester), isEmpty);
+    repository.completed = [challenge('late', completedAt: at(today))];
+    await tester.drag(find.text('Défis à réaliser'), const Offset(0, 400));
+    await tester.pumpAndSettle();
+    expect(flowerIds(tester), ['late']);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a failed refresh keeps the monthly garden on screen', (
+    tester,
+  ) async {
+    final today = CivilDay.fromLocal(DateTime.now());
+    repository.completed = [challenge('kept', completedAt: at(today))];
+    await open(tester);
+    repository.unavailable = true;
+    await tester.runAsync(() => garden.loadAll(force: true));
+    await tester.pump();
+    expect(find.text('Jardin indisponible'), findsWidgets);
+    expect(flowerIds(tester), ['kept']);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('every flower of a crowded month stays reachable', (
+    tester,
+  ) async {
+    final handle = tester.ensureSemantics();
+    final today = CivilDay.fromLocal(DateTime.now());
+    repository.completed = [
+      for (var i = 0; i < 35; i++) challenge('c$i', completedAt: at(today, 10)),
+    ];
+    await open(tester, height: 3000);
+    expect(flowerIds(tester), hasLength(35));
+    expect(find.bySemanticsLabel(RegExp('^Fleur : ')), findsNWidgets(35));
+
+    expect(find.byType(ListTile), findsNWidgets(3));
+    await tapVisible(tester, find.text('Voir tout (35)'));
+    expect(find.byType(ListTile), findsNWidgets(35));
+    await tapVisible(tester, find.text('Réduire'));
+    expect(find.byType(ListTile), findsNWidgets(3));
+    handle.dispose();
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a flower opens its actual challenge and completion date', (
+    tester,
+  ) async {
+    final today = CivilDay.fromLocal(DateTime.now());
+    repository.completed = [
+      challenge('one', completedAt: at(today), title: 'Un moment pour écrire'),
+    ];
+    await open(tester, height: 3000);
+    final flower = find.bySemanticsLabel(
+      RegExp('^Fleur : Un moment pour écrire'),
+    );
+    await tester.tap(flower);
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Fermer'), findsOneWidget);
+    expect(find.textContaining('Terminé le'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('server errors preserve local consultation and expose retry', (
     tester,
@@ -205,6 +306,8 @@ void main() {
     await open(tester);
     expect(find.text('Écouter une chanson calme'), findsOneWidget);
     expect(find.text('Jardin indisponible'), findsWidgets);
+    expect(find.byType(MonthlyGarden), findsNothing);
+    expect(find.text('Aucun défi terminé pendant ce mois.'), findsNothing);
     repository.unavailable = false;
     await Scrollable.ensureVisible(
       tester.element(find.text('Réessayer').first),
@@ -215,70 +318,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Jardin indisponible'), findsNothing);
     expect(find.text('Écouter une chanson calme'), findsOneWidget);
+    expect(find.byType(MonthlyGarden), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 
-  testWidgets('recorded dates remain readable when flowers are unavailable', (
-    tester,
-  ) async {
-    final today = CivilDay.fromLocal(DateTime.now());
-    final yesterday = today.addDays(-1);
-    await record(tester, yesterday, AccueilRitual.music);
-    repository.unavailable = true;
+  testWidgets('monthly navigation blocks future months', (tester) async {
     await open(tester);
-    if (yesterday.civilMonth != today.civilMonth) {
-      await tester.tap(find.byTooltip('Mois précédent'));
-      await tester.pumpAndSettle();
-    }
-    await openDay(tester, yesterday);
-    expect(find.text('Écouter une chanson calme'), findsOneWidget);
-    expect(garden.hasLoadedData, isFalse);
-    expect(garden.completedChallenges, isEmpty);
+    final today = CivilDay.fromLocal(DateTime.now());
+    final previous = today.civilMonth.shifted(-1);
+    await tapVisible(tester, find.byTooltip('Mois précédent'));
     expect(
-      store.snapshot.rituals[yesterday]!.isDone(AccueilRitual.music),
-      isTrue,
+      find.text(
+        AppDates.format(DateTime(previous.year, previous.month), 'MMMM yyyy'),
+      ),
+      findsWidgets,
+    );
+    await tapVisible(tester, find.byTooltip('Mois suivant'));
+    expect(
+      find.text(
+        AppDates.format(DateTime(today.year, today.month), 'MMMM yyyy'),
+      ),
+      findsWidgets,
+    );
+    expect(
+      tester
+          .widget<IconButton>(
+            find.widgetWithIcon(IconButton, Symbols.chevron_right_rounded),
+          )
+          .onPressed,
+      isNull,
     );
     await tester.pumpWidget(const SizedBox());
   });
-
-  testWidgets(
-    'monthly navigation stays accessible after scrolling and blocks future months',
-    (tester) async {
-      await open(tester);
-      await Scrollable.ensureVisible(
-        tester.element(find.text('Prochaines récompenses')),
-        alignment: .5,
-      );
-      await tester.pumpAndSettle();
-      final prevButton = find.byTooltip('Mois précédent');
-      await Scrollable.ensureVisible(tester.element(prevButton), alignment: .5);
-      await tester.pumpAndSettle();
-      await tester.tap(prevButton);
-      await tester.pumpAndSettle();
-      final today = CivilDay.fromLocal(DateTime.now());
-      final previous = today.civilMonth.shifted(-1);
-      final label = AppDates.format(
-        DateTime(previous.year, previous.month),
-        'MMMM yyyy',
-      );
-      expect(find.text(label), findsWidgets);
-      final nextButton = find.byTooltip('Mois suivant');
-      await tester.tap(nextButton);
-      await tester.pumpAndSettle();
-      final currentLabel = AppDates.format(
-        DateTime(today.year, today.month),
-        'MMMM yyyy',
-      );
-      expect(find.text(currentLabel), findsWidgets);
-      expect(
-        tester
-            .widget<IconButton>(
-              find.widgetWithIcon(IconButton, Symbols.chevron_right_rounded),
-            )
-            .onPressed,
-        isNull,
-      );
-      await tester.pumpWidget(const SizedBox());
-    },
-  );
 }
