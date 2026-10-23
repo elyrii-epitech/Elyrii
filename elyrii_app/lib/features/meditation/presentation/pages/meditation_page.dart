@@ -7,16 +7,11 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/repositories/meditation_repository.dart';
 import '../controllers/meditation_controller.dart';
-import '../widgets/meditation_catalog_view.dart';
+import '../widgets/meditation_library.dart';
 
 export '../../domain/models/breath_phase.dart';
 export '../controllers/meditation_controller.dart';
 
-/// Page onglet Méditation : catalogue de préparation de séance.
-///
-/// Dès que la session démarre, l'utilisateur bascule sur
-/// [MeditationSessionPage] (route hors shell, sans dock) pour une immersion
-/// totale. Cette page ne sert qu'à préparer la séance.
 class MeditationPage extends StatefulWidget {
   const MeditationPage({super.key});
 
@@ -50,7 +45,10 @@ class _MeditationPageState extends State<MeditationPage> {
     if (running && !_sessionRouteOpen) {
       _sessionRouteOpen = true;
       context.push(AppRoutes.meditationSession, extra: _controller).then((_) {
-        if (mounted) _sessionRouteOpen = false;
+        if (mounted) {
+          _sessionRouteOpen = false;
+          if (!_controller.isSetup) _controller.resetToSetup();
+        }
       });
     }
   }
@@ -60,10 +58,8 @@ class _MeditationPageState extends State<MeditationPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: MeditationCatalogView(controller: _controller),
+      backgroundColor: AppColors.sectionBody(isDark),
+      body: MeditationLibrary(controller: _controller),
     );
   }
 }

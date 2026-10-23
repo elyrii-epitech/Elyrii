@@ -19,6 +19,7 @@ class AppSheetRoute<T> extends PopupRoute<T> {
   final bool transparentVeil;
   final bool calendar;
   final bool Function()? canDismiss;
+  final Rect? cardOrigin;
 
   AppSheetRoute({
     required this.builder,
@@ -26,6 +27,7 @@ class AppSheetRoute<T> extends PopupRoute<T> {
     this.transparentVeil = false,
     this.calendar = false,
     this.canDismiss,
+    this.cardOrigin,
   });
 
   @override
@@ -76,6 +78,19 @@ class AppSheetRoute<T> extends PopupRoute<T> {
               );
         final panel = reduced
             ? Opacity(opacity: k, child: child)
+            : cardOrigin != null
+            ? Transform.translate(
+                offset:
+                    (cardOrigin!.center -
+                        MediaQuery.sizeOf(context).center(Offset.zero)) *
+                    (1 - rise),
+                child: Transform.scale(
+                  scale:
+                      AppDimensions.accueilPreviewPopScale +
+                      (1 - AppDimensions.accueilPreviewPopScale) * rise,
+                  child: Opacity(opacity: k, child: child),
+                ),
+              )
             : calendar
             ? Transform.translate(
                 offset: Offset(
