@@ -8,8 +8,8 @@ import '../../../../core/storage/content_cipher.dart';
 import '../domain/civil_day.dart';
 import '../presentation/mood_presentation.dart';
 
-/// Les trois rituels du jour, dans l'ordre de la grille Accueil.
-enum AccueilRitual { breathe, gratitude, walk }
+/// Les rituels partagés entre l'Accueil et le Jardin.
+enum AccueilRitual { breathe, gratitude, walk, reachOut, water, music }
 
 /// Réponse typée au fil ; la première réponse confirmée est conservée.
 enum ThreadReply { ratherGood, notGreat }
@@ -77,6 +77,7 @@ class AccueilActivitySnapshot {
   final Map<String, ThreadAnswer> threadAnswers;
   final Map<CivilDay, MoodType> moodDays;
   final MascotDecor decor;
+  final Set<AccueilRitual> addedRituals;
   final bool isLoading;
   final bool isWriting;
   final String? error;
@@ -87,10 +88,12 @@ class AccueilActivitySnapshot {
     Map<String, ThreadAnswer>? threadAnswers,
     Map<CivilDay, MoodType>? moodDays,
     this.decor = MascotDecor.arches,
+    Set<AccueilRitual>? addedRituals,
     this.isLoading = false,
     this.isWriting = false,
     this.error,
-  }) : rituals = Map.unmodifiable(rituals ?? const {}),
+  }) : addedRituals = Set.unmodifiable(addedRituals ?? const {}),
+       rituals = Map.unmodifiable(rituals ?? const {}),
        socialWeeks = Map.unmodifiable(socialWeeks ?? const {}),
        threadAnswers = Map.unmodifiable(threadAnswers ?? const {}),
        moodDays = Map.unmodifiable(moodDays ?? const {});
@@ -103,6 +106,7 @@ class _Facts {
   final Map<String, ThreadAnswer> threadAnswers = {};
   final Map<CivilDay, MoodType> moodDays = {};
   MascotDecor decor = MascotDecor.arches;
+  final Set<AccueilRitual> addedRituals = {};
 
   _Facts();
 
@@ -123,6 +127,7 @@ class _Facts {
     threadAnswers.addAll(snapshot.threadAnswers);
     moodDays.addAll(snapshot.moodDays);
     decor = snapshot.decor;
+    addedRituals.addAll(snapshot.addedRituals);
   }
 
   AccueilActivitySnapshot snapshot({bool isWriting = false, String? error}) =>
@@ -132,6 +137,7 @@ class _Facts {
         threadAnswers: threadAnswers,
         moodDays: moodDays,
         decor: decor,
+        addedRituals: addedRituals,
         isWriting: isWriting,
         error: error,
       );
@@ -193,6 +199,14 @@ class AccueilActivities extends ChangeNotifier {
     unawaited(_load(_revision));
   }
 
+  Future<void> reload() async {
+    if (_snapshot.isWriting) return;
+    _revision++;
+    _snapshot = AccueilActivitySnapshot(isLoading: true);
+    _notify();
+    await _load(_revision);
+  }
+
   Future<SharedPreferences> get _prefs async =>
       preferences ?? await SharedPreferences.getInstance();
 
@@ -220,6 +234,12 @@ class AccueilActivities extends ChangeNotifier {
         ..threadAnswers.addAll(_parseThreadAnswers(document['threadAnswers']))
         ..moodDays.addAll(_parseMoodDays(document['moodDays']))
         ..decor = parseDecor(document['decor']);
+      final added = document['addedRituals'];
+      if (added is List) {
+        facts.addedRituals.addAll(
+          AccueilRitual.values.where((ritual) => added.contains(ritual.name)),
+        );
+      }
       _publishIfCurrent(revision, facts.snapshot());
     } catch (_) {
       // Des données corrompues ne deviennent jamais un document vide :
@@ -347,6 +367,15 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
+  Future<bool> addRitual(AccueilRitual ritual) {
+    if (_snapshot.isLoading || _snapshot.isWriting || _snapshot.error != null) {
+      return Future.value(false);
+    }
+    if (_snapshot.addedRituals.contains(ritual)) return Future.value(true);
+    final facts = _Facts.of(_snapshot)..addedRituals.add(ritual);
+    return _commit(facts);
+  }
+
   /// Répond au fil : la première réponse confirmée d'une entrée est gardée.
   Future<bool> answerThread({
     required String entryId,
@@ -462,6 +491,7 @@ class AccueilActivities extends ChangeNotifier {
           entry.key.isoDate: entry.value.name,
       },
       'decor': facts.decor.name,
+      'addedRituals': facts.addedRituals.map((ritual) => ritual.name).toList(),
     };
   }
 

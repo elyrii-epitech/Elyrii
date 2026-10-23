@@ -107,6 +107,24 @@ class AppDimensions {
   static const double accueilDressTop = 334;
   static const double dockHeight = 64;
 
+  static const double sectionSkyHeight = 290;
+  static const double sectionBodyOverlap = 30;
+  static const double sectionTitleBottom = 48;
+  static const double sectionScrollThreshold = 190;
+  static const double sectionPeriodTop = 112;
+  static const double gardenTouchPadding = 6;
+  static const double gardenCalendarMinWidth = 350;
+  static const double gardenGap = 6;
+  static const double gardenPlotHeight = 37;
+  static const double gardenPlotInset = (controlSize - gardenPlotHeight) / 2;
+  static const double gardenWeekPlotHeight = 62;
+  static const double gardenPlotRadius = 9;
+  static const double gardenFlowerSize = 27;
+  static const double gardenRewardWidth = 158;
+  static const double gardenRewardHeight = 84;
+  static const double gardenPreviewHeight = 208;
+  static const double gardenBloomSize = 112;
+
   static double dockBottomMargin(double safeBottom) =>
       safeBottom > 0 ? spacing20 : spacing16;
 

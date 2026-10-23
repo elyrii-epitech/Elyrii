@@ -132,6 +132,9 @@ class AppTextStyles {
   static TextStyle labelSmall({Color? color}) =>
       _role(11, FontWeight.w500, null, 0.4, color);
 
+  static TextStyle gardenCaption({Color? color}) =>
+      _role(12, FontWeight.w600, 1.35, 0, color);
+
   /// Tags and badges.
   static TextStyle badge({Color? color}) =>
       _role(11, FontWeight.w700, 1.3, 0.4, color);

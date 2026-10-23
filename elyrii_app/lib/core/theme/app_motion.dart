@@ -27,6 +27,12 @@ abstract final class AppMotion {
   /// Opacité de la bande de verre supérieure.
   static const Duration bandFade = Duration(milliseconds: 200);
 
+  static const Duration gardenSegment = Duration(milliseconds: 150);
+  static const Duration gardenTodayScroll = Duration(milliseconds: 445);
+  static const Duration gardenToast = Duration(milliseconds: 2500);
+  static const Duration gardenBreathPhase = Duration(seconds: 4);
+  static const Duration gardenBreathSession = Duration(minutes: 2);
+
   /// Compaction de la capsule (hauteur, padding, largeur des labels).
   static const Duration capsuleCompact = Duration(milliseconds: 250);
 

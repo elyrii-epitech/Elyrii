@@ -502,7 +502,7 @@ class _Rituals extends StatelessWidget {
               ),
             ),
             Text(
-              '${done.length} sur 3',
+              '${accueilRituals.where((info) => done.containsKey(info.ritual)).length} sur ${accueilRituals.length}',
               style: AppTextStyles.bodySmall(color: context.textTertiary),
             ),
           ],

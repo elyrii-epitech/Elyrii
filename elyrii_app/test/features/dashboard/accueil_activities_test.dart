@@ -171,4 +171,30 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(reloaded.snapshot.decor, MascotDecor.arches);
   });
+
+  test('les idées du Jardin et leurs heures sont isolées par compte', () async {
+    store.onUserChanged(userId: 'alice');
+    await store.reload();
+    expect(await store.addRitual(AccueilRitual.reachOut), isTrue);
+    expect(await store.addRitual(AccueilRitual.reachOut), isTrue);
+    final day = CivilDay.fromLocal(now);
+    await store.setRitualDone(
+      day: day,
+      ritual: AccueilRitual.reachOut,
+      done: true,
+    );
+    await store.reload();
+    expect(store.snapshot.addedRituals, {AccueilRitual.reachOut});
+    expect(
+      store.snapshot.rituals[day]!.completedAt[AccueilRitual.reachOut],
+      now.toUtc(),
+    );
+    store.onUserChanged(userId: 'bob');
+    await store.reload();
+    expect(store.snapshot.addedRituals, isEmpty);
+    expect(store.snapshot.rituals, isEmpty);
+    store.onUserChanged(userId: 'alice');
+    await store.reload();
+    expect(store.snapshot.addedRituals, {AccueilRitual.reachOut});
+  });
 }

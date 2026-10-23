@@ -651,24 +651,24 @@ class WeekFlowers {
   });
 }
 
-/// Une fleur par défi terminé cette semaine, dédupliquée par identifiant.
-/// Sa couleur reprend l'humeur notée ce jour-là sur cet appareil. Un défi
-/// sans date compte pour le Jardin, pas pour la semaine.
-WeekFlowers buildWeekFlowers({
-  required CivilDay today,
+/// Une fleur datée par défi terminé, dédupliquée par identifiant.
+List<WeekFlower> buildGardenFlowers({
   required List<UserChallenge> completedChallenges,
   required AccueilActivitySnapshot activities,
+  CivilDay? start,
+  CivilDay? end,
 }) {
-  final monday = AccueilActivities.mondayOf(today);
-  final sunday = monday.addDays(6);
   final seen = <String>{};
-  final all = <WeekFlower>[];
+  final flowers = <WeekFlower>[];
   for (final challenge in completedChallenges) {
     final completedAt = challenge.completedAt;
     if (completedAt == null || !seen.add(challenge.id)) continue;
     final day = CivilDay.fromLocal(completedAt);
-    if (day.isBefore(monday) || day.isAfter(sunday)) continue;
-    all.add(
+    if (start != null && day.isBefore(start) ||
+        end != null && day.isAfter(end)) {
+      continue;
+    }
+    flowers.add(
       WeekFlower(
         challengeId: challenge.id,
         title: challenge.displayTitle,
@@ -677,7 +677,24 @@ WeekFlowers buildWeekFlowers({
       ),
     );
   }
-  all.sort((a, b) => a.day.compareTo(b.day));
+  flowers.sort((a, b) => a.day.compareTo(b.day));
+  return List.unmodifiable(flowers);
+}
+
+/// Un défi sans date compte pour le Jardin, pas pour la semaine.
+WeekFlowers buildWeekFlowers({
+  required CivilDay today,
+  required List<UserChallenge> completedChallenges,
+  required AccueilActivitySnapshot activities,
+}) {
+  final monday = AccueilActivities.mondayOf(today);
+  final sunday = monday.addDays(6);
+  final all = buildGardenFlowers(
+    completedChallenges: completedChallenges,
+    activities: activities,
+    start: monday,
+    end: sunday,
+  );
   return WeekFlowers(
     monday: monday,
     byWeekday: {

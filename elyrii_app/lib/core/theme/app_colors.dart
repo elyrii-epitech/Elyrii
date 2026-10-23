@@ -101,6 +101,29 @@ class AppColors {
   static Color pink(bool isDark) => isDark ? pinkDark : pinkLight;
   static Color violet(bool isDark) => isDark ? violetDark : violetLight;
 
+  static Color sectionBody(bool dark) =>
+      dark ? const Color(0xFF15121F) : const Color(0xFFF4F3F8);
+  static Color sectionSky(bool dark) =>
+      dark ? const Color(0xFF1B1538) : const Color(0xFFE9E4FB);
+  static Color gardenBoard(bool dark) =>
+      dark ? const Color(0xFF23794D) : const Color(0xFFE3F4EA);
+  static Color gardenBorder(bool dark) =>
+      dark ? const Color(0xFF399A68) : borderLight;
+  static Color gardenPlot(bool dark) =>
+      dark ? const Color(0xFF1C5C3C) : Colors.white;
+  static Color gardenEmptyPlot(bool dark) =>
+      dark ? const Color(0xFF1B5538) : const Color(0x8CFFFFFF);
+  static Color gardenInk(bool dark) =>
+      dark ? Colors.white : const Color(0xFF173B26);
+  static Color gardenNote(bool dark) =>
+      dark ? const Color(0xFFA9DEBE) : const Color(0xFF1E7B49);
+  static Color gardenGroup(bool dark) =>
+      dark ? const Color(0xFF192D29) : surfaceLight;
+  static Color gardenReward(bool dark) =>
+      dark ? const Color(0xFF213329) : surfaceLight;
+  static Color gardenRewardThumb(bool dark) =>
+      dark ? const Color(0xFF315B40) : const Color(0xFFE3F4EA);
+
   /// The 3114 help line: pink in dark, a deeper rose that keeps 4.5:1 on
   /// the light soft-pink card.
   static Color helpInk(bool isDark) =>
