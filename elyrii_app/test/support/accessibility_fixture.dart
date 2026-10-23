@@ -18,7 +18,7 @@ import 'package:elyrii_app/core/storage/local_database.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:elyrii_app/features/chatbot/presentation/providers/chatbot_provider.dart';
-import 'package:elyrii_app/features/coach/presentation/providers/coach_provider.dart';
+import 'package:elyrii_app/features/parcours/presentation/providers/journey_provider.dart';
 import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:elyrii_app/features/dashboard/data/accueil_activities.dart';
 import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
@@ -135,7 +135,7 @@ Widget host(
     ChangeNotifierProvider<UserProvider>.value(value: app.user),
     ChangeNotifierProvider<ChatbotProvider>.value(value: app.chat),
     ChangeNotifierProvider<JournalProvider>.value(value: visualJournals[app]!),
-    ChangeNotifierProvider<CoachProvider>.value(value: app.coach),
+    ChangeNotifierProvider<JourneyProvider>.value(value: app.parcours),
     ChangeNotifierProvider<DashboardProvider>.value(value: app.dashboard),
     ChangeNotifierProvider<AccueilActivities>.value(
       value: app.accueilActivities,

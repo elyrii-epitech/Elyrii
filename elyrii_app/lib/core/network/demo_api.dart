@@ -132,14 +132,14 @@ class DemoApi {
     if (path == '/meditation/catalog' || path.startsWith('/challenge/')) {
       return <dynamic>[];
     }
-    if (path == '/coach/sessions' || path == '/meditation/sessions') {
+    if (path == '/meditation/sessions') {
       if (method == 'GET') {
         return _sessions.values
             .where((s) => s['service'] == uri.pathSegments[0])
             .toList();
       }
     }
-    if (path == '/coach/sessions' || path == '/meditation/sessions/start') {
+    if (path == '/meditation/sessions/start') {
       final id = const Uuid().v4();
       final session = {
         'id': id,

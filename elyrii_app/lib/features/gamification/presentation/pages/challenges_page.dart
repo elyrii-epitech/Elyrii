@@ -23,7 +23,6 @@ import '../../../journal/presentation/providers/journal_provider.dart';
 import '../../../mascot/data/models/mascot_model.dart';
 import '../../../mascot/data/models/mascot_accessory.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
-import '../../data/models/gamification_models.dart';
 import '../providers/gamification_provider.dart';
 
 part 'jardin_calendar.dart';
@@ -56,14 +55,6 @@ final _gardenRituals = List<AccueilRitualInfo>.unmodifiable([
   ...accueilRituals,
   ..._extraRituals,
 ]);
-const _ritualCategories = {
-  AccueilRitual.breathe: 'Calme',
-  AccueilRitual.gratitude: 'Écriture',
-  AccueilRitual.walk: 'Corps',
-  AccueilRitual.reachOut: 'Lien',
-  AccueilRitual.water: 'Corps',
-  AccueilRitual.music: 'Calme',
-};
 
 String _dayLabel(CivilDay day) =>
     AppDates.format(DateTime(day.year, day.month, day.day), 'EEEE d MMMM yyyy');
@@ -82,7 +73,6 @@ class ChallengesPage extends StatefulWidget {
 class _ChallengesPageState extends State<ChallengesPage>
     with WidgetsBindingObserver {
   final _scroll = ScrollController();
-  final _todayKey = GlobalKey();
   final _periodKey = GlobalKey();
   final _frameKey = GlobalKey();
   double? _periodOrigin;
@@ -91,7 +81,6 @@ class _ChallengesPageState extends State<ChallengesPage>
   late CivilMonth _month;
   late CivilDay _monday;
   Timer? _midnight;
-  bool _celebrating = false;
 
   @override
   void initState() {
@@ -213,107 +202,31 @@ class _ChallengesPageState extends State<ChallengesPage>
     );
   }
 
-  void _goToToday() {
-    final target = _todayKey.currentContext;
-    if (target == null) return;
-    Scrollable.ensureVisible(
-      target,
-      duration: MediaQuery.disableAnimationsOf(context)
-          ? Duration.zero
-          : AppMotion.gardenTodayScroll,
-      curve: Curves.easeInOut,
-    );
-  }
-
-  Future<void> _toggle(AccueilRitual ritual, bool done) async {
-    final store = context.read<AccueilActivities>();
-    final snapshot = store.snapshot;
-    if (snapshot.isLoading || snapshot.isWriting || snapshot.error != null) {
-      return;
-    }
-    final garden = context.read<GamificationProvider>();
-    final known = garden.hasLoadedData && garden.error == null;
-    final before = garden.completedChallenges
-        .map((challenge) => challenge.id)
-        .toSet();
-    final day = _today;
-    final saved = await store.setRitualDone(
-      day: day,
-      ritual: ritual,
-      done: done,
-    );
-    if (!saved || !done) return;
-    await garden.loadAll(force: true);
-    final newFlower = garden.completedChallenges.any(
-      (challenge) => !before.contains(challenge.id),
-    );
-    if (!mounted ||
-        !known ||
-        garden.error != null ||
-        !newFlower ||
-        _celebrating ||
-        day != _today) {
-      return;
-    }
-    _celebrating = true;
-    final count = garden.completedChallenges.length;
-    await _show(
-      'Une nouvelle fleur !',
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const _GardenFlower(
-            size: AppDimensions.gardenBloomSize,
-            color: AppColors.yellowDark,
-          ),
-          Text(
-            'Ton jardin en compte $count.',
-            style: AppTextStyles.bodyMedium(color: context.textSecondary),
-          ),
-          const SizedBox(height: AppDimensions.spacing16),
-          Text(
-            "Tu as pris un moment pour toi.\nC'est ça qui compte.",
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall(color: context.textSecondary),
-          ),
-          const SizedBox(height: AppDimensions.spacing16),
-          FilledButton(
-            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
-            child: const Text('Voir mon jardin'),
-          ),
-        ],
-      ),
-    );
-    _celebrating = false;
-  }
-
   void _openDay(
     CivilDay day,
     AccueilActivitySnapshot snapshot,
-    List<WeekFlower> flowers,
-  ) {
-    final done = snapshot.rituals[day];
-    if (flowers.isNotEmpty || done?.completedAt.isNotEmpty == true) {
+    List<WeekFlower> flowers, {
+    required bool flowersKnown,
+  }) {
+    final hasFacts =
+        flowers.isNotEmpty ||
+        snapshot.rituals[day]?.completedAt.isNotEmpty == true;
+    if (day.isAfter(_today)) {
+      _toast(
+        'Cette journée est encore à venir. Ton jardin grandira à ton rythme.',
+      );
+    } else if (!hasFacts && day.isBefore(_today.addDays(-370))) {
+      _toast("L'historique local de cette journée n'est plus disponible.");
+    } else {
       _show(
         _dayLabel(day),
         _FlowerSheet(
           day: day,
-          rituals: done,
+          rituals: snapshot.rituals[day],
           flowers: flowers,
+          flowersKnown: flowersKnown,
           mood: snapshot.moodDays[day],
         ),
-      );
-    } else if (day == _today) {
-      _goToToday();
-    } else if (day.isAfter(_today)) {
-      _toast(
-        'Cette journée est encore à venir. Ton jardin grandira à ton rythme.',
-      );
-    } else if (day.isBefore(_today.addDays(-370))) {
-      _toast("L'historique local de cette journée n'est plus disponible.");
-    } else {
-      _toast(
-        'Pas de défi terminé ce jour-là. Tu peux reprendre quand tu veux.',
       );
     }
   }
@@ -325,8 +238,7 @@ class _ChallengesPageState extends State<ChallengesPage>
     final dark = Theme.of(context).brightness == Brightness.dark;
     final bottom = AppShell.bottomClearanceOf(context);
     final garden = context.watch<GamificationProvider>();
-    final known =
-        garden.hasLoadedData && !garden.isLoading && garden.error == null;
+    final known = garden.hasLoadedData;
     final flowers = buildGardenFlowers(
       completedChallenges: garden.completedChallenges,
       activities: snapshot,
@@ -388,7 +300,9 @@ class _ChallengesPageState extends State<ChallengesPage>
                                 else if (snapshot.error != null)
                                   _localError(snapshot.error!)
                                 else ...[
-                                  if (!known)
+                                  if (garden.isLoading ||
+                                      garden.error != null ||
+                                      !known)
                                     Column(
                                       children: [
                                         Text(
@@ -405,37 +319,35 @@ class _ChallengesPageState extends State<ChallengesPage>
                                             child: const Text('Réessayer'),
                                           ),
                                       ],
-                                    )
-                                  else ...[
-                                    _GardenCalendar(
-                                      today: _today,
-                                      month: _month,
-                                      monday: _monday,
-                                      week: _view == _GardenView.week,
-                                      snapshot: snapshot,
-                                      flowers: flowers,
-                                      onDay: (day) => _openDay(
-                                        day,
-                                        snapshot,
-                                        flowers
-                                            .where(
-                                              (flower) => flower.day == day,
-                                            )
-                                            .toList(),
+                                    ),
+                                  _GardenCalendar(
+                                    today: _today,
+                                    month: _month,
+                                    monday: _monday,
+                                    week: _view == _GardenView.week,
+                                    snapshot: snapshot,
+                                    flowers: flowers,
+                                    flowersKnown: known,
+                                    onDay: (day) => _openDay(
+                                      day,
+                                      snapshot,
+                                      flowers
+                                          .where((flower) => flower.day == day)
+                                          .toList(),
+                                      flowersKnown: known,
+                                    ),
+                                  ),
+                                  if (known && _view == _GardenView.month)
+                                    Text(
+                                      '${flowers.length} fleurs en ${_monthLabel(_month)}',
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.bodySmall(
+                                        color: AppColors.gardenNote(dark),
                                       ),
                                     ),
-                                    if (_view == _GardenView.month)
-                                      Text(
-                                        '${flowers.length} fleurs en ${_monthLabel(_month)}',
-                                        textAlign: TextAlign.center,
-                                        style: AppTextStyles.bodySmall(
-                                          color: AppColors.gardenNote(dark),
-                                        ),
-                                      ),
-                                    if (_view == _GardenView.week)
-                                      _weekAnswer(flowers.length, dark),
-                                  ],
-                                  _rituals(snapshot, dark),
+                                  if (known && _view == _GardenView.week)
+                                    _weekAnswer(flowers.length, dark),
+                                  _recordedGestures(snapshot, dark),
                                 ],
                                 Material(
                                   color: AppColors.gardenGroup(dark),
@@ -452,7 +364,7 @@ class _ChallengesPageState extends State<ChallengesPage>
                                       spacing: AppDimensions.spacing12,
                                       children: [
                                         Text(
-                                          'Faire pousser mon jardin',
+                                          'Les fleurs de ton jardin',
                                           style: AppTextStyles.titleMedium(
                                             color: context.textPrimary,
                                           ),
@@ -462,24 +374,6 @@ class _ChallengesPageState extends State<ChallengesPage>
                                           style: AppTextStyles.bodyMedium(
                                             color: context.textSecondary,
                                           ),
-                                        ),
-                                        FilledButton.tonalIcon(
-                                          style: FilledButton.styleFrom(
-                                            backgroundColor:
-                                                AppColors.primaryText(dark),
-                                            foregroundColor: AppColors.onTint(
-                                              dark,
-                                            ),
-                                          ),
-                                          onPressed: () => _show(
-                                            'Tes défis',
-                                            _GardenChallenges(
-                                              provider: context
-                                                  .read<GamificationProvider>(),
-                                            ),
-                                          ),
-                                          icon: const Icon(Symbols.eco_rounded),
-                                          label: const Text('Choisir un défi'),
                                         ),
                                       ],
                                     ),
@@ -630,95 +524,59 @@ class _ChallengesPageState extends State<ChallengesPage>
         color: AppColors.gardenGroup(dark),
         borderRadius: BorderRadius.circular(AppDimensions.radius20),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$count fleurs cette semaine. Chaque petit geste compte.',
-            style: AppTextStyles.bodyMedium(color: context.textPrimary),
-          ),
-          TextButton.icon(
-            onPressed: () =>
-                _show('Respirer 2 minutes', const _GardenBreathing()),
-            icon: const Icon(Symbols.air_rounded),
-            label: const Text('Respirer 2 min'),
-          ),
-        ],
+      child: Text(
+        '$count fleurs cette semaine. Chaque petit geste compte.',
+        style: AppTextStyles.bodyMedium(color: context.textPrimary),
       ),
     );
   }
 
-  Widget _rituals(AccueilActivitySnapshot snapshot, bool dark) {
-    final selected = _gardenRituals
-        .where(
-          (info) =>
-              accueilRituals.contains(info) ||
-              snapshot.addedRituals.contains(info.ritual),
-        )
-        .toList();
+  Widget _recordedGestures(AccueilActivitySnapshot snapshot, bool dark) {
     final done =
         snapshot.rituals[_today]?.completedAt ??
         const <AccueilRitual, DateTime>{};
     return Column(
-      key: _todayKey,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          spacing: AppDimensions.spacing8,
-          runSpacing: AppDimensions.spacing8,
-          children: [
-            Text(
-              "Aujourd'hui",
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
-            Text(
-              '${selected.where((info) => done.containsKey(info.ritual)).length} sur ${selected.length}',
-              style: AppTextStyles.bodySmall(color: context.textSecondary),
-            ),
-          ],
+        Text(
+          "Aujourd'hui",
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
         ),
         const SizedBox(height: AppDimensions.spacing12),
         Material(
           color: AppColors.gardenGroup(dark),
           borderRadius: BorderRadius.circular(AppDimensions.radius20),
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              for (final info in selected)
-                _RitualRow(
-                  info: info,
-                  detail: ritualDetail(info, done[info.ritual]),
-                  trailing: Checkbox(
-                    value: done.containsKey(info.ritual),
-                    semanticLabel: info.title,
-                    onChanged: snapshot.isWriting
-                        ? null
-                        : (value) => _toggle(info.ritual, value!),
+          child: done.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(AppDimensions.spacing16),
+                  child: Text(
+                    "Aucun geste enregistré sur cet appareil aujourd'hui.",
+                    style: AppTextStyles.bodyMedium(
+                      color: context.textSecondary,
+                    ),
                   ),
-                ),
-              ListTile(
-                leading: Icon(
-                  Symbols.add_rounded,
-                  color: AppColors.primaryText(dark),
-                ),
-                title: Text(
-                  'Ajouter un rituel',
-                  style: AppTextStyles.titleSmall(
-                    color: AppColors.primaryText(dark),
-                  ),
-                ),
-                onTap: snapshot.isWriting
-                    ? null
-                    : () => _show(
-                        'Ajouter un rituel',
-                        _AddRitualSheet(
-                          store: context.read<AccueilActivities>(),
+                )
+              : Column(
+                  children: [
+                    for (final entry in done.entries)
+                      _RitualRow(
+                        info: _gardenRituals.firstWhere(
+                          (info) => info.ritual == entry.key,
+                        ),
+                        detail: ritualDetail(
+                          _gardenRituals.firstWhere(
+                            (info) => info.ritual == entry.key,
+                          ),
+                          entry.value,
+                        ),
+                        trailing: Icon(
+                          Symbols.check_rounded,
+                          color: AppColors.green(dark),
                         ),
                       ),
-              ),
-            ],
-          ),
+                  ],
+                ),
         ),
       ],
     );

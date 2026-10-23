@@ -7,13 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:elyrii_app/app/router/app_router.dart';
 import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
+import 'package:elyrii_app/core/storage/content_cipher.dart';
 import 'package:elyrii_app/core/widgets/glass_navigation_bar.dart';
 import 'package:elyrii_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:elyrii_app/features/journal/presentation/providers/journal_provider.dart';
 import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
-import 'package:elyrii_app/features/coach/presentation/providers/coach_provider.dart';
+import 'package:elyrii_app/features/parcours/data/journey_repository.dart';
+import 'package:elyrii_app/features/parcours/presentation/providers/journey_provider.dart';
 import 'package:elyrii_app/features/settings/providers/settings_provider.dart';
 
 void main() {
@@ -53,7 +55,11 @@ void main() {
               create: (_) => GamificationProvider(client: apiClient),
             ),
             ChangeNotifierProvider(
-              create: (_) => CoachProvider(client: apiClient),
+              create: (_) => JourneyProvider(
+                repository: JourneyRepository(
+                  cipher: ContentCipher(secureStorage),
+                ),
+              ),
             ),
             ChangeNotifierProvider(
               create: (_) => UserProvider(client: apiClient),

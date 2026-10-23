@@ -83,11 +83,13 @@ class _FlowerSheet extends StatelessWidget {
   final CivilDay day;
   final RitualDay? rituals;
   final List<WeekFlower> flowers;
+  final bool flowersKnown;
   final MoodType? mood;
   const _FlowerSheet({
     required this.day,
     required this.rituals,
     required this.flowers,
+    required this.flowersKnown,
     required this.mood,
   });
   @override
@@ -138,9 +140,11 @@ class _FlowerSheet extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      flowers.isEmpty
+                      flowers.isNotEmpty
+                          ? '${flowers.length} ${flowers.length == 1 ? 'fleur a poussé' : 'fleurs ont poussé'} ce jour-là.'
+                          : rituals?.completedAt.isNotEmpty == true
                           ? 'Tes petits gestes sont enregistrés.'
-                          : '${flowers.length} ${flowers.length == 1 ? 'fleur a poussé' : 'fleurs ont poussé'} ce jour-là.',
+                          : 'Aucun geste enregistré sur cet appareil ce jour-là.',
                       style: AppTextStyles.bodySmall(
                         color: context.textSecondary,
                       ),
@@ -151,6 +155,11 @@ class _FlowerSheet extends StatelessWidget {
             ],
           ),
         ),
+        if (!flowersKnown)
+          Text(
+            'Les fleurs de cette journée ne sont pas disponibles. Tes gestes locaux restent consultables.',
+            style: AppTextStyles.bodySmall(color: context.textSecondary),
+          ),
         if (flowers.isNotEmpty)
           Text(
             'Tes défis terminés',
@@ -213,95 +222,6 @@ class _FlowerSheet extends StatelessWidget {
   }
 }
 
-class _AddRitualSheet extends StatefulWidget {
-  final AccueilActivities store;
-  const _AddRitualSheet({required this.store});
-  @override
-  State<_AddRitualSheet> createState() => _AddRitualSheetState();
-}
-
-class _AddRitualSheetState extends State<_AddRitualSheet> {
-  String _category = 'Tous';
-  bool _saving = false;
-  String? _error;
-
-  Future<void> _add(AccueilRitualInfo info) async {
-    if (_saving) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    final saved = await widget.store.addRitual(info.ritual);
-    if (!mounted) return;
-    if (saved) {
-      Navigator.of(context).pop();
-      return;
-    }
-    setState(() {
-      _saving = false;
-      _error =
-          widget.store.snapshot.error ??
-          'Le rituel n’a pas pu être ajouté. Réessaie.';
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => Column(
-    mainAxisSize: MainAxisSize.min,
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    spacing: AppDimensions.spacing16,
-    children: [
-      Text(
-        "Un petit geste qui te fait du bien. Un seul suffit pour aujourd'hui.",
-        style: AppTextStyles.bodyMedium(color: context.textSecondary),
-      ),
-      Wrap(
-        spacing: AppDimensions.gardenGap,
-        runSpacing: AppDimensions.gardenGap,
-        children: [
-          for (final category in ['Tous', 'Calme', 'Corps', 'Lien', 'Écriture'])
-            ChoiceChip(
-              label: Text(category),
-              selected: category == _category,
-              onSelected: _saving
-                  ? null
-                  : (_) => setState(() => _category = category),
-            ),
-        ],
-      ),
-      if (_error != null)
-        Text(
-          _error!,
-          style: AppTextStyles.bodySmall(
-            color: AppColors.errorText(
-              Theme.of(context).brightness == Brightness.dark,
-            ),
-          ),
-        ),
-      for (final info in _gardenRituals.where(
-        (info) =>
-            _category == 'Tous' || _ritualCategories[info.ritual] == _category,
-      ))
-        _RitualRow(
-          info: info,
-          detail: info.pendingDetail,
-          trailing:
-              accueilRituals.contains(info) ||
-                  widget.store.snapshot.addedRituals.contains(info.ritual)
-              ? const Icon(
-                  Symbols.check_rounded,
-                  semanticLabel: 'Déjà dans ta journée',
-                )
-              : IconButton(
-                  onPressed: _saving ? null : () => _add(info),
-                  tooltip: 'Ajouter ${info.title}',
-                  icon: const Icon(Symbols.add_circle_rounded),
-                ),
-        ),
-    ],
-  );
-}
-
 class _RewardSheet extends StatelessWidget {
   final MascotAccessory reward;
   final int count;
@@ -362,325 +282,6 @@ class _RewardSheet extends StatelessWidget {
           style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
       ],
-    );
-  }
-}
-
-class _GardenBreathing extends StatefulWidget {
-  const _GardenBreathing();
-  @override
-  State<_GardenBreathing> createState() => _GardenBreathingState();
-}
-
-class _GardenBreathingState extends State<_GardenBreathing>
-    with WidgetsBindingObserver {
-  Timer? _timer;
-  DateTime? _started;
-  int _seconds = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  void _tick({int minimum = 0}) {
-    if (_started == null) return;
-    setState(
-      () => _seconds = math.max(
-        minimum,
-        DateTime.now().difference(_started!).inSeconds,
-      ),
-    );
-    if (_seconds >= AppMotion.gardenBreathSession.inSeconds) _timer?.cancel();
-  }
-
-  void _start() {
-    setState(() {
-      _started = DateTime.now();
-      _seconds = 0;
-    });
-    _timer = Timer.periodic(
-      AppMotion.gardenBreathPhase,
-      (timer) =>
-          _tick(minimum: timer.tick * AppMotion.gardenBreathPhase.inSeconds),
-    );
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _started != null) _tick();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final finished = _seconds >= AppMotion.gardenBreathSession.inSeconds;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: AppDimensions.spacing16,
-      children: [
-        Icon(
-          Symbols.air_rounded,
-          size: AppDimensions.controlSize,
-          color: AppColors.teal(
-            Theme.of(context).brightness == Brightness.dark,
-          ),
-        ),
-        Text(
-          "Inspire doucement. Expire à ton rythme. Tu n'as rien à réussir.",
-          style: AppTextStyles.bodyMedium(color: context.textSecondary),
-        ),
-        Semantics(
-          liveRegion: true,
-          child: FilledButton(
-            onPressed: _started == null
-                ? _start
-                : finished
-                ? () => Navigator.of(context).pop()
-                : null,
-            child: Text(
-              _started == null
-                  ? 'Commencer'
-                  : finished
-                  ? 'Terminer mon moment'
-                  : (_seconds ~/ AppMotion.gardenBreathPhase.inSeconds).isEven
-                  ? 'Inspire doucement · 4 secondes'
-                  : 'Expire doucement · 4 secondes',
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _GardenChallenges extends StatefulWidget {
-  final GamificationProvider provider;
-  const _GardenChallenges({required this.provider});
-
-  @override
-  State<_GardenChallenges> createState() => _GardenChallengesState();
-}
-
-class _GardenChallengesState extends State<_GardenChallenges> {
-  bool _busy = false;
-  String? _feedback;
-
-  Future<void> _perform(Future<bool> Function() command, String success) async {
-    if (_busy) return;
-    setState(() {
-      _busy = true;
-      _feedback = null;
-    });
-    final saved = await command();
-    if (!mounted) return;
-    setState(() {
-      _busy = false;
-      _feedback = saved
-          ? success
-          : widget.provider.error ??
-                'Le changement n’a pas été enregistré. Réessaie.';
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: widget.provider,
-    builder: (context, child) {
-      final provider = widget.provider;
-      final dark = Theme.of(context).brightness == Brightness.dark;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: AppDimensions.spacing16,
-        children: [
-          Text(
-            'Un petit pas à ton rythme. Les défis terminés font pousser les fleurs de ton jardin.',
-            style: AppTextStyles.bodyMedium(color: context.textSecondary),
-          ),
-          if (_feedback != null && provider.error == null)
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                _feedback!,
-                style: AppTextStyles.bodySmall(color: context.textPrimary),
-              ),
-            ),
-          if (provider.isLoading)
-            const Center(child: CircularProgressIndicator())
-          else if (provider.error != null) ...[
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                provider.error!,
-                style: AppTextStyles.bodyMedium(
-                  color: AppColors.errorText(dark),
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: _busy ? null : () => provider.loadAll(force: true),
-              child: const Text('Réessayer'),
-            ),
-          ] else if (provider.hasLoadedData) ...[
-            Text(
-              'En cours',
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
-            if (provider.activeChallenges.isEmpty)
-              Text(
-                'Aucun défi en cours. Choisis une idée qui te fait du bien.',
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
-              ),
-            for (final challenge in provider.activeChallenges)
-              _ChallengeIdea(
-                title: challenge.displayTitle,
-                description: challenge.displayDescription,
-                progress: challenge,
-              ),
-            Text(
-              'Les idées d’Elyrii',
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
-            if (provider.proposals.isEmpty)
-              Text(
-                'Pas de proposition pour le moment.',
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
-              ),
-            for (final proposal in provider.proposals)
-              _ChallengeIdea(
-                title: proposal.displayTitle,
-                description: proposal.displayDescription,
-                action: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: AppDimensions.spacing8,
-                  children: [
-                    TextButton(
-                      onPressed: _busy
-                          ? null
-                          : () => _perform(
-                              () => provider.rejectChallenge(proposal.id),
-                              'La proposition a été retirée.',
-                            ),
-                      child: const Text('Refuser'),
-                    ),
-                    FilledButton.tonal(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primaryText(dark),
-                        foregroundColor: AppColors.onTint(dark),
-                      ),
-                      onPressed: _busy
-                          ? null
-                          : () => _perform(
-                              () => provider.acceptChallenge(proposal.id),
-                              'Ton défi est en cours.',
-                            ),
-                      child: const Text('Accepter'),
-                    ),
-                  ],
-                ),
-              ),
-            Text(
-              'Idées de défis',
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
-            if (provider.availableChallenges.isEmpty)
-              Text(
-                'Les prochains défis apparaîtront ici.',
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
-              ),
-            for (final challenge in provider.availableChallenges)
-              _ChallengeIdea(
-                title: challenge.title,
-                description: challenge.description ?? '',
-                action: TextButton.icon(
-                  onPressed: _busy
-                      ? null
-                      : () => _perform(
-                          () => provider.startChallenge(challenge.id),
-                          'Ton défi est en cours.',
-                        ),
-                  icon: const Icon(Symbols.add_rounded),
-                  label: const Text('Commencer'),
-                ),
-              ),
-          ],
-        ],
-      );
-    },
-  );
-}
-
-class _ChallengeIdea extends StatelessWidget {
-  final String title;
-  final String description;
-  final UserChallenge? progress;
-  final Widget? action;
-  const _ChallengeIdea({
-    required this.title,
-    required this.description,
-    this.progress,
-    this.action,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final challenge = progress;
-    return Material(
-      color: AppColors.gardenGroup(dark),
-      borderRadius: BorderRadius.circular(AppDimensions.radius16),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: AppDimensions.spacing8,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Symbols.eco_rounded,
-                  size: AppDimensions.iconSm,
-                  color: AppColors.green(dark),
-                ),
-                const SizedBox(width: AppDimensions.spacing8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTextStyles.titleSmall(color: context.textPrimary),
-                  ),
-                ),
-              ],
-            ),
-            if (description.isNotEmpty)
-              Text(
-                description,
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
-              ),
-            if (challenge != null && challenge.progress != null) ...[
-              Text(
-                challenge.progressText,
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
-              ),
-              LinearProgressIndicator(
-                value: challenge.progressFraction,
-                color: AppColors.green(dark),
-                backgroundColor: AppColors.track(dark),
-              ),
-            ],
-            if (action != null)
-              Align(alignment: Alignment.centerRight, child: action),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -21,7 +21,8 @@ import '../features/journal/data/repositories/journal_repository.dart';
 import '../features/journal/data/repositories/journal_store.dart';
 import '../features/journal/presentation/providers/journal_provider.dart';
 import '../features/settings/providers/settings_provider.dart';
-import '../features/coach/presentation/providers/coach_provider.dart';
+import '../features/parcours/data/journey_repository.dart';
+import '../features/parcours/presentation/providers/journey_provider.dart';
 import '../features/dashboard/data/accueil_activities.dart';
 import '../features/dashboard/presentation/providers/dashboard_provider.dart';
 import '../features/gamification/presentation/providers/gamification_provider.dart';
@@ -40,7 +41,7 @@ class AppDependencies {
   late final AuthProvider auth;
   late final UserProvider user;
   late final JournalProvider journal;
-  late final CoachProvider coach;
+  late final JourneyProvider parcours;
   late final ChatbotProvider chat;
   late final AccueilActivities accueilActivities;
   late final DashboardProvider dashboard;
@@ -66,7 +67,7 @@ class AppDependencies {
     journal = JournalProvider(
       repository: JournalRepository(client: api, store: journalStore),
     );
-    coach = CoachProvider(client: api);
+    parcours = JourneyProvider(repository: JourneyRepository(cipher: cipher));
     chat = ChatbotProvider(
       storage: storage,
       history: history,
@@ -139,7 +140,7 @@ class AppDependencies {
     final revision = _revision;
     profileSetupDone.value = auth.isDemoSession || owner == null;
     user.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
-    coach.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
+    parcours.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     journal.onUserChanged(owner);
     accueilActivities.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
     dashboard.onUserChanged(userId: owner, isDemo: auth.isDemoSession);
@@ -252,6 +253,7 @@ class AppDependencies {
       journalStore.deleteOwner(owner),
       history.deleteOwner(owner),
       accueilActivities.deleteOwner(owner),
+      parcours.deleteOwner(owner),
       storage.clearProfileSetup(owner),
       cipher.deleteOwner(owner),
       () async {
@@ -311,7 +313,7 @@ class AppDependencies {
     api.onUnauthorized = null;
     chat.dispose();
     journal.dispose();
-    coach.dispose();
+    parcours.dispose();
     user.dispose();
     dashboard.dispose();
     accueilActivities.dispose();

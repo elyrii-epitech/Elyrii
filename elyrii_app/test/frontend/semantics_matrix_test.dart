@@ -13,7 +13,7 @@ import 'package:elyrii_app/features/auth/presentation/pages/login_page.dart';
 import 'package:elyrii_app/features/auth/presentation/pages/register_page.dart';
 import 'package:elyrii_app/features/auth/presentation/pages/password_reset_page.dart';
 import 'package:elyrii_app/features/chatbot/presentation/pages/chatbot_page.dart';
-import 'package:elyrii_app/features/coach/presentation/pages/coach_page.dart';
+import 'package:elyrii_app/features/parcours/presentation/pages/parcours_page.dart';
 import 'package:elyrii_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:elyrii_app/features/gamification/presentation/pages/challenges_page.dart';
 import 'package:elyrii_app/features/journal/presentation/pages/journal_page.dart';
@@ -157,7 +157,7 @@ void main() {
     'challenges': const ChallengesPage(),
     'journal': const JournalPage(),
     'chat': const ChatbotPage(),
-    'coach': const CoachPage(),
+    'parcours': const ParcoursPage(),
     'meditation': const MeditationPage(),
     'profile-setup': const ProfileSetupPage(),
     'profile': const ProfilePage(),

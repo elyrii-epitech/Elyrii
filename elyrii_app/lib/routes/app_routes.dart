@@ -5,7 +5,7 @@ class AppRoutes {
   static const String reviews = '/reviews';
   static const String challenges = '/challenges';
   static const String journal = '/journal';
-  static const String coach = '/coach';
+  static const String parcours = '/parcours';
   static const String meditation = '/meditation';
   static const String meditationSession = '/meditation/session';
   static const String chatbot = '/chatbot';

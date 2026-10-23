@@ -142,6 +142,7 @@ Future<void> exportAccount(BuildContext context) async {
     final remote = await services.api.get('${ApiConfig.baseUrl}/user/export');
     final local = await services.history.exportOwner(owner);
     final drafts = await services.journalStore.exportDrafts(owner);
+    final journey = await services.parcours.exportOwner(owner);
     if (!context.mounted ||
         services.auth.accountId != owner ||
         revision != services.auth.sessionRevision) {
@@ -149,7 +150,12 @@ Future<void> exportAccount(BuildContext context) async {
     }
     await PrivateExport.share(
       context,
-      {'server': remote, 'localConversations': local, 'localDrafts': drafts},
+      {
+        'server': remote,
+        'localConversations': local,
+        'localDrafts': drafts,
+        'localJourney': journey,
+      },
       title: 'Mes données Elyrii',
       isCurrentOwner: () =>
           services.auth.accountId == owner &&

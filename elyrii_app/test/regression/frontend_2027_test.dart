@@ -159,8 +159,6 @@ void main() {
       await api.post(
         ApiConfig.completeMeditationSessionUrl(session['id'] as String),
       );
-      await api.get(ApiConfig.coachSessionsUrl);
-      await api.post(ApiConfig.coachSessionsUrl, body: {'prompt': 'Demo'});
       await api.get('${ApiConfig.baseUrl}/user/export');
       expect(network, 0);
       await api.post(ApiConfig.loginUrl, auth: false);

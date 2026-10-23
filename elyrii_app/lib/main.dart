@@ -24,7 +24,7 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/settings/providers/settings_provider.dart';
 import 'features/journal/presentation/providers/journal_provider.dart';
 import 'features/chatbot/presentation/providers/chatbot_provider.dart';
-import 'features/coach/presentation/providers/coach_provider.dart';
+import 'features/parcours/presentation/providers/journey_provider.dart';
 
 import 'package:elyrii_app/features/dashboard/data/accueil_activities.dart';
 import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
@@ -200,7 +200,9 @@ class _ApplicationBootstrapState extends State<ApplicationBootstrap> {
             value: services.journal,
           ),
           ChangeNotifierProvider<ChatbotProvider>.value(value: services.chat),
-          ChangeNotifierProvider<CoachProvider>.value(value: services.coach),
+          ChangeNotifierProvider<JourneyProvider>.value(
+            value: services.parcours,
+          ),
           ChangeNotifierProvider<DashboardProvider>.value(
             value: services.dashboard,
           ),

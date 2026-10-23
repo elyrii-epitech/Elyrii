@@ -6,7 +6,7 @@ import '../../features/auth/presentation/pages/password_reset_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/chatbot/presentation/pages/chatbot_page.dart';
-import '../../features/coach/presentation/pages/coach_page.dart';
+import '../../features/parcours/presentation/pages/parcours_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/gamification/presentation/pages/challenges_page.dart';
 import '../../features/journal/presentation/pages/journal_page.dart';
@@ -123,12 +123,12 @@ abstract final class AppRouter {
                 ),
               ],
             ),
-            // Onglet 4 : Coach bien-être
+            // Onglet 4 : Parcours choisis
             StatefulShellBranch(
               routes: [
                 GoRoute(
-                  path: AppRoutes.coach,
-                  builder: (context, state) => const CoachPage(),
+                  path: AppRoutes.parcours,
+                  builder: (context, state) => const ParcoursPage(),
                 ),
               ],
             ),

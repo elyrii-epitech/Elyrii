@@ -7,6 +7,7 @@ class _GardenCalendar extends StatelessWidget {
   final bool week;
   final AccueilActivitySnapshot snapshot;
   final List<WeekFlower> flowers;
+  final bool flowersKnown;
   final ValueChanged<CivilDay> onDay;
 
   const _GardenCalendar({
@@ -16,6 +17,7 @@ class _GardenCalendar extends StatelessWidget {
     required this.week,
     required this.snapshot,
     required this.flowers,
+    required this.flowersKnown,
     required this.onDay,
   });
 
@@ -101,7 +103,12 @@ class _GardenCalendar extends StatelessWidget {
                   ),
                 Padding(
                   padding: const EdgeInsets.all(AppDimensions.spacing8),
-                  child: week
+                  child: !flowersKnown
+                      ? Text(
+                          'Les fleurs de cette période ne sont pas disponibles.',
+                          style: AppTextStyles.bodySmall(color: ink),
+                        )
+                      : week
                       ? Row(
                           children: [
                             Text(
@@ -115,7 +122,7 @@ class _GardenCalendar extends StatelessWidget {
                             const SizedBox(width: AppDimensions.spacing12),
                             Expanded(
                               child: Text(
-                                'fleurs cette semaine\n${flowerDays.length} jours où tu as pris soin de toi',
+                                'fleurs cette semaine\n${flowerDays.length} journées avec une fleur',
                                 style: AppTextStyles.bodySmall(color: ink),
                               ),
                             ),
@@ -210,11 +217,15 @@ class _GardenCalendar extends StatelessWidget {
           label:
               '${_dayLabel(day)}, ${flower
                   ? 'une fleur'
+                  : facts?.completedAt.isNotEmpty == true
+                  ? '${facts!.completedAt.length} gestes enregistrés'
                   : day == today
                   ? "aujourd'hui"
                   : day.isAfter(today)
                   ? 'à venir'
-                  : 'sans défi terminé'}',
+                  : day.isBefore(today.addDays(-370))
+                  ? 'historique local indisponible'
+                  : 'aucun geste enregistré sur cet appareil'}${flowersKnown ? '' : ', fleurs non chargées'}',
           excludeSemantics: true,
           child: Material(
             color: Colors.transparent,
@@ -293,7 +304,7 @@ class _GardenCalendar extends StatelessWidget {
                 ? day.isAfter(today)
                       ? 'À venir'
                       : day == today
-                      ? 'À toi'
+                      ? "Aujourd'hui"
                       : '—'
                 : switch (info.ritual) {
                     AccueilRitual.breathe => 'Souffle',
