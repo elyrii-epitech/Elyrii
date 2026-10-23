@@ -215,6 +215,23 @@ class AppDimensions {
   static const double profileChartIcon = 28;
   static const double profileHairline = .5;
 
+  static const double arrivalSceneHeight = 360;
+  static const double arrivalSheetTop = 326;
+  static const double arrivalHeroTop = 56;
+  static const double arrivalHeroSize = 270;
+  static const double arrivalLaunchHero = 360;
+  static const double arrivalLaunchTop = 190;
+  static const double arrivalWordTop = 552;
+  static const double arrivalResetTop = 120;
+  static const double arrivalPalette = 42;
+  static const double arrivalDecorHeight = 50;
+  static const double arrivalMinBody = 520;
+  static const double arrivalProgressHeight = 4;
+  static const double arrivalHeroFadeRange = 260;
+  static const double arrivalAuthThreshold = 240;
+  static const double arrivalStepThreshold = 220;
+  static const double arrivalGoalThreshold = 80;
+
   static double dockBottomMargin(double safeBottom) =>
       safeBottom > 0 ? spacing20 : spacing16;
 

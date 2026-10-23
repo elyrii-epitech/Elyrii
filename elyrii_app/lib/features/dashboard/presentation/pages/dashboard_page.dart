@@ -20,6 +20,7 @@ import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/app_sheet_route.dart';
+import '../../../../core/widgets/accueil_scene.dart';
 import '../../../../core/widgets/mascot_contact_shadow.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../../core/widgets/night_painter.dart';
@@ -46,7 +47,6 @@ part 'accueil_frame.dart';
 part 'accueil_sections.dart';
 part 'accueil_overlays.dart';
 part 'accueil_dressing.dart';
-part 'accueil_scene.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});

@@ -103,7 +103,7 @@ class _AccueilFrame extends StatelessWidget {
                           valueListenable: preview,
                           builder: (_, look, _) => CustomPaint(
                             size: Size.infinite,
-                            painter: _ScenePainter(
+                            painter: AccueilScenePainter(
                               decor: look?.decor ?? activities.decor,
                               dark: dark,
                             ),

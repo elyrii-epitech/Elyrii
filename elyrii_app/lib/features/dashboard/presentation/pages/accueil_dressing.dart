@@ -702,7 +702,7 @@ class _DressingState extends State<_Dressing> {
                                   : .45,
                               child: CustomPaint(
                                 size: const Size(double.infinity, 92),
-                                painter: _ScenePainter(
+                                painter: AccueilScenePainter(
                                   decor: decor,
                                   dark: dark,
                                   thumbnail: true,

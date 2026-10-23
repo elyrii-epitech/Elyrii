@@ -1,13 +1,17 @@
-part of 'dashboard_page.dart';
+import 'dart:math' as math;
 
-class _ScenePainter extends CustomPainter {
+import 'package:flutter/material.dart';
+
+import '../../features/dashboard/data/accueil_activities.dart';
+
+class AccueilScenePainter extends CustomPainter {
   /// Art line kept at its phone-frame height when a wide column makes the art
   /// overflow vertically, so the moon and the ground both stay in view.
   static const _horizon = 300.0;
   final MascotDecor decor;
   final bool dark;
   final bool thumbnail;
-  const _ScenePainter({
+  const AccueilScenePainter({
     required this.decor,
     required this.dark,
     this.thumbnail = false,
@@ -194,6 +198,8 @@ class _ScenePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ScenePainter oldDelegate) =>
-      oldDelegate.decor != decor || oldDelegate.dark != dark;
+  bool shouldRepaint(AccueilScenePainter oldDelegate) =>
+      oldDelegate.decor != decor ||
+      oldDelegate.dark != dark ||
+      oldDelegate.thumbnail != thumbnail;
 }

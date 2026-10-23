@@ -28,7 +28,7 @@ class AppTextStyles {
 
   /// The "elyrii" logotype on the launch screen: light and widely spaced.
   static TextStyle wordmark({Color? color}) =>
-      _role(38, FontWeight.w500, 1.2, 3, color);
+      _role(28, FontWeight.w500, 1.2, 3, color);
 
   /// Root page title, rendered by `ElyriiPageFrame` only.
   static TextStyle pageTitle({Color? color}) =>
