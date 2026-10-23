@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/widgets/elyrii_page_header.dart';
 import 'package:elyrii_app/core/widgets/glass/elyrii_back_button.dart';
-import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -21,23 +18,12 @@ void main() {
   });
 
   for (final level in ElyriiTitleLevel.values) {
-    testWidgets('tirer pour actualiser déclenche le rappel, ${level.name}', (
+    testWidgets('le défilement reste dans ses limites, ${level.name}', (
       tester,
     ) async {
-      var refreshes = 0;
-      final pendingRefresh = Completer<void>();
-      addTearDown(() {
-        if (!pendingRefresh.isCompleted) pendingRefresh.complete();
-      });
-      Future<void> refresh() {
-        refreshes++;
-        return pendingRefresh.future;
-      }
-
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
       final slivers = [const SliverToBoxAdapter(child: SizedBox(height: 1200))];
-      const physics = BouncingScrollPhysics(
-        parent: AlwaysScrollableScrollPhysics(),
-      );
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.lightTheme,
@@ -50,43 +36,59 @@ void main() {
             body: level == ElyriiTitleLevel.tab
                 ? ElyriiPageFrame.tab(
                     title: 'Journal',
-                    physics: physics,
+                    controller: controller,
                     slivers: slivers,
-                    onRefresh: refresh,
                   )
                 : ElyriiPageFrame.detail(
                     title: 'Bilan',
                     leading: ElyriiBackButton(onPressed: () {}),
-                    physics: physics,
+                    controller: controller,
                     slivers: slivers,
-                    onRefresh: refresh,
                   ),
           ),
         ),
       );
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 600));
-      await tester.pump();
-      for (var frame = 0; frame < 120; frame++) {
-        await tester.pump(const Duration(milliseconds: 16));
-      }
-      expect(refreshes, 1);
-      final indicator = tester.getRect(
-        find.byType(CupertinoActivityIndicator, skipOffstage: false),
-      );
-      final frameContext = tester.element(find.byType(ElyriiPageFrame));
-      expect(
-        indicator.top,
-        greaterThanOrEqualTo(ElyriiHeaderBar.extentOf(frameContext)),
-        reason:
-            'L’actualisation reste visible sous la barre et la zone système.',
-      );
-      pendingRefresh.complete();
       await tester.pumpAndSettle();
-      expect(find.byType(CupertinoActivityIndicator), findsNothing);
+      expect(controller.offset, 0);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -2000));
+      await tester.pumpAndSettle();
+      expect(controller.offset, controller.position.maxScrollExtent);
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -600));
+      await tester.pump();
+      expect(controller.offset, controller.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+      expect(find.byType(RefreshIndicator), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }
+
+  testWidgets('une page courte reste immobile dans les deux sens', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme.copyWith(platform: TargetPlatform.iOS),
+        home: Scaffold(
+          body: ElyriiPageFrame.tab(
+            title: 'Page courte',
+            controller: controller,
+            slivers: const [SliverToBoxAdapter(child: SizedBox(height: 80))],
+          ),
+        ),
+      ),
+    );
+    for (final distance in [400.0, -400.0]) {
+      await tester.drag(find.byType(CustomScrollView), Offset(0, distance));
+      await tester.pump();
+      expect(controller.offset, 0);
+      expect(controller.position.maxScrollExtent, 0);
+      await tester.pumpAndSettle();
+    }
+  });
 
   for (final title in ['Jardin', 'Bon après-midi, Marie-Claire']) {
     testWidgets(

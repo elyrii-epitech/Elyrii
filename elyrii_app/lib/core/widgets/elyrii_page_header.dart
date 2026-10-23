@@ -1,7 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart' show ValueListenable;
-import 'package:flutter/cupertino.dart' show CupertinoSliverRefreshControl;
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -27,8 +26,6 @@ class ElyriiPageFrame extends StatefulWidget {
     this.actions = const [],
     required this.slivers,
     this.controller,
-    this.physics,
-    this.onRefresh,
   }) : level = ElyriiTitleLevel.tab;
 
   const ElyriiPageFrame.detail({
@@ -38,8 +35,6 @@ class ElyriiPageFrame extends StatefulWidget {
     this.actions = const [],
     required this.slivers,
     this.controller,
-    this.physics,
-    this.onRefresh,
   }) : level = ElyriiTitleLevel.detail,
        eyebrow = null;
 
@@ -52,10 +47,6 @@ class ElyriiPageFrame extends StatefulWidget {
   final List<Widget> actions;
   final List<Widget> slivers;
   final ScrollController? controller;
-  final ScrollPhysics? physics;
-
-  /// Pull-to-refresh belongs before the header spacer to receive overscroll.
-  final Future<void> Function()? onRefresh;
 
   @override
   State<ElyriiPageFrame> createState() => _ElyriiPageFrameState();
@@ -102,31 +93,8 @@ class _ElyriiPageFrameState extends State<ElyriiPageFrame> {
               },
               child: CustomScrollView(
                 controller: widget.controller,
-                physics:
-                    widget.physics ?? const AlwaysScrollableScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 slivers: [
-                  if (widget.onRefresh case final onRefresh?)
-                    CupertinoSliverRefreshControl(
-                      onRefresh: onRefresh,
-                      builder:
-                          (
-                            context,
-                            state,
-                            pulledExtent,
-                            triggerDistance,
-                            indicatorExtent,
-                          ) => Transform.translate(
-                            offset: Offset(0, extent),
-                            child:
-                                CupertinoSliverRefreshControl.buildRefreshIndicator(
-                                  context,
-                                  state,
-                                  pulledExtent,
-                                  triggerDistance,
-                                  indicatorExtent,
-                                ),
-                          ),
-                    ),
                   SliverToBoxAdapter(child: SizedBox(height: extent)),
                   if (isTab)
                     SliverToBoxAdapter(

@@ -93,12 +93,22 @@ mesures sur les contenus effectivement visibles de la fixture : elles ne
 couvrent pas automatiquement tous les avatars, photos, états vides/erreurs et
 couleurs qu’un utilisateur peut produire.
 
-`ElyriiPageFrame.onRefresh` place le contrôle Cupertino avant l'espace réservé
-à la barre et le grand titre. Les pages Journal, Jardin, Coach et Bilan lui
-passent leur rappel d'actualisation. L'indicateur apparaît sous la barre,
-hors de la zone système supérieure. Les tests d'en-tête vérifient le geste
-de tirage, l'appel du rappel, la position de l'indicateur pendant l'attente
-et sa disparition après actualisation, pour les cadres d'onglet et de détail.
+Les pages utilisent un défilement borné, sans rebond ni geste d’actualisation.
+Un contenu plus court que l’écran reste immobile. Le chargement à l’ouverture
+et à la reprise de l’application conserve son comportement existant.
+Les tests d’en-tête vérifient que les gestes aux deux extrémités ne déplacent
+pas le contenu au-delà de ses limites, pour les cadres d’onglet et de détail.
+Les feuilles et les dialogues utilisent des surfaces v2 opaques. Les feuilles
+touchent le bas de l’écran, avec les coins inférieurs carrés et la zone de
+sécurité à l’intérieur. Sur écran large, leur largeur reste celle de la colonne
+de contenu. Le calendrier de l’Accueil reste ancré à la barre supérieure.
+Le glissement vers le bas suit le doigt et ferme la feuille au-delà d’un quart
+de sa hauteur ou lors d’un geste rapide. Un geste plus court revient en place.
+Le contenu ne peut engager ce geste que depuis le haut de son défilement.
+La poignée et l’en-tête restent utilisables indépendamment de ce défilement.
+Les refus de fermeture sont respectés. Le mouvement réduit conserve le suivi
+du doigt et rend le retour instantané. Le glissement abandonne la tenue
+prévisualisée, comme la croix, sans sauvegarde.
 
 ## Traçabilité des critères
 

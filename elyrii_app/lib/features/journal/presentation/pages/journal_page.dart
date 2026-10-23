@@ -83,45 +83,40 @@ class _JournalPageState extends State<JournalPage> {
           ),
           child: Stack(
             children: [
-              RefreshIndicator(
-                onRefresh: provider.loadEntries,
-                edgeOffset: MediaQuery.paddingOf(context).top,
-                child: CustomScrollView(
-                  controller: _scroll,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Stack(
-                        children: [
-                          SectionSkyHeader(
-                            title: 'Journal',
-                            subtitle: 'Quelques mots, juste pour toi.',
-                            scene: SectionSkyScene.window,
-                            titleTrailing: _PrivatePill(
-                              onTap: () =>
-                                  showJournalPrivacy(context, provider),
-                            ),
+              CustomScrollView(
+                controller: _scroll,
+                physics: const ClampingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Stack(
+                      children: [
+                        SectionSkyHeader(
+                          title: 'Journal',
+                          subtitle: 'Quelques mots, juste pour toi.',
+                          scene: SectionSkyScene.window,
+                          titleTrailing: _PrivatePill(
+                            onTap: () => showJournalPrivacy(context, provider),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              top:
-                                  AppDimensions.sectionSkyHeight -
-                                  AppDimensions.sectionBodyOverlap,
-                            ),
-                            child: SectionSkyBody(
-                              bottomPadding:
-                                  AppShell.bottomClearanceOf(context) +
-                                  AppDimensions.spacing24,
-                              child: entries.isEmpty
-                                  ? _withoutEntries(provider)
-                                  : _feed(provider, activities, today, dark),
-                            ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            top:
+                                AppDimensions.sectionSkyHeight -
+                                AppDimensions.sectionBodyOverlap,
                           ),
-                        ],
-                      ),
+                          child: SectionSkyBody(
+                            bottomPadding:
+                                AppShell.bottomClearanceOf(context) +
+                                AppDimensions.spacing24,
+                            child: entries.isEmpty
+                                ? _withoutEntries(provider)
+                                : _feed(provider, activities, today, dark),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               _TopBar(
                 scroll: _scroll,

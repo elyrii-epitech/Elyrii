@@ -13,7 +13,6 @@ class _AccueilFrame extends StatelessWidget {
   final bool calendarOpen;
   final Future<void> Function(_AccueilOverlay) onOpen;
   final Future<void> Function(AccueilAction) onAction;
-  final Future<void> Function() onRefresh;
 
   const _AccueilFrame({
     required this.now,
@@ -23,7 +22,6 @@ class _AccueilFrame extends StatelessWidget {
     required this.calendarOpen,
     required this.onOpen,
     required this.onAction,
-    required this.onRefresh,
   });
 
   @override
@@ -112,88 +110,82 @@ class _AccueilFrame extends StatelessWidget {
                       ),
                     ),
                   ),
-                  RefreshIndicator(
-                    onRefresh: onRefresh,
-                    child: CustomScrollView(
-                      key: const PageStorageKey('accueil-scroll'),
-                      scrollBehavior: ScrollConfiguration.of(context)
-                          .copyWith(scrollbars: false),
-                      controller: scroll,
-                      physics: const AlwaysScrollableScrollPhysics(
-                        parent: ClampingScrollPhysics(),
-                      ),
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: safeTop + AppDimensions.accueilSheetTop,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: safeTop + AppDimensions.accueilHeroTop,
-                                  left: 0,
-                                  right: 0,
-                                  child:
-                                      ValueListenableBuilder<
-                                        _AccueilScrollVisuals
-                                      >(
-                                        valueListenable: visuals,
-                                        child: hero,
-                                        builder: (_, state, child) =>
-                                            Transform.translate(
-                                              offset: Offset(
-                                                0,
-                                                reduced
-                                                    ? 0
-                                                    : state.heroCounterShift,
-                                              ),
-                                              child: Center(
-                                                child: IgnorePointer(
-                                                  ignoring:
+                  CustomScrollView(
+                    key: const PageStorageKey('accueil-scroll'),
+                    scrollBehavior: ScrollConfiguration.of(context)
+                        .copyWith(scrollbars: false),
+                    controller: scroll,
+                    physics: const ClampingScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: safeTop + AppDimensions.accueilSheetTop,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                top: safeTop + AppDimensions.accueilHeroTop,
+                                left: 0,
+                                right: 0,
+                                child:
+                                    ValueListenableBuilder<
+                                      _AccueilScrollVisuals
+                                    >(
+                                      valueListenable: visuals,
+                                      child: hero,
+                                      builder: (_, state, child) =>
+                                          Transform.translate(
+                                            offset: Offset(
+                                              0,
+                                              reduced
+                                                  ? 0
+                                                  : state.heroCounterShift,
+                                            ),
+                                            child: Center(
+                                              child: IgnorePointer(
+                                                ignoring:
+                                                    state.heroOpacity == 0,
+                                                child: ExcludeSemantics(
+                                                  excluding:
                                                       state.heroOpacity == 0,
-                                                  child: ExcludeSemantics(
-                                                    excluding:
-                                                        state.heroOpacity == 0,
-                                                    child: Opacity(
-                                                      opacity:
-                                                          state.heroOpacity,
-                                                      child: child,
-                                                    ),
+                                                  child: Opacity(
+                                                    opacity: state.heroOpacity,
+                                                    child: child,
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                      ),
-                                ),
-                              ],
+                                          ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SliverToBoxAdapter(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: dark
+                                ? const Color(0xFF15121F)
+                                : const Color(0xFFF4F3F8),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(AppDimensions.radius30),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              AppDimensions.spacing20,
+                              AppDimensions.accueilSheetTopPadding,
+                              AppDimensions.spacing20,
+                              bottom,
+                            ),
+                            child: _AccueilSections(
+                              now: now,
+                              onAction: onAction,
                             ),
                           ),
                         ),
-                        SliverToBoxAdapter(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: dark
-                                  ? const Color(0xFF15121F)
-                                  : const Color(0xFFF4F3F8),
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(AppDimensions.radius30),
-                              ),
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.fromLTRB(
-                                AppDimensions.spacing20,
-                                AppDimensions.accueilSheetTopPadding,
-                                AppDimensions.spacing20,
-                                bottom,
-                              ),
-                              child: _AccueilSections(
-                                now: now,
-                                onAction: onAction,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   Positioned(
                     top: 0,

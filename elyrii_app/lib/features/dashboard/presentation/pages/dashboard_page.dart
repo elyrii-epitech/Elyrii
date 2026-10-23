@@ -210,7 +210,6 @@ class _DashboardPageState extends State<DashboardPage>
     calendarOpen: _overlay == _AccueilOverlay.calendar,
     onOpen: _openOverlay,
     onAction: _performAction,
-    onRefresh: _refresh,
   );
 }
 
