@@ -149,6 +149,9 @@ jobs:
         timeout-minutes: 2
         continue-on-error: true
         run: |
+          if [ -f build/ios-integration-test.log ]; then
+            tail -n 120 build/ios-integration-test.log
+          fi
           xcrun simctl io "$ELYRII_SIMULATOR_ID" screenshot build/ios-integration-simulator.png
           xcrun simctl spawn "$ELYRII_SIMULATOR_ID" log show --last 10m --style compact --predicate 'process == "Runner"' > build/ios-integration-simulator.log
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

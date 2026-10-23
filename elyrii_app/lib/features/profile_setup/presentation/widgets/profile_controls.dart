@@ -34,18 +34,22 @@ class ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: padding,
+    return Material(
+      color: color ?? (dark ? AppColors.surfaceDark : AppColors.surfaceLight),
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: color ?? (dark ? AppColors.surfaceDark : AppColors.surfaceLight),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
+        side: BorderSide(
           width: AppDimensions.profileHairline,
           color: dark ? AppColors.borderDark : AppColors.borderLight,
         ),
       ),
-      child: child,
+      child: Padding(
+        padding: padding.add(
+          const EdgeInsets.all(AppDimensions.profileHairline),
+        ),
+        child: child,
+      ),
     );
   }
 }
