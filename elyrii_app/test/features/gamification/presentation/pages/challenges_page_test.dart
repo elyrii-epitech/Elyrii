@@ -19,14 +19,68 @@ import 'package:shared_preferences/shared_preferences.dart';
 class _GardenRepository extends GamificationRepository {
   _GardenRepository(ApiClient client) : super(client: client);
   List<UserChallenge> completed = [];
+  List<ChallengeTemplate> available = [];
+  List<UserChallenge> active = [];
+  List<UserChallenge> proposals = [];
   @override
   Future<List<UserChallenge>> getCompletedChallenges() async => completed;
   @override
-  Future<List<UserChallenge>> getActiveChallenges() async => [];
+  Future<List<UserChallenge>> getActiveChallenges() async => active;
   @override
-  Future<List<UserChallenge>> getProposals() async => [];
+  Future<List<UserChallenge>> getProposals() async => proposals;
   @override
-  Future<List<ChallengeTemplate>> getAvailableChallenges() async => [];
+  Future<List<ChallengeTemplate>> getAvailableChallenges() async => available;
+
+  @override
+  Future<UserChallenge> startChallenge(String challengeId) async {
+    final template = available.firstWhere(
+      (challenge) => challenge.id == challengeId,
+    );
+    available = available
+        .where((challenge) => challenge.id != challengeId)
+        .toList();
+    final started = assignment('active-$challengeId', template, 'ACTIVE');
+    active = [...active, started];
+    return started;
+  }
+
+  @override
+  Future<UserChallenge> acceptChallenge(String challengeId) async {
+    final proposal = proposals.firstWhere(
+      (challenge) => challenge.id == challengeId,
+    );
+    proposals = proposals
+        .where((challenge) => challenge.id != challengeId)
+        .toList();
+    final accepted = assignment(proposal.id, proposal.template!, 'ACTIVE');
+    active = [...active, accepted];
+    return accepted;
+  }
+
+  @override
+  Future<UserChallenge> rejectChallenge(String challengeId) async {
+    final proposal = proposals.firstWhere(
+      (challenge) => challenge.id == challengeId,
+    );
+    proposals = proposals
+        .where((challenge) => challenge.id != challengeId)
+        .toList();
+    return assignment(proposal.id, proposal.template!, 'REJECTED');
+  }
+
+  UserChallenge assignment(
+    String id,
+    ChallengeTemplate template,
+    String status,
+  ) => UserChallenge(
+    id: id,
+    userId: 'alice',
+    challengeId: template.id,
+    status: status,
+    createdAt: DateTime(2026, 10, 23),
+    updatedAt: DateTime(2026, 10, 23),
+    template: template,
+  );
 }
 
 void main() {
@@ -197,4 +251,80 @@ void main() {
     expect(find.text('Expire doucement · 4 secondes'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   }, timeout: const Timeout(Duration(seconds: 30)));
+
+  testWidgets(
+    'garden starts a challenge and accepts or declines Elyrii proposals',
+    (tester) async {
+      ChallengeTemplate idea(String id, String title, String source) =>
+          ChallengeTemplate(
+            id: id,
+            title: title,
+            description: 'Un petit geste pour toi.',
+            source: source,
+            rewardPoints: 0,
+            aggregator: 'ALL',
+            createdAt: DateTime(2026, 10, 23),
+            updatedAt: DateTime(2026, 10, 23),
+          );
+      repository.available = [
+        idea('journal', 'Un moment pour écrire', 'SYSTEM'),
+      ];
+      repository.proposals = [
+        repository.assignment(
+          'proposal-walk',
+          idea('walk', 'Une promenade douce', 'AI'),
+          'PENDING',
+        ),
+        repository.assignment(
+          'proposal-music',
+          idea('music', 'Une chanson pour moi', 'AI'),
+          'PENDING',
+        ),
+      ];
+      await open(tester);
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Choisir un défi')),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Choisir un défi'));
+      await tester.pumpAndSettle();
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Commencer')),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Commencer'));
+      await tester.pumpAndSettle();
+      expect(garden.availableChallenges, isEmpty);
+      expect(
+        garden.activeChallenges.map((challenge) => challenge.challengeId),
+        contains('journal'),
+      );
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Accepter').first),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Accepter').first);
+      await tester.pumpAndSettle();
+      expect(
+        garden.activeChallenges.map((challenge) => challenge.challengeId),
+        contains('walk'),
+      );
+      expect(garden.proposals.map((challenge) => challenge.id), [
+        'proposal-music',
+      ]);
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Refuser')),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Refuser'));
+      await tester.pumpAndSettle();
+      expect(garden.proposals, isEmpty);
+      await tester.pumpWidget(const SizedBox());
+    },
+    timeout: const Timeout(Duration(seconds: 30)),
+  );
 }

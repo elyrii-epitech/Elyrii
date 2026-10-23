@@ -22,6 +22,7 @@ import '../../../journal/presentation/providers/journal_provider.dart';
 import '../../../mascot/data/models/mascot_model.dart';
 import '../../../mascot/data/models/mascot_accessory.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
+import '../../data/models/gamification_models.dart';
 import '../providers/gamification_provider.dart';
 
 part 'jardin_calendar.dart';
@@ -432,6 +433,54 @@ class _ChallengesPageState extends State<ChallengesPage>
                                   ],
                                   _rituals(snapshot, dark),
                                 ],
+                                Material(
+                                  color: AppColors.gardenGroup(dark),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radius20,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(
+                                      AppDimensions.spacing16,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      spacing: AppDimensions.spacing12,
+                                      children: [
+                                        Text(
+                                          'Faire pousser mon jardin',
+                                          style: AppTextStyles.titleMedium(
+                                            color: context.textPrimary,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Chaque défi terminé fait pousser une fleur et te rapproche d’une nouvelle tenue.',
+                                          style: AppTextStyles.bodyMedium(
+                                            color: context.textSecondary,
+                                          ),
+                                        ),
+                                        FilledButton.tonalIcon(
+                                          style: FilledButton.styleFrom(
+                                            backgroundColor:
+                                                AppColors.primaryText(dark),
+                                            foregroundColor: AppColors.onTint(
+                                              dark,
+                                            ),
+                                          ),
+                                          onPressed: () => _show(
+                                            'Tes défis',
+                                            _GardenChallenges(
+                                              provider: context
+                                                  .read<GamificationProvider>(),
+                                            ),
+                                          ),
+                                          icon: const Icon(Symbols.eco_rounded),
+                                          label: const Text('Choisir un défi'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                                 _rewards(dark),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
