@@ -132,12 +132,6 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  List<String> flowerIds(WidgetTester tester) => tester
-      .widget<MonthlyGarden>(find.byType(MonthlyGarden))
-      .flowers
-      .map((flower) => flower.challengeId)
-      .toList();
-
   testWidgets('saved local gestures are read-only and do not create flowers', (
     tester,
   ) async {
@@ -192,18 +186,38 @@ void main() {
       ];
       await open(tester);
 
-      expect(flowerIds(tester), ['now']);
+      expect(
+        find.bySemanticsLabel(RegExp('^Fleur : Défi now')),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          RegExp('^Fleur : Défi (edge|mid|future|undated)'),
+        ),
+        findsNothing,
+      );
       expect(find.widgetWithText(ListTile, 'Défi now'), findsOneWidget);
       expect(find.widgetWithText(ListTile, 'Défi edge'), findsNothing);
       expect(find.textContaining("n'a pas de date"), findsOneWidget);
 
       await tapVisible(tester, find.byTooltip('Mois précédent'));
-      expect(flowerIds(tester), ['mid', 'edge']);
+      expect(
+        find.bySemanticsLabel(RegExp('^Fleur : Défi mid')),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp('^Fleur : Défi edge')),
+        findsOneWidget,
+      );
+      expect(find.bySemanticsLabel(RegExp('^Fleur : Défi now')), findsNothing);
       expect(find.widgetWithText(ListTile, 'Défi edge'), findsOneWidget);
       expect(find.widgetWithText(ListTile, 'Défi now'), findsNothing);
 
       await tapVisible(tester, find.byTooltip('Mois suivant'));
-      expect(flowerIds(tester), ['now']);
+      expect(
+        find.bySemanticsLabel(RegExp('^Fleur : Défi now')),
+        findsOneWidget,
+      );
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -214,8 +228,9 @@ void main() {
     final today = CivilDay.fromLocal(DateTime.now());
     repository.completed = [challenge('old', completedAt: at(today, 8))];
     await open(tester);
-    final element = tester.element(find.byType(MonthlyGarden));
-    expect(flowerIds(tester), ['old']);
+    final oldFlower = find.bySemanticsLabel(RegExp('^Fleur : Défi old'));
+    expect(oldFlower, findsOneWidget);
+    final oldPosition = tester.getCenter(oldFlower);
 
     repository.completed = [
       challenge('old', completedAt: at(today, 8)),
@@ -223,8 +238,9 @@ void main() {
     ];
     await tester.runAsync(() => garden.loadAll(force: true));
     await tester.pump();
-    expect(flowerIds(tester), unorderedEquals(['old', 'new']));
-    expect(tester.element(find.byType(MonthlyGarden)), same(element));
+    expect(find.bySemanticsLabel(RegExp('^Fleur : Défi new')), findsOneWidget);
+    expect(oldFlower, findsOneWidget);
+    expect(tester.getCenter(oldFlower), oldPosition);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -233,11 +249,11 @@ void main() {
   ) async {
     final today = CivilDay.fromLocal(DateTime.now());
     await open(tester);
-    expect(flowerIds(tester), isEmpty);
+    expect(find.bySemanticsLabel(RegExp('^Fleur : ')), findsNothing);
     repository.completed = [challenge('late', completedAt: at(today))];
     await tester.drag(find.text('Défis à réaliser'), const Offset(0, 400));
     await tester.pumpAndSettle();
-    expect(flowerIds(tester), ['late']);
+    expect(find.bySemanticsLabel(RegExp('^Fleur : Défi late')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -251,7 +267,7 @@ void main() {
     await tester.runAsync(() => garden.loadAll(force: true));
     await tester.pump();
     expect(find.text('Jardin indisponible'), findsWidgets);
-    expect(flowerIds(tester), ['kept']);
+    expect(find.bySemanticsLabel(RegExp('^Fleur : Défi kept')), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -264,7 +280,6 @@ void main() {
       for (var i = 0; i < 35; i++) challenge('c$i', completedAt: at(today, 10)),
     ];
     await open(tester, height: 3000);
-    expect(flowerIds(tester), hasLength(35));
     expect(find.bySemanticsLabel(RegExp('^Fleur : ')), findsNWidgets(35));
 
     expect(find.byType(ListTile), findsNWidgets(3));

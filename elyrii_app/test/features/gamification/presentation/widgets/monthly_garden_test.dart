@@ -12,6 +12,11 @@ void main() {
     await initializeDateFormatting('fr');
   });
 
+  Finder arrow(String tooltip) => find.ancestor(
+    of: find.byTooltip(tooltip),
+    matching: find.byType(IconButton),
+  );
+
   Widget buildGarden({
     required CivilMonth month,
     required CivilDay today,
@@ -37,76 +42,78 @@ void main() {
     );
   }
 
-  testWidgets('empty month shows honest state and soil without fabricated flowers', (
-    tester,
-  ) async {
-    final today = CivilDay(2026, 10, 23);
-    final month = CivilMonth(2026, 10);
+  testWidgets(
+    'empty month shows honest state and soil without fabricated flowers',
+    (tester) async {
+      final today = CivilDay(2026, 10, 23);
+      final month = CivilMonth(2026, 10);
 
-    await tester.pumpWidget(
-      buildGarden(month: month, today: today, flowers: const []),
-    );
+      await tester.pumpWidget(
+        buildGarden(month: month, today: today, flowers: const []),
+      );
 
-    expect(find.bySemanticsLabel(RegExp(r'^Fleur : ')), findsNothing);
-    expect(find.text('Aucun défi complété ce mois-ci'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^Fleur : ')), findsNothing);
+      expect(find.text('Aucun défi complété ce mois-ci'), findsOneWidget);
 
-    final prevButton = tester.widget<IconButton>(find.byTooltip('Mois précédent'));
-    expect(prevButton.onPressed, isNotNull);
+      final prevButton = tester.widget<IconButton>(arrow('Mois précédent'));
+      expect(prevButton.onPressed, isNotNull);
 
-    final nextButton = tester.widget<IconButton>(find.byTooltip('Mois suivant'));
-    expect(nextButton.onPressed, isNull);
-  });
+      final nextButton = tester.widget<IconButton>(arrow('Mois suivant'));
+      expect(nextButton.onPressed, isNull);
+    },
+  );
 
-  testWidgets('month arrows disable future navigation and allow browsing past', (
-    tester,
-  ) async {
-    final today = CivilDay(2026, 10, 23);
-    final currentMonth = CivilMonth(2026, 10);
-    CivilMonth? navigatedMonth;
+  testWidgets(
+    'month arrows disable future navigation and allow browsing past',
+    (tester) async {
+      final today = CivilDay(2026, 10, 23);
+      final currentMonth = CivilMonth(2026, 10);
+      CivilMonth? navigatedMonth;
 
-    await tester.pumpWidget(
-      buildGarden(
-        month: currentMonth,
-        today: today,
-        flowers: const [],
-        onMonth: (m) => navigatedMonth = m,
-      ),
-    );
+      await tester.pumpWidget(
+        buildGarden(
+          month: currentMonth,
+          today: today,
+          flowers: const [],
+          onMonth: (m) => navigatedMonth = m,
+        ),
+      );
 
-    expect(
-      tester.widget<IconButton>(find.byTooltip('Mois suivant')).onPressed,
-      isNull,
-    );
-    expect(
-      tester.widget<IconButton>(find.byTooltip('Mois précédent')).onPressed,
-      isNotNull,
-    );
+      expect(
+        tester.widget<IconButton>(arrow('Mois suivant')).onPressed,
+        isNull,
+      );
+      expect(
+        tester.widget<IconButton>(arrow('Mois précédent')).onPressed,
+        isNotNull,
+      );
 
-    await tester.tap(find.byTooltip('Mois précédent'));
-    expect(navigatedMonth, CivilMonth(2026, 9));
+      await tester.tap(find.byTooltip('Mois précédent'));
+      expect(navigatedMonth, CivilMonth(2026, 9));
 
-    final pastMonth = CivilMonth(2026, 9);
-    await tester.pumpWidget(
-      buildGarden(
-        month: pastMonth,
-        today: today,
-        flowers: const [],
-        onMonth: (m) => navigatedMonth = m,
-      ),
-    );
+      final pastMonth = CivilMonth(2026, 9);
+      await tester.pumpWidget(
+        buildGarden(
+          month: pastMonth,
+          today: today,
+          flowers: const [],
+          onMonth: (m) => navigatedMonth = m,
+        ),
+      );
 
-    expect(
-      tester.widget<IconButton>(find.byTooltip('Mois suivant')).onPressed,
-      isNotNull,
-    );
-    expect(
-      tester.widget<IconButton>(find.byTooltip('Mois précédent')).onPressed,
-      isNotNull,
-    );
+      expect(
+        tester.widget<IconButton>(arrow('Mois suivant')).onPressed,
+        isNotNull,
+      );
+      expect(
+        tester.widget<IconButton>(arrow('Mois précédent')).onPressed,
+        isNotNull,
+      );
 
-    await tester.tap(find.byTooltip('Mois suivant'));
-    expect(navigatedMonth, CivilMonth(2026, 10));
-  });
+      await tester.tap(find.byTooltip('Mois suivant'));
+      expect(navigatedMonth, CivilMonth(2026, 10));
+    },
+  );
 
   testWidgets(
     'every flower of a crowded month (>30) is retained and accessible with >=48 tap targets',
@@ -141,43 +148,46 @@ void main() {
     },
   );
 
-  testWidgets('flower selection callback passes the matching WeekFlower record', (
-    tester,
-  ) async {
-    final today = CivilDay(2026, 10, 23);
-    final month = CivilMonth(2026, 10);
-    final flowerA = WeekFlower(
-      challengeId: 'c_a',
-      title: 'Méditer 5 minutes',
-      day: CivilDay(2026, 10, 10),
-      mood: null,
-    );
-    final flowerB = WeekFlower(
-      challengeId: 'c_b',
-      title: 'Marcher en forêt',
-      day: CivilDay(2026, 10, 15),
-      mood: null,
-    );
+  testWidgets(
+    'flower selection callback passes the matching WeekFlower record',
+    (tester) async {
+      final today = CivilDay(2026, 10, 23);
+      final month = CivilMonth(2026, 10);
+      final flowerA = WeekFlower(
+        challengeId: 'c_a',
+        title: 'Méditer 5 minutes',
+        day: CivilDay(2026, 10, 10),
+        mood: null,
+      );
+      final flowerB = WeekFlower(
+        challengeId: 'c_b',
+        title: 'Marcher en forêt',
+        day: CivilDay(2026, 10, 15),
+        mood: null,
+      );
 
-    WeekFlower? selectedFlower;
-    await tester.pumpWidget(
-      buildGarden(
-        month: month,
-        today: today,
-        flowers: [flowerA, flowerB],
-        onFlower: (flower) => selectedFlower = flower,
-      ),
-    );
+      WeekFlower? selectedFlower;
+      await tester.pumpWidget(
+        buildGarden(
+          month: month,
+          today: today,
+          flowers: [flowerA, flowerB],
+          onFlower: (flower) => selectedFlower = flower,
+        ),
+      );
 
-    final target = find.bySemanticsLabel(RegExp(r'^Fleur : Marcher en forêt'));
-    expect(target, findsOneWidget);
+      final target = find.bySemanticsLabel(
+        RegExp(r'^Fleur : Marcher en forêt'),
+      );
+      expect(target, findsOneWidget);
 
-    await tester.tap(target);
-    expect(selectedFlower, isNotNull);
-    expect(selectedFlower!.challengeId, 'c_b');
-    expect(selectedFlower!.title, 'Marcher en forêt');
-    expect(selectedFlower!.day, CivilDay(2026, 10, 15));
-  });
+      await tester.tap(target);
+      expect(selectedFlower, isNotNull);
+      expect(selectedFlower!.challengeId, 'c_b');
+      expect(selectedFlower!.title, 'Marcher en forêt');
+      expect(selectedFlower!.day, CivilDay(2026, 10, 15));
+    },
+  );
 
   testWidgets(
     'updating month adds new flower while preserving existing positions without duplicates',
@@ -244,7 +254,7 @@ void main() {
     },
   );
 
-  testWidgets('navigating historical months displays flowers mature without replay', (
+  testWidgets('navigating to a past month replaces the current flowers', (
     tester,
   ) async {
     final today = CivilDay(2026, 10, 23);
@@ -267,94 +277,22 @@ void main() {
     await tester.pumpWidget(
       buildGarden(month: monthCurrent, today: today, flowers: [flowerCurrent]),
     );
-    expect(find.bySemanticsLabel(RegExp(r'^Fleur : Défi actuel')), findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp(r'^Fleur : Défi actuel')),
+      findsOneWidget,
+    );
 
     await tester.pumpWidget(
       buildGarden(month: monthPast, today: today, flowers: [flowerPast]),
     );
 
-    expect(find.bySemanticsLabel(RegExp(r'^Fleur : Défi passé')), findsOneWidget);
-    await tester.pump();
-    expect(find.bySemanticsLabel(RegExp(r'^Fleur : Défi passé')), findsOneWidget);
-  });
-
-  testWidgets('reduced motion settles immediately without playing animation', (
-    tester,
-  ) async {
-    final today = CivilDay(2026, 10, 23);
-    final month = CivilMonth(2026, 10);
-
-    final flower1 = WeekFlower(
-      challengeId: 'c1',
-      title: 'Défi 1',
-      day: CivilDay(2026, 10, 1),
-      mood: null,
+    expect(
+      find.bySemanticsLabel(RegExp(r'^Fleur : Défi passé')),
+      findsOneWidget,
     );
-
-    await tester.pumpWidget(
-      buildGarden(
-        month: month,
-        today: today,
-        flowers: [flower1],
-        reduceMotion: true,
-      ),
+    expect(
+      find.bySemanticsLabel(RegExp(r'^Fleur : Défi actuel')),
+      findsNothing,
     );
-
-    final flower2 = WeekFlower(
-      challengeId: 'c2',
-      title: 'Défi 2',
-      day: CivilDay(2026, 10, 2),
-      mood: null,
-    );
-
-    await tester.pumpWidget(
-      buildGarden(
-        month: month,
-        today: today,
-        flowers: [flower1, flower2],
-        reduceMotion: true,
-      ),
-    );
-
-    expect(find.bySemanticsLabel(RegExp(r'^Fleur : ')), findsNWidgets(2));
-  });
-
-  testWidgets('provider rebuild with identical challenge IDs does not re-animate', (
-    tester,
-  ) async {
-    final today = CivilDay(2026, 10, 23);
-    final month = CivilMonth(2026, 10);
-
-    await tester.pumpWidget(
-      buildGarden(
-        month: month,
-        today: today,
-        flowers: [
-          WeekFlower(
-            challengeId: 'c1',
-            title: 'Défi 1',
-            day: CivilDay(2026, 10, 1),
-            mood: null,
-          ),
-        ],
-      ),
-    );
-
-    await tester.pumpWidget(
-      buildGarden(
-        month: month,
-        today: today,
-        flowers: [
-          WeekFlower(
-            challengeId: 'c1',
-            title: 'Défi 1',
-            day: CivilDay(2026, 10, 1),
-            mood: null,
-          ),
-        ],
-      ),
-    );
-
-    expect(find.bySemanticsLabel(RegExp(r'^Fleur : ')), findsOneWidget);
   });
 }

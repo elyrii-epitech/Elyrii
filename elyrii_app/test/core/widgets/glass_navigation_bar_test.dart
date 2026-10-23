@@ -1,4 +1,7 @@
 import 'package:elyrii_app/app/router/app_shell.dart';
+import 'package:elyrii_app/core/network/api_client.dart';
+import 'package:elyrii_app/core/services/secure_storage_service.dart';
+import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:elyrii_app/core/glass/elyrii_glass_surface.dart';
 import 'package:elyrii_app/core/theme/app_dimensions.dart';
 import 'package:elyrii_app/core/theme/app_text_styles.dart';
@@ -10,6 +13,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 Future<GoRouter> _pumpShell(
   WidgetTester tester, {
@@ -23,6 +27,11 @@ Future<GoRouter> _pumpShell(
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
+  final api = ApiClient(storage: SecureStorageService());
+  addTearDown(api.dispose);
+  final gamification = GamificationProvider(client: api)
+    ..onUserChanged(userId: 'demo-user', isDemo: true);
+  addTearDown(gamification.dispose);
   final router = GoRouter(
     initialLocation: '/branch3',
     routes: [
@@ -44,18 +53,21 @@ Future<GoRouter> _pumpShell(
   );
   addTearDown(router.dispose);
   await tester.pumpWidget(
-    MaterialApp.router(
-      routerConfig: router,
-      theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: TextScaler.linear(textScale),
-          highContrast: highContrast,
-          disableAnimations: reduceMotion,
-          boldText: boldText,
-          padding: const EdgeInsets.only(top: 24, bottom: 20),
+    ChangeNotifierProvider<GamificationProvider>.value(
+      value: gamification,
+      child: MaterialApp.router(
+        routerConfig: router,
+        theme: dark ? AppTheme.darkTheme : AppTheme.lightTheme,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(textScale),
+            highContrast: highContrast,
+            disableAnimations: reduceMotion,
+            boldText: boldText,
+            padding: const EdgeInsets.only(top: 24, bottom: 20),
+          ),
+          child: child!,
         ),
-        child: child!,
       ),
     ),
   );

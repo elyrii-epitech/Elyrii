@@ -10,6 +10,7 @@ import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../dashboard/domain/accueil_content.dart';
 import '../../../dashboard/domain/civil_day.dart';
+import '../../../dashboard/presentation/mood_presentation.dart';
 
 /// Jardin mensuel : paysage panoramique organique affichant les fleurs
 /// associées aux défis réellement accomplis pour le mois sélectionné.
@@ -36,22 +37,17 @@ class MonthlyGarden extends StatefulWidget {
 class _MonthlyGardenState extends State<MonthlyGarden>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _animation;
+  late final CurvedAnimation _animation;
 
-  late CivilMonth _activeMonth;
   final Map<String, int> _slotByChallengeId = {};
-  Set<String> _knownIds = {};
   Set<String> _animatingIds = {};
 
   @override
   void initState() {
     super.initState();
-    _activeMonth = widget.month;
-    _knownIds = widget.flowers.map((f) => f.challengeId).toSet();
     for (var i = 0; i < widget.flowers.length; i++) {
       _slotByChallengeId[widget.flowers[i].challengeId] = i;
     }
-    _animatingIds = {};
 
     _controller = AnimationController(
       vsync: this,
@@ -61,20 +57,14 @@ class _MonthlyGardenState extends State<MonthlyGarden>
       parent: _controller,
       curve: AppMotion.accueilRise,
     );
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed && mounted && _animatingIds.isNotEmpty) {
-        setState(() {
-          _animatingIds = {};
-        });
-      }
-    });
     _controller.value = 1.0;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context) || !TickerMode.of(context)) {
+    if (MediaQuery.disableAnimationsOf(context) ||
+        !TickerMode.valuesOf(context).enabled) {
       if (_controller.isAnimating) {
         _controller.stop();
       }
@@ -87,58 +77,42 @@ class _MonthlyGardenState extends State<MonthlyGarden>
   void didUpdateWidget(MonthlyGarden oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.month != oldWidget.month) {
-      // Navigation vers un autre mois : ne pas animer les fleurs historiques.
-      _activeMonth = widget.month;
       _slotByChallengeId.clear();
       for (var i = 0; i < widget.flowers.length; i++) {
         _slotByChallengeId[widget.flowers[i].challengeId] = i;
       }
-      _knownIds = widget.flowers.map((f) => f.challengeId).toSet();
       _animatingIds = {};
       _controller.stop();
-      _controller.value = 1.0;
-    } else {
-      // Même mois : repérer uniquement les nouveaux identifiants ajoutés.
-      final currentIds = widget.flowers.map((f) => f.challengeId).toSet();
-      final newIds = currentIds.difference(_knownIds);
-      if (newIds.isNotEmpty) {
-        var maxSlot = _slotByChallengeId.values.isEmpty
-            ? -1
-            : _slotByChallengeId.values.reduce(math.max);
-        for (final flower in widget.flowers) {
-          if (!_slotByChallengeId.containsKey(flower.challengeId)) {
-            maxSlot++;
-            _slotByChallengeId[flower.challengeId] = maxSlot;
-          }
-        }
-        _knownIds.addAll(newIds);
-        final reduceMotion = MediaQuery.disableAnimationsOf(context);
-        final tickerMode = TickerMode.of(context);
-        if (reduceMotion || !tickerMode) {
-          _animatingIds = {};
-          _controller.value = 1.0;
-        } else {
-          _animatingIds = newIds;
-          _controller.forward(from: 0.0);
-        }
-      } else {
-        _knownIds = currentIds;
+      _controller.value = 1;
+      return;
+    }
+    final newIds = <String>{};
+    for (final flower in widget.flowers) {
+      if (!_slotByChallengeId.containsKey(flower.challengeId)) {
+        _slotByChallengeId[flower.challengeId] = _slotByChallengeId.length;
+        newIds.add(flower.challengeId);
       }
+    }
+    if (newIds.isEmpty) return;
+    if (MediaQuery.disableAnimationsOf(context) ||
+        !TickerMode.valuesOf(context).enabled) {
+      _animatingIds = {};
+      _controller.value = 1;
+    } else {
+      _animatingIds = newIds;
+      _controller.forward(from: 0);
     }
   }
 
   @override
   void dispose() {
+    _animation.dispose();
     _controller.dispose();
     super.dispose();
   }
 
-  String _formatMonth(CivilMonth month) {
-    final date = DateTime(month.year, month.month);
-    final raw = AppDates.format(date, 'MMMM yyyy');
-    if (raw.isEmpty) return raw;
-    return '${raw[0].toUpperCase()}${raw.substring(1)}';
-  }
+  String _formatMonth(CivilMonth month) =>
+      AppDates.format(DateTime(month.year, month.month), 'MMMM yyyy');
 
   String _formatCount(int count) {
     if (count == 0) return '0 fleur';
@@ -149,14 +123,19 @@ class _MonthlyGardenState extends State<MonthlyGarden>
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final canGoNext = widget.month.firstDay.isBefore(widget.today.civilMonth.firstDay);
-    final layouts = _buildLayouts(widget.flowers, widget.month, _slotByChallengeId);
+    final canGoNext = widget.month.firstDay.isBefore(
+      widget.today.civilMonth.firstDay,
+    );
+    final layouts = _buildLayouts(
+      widget.flowers,
+      widget.month,
+      _slotByChallengeId,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // En-tête : navigation mensuelle et décompte de fleurs
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -175,18 +154,18 @@ class _MonthlyGardenState extends State<MonthlyGarden>
                 children: [
                   Text(
                     _formatMonth(widget.month),
-                    style: AppTextStyles.titleMedium(color: context.textPrimary),
+                    style: AppTextStyles.titleMedium(
+                      color: context.textPrimary,
+                    ),
                     textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppDimensions.spacing2),
                   Text(
                     _formatCount(widget.flowers.length),
-                    style: AppTextStyles.bodySmall(color: context.textSecondary),
+                    style: AppTextStyles.bodySmall(
+                      color: context.textSecondary,
+                    ),
                     textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -198,12 +177,13 @@ class _MonthlyGardenState extends State<MonthlyGarden>
                 minWidth: AppDimensions.controlSize,
                 minHeight: AppDimensions.controlSize,
               ),
-              onPressed: canGoNext ? () => widget.onMonth(widget.month.shifted(1)) : null,
+              onPressed: canGoNext
+                  ? () => widget.onMonth(widget.month.shifted(1))
+                  : null,
             ),
           ],
         ),
         const SizedBox(height: AppDimensions.spacing12),
-        // Prairie panoramique
         _MeadowViewport(
           month: widget.month,
           flowers: widget.flowers,
@@ -256,9 +236,12 @@ List<_FlowerLayout> _buildLayouts(
   return [
     for (final flower in flowers)
       () {
-        final slot = slotByChallengeId[flower.challengeId] ?? 0;
-        final seed = (monthSeed * 10007 + slot * 37 + flower.challengeId.hashCode).abs();
-        final jitterX = (((seed % 17) - 8.0) * 0.75);
+        final slot = slotByChallengeId[flower.challengeId]!;
+        var seed = monthSeed;
+        for (var i = 0; i < flower.challengeId.length; i++) {
+          seed = (seed * 31 + flower.challengeId.codeUnitAt(i)) & 0x7fffffff;
+        }
+        final jitterX = ((seed % 9) - 4.0) * 0.75;
         final x = leftPadding + (slot + 0.5) * slotWidth + jitterX;
         final tier = slot % 2;
         final groundY = 152.0 + tier * 22.0 + (((seed >> 3) % 7) - 3.0);
@@ -267,8 +250,16 @@ List<_FlowerLayout> _buildLayouts(
         final curveOffset = (((seed >> 10) % 15) - 7.0);
         final species = (seed ^ monthSeed) % 4;
         final center = Offset(x, blossomY);
-        final tapTarget = Rect.fromCenter(center: center, width: 48.0, height: 48.0);
-        final dayDate = DateTime(flower.day.year, flower.day.month, flower.day.day);
+        final tapTarget = Rect.fromCenter(
+          center: center,
+          width: 48.0,
+          height: 48.0,
+        );
+        final dayDate = DateTime(
+          flower.day.year,
+          flower.day.month,
+          flower.day.day,
+        );
         final formattedDate = AppDates.format(dayDate, 'd MMMM yyyy');
         final semanticLabel = 'Fleur : ${flower.title} · $formattedDate';
 
@@ -313,106 +304,99 @@ class _MeadowViewport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final painter = _MeadowPainter(
+      month: month,
+      layouts: layouts,
+      animatingIds: animatingIds,
+      animation: animation,
+      dark: dark,
+    );
     return Container(
-      height: _meadowHeight,
+      height: flowers.isEmpty ? null : _meadowHeight,
+      constraints: const BoxConstraints(minHeight: _meadowHeight),
       decoration: BoxDecoration(
         color: dark ? AppColors.cardDark : AppColors.cardLight,
         borderRadius: BorderRadius.circular(AppDimensions.radius20),
         border: Border.all(color: AppColors.gardenBorder(dark)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final maxSlot = layouts.isEmpty
-              ? 0
-              : layouts.map((l) => l.slotIndex).reduce(math.max);
-          final totalSlots = flowers.isEmpty ? 0 : maxSlot + 1;
-          final contentWidth = math.max(
-            constraints.maxWidth,
-            _horizontalPadding * 2 + totalSlots * _slotWidth,
-          );
-
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: contentWidth,
-              height: _meadowHeight,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Paysage dessiné
-                  AnimatedBuilder(
-                    animation: animation,
-                    builder: (context, _) => CustomPaint(
-                      size: Size(contentWidth, _meadowHeight),
-                      painter: _MeadowPainter(
-                        month: month,
-                        layouts: layouts,
-                        animatingIds: animatingIds,
-                        growthProgress: animation.value,
-                        dark: dark,
+      child: flowers.isEmpty
+          ? Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(child: CustomPaint(painter: painter)),
+                Padding(
+                  padding: const EdgeInsets.all(AppDimensions.spacing24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Symbols.potted_plant_rounded,
+                        size: AppDimensions.iconMd,
+                        color: AppColors.green(dark),
                       ),
+                      const SizedBox(height: AppDimensions.spacing8),
+                      Text(
+                        'Aucun défi complété ce mois-ci',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.titleSmall(
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.spacing4),
+                      Text(
+                        'Accomplis des défis pour faire éclore ton jardin.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.bodySmall(
+                          color: context.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final maxSlot = layouts.fold<int>(
+                  0,
+                  (largest, layout) => math.max(largest, layout.slotIndex),
+                );
+                final contentWidth = math.max(
+                  constraints.maxWidth,
+                  _horizontalPadding * 2 + (maxSlot + 1) * _slotWidth,
+                );
+                return SingleChildScrollView(
+                  key: ValueKey(month),
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: contentWidth,
+                    height: _meadowHeight,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CustomPaint(painter: painter),
+                        for (final layout in layouts)
+                          Positioned(
+                            left: layout.tapTarget.left,
+                            top: layout.tapTarget.top,
+                            width: layout.tapTarget.width,
+                            height: layout.tapTarget.height,
+                            child: Semantics(
+                              button: true,
+                              label: layout.semanticLabel,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => onFlower(layout.flower),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-                  // Message honnête de prairie sans fleur (sans aucune fleur fabriquée)
-                  if (flowers.isEmpty)
-                    Positioned.fill(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.spacing24,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Symbols.potted_plant_rounded,
-                                size: AppDimensions.iconMd,
-                                color: AppColors.green(dark).withValues(alpha: 0.6),
-                              ),
-                              const SizedBox(height: AppDimensions.spacing8),
-                              Text(
-                                'Aucun défi complété ce mois-ci',
-                                textAlign: TextAlign.center,
-                                style: AppTextStyles.titleSmall(
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: AppDimensions.spacing4),
-                              Text(
-                                'Accomplis des défis pour faire éclore ton jardin.',
-                                textAlign: TextAlign.center,
-                                style: AppTextStyles.bodySmall(
-                                  color: context.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  // Régions tactiles accessibles réelles par fleur
-                  for (final layout in layouts)
-                    Positioned(
-                      left: layout.tapTarget.left,
-                      top: layout.tapTarget.top,
-                      width: layout.tapTarget.width,
-                      height: layout.tapTarget.height,
-                      child: Semantics(
-                        button: true,
-                        label: layout.semanticLabel,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () => onFlower(layout.flower),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 }
@@ -422,14 +406,14 @@ class _MeadowPainter extends CustomPainter {
     required this.month,
     required this.layouts,
     required this.animatingIds,
-    required this.growthProgress,
+    required this.animation,
     required this.dark,
-  });
+  }) : super(repaint: animation);
 
   final CivilMonth month;
   final List<_FlowerLayout> layouts;
   final Set<String> animatingIds;
-  final double growthProgress;
+  final Animation<double> animation;
   final bool dark;
 
   // Peintures réutilisées pour supprimer les allocations répétées dans paint()
@@ -451,11 +435,12 @@ class _MeadowPainter extends CustomPainter {
     final monthSeed = month.year * 12 + month.month;
 
     // Fond ciel doux
-    _skyPaint.color = dark ? const Color(0xFF1B162C) : const Color(0xFFEEF5F0);
+    _skyPaint.color = dark ? AppColors.cardDark : AppColors.cardLight;
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _skyPaint);
 
     // Colline d'arrière-plan avec onde douce
-    _hillPaint.color = AppColors.green(dark).withValues(alpha: dark ? 0.22 : 0.18);
+    _hillPaint.color = AppColors.green(dark)
+        .withValues(alpha: dark ? 0.22 : 0.18);
     final backHill = Path()..moveTo(0, h * 0.68);
     var bx = 0.0;
     while (bx < w) {
@@ -472,7 +457,8 @@ class _MeadowPainter extends CustomPainter {
     canvas.drawPath(backHill, _hillPaint);
 
     // Colline de premier plan
-    _hillPaint.color = AppColors.green(dark).withValues(alpha: dark ? 0.38 : 0.32);
+    _hillPaint.color = AppColors.green(dark)
+        .withValues(alpha: dark ? 0.38 : 0.32);
     final frontHill = Path()..moveTo(0, h * 0.80);
     var fx = 0.0;
     while (fx < w) {
@@ -489,7 +475,7 @@ class _MeadowPainter extends CustomPainter {
     canvas.drawPath(frontHill, _hillPaint);
 
     // Bande de sol terreux
-    _soilPaint.color = dark ? const Color(0xFF2A2158) : const Color(0xFFD6CCF5);
+    _soilPaint.color = AppColors.gardenGroup(dark);
     canvas.drawRect(Rect.fromLTWH(0, h * 0.88, w, h * 0.12), _soilPaint);
 
     if (layouts.isEmpty) return;
@@ -500,8 +486,7 @@ class _MeadowPainter extends CustomPainter {
 
     for (final layout in layouts) {
       final isNew = animatingIds.contains(layout.flower.challengeId);
-      final t = isNew ? growthProgress : 1.0;
-      final k = isNew ? AppMotion.accueilRise.transform(t) : 1.0;
+      final k = isNew ? animation.value : 1.0;
       final stemK = (k / 0.6).clamp(0.0, 1.0);
       final petalK = ((k - 0.4) / 0.6).clamp(0.0, 1.0);
 
@@ -548,10 +533,11 @@ class _MeadowPainter extends CustomPainter {
         canvas.translate(currentCenter.dx, currentCenter.dy);
         canvas.scale(scale);
 
-        final color = layout.flower.mood?.colorFor(brightness) ??
+        final color =
+            layout.flower.mood?.colorFor(brightness) ??
             _paletteColor(layout.seed, monthSeed, dark);
         _petalPaint.color = color;
-        _centerPaint.color = dark ? const Color(0xFFFFD56B) : const Color(0xFFF6BE46);
+        _centerPaint.color = AppColors.xpBar;
 
         _drawBlossom(canvas, layout.species);
         canvas.restore();
@@ -616,7 +602,7 @@ class _MeadowPainter extends CustomPainter {
     return oldDelegate.month != month ||
         oldDelegate.layouts != layouts ||
         oldDelegate.animatingIds != animatingIds ||
-        oldDelegate.growthProgress != growthProgress ||
+        oldDelegate.animation != animation ||
         oldDelegate.dark != dark;
   }
 }

@@ -292,10 +292,8 @@ class _ChallengesPageState extends State<ChallengesPage>
         ),
       );
     }
-    final recent = flowers.reversed.toList();
-    final visible = _showAllCompleted
-        ? recent
-        : recent.take(_collapsedCount).toList();
+    final recent = flowers.reversed;
+    final visible = _showAllCompleted ? recent : recent.take(_collapsedCount);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: AppDimensions.spacing8,
