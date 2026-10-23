@@ -164,6 +164,32 @@ class AppDimensions {
   static const double journalToastTop = 112;
   static const double journalSearchField = 40;
 
+  // ==================== MÉDITER ====================
+
+  static const double meditationChipHeight = 36;
+  static const double meditationFeaturedHeight = 200;
+  static const double meditationTileSize = 142;
+  static const double meditationTileRadius = 21;
+  static const double meditationRowHeight = 67;
+  static const double meditationRhythmTrack = 52;
+  static const double meditationRhythmUnit = 6;
+  static const double meditationRhythmMin = 4;
+  static const double meditationCircle = 248;
+  static const double meditationCircleMinScale = .84;
+
+  /// The viewer includes framing margins around the 150 × 180 visual bear.
+  static const double meditationMascotWidth = 300;
+  static const double meditationMascotHeight = 360;
+  static const double meditationSessionTop = 64;
+  static const double meditationPhaseGap = 38;
+  static const double meditationProgressHeight = 6;
+  static const double meditationButtonHeight = 50;
+  static const double meditationBandPadding = 18;
+  static const double meditationIcon = 28;
+  static const double meditationBandIcon = 38;
+  static const double meditationFeaturedArtWidth = 190;
+  static const double meditationFeaturedArtHeight = 170;
+
   static double dockBottomMargin(double safeBottom) =>
       safeBottom > 0 ? spacing20 : spacing16;
 

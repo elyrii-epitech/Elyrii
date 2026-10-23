@@ -66,6 +66,9 @@ class AppTextStyles {
   static TextStyle titleSmall({Color? color}) =>
       _role(15, FontWeight.w600, 1.4, 0, color);
 
+  static TextStyle meditationTileTitle({Color? color}) =>
+      _role(15, FontWeight.w600, 1.3, 0, color);
+
   /// Reading text, inputs and chat messages (t-body-l).
   static TextStyle bodyLarge({Color? color}) =>
       _role(16, FontWeight.w400, 1.5, 0, color);

@@ -22,6 +22,8 @@ abstract final class AppMotion {
   /// `cubic-bezier(.3,1.4,.5,1)` : hop de mascotte, pops d'essayage, check.
   static const Cubic accueilPop = Cubic(0.3, 1.4, 0.5, 1);
 
+  static const Cubic meditationBreath = Cubic(.42, 0, .58, 1);
+
   // ==================== DURÉES ====================
 
   /// Opacité de la bande de verre supérieure.

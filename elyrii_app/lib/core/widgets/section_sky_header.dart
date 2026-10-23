@@ -15,6 +15,8 @@ class SectionSkyHeader extends StatelessWidget {
 
   /// A control beside the title, such as the Journal « Privé » pill.
   final Widget? titleTrailing;
+  final double height;
+  final double titleBottom;
 
   const SectionSkyHeader({
     super.key,
@@ -22,23 +24,23 @@ class SectionSkyHeader extends StatelessWidget {
     required this.subtitle,
     required this.scene,
     this.titleTrailing,
+    this.height = AppDimensions.sectionSkyHeight,
+    this.titleBottom = AppDimensions.sectionTitleBottom,
   });
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return SizedBox(
-      height: AppDimensions.sectionSkyHeight,
+      height: height,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          RepaintBoundary(
-            child: CustomPaint(painter: _SkyPainter(scene, dark)),
-          ),
+          SectionSkyBackdrop(scene: scene),
           Positioned(
             left: AppDimensions.pageHorizontalPadding,
             right: AppDimensions.pageHorizontalPadding,
-            bottom: AppDimensions.sectionTitleBottom,
+            bottom: titleBottom,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -81,18 +83,20 @@ class SectionSkyHeader extends StatelessWidget {
 class SectionSkyBody extends StatelessWidget {
   final Widget child;
   final double bottomPadding;
+  final double topPadding;
 
   const SectionSkyBody({
     super.key,
     required this.child,
     this.bottomPadding = AppDimensions.spacing32,
+    this.topPadding = AppDimensions.accueilSectionGap,
   });
 
   @override
   Widget build(BuildContext context) => Container(
     padding: EdgeInsets.fromLTRB(
       AppDimensions.pageHorizontalPadding,
-      AppDimensions.accueilSectionGap,
+      topPadding,
       AppDimensions.pageHorizontalPadding,
       bottomPadding,
     ),
@@ -105,6 +109,22 @@ class SectionSkyBody extends StatelessWidget {
       ),
     ),
     child: child,
+  );
+}
+
+class SectionSkyBackdrop extends StatelessWidget {
+  final SectionSkyScene scene;
+  const SectionSkyBackdrop({super.key, required this.scene});
+
+  @override
+  Widget build(BuildContext context) => RepaintBoundary(
+    child: CustomPaint(
+      painter: _SkyPainter(
+        scene,
+        Theme.of(context).brightness == Brightness.dark,
+      ),
+      child: const SizedBox.expand(),
+    ),
   );
 }
 
@@ -270,6 +290,16 @@ class _SkyPainter extends CustomPainter {
           const Rect.fromLTWH(0, 292, 390, 178),
           paint..color = color(0xFF232B63, 0xFFC6D8F6),
         );
+        shape(
+          Path()
+            ..moveTo(0, 292)
+            ..lineTo(390, 292)
+            ..lineTo(390, 306)
+            ..cubicTo(300, 300, 100, 312, 0, 304)
+            ..close(),
+          0xFF2A2158,
+          0xFFD6CCF5,
+        );
         for (final (x, y, w) in [
           (282.0, 316.0, 56.0),
           (292.0, 330.0, 36.0),
@@ -281,6 +311,19 @@ class _SkyPainter extends CustomPainter {
               const Radius.circular(AppDimensions.spacing2),
             ),
             paint..color = color(0xFFF1E6D2, 0xFFFFD7B0).withValues(alpha: .55),
+          );
+        }
+        for (final (x, y, w) in [
+          (30.0, 360.0, 90.0),
+          (260.0, 372.0, 100.0),
+          (90.0, 396.0, 70.0),
+        ]) {
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(
+              Rect.fromLTWH(x, y, w, 2),
+              const Radius.circular(AppDimensions.spacing2),
+            ),
+            paint..color = AppColors.tealDark.withValues(alpha: .25),
           );
         }
       case SectionSkyScene.window:

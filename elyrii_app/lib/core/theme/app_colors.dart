@@ -225,9 +225,14 @@ class AppColors {
   static const Color objectiveInProgress = Color(0xFF7E6AD8);
   static const Color objectiveNotStarted = Color(0xFFBFC5D1);
 
-  /// Couleurs pour la méditation
-  static const Color meditationActive = Color(0xFF7E6AD8);
-  static const Color meditationBreathing = Color(0xFFA99AF0);
+  static const Color meditationTeal = Color(0xFF177C91);
+  static const Color meditationGreen = Color(0xFF357A63);
+  static const Color meditationViolet = Color(0xFF6955AC);
+  static const Color meditationPink = Color(0xFFB34874);
+  static const Color meditationOrange = Color(0xFFB95B2C);
+  static const Color meditationPlay = Color(0xFF126C7D);
+  static Color meditationCount(bool dark) =>
+      dark ? tealDark : const Color(0xFF0E7A9E);
 
   /// Gradient pour le chatbot
   static const LinearGradient chatbotGradient = LinearGradient(
