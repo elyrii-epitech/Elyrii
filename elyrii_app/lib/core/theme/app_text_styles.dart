@@ -81,6 +81,8 @@ class AppTextStyles {
   /// thin to keep secondary greys readable on glass (t-body-s).
   static TextStyle bodySmall({Color? color}) =>
       _role(12, FontWeight.w500, 1.35, 0, color);
+  static TextStyle profileFootnote({Color? color}) =>
+      _role(12, FontWeight.w400, 1.45, 0, color);
 
   /// The composer question, entry excerpts and search notes (14/1.5).
   static TextStyle journalLine({Color? color}) =>

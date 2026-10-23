@@ -15,6 +15,7 @@ import '../../features/meditation/presentation/pages/meditation_session_page.dar
 import '../../features/profile_setup/presentation/pages/avatar_picker_page.dart';
 import '../../features/profile_setup/presentation/pages/edit_profile_page.dart';
 import '../../features/profile_setup/presentation/pages/profile_setup_page.dart';
+import '../../features/profile_setup/presentation/pages/profile_page.dart';
 import '../../features/reviews/presentation/pages/reviews_page.dart';
 import '../../features/settings/pages/settings_page.dart';
 import 'app_routes.dart';
@@ -178,6 +179,14 @@ abstract final class AppRouter {
         ),
 
         // Routes secondaires plein écran (hors shell onglets)
+        GoRoute(
+          path: AppRoutes.profile,
+          pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(
+            key: state.pageKey,
+            name: state.name,
+            child: const ProfilePage(),
+          ),
+        ),
         GoRoute(
           path: AppRoutes.reviews,
           pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(

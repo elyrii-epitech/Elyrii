@@ -187,6 +187,34 @@ class AppDimensions {
   static const double meditationFeaturedArtHeight = 170;
   static const double meditationPreviewWidth = 360;
 
+  static const double profileTop = 94;
+  static const double profileHeaderTop = 122;
+  static const double profileScrollThreshold = 44;
+  static const double profileAvatar = 96;
+  static const double profileEditAvatar = 64;
+  static const double profileAvatarPreview = 120;
+  static const double profileAvatarTile = 66;
+  static const double profileFieldLabel = 86;
+  static const double profileBioHeight = 80;
+  static const double profileRowHeight = 56;
+  static const double profileSquare = 32;
+  static const double profileSquareRadius = 9;
+  static const double profileIcon = 19;
+  static const double profileSegment = 36;
+  static const double profileToggleWidth = 51;
+  static const double profileToggleHeight = 31;
+  static const double profileToggleThumb = 27;
+  static const double profileToggleTravel = 20;
+  static const double profileChartHeight = 95;
+  static const double profileChartPlot = 77;
+  static const double profileMoodDot = 13;
+  static const double profileMoodStep = 15;
+  static const double profileBarChart = 60;
+  static const double profileBarHeight = 43;
+  static const double profileBarWidth = 16;
+  static const double profileChartIcon = 28;
+  static const double profileHairline = .5;
+
   static double dockBottomMargin(double safeBottom) =>
       safeBottom > 0 ? spacing20 : spacing16;
 

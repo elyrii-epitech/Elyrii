@@ -22,6 +22,8 @@ import '../../../../core/widgets/accessible_action.dart';
 import '../../../../core/widgets/app_sheet_route.dart';
 import '../../../../core/widgets/mascot_contact_shadow.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/widgets/night_painter.dart';
+import '../../../profile_setup/presentation/pages/profile_page.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../../../journal/presentation/providers/journal_provider.dart';

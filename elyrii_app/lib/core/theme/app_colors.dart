@@ -171,6 +171,22 @@ class AppColors {
   static Color journalToast(bool dark) =>
       dark ? const Color(0xFF302A40) : Colors.white;
 
+  static Color profileAvatar(bool dark) =>
+      dark ? const Color(0xFF29213E) : const Color(0xFFEDE9FD);
+  static Color profileMoodCard(bool dark) =>
+      dark ? const Color(0xFF252030) : const Color(0xFFEDE9FD);
+  static Color profileCalmCard(bool dark) =>
+      dark ? const Color(0xFF172D3A) : const Color(0xFFE0F5FA);
+  static Color profileJournalCard(bool dark) =>
+      dark ? const Color(0xFF342A26) : const Color(0xFFFFF4D6);
+  static Color profileDanger(bool dark) =>
+      dark ? const Color(0xFFF08BA0) : const Color(0xFFB03A55);
+  static const Color profileToggle = Color(0xFF7C66F0);
+  static Color profileToast(bool dark) =>
+      dark ? const Color(0xFF3B3154) : Colors.white;
+  static Color profileAlert(bool dark) =>
+      dark ? const Color(0xF0242032) : const Color(0xF5FAF9FD);
+
   /// The board's rose: destructive labels and the delete row.
   static Color rose(bool dark) =>
       dark ? const Color(0xFFF08BA0) : const Color(0xFFC9506A);

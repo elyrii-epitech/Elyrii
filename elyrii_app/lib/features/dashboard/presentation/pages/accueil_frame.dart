@@ -75,7 +75,7 @@ class _AccueilFrame extends StatelessWidget {
         children: [
           Positioned.fill(
             child: IgnorePointer(
-              child: CustomPaint(painter: _NightPainter(dark)),
+              child: CustomPaint(painter: NightPainter(dark)),
             ),
           ),
           Align(
@@ -252,6 +252,7 @@ class _AccueilFrame extends StatelessWidget {
                       now: now,
                       calendarOpen: calendarOpen,
                       onCalendar: () => onOpen(_AccueilOverlay.calendar),
+                      onDressing: () => onOpen(_AccueilOverlay.dressing),
                     ),
                   ),
                 ],
@@ -268,10 +269,12 @@ class _AccueilHeader extends StatelessWidget {
   final DateTime now;
   final bool calendarOpen;
   final VoidCallback onCalendar;
+  final Future<void> Function() onDressing;
   const _AccueilHeader({
     required this.now,
     required this.calendarOpen,
     required this.onCalendar,
+    required this.onDressing,
   });
 
   @override
@@ -282,7 +285,12 @@ class _AccueilHeader extends StatelessWidget {
       children: [
         _GlassControl(
           label: 'Profil',
-          onTap: () => context.push(AppRoutes.editProfile),
+          onTap: () async {
+            final exit = await context.push<ProfileExit>(AppRoutes.profile);
+            if (context.mounted && exit == ProfileExit.dressing) {
+              await onDressing();
+            }
+          },
           child: ClipOval(
             child: UserAvatar(
               pfp: user.profile?.pfp,
@@ -322,7 +330,7 @@ class _AccueilHeader extends StatelessWidget {
           ),
         ),
         _GlassControl(
-          label: 'Paramètres',
+          label: 'Réglages',
           onTap: () => context.push(AppRoutes.settings),
           child: Icon(
             Symbols.settings_rounded,

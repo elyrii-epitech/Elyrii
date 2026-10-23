@@ -35,6 +35,9 @@ abstract final class AppMotion {
 
   /// Journal confirmations stay 3 s, then disappear without a fade.
   static const Duration journalToast = Duration(seconds: 3);
+  static const Duration profileToast = Duration(milliseconds: 3200);
+  static const Duration profileSegment = Duration(milliseconds: 150);
+  static const Duration profileToggle = Duration(milliseconds: 200);
   static const Duration gardenBreathPhase = Duration(seconds: 4);
   static const Duration gardenBreathSession = Duration(minutes: 2);
 

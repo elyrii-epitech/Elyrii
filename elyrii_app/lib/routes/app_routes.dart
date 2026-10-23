@@ -10,6 +10,7 @@ class AppRoutes {
   static const String meditationSession = '/meditation/session';
   static const String chatbot = '/chatbot';
   static const String settings = '/settings';
+  static const String profile = '/profile';
   static const String profileSetup = '/profile-setup';
   static const String editProfile = '/edit-profile';
   static const String avatarPicker = '/avatar-picker';
