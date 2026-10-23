@@ -7,6 +7,7 @@ import 'package:elyrii_app/features/dashboard/data/repositories/dashboard_reposi
 import 'package:elyrii_app/features/reviews/presentation/pages/reviews_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class _Repository extends DashboardRepository {
   _Repository() : super(client: ApiClient(storage: SecureStorageService()));
@@ -22,6 +23,7 @@ class _Repository extends DashboardRepository {
 }
 
 void main() {
+  setUpAll(() => initializeDateFormatting('fr_FR'));
   testWidgets(
     'injected repository handles periods, stale results and visible errors',
     (tester) async {
@@ -30,14 +32,17 @@ void main() {
         MaterialApp(
           home: MediaQuery(
             data: const MediaQueryData(disableAnimations: true),
-            child: ReviewsPage(repository: repository),
+            child: ReviewsPage(
+              repository: repository,
+              now: () => DateTime(2026, 10, 23),
+            ),
           ),
         ),
       );
-      expect(repository.calls, ['30d']);
-      await tester.tap(find.text('7 jours'));
+      expect(repository.calls, ['7d']);
+      await tester.tap(find.text('Mois'));
       await tester.pump();
-      expect(repository.calls, ['30d', '7d']);
+      expect(repository.calls, ['7d', '23d']);
       repository.pending[0].complete(DashboardStats.empty());
       repository.pending[1].completeError(StateError('offline'));
       await tester.pump();
@@ -45,7 +50,7 @@ void main() {
         find.text('Impossible de charger le bilan pour le moment.'),
         findsOneWidget,
       );
-      await tester.tap(find.text('90 jours'));
+      await tester.tap(find.text('Trimestre'));
       await tester.pump();
       repository.pending[2].complete(DashboardStats.empty());
       await tester.pump();

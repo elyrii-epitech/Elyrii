@@ -21,6 +21,7 @@ import 'package:elyrii_app/features/meditation/presentation/pages/meditation_pag
 import 'package:elyrii_app/features/profile_setup/presentation/pages/profile_setup_page.dart';
 import 'package:elyrii_app/features/profile_setup/presentation/pages/edit_profile_page.dart';
 import 'package:elyrii_app/features/profile_setup/presentation/pages/avatar_picker_page.dart';
+import 'package:elyrii_app/features/profile_setup/presentation/pages/profile_page.dart';
 import 'package:elyrii_app/features/reviews/presentation/pages/reviews_page.dart';
 import 'package:elyrii_app/features/settings/pages/settings_page.dart';
 
@@ -159,6 +160,7 @@ void main() {
     'coach': const CoachPage(),
     'meditation': const MeditationPage(),
     'profile-setup': const ProfileSetupPage(),
+    'profile': const ProfilePage(),
     'profile-edit': const EditProfilePage(),
     'avatar': const AvatarPickerPage(),
     'settings': const SettingsPage(),

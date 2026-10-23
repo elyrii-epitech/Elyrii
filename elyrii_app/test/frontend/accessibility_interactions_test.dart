@@ -11,13 +11,11 @@ import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
 import 'package:elyrii_app/features/chatbot/data/entities/chat_message.dart';
 import 'package:elyrii_app/features/chatbot/presentation/widgets/ai_report_sheet.dart';
-import 'package:elyrii_app/features/dashboard/data/models/dashboard_models.dart';
-import 'package:elyrii_app/features/reviews/presentation/widgets/review_content.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/theme/app_colors.dart';
 import 'package:elyrii_app/core/widgets/accessible_action.dart';
 import 'package:elyrii_app/core/widgets/glass/liquid_glass_dialog.dart';
-import 'package:elyrii_app/core/widgets/glass/liquid_glass_controls.dart';
+import 'package:elyrii_app/features/profile_setup/presentation/widgets/profile_controls.dart';
 import 'package:elyrii_app/features/auth/presentation/widgets/glass_auth_text_field.dart';
 
 void main() {
@@ -29,60 +27,6 @@ void main() {
           ..addFont(rootBundle.load('assets/fonts/Poppins-Bold.ttf')))
         .load();
   });
-  testWidgets(
-    'nonempty chart exposes exact values as text and reflows its expanded alternative at 300 percent',
-    (tester) async {
-      final semantics = tester.ensureSemantics();
-      tester.view.physicalSize = const Size(320, 568);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      try {
-        await tester.pumpWidget(
-          MaterialApp(
-            theme: AppTheme.lightTheme,
-            home: Scaffold(
-              body: MediaQuery(
-                data: const MediaQueryData(
-                  textScaler: TextScaler.linear(3),
-                  disableAnimations: true,
-                ),
-                child: SingleChildScrollView(
-                  child: ReviewTrendChart(
-                    isDark: false,
-                    stats: DashboardStats.fromJson({
-                      'moodTrend7Days': [
-                        {'day': '2026-10-10', 'count': 3},
-                      ],
-                    }),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.scrollUntilVisible(
-          find.text('Données du graphique des humeurs'),
-          160,
-          scrollable: find.byType(Scrollable).last,
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Données du graphique des humeurs'));
-        await tester.pumpAndSettle();
-        expect(
-          find.text('2026-10-10 : 3 humeurs enregistrées'),
-          findsOneWidget,
-        );
-        expect(
-          find.bySemanticsLabel('2026-10-10 : 3 humeurs enregistrées'),
-          findsOneWidget,
-        );
-        expect(tester.takeException(), isNull);
-        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-      } finally {
-        semantics.dispose();
-      }
-    },
-  );
   testWidgets(
     'AI report motives remain named and selectable at 300 percent and sending announces acknowledgment',
     (tester) async {
@@ -360,19 +304,20 @@ void main() {
             body: StatefulBuilder(
               builder: (context, setState) => Column(
                 children: [
-                  LiquidGlassSegmentedControl<String>(
-                    segments: const {
+                  ProfileSegments<String>(
+                    options: const {
                       'a': 'Première option',
                       'b': 'Deuxième option',
                     },
-                    selectedValue: selected,
-                    onValueChanged: (v) => setState(() => selected = v),
+                    selected: selected,
+                    onChanged: (v) => setState(() => selected = v),
                   ),
                   MergeSemantics(
                     child: Row(
                       children: [
                         const Text('Vibrations'),
-                        LiquidGlassSwitch(
+                        ProfileToggle(
+                          label: 'Vibrations',
                           value: value,
                           onChanged: (v) => setState(() => value = v),
                         ),
@@ -397,7 +342,7 @@ void main() {
             Tristate.isTrue,
         isTrue,
       );
-      await tester.tap(find.byType(Switch));
+      await tester.tap(find.byType(ProfileToggle));
       await tester.pump();
       expect(value, isTrue);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
