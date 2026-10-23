@@ -26,6 +26,7 @@ class ParcoursPage extends StatefulWidget {
 
 class _ParcoursPageState extends State<ParcoursPage> {
   JourneyTopic? _topic;
+  final _scroll = ScrollController();
 
   @override
   void initState() {
@@ -33,6 +34,12 @@ class _ParcoursPageState extends State<ParcoursPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(context.read<JourneyProvider>().load());
     });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
   }
 
   Future<void> _pauseOrResume(
@@ -70,65 +77,79 @@ class _ParcoursPageState extends State<ParcoursPage> {
             maxWidth: AppDimensions.maxContentWidth,
           ),
           child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              child: Stack(
-                children: [
-                  const SectionSkyHeader(
-                    title: 'Parcours',
-                    subtitle: 'Un chemin choisi. À ton rythme.',
-                    scene: SectionSkyScene.arches,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: bodyTop),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: math.max(0, constraints.maxHeight - bodyTop),
+            builder: (context, constraints) => Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: _scroll,
+                  child: Stack(
+                    children: [
+                      const SectionSkyHeader(
+                        title: 'Parcours',
+                        subtitle: 'Un chemin choisi. À ton rythme.',
+                        scene: SectionSkyScene.arches,
                       ),
-                      child: SectionSkyBody(
-                        bottomPadding:
-                            AppShell.bottomClearanceOf(context) +
-                            AppDimensions.spacing24,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          spacing: AppDimensions.spacing16,
-                          children: [
-                            JourneyFeedback(
-                              error: provider.error,
-                              loading: provider.isLoading,
-                              writing: provider.isWriting,
-                              onRetry: () => provider.load(force: true),
+                      Padding(
+                        padding: const EdgeInsets.only(top: bodyTop),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: math.max(
+                              0,
+                              constraints.maxHeight - bodyTop,
                             ),
-                            const JourneyNote(
-                              'Ta progression est enregistrée sur cet appareil.',
-                            ),
-                            if (!provider.hasLoadedData) ...[
-                              if (provider.isLoading)
-                                const JourneyNote(
-                                  'Chargement de tes parcours…',
-                                  live: true,
-                                )
-                              else if (provider.error == null) ...[
-                                const JourneyNote(
-                                  'Tes parcours ne sont pas disponibles pour le moment.',
+                          ),
+                          child: SectionSkyBody(
+                            bottomPadding:
+                                AppShell.bottomClearanceOf(context) +
+                                AppDimensions.spacing24,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              spacing: AppDimensions.spacing16,
+                              children: [
+                                JourneyFeedback(
+                                  error: provider.error,
+                                  loading: provider.isLoading,
+                                  writing: provider.isWriting,
+                                  onRetry: () => provider.load(force: true),
                                 ),
-                                JourneyButton(
-                                  label: 'Réessayer',
-                                  primary: false,
-                                  onPressed: () => provider.load(force: true),
+                                const JourneyNote(
+                                  'Ta progression est enregistrée sur cet appareil.',
                                 ),
+                                if (!provider.hasLoadedData) ...[
+                                  if (provider.isLoading)
+                                    const JourneyNote(
+                                      'Chargement de tes parcours…',
+                                      live: true,
+                                    )
+                                  else if (provider.error == null) ...[
+                                    const JourneyNote(
+                                      'Tes parcours ne sont pas disponibles pour le moment.',
+                                    ),
+                                    JourneyButton(
+                                      label: 'Réessayer',
+                                      primary: false,
+                                      onPressed: () =>
+                                          provider.load(force: true),
+                                    ),
+                                  ],
+                                ] else if (provider.current case final current?)
+                                  _currentBoard(context, provider, current)
+                                else
+                                  _catalog(context, provider),
+                                _secondary(context, provider),
                               ],
-                            ] else if (provider.current case final current?)
-                              _currentBoard(context, provider, current)
-                            else
-                              _catalog(context, provider),
-                            _secondary(context, provider),
-                          ],
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                SectionSkyBar(
+                  scroll: _scroll,
+                  title: 'Parcours',
+                  trailing: const SizedBox.shrink(),
+                ),
+              ],
             ),
           ),
         ),
