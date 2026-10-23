@@ -196,7 +196,7 @@ class ProfileSection extends StatelessWidget {
             ),
             child: Text(
               footer!,
-              style: AppTextStyles.profileFootnote(color: context.textTertiary),
+              style: AppTextStyles.bodySmall(color: context.textSecondary),
             ),
           ),
       ],

@@ -323,7 +323,7 @@ class _MoodPicker extends StatelessWidget {
                                     color: context.textPrimary,
                                   )
                                 : AppTextStyles.moodLabel(
-                                    color: context.textTertiary,
+                                    color: context.textPrimary,
                                   ),
                             textAlign: TextAlign.center,
                           ),

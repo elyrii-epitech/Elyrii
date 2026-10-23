@@ -140,13 +140,13 @@ class AppTextStyles {
   static TextStyle capsuleSuffix({Color? color}) =>
       _role(14, FontWeight.w500, null, 0, color);
 
-  /// Mood face labels (labels d'humeur).
+  /// Small mood labels need semibold strokes to stay readable on the scene.
   static TextStyle moodLabel({Color? color}) =>
-      _role(11, FontWeight.w500, null, 0, color);
+      _role(11, FontWeight.w600, null, 0, color);
 
   /// The selected mood face label, one weight up.
   static TextStyle moodLabelSelected({Color? color}) =>
-      _role(11, FontWeight.w600, null, 0, color);
+      _role(11, FontWeight.w700, null, 0, color);
 
   /// A ritual tile title (titre rituel).
   static TextStyle ritualTitle({Color? color}) =>
