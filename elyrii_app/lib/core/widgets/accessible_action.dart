@@ -96,41 +96,33 @@ class AccessibleActionState extends State<AccessibleAction> {
             scale: _isPressed && enabled && !reduceMotion ? 0.97 : 1,
             duration: duration,
             curve: Curves.easeOutCubic,
-            child: AnimatedOpacity(
-              duration: duration,
-              // Press feedback must not lower the contrast of active labels.
-              opacity: 1,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: widget.borderRadius,
-                  // Two contrasting rings remain visible on both filled and
-                  // transparent controls, without covering their content.
-                  boxShadow: _showFocus && enabled
-                      ? [
-                          BoxShadow(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            spreadRadius: 4,
-                          ),
-                          BoxShadow(
-                            color: Theme.of(context).colorScheme.surface,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : null,
-                  border: _showFocus && enabled
-                      ? Border.all(
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 2,
-                        )
-                      : null,
-                ),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 48,
-                    minHeight: 48,
-                  ),
-                  child: widget.child,
-                ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: widget.borderRadius,
+                // Two contrasting rings remain visible on both filled and
+                // transparent controls, without covering their content.
+                boxShadow: _showFocus && enabled
+                    ? [
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          spreadRadius: 4,
+                        ),
+                        BoxShadow(
+                          color: Theme.of(context).colorScheme.surface,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : null,
+                border: _showFocus && enabled
+                    ? Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 2,
+                      )
+                    : null,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                child: widget.child,
               ),
             ),
           ),

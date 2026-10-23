@@ -13,7 +13,6 @@ import '../../domain/civil_day.dart';
 import '../mood_presentation.dart';
 export '../mood_presentation.dart';
 
-/// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
   final DashboardRepository _repository;
   AccueilActivities? _activities;

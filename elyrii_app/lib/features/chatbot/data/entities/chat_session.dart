@@ -4,8 +4,6 @@ import 'chat_message.dart';
 
 const _uuid = Uuid();
 
-/// Une conversation persistée localement : messages horodatés, titre
-/// dérivé du premier message utilisateur, bornes de mise à jour.
 class ChatSession {
   final String id;
   final String title;

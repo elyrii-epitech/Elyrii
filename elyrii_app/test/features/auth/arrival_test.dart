@@ -4,6 +4,7 @@ import 'package:elyrii_app/features/auth/presentation/pages/login_page.dart';
 import 'package:elyrii_app/features/auth/presentation/pages/password_reset_page.dart';
 import 'package:elyrii_app/features/auth/presentation/pages/register_page.dart';
 import 'package:elyrii_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,6 +36,7 @@ void main() {
     providers: [
       Provider<ApiClient>.value(value: api),
       ChangeNotifierProvider<AuthProvider>.value(value: auth),
+      ChangeNotifierProvider(create: (_) => MascotProvider()),
     ],
     child: MaterialApp(home: child),
   );

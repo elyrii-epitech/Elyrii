@@ -32,9 +32,6 @@ class ApiException implements Exception {
           ? ApiFailureKind.offline
           : ApiFailureKind.validation);
   bool get isUnauthorized => kind == ApiFailureKind.unauthorized;
-  bool get isForbidden => kind == ApiFailureKind.forbidden;
-  bool get isNotFound => statusCode == 404;
-  bool get isServerError => kind == ApiFailureKind.server;
   bool get canUseOfflineData =>
       kind == ApiFailureKind.offline ||
       kind == ApiFailureKind.timeout ||

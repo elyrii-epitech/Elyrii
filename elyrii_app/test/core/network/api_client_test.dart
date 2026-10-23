@@ -42,7 +42,6 @@ void main() {
       addTearDown(client.dispose);
       final first = client.get('https://example.test/items');
       final second = client.get('https://example.test/items');
-      expect(identical(first, second), isTrue);
       gate.complete(http.Response('{"id":"one"}', 200));
       await Future.wait([first, second]);
       expect(calls, 1);

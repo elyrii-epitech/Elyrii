@@ -122,7 +122,7 @@ class AppShell extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: AppDimensions.spacing8),
-                            GlassBubbleButtonStateful(
+                            GlassBubbleButton(
                               icon: Icons.chat_bubble_rounded,
                               onTap: () => _onTabSelected(5),
                               size: AppDimensions.dockHeight,

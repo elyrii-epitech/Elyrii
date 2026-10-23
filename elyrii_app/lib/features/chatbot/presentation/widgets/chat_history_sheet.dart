@@ -12,13 +12,9 @@ import '../../../../core/widgets/app_sheet_route.dart';
 import '../../data/entities/chat_session.dart';
 import '../providers/chatbot_provider.dart';
 
-/// Feuille d'historique des conversations : liste des sessions passées
-/// (titre, date relative, taille du fil), reprise au tap, suppression
-/// à l'icône corbeille, et démarrage d'une nouvelle conversation.
 class ChatHistorySheet extends StatelessWidget {
   const ChatHistorySheet({super.key});
 
-  /// Ouvre la feuille au-dessus de la page chat.
   static Future<void> show(BuildContext context) {
     return Navigator.of(context, rootNavigator: true).push<void>(
       AppSheetRoute<void>(

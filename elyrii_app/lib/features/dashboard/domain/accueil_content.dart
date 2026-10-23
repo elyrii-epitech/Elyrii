@@ -9,8 +9,6 @@ import '../data/models/dashboard_models.dart';
 import '../presentation/mood_presentation.dart';
 import 'civil_day.dart';
 
-// ==================== MOMENT DE LA JOURNÉE ====================
-
 enum DayPart { morning, afternoon, evening }
 
 /// Matin avant 12 h, après-midi de 12 h à 17 h 59, soir à partir de 18 h.
@@ -31,11 +29,8 @@ extension on DayPart {
 String _capitalize(String text) =>
     text.isEmpty ? text : '${text[0].toUpperCase()}${text.substring(1)}';
 
-/// « Comment te sens-tu ce soir ? », selon le moment de la journée.
 String moodQuestion(DateTime now) =>
     'Comment te sens-tu ${dayPartOf(now).thisPart} ?';
-
-// ==================== ACTIONS ET RÉPONSES ====================
 
 /// Ce qu'une action de l'Accueil déclenche réellement ; la page l'exécute.
 sealed class AccueilAction {
@@ -104,9 +99,6 @@ const helpLine = 'Besoin d\'aide maintenant · 3114, gratuit, jour et nuit';
 /// Le texte de partage proposé par « Écrire à un proche ».
 const contactShareText = 'Je pensais à toi.';
 
-/// La table ANSWERS de la maquette, exhaustive sur `MoodType?`. Seules les
-/// références au moment de la journée changent ; « Rappel coucher » est
-/// retiré faute de service de rappel.
 AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
   final part = dayPartOf(now);
   switch (mood) {
@@ -206,8 +198,6 @@ AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
   }
 }
 
-// ==================== MATRICE D'HUMEUR ====================
-
 /// Les sections affichées sous l'humeur. Le soutien passe d'abord pour
 /// Éprouvé et Vulnérable ; le lien social disparaît seulement pour Éprouvé.
 /// Le fil et l'insight ne dépendent pas de l'humeur.
@@ -242,8 +232,6 @@ AccueilMoodLayout layoutForMood(MoodType? mood) => switch (mood) {
 };
 
 const restTitle = 'Les rituels peuvent attendre';
-
-// ==================== RITUELS ====================
 
 class AccueilRitualInfo {
   final AccueilRitual ritual;
@@ -298,8 +286,6 @@ String ritualDetail(AccueilRitualInfo info, DateTime? completedAt) {
 
 String ritualCounter(int done) => '$done sur ${accueilRituals.length}';
 
-// ==================== LIEN SOCIAL ====================
-
 const socialTitle = 'Un pas vers les autres';
 const socialWeeklyGoal = 3;
 
@@ -316,8 +302,6 @@ String socialIdeaAt(int index) => socialIdeas[index % socialIdeas.length];
 /// Le but est trois pas ; quatre restent une mesure vraie.
 String socialCounter(int steps) =>
     '$steps pas sur $socialWeeklyGoal cette semaine';
-
-// ==================== FIL ====================
 
 class AccueilThread {
   final String entryId;
@@ -411,8 +395,6 @@ String _relativePhrase(DateTime createdAt, DateTime now) {
   }
   return _capitalize(_weekdayNames[day.weekday - 1]);
 }
-
-// ==================== CALENDRIER ====================
 
 enum CalendarCellState {
   presentWithMood,
@@ -518,8 +500,6 @@ CalendarMonth buildCalendarMonth({
   );
 }
 
-// ==================== SÉRIE ====================
-
 enum StreakDayState { done, missed, upcoming }
 
 class StreakDay {
@@ -559,8 +539,6 @@ List<StreakDay> buildStreakWeek({
       }(),
   ];
 }
-
-// ==================== FLEURS ====================
 
 class WeekFlower {
   final String challengeId;
@@ -646,8 +624,6 @@ WeekFlowers buildWeekFlowers({
     all: List.unmodifiable(all),
   );
 }
-
-// ==================== INSIGHT ====================
 
 class AccueilInsight {
   final String title;

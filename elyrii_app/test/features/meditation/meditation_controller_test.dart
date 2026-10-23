@@ -214,28 +214,24 @@ void main() {
         controller.setBreathingType(BreathingType.relaxation478);
         await controller.startSession();
 
-        // Phase 0 : Inspire (4 secondes)
-        controller.tick(); // 3s
+        controller.tick();
         expect(controller.currentPhaseIndex, equals(0));
         expect(controller.phaseSecondsRemaining, equals(3));
 
-        controller.tick(); // 2s
-        controller.tick(); // 1s
+        controller.tick();
+        controller.tick();
         expect(controller.currentPhaseIndex, equals(0));
 
-        // 4e tick : bascule vers Phase 1 (Retiens, 7s)
         controller.tick();
         expect(controller.currentPhaseIndex, equals(1));
         expect(controller.currentPhase.label, equals('Retiens'));
         expect(controller.phaseSecondsRemaining, equals(7));
 
-        // 7 ticks dans Retiens
         for (int i = 0; i < 6; i++) {
           controller.tick();
         }
         expect(controller.currentPhaseIndex, equals(1));
 
-        // Dernier tick de Retiens : bascule vers Phase 2 (Expire, 8s)
         controller.tick();
         expect(controller.currentPhaseIndex, equals(2));
         expect(controller.currentPhase.label, equals('Expire'));
@@ -253,7 +249,7 @@ void main() {
       }
 
       expect(controller.completedCycles, equals(1));
-      expect(controller.currentPhaseIndex, equals(0)); // Retour à Inspire
+      expect(controller.currentPhaseIndex, equals(0));
     });
 
     test('mise en pause et reprise de la session', () async {

@@ -426,7 +426,6 @@ def main():
     bpy.ops.import_scene.gltf(filepath=str(SOURCE))
     bpy.context.scene.frame_set(0)
     bpy.context.view_layer.update()
-    base=list(bpy.context.scene.objects)
     head=bpy.data.objects.get('root.0');chest=bpy.data.objects.get('root.1')
     if not head or not chest:
         raise RuntimeError('Velours rest-pose mesh names changed; inspect fit before rebuilding.')

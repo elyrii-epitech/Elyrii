@@ -234,28 +234,4 @@ class JournalRepository {
     await _client.delete(ApiConfig.journalEntryUrl(id));
     if (owner != null) await _cacheCommitted(() => store.delete(owner, id));
   }
-
-  Future<List<JournalMediaModel>> listMedia(String entryId) async {
-    final response = await _client.get(ApiConfig.journalMediaUrl(entryId));
-    return decodeListResponse(response, JournalMediaModel.fromJson);
-  }
-
-  Future<JournalMediaModel> addMedia({
-    required String entryId,
-    required String url,
-    String? type,
-  }) async {
-    final response = await _client.post(
-      ApiConfig.journalMediaUrl(entryId),
-      body: {'url': url, 'type': ?type},
-    );
-    return decodeResponse(response, JournalMediaModel.fromJson);
-  }
-
-  Future<void> deleteMedia({
-    required String entryId,
-    required String mediaId,
-  }) async {
-    await _client.delete(ApiConfig.journalMediaItemUrl(entryId, mediaId));
-  }
 }

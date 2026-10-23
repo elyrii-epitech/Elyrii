@@ -11,28 +11,15 @@ import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 
-/// Widget d'affichage de la mascotte Elyrii dans le chatbot.
-///
-/// Réflexion pendant la génération, écoute pendant la saisie, acquiescement
-/// à la réception et présence rassurante après une déconnexion.
-/// En mode réduit, la bannière devient une pilule « Dynamic Island »
-/// compacte et flottante, centrée au-dessus de la conversation.
 class MascotWidget extends StatefulWidget {
-  /// Indique si la mascotte doit être affichée en mode réduit.
   final bool isMinimized;
 
-  /// Hauteur de la mascotte en mode plein écran.
   final double lottieHeight;
 
-  /// Action déclenchée au clic sur la mascotte.
   final VoidCallback? onTap;
 
-  /// Vrai pendant que l'utilisateur saisit un message : la mascotte
-  /// passe en écoute attentive (`MascotAnimations.attentive`).
   final bool isUserTyping;
 
-  /// Vrai lorsque des propos exprimant une détresse ont été détectés :
-  /// la mascotte adopte une posture de présence rassurante (`reassure`).
   final bool isCrisis;
 
   const MascotWidget({
@@ -145,11 +132,6 @@ class _MascotWidgetState extends State<MascotWidget> {
     );
   }
 
-  /// Construit la pilule « Dynamic Island » du mode réduit.
-  ///
-  /// Compacte, centrée, flottante au-dessus de la conversation : un tap
-  /// la redéploie en mascotte plein écran. Le statut de présence change
-  /// en douceur selon l'état de la mascotte.
   Widget _buildDynamicIsland(
     bool isDark,
     MascotAnimation animation,
@@ -168,8 +150,6 @@ class _MascotWidgetState extends State<MascotWidget> {
             right: AppDimensions.spacing12,
           ),
           decoration: BoxDecoration(
-            // Pilule charbon profond façon Dynamic Island : discrets
-            // reflets de bord, aucune couleur criarde.
             color: isDark
                 ? Colors.black.withValues(alpha: 0.55)
                 : Colors.black.withValues(alpha: 0.82),

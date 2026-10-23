@@ -12,8 +12,6 @@ import '../../../dashboard/domain/accueil_content.dart';
 import '../../../dashboard/domain/civil_day.dart';
 import '../../../dashboard/presentation/mood_presentation.dart';
 
-/// Jardin mensuel : paysage panoramique organique affichant les fleurs
-/// associées aux défis réellement accomplis pour le mois sélectionné.
 class MonthlyGarden extends StatefulWidget {
   const MonthlyGarden({
     super.key,
@@ -416,7 +414,6 @@ class _MeadowPainter extends CustomPainter {
   final Animation<double> animation;
   final bool dark;
 
-  // Peintures réutilisées pour supprimer les allocations répétées dans paint()
   final Paint _skyPaint = Paint()..style = PaintingStyle.fill;
   final Paint _hillPaint = Paint()..style = PaintingStyle.fill;
   final Paint _soilPaint = Paint()..style = PaintingStyle.fill;
@@ -434,11 +431,9 @@ class _MeadowPainter extends CustomPainter {
     final h = size.height;
     final monthSeed = month.year * 12 + month.month;
 
-    // Fond ciel doux
     _skyPaint.color = dark ? AppColors.cardDark : AppColors.cardLight;
     canvas.drawRect(Rect.fromLTWH(0, 0, w, h), _skyPaint);
 
-    // Colline d'arrière-plan avec onde douce
     _hillPaint.color = AppColors.green(dark)
         .withValues(alpha: dark ? 0.22 : 0.18);
     final backHill = Path()..moveTo(0, h * 0.68);
@@ -456,7 +451,6 @@ class _MeadowPainter extends CustomPainter {
     backHill.close();
     canvas.drawPath(backHill, _hillPaint);
 
-    // Colline de premier plan
     _hillPaint.color = AppColors.green(dark)
         .withValues(alpha: dark ? 0.38 : 0.32);
     final frontHill = Path()..moveTo(0, h * 0.80);
@@ -474,7 +468,6 @@ class _MeadowPainter extends CustomPainter {
     frontHill.close();
     canvas.drawPath(frontHill, _hillPaint);
 
-    // Bande de sol terreux
     _soilPaint.color = AppColors.gardenGroup(dark);
     canvas.drawRect(Rect.fromLTWH(0, h * 0.88, w, h * 0.12), _soilPaint);
 
@@ -494,7 +487,6 @@ class _MeadowPainter extends CustomPainter {
       final currentBlossomY = layout.groundOffset.dy - currentStemHeight;
       final currentCenter = Offset(layout.blossomCenter.dx, currentBlossomY);
 
-      // Tige
       final stemPath = Path()
         ..moveTo(layout.groundOffset.dx, layout.groundOffset.dy)
         ..quadraticBezierTo(
@@ -505,7 +497,6 @@ class _MeadowPainter extends CustomPainter {
         );
       canvas.drawPath(stemPath, _stemPaint);
 
-      // Feuille sur la tige
       if (stemK > 0.45) {
         final leafProgress = ((stemK - 0.45) / 0.55).clamp(0.0, 1.0);
         final leafY = layout.groundOffset.dy - currentStemHeight * 0.45;
@@ -524,7 +515,6 @@ class _MeadowPainter extends CustomPainter {
         canvas.restore();
       }
 
-      // Corolle / pétales
       if (petalK > 0.0) {
         final tierScale = (layout.slotIndex % 2 == 0) ? 0.95 : 1.0;
         final scale = petalK * tierScale;

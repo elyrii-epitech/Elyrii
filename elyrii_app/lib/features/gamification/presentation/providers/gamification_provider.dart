@@ -185,7 +185,7 @@ class GamificationProvider extends ChangeNotifier {
     try {
       await _repository.startChallenge(challengeId);
       if (session != _sessionRevision) return false;
-      await _reloadAfterCommand(); // Refresh everything to get updated streak and lists
+      await _reloadAfterCommand();
       return true;
     } catch (e) {
       if (session != _sessionRevision) return false;
@@ -208,7 +208,7 @@ class GamificationProvider extends ChangeNotifier {
     try {
       await _repository.acceptChallenge(challengeId);
       if (session != _sessionRevision) return false;
-      await _reloadAfterCommand(); // Refresh everything
+      await _reloadAfterCommand();
       return true;
     } catch (e) {
       if (session != _sessionRevision) return false;
@@ -245,26 +245,6 @@ class GamificationProvider extends ChangeNotifier {
       return false;
     } finally {
       if (session == _sessionRevision) _commands.remove(challengeId);
-    }
-  }
-
-  Future<void> loadActive() async {
-    if (_isDemo) {
-      applyDevProgress();
-      return;
-    }
-    final session = _sessionRevision;
-    try {
-      final result = await _repository.getActiveChallenges();
-      if (session != _sessionRevision) return;
-      _activeChallenges = List.unmodifiable(result);
-      _notify();
-    } catch (e) {
-      if (session != _sessionRevision) return;
-      _error = e is ApiException
-          ? e.message
-          : 'Impossible de synchroniser tes défis. Réessaie.';
-      _notify();
     }
   }
 }

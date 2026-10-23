@@ -28,7 +28,7 @@ void main() {
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.byType(GlassNavigationBar), findsOneWidget);
     expect(tester.takeException(), isNull);
-    await tapVisible(tester, find.byType(GlassBubbleButtonStateful));
+    await tapVisible(tester, find.byType(GlassBubbleButton));
     await waitFor(
       tester,
       () => find.byType(ChatbotPage).evaluate().isNotEmpty,

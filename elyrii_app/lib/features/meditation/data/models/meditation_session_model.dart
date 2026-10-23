@@ -1,41 +1,5 @@
 import '../../../../core/data/json_contract.dart';
 
-class MeditationProgram {
-  final String id;
-  final String title;
-  final String description;
-  final int durationMinutes;
-  final String audioUrl;
-  final List<String> tags;
-
-  MeditationProgram({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.durationMinutes,
-    required this.audioUrl,
-    required List<String> tags,
-  }) : tags = List.unmodifiable(tags);
-
-  factory MeditationProgram.fromJson(Map<String, dynamic> json) {
-    return MeditationProgram(
-      id: requiredJsonString(json['id'], 'id'),
-      title: json['title'] as String? ?? '',
-      description: json['description'] as String? ?? '',
-      durationMinutes: _parseInt(
-        json['durationMinutes'] ?? json['duration_minutes'],
-      ),
-      audioUrl:
-          json['audioUrl'] as String? ?? json['audio_url'] as String? ?? '',
-      tags:
-          (json['tags'] as List<dynamic>?)
-              ?.map((tag) => tag.toString())
-              .toList() ??
-          const [],
-    );
-  }
-}
-
 class MeditationSessionModel {
   final String id;
   final String type;

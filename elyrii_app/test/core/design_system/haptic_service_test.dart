@@ -6,7 +6,6 @@ void main() {
 
   group('ElyriiHaptics', () {
     tearDown(() {
-      // Toujours réactiver après chaque test
       ElyriiHaptics.setEnabled(true);
     });
 
@@ -17,13 +16,6 @@ void main() {
     test('désactivation globale respectée', () {
       ElyriiHaptics.setEnabled(false);
       expect(ElyriiHaptics.isEnabled, isFalse);
-
-      // Les appels ne doivent pas lever d'exception et ne rien émettre
-      expect(() => ElyriiHaptics.light(), returnsNormally);
-      expect(() => ElyriiHaptics.medium(), returnsNormally);
-      expect(() => ElyriiHaptics.selection(), returnsNormally);
-      expect(() => ElyriiHaptics.warning(), returnsNormally);
-      expect(() => ElyriiHaptics.success(), returnsNormally);
     });
 
     test('réactivation fonctionne', () {

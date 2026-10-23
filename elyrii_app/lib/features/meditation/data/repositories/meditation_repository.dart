@@ -8,11 +8,6 @@ class MeditationRepository {
 
   MeditationRepository({required this._client});
 
-  Future<List<MeditationProgram>> getCatalog() async {
-    final response = await _client.get(ApiConfig.meditationCatalogUrl);
-    return decodeListResponse(response, MeditationProgram.fromJson);
-  }
-
   Future<List<MeditationSessionModel>> getSessions({int limit = 20}) async {
     final response = await _client.get(
       ApiConfig.meditationSessionsUrl,

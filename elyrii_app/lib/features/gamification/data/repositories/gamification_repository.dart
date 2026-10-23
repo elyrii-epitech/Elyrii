@@ -9,27 +9,22 @@ class GamificationRepository {
 
   GamificationRepository({required this._client});
 
-  /// Parse a list response into UserChallenge objects
-  List<UserChallenge> _parseList(dynamic response) {
-    return decodeListResponse(response, UserChallenge.fromJson);
-  }
-
   /// Fetch active challenges for the authenticated user
   Future<List<UserChallenge>> getActiveChallenges() async {
     final response = await _client.get(ApiConfig.activeChallengesUrl);
-    return _parseList(response);
+    return decodeListResponse(response, UserChallenge.fromJson);
   }
 
   /// Fetch completed challenges for the authenticated user
   Future<List<UserChallenge>> getCompletedChallenges() async {
     final response = await _client.get(ApiConfig.completedChallengesUrl);
-    return _parseList(response);
+    return decodeListResponse(response, UserChallenge.fromJson);
   }
 
   /// Fetch pending challenge proposals
   Future<List<UserChallenge>> getProposals() async {
     final response = await _client.get(ApiConfig.proposalsUrl);
-    return _parseList(response);
+    return decodeListResponse(response, UserChallenge.fromJson);
   }
 
   /// Accept a proposed challenge

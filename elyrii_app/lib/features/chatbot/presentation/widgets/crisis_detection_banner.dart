@@ -47,14 +47,9 @@ bool containsCrisisKeyword(String text) {
   );
 }
 
-/// A non-intrusive but visible banner that slides down smoothly when the
-/// chatbot detects concerning language. It shows supportive messaging and
-/// emergency contact numbers for France.
 class CrisisDetectionBanner extends StatelessWidget {
-  /// Whether the banner is currently visible.
   final bool visible;
 
-  /// Called when the user dismisses the banner.
   final VoidCallback onDismiss;
 
   const CrisisDetectionBanner({
@@ -119,7 +114,6 @@ class CrisisDetectionBanner extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Gentle icon + message
           Icon(
             Icons.favorite_rounded,
             size: 28,
@@ -133,7 +127,6 @@ class CrisisDetectionBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacing16),
 
-          // Emergency numbers
           _buildPhoneRow(
             context,
             isDark,
@@ -149,7 +142,6 @@ class CrisisDetectionBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacing16),
 
-          // Action buttons
           LiquidGlassButton(
             label: 'J\'ai besoin d\'aide maintenant',
             icon: Icons.phone_in_talk_rounded,

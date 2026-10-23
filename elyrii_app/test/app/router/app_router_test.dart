@@ -21,57 +21,55 @@ import 'package:elyrii_app/features/settings/providers/settings_provider.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets(
-    'GoRouter shell affiche la barre de navigation sur les écrans connectés',
-    (tester) async {
-      SharedPreferences.setMockInitialValues({});
-      FlutterSecureStorage.setMockInitialValues({});
+  testWidgets('GoRouter masque le dock pour une session non authentifiée', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
 
-      final secureStorage = SecureStorageService();
-      final apiClient = ApiClient(storage: secureStorage);
-      final authProvider = AuthProvider(
-        client: apiClient,
-        storage: secureStorage,
-      );
-      final profileSetupDone = ValueNotifier<bool>(true);
+    final secureStorage = SecureStorageService();
+    final apiClient = ApiClient(storage: secureStorage);
+    final authProvider = AuthProvider(
+      client: apiClient,
+      storage: secureStorage,
+    );
+    final profileSetupDone = ValueNotifier<bool>(true);
 
-      final router = AppRouter.createRouter(
-        authProvider: authProvider,
-        profileSetupDone: profileSetupDone,
-      );
+    final router = AppRouter.createRouter(
+      authProvider: authProvider,
+      profileSetupDone: profileSetupDone,
+    );
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider.value(value: authProvider),
-            ChangeNotifierProvider(create: (_) => MascotProvider()),
-            ChangeNotifierProvider(
-              create: (_) => DashboardProvider(apiClient: apiClient),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => JournalProvider(client: apiClient),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => GamificationProvider(client: apiClient),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => JourneyProvider(
-                repository: JourneyRepository(
-                  cipher: ContentCipher(secureStorage),
-                ),
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: authProvider),
+          ChangeNotifierProvider(create: (_) => MascotProvider()),
+          ChangeNotifierProvider(
+            create: (_) => DashboardProvider(apiClient: apiClient),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => JournalProvider(client: apiClient),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => GamificationProvider(client: apiClient),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => JourneyProvider(
+              repository: JourneyRepository(
+                cipher: ContentCipher(secureStorage),
               ),
             ),
-            ChangeNotifierProvider(
-              create: (_) => UserProvider(client: apiClient),
-            ),
-          ],
-          child: MaterialApp.router(routerConfig: router),
-        ),
-      );
+          ),
+          ChangeNotifierProvider(
+            create: (_) => UserProvider(client: apiClient),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
 
-      // Initialement non authentifié -> redirigé vers /login
-      await tester.pumpAndSettle();
-      expect(find.byType(GlassNavigationBar), findsNothing);
-    },
-  );
+    await tester.pumpAndSettle();
+    expect(find.byType(GlassNavigationBar), findsNothing);
+  });
 }

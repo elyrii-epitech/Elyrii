@@ -41,7 +41,7 @@ class AuthRepository {
       body: {'email': email, 'password': password},
       auth: false,
     );
-    return decodeResponse(response, (json) => _loginResult(json));
+    return decodeResponse(response, _loginResult);
   }
 
   AuthResult _loginResult(Map<String, dynamic> response) {
@@ -74,7 +74,7 @@ class AuthRepository {
       body: body,
       auth: false,
     );
-    return decodeResponse(response, (json) => _registrationResult(json));
+    return decodeResponse(response, _registrationResult);
   }
 
   AuthResult _registrationResult(Map<String, dynamic> response) {

@@ -140,7 +140,6 @@ class UserChallenge {
 
   String get displayTitle => template?.title ?? 'Défi';
   String get displayDescription => template?.description ?? '';
-  IconData get displayIcon => template?.icon ?? Icons.star_rounded;
 
   ChallengeStatus get state => ChallengeStatus.values.firstWhere(
     (value) => value.name.toUpperCase() == status,
@@ -149,7 +148,6 @@ class UserChallenge {
 
   bool get isActive => status == 'ACTIVE';
   bool get isCompleted => status == 'COMPLETED';
-  bool get isPending => status == 'PENDING';
 
   /// Fraction de progression globale entre 0.0 et 1.0
   double get progressFraction {

@@ -597,34 +597,6 @@ class ChatbotProvider extends ChangeNotifier {
     _notify();
   }
 
-  Future<void> clearHistory() async {
-    await ready;
-    final session = _activeSession;
-    if (session == null) return;
-    final owner = _owner!;
-    _selection++;
-    _loadingSession = false;
-    _messages.clear();
-    for (final id
-        in _pendingReplies.entries
-            .where((entry) => entry.value.session.id == session.id)
-            .map((entry) => entry.key)
-            .toList()) {
-      _pendingReplies.remove(id)?.timer.cancel();
-    }
-    _hasMoreMessages = false;
-    _activeSession = session.copyWith(
-      messages: const [],
-      messageCount: 0,
-      updatedAt: DateTime.now(),
-    );
-    final index = _sessions.indexWhere((s) => s.id == session.id);
-    if (index >= 0) _sessions[index] = _activeSession!;
-    final empty = _activeSession!;
-    _queue(() => _history.clearMessages(owner, empty));
-    _notify();
-  }
-
   @override
   void dispose() {
     _disposed = true;

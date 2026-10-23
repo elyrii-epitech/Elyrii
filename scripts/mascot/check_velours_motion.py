@@ -66,7 +66,8 @@ def check(compare_ref=None):
         frames += len(times)
 
     # Geometry, skins, images and material payloads survive rebuilding.
-    geometry = remove_animations(copy.deepcopy(g), binary)
+    compacted = copy.deepcopy(g)
+    geometry = remove_animations(compacted, binary)
     if compare_ref:
         raw = subprocess.check_output(['git', 'show', f'{compare_ref}:elyrii_app/assets/elyrii_velours_animations.glb'], cwd=ROOT)
         with tempfile.TemporaryDirectory() as temp:
@@ -76,17 +77,10 @@ def check(compare_ref=None):
         assert before['nodes'] == g['nodes']
         assert before['materials'] == g['materials']
         assert remove_animations(before, before_data) == geometry
-        compacted = _compacted(g, binary)
         for key in ('meshes', 'skins', 'images', 'textures'):
             assert before.get(key) == compacted.get(key), key
     print(f'OK: {len(CLIPS)} clips, {frames} poses, normalized quaternions, common endpoints, bounded eyelids, catalog matches GLB.')
     print('Geometry SHA256:', hashlib.sha256(geometry).hexdigest())
-
-
-def _compacted(g, binary):
-    result = copy.deepcopy(g)
-    remove_animations(result, binary)
-    return result
 
 
 if __name__ == '__main__':

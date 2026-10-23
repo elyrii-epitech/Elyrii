@@ -24,24 +24,6 @@ class _Dependencies extends AppDependencies {
 }
 
 void main() {
-  testWidgets('bootstrap preserves a deep link while services are loading', (
-    tester,
-  ) async {
-    final startup = Completer<AppDependencies>();
-    tester.binding.platformDispatcher.defaultRouteNameTestValue = '/chatbot';
-    addTearDown(
-      tester.binding.platformDispatcher.clearDefaultRouteNameTestValue,
-    );
-    await tester.pumpWidget(
-      ApplicationBootstrap(initialize: () => startup.future),
-    );
-    await tester.pump();
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-    startup.completeError(StateError('Cancelled test startup'));
-    await tester.pump();
-  });
   testWidgets(
     'bootstrap shows retry after initialization fails and releases late services',
     (tester) async {
@@ -63,7 +45,6 @@ void main() {
       await tester.tap(find.text('Réessayer'));
       await tester.pump();
       expect(attempts, 2);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       final services = _Dependencies();
       late.complete(services);

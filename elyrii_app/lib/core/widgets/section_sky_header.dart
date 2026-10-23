@@ -36,12 +36,15 @@ class SectionSkyHeader extends StatelessWidget {
             left: AppDimensions.pageHorizontalPadding,
             right: AppDimensions.pageHorizontalPadding,
             bottom: AppDimensions.sectionTitleBottom,
-            child: Semantics(
-              header: true,
-              child: Text(
-                title,
-                style: AppTextStyles.pageTitle(
-                  color: dark ? Colors.white : context.textPrimary,
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: AppTextStyles.pageTitle(
+                    color: dark ? Colors.white : context.textPrimary,
+                  ),
                 ),
               ),
             ),

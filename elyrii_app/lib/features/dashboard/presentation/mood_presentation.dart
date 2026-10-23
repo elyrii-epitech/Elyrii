@@ -3,10 +3,8 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
-/// Enum représentant les différents moods disponibles
 enum MoodType { verySad, sad, neutral, happy, veryHappy }
 
-/// Extension pour obtenir les propriétés du mood
 extension MoodTypeExtension on MoodType {
   IconData get icon {
     switch (this) {
@@ -23,7 +21,6 @@ extension MoodTypeExtension on MoodType {
     }
   }
 
-  /// Couleur du mood selon le thème : rose, orange, teal, vert, jaune v2.
   Color colorFor(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
     switch (this) {

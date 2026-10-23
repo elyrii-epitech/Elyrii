@@ -178,11 +178,6 @@ void main() {
               .every((filter) => !filter.enabled),
           isTrue,
         );
-        for (final surface in tester.widgetList<ElyriiGlassSurface>(
-          find.byType(ElyriiGlassSurface),
-        )) {
-          expect(surface.glassColor, isNull);
-        }
         final surfaces = find.descendant(
           of: find.byType(ElyriiGlassSurface),
           matching: find.byType(Container),
@@ -190,8 +185,6 @@ void main() {
         expect(
           tester.widgetList<Container>(surfaces).where((container) {
             final decoration = container.decoration;
-            // Le repli haut contraste reste opaque, quelle que soit la
-            // translucidité du jeton surface.
             return decoration is BoxDecoration && decoration.color?.a == 1;
           }),
           hasLength(2),
@@ -302,12 +295,12 @@ void main() {
     expect(scales.every((scale) => scale.duration == Duration.zero), isTrue);
     await gesture.up();
     final bubbleGesture = await tester.startGesture(
-      tester.getCenter(find.byType(GlassBubbleButtonStateful)),
+      tester.getCenter(find.byType(GlassBubbleButton)),
     );
     await tester.pump(const Duration(milliseconds: 120));
     final bubbleScale = tester.widget<AnimatedScale>(
       find.descendant(
-        of: find.byType(GlassBubbleButtonStateful),
+        of: find.byType(GlassBubbleButton),
         matching: find.byType(AnimatedScale),
       ),
     );

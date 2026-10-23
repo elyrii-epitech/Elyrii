@@ -14,19 +14,8 @@ import 'mascot_look.dart';
 import 'mascot_poster.dart';
 import '../../features/mascot/data/models/mascot_appearance.dart';
 
-/// Widget réutilisable pour afficher la mascotte 3D Elyrii.
-///
-/// Encapsule [Flutter3DViewer] avec gestion du loading, du fallback PNG,
-/// et de la configuration via [Mascot3DConfig].
-///
-/// Usage:
-/// ```dart
-/// Mascot3DViewer(
-///   config: const Mascot3DConfig.authPage(),
-///   width: 150,
-///   height: 150,
-/// )
-/// ```
+/// Affiche la mascotte 3D avec un poster pendant le chargement ou en cas
+/// d'erreur, et libère le rendu natif après une absence prolongée.
 class Mascot3DViewer extends StatefulWidget {
   /// Configuration du viewer 3D (caméra, rotation, interaction).
   final Mascot3DConfig config;
@@ -40,12 +29,6 @@ class Mascot3DViewer extends StatefulWidget {
   /// Contrôleur externe optionnel pour piloter le modèle 3D.
   /// Si non fourni, un contrôleur interne est créé automatiquement.
   final MascotModelController? controller;
-
-  /// Matrice de couleur optionnelle (20 valeurs) pour recolorer le modèle.
-  /// Si null, aucune transformation n'est appliquée.
-  /// Conservée pour les consommateurs historiques ; l'atelier utilise
-  /// [appearance] pour recolorer les matériaux.
-  final List<double>? colorMatrix;
 
   /// Animation à jouer maintenant. Null → [Mascot3DConfig.initialAnimation].
   ///
@@ -79,7 +62,6 @@ class Mascot3DViewer extends StatefulWidget {
     this.width = 150,
     this.height = 150,
     this.controller,
-    this.colorMatrix,
     this.animation,
     this.animationTrigger = 0,
     this.breathProgress,
@@ -340,13 +322,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
       ),
     );
 
-    final tinted = widget.colorMatrix != null
-        ? ColorFiltered(
-            colorFilter: ColorFilter.matrix(widget.colorMatrix!),
-            child: child,
-          )
-        : child;
-    if (_isWidgetTest) return tinted;
+    if (_isWidgetTest) return child;
     return VisibilityDetector(
       key: ValueKey(('mascot-visibility', this)),
       onVisibilityChanged: (info) {
@@ -356,7 +332,7 @@ class _Mascot3DViewerState extends State<Mascot3DViewer>
         _updateRetention();
         _syncPlayback();
       },
-      child: tinted,
+      child: child,
     );
   }
 

@@ -8,32 +8,25 @@ import '../../domain/models/breath_phase.dart';
 import '../../domain/models/meditation_exercise.dart';
 import '../../domain/models/meditation_exercises.dart';
 
-/// États possibles d'une session de méditation.
 enum MeditationSessionState { setup, running, paused, finished }
 
-/// Chronométrage des respirations et des pratiques à guidage écrit.
-/// Totalement découplé de l'arbre de widgets pour une testabilité unitaire maximale.
 class MeditationController extends ChangeNotifier {
   final MeditationRepository? _repository;
 
-  // Options sélectionnées (aucune intention présélectionnée : l'utilisateur choisit)
   int _selectedDurationMinutes = 5;
   MeditationExercise? _selectedExercise;
 
   static const minDurationMinutes = 1;
   static const maxDurationMinutes = 23 * 60 + 59;
 
-  // État de la session
   MeditationSessionState _sessionState = MeditationSessionState.setup;
   int _remainingSeconds = 300;
   int _currentPhaseIndex = 0;
   int _phaseSecondsRemaining = 0;
   int _completedCycles = 0;
 
-  // Backend sync
   String? _backendSessionId;
   String? _backendError;
-  bool _isStartingSession = false;
   int? _selectedMoodIndex;
   String? _selectedMoodKey;
   int _generation = 0;
@@ -48,7 +41,6 @@ class MeditationController extends ChangeNotifier {
 
   MeditationController({this._repository, this._elapsed});
 
-  // Getters
   int get selectedDurationMinutes => _selectedDurationMinutes;
   Duration get selectedDuration => Duration(minutes: _selectedDurationMinutes);
   String get selectedDurationLabel => formatDuration(selectedDuration);
@@ -69,7 +61,6 @@ class MeditationController extends ChangeNotifier {
   bool get isBreathingRecovery =>
       selectedBreathingType == BreathingType.relaxation478 &&
       _completedCycles >= 4;
-  MeditationSessionState get sessionState => _sessionState;
   int get remainingSeconds => _remainingSeconds;
   String get formattedRemainingTime => formatCountdown(_remainingSeconds);
 
@@ -87,7 +78,6 @@ class MeditationController extends ChangeNotifier {
   int get completedCycles => _completedCycles;
   String? get backendSessionId => _backendSessionId;
   String? get backendError => _backendError;
-  bool get isStartingSession => _isStartingSession;
   int? get selectedMoodIndex => _selectedMoodIndex;
 
   bool get isRunning => _sessionState == MeditationSessionState.running;
@@ -171,13 +161,11 @@ class MeditationController extends ChangeNotifier {
     _selectedMoodKey = null;
     _backendError = null;
     _backendSessionId = null;
-    _isStartingSession = _repository != null;
 
     ElyriiHaptics.medium();
     _startTimer();
     notifyListeners();
 
-    // Async backend session registration
     if (_repository != null) {
       try {
         final session = await _repository.startSession(
@@ -202,7 +190,6 @@ class MeditationController extends ChangeNotifier {
         }
       } finally {
         if (!_disposed && generation == _generation) {
-          _isStartingSession = false;
           notifyListeners();
         }
       }
@@ -239,7 +226,6 @@ class MeditationController extends ChangeNotifier {
       ElyriiHaptics.success();
     } else {
       _generation++;
-      _isStartingSession = false;
       _sessionState = MeditationSessionState.setup;
       _remainingSeconds = _selectedDurationMinutes * 60;
       _backendSessionId = null;
@@ -289,7 +275,6 @@ class MeditationController extends ChangeNotifier {
   void resetToSetup() {
     _timer?.cancel();
     _generation++;
-    _isStartingSession = false;
     _sessionState = MeditationSessionState.setup;
     _remainingSeconds = _selectedDurationMinutes * 60;
     _currentPhaseIndex = 0;

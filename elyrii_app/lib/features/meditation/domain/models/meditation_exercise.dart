@@ -54,5 +54,4 @@ class MeditationExercise {
   final String practiceTip;
 
   bool get isBreathing => breathingType != null;
-  String get guidanceLabel => isBreathing ? 'Souffle guidé' : 'Guidage écrit';
 }

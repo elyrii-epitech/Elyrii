@@ -137,20 +137,16 @@ void main() {
       ); // 30 jours bornés à aujourd'hui
       expect(provider.history[CivilDay(2026, 10, 22)]!.moodLogs, 2);
 
-      // Le mois courant tient dans la plage de 30 jours déjà chargée.
       await provider.ensureCalendarHistory(CivilMonth(2026, 10));
       expect(repository.ranges, ['30d']);
 
-      // Un mois ancien force exactement la plage dont il a besoin.
       await provider.ensureCalendarHistory(CivilMonth(2026, 2));
       expect(repository.ranges, ['30d', '264d']);
       expect(provider.coverage!.firstDay, CivilDay(2026, 2, 1));
 
-      // Déjà couvert : aucune nouvelle requête.
       await provider.ensureCalendarHistory(CivilMonth(2026, 6));
       expect(repository.ranges, ['30d', '264d']);
 
-      // Un refresh conserve la plage large déjà demandée.
       await provider.refresh();
       expect(repository.ranges, ['30d', '264d', '264d']);
     });

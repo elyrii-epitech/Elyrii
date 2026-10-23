@@ -262,14 +262,6 @@ class MascotProvider extends ChangeNotifier {
 
   Future<void> retrySync() => _syncToBackend();
 
-  /// Réinitialise l'état de la mascotte par défaut
-  void resetToDefault() {
-    _mascot = MascotModel.defaultMascot();
-    _error = null;
-    _notify();
-    unawaited(_persistAndSync());
-  }
-
   Future<void> _persistAndSync() async {
     final session = _sessionRevision;
     if (await _saveMascot(markForSync: true) && session == _sessionRevision) {

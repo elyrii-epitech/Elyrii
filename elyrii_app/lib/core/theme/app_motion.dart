@@ -11,8 +11,6 @@ import 'package:flutter/animation.dart';
 /// `cubic-bezier(.22,.8,.24,1)` et les rebonds pop utilisent
 /// `cubic-bezier(.3,1.4,.5,1)`, overshoot compris.
 abstract final class AppMotion {
-  // ==================== COURBES ====================
-
   /// `cubic-bezier(.25,.1,.25,1)` : bande, capsule, fond de réponse, voiles.
   static const Cubic accueilEase = Cubic(0.25, 0.1, 0.25, 1);
 
@@ -23,8 +21,6 @@ abstract final class AppMotion {
   static const Cubic accueilPop = Cubic(0.3, 1.4, 0.5, 1);
 
   static const Cubic meditationBreath = Cubic(.42, 0, .58, 1);
-
-  // ==================== DURÉES ====================
 
   /// Opacité de la bande de verre supérieure.
   static const Duration bandFade = Duration(milliseconds: 200);

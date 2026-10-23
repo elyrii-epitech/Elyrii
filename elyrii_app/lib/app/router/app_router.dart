@@ -43,7 +43,6 @@ class _CompositeListenable extends ChangeNotifier {
   }
 }
 
-/// Créateur et configurateur du routeur déclaratif moderne [GoRouter].
 abstract final class AppRouter {
   static GoRouter createRouter({
     required AuthProvider authProvider,
@@ -61,17 +60,14 @@ abstract final class AppRouter {
             location == AppRoutes.passwordReset;
         final setupDone = profileSetupDone.value;
 
-        // Utilisateur non connecté tentant d'accéder à l'application
         if (!isAuthenticated) {
           return isAuthRoute ? null : AppRoutes.login;
         }
 
-        // Utilisateur connecté tentant d'accéder aux écrans d'authentification
         if (isAuthRoute) {
           return setupDone ? AppRoutes.home : AppRoutes.profileSetup;
         }
 
-        // Onboarding profil obligatoire avant le reste de l'application
         if (!setupDone &&
             location != AppRoutes.profileSetup &&
             location != AppRoutes.avatarPicker) {
@@ -81,13 +77,11 @@ abstract final class AppRouter {
         return null;
       },
       routes: [
-        // Shell persistant pour les 5 onglets principaux + chatbot
         StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell) {
             return AppShell(navigationShell: navigationShell);
           },
           branches: [
-            // Onglet 0 : Accueil (Dashboard)
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -96,7 +90,6 @@ abstract final class AppRouter {
                 ),
               ],
             ),
-            // Onglet 1 : Jardin (Gamification / Défis)
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -105,7 +98,6 @@ abstract final class AppRouter {
                 ),
               ],
             ),
-            // Onglet 2 : Journal
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -114,7 +106,6 @@ abstract final class AppRouter {
                 ),
               ],
             ),
-            // Onglet 3 : Méditation & Cohérence cardiaque
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -123,7 +114,6 @@ abstract final class AppRouter {
                 ),
               ],
             ),
-            // Onglet 4 : Parcours choisis
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -132,7 +122,6 @@ abstract final class AppRouter {
                 ),
               ],
             ),
-            // Branche 5 : Chatbot (Bulle flottante)
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -152,7 +141,6 @@ abstract final class AppRouter {
             child: const PasswordResetPage(),
           ),
         ),
-        // Routes d'authentification
         GoRoute(
           path: AppRoutes.login,
           pageBuilder: (context, state) => ElyriiPageTransitions.slideFromRight(
@@ -178,7 +166,6 @@ abstract final class AppRouter {
           ),
         ),
 
-        // Routes secondaires plein écran (hors shell onglets)
         GoRoute(
           path: AppRoutes.profile,
           pageBuilder: (context, state) => ElyriiPageTransitions.slideFromLeft(
@@ -223,7 +210,6 @@ abstract final class AppRouter {
           ),
         ),
 
-        // Session de méditation immersive (hors shell : aucun dock)
         GoRoute(
           path: AppRoutes.meditationSession,
           redirect: (context, state) =>

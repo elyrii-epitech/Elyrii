@@ -311,11 +311,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void clearError() {
-    _error = null;
-    _notify();
-  }
-
   @override
   void dispose() {
     _disposed = true;

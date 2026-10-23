@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-/// Rejoue le rebond : doit écraser puis overshoot avant retour au repos.
 double _scaleOf(WidgetTester tester) {
   final transition = tester.widget<ScaleTransition>(
     find
@@ -62,11 +61,9 @@ void main() {
       // frame 2 : fait avancer l'animation dans la phase squash.
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 80));
-      // Phase squash : légèrement écrasé.
       expect(_scaleOf(tester), lessThan(1.0));
 
       await tester.pumpAndSettle();
-      // Repos : scale exactement 1.
       expect(_scaleOf(tester), moreOrLessEquals(1.0));
     });
 

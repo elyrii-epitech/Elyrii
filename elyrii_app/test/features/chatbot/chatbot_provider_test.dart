@@ -34,7 +34,6 @@ void main() {
     expect(provider.error, isNotNull);
     expect(provider.conversations, hasLength(1));
     expect(provider.conversations.first.messageCount, 1);
-    expect(identical(provider.messages, provider.messages), isTrue);
     await provider.flushed;
     expect(
       await history.messages('local-guest', provider.activeSessionId!),

@@ -1,10 +1,6 @@
 import 'mascot_animations.dart';
 
 /// Configuration immutable pour le viewer 3D de la mascotte Elyrii.
-///
-/// Fournit des configurations prédéfinies pour chaque contexte d'utilisation
-/// (auth, chatbot full, chatbot minimisé) et est extensible pour la
-/// personnalisation future (cosmétiques, animations, etc.)
 class Mascot3DConfig {
   /// Chemin vers le fichier .glb du modèle 3D
   final String assetPath;
@@ -98,8 +94,6 @@ class Mascot3DConfig {
       useCameraOrbit = false,
       cameraTargetY = null;
 
-  /// Crée une copie de cette configuration avec les champs modifiés.
-  /// Utile pour la personnalisation future (changer le modèle, la caméra, etc.)
   Mascot3DConfig copyWith({
     String? assetPath,
     MascotAnimation? initialAnimation,

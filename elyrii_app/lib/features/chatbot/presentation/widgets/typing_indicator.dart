@@ -4,9 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import 'chat_message_bubble.dart' show ChatBubbleStyles;
 
-/// Indicateur de frappe intégré à une bulle assistante, façon iMessage :
-/// trois points pulsants décalés de 200 ms chacun, montée/descente avec
-/// une inertie `easeInOutSine` et un léger déplacement vertical.
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({super.key});
 
@@ -31,8 +28,6 @@ class _TypingIndicatorState extends State<TypingIndicator>
       vsync: this,
     );
 
-    // Chaque point monte puis redescend sur 600 ms, décalé de 200 ms
-    // par rapport au précédent — jamais synchrones, jamais mécaniques.
     _dots = List.generate(3, (index) {
       final start = (index * _stagger) / _period;
       const span = _pulse / _period;

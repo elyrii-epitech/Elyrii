@@ -71,34 +71,3 @@ class JournalEntryModel {
     );
   }
 }
-
-class JournalMediaModel {
-  final String id;
-  final String entryId;
-  final String url;
-  final String? type;
-  final DateTime createdAt;
-
-  const JournalMediaModel({
-    required this.id,
-    required this.entryId,
-    required this.url,
-    this.type,
-    required this.createdAt,
-  });
-
-  factory JournalMediaModel.fromJson(Map<String, dynamic> json) {
-    return JournalMediaModel(
-      id: requiredJsonString(json['id'], 'id'),
-      entryId: requiredJsonString(
-        json['entryId'] ?? json['entry_id'],
-        'entryId',
-      ),
-      url: requiredJsonString(json['url'], 'url'),
-      type: json['type'] as String?,
-      createdAt: JournalEntryModel._parseDate(
-        json['createdAt'] ?? json['created_at'],
-      ),
-    );
-  }
-}

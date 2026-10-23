@@ -25,9 +25,6 @@ class MascotAccessory {
 
   int remainingChallenges(int completedChallenges) =>
       (requiredChallenges - completedChallenges).clamp(0, requiredChallenges);
-
-  String get unlockLabel =>
-      '$requiredChallenges ${requiredChallenges == 1 ? 'défi terminé' : 'défis terminés'}';
 }
 
 /// Catalogue commun au rendu, à la personnalisation et à la sauvegarde.

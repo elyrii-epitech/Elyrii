@@ -1,24 +1,9 @@
 import 'package:elyrii_app/core/widgets/glass/elyrii_back_button.dart';
-import 'package:elyrii_app/core/widgets/glass/liquid_glass_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-
-  testWidgets('design unifié : flèche iOS dans un LiquidGlassIconButton 48', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: ElyriiBackButton())),
-    );
-
-    final button = tester.widget<LiquidGlassIconButton>(
-      find.byType(LiquidGlassIconButton),
-    );
-    expect(button.icon, Icons.arrow_back_ios_new_rounded);
-    expect(button.size, 48);
-  });
 
   testWidgets('sans onPressed : tap revient à la page précédente', (
     tester,

@@ -6,8 +6,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_dimensions.dart';
 import '../theme/app_motion.dart';
 
-/// Bouton en forme de bulle avec effet iOS 26 Liquid Glass
-/// Peut être réutilisé pour chatbot, settings, notifications, etc.
 class GlassBubbleButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -17,7 +15,6 @@ class GlassBubbleButton extends StatelessWidget {
   final bool isSelected;
   final String? tooltip;
 
-  /// Full-color avatar, cropped to the mockup's circular chat image.
   final String? iconAsset;
   final double iconAssetSize;
 
@@ -78,51 +75,6 @@ class GlassBubbleButton extends StatelessWidget {
   }
 }
 
-/// Widget stateful qui gère l'état de pression pour GlassBubbleButton
-class GlassBubbleButtonStateful extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  final double size;
-  final bool isDark;
-  final bool isSelected;
-  final String? tooltip;
-  final String? iconAsset;
-  final double iconAssetSize;
-
-  const GlassBubbleButtonStateful({
-    super.key,
-    required this.icon,
-    required this.onTap,
-    this.size = 64,
-    this.isDark = false,
-    this.isSelected = false,
-    this.tooltip,
-    this.iconAsset,
-    this.iconAssetSize = 28,
-  });
-
-  @override
-  State<GlassBubbleButtonStateful> createState() =>
-      _GlassBubbleButtonStatefulState();
-}
-
-class _GlassBubbleButtonStatefulState extends State<GlassBubbleButtonStateful> {
-  @override
-  Widget build(BuildContext context) {
-    return GlassBubbleButton(
-      icon: widget.icon,
-      onTap: widget.onTap,
-      size: widget.size,
-      isDark: widget.isDark,
-      isSelected: widget.isSelected,
-      tooltip: widget.tooltip,
-      iconAsset: widget.iconAsset,
-      iconAssetSize: widget.iconAssetSize,
-    );
-  }
-}
-
-/// One interaction target for touch, keyboard and assistive technologies.
 class _GlassBubbleInteraction extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;

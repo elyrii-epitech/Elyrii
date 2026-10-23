@@ -17,6 +17,7 @@ void main() {
       final authorization = Completer<String?>();
       final received = Completer<String>();
       final subscription = server.listen((request) async {
+        expect(request.uri.hasQuery, isFalse);
         authorization.complete(
           request.headers.value(HttpHeaders.authorizationHeader),
         );
@@ -47,7 +48,6 @@ void main() {
         await authorization.future.timeout(const Duration(seconds: 5)),
         'Bearer fixture-token',
       );
-      expect(uri.hasQuery, isFalse);
       final reply = opened.frames.first;
       opened.send('fixture request');
       expect(

@@ -86,13 +86,6 @@ class ApiClient {
     Map<String, dynamic>? body,
     bool auth = true,
   }) => _request('DELETE', Uri.parse(url), body: body, auth: auth);
-  Future<dynamic> uploadFile(
-    String url, {
-    required String fieldName,
-    required String filePath,
-    bool auth = true,
-  }) =>
-      uploadXFile(url, fieldName: fieldName, file: XFile(filePath), auth: auth);
   Future<dynamic> uploadXFile(
     String url, {
     required String fieldName,

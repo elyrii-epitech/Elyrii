@@ -295,19 +295,13 @@ def build_custom1():
     gold_mat = builder.add_material('MajesticGold', [0.98, 0.84, 0.30, 1.0], roughness=0.15, metallic=0.92)
 
     geoms_silk = []
-    # Base skullcap sitting on top of skull
     geoms_silk.append(make_cylinder(0.36, 0.42, 0.20, segs=28, offset=(0.0, 0.08, 0.0)))
-    # Imposing mortarboard (1.05 x 1.05) tilted with academic flair
     geoms_silk.append(make_box(1.05, 0.038, 1.05, offset=(0.0, 0.18, 0.0), rot_y=math.radians(45), rot_x=-0.14, rot_z=0.06))
 
     geoms_gold = []
-    # Gold ribbon around cap base
     geoms_gold.append(make_torus(ring_r=0.40, pipe_r=0.016, ring_segs=28, pipe_segs=8, offset=(0.0, -0.01, 0.0)))
-    # Center gold button
     geoms_gold.append(make_sphere(0.038, rings=8, segs=8, offset=(0.0, 0.21, 0.0)))
-    # Long flowing cord draped over side
     geoms_gold.append(make_cylinder(0.010, 0.010, 0.44, segs=10, offset=(0.38, 0.10, 0.16), scale=(1.0, 1.0, 1.0), rot_x=0.22, rot_z=-0.44))
-    # Bushy gold tassel
     geoms_gold.append(make_cylinder(0.035, 0.052, 0.18, segs=16, offset=(0.54, -0.18, 0.26), scale=(1.0, 1.0, 1.0), rot_x=0.12, rot_z=-0.15))
     geoms_gold.append(make_sphere(0.045, rings=8, segs=10, offset=(0.54, -0.07, 0.26)))
 
@@ -358,7 +352,6 @@ def build_crown_laurel():
 
 def build_flower_mouth():
     builder = GLBBuilder()
-    # Glowing vibrant radiant cyan/sapphire star (emissive pops against warm fur!)
     star_mat = builder.add_material('RadiantCyanGlow', [0.0, 0.92, 1.0, 1.0], roughness=0.05, metallic=0.20, emissive=[0.25, 0.95, 1.0])
     core_mat = builder.add_material('DiamondSparkleCore', [0.98, 1.0, 1.0, 1.0], roughness=0.01, metallic=0.50, emissive=[0.60, 0.90, 1.0])
 
@@ -366,11 +359,9 @@ def build_flower_mouth():
     # Adapt Lucas's sparkle as a small cheek jewel, keeping the eye visible.
     geoms_star.append(make_sphere(0.055, rings=10, segs=12, offset=(0.40, 0.25, 0.46), scale=(2.2, 0.35, 0.45)))
     geoms_star.append(make_sphere(0.055, rings=10, segs=12, offset=(0.40, 0.25, 0.46), scale=(0.35, 2.2, 0.45)))
-    # Diagonal sparkles
     geoms_star.append(make_sphere(0.03, rings=8, segs=8, offset=(0.40, 0.25, 0.46), scale=(1.2, 1.2, 0.4)))
 
     geoms_core = []
-    # Glowing diamond center
     geoms_core.append(make_sphere(0.022, rings=8, segs=10, offset=(0.40, 0.25, 0.478)))
 
     v, n, i = merge_geometries(geoms_star)

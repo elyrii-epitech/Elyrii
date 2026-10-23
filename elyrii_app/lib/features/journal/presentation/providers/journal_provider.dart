@@ -17,12 +17,10 @@ class JournalProvider extends ChangeNotifier {
 
   List<JournalEntryModel> _entries = [];
   List<JournalEntryModel> _sortedEntries = const [];
-  bool _sortNewest = true;
   bool _isLoading = false;
   String? _error;
 
   List<JournalEntryModel> get entries => _sortedEntries;
-  bool get sortNewest => _sortNewest;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -198,11 +196,7 @@ class JournalProvider extends ChangeNotifier {
 
   void _updateSortedEntries() {
     final sorted = List<JournalEntryModel>.from(_entries);
-    sorted.sort(
-      (a, b) => _sortNewest
-          ? b.createdAt.compareTo(a.createdAt)
-          : a.createdAt.compareTo(b.createdAt),
-    );
+    sorted.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     _sortedEntries = List.unmodifiable(sorted);
   }
 
@@ -294,17 +288,5 @@ class JournalProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-  }
-
-  void toggleSort() {
-    _sortNewest = !_sortNewest;
-    _repository.newestFirst = _sortNewest;
-    if (_repository.isPaginated || _isLoading) {
-      // A request for the previous order must not satisfy the new order.
-      _loads.clear();
-      unawaited(loadEntries());
-    }
-    _updateSortedEntries();
-    notifyListeners();
   }
 }

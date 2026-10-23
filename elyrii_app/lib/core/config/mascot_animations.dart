@@ -12,9 +12,7 @@ enum MascotAnimationMode {
   hold,
 }
 
-/// Clip d'animation embarqué dans `assets/elyrii_velours_animations.glb`.
-///
-/// Courbes reproductibles : `scripts/mascot/build_velours_motion.py`.
+/// Clip d'animation embarqué dans les modèles optimisés de la mascotte.
 @immutable
 class MascotAnimation {
   /// Nom exact de l'animation dans le GLB (sensible à la casse).

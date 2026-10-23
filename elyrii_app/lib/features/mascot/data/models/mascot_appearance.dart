@@ -25,18 +25,6 @@ class MascotAppearance {
 
   String? colorFor(MascotColorPart part) => colors[part.name];
 
-  MascotAppearance withColor(MascotColorPart part, String? hex) {
-    final next = Map<String, String>.from(colors);
-    if (hex == null) {
-      next.remove(part.name);
-    } else {
-      final normalized = normalizeHex(hex);
-      if (normalized == null) return this;
-      next[part.name] = normalized;
-    }
-    return MascotAppearance(colors: Map.unmodifiable(next), finish: finish);
-  }
-
   MascotAppearance withFinish(MascotFinish value) =>
       MascotAppearance(colors: colors, finish: value);
 

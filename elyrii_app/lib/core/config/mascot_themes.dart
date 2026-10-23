@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 /// Représente une palette visuelle de la mascotte 3D.
 ///
 /// [MascotThemes.colorsFor] fournit les couleurs des matériaux de la scène.
-/// Les matrices historiques restent disponibles pour les anciens consommateurs.
 @immutable
 class MascotTheme {
   /// Identifiant unique stocké en SharedPreferences.
@@ -24,9 +23,6 @@ class MascotTheme {
   /// Authored fur, ear/blush and eye colors, adapted from Lucas Debize's Esprits.
   final List<Color> paletteColors;
 
-  /// Matrice historique 5x4, conservée pour les anciens consommateurs.
-  final List<double> colorMatrix;
-
   /// Emoji utilisé comme aperçu rapide dans l'UI.
   final String emoji;
 
@@ -37,7 +33,6 @@ class MascotTheme {
     required this.icon,
     required this.accentColor,
     required this.paletteColors,
-    required this.colorMatrix,
     required this.emoji,
   });
 
@@ -67,7 +62,6 @@ class MascotThemes {
     icon: Icons.spa_rounded,
     accentColor: Color(0xFF7E6AD8),
     paletteColors: [Color(0xFFEBCFAE), Color(0xFFFE9186), Color(0xFF543349)],
-    colorMatrix: _identity,
     emoji: '🌿',
   );
 
@@ -79,13 +73,6 @@ class MascotThemes {
     icon: Icons.pets_rounded,
     accentColor: Color(0xFFE67E22),
     paletteColors: [Color(0xFFE67E22), Color(0xFFC48668), Color(0xFF23150E)],
-    // Décalage de teinte vers l'orange (~-30°) + saturation accrue
-    colorMatrix: [
-      1.25, -0.15, 0.05, 0.0, -0.05, //
-      -0.10, 0.85, 0.0, 0.0, -0.05, //
-      -0.20, -0.10, 0.70, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
     emoji: '🎃',
   );
 
@@ -97,13 +84,6 @@ class MascotThemes {
     icon: Icons.icecream_rounded,
     accentColor: Color(0xFF555555),
     paletteColors: [Color(0xFFF5F5F7), Color(0xFF263238), Color(0xFF121212)],
-    // Désaturation presque totale + léger contraste
-    colorMatrix: [
-      0.30, 0.60, 0.10, 0.0, 0.0, //
-      0.30, 0.60, 0.10, 0.0, 0.0, //
-      0.30, 0.60, 0.10, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
     emoji: '🐼',
   );
 
@@ -115,13 +95,6 @@ class MascotThemes {
     icon: Icons.park_rounded,
     accentColor: Color(0xFFC0392B),
     paletteColors: [Color(0xFFC87982), Color(0xFFFE9186), Color(0xFF352B3B)],
-    // Décalage vers le rouge/vert saturé
-    colorMatrix: [
-      1.10, 0.05, -0.15, 0.0, -0.05, //
-      -0.20, 1.00, 0.10, 0.0, 0.0, //
-      -0.10, 0.10, 0.85, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
     emoji: '🎄',
   );
 
@@ -133,13 +106,6 @@ class MascotThemes {
     icon: Icons.auto_awesome_rounded,
     accentColor: Color(0xFF5B8DEE),
     paletteColors: [Color(0xFF2D3561), Color(0xFFF2CE94), Color(0xFF151833)],
-    // Décalage de teinte vers le bleu/violet + saturation
-    colorMatrix: [
-      0.50, 0.20, 0.40, 0.0, 0.0, //
-      0.10, 0.60, 0.30, 0.0, 0.0, //
-      0.30, 0.10, 1.10, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
     emoji: '🌌',
   );
 
@@ -151,13 +117,6 @@ class MascotThemes {
     icon: Icons.water_drop_rounded,
     accentColor: Color(0xFF26C6DA),
     paletteColors: [Color(0xFF78BEBB), Color(0xFFFE9186), Color(0xFF243C43)],
-    // Décalage vers le cyan
-    colorMatrix: [
-      0.55, 0.25, 0.30, 0.0, 0.0, //
-      0.15, 0.85, 0.20, 0.0, 0.0, //
-      0.20, 0.25, 0.90, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
     emoji: '🌊',
   );
 
@@ -168,7 +127,6 @@ class MascotThemes {
     icon: Icons.self_improvement_rounded,
     accentColor: Color(0xFF5D9B6E),
     paletteColors: [Color(0xFF8AA882), Color(0xFFC8E6C9), Color(0xFF152418)],
-    colorMatrix: _identity,
     emoji: '🍵',
   );
 
@@ -179,7 +137,6 @@ class MascotThemes {
     icon: Icons.filter_vintage_rounded,
     accentColor: Color(0xFFEC407A),
     paletteColors: [Color(0xFFF48FB1), Color(0xFFF8BBD0), Color(0xFF2E1042)],
-    colorMatrix: _identity,
     emoji: '🌸',
   );
 
@@ -238,12 +195,4 @@ class MascotThemes {
     if (id == null) return nature;
     return all.firstWhere((t) => t.id == id, orElse: () => nature);
   }
-
-  /// Matrice identité (pas de transformation).
-  static const List<double> _identity = [
-    1, 0, 0, 0, 0, //
-    0, 1, 0, 0, 0, //
-    0, 0, 1, 0, 0, //
-    0, 0, 0, 1, 0, //
-  ];
 }

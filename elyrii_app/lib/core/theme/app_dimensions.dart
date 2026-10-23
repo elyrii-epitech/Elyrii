@@ -15,8 +15,6 @@ class AppDimensions {
 
   static const double pageHorizontalPadding = spacing20;
 
-  // ==================== RADII ====================
-
   static const double radius4 = 4;
   static const double radius8 = 8;
   static const double radius12 = 12;
@@ -69,8 +67,6 @@ class AppDimensions {
   static const double borderWidthThin = 1;
   static const double borderWidthMedium = 2;
   static const double dividerThickness = 1;
-
-  // ==================== GÉOMÉTRIE ACCUEIL ====================
 
   /// Hauteur du décor derrière le héros (viewBox 390 × 470).
   static const double accueilSceneHeight = 470;
@@ -147,8 +143,6 @@ class AppDimensions {
   static const double gardenPreviewHeight = 208;
   static const double gardenBloomSize = 112;
 
-  // ==================== JOURNAL ====================
-
   /// Day stamp column; the thread runs at [journalThreadInset] from the left.
   static const double journalDayColumn = 49;
   static const double journalThreadInset = 24;
@@ -174,8 +168,6 @@ class AppDimensions {
   static const double journalBodyMinHeight = 220;
   static const double journalToastTop = 112;
   static const double journalSearchField = 40;
-
-  // ==================== MÉDITER ====================
 
   static const double meditationChipHeight = 36;
   static const double meditationFeaturedHeight = 200;

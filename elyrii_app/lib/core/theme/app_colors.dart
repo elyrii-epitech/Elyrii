@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// Palette de couleurs de l'application Elyrii.
-/// Définit toutes les couleurs utilisées dans l'application pour maintenir la cohérence visuelle.
 /// Les valeurs neutres viennent des jetons v2 de l'Accueil : bg, label,
 /// label-2, label-3, tint, surface, surface-2, stroke, separator, glass,
 /// glass-stroke, track et thumb, en sombre et en clair. Les couleurs
 /// translucides conservent leur alpha.
 class AppColors {
-  AppColors._(); // Constructeur privé pour empêcher l'instanciation
-
-  // ==================== COULEURS PRINCIPALES ====================
+  AppColors._();
 
   /// Couleur principale de l'application (tint clair).
   /// Lavande apaisée, utilisée comme accent plutôt que comme ambiance dominante.
@@ -77,8 +73,6 @@ class AppColors {
   static const Color infoLight = Color(0xFFD1E4F3);
   static const Color infoDark = Color(0xFF7AA3C7);
 
-  // ==================== COULEURS DE SECTION V2 ====================
-
   /// Six teintes de section, dont les cinq humeurs de l'Accueil.
   /// Sombre d'abord, clair ensuite, comme les autres rôles.
   static const Color orangeDark = Color(0xFFE76418);
@@ -132,8 +126,6 @@ class AppColors {
   /// the light soft-pink card.
   static Color helpInk(bool isDark) =>
       isDark ? pinkDark : const Color(0xFFBC4159);
-
-  // ==================== JOURNAL ====================
 
   /// Prune is the Journal's section color, chosen instead of the board yellow.
   static Color journalPaper(bool dark) =>
