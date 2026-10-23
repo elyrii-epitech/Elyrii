@@ -101,11 +101,12 @@ chatRouter.get("/ws", describeRoute({
                 clientSockets.delete(userId);
             },
             onMessage: async (event, ws) => {
-                console.log(`[Chat] Message received from ${userId}: ${event.data}`);
+                console.log(`[Chat] Message received for ${userId}`);
                 const rawMessage = event.data.toString();
                 let message = rawMessage;
                 let conversationId = defaultConversationId;
                 let clientRequestId: string | undefined;
+                let persistedMessageId: string | undefined;
 
                 try {
                     const parsed = JSON.parse(rawMessage) as { message?: string; conversationId?: string; requestId?: string };
@@ -124,19 +125,21 @@ chatRouter.get("/ws", describeRoute({
 
                 try {
                     console.log(`[Chat] Persisting message for ${userId}...`);
-                    await chatRepository.createMessage({
+                    const persisted = await chatRepository.createMessage({
                         userId,
                         conversationId,
                         role: "user",
                         message,
                     });
+                    persistedMessageId = persisted?.id;
                 } catch (error) {
                     console.error("[Chat] Failed to persist user chat message:", error);
                 }
 
                 try {
                     console.log(`[Chat] Getting history and sending to Kafka for ${userId}...`);
-                    const history = await chatRepository.getRecentMessagesForContext(userId, conversationId, 12);
+                    // The AI bridge appends the current message itself.
+                    const history = await chatRepository.getRecentMessagesForContext(userId, conversationId, 12, persistedMessageId);
                     // Server-generated Kafka keys prevent client IDs colliding across users.
                     const requestId = randomUUIDv7();
                     const aiResponse = await aiResponseTracker.request(requestId, () =>

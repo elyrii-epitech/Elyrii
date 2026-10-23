@@ -176,7 +176,8 @@ class QuestController {
             }
             try {
                 const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'ACTIVE');
-                return ctx.json(updated);
+                const challenge = await this.questRepository.getChallengeTemplateById(updated.challengeId);
+                return ctx.json({ ...updated, challenge });
             } catch (e) {
                 return ctx.json({ error: "Failed to accept challenge" }, 500);
             }
@@ -220,7 +221,8 @@ class QuestController {
             }
             try {
                 const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'REJECTED');
-                return ctx.json(updated);
+                const challenge = await this.questRepository.getChallengeTemplateById(updated.challengeId);
+                return ctx.json({ ...updated, challenge });
             } catch (e) {
                 return ctx.json({ error: "Failed to reject challenge" }, 500);
             }
