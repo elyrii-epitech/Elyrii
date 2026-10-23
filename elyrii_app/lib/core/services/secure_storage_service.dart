@@ -1,208 +1,122 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Service for securely storing sensitive data (tokens, credentials)
-/// Uses flutter_secure_storage which encrypts data.
-/// Fallbacks to SharedPreferences (unencrypted) on macOS if entitlements are missing (-34018).
+/// Credentials never fall back to plaintext preferences. Platform failures are
+/// surfaced to the session owner, including failed credential removal.
 class SecureStorageService {
-  static const String _accessTokenKey = 'access_token';
-  static const String _refreshTokenKey = 'refresh_token';
-  static const String _userIdKey = 'user_id';
-  static const String _profileSetupCompletedKey = 'profile_setup_completed';
-
+  static const _accessTokenKey = 'access_token';
+  static const _refreshTokenKey = 'refresh_token';
+  static const _userIdKey = 'user_id';
+  static const _profileSetupKey = 'profile_setup_completed';
   final FlutterSecureStorage _storage;
-  SharedPreferences? _prefs;
-  bool _useFallback = false;
 
-  SecureStorageService()
-    : _storage = const FlutterSecureStorage(
-        aOptions: AndroidOptions(),
-        iOptions: IOSOptions(
-          accessibility: KeychainAccessibility.first_unlock_this_device,
-        ),
-        mOptions: MacOsOptions(
-          accessibility: KeychainAccessibility.first_unlock_this_device,
-        ),
-      );
+  SecureStorageService({FlutterSecureStorage? storage})
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            aOptions: AndroidOptions(),
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock_this_device,
+            ),
+            mOptions: MacOsOptions(
+              accessibility: KeychainAccessibility.first_unlock_this_device,
+            ),
+          );
 
-  Future<void> _initFallback() async {
-    if (_prefs != null) return;
-    _prefs = await SharedPreferences.getInstance();
-  }
-
-  // ==================== Initialization Check ====================
-
-  /// Check if the storage service is available and working
   Future<bool> isAvailable() async {
     try {
-      if (_useFallback) return true;
-      // Attempt a dummy read to check access
       await _storage.containsKey(key: 'init_check');
       return true;
-    } catch (e) {
-      debugPrint('SecureStorageService not available, using fallback: $e');
-      _useFallback = true;
-      return true;
+    } catch (_) {
+      return false;
     }
   }
 
-  // ==================== Token Management ====================
+  Future<void> saveAccessToken(String token) =>
+      write(key: _accessTokenKey, value: token);
+  Future<String?> getAccessToken() => read(key: _accessTokenKey);
+  Future<void> saveRefreshToken(String token) =>
+      write(key: _refreshTokenKey, value: token);
+  Future<String?> getRefreshToken() => read(key: _refreshTokenKey);
+  Future<void> saveUserId(String userId) =>
+      write(key: _userIdKey, value: userId);
+  Future<String?> getUserId() => read(key: _userIdKey);
+  Future<bool> hasAccessToken() async =>
+      (await getAccessToken())?.isNotEmpty ?? false;
 
-  /// Store the access token securely
-  Future<void> saveAccessToken(String token) async {
-    await write(key: _accessTokenKey, value: token);
-  }
-
-  /// Retrieve the access token
-  Future<String?> getAccessToken() async {
-    return await read(key: _accessTokenKey);
-  }
-
-  /// Store the refresh token securely
-  Future<void> saveRefreshToken(String token) async {
-    await write(key: _refreshTokenKey, value: token);
-  }
-
-  /// Retrieve the refresh token
-  Future<String?> getRefreshToken() async {
-    return await read(key: _refreshTokenKey);
-  }
-
-  /// Check if user has a valid stored token
-  Future<bool> hasAccessToken() async {
-    final token = await getAccessToken();
-    return token != null && token.isNotEmpty;
-  }
-
-  // ==================== User Data ====================
-
-  /// Store user ID securely
-  Future<void> saveUserId(String userId) async {
-    await write(key: _userIdKey, value: userId);
-  }
-
-  /// Retrieve user ID
-  Future<String?> getUserId() async {
-    return await read(key: _userIdKey);
-  }
-
-  // ==================== Generic Methods ====================
-
-  /// Store any sensitive value
   Future<void> write({required String key, required String value}) async {
-    try {
-      if (_useFallback) {
-        await _initFallback();
-        await _prefs?.setString(key, value);
-        return;
-      }
-      await _storage.write(key: key, value: value);
-    } on PlatformException catch (e) {
-      if (e.code == '-34018' || e.message?.contains('-34018') == true) {
-        debugPrint(
-          'SecureStorage: Keychain inaccessible. Using SharedPreferences fallback.',
-        );
-        _useFallback = true;
-        await _initFallback();
-        await _prefs?.setString(key, value);
-      } else {
-        rethrow;
-      }
-    } catch (e) {
-      debugPrint('Error writing to SecureStorage ($key): $e');
-      rethrow;
+    await _storage.write(key: key, value: value);
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey(key) && !await prefs.remove(key)) {
+      throw StateError('Legacy credential removal refused');
     }
   }
 
-  /// Read any sensitive value
   Future<String?> read({required String key}) async {
-    try {
-      if (_useFallback) {
-        await _initFallback();
-        return _prefs?.getString(key);
+    final secure = await _storage.read(key: key);
+    final prefs = await SharedPreferences.getInstance();
+    if (secure != null) {
+      if (prefs.containsKey(key) && !await prefs.remove(key)) {
+        throw StateError('Legacy credential removal refused');
       }
-      return await _storage.read(key: key);
-    } catch (e) {
-      // If read fails, try fallback
-      await _initFallback();
-      final value = _prefs?.getString(key);
-      if (value != null) {
-        _useFallback = true;
-        return value;
-      }
-      debugPrint('Error reading from SecureStorage ($key): $e');
-      return null;
+      return secure;
     }
+    final legacy = prefs.getString(key);
+    if (legacy == null) return null;
+    // One-way migration: unavailable secure storage must never open a session
+    // using an old plaintext credential.
+    await _storage.write(key: key, value: legacy);
+    if (!await prefs.remove(key)) {
+      throw StateError('Legacy credential removal refused');
+    }
+    return legacy;
   }
 
-  /// Delete a specific key
   Future<void> delete({required String key}) async {
     try {
       await _storage.delete(key: key);
-      await _initFallback();
-      await _prefs?.remove(key);
-    } catch (e) {
-      await _initFallback();
-      await _prefs?.remove(key);
-    }
-  }
-
-  /// Check if a key exists
-  Future<bool> containsKey({required String key}) async {
-    try {
-      if (_useFallback) {
-        await _initFallback();
-        return _prefs?.containsKey(key) ?? false;
+    } finally {
+      if (!await (await SharedPreferences.getInstance()).remove(key)) {
+        throw StateError('Legacy credential removal refused');
       }
-      return await _storage.containsKey(key: key);
-    } catch (e) {
-      await _initFallback();
-      return _prefs?.containsKey(key) ?? false;
     }
   }
 
-  // ==================== Profile Setup ====================
-
-  /// Indique si l'utilisateur a complete (ou ignore) l'onboarding de profil.
+  Future<bool> containsKey({required String key}) async =>
+      await read(key: key) != null;
   Future<bool> isProfileSetupCompleted() async {
-    final value = await read(key: _profileSetupCompletedKey);
-    return value == 'true';
+    final owner = await getUserId();
+    return owner != null && await isProfileSetupCompletedFor(owner);
   }
 
-  /// Marque l'onboarding de profil comme complete.
+  Future<bool> isProfileSetupCompletedFor(String owner) async =>
+      await read(key: '${_profileSetupKey}_$owner') == 'true';
   Future<void> setProfileSetupCompleted() async {
-    await write(key: _profileSetupCompletedKey, value: 'true');
+    final owner = await getUserId();
+    if (owner == null || owner.isEmpty) throw StateError('No active account');
+    await write(key: '${_profileSetupKey}_$owner', value: 'true');
   }
 
-  // ==================== Session Management ====================
-
-  /// Clear all authentication data (logout)
+  Future<void> clearProfileSetup(String owner) =>
+      delete(key: '${_profileSetupKey}_$owner');
   Future<void> clearAuthData() async {
-    try {
-      await Future.wait([
-        delete(key: _accessTokenKey),
-        delete(key: _refreshTokenKey),
-        delete(key: _userIdKey),
-      ]);
-    } catch (e) {
-      debugPrint('Error clearing auth data: $e');
-    }
+    await Future.wait([
+      delete(key: _accessTokenKey),
+      delete(key: _refreshTokenKey),
+      delete(key: _userIdKey),
+    ]);
   }
 
-  /// Clear all stored data
   Future<void> clearAll() async {
-    try {
-      await _storage.deleteAll();
-      await _initFallback();
-      final keys = _prefs?.getKeys() ?? {};
-      for (final key in keys) {
-        await _prefs?.remove(key);
-      }
-    } catch (e) {
-      await _initFallback();
-      await _prefs?.clear();
+    await _storage.deleteAll();
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in [
+      _accessTokenKey,
+      _refreshTokenKey,
+      _userIdKey,
+      _profileSetupKey,
+    ]) {
+      await prefs.remove(key);
     }
   }
 }

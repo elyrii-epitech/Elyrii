@@ -1,3 +1,5 @@
+import '../../../../core/data/json_contract.dart';
+
 /// User model representing the authenticated user
 class UserModel {
   final String id;
@@ -14,7 +16,7 @@ class UserModel {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['userId'] as String? ?? json['id'] as String? ?? '',
+      id: json['userId'] as String? ?? requiredJsonString(json['id'], 'id'),
       email: json['email'] as String? ?? '',
       firstName: json['firstName'] as String?,
       lastName: json['lastName'] as String?,

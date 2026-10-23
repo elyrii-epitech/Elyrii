@@ -1,40 +1,55 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
-import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
+import '../../../../core/widgets/app_dialog.dart';
 
-/// Crisis keywords in French that may indicate the user is in distress.
-const List<String> _crisisKeywords = [
-  'suicide',
-  'suicidaire',
-  'mourir',
-  'finir ma vie',
-  'ne plus en pouvoir',
-  'automutilation',
-  'me faire du mal',
-  'mettre fin',
-  'sauter',
-  'avaler',
-];
-
-/// Checks whether [text] contains any crisis keyword.
+/// Conservative French cues for offering help, not a clinical assessment.
+/// Ordinary verbs such as “sauter” and “avaler” are not distress signals alone.
 bool containsCrisisKeyword(String text) {
-  final lowered = text.toLowerCase();
-  for (final keyword in _crisisKeywords) {
-    if (lowered.contains(keyword)) return true;
-  }
-  return false;
+  final normalized = text
+      .toLowerCase()
+      .replaceAll(RegExp('[àâä]'), 'a')
+      .replaceAll(RegExp('[éèêë]'), 'e')
+      .replaceAll(RegExp('[îï]'), 'i')
+      .replaceAll(RegExp('[ôö]'), 'o')
+      .replaceAll(RegExp('[ùûü]'), 'u')
+      .replaceAll('’', "'")
+      .replaceAll(RegExp(r"[^a-z0-9']+"), ' ');
+  const phrases = [
+    'suicide',
+    'suicidaire',
+    'automutilation',
+    'me faire du mal',
+    'finir ma vie',
+    'mettre fin a ma vie',
+    'mettre fin a mes jours',
+    'je veux en finir',
+    "j'ai envie d'en finir",
+    'je ne veux plus vivre',
+    'je veux mourir',
+    "j'ai envie de mourir",
+    'je vais me tuer',
+    'je veux me tuer',
+    'sauter du pont',
+    'sauter par la fenetre',
+    'avaler tous mes medicaments',
+    'avaler des medicaments pour mourir',
+    "je n'en peux plus",
+    'je ne peux plus continuer',
+  ];
+  return phrases.any(
+    (phrase) =>
+        RegExp(r'(?:^| )' + RegExp.escape(phrase) + r'(?: |$)')
+            .hasMatch(normalized),
+  );
 }
 
-/// A non-intrusive but visible banner that slides down smoothly when the
-/// chatbot detects concerning language. It shows supportive messaging and
-/// emergency contact numbers for France.
 class CrisisDetectionBanner extends StatelessWidget {
-  /// Whether the banner is currently visible.
   final bool visible;
 
-  /// Called when the user dismisses the banner.
   final VoidCallback onDismiss;
 
   const CrisisDetectionBanner({
@@ -47,104 +62,101 @@ class CrisisDetectionBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      height: visible ? null : 0.0,
-      clipBehavior: Clip.hardEdge,
-      decoration: const BoxDecoration(),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: visible ? 1.0 : 0.0,
-        child: _buildBannerContent(context, isDark),
+    if (!visible) return const SizedBox.shrink();
+    return Semantics(
+      liveRegion: true,
+      container: true,
+      child: AnimatedContainer(
+        duration: MediaQuery.of(context).disableAnimations
+            ? Duration.zero
+            : const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+        height: visible ? null : 0.0,
+        clipBehavior: Clip.hardEdge,
+        decoration: const BoxDecoration(),
+        child: AnimatedOpacity(
+          duration: MediaQuery.of(context).disableAnimations
+              ? Duration.zero
+              : const Duration(milliseconds: 300),
+          opacity: visible ? 1.0 : 0.0,
+          child: _buildBannerContent(context, isDark),
+        ),
       ),
     );
   }
 
   Widget _buildBannerContent(BuildContext context, bool isDark) {
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-          decoration: BoxDecoration(
-            color: AppColors.warning.withValues(alpha: isDark ? 0.15 : 0.12),
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(16),
-            ),
-            border: Border.all(
-              color: AppColors.warning.withValues(alpha: isDark ? 0.3 : 0.2),
-              width: 0.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.warning.withValues(alpha: 0.06),
-                blurRadius: 12,
-                spreadRadius: 0,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Gentle icon + message
-              Icon(
-                Icons.favorite_rounded,
-                size: 28,
-                color: isDark ? AppColors.warningLight : AppColors.warningDark,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'On dirait que tu traverses un moment difficile. Tu n\'es pas seul(e).',
-                style: TextStyle(
-                  color: isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Emergency numbers
-              _buildPhoneRow(
-                context,
-                isDark,
-                label: 'SOS Amitié',
-                number: '09 72 39 40 50',
-              ),
-              const SizedBox(height: 8),
-              _buildPhoneRow(
-                context,
-                isDark,
-                label: 'Prévention suicide',
-                number: '3114',
-              ),
-              const SizedBox(height: 16),
-
-              // Action buttons
-              LiquidGlassButton(
-                label: 'J\'ai besoin d\'aide maintenant',
-                icon: Icons.phone_in_talk_rounded,
-                style: LiquidGlassButtonStyle.filled,
-                isExpanded: true,
-                onPressed: () => _showHelpDialog(context, isDark),
-              ),
-              const SizedBox(height: 8),
-              LiquidGlassButton(
-                label: 'Ça va, merci',
-                style: LiquidGlassButtonStyle.plain,
-                isExpanded: true,
-                onPressed: onDismiss,
-              ),
-            ],
-          ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.spacing20,
+        AppDimensions.spacing16,
+        AppDimensions.spacing20,
+        AppDimensions.spacing16,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2218) : const Color(0xFFFFF7ED),
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(AppDimensions.radius16),
         ),
+        border: Border.all(
+          color: AppColors.warning.withValues(alpha: isDark ? 0.35 : 0.25),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.favorite_rounded,
+            size: 28,
+            color: isDark ? AppColors.warningLight : AppColors.warningDark,
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          Text(
+            'On dirait que tu traverses un moment difficile. Tu n\'es pas seul(e).',
+            style: AppTextStyles.bodyLarge(color: context.textPrimary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+
+          _buildPhoneRow(
+            context,
+            isDark,
+            label: 'SOS Amitié',
+            number: '09 72 39 40 50',
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          _buildPhoneRow(
+            context,
+            isDark,
+            label: 'Prévention suicide',
+            number: '3114',
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+
+          LiquidGlassButton(
+            label: 'J\'ai besoin d\'aide maintenant',
+            icon: Icons.phone_in_talk_rounded,
+            style: LiquidGlassButtonStyle.filled,
+            isExpanded: true,
+            onPressed: () => _showHelpDialog(context),
+          ),
+          const SizedBox(height: AppDimensions.spacing8),
+          LiquidGlassButton(
+            label: 'Ça va, merci',
+            style: LiquidGlassButtonStyle.plain,
+            isExpanded: true,
+            onPressed: onDismiss,
+          ),
+        ],
       ),
     );
   }
@@ -156,12 +168,15 @@ class CrisisDetectionBanner extends StatelessWidget {
     required String number,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.spacing16,
+        vertical: AppDimensions.spacing8,
+      ),
       decoration: BoxDecoration(
         color: (isDark ? AppColors.cardDark : AppColors.cardLight).withValues(
           alpha: 0.5,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimensions.radius12),
         border: Border.all(
           color: AppColors.warning.withValues(alpha: 0.15),
           width: 0.5,
@@ -175,17 +190,11 @@ class CrisisDetectionBanner extends StatelessWidget {
             size: 16,
             color: isDark ? AppColors.warningLight : AppColors.warningDark,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppDimensions.spacing8),
           Flexible(
             child: Text(
               '$label : $number',
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.bodyMedium(color: context.textSecondary),
               textAlign: TextAlign.center,
             ),
           ),
@@ -194,8 +203,8 @@ class CrisisDetectionBanner extends StatelessWidget {
     );
   }
 
-  void _showHelpDialog(BuildContext context, bool isDark) {
-    showLiquidGlassDialog(
+  void _showHelpDialog(BuildContext context) {
+    showAppDialog(
       context: context,
       title: 'Tu n\'es pas seul(e)',
       child: Column(
@@ -205,46 +214,28 @@ class CrisisDetectionBanner extends StatelessWidget {
             'Voici les numéros que tu peux appeler dès maintenant :',
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spacing16),
           Text(
             'SOS Amitié\n09 72 39 40 50',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+            style: AppTextStyles.titleSmall(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacing12),
           Text(
             'Numéro national de prévention du suicide\n3114',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+            style: AppTextStyles.titleSmall(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppDimensions.spacing12),
           Text(
             'Urgence vitale : 15 ou 112',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ),
+            style: AppTextStyles.titleSmall(color: context.textPrimary),
             textAlign: TextAlign.center,
           ),
         ],
       ),
       actions: [
-        LiquidGlassDialogAction(
+        AppDialogAction(
           label: 'Fermer',
           onPressed: () => Navigator.pop(context),
         ),

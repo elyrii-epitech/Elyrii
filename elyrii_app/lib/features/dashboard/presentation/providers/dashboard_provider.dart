@@ -1,376 +1,307 @@
+import 'dart:async';
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
-import 'dart:math';
+
+import '../../../../core/config/dev_session.dart';
 import '../../../../core/network/api_client.dart';
-import '../../../../core/config/api_config.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../data/accueil_activities.dart';
+import '../../data/repositories/dashboard_repository.dart';
+import '../../data/models/dashboard_models.dart';
+import '../../domain/civil_day.dart';
+import '../mood_presentation.dart';
+export '../mood_presentation.dart';
 
-/// Enum représentant les différents moods disponibles
-enum MoodType { verySad, sad, neutral, happy, veryHappy }
-
-/// Enum pour les types d'objectifs quotidiens
-enum GoalType { journal, meditation, breathing, gratitude }
-
-/// Extension pour obtenir les propriétés du mood
-extension MoodTypeExtension on MoodType {
-  IconData get icon {
-    switch (this) {
-      case MoodType.verySad:
-        return Icons.sentiment_very_dissatisfied_rounded;
-      case MoodType.sad:
-        return Icons.sentiment_dissatisfied_rounded;
-      case MoodType.neutral:
-        return Icons.sentiment_neutral_rounded;
-      case MoodType.happy:
-        return Icons.sentiment_satisfied_rounded;
-      case MoodType.veryHappy:
-        return Icons.sentiment_very_satisfied_rounded;
-    }
-  }
-
-  Color get color {
-    switch (this) {
-      case MoodType.verySad:
-        return const Color(0xFF7BA3C7);
-      case MoodType.sad:
-        return const Color(0xFF93B8DA);
-      case MoodType.neutral:
-        return const Color(0xFFA39C96);
-      case MoodType.happy:
-        return const Color(0xFFA8D5BA);
-      case MoodType.veryHappy:
-        return const Color(0xFF7BC393);
-    }
-  }
-
-  String get label {
-    switch (this) {
-      case MoodType.verySad:
-        return 'Très triste';
-      case MoodType.sad:
-        return 'Triste';
-      case MoodType.neutral:
-        return 'Neutre';
-      case MoodType.happy:
-        return 'Content';
-      case MoodType.veryHappy:
-        return 'Très content';
-    }
-  }
-}
-
-/// Extension pour les propriétés des objectifs
-extension GoalTypeExtension on GoalType {
-  String get title {
-    switch (this) {
-      case GoalType.journal:
-        return 'Écrire dans ton journal';
-      case GoalType.meditation:
-        return '5 minutes de méditation';
-      case GoalType.breathing:
-        return 'Exercice de respiration';
-      case GoalType.gratitude:
-        return 'Noter 3 gratitudes';
-    }
-  }
-
-  IconData get icon {
-    switch (this) {
-      case GoalType.journal:
-        return Icons.edit_note_rounded;
-      case GoalType.meditation:
-        return Icons.self_improvement_rounded;
-      case GoalType.breathing:
-        return Icons.air_rounded;
-      case GoalType.gratitude:
-        return Icons.favorite_rounded;
-    }
-  }
-
-  String get completedMessage {
-    switch (this) {
-      case GoalType.journal:
-        return 'Bravo ! Tu as pris le temps d\'écrire';
-      case GoalType.meditation:
-        return 'Magnifique ! Ton esprit te remercie';
-      case GoalType.breathing:
-        return 'Super ! Tu respires la sérénité';
-      case GoalType.gratitude:
-        return 'Génial ! La gratitude illumine ta journée';
-    }
-  }
-}
-
-/// Provider pour gérer l'état du dashboard
 class DashboardProvider extends ChangeNotifier {
-  final ApiClient _apiClient;
+  final DashboardRepository _repository;
+  AccueilActivities? _activities;
+  final bool Function()? _isDemoSession;
+  int _sessionRevision = 0;
+  bool _disposed = false;
+
+  bool get _isDemo => _isDemoSession?.call() == true;
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   bool _isLoading = false;
+  bool _isSavingMood = false;
+  DateTime? _cachedAt;
+  final DateTime Function() _now;
+  int _moodVersion = 0;
   String? _error;
 
   // Mood du jour
   MoodType? _selectedMood;
-  final Map<DateTime, MoodType> _moodHistory = {};
 
   // Streak (série de jours consécutifs)
   int _currentStreak = 0;
-  int _activeChallengesCount = 0;
-  int _journalEntriesCount = 0;
-  int _completedChallengesCount = 0;
-  int _totalPoints = 0;
-  int _meditationSessionsCount = 0;
-  int _coachSessionsCount = 0;
-  int _moodLogsCount = 0;
 
-  // Quote du jour
-  int _currentQuoteIndex = 0;
-  final List<String> _quotes = [
-    "La patience est l'art d'espérer.",
-    "Chaque jour est une nouvelle chance de changer ta vie.",
-    "Le bonheur n'est pas une destination, c'est un voyage.",
-    "Prends soin de toi, tu es la personne avec qui tu passeras le plus de temps.",
-    "Les petits pas mènent aux grandes destinations.",
-    "Respire. Tout va bien se passer.",
-    "Tu es plus fort(e) que tu ne le penses.",
-    "Aujourd'hui est un bon jour pour être heureux.",
-  ];
-
-  // Messages de la mascotte Elyrii
-  int _currentMascotMessageIndex = 0;
-  final List<String> _mascotMessages = [
-    "Je suis contente de te voir",
-    "Comment vas-tu aujourd'hui ?",
-    "N'oublie pas : tu es incroyable !",
-    "Prends un moment pour toi",
-    "Je suis là si tu as besoin de parler",
-    "Chaque petit pas compte",
-    "Tu fais du super boulot !",
-    "Respire profondément... voilà",
-    "Ta présence ici est déjà une victoire",
-    "Je crois en toi, toujours",
-  ];
-
-  // Messages adaptés au mood
-  final Map<MoodType, List<String>> _moodMascotMessages = {
-    MoodType.verySad: [
-      "Je suis là pour toi, toujours",
-      "C'est ok de ne pas aller bien...",
-      "Veux-tu qu'on en parle ensemble ?",
-      "Je t'envoie plein de douceur",
-    ],
-    MoodType.sad: [
-      "Les nuages passent, le soleil revient",
-      "Prends le temps qu'il te faut",
-      "Courage, je suis là",
-      "Demain sera un nouveau jour",
-    ],
-    MoodType.neutral: [
-      "Une journée tranquille, c'est bien aussi",
-      "Que dirais-tu d'un petit moment zen ?",
-      "Parfois, neutre c'est parfait",
-      "On avance à notre rythme",
-    ],
-    MoodType.happy: [
-      "Ça fait plaisir de te voir sourire !",
-      "Continue comme ça, tu gères !",
-      "Ta bonne humeur est contagieuse",
-      "Profite bien de cette belle énergie !",
-    ],
-    MoodType.veryHappy: [
-      "Quelle belle énergie !",
-      "Tu rayonnes aujourd'hui !",
-      "J'adore te voir comme ça !",
-      "Partage cette joie avec le monde !",
-    ],
-  };
-
-  // Objectif du jour
-  GoalType _dailyGoal = GoalType.journal;
-  bool _goalCompleted = false;
-
-  // Nom utilisateur (à récupérer depuis l'auth plus tard)
-  String _userName = '';
+  // Historique typé pour le calendrier : un point par jour connu du serveur.
+  final Map<CivilDay, ActivityTimelinePoint> _history = {};
+  late final Map<CivilDay, ActivityTimelinePoint> _historyView =
+      UnmodifiableMapView(_history);
+  CalendarCoverage? _coverage;
+  int _widestDays = 30;
 
   // Getters
+  bool get isSavingMood => _isSavingMood;
+  DateTime? get cachedAt => _cachedAt;
   bool get isLoading => _isLoading;
   String? get error => _error;
   MoodType? get selectedMood => _selectedMood;
   int get currentStreak => _currentStreak;
-  int get activeChallengesCount => _activeChallengesCount;
-  int get journalEntriesCount => _journalEntriesCount;
-  int get completedChallengesCount => _completedChallengesCount;
-  int get totalPoints => _totalPoints;
-  int get meditationSessionsCount => _meditationSessionsCount;
-  int get coachSessionsCount => _coachSessionsCount;
-  int get moodLogsCount => _moodLogsCount;
-  String get userName => _userName;
-  String get currentQuote => _quotes[_currentQuoteIndex];
-  Map<DateTime, MoodType> get moodHistory => Map.unmodifiable(_moodHistory);
-  GoalType get dailyGoal => _dailyGoal;
-  bool get goalCompleted => _goalCompleted;
 
-  /// Retourne le message actuel de la mascotte
-  String get mascotMessage {
-    if (_selectedMood != null) {
-      final messages = _moodMascotMessages[_selectedMood]!;
-      return messages[_currentMascotMessageIndex % messages.length];
-    }
-    return _mascotMessages[_currentMascotMessageIndex % _mascotMessages.length];
+  /// Historique serveur indexé par jour, couvrant `coverage` au plus.
+  Map<CivilDay, ActivityTimelinePoint> get history => _historyView;
+
+  /// Plage réellement chargée ; null avant le premier chargement. Un jour
+  /// hors plage est inconnu, jamais absent.
+  CalendarCoverage? get coverage => _coverage;
+
+  DashboardProvider({
+    DashboardRepository? repository,
+    ApiClient? apiClient,
+    AccueilActivities? activities,
+    this._isDemoSession,
+    DateTime Function()? now,
+  }) : assert(
+         repository != null || apiClient != null,
+         'repository or apiClient must be provided',
+       ),
+       _repository = repository ?? DashboardRepository(client: apiClient!),
+       _now = now ?? DateTime.now {
+    _activities = activities;
   }
 
-  DashboardProvider({required ApiClient apiClient}) : _apiClient = apiClient {
-    _initializeQuoteOfTheDay();
-    _initializeDailyGoal();
-    _initializeMascotMessage();
-  }
-
-  void _initializeQuoteOfTheDay() {
-    final now = DateTime.now();
-    _currentQuoteIndex = (now.day + now.month) % _quotes.length;
-  }
-
-  void _initializeDailyGoal() {
-    final now = DateTime.now();
-    final goalIndex = (now.day + now.month + now.year) % GoalType.values.length;
-    _dailyGoal = GoalType.values[goalIndex];
-  }
-
-  void _initializeMascotMessage() {
-    final now = DateTime.now();
-    _currentMascotMessageIndex =
-        (now.hour + now.minute) % _mascotMessages.length;
-  }
-
-  void nextMascotMessage() {
-    if (_selectedMood != null) {
-      final messages = _moodMascotMessages[_selectedMood]!;
-      _currentMascotMessageIndex =
-          (_currentMascotMessageIndex + 1) % messages.length;
-    } else {
-      _currentMascotMessageIndex =
-          (_currentMascotMessageIndex + 1) % _mascotMessages.length;
-    }
-    notifyListeners();
-  }
-
-  Future<void> selectMood(MoodType mood) async {
-    _selectedMood = mood;
-    _currentMascotMessageIndex = Random().nextInt(
-      _moodMascotMessages[mood]!.length,
-    );
-    final today = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-    );
-    _moodHistory[today] = mood;
+  void resetSession() {
+    _sessionRevision++;
+    _loadInFlight = null;
+    _loadInFlightDays = 0;
+    _queuedDays = 0;
+    _selectedMood = null;
+    _moodVersion++;
+    _isSavingMood = false;
+    _cachedAt = null;
+    _currentStreak = 0;
+    _history.clear();
+    _coverage = null;
+    _widestDays = 30;
+    _isLoading = false;
     _error = null;
-    notifyListeners();
+    _notify();
+  }
 
+  void onUserChanged({String? userId, bool isDemo = false}) {
+    resetSession();
+    _repository.onUserChanged(userId: userId, isDemo: isDemo);
+  }
+
+  void _applyDevStats(int days) {
+    _applyStats(
+      DashboardStats.fromJson(
+        DevSession.statsPayload(now: _now(), rangeDays: days),
+      ),
+    );
+    _error = null;
+  }
+
+  Future<bool> selectMood(MoodType mood) async {
+    if (_selectedMood == mood || _isSavingMood || _disposed) return false;
+    final session = _sessionRevision;
+    _moodVersion++;
+    final previous = _selectedMood;
+    _selectedMood = mood;
+    _error = null;
+    _isSavingMood = !_isDemo;
+    _notify();
+    if (_isDemo) {
+      _recordMoodLocally(mood);
+      return true;
+    }
     try {
-      await _apiClient.post(
-        ApiConfig.logMoodUrl,
-        body: {'moodType': mood.name},
-      );
-      // Refresh stats to get updated streak from backend
+      await _repository.logMood(mood.name);
+      if (session != _sessionRevision || _disposed) return false;
+      _isSavingMood = false;
+      _notify();
+      _recordMoodLocally(mood);
+      // A refresh failure does not undo an already acknowledged mutation.
       await loadDashboardData();
-    } catch (e) {
-      _error = "Impossible d'enregistrer l'humeur: ${e.toString()}";
-      notifyListeners();
+      return true;
+    } catch (error) {
+      if (session != _sessionRevision || _disposed) return false;
+      _selectedMood = previous;
+      _error = error is ApiException
+          ? error.message
+          : 'Ton humeur n’a pas été enregistrée. Réessaie.';
+      return false;
+    } finally {
+      if (session == _sessionRevision && !_disposed) {
+        _isSavingMood = false;
+        _notify();
+      }
     }
   }
 
-  void completeGoal() {
-    _goalCompleted = true;
-    notifyListeners();
+  /// L'humeur du jour confirmée est aussi un fait local du calendrier ; un
+  /// échec d'écriture locale n'annule pas l'humeur enregistrée.
+  void _recordMoodLocally(MoodType mood) {
+    final activities = _activities;
+    if (activities == null) return;
+    unawaited(
+      activities.recordMood(day: CivilDay.fromLocal(_now()), mood: mood),
+    );
   }
 
-  String getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) {
-      return 'Bonjour';
-    } else if (hour < 18) {
-      return 'Bon après-midi';
-    } else {
-      return 'Bonsoir';
+  Future<void>? _loadInFlight;
+  int _loadInFlightDays = 0;
+  int _queuedDays = 0;
+
+  /// Recharge toujours la plage la plus large déjà demandée : un
+  /// rafraîchissement doit atteindre le réseau, la couverture ne le
+  /// court-circuite pas.
+  Future<void> loadDashboardData() => _startLoad(_widestDays);
+
+  /// Garantit un historique couvrant [month] : la plage demandée va du
+  /// premier jour du mois à aujourd'hui, plafonnée aux 365 jours acceptés
+  /// par l'API existante. Une plage déjà couverte ne déclenche rien.
+  Future<void> ensureCalendarHistory(CivilMonth month) {
+    final today = CivilDay.fromLocal(_now());
+    final span = month.firstDay.isAfter(today)
+        ? 30
+        : month.firstDay.daysUntil(today) + 1;
+    final days = span.clamp(30, 365);
+    if (days > _widestDays) _widestDays = days;
+    if (_coversDays(days)) return Future.value();
+    return _startLoad(days);
+  }
+
+  bool _coversDays(int days) {
+    final coverage = _coverage;
+    if (coverage == null) return false;
+    final today = CivilDay.fromLocal(_now());
+    return !coverage.firstDay.isAfter(today.addDays(-(days - 1))) &&
+        !coverage.throughDay.isBefore(today);
+  }
+
+  Future<void> _startLoad(int days) {
+    final inFlight = _loadInFlight;
+    if (inFlight != null) {
+      // La queue termine la plage la plus large demandée, sans deux
+      // requêtes simultanées du même provider.
+      if (days > _loadInFlightDays && days > _queuedDays) _queuedDays = days;
+      return inFlight;
+    }
+    late final Future<void> future;
+    future = _runLoad(days).whenComplete(() {
+      if (identical(_loadInFlight, future)) _loadInFlight = null;
+    });
+    _loadInFlight = future;
+    return future;
+  }
+
+  Future<void> _runLoad(int days) async {
+    var rangeDays = days;
+    while (true) {
+      _loadInFlightDays = rangeDays;
+      try {
+        await _loadDashboardData(rangeDays);
+      } finally {
+        _loadInFlightDays = 0;
+      }
+      final queued = _queuedDays;
+      _queuedDays = 0;
+      if (queued <= rangeDays || _coversDays(queued)) return;
+      rangeDays = queued;
     }
   }
 
-  String getMoodMessage() {
-    if (_selectedMood == null) {
-      return 'Comment te sens-tu aujourd\'hui ?';
+  Future<void> _loadDashboardData(int days) async {
+    if (_isDemo) {
+      _applyDevStats(days);
+      return;
     }
-    switch (_selectedMood!) {
-      case MoodType.verySad:
-        return 'Je suis là pour toi. Veux-tu en parler ?';
-      case MoodType.sad:
-        return 'Les jours difficiles passent aussi.';
-      case MoodType.neutral:
-        return 'Une journée tranquille, c\'est bien aussi.';
-      case MoodType.happy:
-        return 'Super ! Continue sur cette lancée !';
-      case MoodType.veryHappy:
-        return 'Quelle belle énergie !';
-    }
-  }
-
-  Future<void> loadDashboardData() async {
+    final range = '${days}d';
+    final session = _sessionRevision;
+    final moodVersion = _moodVersion;
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notify();
 
-    try {
-      final dashboardResponse =
-          await _apiClient.get(ApiConfig.userDashboardUrl)
-              as Map<String, dynamic>;
-      final statsResponse =
-          dashboardResponse['stats'] as Map<String, dynamic>? ??
-          dashboardResponse;
-
-      final moodTypeStr =
-          dashboardResponse['latestMood'] as String? ??
-          statsResponse['latestMood'] as String?;
-      if (moodTypeStr != null) {
-        _selectedMood = MoodType.values.firstWhere(
-          (m) => m.name == moodTypeStr,
-          orElse: () => MoodType.neutral,
-        );
-      } else {
-        _selectedMood = null;
+    var networkFinished = false;
+    // Cached content and the refresh race independently. A slow cache must
+    // never hold up a faster network result or replace fresher data afterward.
+    unawaited(() async {
+      try {
+        final cached = await _repository.getCachedDashboard(range: range);
+        if (_disposed ||
+            session != _sessionRevision ||
+            networkFinished ||
+            cached == null) {
+          return;
+        }
+        _applyDashboardData(cached, moodVersion);
+      } catch (_) {
+        // Cache failures do not cancel the network request or hide its errors.
       }
-
-      _currentStreak = _readInt(statsResponse['streak']);
-      _activeChallengesCount = _readInt(statsResponse['activeChallengesCount']);
-      _journalEntriesCount = _readInt(statsResponse['journalEntriesCount']);
-      _completedChallengesCount = _readInt(
-        statsResponse['completedChallengesCount'],
-      );
-      _totalPoints = _readInt(statsResponse['totalPoints']);
-      _meditationSessionsCount = _readInt(
-        statsResponse['meditationSessionsCount'],
-      );
-      _coachSessionsCount = _readInt(statsResponse['coachSessionsCount']);
-      _moodLogsCount = _readInt(statsResponse['moodLogsCount']);
-
+    }());
+    try {
+      final data = await _repository.getDashboard(range: range);
+      networkFinished = true;
+      if (_disposed || session != _sessionRevision) return;
+      _applyDashboardData(data, moodVersion);
+    } catch (error) {
+      networkFinished = true;
+      if (_disposed || session != _sessionRevision) return;
+      _error = error is ApiException
+          ? error.message
+          : 'Impossible de charger ton tableau de bord. Réessaie.';
+      // Mode silencieux : n'affiche pas d'exception socket brute sur l'accueil
       _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = e.toString();
-      _isLoading = false;
-      notifyListeners();
+      _notify();
     }
+  }
+
+  void _applyDashboardData(DashboardData data, int moodVersion) {
+    final moodTypeStr = data.latestMood;
+    _cachedAt = data.cachedAt;
+    if (moodVersion == _moodVersion && moodTypeStr != null) {
+      _selectedMood = MoodType.values.firstWhere(
+        (m) => m.name == moodTypeStr,
+        orElse: () => MoodType.neutral,
+      );
+    } else if (moodVersion == _moodVersion) {
+      _selectedMood = null;
+    }
+    _applyStats(data.stats, fetchedAt: data.cachedAt);
+  }
+
+  void _applyStats(DashboardStats stats, {DateTime? fetchedAt}) {
+    _currentStreak = stats.streak;
+    _history
+      ..clear()
+      ..addEntries(
+        stats.activityTimeline.map((point) => MapEntry(point.day, point)),
+      );
+    // La couverture est calculée côté client, depuis la plage demandée
+    // jusqu'au jour de récupération : le serveur ne déclare pas ses bornes.
+    final through = CivilDay.fromLocal(fetchedAt ?? _now());
+    _coverage = CalendarCoverage(
+      firstDay: through.addDays(-(stats.rangeDays - 1)),
+      throughDay: through,
+    );
+    _isLoading = false;
+    _notify();
   }
 
   Future<void> refresh() async {
     await loadDashboardData();
-  }
-
-  void setUserName(String name) {
-    _userName = name;
-    notifyListeners();
-  }
-
-  int _readInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
   }
 }

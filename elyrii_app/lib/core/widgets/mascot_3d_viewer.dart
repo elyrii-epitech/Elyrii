@@ -1,22 +1,21 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_3d_controller/flutter_3d_controller.dart';
-import 'package:shimmer/shimmer.dart';
-import '../config/mascot_3d_config.dart';
-import '../theme/app_colors.dart';
+import '../diagnostics/app_diagnostics.dart';
 
-/// Widget réutilisable pour afficher la mascotte 3D Elyrii.
-///
-/// Encapsule [Flutter3DViewer] avec gestion du loading, du fallback PNG,
-/// et de la configuration via [Mascot3DConfig].
-///
-/// Usage:
-/// ```dart
-/// Mascot3DViewer(
-///   config: const Mascot3DConfig.authPage(),
-///   width: 150,
-///   height: 150,
-/// )
-/// ```
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:visibility_detector/visibility_detector.dart';
+
+import '../services/mascot_motion_controller.dart';
+import 'mascot_model_surface.dart';
+import '../config/mascot_3d_config.dart';
+import '../config/mascot_animations.dart';
+import 'mascot_look.dart';
+import 'mascot_poster.dart';
+import '../../features/mascot/data/models/mascot_appearance.dart';
+
+/// Affiche la mascotte 3D avec un poster pendant le chargement ou en cas
+/// d'erreur, et libère le rendu natif après une absence prolongée.
 class Mascot3DViewer extends StatefulWidget {
   /// Configuration du viewer 3D (caméra, rotation, interaction).
   final Mascot3DConfig config;
@@ -29,12 +28,27 @@ class Mascot3DViewer extends StatefulWidget {
 
   /// Contrôleur externe optionnel pour piloter le modèle 3D.
   /// Si non fourni, un contrôleur interne est créé automatiquement.
-  final Flutter3DController? controller;
+  final MascotModelController? controller;
 
-  /// Matrice de couleur optionnelle (20 valeurs) pour recolorer le modèle.
-  /// Si null, aucune transformation n'est appliquée.
-  /// Utilisée par le système de thèmes (voir [MascotThemes]).
-  final List<double>? colorMatrix;
+  /// Animation à jouer maintenant. Null → [Mascot3DConfig.initialAnimation].
+  ///
+  /// Les clips `once` retournent automatiquement à idle à leur fin.
+  /// [MascotAnimations.holdPose] fige la pose courante (pauseAnimation).
+  final MascotAnimation? animation;
+
+  /// Incrémenter pour rejouer un même geste après une nouvelle interaction.
+  final int animationTrigger;
+
+  /// Progression du souffle 0 → 1, partagée avec le cercle de guidage.
+  final ValueListenable<double>? breathProgress;
+
+  /// Faux pour les accessoires statiques sans clips natifs.
+  final bool animated;
+
+  /// Accessory variant inside the shared rigged wardrobe GLB. Null removes it.
+  final String? accessoryVariant;
+  final MascotAppearance appearance;
+  final String posterScope;
 
   /// Callback appelé quand le modèle est chargé avec succès.
   final VoidCallback? onModelLoaded;
@@ -48,7 +62,13 @@ class Mascot3DViewer extends StatefulWidget {
     this.width = 150,
     this.height = 150,
     this.controller,
-    this.colorMatrix,
+    this.animation,
+    this.animationTrigger = 0,
+    this.breathProgress,
+    this.animated = true,
+    this.accessoryVariant,
+    this.appearance = MascotAppearance.defaults,
+    this.posterScope = 'guest',
     this.onModelLoaded,
     this.onError,
   });
@@ -57,68 +77,205 @@ class Mascot3DViewer extends StatefulWidget {
   State<Mascot3DViewer> createState() => _Mascot3DViewerState();
 }
 
-class _Mascot3DViewerState extends State<Mascot3DViewer> {
-  late Flutter3DController _controller;
-  bool _isLoading = true;
-  bool _hasError = false;
+enum _MascotPresence { preparing, revealing, visible, failed, released }
 
-  bool get _isWidgetTest {
-    return WidgetsBinding.instance.runtimeType.toString().contains('Test');
-  }
+class _Mascot3DViewerState extends State<Mascot3DViewer>
+    with WidgetsBindingObserver {
+  late MascotModelController _controller;
+  late MascotMotionController _motion;
+  _MascotPresence _presence = _MascotPresence.preparing;
+  bool _active = true;
+  bool _tickerEnabled = true;
+  bool _reducedMotion = false;
+  bool _visible = true;
+  bool get _hasError => _presence == _MascotPresence.failed;
+  bool get _modelReady => _presence == _MascotPresence.visible;
+  bool get _released => _presence == _MascotPresence.released;
+  bool get _posterHidden =>
+      _modelReady || _presence == _MascotPresence.revealing;
+  Timer? _releaseTimer;
+  Timer? _loadTimeoutTimer;
+  final Stopwatch _seekClock = Stopwatch()..start();
+  int _lastSeek = -100;
+
+  MascotLook get _look => MascotLook.framed(
+    widget.config,
+    appearance: widget.appearance,
+    accessoryVariant: widget.accessoryVariant,
+  );
+  String get _posterKey => MascotPosterStore.key(
+    scope: widget.posterScope,
+    assetPath: widget.config.assetPath,
+    look: _look,
+    aspect: widget.width / widget.height,
+  );
+
+  bool get _isWidgetTest =>
+      WidgetsBinding.instance.runtimeType.toString().contains('Test');
+  bool get _canMove =>
+      _active && _tickerEnabled && _visible && !_reducedMotion && !_released;
 
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? Flutter3DController();
+    WidgetsBinding.instance.addObserver(this);
+    _active =
+        WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    _controller = widget.controller ?? MascotModelController();
+    _createMotion();
+    widget.breathProgress?.addListener(_seekBreath);
+    _startLoadTimeout();
+  }
+
+  void _createMotion() {
+    _motion = MascotMotionController()..addListener(_playCurrent);
+    _motion.setAnimation(
+      widget.animation ?? widget.config.initialAnimation,
+      trigger: widget.animationTrigger,
+    );
+  }
+
+  void _startLoadTimeout() {
+    _loadTimeoutTimer?.cancel();
+    if (_isWidgetTest) return;
+    _loadTimeoutTimer = Timer(MascotModelController.prepareTimeout, () {
+      if (mounted && !_posterHidden) {
+        _onModelError('Délai de chargement dépassé');
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _tickerEnabled = TickerMode.valuesOf(context).enabled;
+    _reducedMotion = MediaQuery.disableAnimationsOf(context);
+    _updateRetention();
+    _syncPlayback();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _active = state == AppLifecycleState.resumed;
+    _updateRetention();
+    _syncPlayback();
   }
 
   @override
   void didUpdateWidget(Mascot3DViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.controller != null &&
-        widget.controller != oldWidget.controller) {
-      _controller = widget.controller!;
+    if (widget.breathProgress != oldWidget.breathProgress) {
+      oldWidget.breathProgress?.removeListener(_seekBreath);
+      widget.breathProgress?.addListener(_seekBreath);
     }
-    if (widget.config.assetPath != oldWidget.config.assetPath) {
-      setState(() {
-        _isLoading = true;
-        _hasError = false;
-      });
+    if (widget.config.assetPath != oldWidget.config.assetPath ||
+        widget.controller != oldWidget.controller) {
+      _motion.dispose();
+      if (oldWidget.controller == null) _controller.onModelLoaded.dispose();
+      _controller = widget.controller ?? MascotModelController();
+      _presence = _MascotPresence.preparing;
+      _createMotion();
+      _startLoadTimeout();
+    }
+    _motion.setAnimation(
+      widget.animation ?? widget.config.initialAnimation,
+      trigger: widget.animationTrigger,
+    );
+    _syncPlayback();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.breathProgress?.removeListener(_seekBreath);
+    _loadTimeoutTimer?.cancel();
+    _releaseTimer?.cancel();
+    _motion.dispose();
+    if (widget.controller == null) _controller.onModelLoaded.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onModelLoaded(MascotPosterFrame frame) async {
+    if (!mounted || _released) return;
+    final key = _posterKey;
+    unawaited(MascotPosterStore.save(key, frame));
+    await precacheImage(MemoryImage(frame.bytes), context);
+    if (!mounted || _released || key != _posterKey) return;
+    _loadTimeoutTimer?.cancel();
+    if (_posterHidden) return;
+    _applyRotationConfig();
+    if (_reducedMotion) {
+      setState(() => _presence = _MascotPresence.visible);
+      _syncPlayback();
+      widget.onModelLoaded?.call();
+    } else {
+      setState(() => _presence = _MascotPresence.revealing);
     }
   }
 
-  void _onModelLoaded(String modelAddress) {
-    if (!mounted) return;
-
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        if (widget.config.useCameraOrbit) {
-          _controller.setCameraOrbit(
-            widget.config.cameraOrbitTheta,
-            widget.config.cameraOrbitPhi,
-            widget.config.cameraOrbitRadius,
-          );
-        }
-        _applyRotationConfig();
-        _playIdleAnimation();
-      }
-    });
-
-    setState(() {
-      _isLoading = false;
-      _hasError = false;
-    });
-
+  void _finishReveal() {
+    if (_presence != _MascotPresence.revealing) return;
+    setState(() => _presence = _MascotPresence.visible);
+    _syncPlayback();
     widget.onModelLoaded?.call();
   }
 
-  /// Joue l'animation "idle" intégrée au modèle GLB en boucle.
-  /// Le modèle Elyrii embarque les animations : idle, wave, twitch, look.
-  void _playIdleAnimation() {
+  void _syncPlayback() {
+    if (!_modelReady) return;
+    _motion.setPlaybackEnabled(
+      _canMove && _modelReady && widget.breathProgress == null,
+    );
+    if (!_modelReady || _hasError || !widget.animated) return;
+    if (widget.breathProgress != null) {
+      _motion.setPlaybackEnabled(false);
+      if (_reducedMotion) {
+        _controller.pauseAnimation();
+      } else if (_canMove) {
+        _seekBreath();
+      } else {
+        _controller.pauseAnimation();
+      }
+    } else {
+      _motion.setPlaybackEnabled(_canMove);
+      if (_reducedMotion) {
+        _controller.pauseAnimation();
+      } else if (!_canMove) {
+        _controller.pauseAnimation();
+      }
+    }
+  }
+
+  void _seekBreath() {
+    if (!_modelReady || !_canMove || _hasError) return;
+    final progress = widget.breathProgress?.value;
+    if (progress == null) return;
+    final now = _seekClock.elapsedMilliseconds;
+    // Au plus 30 messages/s vers WebKit. Les extrémités restent exactes.
+    if (now - _lastSeek < 33 && progress > 0 && progress < 1) return;
+    _lastSeek = now;
+    _controller.seekBreath(progress);
+  }
+
+  void _playCurrent() {
+    if (!_modelReady ||
+        _hasError ||
+        !_canMove ||
+        widget.breathProgress != null) {
+      return;
+    }
+    final animation = _motion.current;
     try {
-      _controller.playAnimation(animationName: 'idle');
+      if (animation.mode == MascotAnimationMode.hold) {
+        _controller.pauseAnimation();
+      } else {
+        _controller.playAnimation(
+          animationName: animation.clipName,
+          loopCount: animation.mode == MascotAnimationMode.once ? 1 : 0,
+        );
+      }
     } catch (error) {
-      debugPrint('Mascot3DViewer: Erreur lecture animation idle: $error');
+      AppDiagnostics.record('mascot_animation_failed', error);
     }
   }
 
@@ -131,19 +288,21 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
         _controller.stopRotation();
       }
     } catch (error) {
-      debugPrint('Mascot3DViewer: Erreur configuration rotation: $error');
+      AppDiagnostics.record('mascot_rotation_failed', error);
     }
   }
 
   void _onModelError(String error) {
     if (!mounted) return;
 
-    debugPrint('Mascot3DViewer: Erreur chargement modèle 3D: $error');
+    _loadTimeoutTimer?.cancel();
+    _motion.setPlaybackEnabled(false);
+    AppDiagnostics.record(
+      'mascot_model_failed',
+      StateError('model unavailable'),
+    );
 
-    setState(() {
-      _isLoading = false;
-      _hasError = true;
-    });
+    setState(() => _presence = _MascotPresence.failed);
 
     widget.onError?.call(error);
   }
@@ -156,71 +315,87 @@ class _Mascot3DViewerState extends State<Mascot3DViewer> {
         child: SizedBox(
           width: widget.width,
           height: widget.height,
-          child: _hasError || _isWidgetTest ? _buildFallback() : _buildViewer(),
+          child: _hasError || _isWidgetTest || _released
+              ? _buildFallback()
+              : _buildViewer(),
         ),
       ),
     );
 
-    if (widget.colorMatrix != null) {
-      return ColorFiltered(
-        colorFilter: ColorFilter.matrix(widget.colorMatrix!),
-        child: child,
-      );
+    if (_isWidgetTest) return child;
+    return VisibilityDetector(
+      key: ValueKey(('mascot-visibility', this)),
+      onVisibilityChanged: (info) {
+        final visible = info.visibleFraction > 0;
+        if (!mounted || visible == _visible) return;
+        _visible = visible;
+        _updateRetention();
+        _syncPlayback();
+      },
+      child: child,
+    );
+  }
+
+  /// Keep rapid tab switches warm, but release native/WebGL resources when
+  /// a mascot stays offscreen. Pausing alone does not release its memory.
+  void _updateRetention() {
+    if (_isWidgetTest) return;
+    if (_active && _tickerEnabled && _visible) {
+      _releaseTimer?.cancel();
+      _releaseTimer = null;
+      if (_released) {
+        _presence = _MascotPresence.preparing;
+        _startLoadTimeout();
+        setState(() {});
+      }
+    } else {
+      _releaseTimer ??= Timer(const Duration(seconds: 15), () {
+        _releaseTimer = null;
+        if (!mounted) return;
+        _loadTimeoutTimer?.cancel();
+        _controller.onModelLoaded.value = false;
+        setState(() {
+          _presence = _MascotPresence.released;
+        });
+      });
     }
-    return child;
   }
 
   Widget _buildViewer() {
     return Stack(
       alignment: Alignment.center,
       children: [
-        Flutter3DViewer(
+        // WebKit must remain visible to produce the frame behind this poster.
+        MascotModelSurface(
+          key: ValueKey((widget.config.assetPath, _controller)),
           controller: _controller,
           src: widget.config.assetPath,
-          activeGestureInterceptor: widget.config.interactionEnabled,
-          enableTouch: widget.config.interactionEnabled,
-          progressBarColor: widget.config.showLoadingIndicator
-              ? AppColors.primary
-              : Colors.transparent,
-          onProgress: (_) {},
+          look: _look,
+          initialPoster: MascotPosterStore.read(_posterKey),
+          interactive: widget.config.interactionEnabled,
           onLoad: _onModelLoaded,
           onError: _onModelError,
         ),
-        if (_isLoading && widget.config.showLoadingIndicator)
-          Positioned.fill(child: _buildLoadingShimmer()),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: _posterHidden ? 0 : 1,
+              duration: _reducedMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 180),
+              curve: Curves.easeOutCubic,
+              onEnd: _finishReveal,
+              child: _buildFallback(),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  /// Shimmer animé pendant le chargement du modèle 3D.
-  Widget _buildLoadingShimmer() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
-      highlightColor: isDark ? Colors.grey.shade600 : Colors.grey.shade100,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey.shade900 : Colors.grey.shade200,
-          shape: BoxShape.circle,
-        ),
-      ),
-    );
-  }
-
-  /// Fallback sur le PNG statique si le modèle 3D ne charge pas.
-  Widget _buildFallback() {
-    return Image.asset(
-      'assets/mascotte.png',
-      width: widget.width,
-      height: widget.height,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return Icon(
-          Icons.pets_rounded,
-          size: widget.width * 0.5,
-          color: AppColors.primary.withValues(alpha: 0.5),
-        );
-      },
-    );
-  }
+  Widget _buildFallback() => MascotPoster(
+    width: widget.width,
+    height: widget.height,
+    frame: MascotPosterStore.read(_posterKey),
+  );
 }

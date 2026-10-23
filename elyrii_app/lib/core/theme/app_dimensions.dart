@@ -1,336 +1,247 @@
-/// Dimensions et espacements de l'application Elyrii
-/// Définit toutes les valeurs de dimension pour maintenir la cohérence
+/// Spacing, radii and sizes shared by every screen. Screens pick a step of
+/// these scales and never write a raw distance.
 class AppDimensions {
-  AppDimensions._(); // Constructeur privé
+  AppDimensions._();
 
-  // ==================== ESPACEMENTS ====================
+  static const double spacing2 = 2;
+  static const double spacing4 = 4;
+  static const double spacing8 = 8;
+  static const double spacing12 = 12;
+  static const double spacing16 = 16;
+  static const double spacing20 = 20;
+  static const double spacing24 = 24;
+  static const double spacing32 = 32;
+  static const double spacing48 = 48;
 
-  /// Espacement minimal (4px)
-  static const double spacingXxs = 4.0;
-
-  /// Très petit espacement (8px)
-  static const double spacingXs = 8.0;
-
-  /// Petit espacement (12px)
-  static const double spacingSm = 12.0;
-
-  /// Espacement standard (16px)
-  static const double spacingMd = 16.0;
-
-  /// Grand espacement (24px)
-  static const double spacingLg = 24.0;
-
-  /// Très grand espacement (32px)
-  static const double spacingXl = 32.0;
-
-  /// Espacement extra large (48px)
-  static const double spacingXxl = 48.0;
-
-  /// Espacement géant (64px)
-  static const double spacingXxxl = 64.0;
-
-  // ==================== PADDING ====================
-
-  /// Padding minimal pour les petits éléments
-  static const double paddingXxs = 4.0;
-
-  /// Padding très petit
-  static const double paddingXs = 8.0;
-
-  /// Padding petit
-  static const double paddingSm = 12.0;
-
-  /// Padding standard (par défaut)
-  static const double paddingMd = 16.0;
-
-  /// Padding large
-  static const double paddingLg = 24.0;
-
-  /// Padding très large
-  static const double paddingXl = 32.0;
-
-  /// Padding horizontal standard des pages
-  static const double pageHorizontalPadding = 20.0;
-
-  /// Padding vertical standard des pages
-  static const double pageVerticalPadding = 16.0;
-
-  // ==================== BORDER RADIUS ====================
-
-  /// Rayon minimal (2px)
-  static const double radiusXxs = 2.0;
-
-  /// Très petit rayon (4px)
-  static const double radiusXs = 4.0;
-
-  /// Petit rayon (8px)
-  static const double radiusSm = 8.0;
-
-  /// Rayon standard (12px)
-  static const double radiusMd = 12.0;
-
-  /// Grand rayon (16px)
-  static const double radiusLg = 16.0;
-
-  /// Très grand rayon (24px)
-  static const double radiusXl = 24.0;
-
-  /// Rayon extra large (32px)
-  static const double radiusXxl = 32.0;
-
-  /// Rayon circulaire (1000px)
-  static const double radiusCircular = 1000.0;
-
-  // ==================== TAILLES D'ICÔNES ====================
-
-  /// Très petite icône (12px)
-  static const double iconXxs = 12.0;
-
-  /// Petite icône (16px)
-  static const double iconXs = 16.0;
-
-  /// Icône petit-moyenne (20px)
-  static const double iconSm = 20.0;
-
-  /// Icône standard (24px)
-  static const double iconMd = 24.0;
-
-  /// Grande icône (32px)
-  static const double iconLg = 32.0;
-
-  /// Très grande icône (48px)
-  static const double iconXl = 48.0;
-
-  /// Icône extra large (64px)
-  static const double iconXxl = 64.0;
-
-  /// Icône géante (96px)
-  static const double iconXxxl = 96.0;
-
-  // ==================== HAUTEURS ====================
-
-  /// Hauteur minimale des boutons
-  static const double buttonHeightMin = 40.0;
-
-  /// Hauteur standard des boutons
-  static const double buttonHeight = 48.0;
-
-  /// Hauteur des grands boutons
-  static const double buttonHeightLarge = 56.0;
-
-  /// Hauteur des champs de texte
-  static const double inputHeight = 56.0;
-
-  /// Hauteur de l'AppBar
-  static const double appBarHeight = 56.0;
-
-  /// Hauteur de la BottomNavigationBar
-  static const double bottomNavHeight = 64.0;
-
-  /// Hauteur des cartes simples
-  static const double cardHeightSmall = 80.0;
-
-  /// Hauteur des cartes moyennes
-  static const double cardHeightMedium = 120.0;
-
-  /// Hauteur des cartes grandes
-  static const double cardHeightLarge = 200.0;
-
-  // ==================== LARGEURS ====================
-
-  /// Largeur maximale pour les petits écrans (smartphone)
-  static const double maxWidthMobile = 480.0;
-
-  /// Largeur maximale pour les tablettes
-  static const double maxWidthTablet = 768.0;
-
-  /// Largeur maximale pour les écrans desktop
-  static const double maxWidthDesktop = 1200.0;
-
-  /// Largeur maximale du contenu des pages
-  static const double maxContentWidth = 600.0;
-
-  // ==================== ÉLÉVATION (SHADOW) ====================
-
-  /// Pas d'élévation
-  static const double elevationNone = 0.0;
-
-  /// Élévation minimale
-  static const double elevationXs = 1.0;
-
-  /// Élévation petite
-  static const double elevationSm = 2.0;
-
-  /// Élévation standard
-  static const double elevationMd = 4.0;
-
-  /// Élévation moyenne
-  static const double elevationLg = 8.0;
-
-  /// Élévation forte
-  static const double elevationXl = 12.0;
-
-  /// Élévation très forte
-  static const double elevationXxl = 16.0;
-
-  // ==================== BORDURES ====================
-
-  /// Épaisseur de bordure fine
-  static const double borderWidthThin = 1.0;
-
-  /// Épaisseur de bordure standard
-  static const double borderWidthMedium = 2.0;
-
-  /// Épaisseur de bordure épaisse
-  static const double borderWidthThick = 3.0;
-
-  /// Épaisseur de bordure très épaisse
-  static const double borderWidthExtraThick = 4.0;
-
-  // ==================== TAILLES SPÉCIFIQUES ====================
-
-  /// Taille de l'avatar petit
-  static const double avatarSizeSmall = 32.0;
-
-  /// Taille de l'avatar moyen
-  static const double avatarSizeMedium = 48.0;
-
-  /// Taille de l'avatar grand
-  static const double avatarSizeLarge = 64.0;
-
-  /// Taille de l'avatar très grand
-  static const double avatarSizeXLarge = 96.0;
-
-  /// Taille de l'avatar du profil
-  static const double avatarSizeProfile = 120.0;
-
-  /// Taille de la mascotte sur le dashboard
-  static const double mascotSizeDashboard = 150.0;
-
-  /// Taille de la mascotte en plein écran
-  static const double mascotSizeFullscreen = 300.0;
-
-  /// Taille du viewer 3D de la mascotte sur les pages d'authentification
-  static const double mascot3DViewerAuth = 150.0;
-
-  /// Taille du viewer 3D de la mascotte en mode chatbot plein écran
-  static const double mascot3DViewerChatbotFull = 250.0;
-
-  /// Taille du viewer 3D de la mascotte en mode chatbot minimisé
-  static const double mascot3DViewerChatbotMini = 100.0;
-
-  /// Hauteur de la bulle de message du chatbot
-  static const double chatBubbleMaxWidth = 280.0;
-
-  /// Hauteur minimale de la zone de saisie du chatbot
-  static const double chatInputMinHeight = 56.0;
-
-  /// Hauteur maximale de la zone de saisie du chatbot
-  static const double chatInputMaxHeight = 120.0;
-
-  /// Largeur de la carte d'objectif
-  static const double objectiveCardWidth = 160.0;
-
-  /// Hauteur de la carte d'objectif
-  static const double objectiveCardHeight = 200.0;
-
-  /// Taille du badge d'achievement
-  static const double achievementBadgeSize = 80.0;
-
-  /// Hauteur de la carte de méditation
-  static const double meditationCardHeight = 140.0;
-
-  /// Largeur de la barre de progression
-  static const double progressBarHeight = 8.0;
-
-  /// Largeur de la barre de progression épaisse
-  static const double progressBarHeightThick = 12.0;
-
-  // ==================== ANIMATIONS ====================
-
-  /// Durée d'animation courte (en millisecondes)
-  static const int animationDurationShort = 200;
-
-  /// Durée d'animation standard (en millisecondes)
-  static const int animationDurationMedium = 300;
-
-  /// Durée d'animation longue (en millisecondes)
-  static const int animationDurationLong = 500;
-
-  /// Durée d'animation très longue (en millisecondes)
-  static const int animationDurationXLong = 800;
-
-  // ==================== DIVIDERS ====================
-
-  /// Épaisseur du divider
-  static const double dividerThickness = 1.0;
-
-  /// Épaisseur du divider épais
-  static const double dividerThicknessThick = 2.0;
-
-  /// Indentation du divider
-  static const double dividerIndent = 16.0;
-
-  // ==================== OPACITY ====================
-
-  /// Opacité désactivée
-  static const double opacityDisabled = 0.38;
-
-  /// Opacité moyenne
-  static const double opacityMedium = 0.60;
-
-  /// Opacité haute
-  static const double opacityHigh = 0.87;
-
-  /// Opacité pour les overlays
-  static const double opacityOverlay = 0.04;
-
-  // ==================== ASPECT RATIO ====================
-
-  /// Ratio carré
-  static const double aspectRatioSquare = 1.0;
-
-  /// Ratio 16:9
-  static const double aspectRatioWide = 16.0 / 9.0;
-
-  /// Ratio 4:3
-  static const double aspectRatioStandard = 4.0 / 3.0;
-
-  /// Ratio 3:2
-  static const double aspectRatioPhoto = 3.0 / 2.0;
-
-  // ==================== iOS 26 LIQUID GLASS ====================
-
-  /// Blur sigma pour liquid glass - léger (ultraThin)
-  static const double blurSigmaLiquidGlassUltraThin = 6.0;
-
-  /// Blur sigma pour liquid glass - fin (thin)
-  static const double blurSigmaLiquidGlassThin = 10.0;
-
-  /// Blur sigma pour liquid glass - régulier
-  static const double blurSigmaLiquidGlassRegular = 14.0;
-
-  /// Alias pour blur sigma régulier (compatibilité)
-  static const double blurSigmaRegular = 14.0;
-
-  /// Blur sigma pour liquid glass - épais (navbar, boutons)
-  static const double blurSigmaLiquidGlass = 16.0;
-
-  /// Border radius pour liquid glass navigation
-  static const double radiusLiquidGlassNav = 44.0;
-
-  /// Border radius pour liquid glass cards
-  static const double radiusLiquidGlassCard = 20.0;
-
-  /// Border radius pour liquid glass sheets/modals
-  static const double radiusLiquidGlassSheet = 28.0;
-
-  /// Border radius pour liquid glass buttons (capsule)
-  static const double radiusLiquidGlassButton = 100.0;
-
-  /// Animation duration pour liquid glass transitions
-  static const int animationDurationLiquidGlass = 200;
-
-  /// Spring damping pour animations iOS 26
-  static const double springDampingLiquidGlass = 0.7;
+  static const double pageHorizontalPadding = spacing20;
+
+  static const double radius4 = 4;
+  static const double radius8 = 8;
+  static const double radius12 = 12;
+  static const double radius16 = 16;
+
+  /// Tuiles de rituels et boutons d'action de la réponse.
+  static const double radius18 = 18;
+
+  static const double radius20 = 20;
+
+  /// Capsule Série/Fleurs/Tenue au repos.
+  static const double radius26 = 26;
+
+  /// Sheets and modal surfaces.
+  static const double radius28 = 28;
+
+  /// Panneau calendrier.
+  static const double radius30 = 30;
+
+  /// Feuilles Série, Fleurs et dressing.
+  static const double radius38 = 38;
+
+  static const double radiusPill = 999;
+
+  /// Sheet grabber (36 × 5).
+  static const double grabberWidth = 36;
+  static const double grabberHeight = 5;
+
+  /// Journal writing prompt chip.
+  static const double radius14 = 14;
+
+  /// Glass toolbar of the Journal editor.
+  static const double radius24 = 24;
+
+  static const double iconSm = 20;
+  static const double iconXs = 14;
+  static const double iconMd = 24;
+
+  /// Tap target of the glass buttons, and the width that balances them.
+  static const double controlSize = 48;
+
+  static const double buttonHeight = 48;
+  static const double maxContentWidth = 600;
+
+  static const double elevationSm = 2;
+  static const double elevationMd = 4;
+  static const double elevationLg = 8;
+  static const double elevationXl = 12;
+
+  static const double borderWidthThin = 1;
+  static const double borderWidthMedium = 2;
+  static const double dividerThickness = 1;
+
+  /// Hauteur du décor derrière le héros (viewBox 390 × 470).
+  static const double accueilSceneHeight = 470;
+
+  /// Pixels de décor que la feuille de contenu recouvre à l'état repos.
+  static const double accueilSheetOverlap = 32;
+
+  /// Dépassement de la capsule au-dessus du bord de la feuille.
+  static const double accueilCapsuleOverhang = 26;
+
+  /// Hauteur de la capsule au repos, puis une fois épinglée.
+  static const double accueilCapsuleHeight = 52;
+  static const double accueilCapsuleCompactHeight = 44;
+
+  /// Amplitude du hop de la mascotte (translateY -12 à mi-parcours).
+  static const double accueilHopDistance = 12;
+
+  /// Face d'humeur sélectionnée (diamètre visuel 54 pour un disque de 50).
+  static const double accueilMoodFaceSelectedScale = 1.08;
+
+  /// Pop d'essayage : la preview part de 0,94, culmine à 1,03, revient à 1.
+  static const double accueilPreviewPopScale = 0.94;
+  static const double accueilPreviewPopPeakScale = 1.03;
+
+  static const double accueilBarHeight = 54;
+  static const double accueilHeaderControl = 44;
+
+  /// The 3D viewer frames the bear with margins, so its box is larger than
+  /// the mockup's 230-pt image and starts higher to put the bear at the
+  /// same place (top ≈ 102, feet ≈ 303 under the status bar).
+  static const double accueilHeroTop = 46;
+  static const double accueilHeroSize = 304;
+
+  /// Distance from the viewer's bottom edge to the bear's feet.
+  static const double accueilHeroFeetInset = 36;
+  static const double accueilDressingHeroLift = 14;
+  static const double accueilSheetTop = 384;
+  static const double accueilCapsuleTop = 358;
+  static const double accueilCapsulePinnedTop = 58;
+  static const double accueilMoodFace = 50;
+  static const double accueilSectionGap = 22;
+  static const double accueilRiseDistance = 14;
+  static const double accueilCalendarRiseDistance = 6;
+  static const double accueilSheetTopPadding = 48;
+  static const double accueilDressTop = 334;
+  static const double dockHeight = 64;
+  static const double dockIcon = 23;
+  static const double dockAvatar = 44;
+  static const double dockItemGap = 1;
+  static const double dockItemPadding = 5;
+  static const double dockItemHeight = 48;
+  static const double dockItemWidth = 58;
+  static const double dockMinWidth = 360;
+  static const double dockMaxLabelSize = 13.2;
+  static const double glassStroke = 0.5;
+  static const double navigationBlur = 22;
+  static const double navigationSaturation = 1.7;
+
+  static const double sectionSkyHeight = 290;
+  static const double sectionBodyOverlap = 30;
+  static const double sectionTitleBottom = 48;
+  static const double sectionScrollThreshold = 190;
+  static const double sectionPeriodTop = 112;
+  static const double gardenTouchPadding = 6;
+  static const double gardenCalendarMinWidth = 350;
+  static const double gardenGap = 6;
+  static const double gardenPlotHeight = 37;
+  static const double gardenPlotInset = (controlSize - gardenPlotHeight) / 2;
+  static const double gardenWeekPlotHeight = 62;
+  static const double gardenPlotRadius = 9;
+  static const double gardenFlowerSize = 27;
+  static const double gardenRewardWidth = 158;
+  static const double gardenRewardHeight = 84;
+  static const double gardenPreviewHeight = 208;
+  static const double gardenBloomSize = 112;
+
+  /// Day stamp column; the thread runs at [journalThreadInset] from the left.
+  static const double journalDayColumn = 49;
+  static const double journalThreadInset = 24;
+  static const double journalThreadTop = 12;
+  static const double journalThreadBottom = 36;
+  static const double journalMonthGap = 40;
+
+  /// Round tools of the composer, filters and the editor close button.
+  static const double journalTool = 36;
+  static const double journalRefresh = 30;
+  static const double journalMoodDot = 8;
+  static const double journalFilterDot = 12;
+  static const double journalPill = 24;
+  static const double journalSquare = 32;
+  static const double journalSquareRadius = 9;
+  static const double journalShield = 44;
+  static const double journalRowHeight = 56;
+  static const double journalPromptRowHeight = 58;
+  static const double journalBigButton = 50;
+  static const double journalMoodColumn = 58;
+  static const double journalMascotWidth = 94;
+  static const double journalMascotHeight = 114;
+  static const double journalBodyMinHeight = 220;
+  static const double journalToastTop = 112;
+  static const double journalSearchField = 40;
+
+  static const double meditationChipHeight = 36;
+  static const double meditationFeaturedHeight = 200;
+  static const double meditationTileSize = 142;
+  static const double meditationTileRadius = 21;
+  static const double meditationRowHeight = 67;
+  static const double meditationCircle = 248;
+  static const double meditationCircleMinScale = .84;
+
+  /// The viewer includes framing margins around the 150 × 180 visual bear.
+  static const double meditationMascotWidth = 300;
+  static const double meditationMascotHeight = 360;
+  static const double meditationSessionTop = 64;
+  static const double meditationPhaseGap = 38;
+  static const double meditationProgressHeight = 6;
+  static const double meditationButtonHeight = 50;
+  static const double meditationIcon = 28;
+  static const double meditationBandIcon = 38;
+  static const double meditationPreviewWidth = 360;
+  static const double meditationFeaturedArtWidth = 190;
+  static const double meditationFeaturedArtHeight = 170;
+
+  static const double profileTop = 94;
+  static const double profileAvatar = 96;
+
+  /// The Accueil décor drawn at its own scale and raised so its moon clears
+  /// the back button and its ground still shows above the Profil body.
+  static const double profileSceneLift = 80;
+  static const double profileEditAvatar = 64;
+  static const double profileAvatarPreview = 120;
+  static const double profileAvatarTile = 66;
+  static const double profileFieldLabel = 86;
+  static const double profileBioHeight = 80;
+  static const double profileRowHeight = 56;
+  static const double profileSquare = 32;
+  static const double profileSquareRadius = 9;
+  static const double profileIcon = 19;
+  static const double profileSegment = 36;
+  static const double profileToggleWidth = 51;
+  static const double profileToggleHeight = 31;
+  static const double profileToggleThumb = 27;
+  static const double profileToggleTravel = 20;
+  static const double profileChartHeight = 95;
+  static const double profileChartPlot = 77;
+  static const double profileMoodDot = 13;
+  static const double profileMoodStep = 15;
+  static const double profileBarChart = 60;
+  static const double profileBarHeight = 43;
+  static const double profileBarWidth = 16;
+  static const double profileChartIcon = 28;
+  static const double profileHairline = .5;
+
+  static const double arrivalSceneHeight = 360;
+  static const double arrivalSheetTop = 326;
+  static const double arrivalHeroTop = 56;
+  static const double arrivalHeroSize = 270;
+  static const double arrivalLaunchHero = 360;
+  static const double arrivalLaunchTop = 190;
+  static const double arrivalWordTop = 552;
+  static const double arrivalResetTop = 120;
+  static const double arrivalPalette = 42;
+  static const double arrivalDecorHeight = 50;
+  static const double arrivalMinBody = 520;
+  static const double arrivalProgressHeight = 4;
+  static const double arrivalHeroFadeRange = 260;
+  static const double arrivalAuthThreshold = 240;
+  static const double arrivalStepThreshold = 220;
+  static const double arrivalGoalThreshold = 80;
+
+  static const double sheetDismissFraction = .25;
+  static const double sheetDismissVelocity = 700;
+
+  static double dockBottomMargin(double safeBottom) => spacing20;
+
+  static double accessibleDockHeight(double scaledLabelHeight) =>
+      spacing48 + scaledLabelHeight * 2;
 }

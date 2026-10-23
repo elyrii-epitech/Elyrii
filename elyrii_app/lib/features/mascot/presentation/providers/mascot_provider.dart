@@ -1,31 +1,168 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../core/config/api_config.dart';
+
+import '../../../../core/config/mascot_animations.dart';
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/network/api_client.dart';
+import '../../data/models/mascot_accessory.dart';
+import '../../data/models/mascot_appearance.dart';
 import '../../data/models/mascot_model.dart';
+import '../../data/repositories/mascot_repository.dart';
 
 /// Provider gérant l'état et l'interaction avec la mascotte 3D.
 ///
 /// Permet de contrôler le modèle 3D globalement, gérer les thèmes visuels
-/// (recoloration via ColorFilter) et préparer le terrain pour les
-/// accessoires futurs et le contrôle des animations.
+/// (palettes des matériaux), les pièces 3D de sa garde-robe et les
+/// animations.
 class MascotProvider extends ChangeNotifier {
-  static const String _storageKey = 'elyrii_mascot_customization';
-  static const String _themeKey = 'elyrii_mascot_theme';
+  String? _userId;
+  bool _isDemo;
+  bool _sessionBound;
+  int _sessionRevision = 0;
+  Future<void>? _loadFuture;
 
-  final ApiClient? _client;
+  String get storageScope => _isDemo ? 'demo' : _userId ?? 'guest';
+  int get sessionRevision => _sessionRevision;
+  bool get _needsSync => _userId != null && !_isDemo;
+  bool get _canSync => _repository.canSync && _needsSync;
+  final MascotRepository _repository;
+  final Set<Future<void>> _loadingOperations = {};
+
+  Future<void> get flushed async {
+    await Future.wait(_loadingOperations.toList());
+    await Future.wait([_persistTail, _syncTail]);
+  }
+
+  Future<void> _trackLoad(Future<void> operation) {
+    late final Future<void> tracked;
+    tracked = operation.whenComplete(() => _loadingOperations.remove(tracked));
+    _loadingOperations.add(tracked);
+    return tracked;
+  }
+
   MascotModel _mascot = MascotModel.defaultMascot();
+  Future<void> _syncTail = Future<void>.value();
+  Future<void> _persistTail = Future<void>.value();
+  bool _disposed = false;
+  int _syncRevision = 0;
+  bool _pendingSync = false;
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  bool _hasGreeted = false;
+
+  // Réactions transversales déclenchées par les autres parcours (journal,
+  // jardin, coach…). Le widget de mascotte visible les consomme avec un
+  // compteur plutôt qu'en comparant des objets, ce qui permet de rejouer le
+  // même clip à chaque nouvel événement.
+  MascotAnimation _reaction = MascotAnimations.idle;
+  int _reactionTrigger = 0;
+  String? _lastReactionKey;
+
+  /// Le salut d'arrivée est consommé une fois pour la vie de ce provider.
+  bool takeGreeting() {
+    if (_hasGreeted) return false;
+    _hasGreeted = true;
+    return true;
+  }
+
+  MascotAnimation get reaction => _reaction;
+  int get reactionTrigger => _reactionTrigger;
+
+  /// Publie une réaction courte à afficher sur la mascotte persistante.
+  ///
+  /// [eventKey] est utile pour les notifications provenant d'un flux qui peut
+  /// émettre plusieurs fois le même état (par exemple un rafraîchissement
+  /// réseau). Les interactions directes omettent la clé pour toujours rejouer
+  /// le geste.
+  void react(MascotAnimation animation, {String? eventKey}) {
+    if (eventKey != null && eventKey == _lastReactionKey) return;
+    _lastReactionKey = eventKey;
+    _reaction = animation;
+    _reactionTrigger++;
+    _notify();
+  }
 
   bool _isLoading = false;
   bool _isSyncing = false;
   String? _error;
 
-  MascotProvider({ApiClient? client}) : _client = client {
-    _loadSavedMascot();
+  MascotProvider({
+    ApiClient? client,
+    MascotRepository? repository,
+    String? userId,
+    bool isDemo = false,
+  }) : _repository = repository ?? MascotRepository(client: client),
+       _userId = userId,
+       _isDemo = isDemo,
+       _sessionBound = userId != null || isDemo {
+    unawaited(_trackLoad(_loadSavedMascot(_sessionRevision)));
   }
+
+  /// Account-scoped persistence adapted from Lucas's studio. Changing scope
+  /// invalidates old reads and queued syncs before loading the new account.
+  Future<void> onUserChanged({
+    String? userId,
+    bool isDemo = false,
+    bool migrateLegacy = false,
+  }) async {
+    if (_sessionBound && _userId == userId && _isDemo == isDemo) {
+      await _loadFuture;
+      return;
+    }
+    _changeSession(userId, isDemo);
+    final session = _sessionRevision;
+    late final Future<void> future;
+    future =
+        _trackLoad(() async {
+          if (migrateLegacy && userId != null && !isDemo) {
+            await _migrateLegacy(session);
+          }
+          if (session == _sessionRevision) await _loadMascot(session);
+        }()).whenComplete(() {
+          if (identical(_loadFuture, future)) _loadFuture = null;
+        });
+    _loadFuture = future;
+    await future;
+  }
+
+  void _changeSession(String? userId, bool isDemo) {
+    _userId = userId;
+    _isDemo = isDemo;
+    _sessionBound = true;
+    _sessionRevision++;
+    _syncRevision++;
+    _loadFuture = null;
+    _mascot = MascotModel.defaultMascot();
+    _pendingSync = false;
+    _isLoading = false;
+    _isSyncing = false;
+    _error = null;
+    _hasGreeted = false;
+    _reaction = MascotAnimations.idle;
+    _reactionTrigger = 0;
+    _lastReactionKey = null;
+    _notify();
+  }
+
+  void resetSession() {
+    if (_sessionBound && _userId == null && !_isDemo) return;
+    _changeSession(null, false);
+  }
+
+  Future<void> _migrateLegacy(int session) => _repository.migrateLegacy(
+    storageScope,
+    () => !_disposed && session == _sessionRevision,
+  );
 
   MascotModel get mascot => _mascot;
 
@@ -37,153 +174,228 @@ class MascotProvider extends ChangeNotifier {
 
   /// Applique un thème visuel à la mascotte.
   ///
-  /// Le thème recolore le modèle 3D à la volée via une ColorMatrix,
+  /// Le thème recolore les matériaux du modèle 3D à la volée,
   /// sans nécessiter de nouveau fichier GLB.
   void setTheme(String themeId) {
-    if (_mascot.themeId == themeId) return;
+    themeId = _validThemeId(themeId);
+    if (_mascot.themeId == themeId && _mascot.appearance.colors.isEmpty) return;
 
-    _mascot = _mascot.copyWith(themeId: themeId);
-    notifyListeners();
-    _saveTheme(themeId);
-    unawaited(_syncToBackend());
+    _mascot = _mascot.copyWith(
+      themeId: themeId,
+      appearance: MascotAppearance(finish: _mascot.appearance.finish),
+    );
+    _notify();
+    unawaited(_persistAndSync());
   }
 
-  /// Sélectionne ou retire un détail visuel (accessoire futur).
-  void equipCosmetic(String cosmeticId) {
-    final List<String> updatedCosmetics = List.from(_mascot.equippedCosmetics);
-    if (updatedCosmetics.contains(cosmeticId)) {
-      updatedCosmetics.remove(cosmeticId);
-    } else {
-      updatedCosmetics.add(cosmeticId);
+  /// Équipe une pièce connue et débloquée, en remplaçant celle de sa zone.
+  /// Retoucher la pièce portée la retire ; une célébration peut demander
+  /// une sélection idempotente avec [toggleIfEquipped] à false.
+  /// La vérification est faite ici, même si l'interface affiche un verrou.
+  bool equipCosmetic(
+    String cosmeticId, {
+    required int completedChallenges,
+    bool toggleIfEquipped = true,
+  }) {
+    final accessory = MascotAccessories.byId(cosmeticId);
+    if (accessory == null) return false;
+    cosmeticId = accessory.id;
+    final isEquipped = _mascot.equippedCosmetics.contains(cosmeticId);
+    if (isEquipped && !toggleIfEquipped) return false;
+    if (!isEquipped && !accessory.isUnlocked(completedChallenges)) return false;
+
+    final next = _mascot.equippedCosmetics
+        .where(
+          (id) => MascotAccessories.byId(id)?.category != accessory.category,
+        )
+        .toList();
+    if (!isEquipped) next.add(cosmeticId);
+    _mascot = _mascot.copyWith(
+      equippedCosmetics: MascotAccessories.sanitizeSelection(next),
+    );
+    _notify();
+    unawaited(_persistAndSync());
+    return true;
+  }
+
+  /// Commit a studio draft only after checking newly equipped rewards.
+  /// Local persistence succeeds independently of an unavailable server.
+  Future<bool> saveCustomization(
+    MascotModel draft, {
+    required int completedChallenges,
+    int? expectedSessionRevision,
+  }) async {
+    if (expectedSessionRevision != null &&
+        expectedSessionRevision != _sessionRevision) {
+      return false;
     }
-
-    _mascot = _mascot.copyWith(equippedCosmetics: updatedCosmetics);
-    notifyListeners();
-    _saveMascot();
-    unawaited(_syncToBackend());
-  }
-
-  /// Réinitialise l'état de la mascotte par défaut
-  void resetToDefault() {
-    _mascot = MascotModel.defaultMascot();
+    final session = _sessionRevision;
+    final selection = MascotAccessories.sanitizeSelection(
+      draft.equippedCosmetics,
+    );
+    for (final id in selection) {
+      if (!_mascot.equippedCosmetics.contains(id) &&
+          !MascotAccessories.byId(id)!.isUnlocked(completedChallenges)) {
+        _error = 'Cet accessoire n’est pas encore débloqué.';
+        _notify();
+        return false;
+      }
+    }
+    final previous = _mascot;
+    _mascot = draft.copyWith(
+      themeId: _validThemeId(draft.themeId),
+      equippedCosmetics: selection,
+      appearance: MascotAppearance.fromJson(draft.appearance.toJson()),
+    );
     _error = null;
-    notifyListeners();
-    _saveMascot();
-    _saveTheme('nature');
+    _notify();
+    final saved = await _saveMascot(markForSync: true);
+    if (session != _sessionRevision) return false;
+    if (!saved) {
+      _mascot = previous;
+      _notify();
+      return false;
+    }
     unawaited(_syncToBackend());
+    return true;
   }
 
-  Future<void> loadMascot() async {
+  Future<void> retrySync() => _syncToBackend();
+
+  Future<void> _persistAndSync() async {
+    final session = _sessionRevision;
+    if (await _saveMascot(markForSync: true) && session == _sessionRevision) {
+      await _syncToBackend();
+    }
+  }
+
+  Future<void> loadMascot() {
+    if (_loadFuture != null) return _loadFuture!;
+    late final Future<void> future;
+    future = _trackLoad(_loadMascot(_sessionRevision)).whenComplete(() {
+      if (identical(_loadFuture, future)) _loadFuture = null;
+    });
+    _loadFuture = future;
+    return future;
+  }
+
+  Future<void> _loadMascot(int session) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _notify();
 
-    await _loadSavedMascot();
+    await _loadSavedMascot(session);
+    if (_disposed || session != _sessionRevision) return;
 
-    if (_client == null) {
+    if (!_canSync) {
       _isLoading = false;
-      notifyListeners();
+      _notify();
+      return;
+    }
+
+    if (_pendingSync) {
+      _isLoading = false;
+      _notify();
+      unawaited(_syncToBackend());
       return;
     }
 
     try {
-      final response =
-          await _client.get(ApiConfig.userMascotUrl) as Map<String, dynamic>;
-      _mascot = _mascotFromBackend(response);
+      final localRevision = _syncRevision;
+      final remote = await _repository.getRemote(_mascot);
+      if (session != _sessionRevision ||
+          _pendingSync ||
+          localRevision != _syncRevision) {
+        return;
+      }
+      _mascot = remote;
       await _saveMascot();
-      await _saveTheme(_mascot.themeId);
     } catch (e) {
-      _error = 'Impossible de charger la mascotte depuis le serveur: $e';
+      if (session == _sessionRevision) {
+        _error = 'Ton look local reste disponible. La synchronisation sera réessayée.';
+      }
     } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> _loadSavedMascot() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-
-      final savedTheme = prefs.getString(_themeKey);
-      if (savedTheme != null && savedTheme != 'nature') {
-        _mascot = _mascot.copyWith(themeId: savedTheme);
+      if (session == _sessionRevision) {
+        _isLoading = false;
+        _notify();
       }
+    }
+  }
 
-      final rawCosmetics = prefs.getStringList(_storageKey);
-      if (rawCosmetics != null) {
-        _mascot = _mascot.copyWith(equippedCosmetics: rawCosmetics);
+  Future<void> _loadSavedMascot(int session) async {
+    try {
+      final saved = await _repository.readLocal(
+        storageScope,
+        needsSync: _needsSync,
+        isCurrent: () => !_disposed && session == _sessionRevision,
+      );
+      if (_disposed || session != _sessionRevision || saved.model == null) {
+        return;
       }
-
-      notifyListeners();
-    } catch (e) {
-      _error = 'Impossible de charger la personnalisation: $e';
-      notifyListeners();
+      _mascot = saved.model!;
+      _pendingSync = saved.pending;
+      _notify();
+    } catch (_) {
+      if (!_disposed && session == _sessionRevision) {
+        _error = 'Ta personnalisation locale n’a pas pu être chargée.';
+        _notify();
+      }
     }
   }
 
-  Future<void> _saveMascot() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList(_storageKey, _mascot.equippedCosmetics);
-    } catch (e) {
-      _error = 'Impossible de sauvegarder la personnalisation: $e';
-      notifyListeners();
-    }
-  }
-
-  Future<void> _saveTheme(String themeId) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_themeKey, themeId);
-    } catch (e) {
-      _error = 'Impossible de sauvegarder le thème: $e';
-      notifyListeners();
-    }
+  Future<bool> _saveMascot({bool markForSync = false}) {
+    final snapshot = _mascot;
+    final scope = storageScope;
+    final session = _sessionRevision;
+    final pending = markForSync && _needsSync;
+    if (pending) _pendingSync = true;
+    final save = _persistTail.then((_) async {
+      try {
+        await _repository.writeLocal(scope, snapshot, pending: pending);
+        return true;
+      } catch (e) {
+        if (session == _sessionRevision) {
+          _error = 'La personnalisation n’a pas pu être enregistrée. Réessaie.';
+          _notify();
+        }
+        return false;
+      }
+    });
+    _persistTail = save.then((_) {});
+    return save;
   }
 
   Future<void> _syncToBackend() async {
-    if (_client == null) return;
-
+    if (!_canSync) return;
+    final snapshot = _mascot;
+    final session = _sessionRevision;
+    final scope = storageScope;
+    final revision = ++_syncRevision;
     _isSyncing = true;
     _error = null;
-    notifyListeners();
-
-    try {
-      await _client.put(
-        ApiConfig.userMascotUrl,
-        body: {
-          'appearance': _mascot.themeId,
-          'themeId': _mascot.themeId,
-          'equippedCosmetics': _mascot.equippedCosmetics,
-          'personality': {'equippedCosmetics': _mascot.equippedCosmetics},
-        },
-      );
-    } catch (e) {
-      _error = 'Impossible de synchroniser la mascotte: $e';
-    } finally {
-      _isSyncing = false;
-      notifyListeners();
-    }
-  }
-
-  MascotModel _mascotFromBackend(Map<String, dynamic> json) {
-    final personality = Map<String, dynamic>.from(
-      json['personality'] as Map? ?? const <String, dynamic>{},
-    );
-    final rawTheme =
-        json['appearance'] as String? ??
-        personality['themeId'] as String? ??
-        'nature';
-    final themeId = _validThemeId(rawTheme == 'default' ? 'nature' : rawTheme);
-    final cosmetics =
-        (json['equippedCosmetics'] as List<dynamic>?) ??
-        (personality['equippedCosmetics'] as List<dynamic>?) ??
-        const <dynamic>[];
-
-    return _mascot.copyWith(
-      themeId: themeId,
-      equippedCosmetics: cosmetics.map((item) => item.toString()).toList(),
-    );
+    _notify();
+    // Serialize writes: a slow previous look must not overwrite a newer one.
+    _syncTail = _syncTail.then((_) async {
+      if (session != _sessionRevision) return;
+      try {
+        await _repository.saveRemote(snapshot);
+        if (session == _sessionRevision && revision == _syncRevision) {
+          _pendingSync = false;
+          await _repository.markSynced(scope);
+        }
+      } catch (e) {
+        if (session == _sessionRevision && revision == _syncRevision) {
+          _error =
+              'Look enregistré sur cet appareil. Synchronisation à réessayer.';
+        }
+      } finally {
+        if (session == _sessionRevision && revision == _syncRevision) {
+          _isSyncing = false;
+          _notify();
+        }
+      }
+    });
+    await _syncTail;
   }
 
   String _validThemeId(String themeId) {

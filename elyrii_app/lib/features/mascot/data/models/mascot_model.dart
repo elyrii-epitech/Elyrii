@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'mascot_appearance.dart';
+
 /// Modèle de données représentant l'état et la configuration de la mascotte.
 ///
 /// Immutable pour s'aligner sur les architectures propres et permettre une
@@ -19,18 +21,21 @@ class MascotModel {
   /// Voir [MascotThemes] pour le catalogue complet.
   final String themeId;
 
-  const MascotModel({
+  final MascotAppearance appearance;
+
+  MascotModel({
     required this.baseModelPath,
-    this.equippedCosmetics = const [],
+    List<String> equippedCosmetics = const [],
     this.animationState = 'idle',
     this.themeId = 'nature',
-  });
+    this.appearance = MascotAppearance.defaults,
+  }) : equippedCosmetics = List.unmodifiable(equippedCosmetics);
 
   /// Crée un modèle par défaut de la mascotte.
   factory MascotModel.defaultMascot() {
-    return const MascotModel(
-      baseModelPath: 'assets/base_basic_shaded_v3.glb',
-      equippedCosmetics: [],
+    return MascotModel(
+      baseModelPath: 'assets/optimized/mascot.glb',
+      equippedCosmetics: const [],
       animationState: 'idle',
       themeId: 'nature',
     );
@@ -42,12 +47,14 @@ class MascotModel {
     List<String>? equippedCosmetics,
     String? animationState,
     String? themeId,
+    MascotAppearance? appearance,
   }) {
     return MascotModel(
       baseModelPath: baseModelPath ?? this.baseModelPath,
       equippedCosmetics: equippedCosmetics ?? this.equippedCosmetics,
       animationState: animationState ?? this.animationState,
       themeId: themeId ?? this.themeId,
+      appearance: appearance ?? this.appearance,
     );
   }
 
@@ -55,7 +62,7 @@ class MascotModel {
   factory MascotModel.fromJson(Map<String, dynamic> json) {
     return MascotModel(
       baseModelPath:
-          json['baseModelPath'] as String? ?? 'assets/base_basic_shaded_v3.glb',
+          json['baseModelPath'] as String? ?? 'assets/optimized/mascot.glb',
       equippedCosmetics:
           (json['equippedCosmetics'] as List<dynamic>?)
               ?.map((e) => e as String)
@@ -63,6 +70,9 @@ class MascotModel {
           const [],
       animationState: json['animationState'] as String? ?? 'idle',
       themeId: json['themeId'] as String? ?? 'nature',
+      appearance: MascotAppearance.fromJson(
+        Map<String, dynamic>.from(json['customization'] as Map? ?? const {}),
+      ),
     );
   }
 
@@ -73,6 +83,7 @@ class MascotModel {
       'equippedCosmetics': equippedCosmetics,
       'animationState': animationState,
       'themeId': themeId,
+      'customization': appearance.toJson(),
     };
   }
 
@@ -84,7 +95,8 @@ class MascotModel {
           baseModelPath == other.baseModelPath &&
           listEquals(equippedCosmetics, other.equippedCosmetics) &&
           animationState == other.animationState &&
-          themeId == other.themeId;
+          themeId == other.themeId &&
+          appearance == other.appearance;
 
   @override
   int get hashCode => Object.hash(
@@ -92,6 +104,7 @@ class MascotModel {
     Object.hashAll(equippedCosmetics),
     animationState,
     themeId,
+    appearance,
   );
 
   @override

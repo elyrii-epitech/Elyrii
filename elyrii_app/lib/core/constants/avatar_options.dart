@@ -66,7 +66,9 @@ bool isMascotAvatar(String? pfp) {
 }
 
 bool isLocalAvatarPath(String pfp) {
-  return pfp.startsWith('/') || pfp.startsWith('file://');
+  return pfp.startsWith('/') ||
+      pfp.startsWith('file://') ||
+      pfp.startsWith('data:image/');
 }
 
 String localAvatarFilePath(String pfp) {
