@@ -59,6 +59,7 @@ class AppDependencies {
     journalStore = JournalStore(cipher: cipher);
     history = ChatHistoryService(cipher: cipher);
     auth = AuthProvider(client: api, storage: storage);
+    api.onRefresh = auth.refreshAccessToken;
     user = UserProvider(client: api);
     journal = JournalProvider(
       repository: JournalRepository(client: api, store: journalStore),
@@ -68,6 +69,12 @@ class AppDependencies {
       storage: storage,
       history: history,
       initialOwner: 'local-guest',
+      accessToken: () async {
+        final token = await storage.getAccessToken();
+        return token != null && ApiClient.tokenNeedsRefresh(token)
+            ? await auth.refreshAccessToken() ?? token
+            : token;
+      },
     );
     dashboard = DashboardProvider(
       apiClient: api,

@@ -10,12 +10,14 @@ import '../models/user_model.dart';
 /// Result type for auth operations
 class AuthResult {
   final String token;
+  final String? refreshToken;
   final UserModel? user;
   final String message;
   final bool verificationRequired;
 
   const AuthResult({
     required this.token,
+    this.refreshToken,
     this.user,
     required this.message,
     this.verificationRequired = false,
@@ -49,6 +51,7 @@ class AuthRepository {
     final user = _decodeTokenPayload(token);
     return AuthResult(
       token: token,
+      refreshToken: response['refreshToken'] as String?,
       user: user,
       message: response['message'] as String? ?? 'Login successful',
     );
@@ -97,16 +100,21 @@ class AuthRepository {
 
     return AuthResult(
       token: resolvedToken,
+      refreshToken: response['refreshToken'] as String?,
       user: user,
       message: response['message'] as String? ?? 'Registration successful',
     );
   }
 
   /// Logout the current user
-  Future<void> logout({String? token}) async {
+  Future<void> logout({String? token, String? refreshToken}) async {
     try {
       if (token != null) {
-        await _client.postWithToken(ApiConfig.logoutUrl, token);
+        await _client.postWithToken(
+          ApiConfig.logoutUrl,
+          token,
+          body: {'refreshToken': ?refreshToken},
+        );
       } else {
         await _client.post(ApiConfig.logoutUrl);
       }
@@ -114,6 +122,15 @@ class AuthRepository {
       // Ignore errors on logout — token will be cleared locally
     }
   }
+
+  Future<AuthResult> refresh(String refreshToken) async => decodeResponse(
+    await _client.post(
+      ApiConfig.refreshUrl,
+      body: {'refreshToken': refreshToken},
+      auth: false,
+    ),
+    _loginResult,
+  );
 
   /// Decode JWT payload to extract user info (userId, email)
   UserModel? _decodeTokenPayload(String token) {

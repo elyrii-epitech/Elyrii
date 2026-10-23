@@ -22,10 +22,12 @@ class ChatbotProvider extends ChangeNotifier {
     ChatHistoryService? history,
     String? initialOwner,
     ChatConnector? connector,
+    Future<String?> Function()? accessToken,
     this._replyTimeout = const Duration(seconds: 60),
   }) : _history = history ?? ChatHistoryService(),
        _ownsHistory = history == null,
-       _connector = connector ?? openChatConnection {
+       _connector = connector ?? openChatConnection,
+       _accessToken = accessToken ?? _storage.getAccessToken {
     ready = initialOwner == null
         ? synchronizeAccount()
         : _synchronizeAccount(ownerOverride: initialOwner);
@@ -34,6 +36,7 @@ class ChatbotProvider extends ChangeNotifier {
   final ChatHistoryService _history;
   final bool _ownsHistory;
   final ChatConnector _connector;
+  final Future<String?> Function() _accessToken;
   final Duration _replyTimeout;
   Future<bool> _lastMessageWrite = Future.value(true);
   final List<ChatMessage> _messages = [];
@@ -245,7 +248,7 @@ class ChatbotProvider extends ChangeNotifier {
     if (_isConnected || _disposed) return;
     final generation = _generation;
     try {
-      final token = await _storage.getAccessToken();
+      final token = await _accessToken();
       if (_disposed ||
           generation != _generation ||
           revision != _connectionRevision) {

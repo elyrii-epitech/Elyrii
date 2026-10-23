@@ -3,7 +3,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String _defaultBaseUrl = 'http://localhost:3001';
+  static const String _defaultBaseUrl = 'http://localhost:3000';
 
   static String _baseUrl = _defaultBaseUrl;
   static String get baseUrl => _baseUrl;

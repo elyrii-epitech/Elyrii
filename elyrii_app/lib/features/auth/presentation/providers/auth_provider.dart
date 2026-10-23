@@ -23,6 +23,7 @@ class AuthProvider extends ChangeNotifier {
   int _sessionRevision = 0;
   bool _disposed = false;
   Future<void> _credentialsTail = Future.value();
+  Future<String?>? _refreshing;
 
   AuthProvider({
     AuthRepository? repository,
@@ -59,12 +60,13 @@ class AuthProvider extends ChangeNotifier {
       final credentials = await Future.wait([
         _storage.getAccessToken(),
         _storage.getUserId(),
+        _storage.getRefreshToken(),
       ]);
       final token = credentials[0];
       final owner = credentials[1];
       if (!_current(revision)) return;
       if (token == null ||
-          _isJwtExpired(token) ||
+          (_isJwtExpired(token) && credentials[2] == null) ||
           owner == null ||
           owner.isEmpty) {
         await clearLocalSession();
@@ -208,6 +210,10 @@ class AuthProvider extends ChangeNotifier {
       if (!_current(revision)) return false;
       await _storage.saveAccessToken(result.token);
       if (!_current(revision)) return false;
+      if (result.refreshToken != null) {
+        await _storage.saveRefreshToken(result.refreshToken!);
+      }
+      if (!_current(revision)) return false;
       await _storage.saveUserId(result.user!.id);
       return _current(revision);
     });
@@ -217,6 +223,46 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.authenticated;
     _notify();
     return true;
+  }
+
+  /// Concurrent HTTP and socket handshakes share one refresh. Credential writes
+  /// use the same queue as logout, so an old response cannot revive a session.
+  Future<String?> refreshAccessToken() {
+    if (_refreshing != null) return _refreshing!;
+    late final Future<String?> pending;
+    pending = _refreshAccessToken().whenComplete(() {
+      if (identical(_refreshing, pending)) _refreshing = null;
+    });
+    return _refreshing = pending;
+  }
+
+  Future<String?> _refreshAccessToken() async {
+    if (!isAuthenticated || isDemoSession) return null;
+    final revision = _sessionRevision;
+    final owner = _accountId;
+    final refreshToken = await _storage.getRefreshToken();
+    if (!_current(revision) || refreshToken == null) return null;
+    try {
+      final result = await _repository.refresh(refreshToken);
+      if (!_current(revision)) return null;
+      if (result.user?.id != owner ||
+          result.token.isEmpty ||
+          result.refreshToken == null) {
+        throw const FormatException('Invalid refreshed session');
+      }
+      return await _credentials(() async {
+        if (!_current(revision)) return null;
+        await _storage.saveAccessToken(result.token);
+        if (!_current(revision)) return null;
+        await _storage.saveRefreshToken(result.refreshToken!);
+        return _current(revision) ? result.token : null;
+      });
+    } on ApiException catch (error) {
+      if (error.statusCode == 401 && _current(revision)) {
+        await clearLocalSession();
+      }
+      rethrow;
+    }
   }
 
   void _fail(int revision, Object error) {
@@ -272,8 +318,9 @@ class AuthProvider extends ChangeNotifier {
     _sessionRevision++;
     final removal = _credentials(() async {
       final token = demo ? null : await _storage.getAccessToken();
+      final refreshToken = demo ? null : await _storage.getRefreshToken();
       await _storage.clearAuthData();
-      return token;
+      return (token: token, refreshToken: refreshToken);
     });
     _user = null;
     _accountId = null;
@@ -281,9 +328,16 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     _notify();
     try {
-      final token = await removal;
+      final credentials = await removal;
       if (!demo) {
-        unawaited(_repository.logout(token: token).catchError((Object _) {}));
+        unawaited(
+          _repository
+              .logout(
+                token: credentials.token,
+                refreshToken: credentials.refreshToken,
+              )
+              .catchError((Object _) {}),
+        );
       }
     } catch (_) {
       _error = 'La suppression des identifiants a échoué. Réessaie.';
