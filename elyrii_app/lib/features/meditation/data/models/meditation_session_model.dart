@@ -1,3 +1,5 @@
+import '../../../../core/data/json_contract.dart';
+
 class MeditationProgram {
   final String id;
   final String title;
@@ -6,18 +8,18 @@ class MeditationProgram {
   final String audioUrl;
   final List<String> tags;
 
-  const MeditationProgram({
+  MeditationProgram({
     required this.id,
     required this.title,
     required this.description,
     required this.durationMinutes,
     required this.audioUrl,
-    required this.tags,
-  });
+    required List<String> tags,
+  }) : tags = List.unmodifiable(tags);
 
   factory MeditationProgram.fromJson(Map<String, dynamic> json) {
     return MeditationProgram(
-      id: json['id'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
       title: json['title'] as String? ?? '',
       description: json['description'] as String? ?? '',
       durationMinutes: _parseInt(
@@ -61,7 +63,7 @@ class MeditationSessionModel {
 
   factory MeditationSessionModel.fromJson(Map<String, dynamic> json) {
     return MeditationSessionModel(
-      id: json['id'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
       type: json['type'] as String? ?? '',
       durationMinutes: _parseInt(
         json['durationMinutes'] ?? json['duration_minutes'],
@@ -73,8 +75,10 @@ class MeditationSessionModel {
       moodAfter: json['moodAfter'] as String? ?? json['mood_after'] as String?,
       startedAt: _parseDate(json['startedAt'] ?? json['started_at']),
       endedAt: _parseDate(json['endedAt'] ?? json['ended_at']),
-      createdAt:
-          _parseDate(json['createdAt'] ?? json['created_at']) ?? DateTime.now(),
+      createdAt: requiredJsonDate(
+        json['createdAt'] ?? json['created_at'],
+        'createdAt',
+      ),
     );
   }
 }
@@ -88,6 +92,5 @@ int _parseInt(dynamic value) {
 
 DateTime? _parseDate(dynamic value) {
   if (value == null) return null;
-  if (value is String) return DateTime.tryParse(value);
-  return null;
+  return requiredJsonDate(value, 'session date');
 }

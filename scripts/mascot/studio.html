@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Velours · Un peu plus vivante</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f0e9;color:#382b3e;font:15px system-ui,sans-serif}main{max-width:1220px;padding:36px;margin:auto}.eyebrow{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#87667e}h1{font-size:44px;letter-spacing:-.045em;font-weight:550;margin:10px 0}p{color:#776777;line-height:1.6}.layout{display:grid;grid-template-columns:1.15fr 1fr;gap:22px;margin-top:28px}.stage,.library{background:#fffdf8;border:1px solid #e6dce0;border-radius:24px;overflow:hidden}.stage{position:sticky;top:24px;align-self:start}.stage header{padding:22px 24px;display:flex;justify-content:space-between;align-items:center}#title{font-size:21px}#badge{font-size:12px;border-radius:20px;background:#f2e7ed;padding:6px 10px;color:#80556b}model-viewer{width:100%;height:470px;background:radial-gradient(ellipse at 50% 40%,#f6ebe2,transparent 70%)}.dark model-viewer{background:#281f2c}.controls{padding:16px 24px 22px;display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid #eee6e7}button,select{font:inherit;color:inherit;background:#fffdf8;border:1px solid #daccd6;border-radius:12px;padding:9px 13px;cursor:pointer}button:hover{background:#f5e8ee}button[aria-pressed=true]{background:#eadbe4;border-color:#a57e96}.library{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:5px}.clip{text-align:left;border:none;padding:15px;border-radius:15px}.clip strong{display:block;font-weight:600;font-size:16px}.clip small{display:block;font-size:12px;color:#87717f;margin-top:5px;line-height:1.45}.timeline{padding:0 24px 22px}input[type=range]{width:100%;accent-color:#96708e}#description{min-height:42px;padding:0 24px;font-size:14px}.notes{display:flex;gap:28px;flex-wrap:wrap;margin-top:28px}.notes p{flex:1;min-width:200px}.notes b{color:#554257}#result{white-space:pre-wrap;font:12px ui-monospace,monospace;line-height:1.6}label{font-size:13px;display:flex;align-items:center;gap:6px}#breathControls{display:none;padding:0 24px 16px}#breathControls.visible{display:block}#phase{font-size:18px;margin-left:12px}.status{font-size:12px;color:#87667e;padding:0 24px 18px}@media(max-width:800px){main{padding:20px}h1{font-size:34px}.layout{grid-template-columns:1fr}.stage{position:static}model-viewer{height:370px}}
+</style>
+<main>
+<div class="eyebrow">Elyrii / Étude de caractère / 16 gestes</div>
+<h1>Un peu plus vivante.<br>Toujours aussi douce.</h1>
+<p>Des regards curieux, des pattes qui répondent, un souffle qui suit le tien.<br>Explore les nouveaux gestes de Velours, intégrés à l’application.</p>
+<div class="layout">
+<section class="stage">
+<header><strong id="title">Présence</strong><span id="badge">Au repos</span></header>
+<model-viewer id="velours" src="/velours.glb" camera-controls camera-orbit="0deg 75deg 125%" interaction-prompt="none" animation-crossfade-duration="320" alt="Velours, mascotte crème aux oreilles framboise"></model-viewer>
+<p id="description">Chargement de Velours…</p>
+<div id="breathControls"><select id="pattern" aria-label="Technique respiratoire"><option value="4,7,8">4–7–8</option><option value="4,4,4,4">Carrée 4–4–4–4</option><option value="5,5">Cohérence 5–5</option><option value="4,2,6">Diaphragmatique 4–2–6</option><option value="6,6">Ujjayi 6–6</option></select><span id="phase"></span></div>
+<div class="controls"><button id="play">Pause</button><button id="replay">Rejouer</button><button id="theme">Fond sombre</button><label><input type="checkbox" id="reduce">Mouvement réduit</label></div>
+<div class="timeline"><input type="range" id="seek" min="0" max="12" step=".01" value="0" aria-label="Position du geste"><span id="time">0,00 s</span></div>
+<div class="status" id="status" role="status">Chargement du modèle…</div>
+</section>
+<nav class="library" id="library" aria-label="Gestes de Velours"></nav>
+</div>
+<div class="notes"><p><b>Une présence qui varie.</b><br>Au repos, les petits gestes sont espacés. Velours s’interrompt pour écouter quand tu écris.</p><p><b>Un toucher, une réponse.</b><br>Un appui sur l’accueil attire son attention. Un appui prolongé déclenche un moment de douceur.</p><p><b>Ton rythme d’abord.</b><br>La respiration suit les phases réelles. La pause conserve la pose ; le mouvement réduit garde une présence stable.</p></div>
+<button id="verify">Vérifier la lecture des 16 gestes</button><pre id="result" aria-live="polite"></pre>
+</main>
+<script type="module">
+import '/model-viewer.min.js';
+const $ = id => document.getElementById(id);
+const m=$('velours'), clips=await fetch('clips.json').then(r=>r.json());
+let selected='idle', running=true, version=0, elapsed=0, last=0, checking=false;
+$('reduce').checked=matchMedia('(prefers-reduced-motion: reduce)').matches;
+for(const [key,clip] of Object.entries(clips)){
+  const b=document.createElement('button');b.className='clip';b.dataset.clip=key;
+  const title=document.createElement('strong');title.textContent=clip.label;
+  const desc=document.createElement('small');desc.textContent=clip.description;
+  b.append(title,desc);b.onclick=()=>select(key);$('library').append(b);
+}
+async function select(key){
+  const token=++version;selected=key;running=true;elapsed=0;
+  $('title').textContent=clips[key].label;$('description').textContent=clips[key].description;
+  $('badge').textContent=key==='breathe'?'À ton rythme':clips[key].mode==='once'?'Un petit geste':'Présence calme';
+  $('seek').max=clips[key].duration;$('breathControls').classList.toggle('visible',key==='breathe');
+  for(const b of document.querySelectorAll('.clip'))b.setAttribute('aria-pressed',b.dataset.clip===key);
+  m.pause();m.animationName=$('reduce').checked?'idle':key;await m.updateComplete;
+  if(token!==version)return;m.currentTime=0;
+  if(!$('reduce').checked&&key!=='breathe')m.play({repetitions:clips[key].mode==='once'?1:Infinity});
+  $('play').textContent='Pause';$('status').textContent=$('reduce').checked?'Mouvement réduit · pose stable':'Velours est prête';
+}
+m.addEventListener('load',()=>select('idle'));
+m.addEventListener('error',()=>{$('status').textContent='Le modèle n’a pas pu être chargé.'});
+m.addEventListener('finished',()=>{if(!checking&&clips[selected].mode==='once')select('idle')});
+$('replay').onclick=()=>select(selected);
+$('play').onclick=()=>{running=!running;if(!running)m.pause();else if(!$('reduce').checked&&selected!=='breathe')m.play({repetitions:clips[selected].mode==='once'?1:Infinity});$('play').textContent=running?'Pause':'Reprendre'};
+$('theme').onclick=()=>{document.body.classList.toggle('dark');$('theme').textContent=document.body.classList.contains('dark')?'Fond clair':'Fond sombre'};
+$('reduce').onchange=()=>select(selected);
+$('pattern').onchange=()=>{elapsed=0};
+$('seek').oninput=e=>{running=false;m.pause();m.currentTime=$('reduce').checked?0:Number(e.target.value);$('play').textContent='Reprendre'};
+document.addEventListener('visibilitychange',()=>{last=0;if(document.hidden){running=false;m.pause();$('play').textContent='Reprendre'}});
+function frame(now){
+  const dt=last?Math.min((now-last)/1000,.1):0;last=now;
+  if(selected==='breathe'&&running&&!checking){
+    elapsed+=dt;const times=$('pattern').value.split(',').map(Number);
+    const actions=times.length===2?['Inspire','Expire']:times.length===3?['Inspire','Retiens','Expire']:['Inspire','Retiens','Expire','Retiens'];
+    let time=elapsed%times.reduce((a,b)=>a+b,0),i=0;while(time>=times[i]&&i<times.length-1){time-=times[i++];}
+    const pose=actions[i]==='Inspire'?time/times[i]:actions[i]==='Expire'?1-time/times[i]:i===1?1:0;
+    m.currentTime=$('reduce').checked?0:pose;$('phase').textContent=actions[i]+' · '+Math.ceil(times[i]-time)+' s';
+  }
+  if(m.loaded){$('time').textContent=m.currentTime.toFixed(2)+' s';if(document.activeElement!==$('seek'))$('seek').value=m.currentTime;}
+  requestAnimationFrame(frame);
+}requestAnimationFrame(frame);
+$('verify').onclick=async()=>{
+  checking=true;running=false;++version;
+  document.querySelectorAll('button,input,select').forEach(e=>e.disabled=true);
+  const results=[];
+  try {
+    for(const key of Object.keys(clips)){
+      m.pause();m.animationName=key;await m.updateComplete;m.currentTime=0;m.play({repetitions:1});
+      await new Promise(r=>setTimeout(r,400));
+      results.push(`${key}: ${m.availableAnimations.includes(key)&&m.currentTime>0?'OK':'ÉCHEC'}`);m.pause();
+      $('result').textContent=results.join('\n');
+    }
+    for(const key of ['greet','nuzzle','settle']){
+      m.animationName=key;await m.updateComplete;m.currentTime=0;
+      const ended=await new Promise(resolve=>{
+        const done=()=>{clearTimeout(timer);resolve(true)};
+        const timer=setTimeout(()=>{m.removeEventListener('finished',done);resolve(false)},8000);
+        m.addEventListener('finished',done,{once:true});m.play({repetitions:1});
+      });results.push(`${key} fin unique: ${ended?'OK':'ÉCHEC'}`);
+    }
+    m.pause();m.animationName='breathe';await m.updateComplete;m.currentTime=.65;
+    await new Promise(r=>setTimeout(r,500));results.push(`pause / pose respiratoire: ${Math.abs(m.currentTime-.65)<.01?'OK':'ÉCHEC'}`);
+    $('result').textContent=results.join('\n');
+  } finally {checking=false;document.querySelectorAll('button,input,select').forEach(e=>e.disabled=false);select('idle');}
+};
+</script>
+</html>

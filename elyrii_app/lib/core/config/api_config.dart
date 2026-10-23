@@ -3,14 +3,23 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String _defaultBaseUrl = 'http://localhost:3000';
+  static const String _defaultBaseUrl = 'http://localhost:3001';
 
   static String _baseUrl = _defaultBaseUrl;
   static String get baseUrl => _baseUrl;
 
   /// Override the gateway base URL (e.g. for staging/production)
   static void setBaseUrl(String url) {
-    _baseUrl = url;
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        !uri.hasAuthority ||
+        !{'http', 'https'}.contains(uri.scheme) ||
+        uri.userInfo.isNotEmpty ||
+        uri.hasQuery ||
+        uri.hasFragment) {
+      throw const FormatException('Invalid API gateway URL');
+    }
+    _baseUrl = url.replaceAll(RegExp(r'/+$'), '');
   }
 
   // ==================== Auth ====================
@@ -58,10 +67,6 @@ class ApiConfig {
   static String get userAvatarUrl => '$_baseUrl/user/avatar';
   static String get userAccountUrl => '$_baseUrl/user/account';
   static String get logMoodUrl => '$_baseUrl/user/mood';
-  static String get latestMoodUrl => '$_baseUrl/user/mood/latest';
-
-  // ==================== Coach ====================
-  static String get coachSessionsUrl => '$_baseUrl/coach/sessions';
 
   // ==================== Meditation ====================
   static String get meditationCatalogUrl => '$_baseUrl/meditation/catalog';

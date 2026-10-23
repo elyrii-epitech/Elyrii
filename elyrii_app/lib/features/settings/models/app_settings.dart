@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/data/json_contract.dart';
+
 class AppSettings {
   final String id;
   final String userId;
@@ -13,7 +15,7 @@ class AppSettings {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  const AppSettings({
+  AppSettings({
     required this.id,
     required this.userId,
     required this.themeMode,
@@ -22,15 +24,16 @@ class AppSettings {
     required this.privacyMode,
     required this.language,
     required this.mascotAppearance,
-    required this.mascotPersonality,
+    required Map<String, dynamic> mascotPersonality,
     this.createdAt,
     this.updatedAt,
-  });
+  }) : mascotPersonality =
+           freezeJson(mascotPersonality) as Map<String, dynamic>;
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     return AppSettings(
-      id: json['id'] as String? ?? '',
-      userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
+      userId: requiredJsonString(json['userId'] ?? json['user_id'], 'userId'),
       themeMode:
           json['themeMode'] as String? ??
           json['theme_mode'] as String? ??

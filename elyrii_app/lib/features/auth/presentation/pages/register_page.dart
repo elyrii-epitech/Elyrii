@@ -1,388 +1,257 @@
 import 'package:flutter/material.dart';
-import 'package:email_validator/email_validator.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
-import '../widgets/glass_auth_text_field.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../routes/app_routes.dart';
-import '../providers/auth_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
-import '../../../../core/config/mascot_3d_config.dart';
-import '../../../../core/widgets/mascot_3d_viewer.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/arrival_widgets.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
-
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _acceptTerms = false;
-  bool get _isLoading => context.read<AuthProvider>().isLoading;
-
+  final _name = TextEditingController();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  final _form = GlobalKey<FormState>();
+  bool _consent = false;
+  String? _message;
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _name.dispose();
+    _email.dispose();
+    _password.dispose();
     super.dispose();
   }
 
-  Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (!_acceptTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Presque ! N\'oublie pas d\'accepter les conditions pour continuer.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+  Future<void> _register() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.isLoading) return;
+    final valid = _form.currentState!.validate();
+    if (!_consent) {
+      setState(
+        () => _message = 'Accepte les conditions pour créer ton espace.',
       );
-      return;
     }
-    final nameParts = _nameController.text.trim().split(' ');
-    final firstName = nameParts.first;
-    final lastName = nameParts.length > 1
-        ? nameParts.sublist(1).join(' ')
-        : firstName;
-    final authProvider = context.read<AuthProvider>();
-    final userProvider = context.read<UserProvider>();
-    final success = await authProvider.register(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      firstName: firstName,
-      lastName: lastName,
+    if (!valid || !_consent) return;
+    setState(() => _message = null);
+    final user = context.read<UserProvider>();
+    final name = _name.text.trim();
+    final success = await auth.register(
+      firstName: name,
+      lastName: name,
+      email: _email.text.trim(),
+      password: _password.text,
     );
     if (!mounted) return;
     if (success) {
-      // Charger le profil pour pre-remplir l'onboarding
-      await userProvider.loadProfile();
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, AppRoutes.profileSetup);
-    } else {
-      // Show success color if it's an email verification message (which means registration worked)
-      final error = authProvider.error?.toLowerCase() ?? '';
-      final isVerificationMessage =
-          error.contains('verification required') ||
-          error.contains('activate your account');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            authProvider.error ??
-                'Oops, petit souci lors de la création. Réessaie quand tu es prêt.',
-          ),
-          backgroundColor: AppColors.warning,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+      await user.loadProfile();
+      if (mounted) context.go(AppRoutes.profileSetup);
+      return;
+    }
+    final error =
+        auth.error ?? 'La création du compte n’a pas abouti. Réessaie.';
+    final normalized = error.toLowerCase();
+    if (normalized.contains('verification required') ||
+        normalized.contains('activate your account')) {
+      await showArrivalInfo(
+        context,
+        'Vérifie ton email',
+        'Ton compte attend sa vérification. Ouvre le message reçu par email pour l’activer, puis connecte-toi.',
       );
-
-      if (isVerificationMessage) {
-        // Optionnellement, on redirige vers la page de login après un petit délai
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.pop(context); // Go back to login
-          }
-        });
-      }
+      if (mounted) context.go(AppRoutes.login);
+    } else {
+      setState(() => _message = error);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimensions.paddingLg),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    final busy = context.watch<AuthProvider>().isLoading;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final password = _password.text;
+    final strength =
+        (password.length >= 8 ? 1 : 0) +
+        (RegExp(r'[A-Z]').hasMatch(password) &&
+                RegExp(r'[a-z]').hasMatch(password)
+            ? 1
+            : 0) +
+        (RegExp(r'[0-9]|[^a-zA-Z]').hasMatch(password) ? 1 : 0);
+    return ArrivalFrame(
+      title: 'Créer ton compte',
+      bubble: 'On crée ton espace ?',
+      onBack: () => context.go(AppRoutes.login),
+      onInfo: () => showArrivalInfo(
+        context,
+        'Un compte, ou juste un premier pas',
+        'Ton compte te permet de retrouver ton espace. Tu peux aussi découvrir Elyrii sans compte et décider plus tard.',
+      ),
+      child: AutofillGroup(
+        child: Form(
+          key: _form,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ArrivalField(
+                controller: _name,
+                label: 'Prénom',
+                icon: Icons.person_outline_rounded,
+                enabled: !busy,
+                autofillHints: const [AutofillHints.givenName],
+                validator: (value) => (value?.trim().isEmpty ?? true)
+                    ? 'Comment peut-on t’appeler ?'
+                    : null,
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
+              ArrivalField(
+                controller: _email,
+                label: 'Email',
+                icon: Icons.mail_outline_rounded,
+                enabled: !busy,
+                autofillHints: const [AutofillHints.email],
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) =>
+                    Validators.isValidEmail(value?.trim() ?? '')
+                    ? null
+                    : 'Entre une adresse email valide.',
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
+              ArrivalField(
+                controller: _password,
+                label: 'Mot de passe',
+                icon: Icons.lock_outline_rounded,
+                password: true,
+                enabled: !busy,
+                autofillHints: const [AutofillHints.newPassword],
+                textInputAction: TextInputAction.done,
+                onChanged: (_) => setState(() {}),
+                onSubmitted: (_) => _register(),
+                validator: (value) {
+                  if ((value?.length ?? 0) < 8) {
+                    return 'Utilise au moins 8 caractères.';
+                  }
+                  if (!RegExp(r'[A-Z]').hasMatch(value!)) {
+                    return 'Ajoute une majuscule.';
+                  }
+                  if (!RegExp(r'[0-9]').hasMatch(value)) {
+                    return 'Ajoute au moins un chiffre.';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: AppDimensions.spacing8),
+              Row(
                 children: [
-                  // Mascot (translated vertically to center the model's visual body within the 250x250 container)
-                  Transform.translate(
-                        offset: const Offset(0, 25),
-                        child: const Mascot3DViewer(
-                          config: Mascot3DConfig.authPage(),
-                          width: 250,
-                          height: 250,
+                  for (var i = 0; i < 3; i++)
+                    Expanded(
+                      child: Container(
+                        height: AppDimensions.arrivalProgressHeight,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.spacing2,
                         ),
-                      )
-                      .animate()
-                      .fadeIn(duration: 600.ms)
-                      .slideY(begin: 0.2, end: 0),
-
-                  const SizedBox(height: 45),
-
-                  Text(
-                    'Créer un compte',
-                    style: AppTextStyles.headlineMedium(
-                      color: isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight,
-                    ).copyWith(fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: AppDimensions.spacingMd),
-
-                  Text(
-                    'Rejoins la communauté Elyrii',
-                    style: AppTextStyles.bodyMedium(
-                      color: isDark
-                          ? AppColors.textSecondaryDark
-                          : AppColors.textSecondaryLight,
+                        decoration: BoxDecoration(
+                          color: i < strength
+                              ? (dark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primary)
+                              : AppColors.track(dark),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radius4,
+                          ),
+                        ),
+                      ),
                     ),
-                    textAlign: TextAlign.center,
+                ],
+              ),
+              const SizedBox(height: AppDimensions.spacing8),
+              Text(
+                strength == 3
+                    ? 'Solide. Au moins 8 caractères, pour toi seulement.'
+                    : 'Au moins 8 caractères, une majuscule et un chiffre.',
+                style: AppTextStyles.bodySmall(color: context.textSecondary),
+              ),
+              const SizedBox(height: AppDimensions.spacing12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Checkbox(
+                    value: _consent,
+                    shape: const CircleBorder(),
+                    semanticLabel:
+                        'Accepter les conditions et la confidentialité',
+                    onChanged: busy
+                        ? null
+                        : (value) => setState(() => _consent = value ?? false),
                   ),
-
-                  const SizedBox(height: AppDimensions.spacingXl),
-
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                  Expanded(
+                    child: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        // Name Field
                         Text(
-                          'Prénom',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
+                          'J’accepte les ',
+                          style: AppTextStyles.bodySmall(
+                            color: context.textSecondary,
+                          ),
                         ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _nameController,
-                          hint: '',
-                          prefixIcon: Icons.person_outline,
-                          keyboardType: TextInputType.name,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre prénom';
-                            }
-                            if (value.length < 2) {
-                              return 'Le prénom doit contenir au moins 2 caractères';
-                            }
-                            return null;
-                          },
+                        TextButton(
+                          onPressed: () => showArrivalInfo(
+                            context,
+                            'Conditions',
+                            'Les conditions d’utilisation complètes ne sont pas encore publiées dans cette version. Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé.',
+                          ),
+                          child: const Text('conditions'),
                         ),
-                        const SizedBox(height: AppDimensions.spacingMd),
-
-                        // Email Field
                         Text(
-                          'Adresse email',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
+                          'et la ',
+                          style: AppTextStyles.bodySmall(
+                            color: context.textSecondary,
+                          ),
                         ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _emailController,
-                          hint: '',
-                          prefixIcon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer votre email';
-                            }
-                            if (!EmailValidator.validate(value)) {
-                              return 'Email invalide';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppDimensions.spacingMd),
-
-                        // Password Field
-                        Text(
-                          'Mot de passe',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _passwordController,
-                          hint: '',
-                          prefixIcon: Icons.lock_outline,
-                          isPassword: true,
-                          textInputAction: TextInputAction.next,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Veuillez entrer un mot de passe';
-                            }
-                            if (value.length < 8) {
-                              return 'Le mot de passe doit contenir au moins 8 caractères';
-                            }
-                            if (!RegExp(r'[A-Z]').hasMatch(value)) {
-                              return 'Le mot de passe doit contenir au moins une majuscule';
-                            }
-                            if (!RegExp(r'[0-9]').hasMatch(value)) {
-                              return 'Le mot de passe doit contenir au moins un chiffre';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: AppDimensions.spacingMd),
-
-                        // Confirm Password Field
-                        Text(
-                          'Confirmer le mot de passe',
-                          style: AppTextStyles.bodyMedium(
-                            color: isDark
-                                ? AppColors.textPrimaryDark
-                                : AppColors.textPrimaryLight,
-                          ).copyWith(fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXs),
-                        GlassAuthTextField(
-                          controller: _confirmPasswordController,
-                          hint: '',
-                          prefixIcon: Icons.lock_outline,
-                          isPassword: true,
-                          textInputAction: TextInputAction.done,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Veuillez confirmer votre mot de passe';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'Les mots de passe ne correspondent pas';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: AppDimensions.spacingLg),
-
-                        // Terms and Conditions
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: Checkbox(
-                                value: _acceptTerms,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _acceptTerms = value ?? false;
-                                  });
-                                },
-                                activeColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: AppDimensions.spacingSm),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _acceptTerms = !_acceptTerms;
-                                  });
-                                },
-                                child: Text.rich(
-                                  TextSpan(
-                                    text: 'J\'accepte les ',
-                                    style: AppTextStyles.bodySmall(
-                                      color: isDark
-                                          ? AppColors.textSecondaryDark
-                                          : AppColors.textSecondaryLight,
-                                    ),
-                                    children: [
-                                      TextSpan(
-                                        text: 'conditions d\'utilisation',
-                                        style: AppTextStyles.bodySmall(
-                                          color: AppColors.primary,
-                                        ).copyWith(fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: AppDimensions.spacingXl),
-
-                        // Register Button
-                        LiquidGlassButton(
-                          label: 'Créer mon compte',
-                          isLoading: _isLoading,
-                          isExpanded: true,
-                          onPressed: _handleRegister,
-                        ),
-
-                        const SizedBox(height: AppDimensions.spacingXl),
-
-                        // Login Link
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Déjà un compte ? ',
-                              style: AppTextStyles.bodySmall(
-                                color: isDark
-                                    ? AppColors.textSecondaryDark
-                                    : AppColors.textSecondaryLight,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                'Se connecter',
-                                style: AppTextStyles.bodySmall(
-                                  color: AppColors.primary,
-                                ).copyWith(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
+                        TextButton(
+                          onPressed: () => showArrivalInfo(
+                            context,
+                            'Politique de confidentialité',
+                            'La politique de confidentialité complète n’est pas encore publiée dans cette version. Tu peux consulter, exporter et supprimer tes données depuis les réglages.',
+                          ),
+                          child: const Text('politique de confidentialité'),
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(duration: 800.ms, delay: 200.ms).slideY(begin: 0.2, end: 0),
+                  ),
                 ],
               ),
-            ),
+              ArrivalFeedback(_message),
+              ArrivalButton(
+                label: 'Créer mon compte',
+                busy: busy,
+                onPressed: _register,
+              ),
+              const SizedBox(height: AppDimensions.spacing16),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    'Déjà un compte ?',
+                    style: AppTextStyles.bodySmall(
+                      color: context.textSecondary,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: busy ? null : () => context.go(AppRoutes.login),
+                    child: const Text('Se connecter'),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

@@ -1,3 +1,5 @@
+import '../../../../core/data/json_contract.dart';
+
 import 'package:flutter/material.dart';
 
 /// Challenge template from the backend (source: SYSTEM or AI)
@@ -7,28 +9,29 @@ class ChallengeTemplate {
   final String? description;
   final String source;
   final int rewardPoints;
-  final dynamic conditions;
+  final Object? conditions;
   final String aggregator;
-  final dynamic constraints;
+  final Object? constraints;
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  const ChallengeTemplate({
+  ChallengeTemplate({
     required this.id,
     required this.title,
     this.description,
     required this.source,
     required this.rewardPoints,
-    this.conditions,
+    Object? conditions,
     required this.aggregator,
-    this.constraints,
+    Object? constraints,
     required this.createdAt,
     required this.updatedAt,
-  });
+  }) : conditions = freezeJson(conditions),
+       constraints = freezeJson(constraints);
 
   factory ChallengeTemplate.fromJson(Map<String, dynamic> json) {
     return ChallengeTemplate(
-      id: json['id'] as String? ?? '',
+      id: requiredJsonString(json['id'], 'id'),
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
       source: json['source'] as String? ?? 'SYSTEM',
@@ -36,17 +39,23 @@ class ChallengeTemplate {
       conditions: json['conditions'],
       aggregator: json['aggregator'] as String? ?? 'ALL',
       constraints: json['constraints'],
-      createdAt: _parseDate(json['createdAt'] ?? json['created_at']),
-      updatedAt: _parseDate(json['updatedAt'] ?? json['updated_at']),
+      createdAt: requiredJsonDate(
+        json['createdAt'] ?? json['created_at'],
+        'createdAt',
+      ),
+      updatedAt: requiredJsonDate(
+        json['updatedAt'] ?? json['updated_at'],
+        'updatedAt',
+      ),
     );
   }
 
   /// Icône déduite du premier type de condition
   IconData get icon {
-    final condList = conditions as List?;
-    final firstType = condList != null && condList.isNotEmpty
-        ? ((condList[0] as Map?)?['type'] as String?) ?? ''
-        : '';
+    final firstType = switch (conditions) {
+      [{'type': final String type}, ...] => type,
+      _ => '',
+    };
     if (firstType.startsWith('mood_streak') ||
         firstType.startsWith('journal_streak')) {
       return Icons.local_fire_department_rounded;
@@ -59,12 +68,6 @@ class ChallengeTemplate {
     return Icons.star_rounded;
   }
 
-  static DateTime _parseDate(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-    return DateTime.now();
-  }
-
   static int _parseInt(dynamic value) {
     if (value is int) return value;
     if (value is num) return value.toInt();
@@ -74,12 +77,14 @@ class ChallengeTemplate {
 }
 
 /// User-assigned challenge with status and progress
+enum ChallengeStatus { pending, active, completed, rejected, unknown }
+
 class UserChallenge {
   final String id;
   final String userId;
   final String challengeId;
   final String status;
-  final dynamic progress;
+  final Object? progress;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? completedAt;
@@ -87,17 +92,17 @@ class UserChallenge {
   // Joined template data (when returned by backend)
   final ChallengeTemplate? template;
 
-  const UserChallenge({
+  UserChallenge({
     required this.id,
     required this.userId,
     required this.challengeId,
     required this.status,
-    this.progress,
+    Object? progress,
     required this.createdAt,
     required this.updatedAt,
     this.completedAt,
     this.template,
-  });
+  }) : progress = freezeJson(progress);
 
   factory UserChallenge.fromJson(Map<String, dynamic> json) {
     ChallengeTemplate? tpl;
@@ -107,18 +112,27 @@ class UserChallenge {
       );
     }
     return UserChallenge(
-      id: json['id'] as String? ?? '',
-      userId: json['userId'] as String? ?? json['user_id'] as String? ?? '',
-      challengeId:
-          json['challengeId'] as String? ??
-          json['challenge_id'] as String? ??
-          '',
+      id: requiredJsonString(json['id'], 'id'),
+      userId: requiredJsonString(json['userId'] ?? json['user_id'], 'userId'),
+      challengeId: requiredJsonString(
+        json['challengeId'] ?? json['challenge_id'],
+        'challengeId',
+      ),
       status: json['status'] as String? ?? 'PENDING',
       progress: json['progress'],
-      createdAt: _parseDate(json['createdAt'] ?? json['created_at']),
-      updatedAt: _parseDate(json['updatedAt'] ?? json['updated_at']),
+      createdAt: requiredJsonDate(
+        json['createdAt'] ?? json['created_at'],
+        'createdAt',
+      ),
+      updatedAt: requiredJsonDate(
+        json['updatedAt'] ?? json['updated_at'],
+        'updatedAt',
+      ),
       completedAt: json['completedAt'] != null || json['completed_at'] != null
-          ? _parseDate(json['completedAt'] ?? json['completed_at'])
+          ? requiredJsonDate(
+              json['completedAt'] ?? json['completed_at'],
+              'completedAt',
+            )
           : null,
       template: tpl,
     );
@@ -127,6 +141,11 @@ class UserChallenge {
   String get displayTitle => template?.title ?? 'Défi';
   String get displayDescription => template?.description ?? '';
   IconData get displayIcon => template?.icon ?? Icons.star_rounded;
+
+  ChallengeStatus get state => ChallengeStatus.values.firstWhere(
+    (value) => value.name.toUpperCase() == status,
+    orElse: () => ChallengeStatus.unknown,
+  );
 
   bool get isActive => status == 'ACTIVE';
   bool get isCompleted => status == 'COMPLETED';
@@ -143,8 +162,10 @@ class UserChallenge {
     int count = 0;
     for (final val in map.values) {
       if (val is Map) {
-        final current = (val['current'] as num? ?? 0).toDouble();
-        final target = (val['target'] as num? ?? 1).toDouble();
+        final current = (val['current'] is num ? val['current'] as num : 0)
+            .toDouble();
+        final target = (val['target'] is num ? val['target'] as num : 1)
+            .toDouble();
         sum += target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
         count++;
       }
@@ -160,8 +181,8 @@ class UserChallenge {
     if (map.length == 1) {
       final val = map.values.first;
       if (val is Map) {
-        final current = val['current'] as num? ?? 0;
-        final target = val['target'] as num? ?? 1;
+        final current = val['current'] is num ? val['current'] as num : 0;
+        final target = val['target'] is num ? val['target'] as num : 1;
         return '$current / $target';
       }
     }
@@ -171,11 +192,5 @@ class UserChallenge {
         .where((v) => v['completed'] == true)
         .length;
     return '$completed / ${map.length}';
-  }
-
-  static DateTime _parseDate(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-    return DateTime.now();
   }
 }
