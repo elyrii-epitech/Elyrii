@@ -21,7 +21,7 @@ de détresse. Cette heuristique ne remplace pas une évaluation professionnelle.
 Les séances de méditation utilisent des consignes écrites et ne fournissent
 pas de piste audio enregistrée.
 
-Le Journal utilise un bleu profond, sans halo ni verre dans les cartes.
+Le Journal utilise une couleur prune, sans halo ni verre dans les cartes.
 La recherche porte sur les entrées chargées et indique cette limite quand
 l’historique contient d’autres pages. L’export texte charge l’historique et
 inclut les brouillons locaux. Le même éditeur à sauvegarde automatique s’ouvre

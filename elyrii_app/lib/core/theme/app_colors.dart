@@ -135,39 +135,39 @@ class AppColors {
 
   // ==================== JOURNAL ====================
 
-  /// Deep blue gives the Journal its own color without a bright yellow fill.
+  /// Prune is the Journal's section color, chosen instead of the board yellow.
   static Color journalPaper(bool dark) =>
-      dark ? const Color(0xFF254A8A) : const Color(0xFF315FAE);
+      dark ? const Color(0xFF694661) : const Color(0xFF784E70);
   static Color journalQuestionInk(bool dark) =>
-      dark ? const Color(0xFFE7F0FF) : const Color(0xFFF3F7FF);
+      dark ? const Color(0xFFF5E6F2) : const Color(0xFFFFF7FD);
   static Color journalToolInk(bool dark) =>
-      dark ? const Color(0xFFE7F0FF) : Colors.white;
+      dark ? const Color(0xFFF5E6F2) : Colors.white;
 
   static const Color journalSquareInk = Color(0xFF30263A);
   static Color journalPlaceholder(bool dark) =>
-      dark ? const Color(0xFFD1DFF5) : const Color(0xFFE3EDFF);
+      dark ? const Color(0xFFE9D2E3) : const Color(0xFFF4E3EF);
   static Color journalTool(bool dark) =>
-      dark ? const Color(0xFF3A5D99) : const Color(0xFF4775BE);
+      dark ? const Color(0xFF805878) : const Color(0xFF8E6085);
   static Color journalPrivatePill(bool dark) =>
       dark ? const Color(0xFF39305C) : const Color(0xB8FFFFFF);
   static Color journalPrivateInk(bool dark) =>
       dark ? const Color(0xFFE6E0F6) : primary;
   static Color journalThread(bool dark) =>
-      dark ? const Color(0xFF3B5278) : const Color(0xFFB8CBE8);
+      dark ? const Color(0xFF6C4C67) : const Color(0xFFCEB5C8);
 
   /// Day numbers, memory labels, writing prompts and search highlights.
   static Color journalAccent(bool dark) =>
-      dark ? const Color(0xFF94B9F5) : const Color(0xFF315FAE);
+      dark ? const Color(0xFFDAB4D2) : const Color(0xFF875677);
   static Color journalEntry(bool dark) =>
-      dark ? const Color(0xFF1B253B) : const Color(0xFFEBF2FC);
+      dark ? const Color(0xFF2D2331) : const Color(0xFFF6EDF4);
   static Color journalEntryBorder(bool dark) =>
-      dark ? const Color(0xFF30476C) : const Color(0xFFC8D8EE);
+      dark ? const Color(0xFF503A53) : const Color(0xFFDAC4D6);
   static Color journalEditor(bool dark) =>
       dark ? const Color(0xFF14111E) : Colors.white;
   static Color journalPrompt(bool dark) =>
-      dark ? const Color(0xFF202D48) : const Color(0xFFE5EDFA);
+      dark ? const Color(0xFF322538) : const Color(0xFFF0E3ED);
   static Color journalMark(bool dark) =>
-      dark ? const Color(0xFF2B4268) : const Color(0xFFDCE8FA);
+      dark ? const Color(0xFF49334B) : const Color(0xFFEEDDE9);
   static Color journalToast(bool dark) =>
       dark ? const Color(0xFF302A40) : Colors.white;
 
