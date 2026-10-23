@@ -289,6 +289,37 @@ class AppColors {
   static Color dockSelection(bool dark) =>
       dark ? const Color(0x11FFFFFF) : const Color(0x0E1C1A24);
 
+  /// Lifted navigation glass: the Accueil capsule's recipe, denser than the
+  /// plain glass so floating controls stand out over the dark sheet.
+  static Color liftedGlass(bool dark) =>
+      dark ? const Color(0xDB242034) : const Color(0xDBFFFFFF);
+
+  static Color liftedGlassStroke(bool dark) =>
+      dark ? const Color(0x1FFFFFFF) : const Color(0x0F140E30);
+
+  static List<BoxShadow> liftedGlassShadow(bool dark) => dark
+      ? const [
+          BoxShadow(
+            color: Color(0x99000000),
+            offset: Offset(0, 10),
+            blurRadius: 24,
+            spreadRadius: -14,
+          ),
+        ]
+      : const [
+          BoxShadow(
+            color: Color(0x0F140E30),
+            offset: Offset(0, 1),
+            blurRadius: 2,
+          ),
+          BoxShadow(
+            color: Color(0x14140E30),
+            offset: Offset(0, 8),
+            blurRadius: 24,
+            spreadRadius: -8,
+          ),
+        ];
+
   /// Standard v2 sheet glass (`rgba(30,27,42,.9)` dark).
   static Color sheetGlass(bool dark) =>
       dark ? const Color(0xE61E1B2A) : glassBackgroundLight;

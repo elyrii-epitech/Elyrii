@@ -510,14 +510,10 @@ class _AccueilCapsule extends StatelessWidget {
                 filter: _accueilGlassFilter,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: dark
-                        ? const Color(0xDB242034)
-                        : Colors.white.withValues(alpha: 0.86),
+                    color: AppColors.liftedGlass(dark),
                     borderRadius: BorderRadius.circular(AppDimensions.radius26),
                     border: Border.all(
-                      color: dark
-                          ? Colors.white.withValues(alpha: 0.12)
-                          : const Color(0x0F140E30),
+                      color: AppColors.liftedGlassStroke(dark),
                       width: 0.5,
                     ),
                   ),

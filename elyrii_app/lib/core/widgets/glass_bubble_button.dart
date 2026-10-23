@@ -46,6 +46,7 @@ class GlassBubbleButton extends StatelessWidget {
                   : AppColors.iconDefaultLight));
     final Widget buttonContent = ElyriiGlassSurface(
       role: GlassRole.navigation,
+      lifted: true,
       borderRadius: BorderRadius.circular(size / 2),
       width: size,
       height: size,

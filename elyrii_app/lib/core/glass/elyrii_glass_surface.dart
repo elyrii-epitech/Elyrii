@@ -36,6 +36,10 @@ class ElyriiGlassSurface extends StatelessWidget {
   /// List rows already sit inside a glass sheet: avoid another offscreen layer.
   final bool lightweight;
 
+  /// Navigation only: denser fill, brighter hairline and a soft drop shadow,
+  /// for floating controls that must stand out from the content below.
+  final bool lifted;
+
   const ElyriiGlassSurface({
     super.key,
     required this.child,
@@ -50,6 +54,7 @@ class ElyriiGlassSurface extends StatelessWidget {
     this.width,
     this.height,
     this.lightweight = false,
+    this.lifted = false,
   });
 
   @override
@@ -67,7 +72,9 @@ class ElyriiGlassSurface extends StatelessWidget {
     if (role == GlassRole.navigation) {
       final tint =
           glassColor ??
-          (isDark
+          (lifted
+              ? AppColors.liftedGlass(isDark)
+              : isDark
               ? AppColors.glassBackgroundDark
               : AppColors.glassBackgroundLight);
       Widget content = RepaintBoundary(
@@ -88,7 +95,9 @@ class ElyriiGlassSurface extends StatelessWidget {
                 border:
                     border ??
                     Border.all(
-                      color: isDark
+                      color: lifted
+                          ? AppColors.liftedGlassStroke(isDark)
+                          : isDark
                           ? AppColors.glassBorderDark
                           : AppColors.glassBorderLight,
                       width: AppDimensions.glassStroke,
@@ -99,6 +108,15 @@ class ElyriiGlassSurface extends StatelessWidget {
           ),
         ),
       );
+      if (lifted && !highContrast) {
+        content = DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            boxShadow: AppColors.liftedGlassShadow(isDark),
+          ),
+          child: content,
+        );
+      }
       if (onTap != null) {
         content = AccessibleAction(
           label: null,

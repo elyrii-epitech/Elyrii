@@ -36,6 +36,7 @@ class GlassNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ElyriiGlassSurface(
     role: GlassRole.navigation,
+    lifted: true,
     borderRadius: BorderRadius.circular(AppDimensions.dockHeight / 2),
     height: AppDimensions.dockHeight,
     padding: const EdgeInsets.symmetric(horizontal: AppDimensions.spacing4),

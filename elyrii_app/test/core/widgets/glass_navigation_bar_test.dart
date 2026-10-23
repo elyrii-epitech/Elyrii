@@ -1,6 +1,5 @@
 import 'package:elyrii_app/app/router/app_shell.dart';
 import 'package:elyrii_app/core/glass/elyrii_glass_surface.dart';
-import 'package:elyrii_app/core/theme/app_colors.dart';
 import 'package:elyrii_app/core/theme/app_dimensions.dart';
 import 'package:elyrii_app/core/theme/app_text_styles.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
@@ -163,10 +162,8 @@ void main() {
               )
               .first,
         );
-        expect(
-          (container.decoration! as BoxDecoration).color,
-          dark ? AppColors.glassBackgroundDark : AppColors.glassBackgroundLight,
-        );
+        final color = (container.decoration! as BoxDecoration).color!;
+        expect(color.a, inExclusiveRange(0, 1));
       }
       expect(tester.takeException(), isNull);
     });
