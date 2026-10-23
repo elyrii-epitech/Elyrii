@@ -16,7 +16,6 @@ import 'package:flutter/cupertino.dart'
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/accessible_action.dart';
-import '../../../../core/widgets/elyrii_page_header.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -24,12 +23,10 @@ import 'package:image_cropper/image_cropper.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/glass/elyrii_back_button.dart';
-import '../../../../core/widgets/glass/liquid_glass_kit.dart';
 import '../../../../core/constants/avatar_options.dart';
+import '../../../../core/widgets/pushed_page.dart';
+import '../widgets/profile_controls.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
-import '../widgets/mascot_avatar_preview.dart';
-import '../../../../core/config/mascot_animations.dart';
 
 /// Page de selection d'avatar proposee au tap sur l'avatar.
 ///
@@ -205,281 +202,120 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        _cancel();
+        if (!didPop) _cancel();
       },
-      child: Scaffold(
-        backgroundColor: isDark
-            ? AppColors.scaffoldDark
-            : AppColors.scaffoldLight,
-        body: ElyriiPageFrame.detail(
-          title: 'Mon avatar',
-          leading: ElyriiBackButton(onPressed: _cancel),
-          slivers: [
-            SliverToBoxAdapter(child: _buildPreview(isDark)),
-
-            SliverToBoxAdapter(child: _buildImportCard()),
-
-            SliverToBoxAdapter(child: _buildPresetsHeader()),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(
-                AppDimensions.pageHorizontalPadding,
-                AppDimensions.spacing8,
-                AppDimensions.pageHorizontalPadding,
-                0,
+      child: PushedPage(
+        title: 'Mon avatar',
+        onBack: _cancel,
+        children: [
+          Center(
+            child: Container(
+              width: AppDimensions.profileAvatarPreview,
+              height: AppDimensions.profileAvatarPreview,
+              padding: const EdgeInsets.all(AppDimensions.spacing12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.profileAvatar(dark),
               ),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: AppDimensions.spacing16,
-                  crossAxisSpacing: AppDimensions.spacing16,
-                  childAspectRatio: 1,
-                ),
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final option = kAvatarOptions[index];
-                  final isSelected =
-                      _customImagePath == null &&
-                      _customAvatarUrl == null &&
-                      _selectedId == option.id;
-                  return _PresetAvatarTile(
-                    option: option,
-                    isSelected: isSelected,
-                    isDark: isDark,
-                    onTap: () {
-                      ElyriiHaptics.selection();
-                      setState(() {
-                        _customImagePath = null;
-                        _customAvatarUrl = null;
-                        _selectedId = option.id;
-                      });
-                    },
-                  );
-                }, childCount: kAvatarOptions.length),
+              child: UserAvatar(
+                pfp: _resultValue,
+                size:
+                    AppDimensions.profileAvatarPreview -
+                    AppDimensions.spacing24,
+                showBorder: false,
               ),
             ),
-
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.pageHorizontalPadding,
-                  AppDimensions.spacing32,
-                  AppDimensions.pageHorizontalPadding,
-                  0,
-                ),
-                child: LiquidGlassButton(
-                  label: 'Choisir cet avatar',
-                  icon: Icons.check_rounded,
-                  isExpanded: true,
-                  onPressed: _confirm,
-                ),
+          ),
+          const SizedBox(height: AppDimensions.spacing24),
+          ProfileGroup(
+            children: [
+              ProfileRow(
+                title: 'Importer une photo',
+                icon: Icons.add_a_photo_rounded,
+                color: AppColors.pink(dark),
+                trailing: _isProcessing
+                    ? const CupertinoActivityIndicator()
+                    : null,
+                onTap: _isProcessing ? null : _pickAndCropImage,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPreview(bool isDark) {
-    final isMascot =
-        _customImagePath == null &&
-        _customAvatarUrl == null &&
-        _selectedId == kMascotAvatarId;
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(
-          top: AppDimensions.spacing12,
-          bottom: AppDimensions.spacing24,
-        ),
-        child: SizedBox(
-          height: 220,
-          child: Center(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) =>
-                  FadeTransition(opacity: animation, child: child),
-              child: isMascot
-                  ? MascotAvatarPreview(
-                      key: const ValueKey('mascot_preview_3d'),
-                      width: 200,
-                      height: 200,
-                      isDark: isDark,
-                      animation: MascotAnimations.proud,
-                    )
-                  : _buildCircularImagePreview(isDark),
-            ),
+            ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCircularImagePreview(bool isDark) {
-    final imageUrl = _customAvatarUrl ?? _resultValue;
-
-    return Container(
-      key: const ValueKey('custom_image_preview'),
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary.withValues(alpha: 0.3),
-            AppColors.secondary.withValues(alpha: 0.3),
-          ],
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.spacing2),
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+          const SizedBox(height: AppDimensions.spacing24),
+          Text(
+            'Un avatar qui te ressemble',
+            style: AppTextStyles.bodySmall(color: context.textTertiary),
           ),
-          child: ClipOval(
-            child: _customImagePath != null
-                ? UserAvatar(
-                    pfp: _customImagePath,
-                    size: 120,
-                    showBorder: false,
-                  )
-                : (imageUrl != null
-                      ? Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => ColoredBox(
-                            color: isDark
-                                ? AppColors.surfaceDark
-                                : AppColors.surfaceLight,
-                            child: Icon(
-                              Icons.person_rounded,
-                              size: 48,
-                              color: context.textSecondary,
-                            ),
-                          ),
-                        )
-                      : const SizedBox.shrink()),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImportCard() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.pageHorizontalPadding,
-        0,
-        AppDimensions.pageHorizontalPadding,
-        AppDimensions.spacing24,
-      ),
-      child: LiquidGlassCard(
-        padding: EdgeInsets.zero,
-        child: LiquidGlassListTile(
-          title: _isProcessing ? 'Chargement...' : 'Importer une photo',
-          subtitle: 'Choisis une image depuis ta galerie',
-          leadingIcon: Icons.photo_library_rounded,
-          trailing: _isProcessing
-              ? const CupertinoActivityIndicator(radius: 10)
-              : null,
-          onTap: _isProcessing ? null : _pickAndCropImage,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPresetsHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.pageHorizontalPadding,
-        0,
-        AppDimensions.pageHorizontalPadding,
-        AppDimensions.spacing8,
-      ),
-      child: Text(
-        'Avatars Elyrii',
-        style: AppTextStyles.overline(color: context.textSecondary),
-      ),
-    );
-  }
-}
-
-// ==================== Preset Avatar Tile ====================
-
-class _PresetAvatarTile extends StatelessWidget {
-  final AvatarOption option;
-  final bool isSelected;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _PresetAvatarTile({
-    required this.option,
-    required this.isSelected,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AccessibleAction(
-      label: option.isMascot
-          ? 'Choisir la mascotte comme avatar'
-          : 'Choisir l’avatar ${option.id}',
-      onPressed: onTap,
-      child: AnimatedScale(
-        scale: isSelected ? 1.08 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.transparent,
-              width: 3,
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-            ),
-            child: ClipOval(
-              child: option.isMascot
-                  ? Image.asset('assets/splash_icon.png', fit: BoxFit.cover)
-                  : Image.network(
-                      option.url!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => ColoredBox(
-                        color: isDark
-                            ? AppColors.surfaceDark
-                            : AppColors.surfaceLight,
-                        child: Icon(
-                          Icons.person_rounded,
-                          color: context.textSecondary,
+          const SizedBox(height: AppDimensions.spacing16),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 4,
+            mainAxisSpacing: AppDimensions.spacing16,
+            crossAxisSpacing: AppDimensions.spacing12,
+            children: [
+              for (final option in kAvatarOptions)
+                Center(
+                  child: AccessibleAction(
+                    label: option.isMascot ? 'Elyrii' : 'Avatar ${option.id}',
+                    selected:
+                        _customImagePath == null &&
+                        _customAvatarUrl == null &&
+                        _selectedId == option.id,
+                    onPressed: _isProcessing
+                        ? null
+                        : () {
+                            ElyriiHaptics.selection();
+                            setState(() {
+                              _customImagePath = null;
+                              _customAvatarUrl = null;
+                              _selectedId = option.id;
+                            });
+                          },
+                    child: Container(
+                      width: AppDimensions.profileAvatarTile,
+                      height: AppDimensions.profileAvatarTile,
+                      padding: const EdgeInsets.all(AppDimensions.spacing8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.profileAvatar(dark),
+                        border: Border.all(
+                          width: AppDimensions.borderWidthMedium,
+                          color:
+                              _customImagePath == null &&
+                                  _customAvatarUrl == null &&
+                                  _selectedId == option.id
+                              ? AppColors.primaryText(dark)
+                              : Colors.transparent,
                         ),
                       ),
+                      child: UserAvatar(
+                        pfp: option.url,
+                        size:
+                            AppDimensions.profileAvatarTile -
+                            AppDimensions.spacing16,
+                        showBorder: false,
+                      ),
                     ),
-            ),
+                  ),
+                ),
+            ],
           ),
-        ),
+          const SizedBox(height: AppDimensions.spacing24),
+          ProfileButton(
+            label: 'Choisir cet avatar',
+            onPressed: _isProcessing ? null : _confirm,
+          ),
+          const SizedBox(height: AppDimensions.spacing12),
+          Text(
+            'Tu peux en changer quand tu veux.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall(color: context.textTertiary),
+          ),
+        ],
       ),
     );
   }
