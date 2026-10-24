@@ -1,7 +1,10 @@
 """Version 2 source storage DTOs. Journal inference/consumption is deliberately not enabled."""
 from typing import Annotated, Literal, Union
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
-from .extraction import Identifier, instant
+try:
+    from .extraction import Identifier, instant
+except ImportError:
+    from extraction import Identifier, instant
 
 
 class StrictSourceModel(BaseModel):

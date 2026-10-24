@@ -89,6 +89,23 @@ services:
     networks:
       - elyrii_net
 
+  journal-extractor:
+    profiles: ["journal-extraction"]
+    build:
+      context: .
+      dockerfile: BridgeDockerfile
+    command: ["python", "journal_extraction_worker.py"]
+    environment:
+      - JOURNAL_EXTRACTION_ENABLED=${JOURNAL_EXTRACTION_ENABLED:-false}
+      - KAFKA_BROKER=host.docker.internal:9092
+      - JOURNAL_EXTRACTION_AI_BASE_URL=${JOURNAL_EXTRACTION_AI_BASE_URL:-http://host.docker.internal:11434}
+      - JOURNAL_EXTRACTION_AI_MODEL=${JOURNAL_EXTRACTION_AI_MODEL:-mistral}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - elyrii_net
+
   summary-worker:
     profiles: ["summaries"]
     build:
