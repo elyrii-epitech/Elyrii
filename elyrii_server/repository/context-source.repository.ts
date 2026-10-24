@@ -41,14 +41,19 @@ export class ContextSourceRepository {
                 if (candidate.origin !== "explicit") continue; // No promotion of uncertain inference.
                 if (candidate.kind === "memory") {
                     const input = { ...candidate, sourceMessageId: source.sourceId, eventAt: candidate.eventAt ? new Date(candidate.eventAt) : null };
-                    const times = this.policy.sourceMemoryTimes(input, now, source.sourceCreatedAt);
+                    // A calendar date is not an exact event instant. Even in UTC-12 the
+                    // day ends by the following 12:00 UTC; cap freshness at that
+                    // conservative upper bound without inventing eventAt precision.
+                    const latestEventAt = candidate.evidence?.eventDate
+                        ? new Date(+new Date(candidate.evidence.eventDate + "T00:00:00Z") + 36 * 3600000) : undefined;
+                    const times = this.policy.sourceMemoryTimes(input, now, source.sourceCreatedAt, latestEventAt);
                     if (!times) continue;
                     const existing = await tx.select().from(memories).where(and(eq(memories.userId, owner.id), eq(memories.sourceKind, source.kind),
                         eq(memories.sourceId, source.sourceId), eq(memories.sourceRevision, source.revision), eq(memories.content, candidate.content),
                         eq(memories.retention, candidate.retention), eq(memories.status, "active")));
                     if (existing.some(m => (m.eventAt?.toISOString() ?? null) === times.eventAt?.toISOString() || (!m.eventAt && !times.eventAt))) continue;
                     await tx.insert(memories).values({ ...provenance, content: candidate.content, origin: candidate.origin,
-                        retention: candidate.retention, ...times, createdAt: now, updatedAt: now });
+                        retention: candidate.retention, evidence: candidate.evidence, ...times, createdAt: now, updatedAt: now });
                 } else {
                     const [barrier] = await tx.select().from(keys).where(and(eq(keys.userId, owner.id), eq(keys.key, `fact:${candidate.key}`)));
                     if (barrier?.suppressed) continue;
@@ -57,7 +62,7 @@ export class ContextSourceRepository {
                     // matching values also retain their original attribution. Explicit correction stays separate.
                     if (current) continue;
                     await tx.insert(facts).values({ ...provenance, key: candidate.key, kind: candidate.kind, value: candidate.value,
-                        origin: candidate.origin, validFrom: now, createdAt: now, updatedAt: now });
+                        origin: candidate.origin, evidence: candidate.evidence, validFrom: now, createdAt: now, updatedAt: now });
                 }
             }
             await tx.update(events).set({ status: "completed" }).where(eq(events.id, event.id));

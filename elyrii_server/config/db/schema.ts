@@ -15,3 +15,5 @@ export * from "./extraction.table";
 export * from "./summary.table";
 export * from "./embedding.table";
 export * from "./context-source.table";
+
+export * from "./journal-extraction.table";

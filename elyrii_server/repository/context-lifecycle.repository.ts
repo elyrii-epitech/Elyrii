@@ -61,11 +61,11 @@ export class ContextLifecycleRepository {
             await this.suppress(tx, userId, row.id, row.sourceMessageId, "key" in row ? row.key : undefined, row.sourceKind === "journal" ? row.sourceId : null);
             if (kind === "facts") {
                 const [updated] = await tx.update(facts).set({ value: (input as z.infer<typeof correctFactSchema>).value,
-                    origin: "explicit", updatedAt: now }).where(and(eq(facts.id, targetId), eq(facts.userId, userId))).returning();
+                    origin: "explicit", evidence: null, updatedAt: now }).where(and(eq(facts.id, targetId), eq(facts.userId, userId))).returning();
                 return updated ? { ...updated, source: sourceReference(updated) } : updated;
             }
             const [updated] = await tx.update(memories).set({ content: (input as z.infer<typeof correctMemorySchema>).content,
-                origin: "explicit", updatedAt: now }).where(and(eq(memories.id, targetId), eq(memories.userId, userId))).returning();
+                origin: "explicit", evidence: null, updatedAt: now }).where(and(eq(memories.id, targetId), eq(memories.userId, userId))).returning();
             return updated ? { ...updated, source: sourceReference(updated) } : updated;
         });
     }

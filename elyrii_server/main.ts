@@ -1,3 +1,4 @@
+import { startJournalExtractionService } from "./modules/context/journal-extraction.service";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -110,6 +111,7 @@ console.log(`[Main] Kafka consumers enabled: ${shouldEnableKafkaConsumers}`);
 // Initialize Kafka and consumers only when explicitly enabled.
 if (shouldEnableKafkaConsumers) {
     startExtractionService();
+    startJournalExtractionService();
     if (Bun.env.ENABLE_EMBEDDINGS === "true") {
         startEmbeddingService().catch(() => console.error("[Embeddings] Registration failed; check database and model digest configuration"));
     }

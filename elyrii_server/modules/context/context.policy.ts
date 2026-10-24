@@ -46,10 +46,10 @@ export class ContextPolicy {
         return { ...this.validity(input, now), expiresAt, eventAt: input.eventAt ?? null };
     }
     /** Delayed work uses the original observation/event time, never processing/edit time. */
-    sourceMemoryTimes(input: ParsedMemoryCandidate, now: Date, sourceCreatedAt: Date) {
+    sourceMemoryTimes(input: ParsedMemoryCandidate, now: Date, sourceCreatedAt: Date, latestEventAt?: Date) {
         if (!Number.isFinite(+sourceCreatedAt) || sourceCreatedAt > now) return null;
         if (input.retention !== "short_term") return this.memoryTimes(input, now);
-        const anchor = new Date(Math.min(+sourceCreatedAt, +(input.eventAt ?? sourceCreatedAt)));
+        const anchor = new Date(Math.min(+sourceCreatedAt, +(input.eventAt ?? sourceCreatedAt), +(latestEventAt ?? sourceCreatedAt)));
         const expiresAt = new Date(+anchor + this.retention.defaultMs);
         if (expiresAt <= now) return null;
         // Less than minMs may remain: do not grant an old observation a new minimum lifetime.
