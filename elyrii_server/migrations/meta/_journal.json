@@ -57,6 +57,13 @@
       "when": 1792697498240,
       "tag": "0007_journal_source_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792702918223,
+      "tag": "0008_journal_extraction",
+      "breakpoints": true
     }
   ]
 }
