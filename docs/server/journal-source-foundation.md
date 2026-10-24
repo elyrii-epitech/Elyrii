@@ -1,7 +1,8 @@
 # Journal context source foundation
 
-Issue #233 adds provenance and lifecycle storage for journal-derived context. Journal
-inference/dispatch (#230) and journal retrieval (#231) remain disabled. Conversation
+Issue #233 adds provenance and lifecycle storage for journal-derived context.
+[Journal inference/dispatch (#230)](journal-extraction.md) is separately opt-in;
+journal retrieval (#231) remains disabled. Conversation
 summaries and the existing v1 extraction wire contract remain chat-only.
 
 ## Provenance and events
