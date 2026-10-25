@@ -7,7 +7,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass/liquid_glass_button.dart';
 import '../../../../core/widgets/app_sheet_route.dart';
 
-/// Numéros d'écoute et d'urgence santé mentale (France), tapables.
+/// Tappable French mental-health support and emergency numbers.
 const List<({String title, String subtitle, String tel})> kEmergencyResources =
     [
       (

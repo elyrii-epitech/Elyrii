@@ -1,105 +1,103 @@
-# Fonctionnalités mobiles
+# Mobile features
 
-Les modules se trouvent dans `elyrii_app/lib/features`. Les données privées
-locales sont rattachées au compte ; la démo utilise une session isolée.
+Modules live in `elyrii_app/lib/features`. Private local data is account-scoped;
+demo mode uses an isolated session. UI labels remain French; this guide uses
+English descriptions.
 
-| Module | Parcours | Données |
+## Backend readiness
+
+The frontend PR does not implement the server contracts required for real
+accounts. The following remain blocking dependencies: correlated chat replies
+[#265](https://github.com/elyrii-epitech/Elyrii/issues/265), password recovery
+[#266](https://github.com/elyrii-epitech/Elyrii/issues/266), account export
+[#267](https://github.com/elyrii-epitech/Elyrii/issues/267), AI response reports
+[#268](https://github.com/elyrii-epitech/Elyrii/issues/268), and meditation catalog
+and duration support [#264](https://github.com/elyrii-epitech/Elyrii/issues/264).
+Journal pagination also requires a compatible server. Demo flows and local
+fixtures do not establish that these contracts work on `dev`.
+
+| Module | Flow | Data |
 | --- | --- | --- |
-| Authentification | Connexion, inscription, récupération du mot de passe, démo, déconnexion | API d’authentification ; credentials dans Keychain/Keystore |
-| Profil | Profil personnel, identité, objectif unique et choix d’avatar | API utilisateur ; copies d’images dans le cache privé par compte |
-| Dashboard et bilan | Humeur, bilan hebdomadaire, mensuel et trimestriel, raccourcis | Historique serveur pour le journal ; humeurs locales ; séances terminées pour les minutes de calme |
-| Journal | Fil des jours, écriture et modification, humeur par entrée, lecture, suppression, recherche locale et export texte | API et SQLite paginés par 100 ; brouillons chiffrés par compte ; question du jour choisie enregistrée localement |
-| Chat | Conversations, réponses corrélées, reprise d’envoi, copie et signalement | WebSocket Bearer ; historique SQLite chiffré, pages de 50 |
-| Jardin | Défis à réaliser, gestes d’aujourd’hui, jardins mensuels et défis terminés du mois | Défis de l’API classés par date de complétion ; gestes locaux en consultation seule |
-| Parcours | Choix volontaire, étapes ordonnées, pause/reprise et accès secondaire aux défis existants | Catalogue éditorial local ; progression chiffrée par compte sur cet appareil, sans nouvelle API ni synchronisation entre appareils |
-| Méditation | 12 pratiques, durée de 1 à 1 439 minutes, pause/reprise et bilan | Contrôleur monotone et synchronisation des séances avec l’API |
-| Mascotte | Couleurs, finitions, 15 accessoires répartis sur quatre zones, sauvegarde explicite | Scène GLB partagée ; préférences et progression par compte |
-| Réglages | Apparence sombre, claire ou automatique, haptique, confidentialité, export, diagnostics et suppression du compte | Préférences, version installée, API et partage natif volontaire |
+| Authentication | Login, registration, password recovery, demo, logout | Authentication API; credentials in Keychain/Keystore |
+| Profile | Personal profile, identity, single goal, and avatar selection | User API; image copies in account-scoped private cache |
+| Dashboard and review | Mood, weekly/monthly/quarterly review, shortcuts | Server journal history; local moods; completed sessions for calm minutes |
+| Journal | Daily feed, writing/editing, mood per entry, reading, deletion, local search, text export | API and SQLite with 100-entry pages; encrypted account-scoped drafts; selected daily question stored locally |
+| Chat | Conversations, correlated replies, retry, copy, report | Bearer WebSocket; encrypted SQLite history, 50-item pages |
+| Garden | Challenges to complete, today's actions, monthly gardens, completed challenges | API challenges grouped by completion date; local actions shown read-only |
+| Journeys | Explicit selection, ordered steps, pause/resume, secondary access to existing challenges | Local editorial catalog; encrypted account-scoped progress on this device, without a new API or cross-device sync |
+| Meditation | 12 domain practices, 1–1,439 minute durations, pause/resume, summary | Monotonic controller; API session synchronization requires #264 |
+| Mascot | Colors, finishes, 15 accessories across four zones, explicit save | Shared GLB scene; account-scoped preferences and progression |
+| Settings | Dark/light/system appearance, haptics, privacy, export, diagnostics, account deletion | Preferences, installed version, API, user-initiated native sharing |
 
-L’arrivée présente Elyrii dans le décor Arches, puis donne accès à la connexion,
-à l’inscription et à **Découvrir sans compte**. La découverte traverse quatre
-questions courtes avant l’Accueil. Le prénom et l’objectif unique utilisent le
-profil existant. La première humeur emprunte le même enregistrement que
-l’Accueil. Le décor est conservé localement par compte après la sauvegarde
-de la tenue. Le choix d’avatar reste dans le Profil.
+The arrival flow introduces Elyrii in the Arches scene, then offers login,
+registration, and account-free discovery. Discovery asks four short questions
+before opening Home. First name and the single goal use the existing profile.
+The first mood uses the same save operation as Home. The scene is stored
+locally per account after saving the outfit. Avatar selection remains in Profile.
 
-L’inscription conserve le consentement obligatoire, les règles de mot de passe
-et le message de vérification email. La récupération utilise le code réellement
-envoyé par le serveur, puis un nouveau mot de passe de 12 à 128 caractères.
-Les boutons Google et Apple ne sont pas affichés car le client n’implémente
-pas leur connexion. Les liens légaux signalent que les textes complets ne sont
-pas encore publiés. Leur publication reste nécessaire avant une mise en production.
+Registration retains mandatory consent, password rules, and the email
+verification message. Password recovery requires a real server-issued code and
+a new password of 12–128 characters. Google and Apple buttons are hidden because
+the client does not implement those login methods. Legal links explain that
+the full texts are not published yet; publication is required before production.
 
-Le chat expose les ressources d’urgence indépendamment de sa détection locale
-de détresse. Cette heuristique ne remplace pas une évaluation professionnelle.
-Les séances de méditation utilisent des consignes écrites et ne fournissent
-pas de piste audio enregistrée.
+Chat exposes emergency resources independently of local distress detection.
+This heuristic does not replace professional assessment. Meditation sessions
+use written instructions and have no recorded audio track.
 
-Parcours remplace Coach dans la navigation, à la route `/parcours`.
-Le choix d’un parcours et la réalisation d’une étape sont explicites.
-Le remplacement d’un parcours demande confirmation ; l’annulation conserve
-sa position. La pause n’entraîne ni échéance ni pénalité. La progression
-reste locale, y compris dans la session de démo isolée. Elle accompagne
-l’export des données et la purge locale du compte.
-Les défis actifs, propositions à accepter ou refuser et idées disponibles
-apparaissent en premier dans le Jardin, et restent accessibles depuis **Mes défis**
-dans Parcours. Les catalogues se déplient sans masquer le jardin mensuel.
-Seuls les défis réellement terminés produisent les fleurs.
-Une étape de Parcours n’en crée pas.
+Journeys replaces Coach in navigation at `/parcours`. Selecting a journey and
+completing a step are explicit actions. Replacing a journey requires confirmation;
+canceling preserves its position. Pausing creates no deadline or penalty.
+Progress stays local, including in the isolated demo session, and is included
+in data export and account purging. Active challenges, proposals to accept or
+reject, and available ideas appear first in Garden and remain accessible from
+the challenge list in Journeys. Catalogs expand without hiding the monthly
+garden. Only completed challenges produce flowers; journey steps do not.
 
-Le Jardin affiche **Défis à réaliser**, puis **Aujourd’hui** et le jardin du mois.
-Les flèches parcourent les mois passés, sans aller dans le futur. Chaque défi
-terminé produit une fleur selon sa date de complétion locale, sans doublon.
-Les défis sans date restent signalés, sans attribution arbitraire à un mois.
-Les jardins denses défilent horizontalement. Toucher une fleur ouvre son titre
-et sa date ; la liste des défis terminés peut se déplier sous le paysage.
-La synchronisation fait pousser les nouvelles fleurs sans déplacer les autres.
-Les gestes locaux d’aujourd’hui ne créent pas de fleurs et ne valident pas de défi.
+Garden shows challenges to complete, today's actions, then the monthly garden.
+Arrows browse past months without entering the future. Each completed challenge
+produces one flower according to its local completion date, without duplicates.
+Challenges without dates remain identified without being assigned to an arbitrary
+month. Dense gardens scroll horizontally. Tapping a flower opens its title and
+date; the completed challenge list expands below the landscape. Synchronization
+grows new flowers without moving existing ones. Today's local actions do not
+create flowers or complete challenges.
 
-Le Journal utilise une couleur prune, sans halo ni verre dans les cartes.
-Son titre n'affiche plus de badge **Privé**. Les informations de confidentialité
-restent accessibles depuis le menu d'une entrée.
-La recherche porte sur les entrées chargées et indique cette limite quand
-l’historique contient d’autres pages. L’export texte charge l’historique et
-inclut les brouillons locaux. Le même éditeur à sauvegarde automatique s’ouvre
-depuis le Journal, l’Accueil et les étapes de Parcours. Les outils de dictée,
-photo et mot-clé ne sont pas proposés sans service réel. Ouvrir ou fermer
-l’éditeur ne valide pas automatiquement une étape.
+Journal uses a plum color without halos or glass cards. Its title no longer
+shows a private badge; privacy information remains in each entry's menu. Search
+covers loaded entries and discloses that limit when more history pages exist.
+Text export loads history and includes local drafts. The same autosaving editor
+opens from Journal, Home, and journey steps. Dictation, photo, and keyword tools
+are not offered without real services. Opening/closing the editor does not
+automatically complete a step.
 
-L’avatar de l’Accueil ouvre le Profil par un glissement depuis la gauche.
-Le mouvement réduit utilise un fondu. Le Profil reprend le décor choisi pour
-la mascotte, derrière l’avatar, le prénom et la date d’arrivée.
-Les commandes du haut de l’Accueil, du Profil et du bilan partagent des bulles
-de 48 points, alignées sous la zone système.
-Le corps arrondi regroupe **Mon profil**, **Réglages**, **Mon bilan**
-et **Mes données**, dans cet ordre.
-Les statistiques et la tenue restent accessibles depuis la capsule de l’Accueil.
-Le choix d’avatar depuis le Profil est enregistré immédiatement.
-Le formulaire **Mon profil** conserve son bouton **Enregistrer** et l’édition
-de l’objectif bien-être, un choix unique parmi les six valeurs du compte.
-Vider le nom, l’âge, le genre ou l’objectif ne les efface pas sur le serveur
-avec le contrat actuel.
+The Home avatar opens Profile with a slide from the left; reduced motion uses
+a fade. Profile reuses the selected mascot scene behind the avatar, first name,
+and arrival date. Top controls in Home, Profile, and Review share 48-point
+bubbles aligned below the system area. The rounded body groups profile,
+settings, review, and data, in that order. Statistics and outfits remain
+accessible from the Home capsule. Avatar selection saves immediately.
+The profile form retains its explicit save button and single wellness goal,
+chosen from six account values. Clearing name, age, gender, or goal does not
+clear it on the server under the current contract.
 
-Le bilan affiche uniquement les humeurs connues sur cet appareil. Les mois et
-les trimestres sont regroupés en sept périodes. Les minutes de calme proviennent
-des séances terminées, sans convertir un nombre de séances en durée.
-Si la limite de cent séances tronque la période, le bilan signale les minutes
-partielles et laisse inconnues les périodes antérieures à la couverture.
-Les points, les pourcentages et les taux de défis ne figurent pas dans le bilan.
-La carte **Ce qui t’aide** reste absente sans association suffisante dans les données.
+Review displays only moods known on this device. Months and quarters are
+grouped into seven periods. Calm minutes come from completed sessions, without
+converting session counts into durations. If the 100-session limit truncates
+the period, Review marks the minutes as partial and leaves earlier periods
+unknown. Points, percentages, and challenge rates are absent. The helpful
+activities card stays hidden without a sufficient association in the data.
 
-**Mes données** explique les copies locales et donne accès à l’export avec
-consentement explicite. La suppression exige le mot de passe et conserve la
-purge locale par compte. Les textes actuels des conditions et de la politique
-restent accessibles dans les Réglages. La politique décrit encore les points à
-documenter, et ne constitue pas un document juridique complet.
+The data section explains local copies and offers export with explicit consent.
+Deletion requires the password and retains account-scoped local purging.
+Current terms and privacy texts remain accessible in Settings. The policy
+still describes information that needs documenting; it is not a complete
+legal document.
 
-Le français est la seule langue déclarée. Les notifications push sont annoncées
-indisponibles. Le renouvellement automatique des access tokens et les évolutions
-d’activation email restent hors périmètre ; un 401 de la session courante la
-ferme localement.
+French is the only declared UI language. Push notifications are marked
+unavailable. Automatic access-token renewal and email activation changes remain
+out of scope; a 401 for the current session closes it locally.
 
-Voir [l’architecture](architecture.md) pour les contrats de session et de
-persistance, [la méditation](meditation.md) et [la personnalisation](mascot-accessories.md)
-pour leurs spécifications détaillées, ainsi que [la livraison](release.md)
-pour la configuration des services nécessaires aux parcours distants.
+See [architecture](architecture.md) for session/persistence contracts,
+[meditation](meditation.md) and [customization](mascot-accessories.md) for their
+specifications, and [release](release.md) for remote-service requirements.

@@ -67,8 +67,8 @@ List<JournalMonth> groupJournalMonths(List<JournalEntryModel> entries) {
   return months;
 }
 
-/// The entry written closest to one month before [today], within a week of
-/// that date. Nothing older or newer is presented as « il y a un mois ».
+/// Entry written closest to one month before [today], within a week of that
+/// date. Older or newer entries are not presented as being a month old.
 JournalEntryModel? journalMemory(
   List<JournalEntryModel> entries,
   CivilDay today,
@@ -114,8 +114,8 @@ List<JournalEntryModel> searchJournal(
   ];
 }
 
-/// The plain-text file of « Exporter mes écrits », with unsaved local pages
-/// labelled separately from confirmed entries.
+/// Plain-text journal export, with unsaved local pages labeled separately from
+/// confirmed entries.
 String journalExportText(
   List<JournalEntryModel> entries,
   String Function(DateTime) date, {

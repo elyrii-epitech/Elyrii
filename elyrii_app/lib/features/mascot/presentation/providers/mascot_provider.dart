@@ -10,11 +10,8 @@ import '../../data/models/mascot_appearance.dart';
 import '../../data/models/mascot_model.dart';
 import '../../data/repositories/mascot_repository.dart';
 
-/// Provider gérant l'état et l'interaction avec la mascotte 3D.
-///
-/// Permet de contrôler le modèle 3D globalement, gérer les thèmes visuels
-/// (palettes des matériaux), les pièces 3D de sa garde-robe et les
-/// animations.
+/// Provider managing 3D mascot state and interactions, including the global
+/// model, visual material palettes, wardrobe pieces, and animations.
 class MascotProvider extends ChangeNotifier {
   String? _userId;
   bool _isDemo;
@@ -68,7 +65,7 @@ class MascotProvider extends ChangeNotifier {
   int _reactionTrigger = 0;
   String? _lastReactionKey;
 
-  /// Le salut d'arrivée est consommé une fois pour la vie de ce provider.
+  /// The arrival greeting is consumed once during this provider's lifetime.
   bool takeGreeting() {
     if (_hasGreeted) return false;
     _hasGreeted = true;
@@ -78,12 +75,10 @@ class MascotProvider extends ChangeNotifier {
   MascotAnimation get reaction => _reaction;
   int get reactionTrigger => _reactionTrigger;
 
-  /// Publie une réaction courte à afficher sur la mascotte persistante.
-  ///
-  /// [eventKey] est utile pour les notifications provenant d'un flux qui peut
-  /// émettre plusieurs fois le même état (par exemple un rafraîchissement
-  /// réseau). Les interactions directes omettent la clé pour toujours rejouer
-  /// le geste.
+  /// Publishes a short reaction for the persistent mascot. [eventKey]
+  /// deduplicates notifications from streams that may emit the same state
+  /// repeatedly, such as network refreshes. Direct interactions omit the key so
+  /// gestures always replay.
   void react(MascotAnimation animation, {String? eventKey}) {
     if (eventKey != null && eventKey == _lastReactionKey) return;
     _lastReactionKey = eventKey;
@@ -172,10 +167,8 @@ class MascotProvider extends ChangeNotifier {
 
   MascotTheme get currentTheme => MascotThemes.getById(_mascot.themeId);
 
-  /// Applique un thème visuel à la mascotte.
-  ///
-  /// Le thème recolore les matériaux du modèle 3D à la volée,
-  /// sans nécessiter de nouveau fichier GLB.
+  /// Applies a visual theme by recoloring the 3D model's materials on the fly
+  /// without requiring another GLB file.
   void setTheme(String themeId) {
     themeId = _validThemeId(themeId);
     if (_mascot.themeId == themeId && _mascot.appearance.colors.isEmpty) return;
@@ -188,10 +181,10 @@ class MascotProvider extends ChangeNotifier {
     unawaited(_persistAndSync());
   }
 
-  /// Équipe une pièce connue et débloquée, en remplaçant celle de sa zone.
-  /// Retoucher la pièce portée la retire ; une célébration peut demander
-  /// une sélection idempotente avec [toggleIfEquipped] à false.
-  /// La vérification est faite ici, même si l'interface affiche un verrou.
+  /// Equips a known, unlocked piece, replacing its zone's current item. Tapping
+  /// an equipped piece removes it; celebrations can request idempotent
+  /// selection by setting [toggleIfEquipped] to false. Validation happens here
+  /// even if the UI displays a lock.
   bool equipCosmetic(
     String cosmeticId, {
     required int completedChallenges,

@@ -1,144 +1,135 @@
-# Design system mobile
+# Mobile design system
 
-L’interface utilise Material 3, les polices Poppins embarquées et les composants
-Liquid Glass communs. Les thèmes clair, sombre et système sont fournis par
-`AppTheme` et persistés par `ThemeProvider`.
+The interface uses Material 3, bundled Poppins fonts, and shared Liquid Glass
+components. `AppTheme` provides light, dark, and system themes, persisted by
+`ThemeProvider`.
 
-## Sources et composants
+## Sources and components
 
-| Source dans `elyrii_app/lib` | Responsabilité |
+| Source in `elyrii_app/lib` | Responsibility |
 | --- | --- |
-| `core/theme/app_colors.dart` | Palette et couleurs de texte selon le thème |
-| `core/theme/app_text_styles.dart` | Rôles typographiques Poppins |
-| `core/theme/app_dimensions.dart` | Grille d’espacement, rayons et tailles |
-| `core/glass/elyrii_glass_surface.dart` et `glass_role.dart` | Matériau partagé et rôles du verre |
-| `core/widgets/glass/liquid_glass_button.dart` | Boutons partagés |
-| `core/widgets/accessible_action.dart` | Activation clavier, focus et état d’action |
-| `core/widgets/elyrii_page_header.dart` | Cadre et en-tête de page défilant |
-| `core/accessibility/motion.dart` | Extension `animateRespectingMotion` |
-| `app/router/app_shell.dart` | Navigation persistante et dock |
+| `core/theme/app_colors.dart` | Palette and theme-aware text colors |
+| `core/theme/app_text_styles.dart` | Poppins typography roles |
+| `core/theme/app_dimensions.dart` | Spacing grid, radii, and sizes |
+| `core/glass/elyrii_glass_surface.dart` and `glass_role.dart` | Shared material and glass roles |
+| `core/widgets/glass/liquid_glass_button.dart` | Shared buttons |
+| `core/widgets/accessible_action.dart` | Keyboard activation, focus, and action state |
+| `core/widgets/elyrii_page_header.dart` | Scrolling page frame and header |
+| `core/accessibility/motion.dart` | `animateRespectingMotion` extension |
+| `app/router/app_shell.dart` | Persistent navigation and dock |
 
-Importer les boutons directement :
+Import buttons directly:
 
 ```dart
 import 'package:elyrii_app/core/widgets/glass/liquid_glass_button.dart';
 ```
 
-`LiquidGlassWidgets.initialize()` et `LiquidGlassWidgets.wrap` sont configurés
-au démarrage. Les écrans utilisent les primitives Elyrii. `ElyriiGlassSurface`
-fournit une surface opaque en contraste élevé et un chemin léger pour les
-lignes déjà placées dans une feuille.
+`LiquidGlassWidgets.initialize()` and `LiquidGlassWidgets.wrap` are configured
+at startup. Screens use Elyrii primitives. `ElyriiGlassSurface` provides an
+opaque surface in high contrast and a lightweight path for rows already
+inside a sheet.
 
-## Jetons de design
+## Design tokens
 
-Les écrans choisissent un jeton, jamais une valeur. `lib/core/theme/` définit
-les tailles, graisses, distances et rayons. `dart run
-tool/check_design_tokens.dart`, lancé en CI, est un balayage de texte : il
-refuse `fontSize`, `fontFamily`, `fontWeight`, les rayons `circular(n)`, les
-marges et écarts chiffrés (`EdgeInsets`, `SizedBox` vide, `spacing`) et les
-couleurs `AppColors.text*Light/Dark` hors du thème. Il ne voit ni les tailles
-d’icônes ou d’éléments, ni les constantes nommées ; ces cas restent à la revue.
+Screens choose a token rather than a literal value. `lib/core/theme/` defines
+sizes, weights, distances, and radii. `dart run tool/check_design_tokens.dart`,
+run in CI, is a text scan: it rejects `fontSize`, `fontFamily`, `fontWeight`,
+`circular(n)` radii, numeric margins/gaps (`EdgeInsets`, empty `SizedBox`,
+`spacing`), and `AppColors.text*Light/Dark` outside the theme. It does not detect
+icon/element sizes or named constants; those still require review.
 
-Chaque rôle typographique fixe sa taille et sa graisse. Un état sélectionné
-change la couleur, pas la graisse ; seule l’action par défaut d’un dialogue
-passe de `dialogAction` à `labelLarge`. Un onglet commence par son grand titre
-(`pageTitle`) en première ligne du contenu, sous la barre de boutons : il suit
-la taille de texte et passe à la ligne au lieu de rétrécir. En défilant, le
-même titre apparaît centré dans la barre en `navTitle`, comme le titre des
-pages poussées et du chat. Un titre de barre trop long finit par une ellipse.
+Each typography role fixes its size and weight. Selection changes color rather
+than weight; only a dialog's default action switches from `dialogAction` to
+`labelLarge`. A tab starts with its large `pageTitle` in the first content row
+below the button bar: it scales with text settings and wraps instead of shrinking.
+On scroll, the same title appears centered in the bar as `navTitle`, as on
+pushed pages and chat. Overlong bar titles end with an ellipsis.
 
-Jardin, Journal, Méditer et Parcours partagent `SectionSkyHeader`.
-Leurs titres ont le même alignement et aucun sous-titre.
-Le décor du Journal conserve sa fenêtre pleine largeur, sans bande sous son appui.
-Les arches de Parcours se prolongent jusqu'au contenu arrondi, sans bande horizontale.
+Garden, Journal, Meditation, and Journeys share `SectionSkyHeader`. Their titles
+have matching alignment and no subtitle. Journal keeps its full-width window
+without a strip beneath its sill. Journey arches extend to the rounded content
+without a horizontal strip.
 
-| Rôle | Taille et graisse | Usage |
+| Role | Size and weight | Use |
 | --- | --- | --- |
-| `wordmark` | 38, w500 | Logo « elyrii » au lancement |
-| `pageTitle` | 28, w700 | Grand titre d’onglet, rendu par `ElyriiPageFrame` |
-| `headlineMedium` | 28, w700 | Titres d’authentification et d’onboarding |
-| `headlineSmall` | 24, w700 | Chiffres clés |
-| `titleLarge` | 20, w600 | Titres de feuille et de dialogue |
-| `titleMedium` | 17, w700 | Titres de section et de carte principale |
-| `navTitle` | 17, w600 | Titre centré dans la barre, rendu par l’en-tête |
-| `titleSmall` | 15, w600 | Titres de carte et de ligne |
-| `bodyLarge` | 16, w400 | Lecture, saisie, messages |
-| `bodyMedium` | 14, w400 | Texte courant |
-| `bodySmall` | 12, w500 | Texte secondaire |
-| `labelLarge` | 15, w600 | Boutons, action par défaut d’un dialogue |
-| `dialogAction` | 15, w400 | Autres actions d’un dialogue |
-| `labelMedium` | 13, w600 | Puces et libellés courts |
-| `overline` | 13, w700 | Libellé au-dessus d’un groupe, date de l’accueil |
-| `labelSmall` | 11, w500 | Légendes, taille minimale |
-| `badge` | 11, w700 | Étiquettes et pastilles |
-| `dockLabel` | 11, w500 | Onglets du dock, tracking nul |
+| `wordmark` | 38, w500 | Launch logo |
+| `pageTitle` | 28, w700 | Large tab title rendered by `ElyriiPageFrame` |
+| `headlineMedium` | 28, w700 | Authentication and onboarding titles |
+| `headlineSmall` | 24, w700 | Key figures |
+| `titleLarge` | 20, w600 | Sheet and dialog titles |
+| `titleMedium` | 17, w700 | Section and primary card titles |
+| `navTitle` | 17, w600 | Centered bar title rendered by the header |
+| `titleSmall` | 15, w600 | Card and row titles |
+| `bodyLarge` | 16, w400 | Reading, input, messages |
+| `bodyMedium` | 14, w400 | Body text |
+| `bodySmall` | 12, w500 | Secondary text |
+| `labelLarge` | 15, w600 | Buttons and default dialog action |
+| `dialogAction` | 15, w400 | Other dialog actions |
+| `labelMedium` | 13, w600 | Chips and short labels |
+| `overline` | 13, w700 | Group labels and Home date |
+| `labelSmall` | 11, w500 | Captions, minimum size |
+| `badge` | 11, w700 | Tags and badges |
+| `dockLabel` | 11, w500 | Dock tabs, zero letter spacing |
 
-Le dock mesure 64 points de haut, avec une bulle de chat circulaire de 64
-et un avatar couleur de 44. `assets/brand/mascot_nav.png` recadre la mascotte
-sans les grandes marges transparentes de l'image de lancement.
-Le dock reste centré dans la colonne de contenu de 600 points, avec des marges
-latérales de 16 et une marge basse de 20.
-Le rôle navigation de `ElyriiGlassSurface` applique le verre v2, flou 22,
-saturation 1,7 et filet de 0,5, sans réfraction, ombre, halo ni gradient.
-Les quatre premiers onglets utilisent Material Symbols Rounded, remplis
-uniquement en sélection. La destination du cinquième onglet reste définie
-par `AppShell`.
+The dock is 64 points high, with a circular 64-point chat bubble and a 44-point
+color avatar. `assets/brand/mascot_nav.png` crops the mascot without the launch
+image's large transparent margins. The dock stays centered within the 600-point
+content column, with 16-point side margins and a 20-point bottom margin.
+The navigation role of `ElyriiGlassSurface` applies v2 glass, blur 22,
+saturation 1.7, and a 0.5 border, without refraction, shadow, halo, or gradient.
+The first four tabs use Material Symbols Rounded, filled only when selected.
+`AppShell` defines the fifth tab's destination.
 
-Les cibles font au moins 48 points. Sous 360 points de largeur ou au-delà
-de 120 % de taille de texte, un sélecteur déroulant donne accès aux six
-destinations sans réduire les libellés. La pression conserve une échelle
-de 0,96, sans mouvement lorsque les animations sont désactivées. Le dock
-n'a ni rebond de sélection ni animation autonome.
+Targets are at least 48 points. Below 360 points in width or above 120% text
+scale, a dropdown gives access to all six destinations without shrinking labels.
+Press feedback retains a 0.96 scale, with no motion when animations are disabled.
+The dock has no selection bounce or autonomous animation.
 
-Les couleurs de texte viennent de `context.textPrimary`, `textSecondary` et
-`textTertiary`, qui suivent le thème courant.
+Text colors come from `context.textPrimary`, `textSecondary`, and `textTertiary`,
+which follow the current theme.
 
-Les espacements suivent une grille de 4 points : `spacing2` à `spacing48`.
-`pageHorizontalPadding` (20) borde chaque page. `ElyriiPageFrame` termine
-chaque page par la marge basse fournie par le Scaffold (le dock sur un onglet,
-l’indicateur d’accueil ailleurs) plus `spacing24` ; les pages n’ajoutent pas
-d’espace final. `controlSize` (48) est la taille des boutons en verre et des
-espaces qui les équilibrent ; `buttonHeight` (48) celle des boutons pleins.
+Spacing follows a 4-point grid, from `spacing2` to `spacing48`.
+`pageHorizontalPadding` (20) frames each page. `ElyriiPageFrame` ends each page
+with the Scaffold's bottom inset (the dock on a tab, the home indicator elsewhere)
+plus `spacing24`; pages do not add their own trailing space. `controlSize` (48)
+sizes glass buttons and balancing spacers; `buttonHeight` (48) sizes filled buttons.
 
-Les rayons sont `radius4`, `radius8`, `radius12`, `radius16`, `radius20`,
-`radius28` pour les feuilles et `radiusPill` pour les capsules.
+Radii are `radius4`, `radius8`, `radius12`, `radius16`, `radius20`,
+`radius28` for sheets, and `radiusPill` for capsules.
 
-## Accessibilité et adaptation
+## Accessibility and adaptation
 
-Conserver les labels persistants, les états de chargement/sélection et les
-zones tactiles des contrôles communs. Utiliser les couleurs du thème et laisser
-le texte s’agrandir ; adapter les colonnes et permettre le défilement plutôt
-que réduire la police pour faire tenir le contenu.
+Preserve persistent labels, loading/selection states, and touch areas in shared
+controls. Use theme colors and allow text growth; adapt columns and enable
+scrolling instead of shrinking fonts to fit.
 
-Les animations respectent les préférences système. Les scénarios de clavier,
-de contraste, de texte agrandi et de lecteur d’écran sont décrits dans le
-[protocole d’accessibilité](accessibility.md). Les tests widgets ne remplacent
-pas la validation des composants natifs.
+Animations respect system preferences. Keyboard, contrast, enlarged text, and
+screen reader scenarios are described in the [accessibility protocol](accessibility.md).
+Widget tests do not replace native component validation.
 
-## Mascotte
+## Mascot
 
-`Mascot3DViewer` et `MascotModelSurface` utilisent `flutter_3d_controller` avec
-un PNG de secours. Le corps et ses accessoires partagent une scène GLB.
-La visibilité, le cycle de vie et les préférences d’animation contrôlent le
-renderer ; sa pause et sa libération évitent un rendu permanent hors écran.
+`Mascot3DViewer` and `MascotModelSurface` use `flutter_3d_controller` with a PNG
+fallback. The body and accessories share one GLB scene. Visibility, lifecycle,
+and motion preferences control the renderer; suspension and release prevent
+continuous offscreen rendering.
 
-Les [accessoires](mascot-accessories.md) et les [mouvements](velours-motion.md)
-ont leurs sources et outils de reconstruction. Les polices et portraits
-livrés restent dans `elyrii_app/assets`.
+[Accessories](mascot-accessories.md) and [motion](velours-motion.md) have their
+own sources and rebuilding tools. Bundled fonts and portraits remain in
+`elyrii_app/assets`.
 
-## Icônes et lancement
+## Icons and launch
 
-Les sources sont `assets/splash_icon.png` pour le lancement et
-`assets/icon_black_bg.png` pour l’icône de l’application. Depuis `elyrii_app` :
+Sources are `assets/splash_icon.png` for launch and `assets/icon_black_bg.png`
+for the app icon. From `elyrii_app`:
 
 ```bash
 dart run flutter_native_splash:create
 dart run flutter_launcher_icons
 ```
 
-Les configurations sont `flutter_native_splash.yaml` et la section
-`flutter_launcher_icons` de `pubspec.yaml`. Vérifier les ressources générées
-Android/iOS et les deux thèmes après une régénération.
+Configuration lives in `flutter_native_splash.yaml` and the
+`flutter_launcher_icons` section of `pubspec.yaml`. Check generated Android/iOS
+resources and both themes after regeneration.
 
-Pour les listes longues, construire les éléments à la demande et limiter les
-animations.
+For long lists, build items on demand and limit animations.

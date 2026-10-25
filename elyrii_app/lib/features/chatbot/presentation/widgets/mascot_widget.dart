@@ -219,7 +219,7 @@ class _MascotWidgetState extends State<MascotWidget> {
     );
   }
 
-  /// Construit la mascotte en mode plein écran.
+  /// Builds the full-screen mascot.
   Widget _buildFullMascot(double maxHeight, MascotAnimation animation) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -231,7 +231,7 @@ class _MascotWidgetState extends State<MascotWidget> {
     );
   }
 
-  /// Construit le viewer 3D de la mascotte pour le mode plein écran.
+  /// Builds the full-screen mascot's 3D viewer.
   Widget _buildMascotAvatar(double size, MascotAnimation animation) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
@@ -251,7 +251,7 @@ class _MascotWidgetState extends State<MascotWidget> {
     );
   }
 
-  /// Construit les textes informatifs accompagnant la mascotte.
+  /// Builds informational text accompanying the mascot.
   Widget _buildMascotText() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -273,8 +273,8 @@ class _MascotWidgetState extends State<MascotWidget> {
   }
 }
 
-/// Wrapper qui applique automatiquement le thème courant de la mascotte
-/// **et** ses accessoires équipés, de façon cohérente avec les autres pages.
+/// Wrapper automatically applying the mascot's current theme and equipped
+/// accessories consistently with other pages.
 class _ThemedMascot extends StatelessWidget {
   final Mascot3DConfig config;
   final MascotAnimation? animation;

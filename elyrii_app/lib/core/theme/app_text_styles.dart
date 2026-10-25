@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// The only type scale of the app. Each role fixes size, weight and spacing,
-/// so screens pick a role and never tune a style.
-///
-/// Les tailles, graisses, interlignes et espacements suivent la table
-/// typographique v2 de l'Accueil. Les rôles dont l'interligne y est
-/// « normal » n'imposent aucun facteur Flutter : la boîte naturelle de
-/// Poppins s'applique.
+/// The app's only type scale. Each role fixes size, weight, and spacing;
+/// screens choose a role without tuning styles. Sizes, weights, line heights,
+/// and spacing follow Home's v2 typography table. Roles with normal line height
+/// impose no Flutter factor; Poppins uses its natural metrics.
 class AppTextStyles {
   AppTextStyles._();
 
@@ -38,7 +35,7 @@ class AppTextStyles {
   static TextStyle headlineMedium({Color? color}) =>
       _role(28, FontWeight.w700, 1.25, -0.5, color);
 
-  /// The Série sheet headline, tighter than t-headline (interligne 1,1).
+  /// Streak sheet headline, tighter than t-headline, with 1.1 line height.
   static TextStyle streakHeadline({Color? color}) =>
       _role(28, FontWeight.w700, 1.1, -0.5, color);
 
@@ -58,7 +55,7 @@ class AppTextStyles {
   static TextStyle navTitle({Color? color}) =>
       _role(17, FontWeight.w600, 1.35, -0.1, color);
 
-  /// The title of a bottom sheet (titre de feuille).
+  /// Bottom sheet title.
   static TextStyle sheetTitle({Color? color}) =>
       _role(17, FontWeight.w600, null, 0, color);
 
@@ -100,19 +97,19 @@ class AppTextStyles {
   static TextStyle editorDate({Color? color}) =>
       _role(14, FontWeight.w600, null, 0, color);
 
-  /// Small pills: « Privé », the month filter, the reading mood (12/600).
+  /// Small pills: privacy badge, month filter, and reading mood (12/600).
   static TextStyle pillLabel({Color? color}) =>
       _role(12, FontWeight.w600, null, 0, color);
 
-  /// The writing prompt chip of the editor (12/500, interligne 1,5).
+  /// Editor's writing prompt chip (12/500, line height 1.5).
   static TextStyle promptChip({Color? color}) =>
       _role(12, FontWeight.w500, 1.5, 0, color);
 
-  /// Button labels, and the default action of a dialog (bouton).
+  /// Button labels and the default dialog action.
   static TextStyle labelLarge({Color? color}) =>
       _role(15, FontWeight.w600, null, 0.2, color);
 
-  /// Small buttons of the answer card and the sheets (bouton petit).
+  /// Small buttons in the response card and sheets.
   static TextStyle buttonSmall({Color? color}) =>
       _role(13, FontWeight.w600, null, 0.2, color);
 
@@ -128,15 +125,15 @@ class AppTextStyles {
   static TextStyle overline({Color? color}) =>
       _role(13, FontWeight.w700, 1.2, 0.6, color);
 
-  /// The date button of the top bar (date de la barre).
+  /// Top-bar date button.
   static TextStyle navDate({Color? color}) =>
       _role(15, FontWeight.w600, null, 0, color);
 
-  /// The counts of the streak/flowers/outfit capsule (valeurs de capsule).
+  /// Counts in the streak/flowers/outfit capsule.
   static TextStyle capsuleValue({Color? color}) =>
       _role(14, FontWeight.w600, null, 0, color);
 
-  /// The words after each capsule count (suffixes « jours », « fleurs »).
+  /// Words following each capsule count, such as days and flowers.
   static TextStyle capsuleSuffix({Color? color}) =>
       _role(14, FontWeight.w500, null, 0, color);
 
@@ -148,11 +145,11 @@ class AppTextStyles {
   static TextStyle moodLabelSelected({Color? color}) =>
       _role(11, FontWeight.w700, null, 0, color);
 
-  /// A ritual tile title (titre rituel).
+  /// Ritual tile title.
   static TextStyle ritualTitle({Color? color}) =>
       _role(13, FontWeight.w600, 1.25, 0, color);
 
-  /// A ritual tile detail line (détail rituel).
+  /// Ritual tile detail line.
   static TextStyle ritualDetail({Color? color}) =>
       _role(11, FontWeight.w500, null, 0, color);
 

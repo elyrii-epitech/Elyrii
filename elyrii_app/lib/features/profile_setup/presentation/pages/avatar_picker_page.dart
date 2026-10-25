@@ -23,18 +23,12 @@ import '../../../../core/widgets/pushed_page.dart';
 import '../widgets/profile_controls.dart';
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
-/// Page de selection d'avatar proposee au tap sur l'avatar.
-///
-/// Deux options :
-/// 1. Choisir un avatar preset (mascotte ou avatars Doux DiceBear)
-/// 2. Importer une image personnelle depuis la galerie, puis la recadrer
-///
-/// La selection est retournee via [Navigator.pop] sous forme de [String?]:
-/// - null => mascotte par defaut
-/// - URL DiceBear => avatar preset
-/// - chemin local => image importee, uploadee au moment de la sauvegarde
+/// Avatar selection page opened by tapping the avatar. Choose a mascot/Doux
+/// DiceBear preset, or import and crop a personal gallery image. Returns the
+/// selection through [Navigator.pop] as a nullable String: null for the default
+/// mascot, a DiceBear URL for a preset, or a local image path uploaded on save.
 class AvatarPickerPage extends StatefulWidget {
-  /// Avatar actuel (pour pre-selectionner)
+  /// Current avatar, used for preselection.
   final String? currentPfp;
 
   const AvatarPickerPage({super.key, this.currentPfp});

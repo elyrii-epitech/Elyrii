@@ -5,11 +5,10 @@ import 'package:flutter/foundation.dart';
 
 import '../config/mascot_animations.dart';
 
-/// Orchestre les intentions d'Elyrii sans dépendre du lecteur 3D.
-///
-/// Une intention remplace immédiatement la précédente. Les événements courts
-/// sont consommés une fois ; [trigger] permet de rejouer le même geste. Aucun
-/// événement en attente ne ressurgit après une interruption ou un arrière-plan.
+/// Orchestrates Elyrii's intentions independently of the 3D player. Each
+/// intention immediately replaces the previous one. Short events are consumed
+/// once; [trigger] replays the same gesture. Pending events never resurface
+/// after interruption or backgrounding.
 class MascotMotionController extends ChangeNotifier {
   MascotMotionController({Random? random}) : _random = random ?? Random();
 
@@ -33,8 +32,8 @@ class MascotMotionController extends ChangeNotifier {
     if (_enabled) _beginRequest();
   }
 
-  /// À activer uniquement quand le modèle est prêt, visible et le mouvement
-  /// autorisé. Les timers ne tournent ni hors écran ni en mouvement réduit.
+  /// Enable only when the model is ready, visible, and motion is allowed.
+  /// Timers do not run offscreen or with reduced motion.
   void setPlaybackEnabled(bool enabled) {
     // Une première présentation en mouvement réduit consomme aussi l'arrivée.
     // Le chargement, lui, n'appelle pas cette méthode avant d'être prêt.

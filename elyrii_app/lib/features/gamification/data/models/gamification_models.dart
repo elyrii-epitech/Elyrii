@@ -50,7 +50,7 @@ class ChallengeTemplate {
     );
   }
 
-  /// Icône déduite du premier type de condition
+  /// Icon derived from the first condition type.
   IconData get icon {
     final firstType = switch (conditions) {
       [{'type': final String type}, ...] => type,
@@ -149,7 +149,7 @@ class UserChallenge {
   bool get isActive => status == 'ACTIVE';
   bool get isCompleted => status == 'COMPLETED';
 
-  /// Fraction de progression globale entre 0.0 et 1.0
+  /// Overall progress fraction between 0.0 and 1.0.
   double get progressFraction {
     final p = progress;
     if (p == null || p is! Map) return 0.0;
@@ -171,7 +171,7 @@ class UserChallenge {
     return count > 0 ? (sum / count).clamp(0.0, 1.0) : 0.0;
   }
 
-  /// Texte de progression lisible, ex: "3 / 7" pour une condition unique
+  /// Readable progress text, such as "3 / 7" for one condition.
   String get progressText {
     final p = progress;
     if (p == null || p is! Map) return '';

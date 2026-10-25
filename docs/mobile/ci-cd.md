@@ -1,49 +1,45 @@
-# Frontend CI — iOS et Android
+# Frontend CI — iOS and Android
 
-Le workflow Flutter unique est `.github/workflows/flutter-check-and-docs.yml`.
-Son nom **Flutter Style, Test & Docs** est utilisé par la publication des
-API docs.
+The single Flutter workflow is `.github/workflows/flutter-check-and-docs.yml`.
+Its name, **Flutter Style, Test & Docs**, is used by API documentation publishing.
 
-Les seules cibles de l’application sont **iOS et Android**. Les pushes et PR
-sur `frontend`, `dev` et `main` déclenchent les vérifications lorsque le code
-Flutter, sa documentation mobile ou sa CI change. Le lancement manuel reste
-possible.
+The app targets **iOS and Android** only. Pushes and PRs to `frontend`, `dev`,
+and `main` trigger checks when Flutter code, mobile documentation, or its CI
+changes. Manual execution is also available.
 
-L’action partagée lit Flutter **3.47.4** depuis `elyrii_app/.fvmrc`, puis impose
-`flutter pub get --enforce-lockfile`. La validation locale utilise exactement
-le même SDK et Dart **3.13.3**.
+The shared action reads Flutter **3.47.4** from `elyrii_app/.fvmrc`, then enforces
+`flutter pub get --enforce-lockfile`. Local validation uses the same SDK and
+Dart **3.13.3**.
 
-| Job | Vérification / artefact |
+| Job | Check / artifact |
 | --- | --- |
-| Frontend quality | Formatage sans mutation, analyse, tests unitaires/widgets et couverture LCOV |
-| Android technical build | Java 17, APK debug de développement |
-| iOS simulator technical build | Application debug de développement pour simulateur, runner macOS |
-| Frontend Android integration | Émulateur API 35, bootstrap, persistance et navigation avec les plugins natifs |
-| Frontend iOS integration | Simulateur iPhone disponible du runner macOS, bootstrap, persistance native et navigation |
-| Frontend API documentation | Dartdoc 9.0.11 épinglé, artefact `dartdoc-html` conservé pour le pipeline documentaire |
+| Frontend quality | Non-mutating formatting check, analysis, unit/widget tests, and LCOV coverage |
+| Android technical build | Java 17, development debug APK |
+| iOS simulator technical build | Development debug simulator application, macOS runner |
+| Frontend Android integration | API 35 emulator, bootstrap, persistence, and navigation with native plugins |
+| Frontend iOS integration | Available iPhone simulator on the macOS runner, bootstrap, native persistence, and navigation |
+| Frontend API documentation | Pinned Dartdoc 9.0.11, `dartdoc-html` artifact retained for the documentation pipeline |
 
-Les builds et l’intégration dépendent du job qualité. Les protections de
-branche et les checks obligatoires doivent être configurés dans GitHub par
-les administrateurs ; un fichier de workflow ne les active pas à lui seul.
+Builds and integration depend on the quality job. Administrators must configure
+branch protections and required checks in GitHub; a workflow file alone does
+not enable them.
 
-## Compatibilité et intégration native
+## Compatibility and native integration
 
-Le wrapper Android utilise **Gradle 8.14.3**, avec Java 17, AGP 8.12.1 et
-Kotlin 2.2.20. Ces versions respectent les minima de Flutter 3.47.4 et des
-plugins de partage/version installés ; les vérifications de compatibilité du
-SDK restent actives.
+The Android wrapper uses **Gradle 8.14.3**, with Java 17, AGP 8.12.1, and
+Kotlin 2.2.20. These meet the minimum versions required by Flutter 3.47.4 and
+the installed sharing/version plugins; SDK compatibility checks remain enabled.
 
-Les parcours attendent la fin de l’écran de lancement et font défiler les
-contrôles avant de cliquer, afin de fonctionner sur les tailles d’écran des
-simulateurs.
-Un scénario natif dédié vérifie la réouverture de l’historique chiffré et sa
-purge, avec les vrais plugins SQLite et Keychain/Keystore. Il couvre notamment
-les commandes SQLite qui renvoient une ligne et exigent `rawQuery`, même
-lorsqu’elles configurent une valeur comme `PRAGMA secure_delete = ON`.
+Flows wait for the launch screen to finish and scroll controls into view before
+tapping, so they work at simulator screen sizes.
+A dedicated native scenario verifies encrypted history reopening and purging
+with the real SQLite and Keychain/Keystore plugins. It covers SQLite commands
+that return a row and require `rawQuery`, even when setting a value such as
+`PRAGMA secure_delete = ON`.
 
-## Commandes locales
+## Local commands
 
-Depuis `elyrii_app`, avec la version du SDK de `.fvmrc` :
+From `elyrii_app`, using the SDK version in `.fvmrc`:
 
 ```bash
 flutter pub get --enforce-lockfile
@@ -57,25 +53,25 @@ dart pub global activate dartdoc 9.0.11
 dart pub global run dartdoc --output doc/api
 ```
 
-`bash scripts/flutter_ci_check.sh`, depuis la racine du dépôt, exécute la
-résolution verrouillée, le formatage sans mutation, l’analyse et les tests.
+From the repository root, `bash scripts/flutter_ci_check.sh` runs locked
+dependency resolution, the non-mutating format check, analysis, and tests.
 
-Sur ce poste, vérifier d’abord les parcours dans le navigateur. Ne pas lancer
-de simulateur ou d’émulateur local. Un build ou une installation sur téléphone
-demande une autorisation explicite après la revue navigateur.
-Les jobs natifs GitHub Actions ne constituent une preuve qu’après leur exécution.
+On this workstation, check flows in the browser first. Do not start a local
+simulator or emulator. A build or installation on a phone requires explicit
+authorization after browser review. Native GitHub Actions jobs provide evidence
+only after they have run.
 
 ## Distribution
 
-Une build production/staging exige une URL explicite de gateway HTTPS :
+A production/staging build requires an explicit HTTPS gateway URL:
 
 ```bash
 flutter build appbundle --release --dart-define=ELYRII_ENV=production --dart-define=ELYRII_API_URL=https://YOUR_GATEWAY
 flutter build ipa --release --dart-define=ELYRII_ENV=production --dart-define=ELYRII_API_URL=https://YOUR_GATEWAY
 ```
 
-Remplacer l’exemple par l’URL réelle. La signature Android release nécessite
-`android/key.properties` et un keystore de distribution ; aucune clé debug
-n’est utilisée en repli. iOS exige les certificats et profils de l’organisation.
-Les artefacts CI de développement ne sont pas des livraisons de production.
-Aucun déploiement ni envoi vers les stores n’est effectué par cette CI.
+Replace the example with the real URL. Android release signing requires
+`android/key.properties` and a distribution keystore; no debug key is used as
+a fallback. iOS requires the organization's certificates and provisioning
+profiles. Development CI artifacts are not production releases. This CI does
+not deploy or submit builds to stores.

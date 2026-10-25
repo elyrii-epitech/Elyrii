@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'liquid_glass_button.dart';
 
-/// Bouton retour unifié de l'application : flèche iOS dans un bouton
-/// Liquid Glass de 48 px, identique sur toutes les pages.
-///
-/// Sans [onPressed], exécute `Navigator.pop`.
+/// Shared app back button: an iOS arrow in a 48-pixel Liquid Glass button,
+/// identical across pages. Uses `Navigator.pop` when [onPressed] is absent.
 class ElyriiBackButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Color? color;

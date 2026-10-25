@@ -2,27 +2,25 @@ import 'dart:math' as math;
 
 import 'package:flutter/animation.dart';
 
-/// Les durées nommées et les trois courbes du contrat de mouvement de
-/// l'Accueil v2. Aucune section n'écrit une durée ou une courbe en dur :
-/// elle choisit un rôle ici.
-///
-/// Les trois courbes viennent des easings CSS de la maquette :
-/// ease est `cubic-bezier(.25,.1,.25,1)`, l'entrée rise est
-/// `cubic-bezier(.22,.8,.24,1)` et les rebonds pop utilisent
-/// `cubic-bezier(.3,1.4,.5,1)`, overshoot compris.
+/// Named durations and three curves of Home's v2 motion contract. Sections
+/// choose a role here instead of hardcoding durations or curves. Curves come
+/// from the mockup's CSS easings: ease is `cubic-bezier(.25,.1,.25,1)`, rise
+/// entry uses `cubic-bezier(.22,.8,.24,1)`, and pop bounces use
+/// `cubic-bezier(.3,1.4,.5,1)`, including overshoot.
 abstract final class AppMotion {
-  /// `cubic-bezier(.25,.1,.25,1)` : bande, capsule, fond de réponse, voiles.
+  /// `cubic-bezier(.25,.1,.25,1)` for the band, capsule, response background,
+  /// and scrims.
   static const Cubic accueilEase = Cubic(0.25, 0.1, 0.25, 1);
 
-  /// `cubic-bezier(.22,.8,.24,1)` : entrées rise, feuilles, calendrier.
+  /// `cubic-bezier(.22,.8,.24,1)` for rise entries, sheets, and calendar.
   static const Cubic accueilRise = Cubic(0.22, 0.8, 0.24, 1);
 
-  /// `cubic-bezier(.3,1.4,.5,1)` : hop de mascotte, pops d'essayage, check.
+  /// `cubic-bezier(.3,1.4,.5,1)` for mascot hops, outfit preview pops, and checkmarks.
   static const Cubic accueilPop = Cubic(0.3, 1.4, 0.5, 1);
 
   static const Cubic meditationBreath = Cubic(.42, 0, .58, 1);
 
-  /// Opacité de la bande de verre supérieure.
+  /// Top glass-band opacity.
   static const Duration bandFade = Duration(milliseconds: 200);
 
   static const Duration dockPress = Duration(milliseconds: 180);
@@ -41,86 +39,86 @@ abstract final class AppMotion {
   static const Duration gardenBreathPhase = Duration(seconds: 4);
   static const Duration gardenBreathSession = Duration(minutes: 2);
 
-  /// Compaction de la capsule (hauteur, padding, largeur des labels).
+  /// Capsule compaction: height, padding, and label width.
   static const Duration capsuleCompact = Duration(milliseconds: 250);
 
-  /// Fondu des labels de la capsule.
+  /// Capsule label fade.
   static const Duration capsuleLabelFade = Duration(milliseconds: 200);
 
-  /// Entrée rise d'un bloc de contenu.
+  /// Rise entry of a content block.
   static const Duration entryRise = Duration(milliseconds: 550);
 
-  /// Écart entre deux blocs de contenu qui entrent.
+  /// Stagger between entering content blocks.
   static const Duration entryStagger = Duration(milliseconds: 70);
 
-  /// Face d'humeur sélectionnée (scale 1 → 1,08).
+  /// Selected mood face scale: 1 to 1.08.
   static const Duration moodFaceTap = Duration(milliseconds: 150);
 
-  /// Fond de la carte réponse entre surface et soft pink.
+  /// Response card background transition between surface and soft pink.
   static const Duration answerBackground = Duration(milliseconds: 300);
 
-  /// Fondu croisé du texte de la réponse.
+  /// Response text crossfade.
   static const Duration answerTextFade = Duration(milliseconds: 150);
 
-  /// Taille intrinsèque de la carte réponse.
+  /// Intrinsic response card size.
   static const Duration answerSize = Duration(milliseconds: 200);
 
-  /// Hop vertical de la mascotte (0, -12, 0).
+  /// Vertical mascot hop: 0, -12, 0.
   static const Duration mascotHop = Duration(milliseconds: 420);
 
-  /// Pop d'essayage d'un preset ou d'un accessoire accepté.
+  /// Outfit preview pop for an accepted preset or accessory.
   static const Duration previewPop = Duration(milliseconds: 380);
 
-  /// Anneau de sélection d'un preset du dressing.
+  /// Dressing-room preset selection ring.
   static const Duration presetRing = Duration(milliseconds: 150);
 
-  /// Recoloration du héros au changement de palette.
+  /// Hero recoloring when the palette changes.
   static const Duration paletteFilter = Duration(milliseconds: 450);
 
-  /// Entrée d'une feuille (Série, Fleurs, dressing).
+  /// Sheet entry for streak, flowers, and dressing room.
   static const Duration sheetEnter = Duration(milliseconds: 380);
 
-  /// Voile d'une feuille Série ou Fleurs.
+  /// Streak or flowers sheet scrim.
   static const Duration sheetVeil = Duration(milliseconds: 250);
 
-  /// Glissement d'une page entière, la durée d'une page Cupertino.
+  /// Full-page slide using Cupertino page duration.
   static const Duration pageSlide = Duration(milliseconds: 500);
 
-  /// Fondu modal autorisé en mouvement réduit : aucune translation.
+  /// Modal fade allowed with reduced motion, without translation.
   static const Duration modalFade = Duration(milliseconds: 150);
 
-  /// Transformée du panneau calendrier (scale + translation).
+  /// Calendar panel transform: scale and translation.
   static const Duration calendarTransform = Duration(milliseconds: 280);
 
-  /// Opacité du panneau et du voile calendrier.
+  /// Calendar panel and scrim opacity.
   static const Duration calendarFade = Duration(milliseconds: 200);
 
-  /// Rotation du chevron du bouton date.
+  /// Date button chevron rotation.
   static const Duration dateChevron = Duration(milliseconds: 250);
 
-  /// Check d'un rituel qui grossit (0,6 → 1).
+  /// Growing ritual checkmark: scale 0.6 to 1.
   static const Duration ritualCheck = Duration(milliseconds: 240);
 
-  /// Croissance d'une fleur du parterre (tige puis pétales).
+  /// Garden flower growth: stem, then petals.
   static const Duration flowerGrow = Duration(milliseconds: 420);
 
-  /// Écart entre deux fleurs du parterre.
+  /// Stagger between garden flowers.
   static const Duration flowerStagger = Duration(milliseconds: 60);
 
-  /// Montée d'une rangée de jours du calendrier.
+  /// Calendar day-row rise.
   static const Duration calendarRowRise = Duration(milliseconds: 220);
 
-  /// Écart entre deux rangées de jours.
+  /// Stagger between day rows.
   static const Duration calendarRowStagger = Duration(milliseconds: 25);
 
-  /// Count-up du « N jours » de la feuille Série.
+  /// Day-count animation in the streak sheet.
   static const Duration countUp = Duration(milliseconds: 900);
 
-  /// Remplissage décalé des points de semaine.
+  /// Staggered filling of week dots.
   static const Duration weekDotStagger = Duration(milliseconds: 50);
 
-  /// Progression du count-up selon la formule de la maquette
-  /// `1-(1-k)^3`, avec k le temps écoulé normalisé.
+  /// Count-up progress using the mockup's `1-(1-k)^3` formula, where k is
+  /// normalized elapsed time.
   static double countUpProgress(double t) {
     final k = t.clamp(0.0, 1.0);
     return 1 - math.pow(1 - k, 3).toDouble();

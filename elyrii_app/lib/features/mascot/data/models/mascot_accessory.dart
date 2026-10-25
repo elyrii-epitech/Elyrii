@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-/// Une pièce 3D de la garde-robe d'Elyrii, débloquée par les défis terminés.
-/// Son identifiant correspond à la variante du modèle de la mascotte.
+/// A 3D piece of Elyrii's wardrobe unlocked by completed challenges. Its ID
+/// matches a variant in the mascot model.
 @immutable
 class MascotAccessory {
   final String id;
@@ -27,7 +27,7 @@ class MascotAccessory {
       (requiredChallenges - completedChallenges).clamp(0, requiredChallenges);
 }
 
-/// Catalogue commun au rendu, à la personnalisation et à la sauvegarde.
+/// Shared catalog for rendering, customization, and persistence.
 abstract final class MascotAccessories {
   /// Preserve saved looks from Lucas's earlier wardrobe identifiers.
   static const legacyIds = {

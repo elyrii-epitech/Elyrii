@@ -1,38 +1,37 @@
-# Dépendances frontend iOS et Android
+# iOS and Android frontend dependencies
 
-La source de vérité est `elyrii_app/pubspec.yaml` et son lockfile versionné.
-Flutter **3.47.4** / Dart **3.13.3** sont utilisés localement et dans la CI ;
-`flutter pub get --enforce-lockfile` vérifie la résolution.
+The source of truth is `elyrii_app/pubspec.yaml` and its committed lockfile.
+Flutter **3.47.4** / Dart **3.13.3** are used locally and in CI;
+`flutter pub get --enforce-lockfile` verifies dependency resolution.
 
-| Dépendance | Responsabilité |
+| Dependency | Responsibility |
 | --- | --- |
-| Flutter, flutter_localizations, intl | UI, français déclaré et dates françaises initialisées |
-| provider, go_router | État/injection des fonctionnalités et shell de navigation persistant |
-| http, http_parser | Transport HTTP commun annulable et types MIME des fichiers |
-| cross_file | Lecture/upload des photos natives via l’interface `XFile` du picker |
-| flutter_secure_storage | Credentials et clés de contenu par compte, sans repli en clair |
-| cryptography | AES-GCM avec authentification liée au propriétaire et à la ressource |
-| shared_preferences | Préférences sans contenu privé, fraîcheur des caches, marqueurs de purge |
-| sqflite, sqflite_common, path | SQLite iOS/Android, interface commune et chemins normalisés |
-| sqflite_common_ffi | Dépendance de développement pour les tests SQLite réels sous Linux |
-| flutter_animate, liquid_glass_widgets | Animations respectant le système et primitives de verre communes |
-| flutter_3d_controller 2.3.0, visibility_detector | Renderer mascotte existant, suspension et libération selon la visibilité |
-| image_picker, image_cropper | Galerie et recadrage natifs iOS/Android |
-| path_provider | Répertoires privés de cache pour les copies d’avatar et les exports temporaires |
-| package_info_plus | Version et numéro de build réellement installés, affichage et diagnostics |
-| share_plus | Partage natif volontaire des exports et diagnostics, avec origine adaptée à l’iPad |
-| uuid, url_launcher, cupertino_icons | Identifiants de corrélation/ressources, ressources externes et icônes |
-| flutter_test, integration_test, flutter_lints | Tests unitaires/widgets, intégration native et analyse statique |
-| flutter_launcher_icons, flutter_native_splash | Génération des icônes et du splash depuis les assets sources |
+| Flutter, flutter_localizations, intl | UI, declared French locale, and initialized French dates |
+| provider, go_router | Feature state/injection and persistent navigation shell |
+| http, http_parser | Shared cancellable HTTP transport and file MIME types |
+| cross_file | Native photo reading/upload through the picker's `XFile` interface |
+| flutter_secure_storage | Account-scoped credentials and content keys, without plaintext fallback |
+| cryptography | AES-GCM authenticated against the owner and resource |
+| shared_preferences | Preferences without private content, cache freshness, and purge markers |
+| sqflite, sqflite_common, path | iOS/Android SQLite, shared interface, and normalized paths |
+| sqflite_common_ffi | Development dependency for real SQLite tests on Linux |
+| flutter_animate, liquid_glass_widgets | Animations respecting system settings and shared glass primitives |
+| flutter_3d_controller 2.3.0, visibility_detector | Existing mascot renderer, visibility-based suspension and release |
+| image_picker, image_cropper | Native iOS/Android gallery and cropping |
+| path_provider | Private cache directories for avatar copies and temporary exports |
+| package_info_plus | Installed version/build number for display and diagnostics |
+| share_plus | User-initiated native sharing of exports and diagnostics, with an iPad-compatible origin |
+| uuid, url_launcher, cupertino_icons | Correlation/resource IDs, external resources, and icons |
+| flutter_test, integration_test, flutter_lints | Unit/widget tests, native integration, and static analysis |
+| flutter_launcher_icons, flutter_native_splash | Icon and splash generation from source assets |
 
-Le transport chat utilise `dart:io` pour le WebSocket authentifié avec Bearer.
-Les polices Poppins sont embarquées, sans téléchargement Google Fonts.
-L’application utilise SQLite, le WebSocket authentifié et le recadrage natifs.
+Chat transport uses `dart:io` for the Bearer-authenticated WebSocket.
+Poppins fonts are bundled; Google Fonts are not downloaded.
+The app uses native SQLite, authenticated WebSockets, and image cropping.
 
-Les upgrades doivent repasser les tests d’assets, les builds iOS/Android et
-les parcours natifs avant fusion.
+Upgrades must pass asset tests, iOS/Android builds, and native flows before merge.
 
-Pour régénérer l’inventaire CycloneDX depuis `elyrii_app` :
+To regenerate the CycloneDX inventory from `elyrii_app`:
 
 ```bash
 mkdir -p build
@@ -40,5 +39,5 @@ flutter pub deps --json > build/pub-deps.json
 python3 tool/frontend_sbom.py --deps build/pub-deps.json --output build/frontend.cdx.json
 ```
 
-Le suivi des dépendances natives Gradle/CocoaPods complète cet inventaire après
-build ; voir le [guide de livraison](release.md).
+Native Gradle/CocoaPods dependency tracking complements this inventory after
+building; see the [release guide](release.md).

@@ -1,14 +1,12 @@
 import '../theme/app_dimensions.dart';
 
-/// Rôles fonctionnels pour les surfaces Liquid Glass dans Elyrii.
-///
-/// Chaque rôle applique un degré de flou, d'opacité et de réfraction
-/// strictement calibré pour son contexte d'utilisation.
+/// Functional roles for Elyrii Liquid Glass surfaces. Each role calibrates
+/// blur, opacity, and refraction to its context.
 enum GlassRole {
-  /// Verre v2 du dock, sans réfraction.
+  /// Dock v2 glass without refraction.
   navigation(blur: AppDimensions.navigationBlur, opacity: 0.66, refraction: 0),
 
-  /// Commandes flottantes (bouton mascotte, actions d'en-tête)
+  /// Floating controls, including the mascot button and header actions.
   floatingControl(blur: 16.0, opacity: 0.75, refraction: 0.08);
 
   final double blur;

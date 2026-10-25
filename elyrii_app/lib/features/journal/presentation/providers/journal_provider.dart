@@ -10,7 +10,7 @@ import '../../data/repositories/journal_repository.dart';
 /// Kept for backward compatibility — re-exports the model under old name
 typedef JournalEntry = JournalEntryModel;
 
-/// Provider pour gérer l'état du journal
+/// Provider managing journal state.
 class JournalProvider extends ChangeNotifier {
   final JournalRepository _repository;
   final bool _ownsRepository;

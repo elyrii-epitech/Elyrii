@@ -1,9 +1,9 @@
-# Développement frontend iOS et Android
+# iOS and Android frontend development
 
-Les seules cibles livrées sont **iOS et Android**. Utiliser Flutter **3.47.4** /
-Dart **3.13.3**, définis dans `elyrii_app/.fvmrc`. Avec FVM : `fvm install`, puis
-`fvm flutter …`. Sinon, installer cette version exacte et ajouter son `bin`
-au `PATH`.
+The only release targets are **iOS and Android**. Use Flutter **3.47.4** /
+Dart **3.13.3**, defined in `elyrii_app/.fvmrc`. With FVM, run `fvm install`,
+then `fvm flutter …`. Otherwise, install this exact version and add its `bin`
+directory to `PATH`.
 
 ```bash
 cd elyrii_app
@@ -13,59 +13,56 @@ flutter doctor -v
 flutter run -d DEVICE_ID
 ```
 
-En debug, l’environnement par défaut est `development`, gateway port **3001**.
-L’émulateur Android utilise `10.0.2.2` et le simulateur iOS `localhost`.
-Sur un téléphone physique, utiliser une gateway accessible en HTTPS :
+In debug mode, the default environment is `development`, with the gateway on
+port **3001**. The Android emulator uses `10.0.2.2`; the iOS simulator uses
+`localhost`. On a physical phone, use a reachable HTTPS gateway:
 
 ```bash
 flutter run -d DEVICE_ID --dart-define=ELYRII_API_URL=https://YOUR_DEVELOPMENT_GATEWAY
 ```
 
-`ELYRII_API_PORT` change le port de développement local. L’ancien argument
-`BASE_URL` reste accepté. Staging/production exigent une URL HTTPS explicite,
-sans credentials incorporés et distante du loopback. Une release sans argument
-d’environnement sélectionne production : elle ne cible pas silencieusement
-la gateway locale de développement.
+`ELYRII_API_PORT` changes the local development port. The legacy `BASE_URL`
+argument is still accepted. Staging/production require an explicit HTTPS URL
+without embedded credentials or a loopback address. A release build without an
+environment argument selects production; it does not silently target the local
+development gateway.
 
-Android/iOS autorisent HTTP pour les seules exceptions locales du renderer et
-du développement. L’application Android est `com.elyrii.elyrii_app` ; la signature
-release exige `android/key.properties`. Ne pas versionner les credentials.
-La cible CI iOS est une application simulateur debug.
+Android/iOS allow HTTP only for local renderer and development exceptions.
+The Android application ID is `com.elyrii.elyrii_app`; release signing requires
+`android/key.properties`. Do not commit credentials. The iOS CI target is a
+debug simulator application.
 
-## Architecture et tests
+## Architecture and tests
 
-Enregistrer les services communs dans `lib/app/app_dependencies.dart`.
-Les opérations par compte capturent une révision de session. Les repositories
-valident le JSON externe via `decodeResponse` / `decodeListResponse` et réservent
-les replis hors ligne aux erreurs typées admises. Un 401, une réponse invalide
-ou une mutation refusée ne deviennent pas un succès issu du cache.
-Les défis du Jardin et les déblocages de la tenue sont réinitialisés lors
-d’un changement de compte, d’un passage en démo ou d’une déconnexion.
+Register shared services in `lib/app/app_dependencies.dart`. Account-scoped
+operations capture a session revision. Repositories validate external JSON
+through `decodeResponse` / `decodeListResponse` and restrict offline fallbacks
+to explicitly supported typed errors. A 401, an invalid response, or a rejected
+mutation must not become a cached success. Garden challenges and wardrobe
+unlocks reset on account changes, entry into demo mode, and logout.
 
-Journal/brouillons et messages/titres chat utilisent SQLite et AES-GCM. Les
-clés sont conservées via Keychain/Keystore. L’adaptateur de test injecte SQLite
-FFI : cela ne remplace pas une vérification des plugins sur iOS/Android.
-Le chat conserve le header Bearer natif ; aucun contrat serveur n’est inventé.
+Journal entries/drafts and chat messages/titles use SQLite and AES-GCM. Keys
+are stored in Keychain/Keystore. The test adapter injects SQLite FFI; this does
+not replace plugin verification on iOS/Android. Chat retains the native Bearer
+header; the required server contract must be delivered separately.
 
-Utiliser les contrôles communs accessibles pour les libellés, le clavier et
-la réduction des animations. Construire les historiques non bornés via des
-slivers paresseux. Pour Flutter Animate, utiliser
+Use the shared accessible controls for labels, keyboard access, and reduced
+motion. Build unbounded histories with lazy slivers. For Flutter Animate, use
 `animateRespectingMotion(context)`.
 
-Les commandes pré-fusion figurent dans [CI/CD](ci-cd.md). Les tests couvrent
-courses de session, credentials, stockage chiffré, purge/reprise, journal,
-préférences hors ordre, annulation/délais réseau, chat, horloge/cycle de vie des
-séances, routes, bootstrap, accessibilité et listes volumineuses.
+Pre-merge commands are listed in [CI/CD](ci-cd.md). Tests cover session races,
+credentials, encrypted storage, purge/recovery, journal entries, out-of-order
+preferences, network cancellation/timeouts, chat, session clocks/lifecycle,
+routes, bootstrap, accessibility, and large lists.
 
-## Intégration native
+## Native integration
 
 ```bash
 flutter test integration_test/frontend_flows_test.dart -d DEVICE_ID --dart-define=ELYRII_ENV=development
 ```
 
-Contrôler également galerie et upload, libération du renderer, TalkBack/VoiceOver
-et texte agrandi sur les appareils représentatifs.
+Also check gallery access/upload, renderer release, TalkBack/VoiceOver, and
+enlarged text on representative devices.
 
-Voir le [guide de livraison](release.md) pour les migrations et les vérifications
-sur appareils et gateway, et le [protocole d’accessibilité](accessibility.md)
-pour les parcours avec les aides techniques.
+See the [release guide](release.md) for migrations and device/gateway checks,
+and the [accessibility protocol](accessibility.md) for assistive technology flows.

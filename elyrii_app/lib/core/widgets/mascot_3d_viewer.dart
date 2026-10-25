@@ -14,35 +14,35 @@ import 'mascot_look.dart';
 import 'mascot_poster.dart';
 import '../../features/mascot/data/models/mascot_appearance.dart';
 
-/// Affiche la mascotte 3D avec un poster pendant le chargement ou en cas
-/// d'erreur, et libère le rendu natif après une absence prolongée.
+/// Displays the 3D mascot with a poster during loading/errors and releases
+/// native rendering after a prolonged absence.
 class Mascot3DViewer extends StatefulWidget {
-  /// Configuration du viewer 3D (caméra, rotation, interaction).
+  /// 3D viewer configuration: camera, rotation, and interaction.
   final Mascot3DConfig config;
 
-  /// Largeur du viewer.
+  /// Viewer width.
   final double width;
 
-  /// Hauteur du viewer.
+  /// Viewer height.
   final double height;
 
-  /// Contrôleur externe optionnel pour piloter le modèle 3D.
-  /// Si non fourni, un contrôleur interne est créé automatiquement.
+  /// Optional external controller for the 3D model. An internal controller is
+  /// created automatically when omitted.
   final MascotModelController? controller;
 
-  /// Animation à jouer maintenant. Null → [Mascot3DConfig.initialAnimation].
-  ///
-  /// Les clips `once` retournent automatiquement à idle à leur fin.
-  /// [MascotAnimations.holdPose] fige la pose courante (pauseAnimation).
+  /// Animation to play now; null uses [Mascot3DConfig.initialAnimation].
+  /// One-shot clips automatically return to idle on completion.
+  /// [MascotAnimations.holdPose] freezes the current pose through
+  /// pauseAnimation.
   final MascotAnimation? animation;
 
-  /// Incrémenter pour rejouer un même geste après une nouvelle interaction.
+  /// Increment to replay the same gesture after a new interaction.
   final int animationTrigger;
 
-  /// Progression du souffle 0 → 1, partagée avec le cercle de guidage.
+  /// Breathing progress from 0 to 1, shared with the guidance circle.
   final ValueListenable<double>? breathProgress;
 
-  /// Faux pour les accessoires statiques sans clips natifs.
+  /// False for static accessories without native clips.
   final bool animated;
 
   /// Accessory variant inside the shared rigged wardrobe GLB. Null removes it.
@@ -50,10 +50,10 @@ class Mascot3DViewer extends StatefulWidget {
   final MascotAppearance appearance;
   final String posterScope;
 
-  /// Callback appelé quand le modèle est chargé avec succès.
+  /// Callback when the model loads successfully.
   final VoidCallback? onModelLoaded;
 
-  /// Callback appelé en cas d'erreur de chargement.
+  /// Callback on a loading error.
   final ValueChanged<String>? onError;
 
   const Mascot3DViewer({

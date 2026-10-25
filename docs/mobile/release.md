@@ -1,189 +1,178 @@
-# Livraison de l’application mobile
+# Mobile app release
 
-Ce guide complète les [contrôles CI/CD](ci-cd.md) et le
-[protocole d’accessibilité](accessibility.md). Les tests locaux ne remplacent pas
-la configuration des services et les vérifications natives avant distribution.
+This guide complements the [CI/CD checks](ci-cd.md) and
+[accessibility protocol](accessibility.md). Local tests do not replace service
+configuration and native checks before distribution.
 
-La PR frontend ne livre pas les évolutions du serveur décrites ci-dessous.
-La récupération de mot de passe, l’export du compte, les signalements, la
-pagination du journal et la corrélation du chat exigent un backend compatible.
-Vérifier ces contrats sur la gateway cible avant de distribuer l’application.
+## Backend readiness
 
-## Migration et ordre de livraison
+The frontend PR does not deliver the server changes below. Password recovery
+[#266](https://github.com/elyrii-epitech/Elyrii/issues/266), account export
+[#267](https://github.com/elyrii-epitech/Elyrii/issues/267), response reports
+[#268](https://github.com/elyrii-epitech/Elyrii/issues/268), journal pagination,
+chat correlation [#265](https://github.com/elyrii-epitech/Elyrii/issues/265), and
+meditation catalog/duration support
+[#264](https://github.com/elyrii-epitech/Elyrii/issues/264) require a compatible
+backend. Verify these contracts on the target gateway before distributing the app.
 
-1. Sauvegarder la base et tester la restauration en staging ; mesurer la durée
-   des créations d’index sur un volume représentatif. Les index standards de
-   cette migration peuvent verrouiller des écritures pendant leur création.
-2. Appliquer
-   [`20261010_frontend_reliability.sql`](https://github.com/elyrii-epitech/Elyrii/blob/frontend/elyrii_server/migrations/20261010_frontend_reliability.sql)
-   par le mécanisme de migration du déploiement avant d’activer le nouveau
-   backend. La migration est additive. Ne jamais utiliser le
-   `drizzle-kit push --force` de la CI de test comme procédure de migration
-   de production.
-3. Livrer le backend, vérifier les routes existantes puis les nouvelles avec
-   des comptes de staging. L’absence de paramètres de pagination conserve
-   l’ancien format tableau du journal ; les nouveaux clients demandent des
-   pages de 100 avec ordre et curseur.
-4. Configurer le mail, l’accès modérateur et les limites de passerelle ci-dessous.
-   Livrer ensuite l’application native testée et signée selon la plateforme.
-5. Vérifier la création idempotente, les effets de défis, la lecture paginée,
-   l’export propriétaire, le signalement et la récupération depuis l’application.
+The backend configuration, limits, and migration behavior described below are
+**requirements for that separate implementation**, not capabilities delivered
+or verified by this frontend PR. Confirm their final names and behavior against
+the backend change before rollout.
 
-Les UUID de création sont uniques par compte ; les anciennes lignes peuvent
-conserver un identifiant de requête nul. Le curseur du journal utilise la date
-tronquée à la milliseconde et l’UUID, avec un index correspondant, pour éviter
-les pertes liées à la précision PostgreSQL/JavaScript.
+## Migration and release order
 
-Un rollback de l’application/backend peut conserver les colonnes, tables et
-index additifs. Ne pas supprimer les notes, signalements ou tokens de
-récupération avec un rollback improvisé. Les accès, sauvegardes et durées de
-conservation des nouveaux signalements doivent entrer dans l’exploitation ;
-leur description juridique demeure reportée à la demande de l’utilisateur.
+1. Back up the database and test restoration in staging. Measure index creation
+   time on representative data; standard index creation can lock writes.
+2. Obtain and review the backend implementation's additive migration, then
+   apply it through the deployment migration mechanism before enabling the
+   new backend. The previously documented
+   `20261010_frontend_reliability.sql` is absent from this PR and must not be
+   treated as a shipped migration. Never use the test CI's
+   `drizzle-kit push --force` as a production migration procedure.
+3. Deliver the backend and check existing/new routes with staging accounts.
+   Without pagination parameters, the journal must preserve its legacy array
+   format; new clients request pages of 100 with sorting and cursors.
+4. Configure mail, moderator access, and gateway limits below, then deliver the
+   tested native app signed for each platform.
+5. Verify idempotent creation, challenge effects, paginated reads, owner-scoped
+   exports, reporting, recovery, and meditation saving from the app.
 
-## Récupération de mot de passe
+Creation UUIDs must be unique per account; older rows may retain a null request
+ID. Journal cursors must use millisecond-truncated dates and UUIDs, with a
+matching index, to avoid PostgreSQL/JavaScript precision-related omissions.
 
-Configurer côté serveur :
+An app/backend rollback can retain additive columns, tables, and indexes.
+Do not delete notes, reports, or recovery tokens through an improvised rollback.
+Operations must cover access, backups, and retention for new reports; their
+legal description remains deferred at the user's request.
 
-| Variable | Contrat |
+## Password recovery requirements
+
+Configure on the server:
+
+| Variable | Required contract |
 | --- | --- |
-| `PASSWORD_RESET_MAIL_WEBHOOK` | URL HTTPS sans identifiant, mot de passe, query ni fragment ; les redirections sont refusées. |
-| `PASSWORD_RESET_MAIL_SECRET` | Secret serveur transmis au webhook par `Authorization: Bearer …`, jamais à l’application. |
-| `PASSWORD_RESET_TRUSTED_PROXY_IPS` | Facultatif : liste séparée par virgules des adresses IP exactes des proxys réellement connectés au serveur. |
+| `PASSWORD_RESET_MAIL_WEBHOOK` | HTTPS URL without username, password, query, or fragment; redirects rejected. |
+| `PASSWORD_RESET_MAIL_SECRET` | Server secret passed to the webhook through `Authorization: Bearer …`, never to the app. |
+| `PASSWORD_RESET_TRUSTED_PROXY_IPS` | Optional comma-separated list of exact IPs of proxies actually connected to the server. |
 
-Le webhook reçoit un POST JSON :
+The webhook should receive a JSON POST:
 
 ```json
 {
   "template": "password-reset",
-  "to": "compte-fictif@example.invalid",
-  "code": "code-base64url-aleatoire-a-usage-unique",
+  "to": "test-account@example.invalid",
+  "code": "random-single-use-base64url-code",
   "expiresInMinutes": 15
 }
 ```
 
-Le modèle doit afficher le code copiable et la durée, sans le journaliser ni
-l’intégrer dans une URL de tracking. Le webhook répond 2xx après prise en
-charge ; timeout de 10 s. Les échecs de livraison invalident le hash émis et
-produisent uniquement une catégorie technique générique. L’absence de
-configuration retourne 503 avec un message honnête. Lorsque configurée, la
-demande valide retourne 202 de manière uniforme pour les adresses connues et
-inconnues ; cette réponse ne prouve pas la livraison de l’email.
+The template must display a copyable code and its lifetime, without logging it
+or embedding it in a tracking URL. The webhook should acknowledge acceptance
+with 2xx within a 10-second timeout. Delivery failures must invalidate the issued
+hash and expose only a generic technical category. Missing configuration should
+return 503 with an accurate message. Once configured, valid requests should
+return 202 uniformly for known and unknown addresses; acceptance does not prove
+email delivery.
 
-Le code est issu de 256 bits aléatoires, stocké uniquement sous forme de
-SHA-256, valable 15 minutes et consommé atomiquement une seule fois. Le
-nouveau mot de passe est borné à 12–128 caractères et hashé par Argon2id. La
-confirmation supprime les refresh sessions du compte ; les access tokens
-existants peuvent continuer jusqu’à leur expiration. Leur renouvellement et
-les parcours d’activation email restent volontairement hors périmètre.
+Codes should use 256 random bits, be stored only as SHA-256 hashes, expire after
+15 minutes, and be consumed atomically once. New passwords must be 12–128
+characters and hashed with Argon2id. Confirmation should remove the account's
+refresh sessions; existing access tokens may remain valid until expiry.
+Automatic renewal and email activation changes remain outside this scope.
 
-Exécuter en staging : adresse inconnue, livraison réussie, indisponibilité du
-webhook, code expiré, deux confirmations concurrentes, demandes répétées et
-mot de passe correct après confirmation. Aucun vrai message n’a été envoyé
-pour valider les fixtures automatisées.
+Test in staging: unknown address, successful delivery, unavailable webhook,
+expired code, two concurrent confirmations, repeated requests, and login after
+confirmation. Automated fixtures have not sent real messages.
 
-Les routes publiques ont des limites de corps de 1 KiB (demande) et 4 KiB
-(confirmation), et des quotas par processus de 10 / 30 requêtes par fenêtre
-de 15 minutes. La carte des identités est bornée à 10 000, les identités
-supplémentaires étant refusées lorsque pleine. Un délai SQL d’une minute par
-compte protège aussi l’émission sur plusieurs instances. Le quota IP en
-mémoire n’est pas un quota distribué : appliquer en complément des limites
-partagées au niveau de la passerelle et du fournisseur mail.
+Proposed public-route limits are 1 KiB for requests and 4 KiB for confirmations,
+with per-process quotas of 10 / 30 requests per 15-minute window. The identity
+map should be capped at 10,000 and reject additional identities when full.
+A one-minute SQL cooldown per account should protect issuance across instances.
+An in-memory IP quota is not distributed; add shared gateway/mail-provider limits.
 
-L’adresse réelle du peer Bun est utilisée. `X-Real-IP` est accepté seulement
-si ce peer figure explicitement dans la liste de confiance et que la valeur
-est une IP unique valide. Le proxy doit écraser le header fourni par le client.
-Tester que des headers arbitraires ne permettent pas de contourner les limites
-et que la configuration ne regroupe pas tous les visiteurs sous un seul quota.
+Use Bun's actual peer address. Accept `X-Real-IP` only if that peer is explicitly
+trusted and the value is one valid IP. The proxy must overwrite client-supplied
+headers. Verify that arbitrary headers cannot bypass limits and that proxy
+configuration does not group all visitors under a single quota.
 
-## Signalement et modération IA
+## AI reporting and moderation requirements
 
-`POST /user/ai-reports` demande une session, une réponse sélectionnée et un
-motif. Le propriétaire est pris dans la session ; aucun propriétaire, statut
-ou historique envoyé par le client n’est accepté comme autorité. Limite de
-16 000 caractères de contenu, corps de 96 KiB et quota atomique de 20
-signalements par fenêtre glissante de 24 h et par compte. Les signalements demeurent dans la
-base d’Elyrii ; aucune transmission automatique à un tiers n’est ajoutée.
+`POST /user/ai-reports` requires a session, selected response, and reason. Derive
+the owner from the session; client-supplied owner, status, or history must never
+be authoritative. Proposed limits are 16,000 content characters, a 96 KiB body,
+and an atomic quota of 20 reports per rolling 24-hour period per account.
+Reports should remain in Elyrii's database without automatic third-party forwarding.
 
-Configurer `MODERATION_ADMIN_USER_IDS` avec les UUID exacts des comptes
-autorisés, séparés par des virgules. Une liste vide refuse tout accès. Ces
-comptes accèdent à `GET /user/moderation/reports` (50 signalements ouverts au
-maximum) et à `PUT /user/moderation/reports/:reportId` avec
-`{"status":"REVIEWED"}` ou `{"status":"ACTIONED"}`. Le rôle n’est pas
-déduit d’un champ modifiable par le client. Il s’agit d’une API de traitement,
-pas d’une nouvelle console d’administration livrée dans l’application.
+Configure `MODERATION_ADMIN_USER_IDS` with exact authorized account UUIDs,
+comma-separated. An empty list must deny all access. The proposed processing
+API is `GET /user/moderation/reports` (at most 50 open reports) and
+`PUT /user/moderation/reports/:reportId` with `{"status":"REVIEWED"}` or
+`{"status":"ACTIONED"}`. The role must not come from a client-editable field.
+This is a processing API, not a new administration console in the mobile app.
 
-Désigner une personne responsable, la fréquence de lecture, les délais de
-prise en charge, l’escalade pour contenus dangereux et la procédure de
-correction du système IA. Vérifier en staging le refus d’un utilisateur
-ordinaire, l’accès d’un modérateur, la clôture et l’absence d’une clôture
-non autorisée. La disponibilité de la route ne démontre pas que les
-signalements sont effectivement traités.
+Assign an owner, review frequency, response deadlines, escalation for dangerous
+content, and an AI correction procedure. In staging, verify denial for ordinary
+users, moderator access, closure, and prevention of unauthorized closure.
+An available route does not establish that reports are actually processed.
 
-## Données et diagnostics
+## Data and diagnostics
 
-Vérifier l’export avec deux comptes, des données supprimées, des tags/media,
-des conversations et des brouillons locaux. Le serveur utilise un snapshot
-cohérent, exclut mots de passe/tokens et joint les relations au propriétaire.
-Le partage natif vérifie encore la session après préparation du fichier. Les
-exports temporaires privés expirent après 24 h avec nettoyage au prochain
-démarrage ou export ; suppression du compte les purge également. Les copies
-déjà partagées relèvent de la destination choisie.
+Verify export with two accounts, deleted records, tags/media, conversations,
+and local drafts. The server export must use a consistent snapshot, exclude
+passwords/tokens, and join relations by owner. Native sharing checks the session
+again after preparing the file. Private temporary exports expire after 24 hours,
+with cleanup on the next startup/export; account deletion also purges them.
+Already shared copies are governed by the chosen destination.
 
-Les diagnostics locaux ne contiennent que catégories techniques, événements
-et horodatages UTC, 100 événements au maximum sur 7 jours. Ils sont partagés
-volontairement, sans upload automatique. L’équipe d’exploitation doit encore
-définir comment recevoir et suivre ces diagnostics, mesurer les taux d’erreur
-et d’indisponibilité, alerter et corréler les incidents sans collecter le texte
-privé. Ne pas ajouter de payloads de chat/journal ou de secrets aux logs.
+Local diagnostics contain only technical categories, events, and UTC timestamps,
+up to 100 events over seven days. Sharing is voluntary, without automatic upload.
+Operations still needs a process for receiving/tracking diagnostics, measuring
+error/outage rates, alerting, and correlating incidents without collecting
+private text. Do not add chat/journal payloads or secrets to logs.
 
-## Dépendances et builds
+## Dependencies and builds
 
-Le workflow frontend impose le lockfile, l’analyse, les tests et les builds
-techniques. Les contrats serveur se vérifient séparément avant livraison.
-Les actions sont épinglées par SHA et Dependabot ouvre les mises à jour compatibles.
-Les mises à jour majeures, en
-particulier du renderer 3D dont certains internes sont utilisés, exigent une
-revue des contrats et des tests natifs.
+The frontend workflow enforces the lockfile, analysis, tests, and technical
+builds. Server contracts require separate verification before release. Actions
+are pinned by SHA and Dependabot opens compatible updates. Major upgrades,
+especially to the 3D renderer whose internals are used, require contract review
+and native tests.
 
-La documentation API utilise Dartdoc **9.0.11** épinglé. Le générateur 9.0.6
-embarqué dans le SDK plantait sur les imports documentaires de dépendances
-avec des fins de ligne CRLF ; la version corrigée est exécutée explicitement
-en local et dans le job documentaire.
+API documentation uses pinned Dartdoc **9.0.11**. The SDK's bundled 9.0.6
+generator crashed on dependency documentation imports with CRLF line endings;
+the fixed version runs explicitly locally and in the documentation job.
 
-L’inventaire CycloneDX généré par `elyrii_app/tool/frontend_sbom.py` contient
-le graphe Dart, les hashes d’archives Pub, le JS model-viewer
-embarqué et les GLB. La version amont du JS embarqué n’est pas déterminée :
-il est identifié par son hash, avec son en-tête de licence. L’inventaire ne
-constitue ni un scan de vulnérabilités ni une revue exhaustive des licences.
-Ajouter la fermeture Gradle/CocoaPods après build, examiner les avis Pub,
-GitHub et fournisseurs, attribuer un responsable et un délai de correction,
-et consigner un exercice de traitement d’un advisory. Les obligations CRA,
-si applicables au produit, demandent une qualification séparée ; aucune
-qualification juridique n’est inventée dans ce dossier.
+The CycloneDX inventory generated by `elyrii_app/tool/frontend_sbom.py` contains
+the Dart graph, Pub archive hashes, bundled model-viewer JavaScript, and GLBs.
+The bundled JavaScript's upstream version is undetermined; it is identified by
+its hash and license header. The inventory is neither a vulnerability scan nor
+an exhaustive license review. Add the Gradle/CocoaPods dependency closure after
+building, review Pub/GitHub/vendor advisories, assign owners and remediation
+deadlines, and record an advisory-handling exercise. CRA obligations, if
+applicable, need separate assessment; this guide makes no legal determination.
 
-Le workflow manuel `frontend-release-validation.yml` ne publie rien. Il
-prend une origine API HTTPS et utilise l’environnement GitHub
-`frontend-release-validation`, avec : `ANDROID_KEYSTORE_BASE64`,
-`ANDROID_STORE_PASSWORD`, `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS`.
-Il construit AAB/APK release signés, contrôle chaque segment ELF natif pour
-les pages de 16 KiB, contrôle le ZIP par `zipalign -c -P 16 -v 4`, puis supprime
-les fichiers temporaires de signature. Le job iOS produit un artefact
-technique release sans signature ; une distribution iOS demande encore les
-certificats, profiles, capabilities et la validation Xcode de l’organisation.
+The manual `frontend-release-validation.yml` workflow publishes nothing. It
+takes an HTTPS API origin and uses the `frontend-release-validation` GitHub
+environment with `ANDROID_KEYSTORE_BASE64`, `ANDROID_STORE_PASSWORD`,
+`ANDROID_KEY_PASSWORD`, and `ANDROID_KEY_ALIAS`. It builds signed release AAB/APK,
+checks every native ELF segment for 16 KiB pages, checks the ZIP with
+`zipalign -c -P 16 -v 4`, then removes temporary signing files. The iOS job
+produces an unsigned technical release artifact; iOS distribution still requires
+the organization's certificates, profiles, capabilities, and Xcode validation.
 
-L’identité iOS versionnée reste celle de `dev`, `com.eip.elyrii`.
-Une identité personnelle de test doit rester dans une configuration locale.
+The committed iOS identity remains `dev`'s `com.eip.elyrii`. Personal test
+identities must stay in local configuration.
 
-La validation navigateur et les tests Flutter sur hôte ne vérifient pas les
-binaires natifs ni la signature. Le workflow de livraison doit être exécuté
-séparément avec les outils et secrets nécessaires. Les fixtures ELF prouvent
-le comportement du contrôle, pas la compatibilité de l’APK final.
+Browser validation and host Flutter tests do not verify native binaries or
+signing. Release validation must run separately with the required tools/secrets.
+ELF fixtures prove the check's behavior, not the final APK's compatibility.
 
-## Vérifications sur appareils
+## Device checks
 
-Avant livraison, exécuter aussi les parcours TalkBack/VoiceOver décrits dans
-le [protocole d’accessibilité](accessibility.md), les permissions galerie,
-la reprise Android après destruction du picker, les partages natifs, la
-suppression/reprise de purge et l’expiration de session. Renseigner résultats,
-modèles, versions, traces et anomalies ; aucun de ces essais physiques n’est
-marqué réussi par défaut.
+Before release, also run TalkBack/VoiceOver flows from the
+[accessibility protocol](accessibility.md), gallery permissions, Android
+recovery after picker destruction, native sharing, deletion/purge recovery,
+and session expiry. Record results, models, versions, traces, and issues;
+none of these physical-device checks is marked successful by default.

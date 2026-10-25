@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
-/// Action de respiration appliquée à une phase.
+/// Breathing action applied to a phase.
 enum BreathAction { expand, hold, contract }
 
-/// Définition d'une phase de respiration.
+/// Definition of a breathing phase.
 class BreathPhase {
   const BreathPhase(this.seconds, this.label, this.action);
   final int seconds;
   final String label;
   final BreathAction action;
 
-  /// Icône pertinente selon l'action de la phase.
+  /// Icon matching the phase's breathing action.
   IconData get icon {
     switch (action) {
       case BreathAction.expand:
@@ -23,11 +23,10 @@ class BreathPhase {
   }
 }
 
-/// Breathing exercise types available in the meditation page.
-///
-/// Les rythmes sont des repères pour le guidage, exprimés en secondes.
+/// Breathing exercise types available on the meditation page. Rhythms are
+/// guidance references expressed in seconds.
 enum BreathingType {
-  /// 4-7-8 breathing (Dr. Andrew Weil) : inspire 4s, retiens 7s, expire 8s.
+  /// 4-7-8 breathing (Dr. Andrew Weil): inhale for 4 s, hold for 7 s, exhale for 8 s.
   relaxation478(
     'Respiration 4-7-8',
     [
@@ -56,7 +55,7 @@ enum BreathingType {
     Color(0xFFA8D5BA),
   ),
 
-  /// Cohérence cardiaque : 5-5, respire au rythme de 6/min.
+  /// Cardiac coherence: 5-5 breathing at six breaths per minute.
   coherence(
     'Cohérence cardiaque',
     [
@@ -69,7 +68,7 @@ enum BreathingType {
     Color(0xFFFFB5A8),
   ),
 
-  /// Repère ventral 4–6, sans rétention.
+  /// Belly-focused 4–6 reference rhythm without holds.
   diaphragmatique(
     'Respiration diaphragmatique',
     [
@@ -82,7 +81,7 @@ enum BreathingType {
     Color(0xFF93B8DA),
   ),
 
-  /// Ujjayi (respiration océanique du yoga / pranayama) : 6-6.
+  /// Ujjayi: 6-6 ocean breathing inspired by yoga/pranayama.
   ujjayi(
     'Respiration Ujjayi',
     [
@@ -131,21 +130,21 @@ enum BreathingType {
   /// French display label.
   final String label;
 
-  /// Phases successives (durée + libellé + action de respiration).
+  /// Successive phases: duration, label, and breathing action.
   final List<BreathPhase> phases;
 
   /// Short French description.
   final String description;
 
-  /// Origine ou cadre de la technique (badge).
+  /// Technique origin or context, used as a badge.
   final String origin;
 
-  /// Icône représentative.
+  /// Representative icon.
   final IconData icon;
 
-  /// Couleur d'accent de la technique.
+  /// Technique accent color.
   final Color color;
 
-  /// Durée totale d'un cycle complet en secondes.
+  /// Total duration of one complete cycle in seconds.
   int get cycleDuration => phases.fold(0, (prev, p) => prev + p.seconds);
 }

@@ -1,9 +1,7 @@
-/// Jour civil : une date de calendrier sans heure ni fuseau, clé de
-/// l'historique Accueil et du store d'activités.
-///
-/// Les comparaisons et l'arithmétique passent par des dates UTC construites
-/// depuis les composantes, jamais par un `Duration(days: 1)` ajouté à une
-/// heure locale : un changement d'heure ne doit pas décaler un jour.
+/// Civil day: a calendar date without time or timezone, used as the key for
+/// Home history and the activity store. Comparisons and arithmetic use UTC
+/// dates constructed from components, never `Duration(days: 1)` added to a
+/// local time, so daylight-saving changes cannot shift a day.
 class CivilDay implements Comparable<CivilDay> {
   static const List<int> _monthLengths = [
     31,
@@ -28,8 +26,8 @@ class CivilDay implements Comparable<CivilDay> {
   static bool _isLeapYear(int year) =>
       (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
 
-  /// Comme [parse] mais renvoie null au lieu de lever, pour l'analyse
-  /// tolérante des documents locaux.
+  /// Like [parse], but returns null instead of throwing, for tolerant parsing
+  /// of local documents.
   static CivilDay? tryParse(String isoDate) {
     try {
       return CivilDay.parse(isoDate);
@@ -38,9 +36,8 @@ class CivilDay implements Comparable<CivilDay> {
     }
   }
 
-  /// Analyse une date `YYYY-MM-DD` telle que renvoyée par le serveur, sans
-  /// la convertir en instant : les composantes sont conservées telles
-  /// quelles. Une valeur mal formée est une erreur de contrat.
+  /// Parses a server `YYYY-MM-DD` date without converting it to an instant;
+  /// components remain unchanged. Malformed values are contract errors.
   factory CivilDay.parse(String isoDate) {
     final match = _isoDay.firstMatch(isoDate);
     if (match == null) {
@@ -53,7 +50,7 @@ class CivilDay implements Comparable<CivilDay> {
     );
   }
 
-  /// Extraie le jour civil d'un instant, dans le fuseau local de l'appareil.
+  /// Extracts an instant's civil day in the device's local timezone.
   factory CivilDay.fromLocal(DateTime instant) {
     final local = instant.toLocal();
     return CivilDay(local.year, local.month, local.day);
@@ -74,11 +71,11 @@ class CivilDay implements Comparable<CivilDay> {
 
   DateTime get _utcDate => DateTime.utc(year, month, day);
 
-  /// La même date au format `YYYY-MM-DD` du serveur.
+  /// The same date in the server's `YYYY-MM-DD` format.
   String get isoDate =>
       '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
 
-  /// Lundi vaut 1, dimanche vaut 7, comme `DateTime.weekday`.
+  /// Monday is 1 and Sunday is 7, matching `DateTime.weekday`.
   int get weekday => _utcDate.weekday;
 
   CivilMonth get civilMonth => CivilMonth(year, month);
@@ -88,7 +85,7 @@ class CivilDay implements Comparable<CivilDay> {
     return CivilDay(shifted.year, shifted.month, shifted.day);
   }
 
-  /// Nombre de jours jusqu'à [other] : positif si [other] est plus tard.
+  /// Days until [other], positive when [other] is later.
   int daysUntil(CivilDay other) => other._utcDate.difference(_utcDate).inDays;
 
   @override
@@ -112,7 +109,7 @@ class CivilDay implements Comparable<CivilDay> {
   String toString() => isoDate;
 }
 
-/// Un mois civil complet, du premier au dernier jour.
+/// A complete civil month, from its first to last day.
 class CivilMonth {
   CivilMonth(this.year, this.month) {
     if (month < 1 || month > 12) {
@@ -131,7 +128,7 @@ class CivilMonth {
   CivilDay get lastDay =>
       CivilDay(year, month, CivilDay._daysInMonth(year, month));
 
-  /// Le mois décalé de [months] mois, en avant ou en arrière.
+  /// The month shifted forward or backward by [months].
   CivilMonth shifted(int months) {
     final zeroBased = year * 12 + (month - 1) + months;
     return CivilMonth(zeroBased ~/ 12, zeroBased % 12 + 1);
@@ -151,8 +148,8 @@ class CivilMonth {
   String toString() => '$year-${month.toString().padLeft(2, '0')}';
 }
 
-/// Plage de jours réellement couverte par un historique chargé. Un jour hors
-/// plage est inconnu, jamais absent.
+/// Day range actually covered by loaded history. A day outside the range is
+/// unknown, never absent.
 class CalendarCoverage {
   const CalendarCoverage({required this.firstDay, required this.throughDay});
 
@@ -162,9 +159,9 @@ class CalendarCoverage {
   bool contains(CivilDay day) =>
       !day.isBefore(firstDay) && !day.isAfter(throughDay);
 
-  /// Le mois est exploitable quand toute sa partie écoulée est couverte :
-  /// entièrement pour un mois passé, jusqu'à aujourd'hui pour le mois
-  /// courant. Un mois futur n'est jamais couvert.
+  /// A month is usable when its entire elapsed portion is covered: all of a
+  /// past month, or through today for the current month. Future months are
+  /// never covered.
   bool containsMonth(CivilMonth month, CivilDay today) {
     if (month.firstDay.isAfter(today)) return false;
     final lastElapsedDay = month.lastDay.isAfter(today) ? today : month.lastDay;

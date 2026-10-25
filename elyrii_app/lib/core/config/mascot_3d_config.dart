@@ -1,37 +1,37 @@
 import 'mascot_animations.dart';
 
-/// Configuration immutable pour le viewer 3D de la mascotte Elyrii.
+/// Immutable configuration for the Elyrii mascot's 3D viewer.
 class Mascot3DConfig {
-  /// Chemin vers le fichier .glb du modèle 3D
+  /// Path to the 3D model's .glb file.
   final String assetPath;
 
-  /// Animation jouée dès que le modèle est chargé (idle par défaut).
+  /// Animation played once the model loads; defaults to idle.
   final MascotAnimation initialAnimation;
 
-  /// Position de la caméra : angle theta (rotation horizontale en degrés)
+  /// Camera theta angle: horizontal rotation in degrees.
   final double cameraOrbitTheta;
 
-  /// Position de la caméra : angle phi (rotation verticale en degrés)
+  /// Camera phi angle: vertical rotation in degrees.
   final double cameraOrbitPhi;
 
   /// Camera distance as a percentage of model-viewer's automatic framing.
   final double cameraOrbitRadius;
 
-  /// Active/désactive la rotation automatique du modèle
+  /// Whether automatic model rotation is enabled.
   final bool autoRotate;
 
-  /// Vitesse de la rotation automatique (degrés/seconde)
+  /// Automatic rotation speed in degrees per second.
   final double autoRotateSpeed;
 
   /// Allows orbiting in the studio; other mascot contexts remain passive.
   final bool interactionEnabled;
 
-  /// Si vrai, configure la caméra avec les valeurs d'orbite fournies.
-  /// Si faux, utilise l'auto-cadrage par défaut de model-viewer (pas d'effet de zoom arrière).
+  /// When true, configures the camera with the supplied orbit values. Otherwise
+  /// uses model-viewer's default automatic framing without zooming out.
   final bool useCameraOrbit;
 
-  /// Cible verticale de la caméra (mètres, axe Y du glTF) pour cadrer le
-  /// corps visuel du modèle sans décalage de disposition. Null = auto.
+  /// Vertical camera target in meters along glTF's Y axis, framing the model's
+  /// visible body without a layout offset. Null selects automatic targeting.
   final double? cameraTargetY;
 
   static const MascotAnimation _defaultAnimation = MascotAnimations.idle;
@@ -65,7 +65,7 @@ class Mascot3DConfig {
       // par la caméra, sans Transform.translate de rattrapage.
       cameraTargetY = 0.35;
 
-  /// Configuration pour le chatbot en mode plein écran.
+  /// Full-screen chatbot configuration.
   const Mascot3DConfig.chatbotFull()
     : assetPath = _defaultAsset,
       initialAnimation = _defaultAnimation,
@@ -79,8 +79,8 @@ class Mascot3DConfig {
       useCameraOrbit = false,
       cameraTargetY = null;
 
-  /// Configuration pour le chatbot en mode minimisé (banner).
-  /// Animation idle intégrée au modèle, pas d'interaction tactile.
+  /// Minimized chatbot banner configuration, using the model's built-in idle
+  /// animation without touch interaction.
   const Mascot3DConfig.chatbotMinimized()
     : assetPath = _defaultAsset,
       initialAnimation = _defaultAnimation,

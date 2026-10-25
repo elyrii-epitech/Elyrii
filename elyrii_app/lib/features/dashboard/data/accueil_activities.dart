@@ -8,20 +8,21 @@ import '../../../../core/storage/content_cipher.dart';
 import '../domain/civil_day.dart';
 import '../presentation/mood_presentation.dart';
 
-/// Les rituels partagés entre l'Accueil et le Jardin.
+/// Rituals shared by Home and Garden.
 enum AccueilRitual { breathe, gratitude, walk, reachOut, water, music }
 
-/// Réponse typée au fil ; la première réponse confirmée est conservée.
+/// Typed follow-up response; the first confirmed answer is retained.
 enum ThreadReply { ratherGood, notGreat }
 
-/// Le décor de la scène d'Accueil. Il vit dans ce store et non dans le look
-/// de la mascotte : le serveur remplace ce look à chaque chargement et
-/// retire les clés qu'il ne connaît pas.
+/// Home scene background. It lives in this store rather than the mascot look
+/// because the server replaces that look on every load and removes unknown
+/// keys.
 enum MascotDecor { arches, hills, waves, clearing }
 
-/// Règles de déblocage des décors, partagées par le dressing et le store.
+/// Scene unlock rules shared by the dressing room and store.
 abstract final class MascotDecorRules {
-  /// La Clairière s'obtient avec dix défis terminés, les fleurs du Jardin.
+  /// Clearing unlocks after ten completed challenges, represented by Garden
+  /// flowers.
   static const clearingChallenges = 10;
 
   static int requiredChallenges(MascotDecor decor) =>
@@ -31,7 +32,7 @@ abstract final class MascotDecorRules {
       completedChallenges >= requiredChallenges(decor);
 }
 
-/// Rituels réalisés un jour donné, avec l'heure de chaque réalisation.
+/// Rituals completed on a given day, with each completion time.
 class RitualDay {
   final CivilDay day;
   final Map<AccueilRitual, DateTime> completedAt;
@@ -41,7 +42,7 @@ class RitualDay {
   bool isDone(AccueilRitual ritual) => completedAt.containsKey(ritual);
 }
 
-/// Pas sociaux d'une semaine ISO, ancrée sur son lundi réel.
+/// Social steps for an ISO week, anchored to its actual Monday.
 class SocialWeek {
   final CivilDay monday;
   final int ideaIndex;
@@ -56,7 +57,7 @@ class SocialWeek {
   bool isDone(CivilDay day) => completedAt.containsKey(day);
 }
 
-/// Une réponse au fil, rattachée à l'identifiant de l'entrée de Journal.
+/// Follow-up answer attached to a journal entry ID.
 class ThreadAnswer {
   final String entryId;
   final ThreadReply reply;
@@ -69,15 +70,15 @@ class ThreadAnswer {
   });
 }
 
-/// The Journal question the user picked with « Changer la question ».
+/// The Journal question explicitly selected by the user.
 class JournalQuestionPick {
   final CivilDay day;
   final int index;
   const JournalQuestionPick({required this.day, required this.index});
 }
 
-/// Photographie gelée des faits locaux d'Accueil. Une lecture manquante
-/// reste `isLoading` ou porte une erreur : aucun zéro de complaisance.
+/// Frozen snapshot of local Home facts. Missing reads stay `isLoading` or carry
+/// an error rather than substituting zero.
 class AccueilActivitySnapshot {
   final Map<CivilDay, RitualDay> rituals;
   final Map<CivilDay, SocialWeek> socialWeeks;
@@ -116,7 +117,7 @@ class AccueilActivitySnapshot {
   }
 }
 
-/// Faits locaux mutables, copiés depuis une photographie puis regelés.
+/// Mutable local facts copied from a snapshot before being frozen again.
 class _Facts {
   final Map<CivilDay, RitualDay> rituals = {};
   final Map<CivilDay, SocialWeek> socialWeeks = {};
@@ -163,15 +164,12 @@ class _Facts {
       );
 }
 
-/// Seul propriétaire des faits locaux d'Accueil : rituels cochés, pas
-/// sociaux, réponses au fil, humeurs notées sur cet appareil, décor et
-/// question du Journal choisie pour le jour.
-///
-/// Le document est chiffré par compte (`accueil-activities:v1`), jamais
-/// synchronisé au serveur, et les jours de plus de 370 jours sont élagués :
-/// un jour élagué redevient inconnu, jamais zéro. Les écritures passent par
-/// une seule file ; une erreur restaure la photographie confirmée et
-/// remonte l'erreur au lieu de la masquer.
+/// Sole owner of local Home facts: checked rituals, social steps, follow-up
+/// answers, device-recorded moods, scene, and the day's selected Journal
+/// question. The account-scoped document is encrypted with
+/// `accueil-activities:v1` and never synchronized to the server. Days older
+/// than 370 days are pruned and become unknown rather than zero. Writes use one
+/// queue; failures restore the confirmed snapshot and surface the error.
 class AccueilActivities extends ChangeNotifier {
   static const _documentVersion = 1;
   static const _purpose = 'accueil-activities:v1';
@@ -196,8 +194,7 @@ class AccueilActivities extends ChangeNotifier {
 
   AccueilActivitySnapshot get snapshot => _snapshot;
 
-  /// Toutes les écritures acceptées se terminent, même après un changement
-  /// de compte ou une suppression.
+  /// All accepted writes finish, even after an account change or deletion.
   Future<void> get flushed => _writes;
 
   void _notify() {
@@ -210,8 +207,8 @@ class AccueilActivities extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Change de compte : l'ancienne lecture est invalidée avant le premier
-  /// `await`, la nouvelle photographie démarre en chargement.
+  /// Switches accounts: invalidates the old read before the first `await` and
+  /// starts the new snapshot in a loading state.
   void onUserChanged({String? userId, bool isDemo = false}) {
     _revision++;
     _scope = isDemo ? 'demo' : userId ?? 'guest';
@@ -281,8 +278,7 @@ class AccueilActivities extends ChangeNotifier {
     _notify();
   }
 
-  /// Un décor absent ou inconnu redevient Arches, sans jamais débloquer une
-  /// récompense.
+  /// Missing or unknown scenes fall back to Arches without unlocking rewards.
   @visibleForTesting
   static MascotDecor parseDecor(dynamic raw) =>
       MascotDecor.values.where((value) => value.name == raw).firstOrNull ??
@@ -374,8 +370,8 @@ class AccueilActivities extends ChangeNotifier {
     return JournalQuestionPick(day: day, index: index);
   }
 
-  /// État souhaité d'un rituel. Cocher deux fois garde la première heure ;
-  /// décocher puis recocher constitue une nouvelle réalisation.
+  /// Desired ritual state. Checking twice keeps the first time; unchecking and
+  /// checking again creates a new completion.
   Future<bool> setRitualDone({
     required CivilDay day,
     required AccueilRitual ritual,
@@ -406,7 +402,7 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  /// Répond au fil : la première réponse confirmée d'une entrée est gardée.
+  /// Answers a follow-up, retaining the entry's first confirmed answer.
   Future<bool> answerThread({
     required String entryId,
     required ThreadReply reply,
@@ -422,8 +418,8 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  /// Un pas social au plus par date ; un second clic le même jour garde le
-  /// premier horodatage.
+  /// At most one social step per date; another click that day keeps the first
+  /// timestamp.
   Future<bool> completeSocialStep({required CivilDay day}) {
     final monday = mondayOf(day);
     final facts = _Facts.of(_snapshot);
@@ -441,7 +437,7 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  /// Passe à l'idée sociale suivante de la semaine, sans toucher au compteur.
+  /// Advances to the week's next social idea without changing the counter.
   Future<bool> nextSocialIdea({required CivilDay day}) {
     final monday = mondayOf(day);
     final facts = _Facts.of(_snapshot);
@@ -456,7 +452,7 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  /// Note l'humeur confirmée ce jour-là. La dernière humeur du jour gagne.
+  /// Records the day's confirmed mood; the last mood that day wins.
   Future<bool> recordMood({required CivilDay day, required MoodType mood}) {
     final facts = _Facts.of(_snapshot);
     if (facts.moodDays[day] == mood) return Future.value(true);
@@ -464,8 +460,8 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  /// Change le décor. Un décor verrouillé est refusé sans écriture ; le
-  /// dressing n'appelle cette commande qu'après l'enregistrement du look.
+  /// Changes the scene. Locked scenes are rejected without writing; the
+  /// dressing room calls this only after saving the look.
   Future<bool> setDecor(MascotDecor decor, {required int completedChallenges}) {
     if (!MascotDecorRules.isUnlocked(decor, completedChallenges)) {
       return Future.value(false);
@@ -489,7 +485,7 @@ class AccueilActivities extends ChangeNotifier {
     return _commit(facts);
   }
 
-  /// Le lundi de la semaine ISO de [day], clé des pas sociaux.
+  /// Monday of [day]'s ISO week, used as the social-step key.
   static CivilDay mondayOf(CivilDay day) => day.addDays(-(day.weekday - 1));
 
   void _capThreadAnswers(Map<String, ThreadAnswer> answers) {
@@ -540,7 +536,7 @@ class AccueilActivities extends ChangeNotifier {
     };
   }
 
-  /// Élague les faits trop vieux : 370 jours de rétention, 50 réponses.
+  /// Prunes old facts: 370-day retention and 50 answers.
   void _prune(_Facts facts) {
     final cutoff = CivilDay.fromLocal(now()).addDays(-_retentionDays);
     facts.rituals.removeWhere((day, _) => day.isBefore(cutoff));
@@ -590,7 +586,7 @@ class AccueilActivities extends ChangeNotifier {
     return revision == _revision;
   }
 
-  /// Retire le document d'un compte supprimé, après les écritures en cours.
+  /// Removes a deleted account's document after pending writes finish.
   Future<void> deleteOwner(String userId) async {
     await _writes;
     final prefs = await _prefs;

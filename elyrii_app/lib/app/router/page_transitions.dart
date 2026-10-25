@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_motion.dart';
 
 abstract final class ElyriiPageTransitions {
-  /// Page plein écran entrant depuis la droite, retournable au glissé
-  /// depuis le bord gauche (geste iOS natif).
+  /// Full-screen page entering from the right, with native iOS back swiping
+  /// from the left edge.
   static Page<T> slideFromRight<T>({
     required Widget child,
     required LocalKey key,

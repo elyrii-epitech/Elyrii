@@ -20,21 +20,21 @@ class AppDimensions {
   static const double radius12 = 12;
   static const double radius16 = 16;
 
-  /// Tuiles de rituels et boutons d'action de la réponse.
+  /// Ritual tiles and response action buttons.
   static const double radius18 = 18;
 
   static const double radius20 = 20;
 
-  /// Capsule Série/Fleurs/Tenue au repos.
+  /// Streak/flowers/outfit capsule at rest.
   static const double radius26 = 26;
 
   /// Sheets and modal surfaces.
   static const double radius28 = 28;
 
-  /// Panneau calendrier.
+  /// Calendar panel.
   static const double radius30 = 30;
 
-  /// Feuilles Série, Fleurs et dressing.
+  /// Streak, flowers, and dressing-room sheets.
   static const double radius38 = 38;
 
   static const double radiusPill = 999;
@@ -68,26 +68,26 @@ class AppDimensions {
   static const double borderWidthMedium = 2;
   static const double dividerThickness = 1;
 
-  /// Hauteur du décor derrière le héros (viewBox 390 × 470).
+  /// Scene height behind the hero, with a 390 × 470 viewBox.
   static const double accueilSceneHeight = 470;
 
-  /// Pixels de décor que la feuille de contenu recouvre à l'état repos.
+  /// Scene pixels covered by the content sheet at rest.
   static const double accueilSheetOverlap = 32;
 
-  /// Dépassement de la capsule au-dessus du bord de la feuille.
+  /// Capsule overlap above the sheet edge.
   static const double accueilCapsuleOverhang = 26;
 
-  /// Hauteur de la capsule au repos, puis une fois épinglée.
+  /// Capsule height at rest, then when pinned.
   static const double accueilCapsuleHeight = 52;
   static const double accueilCapsuleCompactHeight = 44;
 
-  /// Amplitude du hop de la mascotte (translateY -12 à mi-parcours).
+  /// Mascot hop amplitude: translateY -12 at the midpoint.
   static const double accueilHopDistance = 12;
 
-  /// Face d'humeur sélectionnée (diamètre visuel 54 pour un disque de 50).
+  /// Selected mood face: visual diameter 54 for a 50-point disc.
   static const double accueilMoodFaceSelectedScale = 1.08;
 
-  /// Pop d'essayage : la preview part de 0,94, culmine à 1,03, revient à 1.
+  /// Outfit preview pop: starts at 0.94, peaks at 1.03, returns to 1.
   static const double accueilPreviewPopScale = 0.94;
   static const double accueilPreviewPopPeakScale = 1.03;
 
@@ -193,8 +193,8 @@ class AppDimensions {
   static const double profileTop = 94;
   static const double profileAvatar = 96;
 
-  /// The Accueil décor drawn at its own scale and raised so its moon clears
-  /// the back button and its ground still shows above the Profil body.
+  /// Home scene drawn at its own scale and raised so the moon clears the back
+  /// button while the ground remains visible above the Profile body.
   static const double profileSceneLift = 80;
   static const double profileEditAvatar = 64;
   static const double profileAvatarPreview = 120;

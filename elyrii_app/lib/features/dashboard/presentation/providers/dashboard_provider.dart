@@ -59,11 +59,11 @@ class DashboardProvider extends ChangeNotifier {
   MoodType? get selectedMood => _selectedMood;
   int get currentStreak => _currentStreak;
 
-  /// Historique serveur indexé par jour, couvrant `coverage` au plus.
+  /// Server history indexed by day, covering at most `coverage`.
   Map<CivilDay, ActivityTimelinePoint> get history => _historyView;
 
-  /// Plage réellement chargée ; null avant le premier chargement. Un jour
-  /// hors plage est inconnu, jamais absent.
+  /// Actually loaded range; null before the first load. Days outside it are
+  /// unknown, never absent.
   CalendarCoverage? get coverage => _coverage;
 
   DashboardProvider({
@@ -150,8 +150,8 @@ class DashboardProvider extends ChangeNotifier {
     }
   }
 
-  /// L'humeur du jour confirmée est aussi un fait local du calendrier ; un
-  /// échec d'écriture locale n'annule pas l'humeur enregistrée.
+  /// The confirmed daily mood is also a local calendar fact; a local write
+  /// failure does not undo the saved mood.
   void _recordMoodLocally(MoodType mood) {
     final activities = _activities;
     if (activities == null) return;
@@ -164,14 +164,13 @@ class DashboardProvider extends ChangeNotifier {
   int _loadInFlightDays = 0;
   int _queuedDays = 0;
 
-  /// Recharge toujours la plage la plus large déjà demandée : un
-  /// rafraîchissement doit atteindre le réseau, la couverture ne le
-  /// court-circuite pas.
+  /// Always reloads the widest range already requested. Refresh must reach the
+  /// network rather than being short-circuited by coverage.
   Future<void> loadDashboardData() => _startLoad(_widestDays);
 
-  /// Garantit un historique couvrant [month] : la plage demandée va du
-  /// premier jour du mois à aujourd'hui, plafonnée aux 365 jours acceptés
-  /// par l'API existante. Une plage déjà couverte ne déclenche rien.
+  /// Ensures history covers [month], requesting from the month's first day
+  /// through today, capped at the existing API's 365-day limit. Already covered
+  /// ranges trigger nothing.
   Future<void> ensureCalendarHistory(CivilMonth month) {
     final today = CivilDay.fromLocal(_now());
     final span = month.firstDay.isAfter(today)

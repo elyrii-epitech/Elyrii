@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Rebond élastique « squash & stretch » rejoué à chaque incrémentation de
-/// [trigger] : léger écrasement vers les pieds, overshoot, puis repos.
-///
-/// Pivot en bas-centre : les pieds de la mascotte restent ancrés au sol.
-/// Désactivé quand les animations sont réduites (accessibilité).
+/// Elastic squash-and-stretch bounce replayed on every [trigger] increment:
+/// slight compression toward the feet, overshoot, then rest. The bottom-center
+/// pivot keeps the mascot's feet grounded. Disabled for reduced motion.
 class MascotBounce extends StatefulWidget {
   final Widget child;
 
-  /// Incrémente pour rejouer le rebond.
+  /// Increment to replay the bounce.
   final int trigger;
 
   const MascotBounce({super.key, required this.child, this.trigger = 0});

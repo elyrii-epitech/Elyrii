@@ -85,8 +85,8 @@ class MeditationController extends ChangeNotifier {
   bool get isFinished => _sessionState == MeditationSessionState.finished;
   bool get isSetup => _sessionState == MeditationSessionState.setup;
 
-  /// Phase des respirations uniquement. Le guidage écrit utilise
-  /// [currentGuidanceStep] et conserve un souffle naturel.
+  /// Breathing-only phase. Written guidance uses [currentGuidanceStep] and
+  /// preserves natural breathing.
   BreathPhase get currentPhase => isBreathingRecovery
       ? BreathPhase(_remainingSeconds, 'Souffle libre', BreathAction.hold)
       : selectedBreathingType!.phases[_currentPhaseIndex];

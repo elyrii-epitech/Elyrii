@@ -6,8 +6,7 @@ import 'app_colors.dart';
 import 'app_text_styles.dart';
 import 'app_dimensions.dart';
 
-/// Thème de l'application Elyrii
-/// Contient les configurations complètes pour le mode clair et sombre
+/// Elyrii application theme, including complete light and dark configurations.
 class AppTheme {
   AppTheme._();
 

@@ -2,23 +2,21 @@ import 'package:flutter/foundation.dart';
 
 import 'mascot_appearance.dart';
 
-/// Modèle de données représentant l'état et la configuration de la mascotte.
-///
-/// Immutable pour s'aligner sur les architectures propres et permettre une
-/// gestion d'état prédictible.
+/// Immutable data model representing mascot state and configuration, supporting
+/// clean architecture and predictable state management.
 @immutable
 class MascotModel {
-  /// Chemin vers le modèle 3D de base (.glb)
+  /// Path to the base 3D model (.glb).
   final String baseModelPath;
 
-  /// Liste des identifiants de détails visuels sélectionnés.
+  /// IDs of selected visual details.
   final List<String> equippedCosmetics;
 
-  /// État actuel de l'animation (ex: 'idle', 'wave', 'jump')
+  /// Current animation state, such as 'idle', 'wave', or 'jump'.
   final String animationState;
 
-  /// Identifiant du thème visuel appliqué (ex: 'nature', 'halloween').
-  /// Voir [MascotThemes] pour le catalogue complet.
+  /// Applied visual theme ID, such as 'nature' or 'halloween'. See
+  /// [MascotThemes] for the full catalog.
   final String themeId;
 
   final MascotAppearance appearance;
@@ -31,7 +29,7 @@ class MascotModel {
     this.appearance = MascotAppearance.defaults,
   }) : equippedCosmetics = List.unmodifiable(equippedCosmetics);
 
-  /// Crée un modèle par défaut de la mascotte.
+  /// Creates the default mascot model.
   factory MascotModel.defaultMascot() {
     return MascotModel(
       baseModelPath: 'assets/optimized/mascot.glb',
@@ -41,7 +39,7 @@ class MascotModel {
     );
   }
 
-  /// Crée une copie de ce modèle avec des attributs modifiés.
+  /// Creates a copy with updated attributes.
   MascotModel copyWith({
     String? baseModelPath,
     List<String>? equippedCosmetics,
@@ -58,7 +56,7 @@ class MascotModel {
     );
   }
 
-  /// Désérialise depuis une map JSON.
+  /// Deserializes from a JSON map.
   factory MascotModel.fromJson(Map<String, dynamic> json) {
     return MascotModel(
       baseModelPath:
@@ -76,7 +74,7 @@ class MascotModel {
     );
   }
 
-  /// Sérialise en map JSON.
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'baseModelPath': baseModelPath,

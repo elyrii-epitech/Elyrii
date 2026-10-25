@@ -11,7 +11,7 @@ import 'civil_day.dart';
 
 enum DayPart { morning, afternoon, evening }
 
-/// Matin avant 12 h, après-midi de 12 h à 17 h 59, soir à partir de 18 h.
+/// Morning before noon, afternoon from noon through 17:59, evening from 18:00.
 DayPart dayPartOf(DateTime local) {
   if (local.hour < 12) return DayPart.morning;
   if (local.hour < 18) return DayPart.afternoon;
@@ -32,7 +32,7 @@ String _capitalize(String text) =>
 String moodQuestion(DateTime now) =>
     'Comment te sens-tu ${dayPartOf(now).thisPart} ?';
 
-/// Ce qu'une action de l'Accueil déclenche réellement ; la page l'exécute.
+/// The actual effect of a Home action, executed by the page.
 sealed class AccueilAction {
   const AccueilAction();
 }
@@ -93,10 +93,10 @@ class AccueilAnswer {
   });
 }
 
-/// Ligne d'aide affichée seulement pour l'humeur Éprouvé.
+/// Help line shown only for the distressed mood.
 const helpLine = 'Besoin d\'aide maintenant · 3114, gratuit, jour et nuit';
 
-/// Le texte de partage proposé par « Écrire à un proche ».
+/// Suggested text for sharing a message with someone close.
 const contactShareText = 'Je pensais à toi.';
 
 AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
@@ -198,9 +198,9 @@ AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
   }
 }
 
-/// Les sections affichées sous l'humeur. Le soutien passe d'abord pour
-/// Éprouvé et Vulnérable ; le lien social disparaît seulement pour Éprouvé.
-/// Le fil et l'insight ne dépendent pas de l'humeur.
+/// Sections displayed below the mood. Support comes first for
+/// distressed/vulnerable moods; social connection is hidden only for the
+/// distressed mood. Follow-up and insight do not depend on mood.
 class AccueilMoodLayout {
   final bool showsRituals;
   final bool showsRest;
@@ -275,7 +275,7 @@ const accueilRituals = [
   ),
 ];
 
-/// « Fait à 21:46 » une fois réalisé, le détail du rituel sinon.
+/// Completion time once done; ritual details otherwise.
 String ritualDetail(AccueilRitualInfo info, DateTime? completedAt) {
   if (completedAt == null) return info.pendingDetail;
   final local = completedAt.toLocal();
@@ -299,7 +299,7 @@ const socialIdeas = [
 
 String socialIdeaAt(int index) => socialIdeas[index % socialIdeas.length];
 
-/// Le but est trois pas ; quatre restent une mesure vraie.
+/// The goal is three steps; four remains an accurate measurement.
 String socialCounter(int steps) =>
     '$steps pas sur $socialWeeklyGoal cette semaine';
 
@@ -326,8 +326,8 @@ String threadReplyLabel(ThreadReply reply) => switch (reply) {
   ThreadReply.notGreat => 'Bof',
 };
 
-/// La ligne d'Elyrii après une réponse ; elle ne prétend pas connaître
-/// l'issue d'un événement privé.
+/// Elyrii's line after an answer; it does not claim to know the outcome of a
+/// private event.
 String threadReplyLine(ThreadReply reply) => switch (reply) {
   ThreadReply.ratherGood => 'Tant mieux.',
   ThreadReply.notGreat => 'On peut en parler.',
@@ -343,8 +343,8 @@ const _weekdayNames = [
   'dimanche',
 ];
 
-/// Le fil reprend la dernière entrée de Journal des trois derniers jours,
-/// quel que soit l'ordre d'affichage du Journal.
+/// Follow-up uses the most recent journal entry from the last three days,
+/// regardless of Journal display order.
 AccueilThread? projectThread({
   required List<JournalEntryModel> entries,
   required DateTime now,
@@ -411,7 +411,8 @@ class CalendarCell {
   final bool isToday;
   final int journalEntries;
 
-  /// Rituels connus de cet appareil ; null quand le store ignore ce jour.
+  /// Rituals known on this device; null when the store has no knowledge of the
+  /// day.
   final int? ritualsDone;
 
   const CalendarCell({
@@ -431,7 +432,7 @@ class CalendarCell {
 class CalendarMonth {
   final CivilMonth month;
 
-  /// Cases vides avant le 1er, la semaine commençant le lundi.
+  /// Empty cells before the first day, with weeks starting on Monday.
   final int leadingBlanks;
   final List<CalendarCell> cells;
   final int presentDays;
@@ -514,8 +515,8 @@ class StreakDay {
   });
 }
 
-/// La semaine du lundi au dimanche. Les jours de la série du serveur sont
-/// faits ; [todayCounted] indique si aujourd'hui compte déjà dans la série.
+/// Monday-to-Sunday week. Server streak days are completed; [todayCounted]
+/// indicates whether today already contributes to the streak.
 List<StreakDay> buildStreakWeek({
   required CivilDay today,
   required int currentStreak,
@@ -557,7 +558,7 @@ class WeekFlower {
 class WeekFlowers {
   final CivilDay monday;
 
-  /// Fleurs groupées par jour de semaine, lundi vaut 1.
+  /// Flowers grouped by weekday, with Monday numbered 1.
   final Map<int, List<WeekFlower>> byWeekday;
   final List<WeekFlower> all;
 
@@ -568,7 +569,7 @@ class WeekFlowers {
   });
 }
 
-/// Une fleur datée par défi terminé, dédupliquée par identifiant.
+/// One dated flower per completed challenge, deduplicated by ID.
 List<WeekFlower> buildGardenFlowers({
   required List<UserChallenge> completedChallenges,
   required AccueilActivitySnapshot activities,
@@ -598,7 +599,7 @@ List<WeekFlower> buildGardenFlowers({
   return List.unmodifiable(flowers);
 }
 
-/// Un défi sans date compte pour le Jardin, pas pour la semaine.
+/// An undated challenge counts toward Garden, but not toward the week.
 WeekFlowers buildWeekFlowers({
   required CivilDay today,
   required List<UserChallenge> completedChallenges,
@@ -642,10 +643,9 @@ class AccueilInsight {
 const _insightMinimumDays = 5;
 const _insightMinimumGap = 0.5;
 
-/// Une association, pas une cause : la moyenne ordinale des humeurs des
-/// jours avec écrit contre celle des jours sans écrit, sur la plage couverte.
-/// Absente avec moins de cinq jours par groupe ou un écart sous un demi
-/// niveau.
+/// Association rather than causation: average ordinal mood on writing days
+/// versus non-writing days within the covered range. Absent with fewer than
+/// five days per group or a difference below half a level.
 AccueilInsight? deriveInsight({
   required Map<CivilDay, ActivityTimelinePoint> history,
   required CalendarCoverage? coverage,

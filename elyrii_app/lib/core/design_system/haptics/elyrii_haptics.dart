@@ -1,35 +1,35 @@
 import 'package:flutter/services.dart';
 
-/// Système haptique centralisé respectueux des préférences de l'utilisateur.
-/// Tous les retours tactiles de l'application DOIVENT passer par cette API.
+/// Central haptic system respecting user preferences. All app haptic feedback
+/// MUST use this API.
 abstract final class ElyriiHaptics {
   static bool _enabled = true;
 
-  /// Indique si les vibrations haptiques sont actuellement activées.
+  /// Whether haptic feedback is currently enabled.
   static bool get isEnabled => _enabled;
 
-  /// Configure l'activation globale du retour haptique (synchronisé avec les réglages).
+  /// Sets global haptic feedback activation, synchronized with settings.
   static void setEnabled(bool enabled) => _enabled = enabled;
 
-  /// Clic léger de sélection (onglets, chips, toggles)
+  /// Light selection click for tabs, chips, and toggles.
   static void selection() {
     if (!_enabled) return;
     HapticFeedback.selectionClick();
   }
 
-  /// Impact subtil (bouton standard, ouverture de fiche)
+  /// Subtle impact for standard buttons and opening details.
   static void light() {
     if (!_enabled) return;
     HapticFeedback.lightImpact();
   }
 
-  /// Impact moyen (action de validation, enregistrement humeur)
+  /// Medium impact for confirmation and mood saving.
   static void medium() {
     if (!_enabled) return;
     HapticFeedback.mediumImpact();
   }
 
-  /// Succès (fin de séance de respiration, défi validé)
+  /// Success feedback for completed breathing sessions and challenges.
   static void success() {
     if (!_enabled) return;
     HapticFeedback.mediumImpact();
@@ -38,7 +38,7 @@ abstract final class ElyriiHaptics {
     });
   }
 
-  /// Avertissement ou sortie de session
+  /// Warning or session exit.
   static void warning() {
     if (!_enabled) return;
     HapticFeedback.heavyImpact();

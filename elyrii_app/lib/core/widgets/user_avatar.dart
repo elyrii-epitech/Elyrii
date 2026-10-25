@@ -6,10 +6,8 @@ import '../theme/app_colors.dart';
 import '../constants/avatar_options.dart';
 import '../theme/app_dimensions.dart';
 
-/// Widget d'avatar utilisateur reutilisable.
-///
-/// Affiche la mascotte Elyrii par defaut (si [pfp] est null, vide ou
-/// le marqueur mascotte), sinon affiche l'image (reseau ou fichier local).
+/// Reusable user avatar widget. Displays the Elyrii mascot when [pfp] is null,
+/// empty, or the mascot marker; otherwise displays a network or local image.
 class UserAvatar extends StatelessWidget {
   final String? pfp;
   final double size;

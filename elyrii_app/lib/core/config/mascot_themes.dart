@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
 
-/// Représente une palette visuelle de la mascotte 3D.
-///
-/// [MascotThemes.colorsFor] fournit les couleurs des matériaux de la scène.
+/// Visual palette for the 3D mascot. [MascotThemes.colorsFor] supplies scene
+/// material colors.
 @immutable
 class MascotTheme {
-  /// Identifiant unique stocké en SharedPreferences.
+  /// Unique ID stored in SharedPreferences.
   final String id;
 
-  /// Nom affiché dans l'UI.
+  /// Name displayed in the UI.
   final String name;
 
-  /// Courte description affichée sous le nom.
+  /// Short description displayed below the name.
   final String description;
 
-  /// Icône Material représentative du thème.
+  /// Material icon representing the theme.
   final IconData icon;
 
-  /// Couleur d'accent utilisée dans l'UI (halo, sélection, etc.).
+  /// UI accent color for halos, selection, and related effects.
   final Color accentColor;
 
   /// Authored fur, ear/blush and eye colors, adapted from Lucas Debize's Esprits.
   final List<Color> paletteColors;
 
-  /// Emoji utilisé comme aperçu rapide dans l'UI.
+  /// Emoji used as a quick UI preview.
   final String emoji;
 
   const MascotTheme({
@@ -47,14 +46,13 @@ class MascotTheme {
   int get hashCode => id.hashCode;
 }
 
-/// Catalogue des thèmes disponibles pour la mascotte Elyrii.
-///
-/// Le thème "nature" conserve les textures d'origine. Les autres palettes
-/// recolorent les matériaux du même modèle, sans remplacer la scène.
+/// Available Elyrii mascot themes. The "nature" theme preserves original
+/// textures; other palettes recolor the same model's materials without
+/// replacing the scene.
 class MascotThemes {
   MascotThemes._();
 
-  /// Palette crème pêche d’origine, avec ses oreilles roses.
+  /// Original peach-cream palette with pink ears.
   static const MascotTheme nature = MascotTheme(
     id: 'nature',
     name: 'Elyrii Originel',
@@ -65,7 +63,7 @@ class MascotThemes {
     emoji: '🌿',
   );
 
-  /// Palette cuivrée ; l’identifiant historique Halloween est conservé.
+  /// Copper palette, retaining the legacy Halloween ID.
   static const MascotTheme halloween = MascotTheme(
     id: 'halloween',
     name: 'Automne Cuivré',
@@ -76,7 +74,8 @@ class MascotThemes {
     emoji: '🎃',
   );
 
-  /// Thème Panda : noir et blanc désaturé, mignon et contrasté.
+  /// Panda theme: desaturated black and white, with a soft, contrasting
+  /// appearance.
   static const MascotTheme panda = MascotTheme(
     id: 'panda',
     name: 'Panda Mystique',
@@ -87,7 +86,7 @@ class MascotThemes {
     emoji: '🐼',
   );
 
-  /// Thème Noël : rouge et vert, chaleureux et festif.
+  /// Christmas theme: warm, festive red and green.
   static const MascotTheme noel = MascotTheme(
     id: 'noel',
     name: 'Noël',
@@ -98,7 +97,7 @@ class MascotThemes {
     emoji: '🎄',
   );
 
-  /// Palette Astral de Lucas ; l’identifiant historique Cosmic est conservé.
+  /// Lucas's Astral palette, retaining the legacy Cosmic ID.
   static const MascotTheme cosmic = MascotTheme(
     id: 'cosmic',
     name: 'Astral',
@@ -109,7 +108,7 @@ class MascotThemes {
     emoji: '🌌',
   );
 
-  /// Thème Ocean : cyan et turquoise, frais et apaisant.
+  /// Ocean theme: fresh, soothing cyan and turquoise.
   static const MascotTheme ocean = MascotTheme(
     id: 'ocean',
     name: 'Océan',
@@ -140,7 +139,7 @@ class MascotThemes {
     emoji: '🌸',
   );
 
-  /// Les Esprits de Lucas et les palettes historiques du studio.
+  /// Lucas's Spirits and the studio's legacy palettes.
   static const List<MascotTheme> all = [
     nature,
     cosmic,
@@ -152,7 +151,7 @@ class MascotThemes {
     ocean,
   ];
 
-  /// Récupère un thème par son identifiant.
+  /// Finds a theme by ID.
   static Map<String, String> colorsFor(String id) => switch (id) {
     'halloween' => {
       'body': '#E67E22',
@@ -189,8 +188,7 @@ class MascotThemes {
     _ => const {},
   };
 
-  /// Récupère un thème par son identifiant.
-  /// Retourne [nature] par défaut si l'id n'existe pas.
+  /// Finds a theme by ID, defaulting to [nature] when it does not exist.
   static MascotTheme getById(String? id) {
     if (id == null) return nature;
     return all.firstWhere((t) => t.id == id, orElse: () => nature);

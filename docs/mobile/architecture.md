@@ -1,159 +1,151 @@
-# Architecture du client Elyrii
+# Elyrii client architecture
 
-État du code : 6 octobre 2026. Client Flutter organisé par fonctionnalité,
-avec Provider pour l’état et l’injection, GoRouter pour la navigation, et un
-client HTTP partagé vers la gateway.
+Code snapshot: October 6, 2026. The Flutter client is organized by feature,
+with Provider for state/injection, GoRouter for navigation, and a shared HTTP
+client connecting to the gateway.
 
-## Organisation
+## Organization
 
 ```text
 elyrii_app/lib/
   app/
-    app_dependencies.dart  # composition et durée de vie des services
-    launch/                # introduction courte et démarrage
-    router/                # GoRouter, guards, shell persistant, transitions
+    app_dependencies.dart  # service composition and lifetime
+    launch/                # short introduction and startup
+    router/                # GoRouter, guards, persistent shell, transitions
   core/
-    config/                # URLs, configuration de la mascotte
+    config/                # URLs and mascot configuration
     network/               # ApiClient, ApiException
-    services/              # stockage sécurisé, thème, animation
-    storage/               # SQLite par plateforme, chiffrement du contenu
-    diagnostics/           # événements bornés sans contenu privé
-    theme/                 # charte graphique
-    glass/ et widgets/     # composants partagés, surfaces, rendu 3D
+    services/              # secure storage, theme, animation
+    storage/               # platform SQLite and content encryption
+    diagnostics/           # bounded events without private content
+    theme/                 # visual design
+    glass/ and widgets/    # shared components, surfaces, 3D rendering
   features/
     auth/ chatbot/ parcours/ dashboard/ gamification/
     journal/ mascot/ meditation/ settings/ …
 ```
 
-Les pages consomment les providers. Les repositories portent les échanges
-REST et le stockage local ; `ApiClient` ajoute le Bearer token et applique un
-timeout. Le chat utilise un WebSocket authentifié vers la gateway.
+Pages consume providers. Repositories handle REST exchanges and local storage;
+`ApiClient` adds the Bearer token and enforces a timeout. Chat uses an
+authenticated WebSocket to the gateway.
 
-## Démarrage et navigation
+## Startup and navigation
 
-1. `main.dart` installe les handlers d'erreurs et affiche immédiatement le bootstrap.
-2. La configuration, les locales et les plugins s'initialisent avec une erreur
-   récupérable, une échéance et un bouton de reprise.
-3. `AppDependencies` possède les services et providers. Il reprend d'abord les
-   purges de compte inachevées puis restaure la session sécurisée sans attendre
-   le réseau.
-4. Chaque changement de session invalide le client HTTP et tous les états du
-   compte, puis hydrate le profil, les préférences et la gamification.
-5. Les pages chargent leurs données avec des requêtes dédupliquées. Le routeur
-   est recréé au changement de compte et libéré avec son propriétaire.
+1. `main.dart` installs error handlers and immediately displays the bootstrap UI.
+2. Configuration, locales, and plugins initialize with recoverable errors,
+   deadlines, and a retry button.
+3. `AppDependencies` owns services and providers. It first resumes incomplete
+   account purges, then restores the secure session without waiting for the network.
+4. Each session change invalidates the HTTP client and all account state, then
+   hydrates the profile, preferences, and gamification.
+5. Pages load data through deduplicated requests. The router is recreated on
+   account changes and disposed of with its owner.
 
-Providers globaux : thème, authentification, journal, chat, gamification,
-profil/réglages, mascotte, dashboard et parcours.
+Global providers cover theme, authentication, journal, chat, gamification,
+profile/settings, mascot, dashboard, and journeys.
 
-`AppRouter` utilise `StatefulShellRoute.indexedStack` pour les six branches
-Accueil, Jardin, Journal, Méditation, Parcours et Chat. Les guards gèrent la
-connexion et la complétion du profil. L’état d’onglet est conservé ; la mascotte
-cesse ses animations hors écran et libère son viewer après 15 secondes.
+`AppRouter` uses `StatefulShellRoute.indexedStack` for six branches: Home,
+Garden, Journal, Meditation, Journeys, and Chat. Guards handle authentication
+and profile completion. Tab state persists; the mascot stops animating offscreen
+and releases its viewer after 15 seconds.
 
-## Configuration réseau
+## Network configuration
 
-Ordre de résolution : argument explicite, `ELYRII_API_URL`, ancien `BASE_URL`,
-puis adresse locale uniquement en développement. Les autres environnements exigent une URL HTTPS explicite. Le port local par défaut est **3001** et peut être remplacé
-avec `ELYRII_API_PORT`. Android emulator utilise `10.0.2.2` ; iOS utilise
-`localhost`. Fournir explicitement l’URL adaptée à l’environnement :
+Resolution order: explicit argument, `ELYRII_API_URL`, legacy `BASE_URL`, then
+a local address in development only. Other environments require an explicit
+HTTPS URL. The default local port is **3001**, overridable with `ELYRII_API_PORT`.
+The Android emulator uses `10.0.2.2`; iOS uses `localhost`. Supply the appropriate
+URL explicitly:
 
 ```bash
 flutter run --dart-define=ELYRII_API_URL=http://127.0.0.1:3001
 ```
 
-Tous les services REST passent par la gateway. Le chat ouvre `/chat/ws`.
-Les diagnostics de santé des services ne s’exécutent qu’en debug, sur demande :
+All REST services go through the gateway. Chat opens `/chat/ws`. Service health
+diagnostics run only in debug mode, on request:
 
 ```bash
 flutter run --dart-define=CHECK_BACKEND_HEALTH=true
 ```
 
-## Données et persistance
+## Data and persistence
 
-- **Authentification** : tokens et identifiant dans `SecureStorageService`.
-  La déconnexion efface la session locale même si l’appel distant échoue.
-- **Chat** : `ChatHistoryService` utilise SQLite, tables de conversations et
-  messages indexées par propriétaire. Écriture incrémentale et transactionnelle ;
-  pages de 50 résumés/messages. La migration de chiffrement est marquée par compte
-  pour éviter de relire tout l’historique à chaque démarrage.
-  Les getters du provider n’allouent plus une copie
-  complète à chaque accès. Chaque réponse reste rattachée à la conversation
-  d’origine, même pendant un changement de conversation.
-- **Migration du chat** : l’ancien JSON global n’identifie pas son propriétaire.
-  L’utilisateur doit donc confirmer « Récupérer mon ancien historique ». Le JSON
-  reste conservé si l’import échoue et n’est supprimé qu’après la transaction.
-- **Journal** : CRUD REST paginé par 100 notes avec filtres, tri et curseurs stables,
-  entrées et brouillons SQLite chiffrés par compte, lecture de l’ancien cache
-  filtrée sur `userId`. Un 401/403 reste une erreur et ne devient
-  pas artificiellement un succès grâce au cache. La déconnexion invalide aussi
-  les requêtes du journal encore en vol et vide son état mémoire.
-- **Éditeur du journal** : une seule sauvegarde en vol ; une nouvelle révision
-  saisie pendant la requête reste à sauvegarder. Un échec ne produit pas le
-  statut « Sauvegardé ».
-- **Préférences** : thème et personnalisation utilisent SharedPreferences.
-- **Parcours** : catalogue éditorial dans `features/parcours/data/journey_catalog.dart`.
-  `JourneyProvider` conserve un seul parcours actif, en pause ou terminé.
-  `JourneyRepository` enregistre un document SharedPreferences chiffré par
-  `ContentCipher`, avec propriétaire, version et photographie des étapes.
-  Le provider ne confirme la progression qu’après l’écriture locale réussie ;
-  une erreur conserve le dernier état confirmé et demande une relecture.
-  Les changements de compte invalident les publications tardives. La démo
-  utilise son propre document. La purge attend les écritures puis retire
-  le document du propriétaire. Aucun endpoint ni schéma serveur n’est ajouté.
-  La progression n’est pas synchronisée entre appareils et ne promet pas
-  d’atomicité entre plusieurs onglets de navigateur.
+- **Authentication**: tokens and account ID in `SecureStorageService`. Logout
+  clears the local session even if the remote call fails.
+- **Chat**: `ChatHistoryService` uses SQLite with owner-indexed conversation and
+  message tables. Writes are incremental and transactional; summary/message
+  pages contain 50 items. Encryption migration is marked per account to avoid
+  rereading the entire history at every startup. Provider getters no longer
+  allocate a complete copy on every access. Each reply stays attached to its
+  original conversation, even when the user switches conversations.
+- **Chat migration**: the legacy global JSON does not identify its owner. The
+  user must explicitly confirm recovery of the old history. The JSON remains
+  available if import fails and is deleted only after the transaction succeeds.
+- **Journal**: REST CRUD requests pages of 100 notes with filters, sorting, and
+  stable cursors; entries and drafts use account-scoped encrypted SQLite. Legacy
+  cache reads are filtered by `userId`. A 401/403 remains an error and cannot
+  become a cached success. Logout also invalidates in-flight journal requests
+  and clears memory state. Server pagination support remains a release dependency.
+- **Journal editor**: only one save is in flight; a revision entered during the
+  request still needs saving. A failed request does not produce a saved status.
+- **Preferences**: theme and customization use SharedPreferences.
+- **Journeys**: the editorial catalog lives in
+  `features/parcours/data/journey_catalog.dart`. `JourneyProvider` retains one
+  active, paused, or completed journey. `JourneyRepository` stores a
+  SharedPreferences document encrypted by `ContentCipher`, with its owner,
+  version, and step snapshot. Progress is confirmed only after a successful
+  local write; an error preserves the last confirmed state and requests a reload.
+  Account changes invalidate late publications. Demo mode uses its own document.
+  Purging waits for writes, then removes the owner's document. No server endpoint
+  or schema is added. Progress is not synchronized across devices, and atomicity
+  across browser tabs is not guaranteed.
 
-Les titres/messages du chat et les entrées/brouillons du journal sont chiffrés
-avec AES-GCM et une clé par compte dans le stockage sécurisé, avec authentification
-du propriétaire et de la ressource. Les caches en clair sont migrés. La suppression
-d'un compte tente toutes les purges et détruit sa clé ; un marqueur conserve les
-étapes à reprendre après un échec. Une déconnexion conserve les données locales
-protégées pour une prochaine connexion. La synchronisation entre
-appareils de l'historique chat local reste hors contrat.
+Chat titles/messages and journal entries/drafts are encrypted with AES-GCM
+using an account key in secure storage, authenticated against the owner and
+resource. Plaintext caches are migrated. Account deletion attempts every purge
+and destroys its key; a marker retains failed steps for retry. Logout keeps
+protected local data for a later login. Cross-device synchronization of local
+chat history remains outside the contract.
 
-### Contrat du chat
+### Chat contract
 
-Le WebSocket natif utilise le header Bearer et envoie
-`{message, requestId, conversationId}`. Chaque tentative d’envoi ou reprise a un
-nouveau `requestId`, tandis que l’identifiant du message stocké reste stable.
-Une réponse `{type, message, requestId, conversationId}` n’est acceptée que si
-ses deux identifiants correspondent à une tentative en attente. Les doublons et
-réponses tardives sont ignorés ; les échecs et délais dépassés permettent une
-reprise explicite. Un changement de conversation conserve le brouillon et
-bloque l’envoi pendant le chargement.
+The native WebSocket uses the Bearer header and sends
+`{message, requestId, conversationId}`. Each send/retry attempt gets a new
+`requestId`, while the stored message ID stays stable. A response
+`{type, message, requestId, conversationId}` is accepted only when both IDs
+match a pending attempt. Duplicate and late responses are ignored; failures
+and timeouts allow explicit retry. Switching conversations preserves the draft
+and blocks sending while loading.
 
-Le backend compatible doit être livré avant le client : une réponse sans
-corrélation ne permet pas de déterminer sa conversation. En SQLite, les
-métadonnées utilisent `INSERT OR IGNORE` puis `UPDATE` dans une transaction.
-Ne pas utiliser `REPLACE` : supprimer la conversation parente supprimerait ses
-messages par cascade.
+The compatible backend must ship before the client: an uncorrelated response
+cannot identify its conversation. This dependency is tracked in
+[#265](https://github.com/elyrii-epitech/Elyrii/issues/265). In SQLite, metadata
+uses `INSERT OR IGNORE` followed by `UPDATE` within a transaction. Do not use
+`REPLACE`: deleting the parent conversation would cascade-delete its messages.
 
-## Rendu et performances
+## Rendering and performance
 
-Le dashboard utilise des sélecteurs ciblés au lieu d’un abonnement de toute la
-page à quatre providers. Le journal et la feuille d’historique construisent
-leurs cartes via des slivers à la demande. Les avatars sont décodés à leur
-taille d’affichage physique.
+The dashboard uses focused selectors instead of subscribing the whole page to
+four providers. Journal and history sheets build cards on demand with slivers.
+Avatars are decoded at their physical display size.
 
-La mascotte et son chapeau constituent une scène 3D unique ; les sources
-originales restent dans le dépôt. La génération des variantes optimisées est
-reproductible dans `elyrii_app/tool/mascot/`.
+The mascot and its headwear form a single 3D scene; original sources remain
+in the repository. Optimized variants are reproducible through
+`elyrii_app/tool/mascot/`.
 
-La reconstruction de la scène est décrite dans le [guide des accessoires](mascot-accessories.md).
+Scene rebuilding is described in the [accessories guide](mascot-accessories.md).
 
-## Limites à ne pas confondre avec des garanties
+## Limits of the guarantees
 
-- Pas de refresh token automatique ; un 401 de la session courante ferme
-  localement cette session, sans affecter un compte connecté ultérieurement.
-- Les tests de widget et le simulateur ne mesurent pas les FPS, la consommation
-  ou la mémoire GPU d’un appareil réel.
-- Le chat IA réel, Android sur appareil et les services distants ne sont pas
-  certifiés par les fixtures locales de cette passe.
-- Les cibles de livraison sont uniquement iOS et Android. Les builds natifs,
-  les plugins sur appareils et le profilage matériel restent à exécuter dans
-  les environnements correspondants.
+- No automatic refresh tokens; a 401 from the current session closes that
+  session locally, without affecting an account signed in afterward.
+- Widget tests and simulators do not measure physical-device FPS, power use,
+  or GPU memory.
+- Local fixtures do not certify real AI chat, Android hardware, or remote services.
+- Only iOS and Android are release targets. Native builds, device plugins, and
+  hardware profiling require their corresponding environments.
 
-## Vérification
+## Verification
 
 ```bash
 cd elyrii_app
@@ -162,8 +154,8 @@ flutter test --no-pub
 flutter build ios --simulator --debug --no-pub
 ```
 
-La CI utilise Flutter 3.47.4. Son artifact iOS est explicitement une application
-**simulateur**, pas une archive signée ou une livraison TestFlight.
+CI uses Flutter 3.47.4. Its iOS artifact is explicitly a **simulator** application,
+not a signed archive or TestFlight distribution.
 
-Les contrôles avant distribution figurent dans le [guide de livraison](release.md)
-et le [protocole d’accessibilité](accessibility.md).
+Pre-distribution checks are listed in the [release guide](release.md) and
+[accessibility protocol](accessibility.md).

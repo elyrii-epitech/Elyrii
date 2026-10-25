@@ -1,127 +1,119 @@
-# Velours — direction et bibliothèque de mouvement
+# Velours — motion direction and library
 
-La mascotte conserve sa matière, sa géométrie et son identité. Sa personnalité
-vient des gestes : anticipation, mouvement principal, petit temps d'arrêt,
-retour souple. Les pieds restent fixes ; les coudes et les poignets s'articulent,
-les oreilles suivent la tête avec 100 ms de retard et les paupières ferment les
-yeux. Aucun flottement ou squash Flutter ne s'ajoute aux gestes du dashboard ou
-de l'aperçu de personnalisation.
+The mascot retains its material, geometry, and identity. Its personality comes
+from gestures: anticipation, main action, a brief pause, and a soft return.
+Feet stay fixed; elbows and wrists articulate, ears follow the head with a
+100 ms delay, and eyelids close the eyes. No Flutter floating or squash effect
+is added to dashboard or customization-preview gestures.
 
-## Les 16 intentions
+## The 16 intentions
 
-| Clip | Durée | Intention et déclenchement |
-|---|---:|---|
-| `idle` | 12 s | Deux souffles discrets, regards et clignements espacés. Présence de base. |
-| `greet` | 3,2 s | Patte levée et salut du poignet. Première arrivée sur l'accueil, une fois par instance de MascotProvider. |
-| `attentive` | 6,4 s | Inclinaison et acquiescement. Pendant la saisie d'un message. |
-| `thinking` | 4,4 s | Regard en biais. Attente du chatbot après 400 ms ; deux boucles maximum. |
-| `celebrate` | 3,4 s | Pattes ouvertes et satisfaction. Aperçu « Bravo » et réussite d'un défi détectée après synchronisation. |
-| `breathe` | 2 s normalisées | Pose du buste et des pattes pilotée par la progression de l'exercice. Jamais une boucle de deux secondes pendant une séance. |
-| `curious` | 7,2 s | Regarde des deux côtés, penche la tête. Variation de repos et interaction. |
-| `cozy` | 8 s | Relâche les épaules et ferme longuement les yeux. Variation de repos et première note de journal enregistrée. |
-| `acknowledge` | 2,6 s | Signe de tête. Réponse reçue, humeur neutre ou toucher. |
-| `reassure` | 4,8 s | S'approche et ouvre doucement une patte. Humeur difficile ou déconnexion du chat. |
-| `delight` | 3,6 s | Deux accents de joie contenus. Humeur positive ou toucher. |
-| `nuzzle` | 4 s | Penche la tête vers l'utilisateur, yeux fermés. Appui prolongé sur l'accueil. |
-| `proud` | 3,8 s | Se redresse et regarde sa tenue. Changement de thème ou d'accessoire dans l'aperçu. |
-| `stretch` | 5,6 s | Étirement asymétrique puis relâchement. Variation de repos. |
-| `settle` | 5,2 s | Expiration longue et signe de tête. Entrée dans la méditation et fin de séance. |
-| `invite` | 3,4 s | Invitation d'une patte. Aperçu « On y va ? », défi démarré ou proposition acceptée. |
+| Clip | Duration | Intention and trigger |
+| --- | ---: | --- |
+| `idle` | 12 s | Two subtle breaths, occasional looks and blinks. Default presence. |
+| `greet` | 3.2 s | Raised paw and wrist wave. First arrival on Home, once per MascotProvider instance. |
+| `attentive` | 6.4 s | Lean and nod while composing a message. |
+| `thinking` | 4.4 s | Sideways look. Chatbot wait after 400 ms; at most two loops. |
+| `celebrate` | 3.4 s | Open paws and satisfaction. Celebration preview and challenge completion detected after synchronization. |
+| `breathe` | 2 normalized seconds | Torso/paw pose driven by exercise progress. Never a repeating two-second loop during a session. |
+| `curious` | 7.2 s | Looks both ways and tilts its head. Idle variation and interaction. |
+| `cozy` | 8 s | Relaxes shoulders and closes its eyes for a long blink. Idle variation and first saved journal entry. |
+| `acknowledge` | 2.6 s | Nod after a reply, neutral mood, or tap. |
+| `reassure` | 4.8 s | Leans closer and gently opens a paw. Difficult mood or chat disconnection. |
+| `delight` | 3.6 s | Two restrained joyful accents. Positive mood or tap. |
+| `nuzzle` | 4 s | Tilts toward the user with closed eyes. Long press on Home. |
+| `proud` | 3.8 s | Straightens up and looks at its outfit. Theme/accessory change in preview. |
+| `stretch` | 5.6 s | Asymmetric stretch followed by release. Idle variation. |
+| `settle` | 5.2 s | Long exhale and nod on entering meditation and completing a session. |
+| `invite` | 3.4 s | Invitation with one paw. Invitation preview, started challenge, or accepted proposal. |
 
-Les gestes sont aussi consultables dans un studio local, sans connexion au
-backend ni modification des données utilisateur :
+Gestures can also be inspected in a local studio without a backend connection
+or changes to user data:
 
 ```sh
 python3 scripts/mascot/serve_studio.py
 # http://127.0.0.1:8766
 ```
 
-Le studio emploie le moteur installé par `flutter pub get`. Il propose une
-chronologie, cinq rythmes respiratoires, pause, mouvement réduit et contrôle
-automatique de lecture. Il sert le GLB de l'application, pas une copie.
+The studio uses the engine installed by `flutter pub get`. It offers a timeline,
+five breathing rhythms, pause, reduced motion, and automated playback checks.
+It serves the app's GLB rather than a copy.
 
-## Connexion aux parcours
+## Integration with user flows
 
-`MascotProvider` expose une petite file de réactions (`react`) partagée par
-les onglets persistants. Le dashboard consomme le compteur de déclenchement et
-reprend le geste au retour d'un onglet : démarrer ou accepter un défi déclenche
-`invite`, une nouvelle réussite déclenche `celebrate` et la première note
-enregistrée déclenche `cozy`. L’ancien déclencheur lié au conseil du Coach
-a disparu avec cette page. Une clé d'événement peut dédupliquer les flux réseau ; les
-interactions directes restent rejouables.
+`MascotProvider` exposes a small reaction queue (`react`) shared by persistent
+tabs. The dashboard consumes the trigger counter and resumes the gesture when
+returning to a tab: starting/accepting a challenge triggers `invite`, a new
+completion triggers `celebrate`, and the first saved note triggers `cozy`.
+The former Coach advice trigger was removed with that page. An event key can
+deduplicate network streams; direct interactions remain replayable.
 
-## Enchaînement et accessibilité
+## Sequencing and accessibility
 
-`MascotMotionController` concentre les règles de rythme et d'interruption. Les
-écrans transmettent une intention et, pour rejouer le même geste, un compteur
-`animationTrigger`. Une notification identique ne redémarre rien. Tout nouveau
-contexte annule le timer précédent : une ancienne célébration ne peut pas
-interrompre une écoute. Après un geste bref, Velours revient au repos.
+`MascotMotionController` owns pacing and interruption rules. Screens pass an
+intention and an `animationTrigger` counter to replay the same gesture. An
+identical notification does not restart anything. Every new context cancels
+the previous timer, preventing an old celebration from interrupting listening.
+After a short gesture, Velours returns to idle.
 
-Au repos, une variation arrive après 14 à 24 secondes de calme ; deux variations
-consécutives diffèrent. Ces gestes ne surviennent ni pendant l'écoute ni
-pendant une attente réseau prolongée. Le toucher dispose d'un délai minimal de
-1,4 seconde, sans bloquer le changement de message dans la bulle de l'accueil.
+An idle variation occurs after 14–24 quiet seconds; consecutive variations
+differ. They do not occur while listening or during prolonged network waits.
+Taps have a 1.4-second cooldown without blocking Home bubble message changes.
 
-Les timers et le lecteur sont suspendus quand `TickerMode` désactive la route
-ou que l'application quitte le premier plan. Les gestes devenus périmés ne se
-rejouent pas au retour. Avec `MediaQuery.disableAnimations`, le modèle et le
-placeholder restent stables. Le statut et le décompte respiratoire sont
-toujours transmis par le texte. La visibilité liée au défilement n'est pas
-mesurée : une mascotte scrollée hors du viewport reste soumise à sa route.
+Timers and playback pause when `TickerMode` disables the route or the app leaves
+the foreground. Stale gestures do not replay on return. With
+`MediaQuery.disableAnimations`, the model and placeholder stay still. Text
+continues to convey status and breathing countdowns. Scroll visibility is not
+measured here: a mascot scrolled outside the viewport still follows its route.
 
-## Respiration
+## Breathing
 
-`ActiveBreathingView` partage son AnimationController avec le viewer via
-`breathProgress`. L'inspiration va de 0 à 1, l'expiration de 1 à 0 ; les
-rétentions conservent une extrémité. Une pause arrête cette même progression.
-La reprise conserve la pose et rejoint la prochaine transition du minuteur.
+`ActiveBreathingView` shares its AnimationController with the viewer through
+`breathProgress`. Inhaling goes from 0 to 1 and exhaling from 1 to 0; holds keep
+an endpoint. Pause stops that same progression. Resume preserves the pose and
+joins the next timer transition.
 
-Le lecteur cherche la pose dans la première seconde du clip `breathe`, qui
-contient toutes les amplitudes possibles du souffle. Il envoie au maximum
-30 commandes par seconde à la WebView, plus les poses d'extrémité. Un modèle
-qui termine son chargement en cours de séance rejoint la progression actuelle.
+Playback seeks a pose in the first second of `breathe`, containing the full
+breathing range. It sends at most 30 commands per second to the WebView, plus
+endpoint poses. A model loaded mid-session joins the current progression.
 
-## Rendu et maintenance
+## Rendering and maintenance
 
-`MascotModelSurface` isole l'accès au moteur interne de
-`flutter_3d_controller` **2.3.0**, version épinglée. Le widget public du package
-n'expose pas la recherche de pose. Cet adapter utilise le même chargement
-d'assets, la même WebView et les mêmes commandes caméra que le package.
+`MascotModelSurface` isolates access to the internal engine of the pinned
+`flutter_3d_controller` **2.3.0**. The package's public widget does not expose
+pose seeking. This adapter uses the same asset loading, WebView, and camera
+commands as the package.
 
-Les changements de clip attendent `updateComplete`, réinitialisent le temps
-explicitement et annulent les commandes JavaScript périmées. Cela permet de
-rejouer un même geste, d'effectuer les fondus et de suspendre une lecture sans
-qu'une ancienne promesse ne la relance. Vérifier cet adapter lors d'une mise à
-jour du package. Après 12 secondes de chargement sans succès, le PNG de secours
-prend le relais.
+Clip changes wait for `updateComplete`, reset time explicitly, and cancel stale
+JavaScript commands. This supports replay, crossfades, and suspension without
+an old promise restarting playback. Check the adapter when upgrading the
+package. After 12 seconds without successful loading, the PNG fallback takes over.
 
-Les accessoires partagent une scène avec le corps et suivent les contrôles
-animés de la tête ou du buste. Les variantes de matériaux changent la tenue
-sans recharger la scène. Le catalogue, la progression et la reconstruction
-sont décrits dans [la garde-robe de Velours](mascot-accessories.md).
-La recoloration sur iOS garde les limitations du rendu existant.
+Accessories share a scene with the body and follow animated head/torso controls.
+Material variants change outfits without reloading the scene. The catalog,
+progression, and rebuilding are described in the
+[Velours wardrobe guide](mascot-accessories.md). iOS recoloring retains the
+existing renderer's limitations.
 
-## Reconstruire et vérifier
+## Rebuilding and verification
 
-Le script Python n'a aucune dépendance externe. Il remplace les courbes du GLB
-riggé existant, compacte les anciennes données et conserve meshes, images,
-skins et matériaux. Deux reconstructions donnent exactement le même fichier.
+The Python script has no external dependencies. It replaces curves in the
+existing rigged GLB, compacts old data, and retains meshes, images, skins, and
+materials. Two rebuilds produce exactly the same file.
 
 ```sh
 python3 scripts/mascot/build_velours_motion.py
 python3 scripts/mascot/check_velours_motion.py
-# Option : comparer la géométrie à une révision git
+# Optional: compare geometry with a Git revision
 python3 scripts/mascot/check_velours_motion.py --compare-ref HEAD
 cd elyrii_app
 flutter analyze
 flutter test
 ```
 
-La bibliothèque contient 2 404 poses échantillonnées à 30 Hz et pèse
-5 687 376 octets, soit +248 556 octets (+4,6 %) par rapport aux six clips.
-Le contrôle vérifie les nombres finis, quaternions normalisés, limites des
-paupières, poses communes aux extrémités et correspondance des durées avec
-le catalogue Dart. Le validateur Khronos ne signale aucune erreur ni aucun
-avertissement. Le bouton du studio vérifie les 16 lectures, la fin de trois
-gestes et une pose respiratoire maintenue.
+The library contains 2,404 poses sampled at 30 Hz and weighs 5,687,376 bytes,
+an increase of 248,556 bytes (+4.6%) over the six-clip version. Checks cover
+finite numbers, normalized quaternions, eyelid limits, shared endpoint poses,
+and duration agreement with the Dart catalog. The Khronos validator reports
+no errors or warnings. The studio button checks all 16 clips, completion of
+three gestures, and a held breathing pose.

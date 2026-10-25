@@ -1,37 +1,35 @@
 import 'package:flutter/material.dart';
 
-/// Les valeurs neutres viennent des jetons v2 de l'Accueil : bg, label,
-/// label-2, label-3, tint, surface, surface-2, stroke, separator, glass,
-/// glass-stroke, track et thumb, en sombre et en clair. Les couleurs
-/// translucides conservent leur alpha.
+/// Neutral values come from Home v2 tokens: bg, label, label-2, label-3, tint,
+/// surface, surface-2, stroke, separator, glass, glass-stroke, track, and
+/// thumb, in dark and light themes. Translucent colors retain their alpha.
 class AppColors {
   AppColors._();
 
-  /// Couleur principale de l'application (tint clair).
-  /// Lavande apaisée, utilisée comme accent plutôt que comme ambiance dominante.
+  /// Primary app color: light tint. Calm lavender used as an accent rather than
+  /// the dominant atmosphere.
   static const Color primary = Color(0xFF6050A5);
   static const Color primaryLight = Color(0xFFEDE8FF); // Lavande très pâle
   static const Color primaryDark = Color(
     0xFFA99AF0,
   ); // Tint sombre, lisible en dark mode
 
-  /// Couleur secondaire (pêche rosé chaleureux)
-  /// Light: #FFB5A8 - Pêche doux
-  /// Dark: #FFCCBF - Pêche très pâle
+  /// Secondary color: warm pink peach. Light: #FFB5A8, soft peach. Dark:
+  /// #FFCCBF, very pale peach.
   static const Color secondary = Color(0xFFFFB5A8);
   static const Color secondaryLight = Color(0xFFFFE4DD);
   static const Color secondaryDark = Color(
     0xFFFFCCBF,
   ); // Pêche pâle (dark mode)
 
-  /// Couleur d'accent (menthe douce)
+  /// Accent color: soft mint.
   static const Color accent = Color(0xFFA8D5BA);
   static const Color accentLight = Color(0xFFD4EFE0);
   static const Color accentDark = Color(0xFFC2E3D2);
 
   // ==================== COULEURS SÉMANTIQUES ====================
 
-  /// Couleurs douces pour les états de succès, erreur, warning, info
+  /// Soft colors for success, error, warning, and information states.
   static const Color success = Color(0xFF7BC393);
   static const Color successLight = Color(0xFFCBEDD8);
   static const Color successDark = Color(0xFF5FA87A);
@@ -45,21 +43,21 @@ class AppColors {
   static Color errorText(bool isDark) => isDark ? errorDark : error;
   static Color primaryText(bool isDark) => isDark ? primaryDark : primary;
 
-  /// Tint du jour : texte et icônes posés sur une surface tintée.
+  /// Daily tint for text and icons on a tinted surface.
   static Color onTint(bool isDark) =>
       isDark ? const Color(0xFF1B1530) : Colors.white;
 
-  /// Aplat translucide du tint (tint-soft) pour les actions secondaires.
+  /// Translucent tint-soft fill for secondary actions.
   static Color tintSoft(bool isDark) =>
       isDark ? const Color(0x29A99AF0) : const Color(0x1A6050A5);
 
-  /// Bornes des contrôles activables, distinctes des surfaces.
+  /// Activatable control boundaries, distinct from surfaces.
   static const Color controlOutlineLight = Color(0xFF6B6481);
   static const Color controlOutlineDark = Color(0xFFA49DBB);
   static Color controlOutline(bool isDark) =>
       isDark ? controlOutlineDark : controlOutlineLight;
 
-  /// Rail (track) et pouce (thumb) des commutateurs v2.
+  /// Track and thumb of v2 switches.
   static Color track(bool isDark) =>
       isDark ? const Color(0x3D767680) : const Color(0x1F767680);
   static Color thumb(bool isDark) =>
@@ -73,8 +71,8 @@ class AppColors {
   static const Color infoLight = Color(0xFFD1E4F3);
   static const Color infoDark = Color(0xFF7AA3C7);
 
-  /// Six teintes de section, dont les cinq humeurs de l'Accueil.
-  /// Sombre d'abord, clair ensuite, comme les autres rôles.
+  /// Six section hues, including Home's five moods. Dark first, then light,
+  /// matching other roles.
   static const Color orangeDark = Color(0xFFE76418);
   static const Color orangeLight = Color(0xFFE76418);
   static const Color greenDark = Color(0xFF43C97E);
@@ -177,9 +175,9 @@ class AppColors {
   static Color rose(bool dark) =>
       dark ? const Color(0xFFF08BA0) : const Color(0xFFC9506A);
 
-  /// label-2 et label-3 exacts du spec, translucides. label-3 n'atteint pas
-  /// 4,5:1 sur un petit texte : il sert au texte large et au décoratif, les
-  /// rôles textSecondary/textTertiary opaques gardent le texte courant.
+  /// Exact translucent label-2 and label-3 specification tokens. label-3 falls
+  /// below 4.5:1 for small text and serves large/decorative text; opaque
+  /// textSecondary/textTertiary roles serve body text.
   static Color label2(bool isDark) =>
       isDark ? const Color(0xA3ECE9F5) : const Color(0x9E1C1A24);
   static Color label3(bool isDark) =>
@@ -187,7 +185,7 @@ class AppColors {
 
   // ==================== COULEURS NEUTRES - LIGHT MODE ====================
 
-  /// Light Theme: encre violette (#1C1A24) sur un fond #F3F2F8.
+  /// Light theme: purple ink (#1C1A24) on a #F3F2F8 background.
   static const Color backgroundLight = Color(0xFFF3F2F8);
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color cardLight = Color(0xFFECEAF3); // surface-2
@@ -202,7 +200,7 @@ class AppColors {
 
   // ==================== COULEURS NEUTRES - DARK MODE ====================
 
-  /// Dark Theme: nuit violette (#0D0B13), jamais un noir neutre.
+  /// Dark theme: purple night (#0D0B13), never neutral black.
   static const Color backgroundDark = Color(0xFF0D0B13);
   static const Color surfaceDark = Color(0x0EFFFFFF); // surface, 5,5 %
   static const Color cardDark = Color(0x17FFFFFF); // surface-2, 9 %
@@ -217,12 +215,12 @@ class AppColors {
 
   // ==================== COULEURS SPÉCIFIQUES ====================
 
-  /// Couleurs pour la gamification
+  /// Gamification colors.
   static const Color xpBar = Color(0xFFFDD876); // Jaune miel doux
   static const Color levelBadge = Color(0xFF7E6AD8);
   static const Color streak = Color(0xFFFFB5A8); // Pêche doux
 
-  /// Couleurs pour les objectifs
+  /// Goal colors.
   static const Color objectiveCompleted = Color(0xFF7BC393);
   static const Color objectiveInProgress = Color(0xFF7E6AD8);
   static const Color objectiveNotStarted = Color(0xFFBFC5D1);
@@ -236,14 +234,14 @@ class AppColors {
   static Color meditationCount(bool dark) =>
       dark ? tealDark : const Color(0xFF0E7A9E);
 
-  /// Gradient pour le chatbot
+  /// Chatbot gradient.
   static const LinearGradient chatbotGradient = LinearGradient(
     colors: [Color(0xFF7E6AD8), Color(0xFFA99AF0)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// Gradient pour les cartes importantes
+  /// Gradient for prominent cards.
   static const LinearGradient cardGradient = LinearGradient(
     colors: [
       Color(0xFFFAF8F5),
@@ -255,20 +253,20 @@ class AppColors {
 
   // ==================== COULEURS SCAFFOLD ====================
 
-  /// Toile de fond des pages, et teinte du bandeau de verre.
+  /// Page backdrop and glass-band tint.
   static const Color scaffoldLight = backgroundLight;
   static const Color scaffoldDark = backgroundDark;
 
   // ==================== COULEURS GLASSMORPHISM ====================
 
-  /// Glass backgrounds - jeton glass v2, translucide sur la scène.
+  /// Glass backgrounds: translucent v2 glass token over the scene.
   static const Color glassBackgroundLight = Color(0xBDFAF9FD); // 74 %
   static const Color glassBackgroundLightEnd = Color(0x99FFFFFF); // 60 %
 
   static const Color glassBackgroundDark = Color(0xA81C1928); // 66 %
   static const Color glassBackgroundDarkEnd = Color(0x0DFFFFFF); // 5 %
 
-  /// Glass borders: jeton glass-stroke v2, filet clair qui accroche la lumière.
+  /// Glass borders: v2 glass-stroke token, a light-catching outline.
   static const Color glassBorderLight = Color(0xE6FFFFFF); // 90 %
   static const Color glassBorderDark = Color(0x1AFFFFFF); // 10 %
 
@@ -310,25 +308,25 @@ class AppColors {
   static const sheetLight = Color(0xFFFAF9FD);
   static Color sheetSurface(bool dark) => dark ? sheetDark : sheetLight;
 
-  /// Couleurs lavande pour effets spéciaux
+  /// Lavender colors for special effects.
   static const Color glassLavender = Color(0xFFF5F3FF);
   static const Color glassLavenderBorder = Color(0xFFE0D4FF);
 
   // ==================== COULEURS ICÔNES NAVIGATION ====================
 
-  /// Icônes par défaut dans la navigation
+  /// Default navigation icons.
   static const Color iconDefaultLight = Color(0xFF2B2640);
   static const Color iconDefaultDark = Color(0xFFE7E4F2);
 
   // ==================== COULEURS OVERLAY ====================
 
-  /// Overlays pour les états interactifs
+  /// Overlays for interactive states.
   static const Color overlay = Color(0x0A000000);
   static const Color overlayPressed = Color(0x14000000);
   static const Color overlayFocused = Color(0x1F000000);
   static const Color overlayHovered = Color(0x0A000000);
 
-  /// Overlay pour les modals/dialogs
+  /// Overlay for modals and dialogs.
   static const Color scrim = Color(0x80000000);
 
   /// Preserve pastel hues in decoration while keeping text readable.

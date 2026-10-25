@@ -111,7 +111,7 @@ class GamificationProvider extends ChangeNotifier {
   String? get error => _error;
   bool get hasLoadedData => _loadedAt != null;
 
-  /// Charge toutes les données en parallèle
+  /// Loads all data in parallel.
   Future<void> loadAll({bool force = false}) {
     if (_loadFuture != null) return _loadFuture!;
     final loadedAt = _loadedAt;
@@ -177,7 +177,7 @@ class GamificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Démarre un défi SYSTEM et le déplace dans la liste active
+  /// Starts a SYSTEM challenge and moves it to the active list.
   Future<bool> startChallenge(String challengeId) async {
     if (_isDemo) return true;
     if (!_commands.add(challengeId)) return false;
@@ -200,7 +200,7 @@ class GamificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Accepte une proposition IA et la déplace dans la liste active
+  /// Accepts an AI proposal and moves it to the active list.
   Future<bool> acceptChallenge(String challengeId) async {
     if (_isDemo) return true;
     if (!_commands.add(challengeId)) return false;
@@ -222,7 +222,7 @@ class GamificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Rejette une proposition IA
+  /// Rejects an AI proposal.
   Future<bool> rejectChallenge(String challengeId) async {
     if (_isDemo) return true;
     if (!_commands.add(challengeId)) return false;

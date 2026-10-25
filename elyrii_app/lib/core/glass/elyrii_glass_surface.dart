@@ -18,10 +18,8 @@ final _navigationFilter = ui.ImageFilter.compose(
   ),
 );
 
-/// Primitive Liquid Glass unifiée et performante pour Elyrii.
-///
-/// Encapsule [GlassContainer] de `liquid_glass_widgets` avec un rendu opaque
-/// en contraste élevé.
+/// Unified, efficient Liquid Glass primitive for Elyrii. Wraps [GlassContainer]
+/// from `liquid_glass_widgets`, rendering opaquely in high contrast.
 class ElyriiGlassSurface extends StatelessWidget {
   final Widget child;
   final GlassRole role;

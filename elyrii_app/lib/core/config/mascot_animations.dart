@@ -1,30 +1,30 @@
 import 'package:flutter/foundation.dart';
 
-/// Mode de lecture d'un clip de la mascotte.
+/// Playback mode for a mascot clip.
 enum MascotAnimationMode {
-  /// Joué en boucle tant que l'état persiste (idle, attentive, thinking).
+  /// Loops while the state persists: idle, attentive, or thinking.
   loop,
 
-  /// Joué une seule fois puis retour automatique au calme (greet, celebrate).
+  /// Plays once, then automatically returns to idle: greet or celebrate.
   once,
 
-  /// Fige le modèle dans sa pose courante sans changer de clip (pauses).
+  /// Freezes the current pose without changing clips, for pauses.
   hold,
 }
 
-/// Clip d'animation embarqué dans les modèles optimisés de la mascotte.
+/// Animation clip bundled in the optimized mascot models.
 @immutable
 class MascotAnimation {
-  /// Nom exact de l'animation dans le GLB (sensible à la casse).
+  /// Exact, case-sensitive animation name in the GLB.
   final String clipName;
 
-  /// Libellé lisible (usage debug/telemetry).
+  /// Readable label for debugging and telemetry.
   final String label;
 
   final MascotAnimationMode mode;
 
-  /// Durée exacte du clip, utilisée pour programmer le retour au calme
-  /// des clips `once` (flutter_3d_controller n'expose pas d'évènement fin).
+  /// Exact clip duration, used to schedule the return to idle for `once` clips
+  /// because flutter_3d_controller exposes no completion event.
   final Duration duration;
 
   const MascotAnimation({
@@ -42,10 +42,10 @@ class MascotAnimation {
   int get hashCode => clipName.hashCode;
 }
 
-/// Bibliothèque native d'Elyrii. Les noms et durées sont vérifiés contre
-/// le GLB par `scripts/mascot/check_velours_motion.py`.
+/// Elyrii's native animation library. Names and durations are checked against
+/// the GLB by `scripts/mascot/check_velours_motion.py`.
 abstract final class MascotAnimations {
-  /// Souffle ample, regards doux, pattes bercées et oreilles qui frémissent.
+  /// Deep breathing, gentle looks, rocking paws, and trembling ears.
   static const idle = MascotAnimation(
     clipName: 'idle',
     label: "Présence",
@@ -53,7 +53,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 12000),
   );
 
-  /// Anticipation, patte relevée, deux salutations du poignet.
+  /// Anticipation, a raised paw, and two wrist waves.
   static const greet = MascotAnimation(
     clipName: 'greet',
     label: "Bonjour !",
@@ -61,7 +61,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 3200),
   );
 
-  /// Inclinaison, légère avancée et petit acquiescement.
+  /// A lean, a small step forward, and a slight nod.
   static const attentive = MascotAnimation(
     clipName: 'attentive',
     label: "Je t’écoute",
@@ -69,7 +69,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 6400),
   );
 
-  /// Regard en biais, oreille en retard, retour vers toi.
+  /// Sideways look, delayed ear movement, then turns back toward the user.
   static const thinking = MascotAnimation(
     clipName: 'thinking',
     label: "Je réfléchis",
@@ -77,7 +77,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 4400),
   );
 
-  /// Les deux pattes s’ouvrent avec un petit rebond du buste.
+  /// Both paws open with a small torso bounce.
   static const celebrate = MascotAnimation(
     clipName: 'celebrate',
     label: "Bravo !",
@@ -85,7 +85,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 3400),
   );
 
-  /// Pose pilotée par la progression réelle de la respiration.
+  /// Pose driven by actual breathing progress.
   static const breathe = MascotAnimation(
     clipName: 'breathe',
     label: "Respirons",
@@ -93,7 +93,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 2000),
   );
 
-  /// Regard à gauche puis à droite, tête penchée et oreille curieuse.
+  /// Looks left and right, tilts its head, and raises a curious ear.
   static const curious = MascotAnimation(
     clipName: 'curious',
     label: "Tiens, tiens…",
@@ -101,7 +101,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 7200),
   );
 
-  /// Long clignement paisible et relâchement des épaules.
+  /// A long peaceful blink and relaxed shoulders.
   static const cozy = MascotAnimation(
     clipName: 'cozy',
     label: "Bien installé",
@@ -109,7 +109,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 8000),
   );
 
-  /// Un signe de tête posé après une réponse ou une humeur partagée.
+  /// A calm nod after a reply or shared mood.
   static const acknowledge = MascotAnimation(
     clipName: 'acknowledge',
     label: "Je suis là",
@@ -117,7 +117,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 2600),
   );
 
-  /// La tête s’approche, une patte s’ouvre doucement pour accueillir.
+  /// The head moves closer and a paw opens gently in welcome.
   static const reassure = MascotAnimation(
     clipName: 'reassure',
     label: "À ton rythme",
@@ -125,7 +125,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 4800),
   );
 
-  /// Deux accents de joie contenus, pattes ouvertes et yeux plissés.
+  /// Two restrained joyful accents, with open paws and narrowed eyes.
   static const delight = MascotAnimation(
     clipName: 'delight',
     label: "Petit bonheur",
@@ -133,7 +133,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 3600),
   );
 
-  /// Se penche vers toi, ferme les yeux et se redresse doucement.
+  /// Leans toward the user, closes its eyes, and gently straightens up.
   static const nuzzle = MascotAnimation(
     clipName: 'nuzzle',
     label: "Un peu de douceur",
@@ -141,7 +141,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 4000),
   );
 
-  /// Buste redressé, petit regard de chaque côté et salut du poignet.
+  /// Upright torso, a glance to each side, and a wrist wave.
   static const proud = MascotAnimation(
     clipName: 'proud',
     label: "Ça me va ?",
@@ -149,7 +149,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 3800),
   );
 
-  /// Étirement asymétrique des pattes, yeux mi-clos, relâchement.
+  /// Asymmetric paw stretch, half-closed eyes, then release.
   static const stretch = MascotAnimation(
     clipName: 'stretch',
     label: "Petite pause",
@@ -157,7 +157,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 5600),
   );
 
-  /// Une longue expiration et un léger signe de tête après la séance.
+  /// A long exhale and a slight nod after the session.
   static const settle = MascotAnimation(
     clipName: 'settle',
     label: "Tout doucement",
@@ -165,7 +165,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 5200),
   );
 
-  /// Une patte invite à avancer, suivie d’un acquiescement.
+  /// One paw invites the user forward, followed by a nod.
   static const invite = MascotAnimation(
     clipName: 'invite',
     label: "On y va ?",
@@ -173,7 +173,7 @@ abstract final class MascotAnimations {
     duration: Duration(milliseconds: 3400),
   );
 
-  /// Conserve la pose courante pendant une pause.
+  /// Preserves the current pose during a pause.
   static const holdPose = MascotAnimation(
     clipName: '',
     label: 'Pose tenue',

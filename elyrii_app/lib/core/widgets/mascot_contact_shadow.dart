@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// Ombre de contact au sol sous la mascotte (occlusion ambiante douce).
-///
-/// Ellipse de dégradé radial noir/anthracite vers transparent. La taille et
-/// l'opacité réagissent à l'élévation du personnage : quand la mascotte
-/// s'élève, l'ombre s'élargit et s'atténue ; quand elle descend, l'ombre se
-/// resserre et s'assombrit — physique spatiale Apple, sans cage circulaire.
+/// Ground contact shadow beneath the mascot, providing soft ambient occlusion.
+/// A black/charcoal-to-transparent radial ellipse changes with elevation: it
+/// widens and fades as the mascot rises, then tightens and darkens as it
+/// descends, following Apple-style spatial behavior without a circular
+/// enclosure.
 class MascotContactShadow extends StatelessWidget {
-  /// Largeur maximale de l'ombre au sol (mascotte au plus près du sol).
+  /// Maximum ground-shadow width when the mascot is closest to the ground.
   final double width;
 
-  /// Élévation normalisée du personnage : 0 = posé, 1 = au plus haut.
+  /// Normalized character elevation: 0 is resting, 1 is the highest point.
   final double elevation;
 
-  /// Assombrit l'ombre en mode sombre pour garder un ancrage lisible.
+  /// Darkens the shadow in dark mode to preserve visible grounding.
   final bool isDark;
 
   const MascotContactShadow({
