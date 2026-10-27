@@ -20,11 +20,11 @@ fixtures do not establish that these contracts work on `dev`.
 | --- | --- | --- |
 | Authentication | Login, registration, password recovery, demo, logout | Authentication API; credentials in Keychain/Keystore |
 | Profile | Personal profile, identity, single goal, and avatar selection | User API; image copies in account-scoped private cache |
-| Dashboard and review | Mood, weekly/monthly/quarterly review, shortcuts | Server journal history; local moods; completed sessions for calm minutes |
+| Dashboard and review | Mood, weekly/monthly/quarterly review, shortcuts | Server journal history; local moods; completed sessions for meditation minutes |
 | Journal | Daily feed, writing/editing, mood per entry, reading, deletion, local search, text export | API and SQLite with 100-entry pages; encrypted account-scoped drafts; selected daily question stored locally |
 | Chat | Conversations, correlated replies, retry, copy, report | Bearer WebSocket; encrypted SQLite history, 50-item pages |
-| Garden | Challenges to complete, today's actions, monthly gardens, completed challenges | API challenges grouped by completion date; local actions shown read-only |
-| Journeys | Explicit selection, ordered steps, pause/resume, secondary access to existing challenges | Local editorial catalog; encrypted account-scoped progress on this device, without a new API or cross-device sync |
+| Challenges | Challenges to complete, today's actions, monthly gardens, completed challenges | API challenges grouped by completion date; local actions shown read-only |
+| Programs | Explicit selection, ordered steps, pause/resume, secondary access to existing challenges | Local editorial catalog; encrypted account-scoped progress on this device, without a new API or cross-device sync |
 | Meditation | 12 domain practices, 1–1,439 minute durations, pause/resume, summary | Monotonic controller; API session synchronization requires #264 |
 | Mascot | Colors, finishes, 15 accessories across four zones, explicit save | Shared GLB scene; account-scoped preferences and progression |
 | Settings | Dark/light/system appearance, haptics, privacy, export, diagnostics, account deletion | Preferences, installed version, API, user-initiated native sharing |
@@ -35,8 +35,9 @@ before opening Home. First name and the single goal use the existing profile.
 The first mood uses the same save operation as Home. The scene is stored
 locally per account after saving the outfit. Avatar selection remains in Profile.
 
-Registration retains mandatory consent, password rules, and the email
-verification message. Password recovery requires a real server-issued code and
+Registration requires acknowledgment of the available service/data information,
+consistent password rules, and the email verification message. This acknowledgment
+is not acceptance of unpublished legal documents. Password recovery requires a real server-issued code and
 a new password of 12–128 characters. Google and Apple buttons are hidden because
 the client does not implement those login methods. Legal links explain that
 the full texts are not published yet; publication is required before production.
@@ -45,16 +46,17 @@ Chat exposes emergency resources independently of local distress detection.
 This heuristic does not replace professional assessment. Meditation sessions
 use written instructions and have no recorded audio track.
 
-Journeys replaces Coach in navigation at `/parcours`. Selecting a journey and
+Programs replaces Coach in navigation at `/parcours`; the French tab reads
+`Programmes`. Selecting a journey and
 completing a step are explicit actions. Replacing a journey requires confirmation;
 canceling preserves its position. Pausing creates no deadline or penalty.
 Progress stays local, including in the isolated demo session, and is included
 in data export and account purging. Active challenges, proposals to accept or
-reject, and available ideas appear first in Garden and remain accessible from
-the challenge list in Journeys. Catalogs expand without hiding the monthly
+reject, and available ideas appear first in Challenges and remain accessible from
+the challenge list in Programs. Catalogs expand without hiding the monthly
 garden. Only completed challenges produce flowers; journey steps do not.
 
-Garden shows challenges to complete, today's actions, then the monthly garden.
+Challenges (`Défis`) shows challenges to complete, today's actions, then the monthly garden.
 Arrows browse past months without entering the future. Each completed challenge
 produces one flower according to its local completion date, without duplicates.
 Challenges without dates remain identified without being assigned to an arbitrary
@@ -82,7 +84,7 @@ chosen from six account values. Clearing name, age, gender, or goal does not
 clear it on the server under the current contract.
 
 Review displays only moods known on this device. Months and quarters are
-grouped into seven periods. Calm minutes come from completed sessions, without
+grouped into seven periods. Meditation minutes come from completed sessions, without
 converting session counts into durations. If the 100-session limit truncates
 the period, Review marks the minutes as partial and leaves earlier periods
 unknown. Points, percentages, and challenge rates are absent. The helpful
@@ -90,14 +92,17 @@ activities card stays hidden without a sufficient association in the data.
 
 The data section explains local copies and offers export with explicit consent.
 Deletion requires the password and retains account-scoped local purging.
-Current terms and privacy texts remain accessible in Settings. The policy
-still describes information that needs documenting; it is not a complete
-legal document.
+The same factual service/data information is available before signup and in
+Settings. It explicitly identifies the unpublished terms and privacy policy.
+The former strict-privacy switch is hidden because no distinct enforcement
+behavior is defined; the stored/API preference is retained for compatibility.
 
-French is the only declared UI language. Push notifications are marked
-unavailable. Automatic access-token renewal and email activation changes remain
+French is the only declared UI language. Push notifications are not offered. Automatic access-token renewal and email activation changes remain
 out of scope; a 401 for the current session closes it locally.
 
 See [architecture](architecture.md) for session/persistence contracts,
 [meditation](meditation.md) and [customization](mascot-accessories.md) for their
 specifications, and [release](release.md) for remote-service requirements.
+
+See [UI wording](wording.md) for the vocabulary, tone, compatibility rules, and
+reproducible page-by-page review captures.

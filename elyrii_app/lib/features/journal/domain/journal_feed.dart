@@ -4,23 +4,23 @@ import '../data/models/journal_entry_model.dart';
 
 /// Questions of the composer, one per day unless the user changes it.
 const journalQuestions = [
-  'Qu’est-ce qui t’a fait sourire aujourd’hui ?',
-  'Quel petit moment aimerais-tu garder ?',
-  'Qu’est-ce qui t’a fait du bien aujourd’hui ?',
+  'Comment s’est passée ta journée ?',
+  'Qu’est-ce qui t’a marqué aujourd’hui ?',
+  'Qu’est-ce qui te préoccupe en ce moment ?',
 ];
 
 /// Writing prompts of the first day and of the editor's prompt sheet.
 const journalPrompts = [
   'Comment s’est passée ta journée ?',
   'Qu’est-ce qui occupe tes pensées ?',
-  'De quoi es-tu reconnaissant(e) ?',
-  'Qu’est-ce que tu aimerais améliorer ?',
+  'Qu’est-ce qui t’a marqué aujourd’hui ?',
+  'De quoi as-tu envie pour la suite ?',
 ];
 
-const journalFreePrompt = 'Une page à toi, sans question.';
+const journalFreePrompt = 'Écriture libre';
 
 /// Titles saved when the writer leaves the title empty.
-const journalFallbackTitle = 'Quelques mots pour moi';
+const journalFallbackTitle = 'Sans titre';
 
 /// Entries store the mood as free text: recent ones carry the [MoodType]
 /// name, older ones a French label. Unknown values have no mood.
@@ -33,11 +33,17 @@ MoodType? parseJournalMood(String? raw) {
     }
   }
   return switch (value) {
-    'très triste' || 'tres triste' => MoodType.verySad,
-    'triste' => MoodType.sad,
-    'neutre' => MoodType.neutral,
-    'joyeux' || 'content' => MoodType.happy,
-    'très joyeux' || 'tres joyeux' || 'radieux' => MoodType.veryHappy,
+    'très triste' ||
+    'tres triste' ||
+    'éprouvé' ||
+    'eprouve' => MoodType.verySad,
+    'triste' || 'vulnérable' || 'vulnerable' => MoodType.sad,
+    'neutre' || 'paisible' => MoodType.neutral,
+    'joyeux' || 'content' || 'serein' => MoodType.happy,
+    'très joyeux' ||
+    'tres joyeux' ||
+    'radieux' ||
+    'rayonnant' => MoodType.veryHappy,
     _ => null,
   };
 }

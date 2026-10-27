@@ -305,7 +305,7 @@ class MascotProvider extends ChangeNotifier {
       await _saveMascot();
     } catch (e) {
       if (session == _sessionRevision) {
-        _error = 'Ton look local reste disponible. La synchronisation sera réessayée.';
+        _error = 'Ton apparence est conservée sur cet appareil. Réessaie de l’envoyer à ton compte.';
       }
     } finally {
       if (session == _sessionRevision) {
@@ -330,7 +330,7 @@ class MascotProvider extends ChangeNotifier {
       _notify();
     } catch (_) {
       if (!_disposed && session == _sessionRevision) {
-        _error = 'Ta personnalisation locale n’a pas pu être chargée.';
+        _error = 'Impossible de charger ton apparence sur cet appareil.';
         _notify();
       }
     }
@@ -378,8 +378,7 @@ class MascotProvider extends ChangeNotifier {
         }
       } catch (e) {
         if (session == _sessionRevision && revision == _syncRevision) {
-          _error =
-              'Look enregistré sur cet appareil. Synchronisation à réessayer.';
+          _error = 'Apparence enregistrée sur cet appareil. L’envoi à ton compte a échoué.';
         }
       } finally {
         if (session == _sessionRevision && revision == _syncRevision) {

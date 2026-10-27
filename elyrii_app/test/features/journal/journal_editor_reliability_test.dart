@@ -74,7 +74,7 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await tester.pump();
       expect(repository.saved, ['Mon brouillon']);
-      expect(find.text('Échec de sauvegarde — réessaie'), findsOneWidget);
+      expect(find.text('Enregistrement impossible. Réessaie.'), findsOneWidget);
       expect(find.text('Enregistré automatiquement'), findsNothing);
       expect(find.text('Mon brouillon'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
@@ -121,7 +121,7 @@ void main() {
     await tester.tap(find.text('Humeur'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.bySemanticsLabel('Paisible'));
+    await tester.tap(find.bySemanticsLabel('Bof'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(seconds: 2));

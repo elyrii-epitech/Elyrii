@@ -45,7 +45,7 @@ Global providers cover theme, authentication, journal, chat, gamification,
 profile/settings, mascot, dashboard, and journeys.
 
 `AppRouter` uses `StatefulShellRoute.indexedStack` for six branches: Home,
-Garden, Journal, Meditation, Journeys, and Chat. Guards handle authentication
+Challenges, Journal, Meditation, Programs, and Chat. Guards handle authentication
 and profile completion. Tab state persists; the mascot stops animating offscreen
 and releases its viewer after 15 seconds.
 
@@ -91,14 +91,18 @@ flutter run --dart-define=CHECK_BACKEND_HEALTH=true
 - **Preferences**: theme and customization use SharedPreferences.
 - **Journeys**: the editorial catalog lives in
   `features/parcours/data/journey_catalog.dart`. `JourneyProvider` retains one
-  active, paused, or completed journey. `JourneyRepository` stores a
+  active, paused, or completed program. `JourneyRepository` stores a
   SharedPreferences document encrypted by `ContentCipher`, with its owner,
   version, and step snapshot. Progress is confirmed only after a successful
   local write; an error preserves the last confirmed state and requests a reload.
   Account changes invalidate late publications. Demo mode uses its own document.
   Purging waits for writes, then removes the owner's document. No server endpoint
   or schema is added. Progress is not synchronized across devices, and atomicity
-  across browser tabs is not guaranteed.
+  across browser tabs is not guaranteed. Built-in content version 1 can receive
+  version 2 editorial text only when path ID, topic, ordered step IDs, durations,
+  and action types/meditation targets match. Enrollment identity, progress,
+  revision, and timestamps remain unchanged; unknown structures keep their
+  stored snapshot. The next successful mutation persists the refreshed copy.
 
 Chat titles/messages and journal entries/drafts are encrypted with AES-GCM
 using an account key in secure storage, authenticated against the owner and

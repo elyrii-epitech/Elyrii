@@ -151,7 +151,7 @@ class CrisisDetectionBanner extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spacing8),
           LiquidGlassButton(
-            label: 'Ça va, merci',
+            label: 'Fermer',
             style: LiquidGlassButtonStyle.plain,
             isExpanded: true,
             onPressed: onDismiss,

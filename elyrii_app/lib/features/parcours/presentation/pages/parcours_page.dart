@@ -53,8 +53,8 @@ class _ParcoursPageState extends State<ParcoursPage> {
       SnackBar(
         content: Text(
           resume
-              ? 'Parcours repris à la même étape.'
-              : 'Parcours en pause. Ta position est conservée.',
+              ? 'Programme repris à la même étape.'
+              : 'Programme en pause. Ta position est conservée.',
         ),
       ),
       snackBarAnimationStyle: MediaQuery.disableAnimationsOf(context)
@@ -84,7 +84,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
                   child: Stack(
                     children: [
                       const SectionSkyHeader(
-                        title: 'Parcours',
+                        title: 'Programmes',
                         scene: SectionSkyScene.arches,
                       ),
                       Padding(
@@ -116,12 +116,12 @@ class _ParcoursPageState extends State<ParcoursPage> {
                                 if (!provider.hasLoadedData) ...[
                                   if (provider.isLoading)
                                     const JourneyNote(
-                                      'Chargement de tes parcours…',
+                                      'Chargement de tes programmes…',
                                       live: true,
                                     )
                                   else if (provider.error == null) ...[
                                     const JourneyNote(
-                                      'Tes parcours ne sont pas disponibles pour le moment.',
+                                      'Tes programmes ne sont pas disponibles pour le moment.',
                                     ),
                                     JourneyButton(
                                       label: 'Réessayer',
@@ -145,7 +145,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
                 ),
                 SectionSkyBar(
                   scroll: _scroll,
-                  title: 'Parcours',
+                  title: 'Programmes',
                   trailing: const SizedBox.shrink(),
                 ),
               ],
@@ -166,11 +166,11 @@ class _ParcoursPageState extends State<ParcoursPage> {
       spacing: AppDimensions.spacing16,
       children: [
         Text(
-          'De quoi as-tu besoin ?',
+          'Choisis un programme',
           style: AppTextStyles.titleMedium(color: context.textPrimary),
         ),
         const JourneyNote(
-          'Un accompagnement à découvrir avant de choisir. Sans échéance, sans obligation de tout faire.',
+          'Des programmes en plusieurs étapes. Choisis celui qui te convient.',
         ),
         Wrap(
           spacing: AppDimensions.spacing8,
@@ -204,9 +204,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: AppDimensions.spacing8,
               children: [
-                const JourneyNote(
-                  'Aucun parcours n’est disponible pour le moment. Aucun choix n’a été fait à ta place.',
-                ),
+                const JourneyNote('Aucun programme disponible pour le moment.'),
                 JourneyButton(
                   label: 'Actualiser le catalogue',
                   primary: false,
@@ -224,7 +222,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
               spacing: AppDimensions.spacing8,
               children: [
                 const JourneyNote(
-                  'Aucun parcours ne correspond à ce besoin pour le moment.',
+                  'Aucun programme ne correspond à ce besoin pour le moment.',
                 ),
                 JourneyButton(
                   label: 'Enlever le filtre',
@@ -263,10 +261,10 @@ class _ParcoursPageState extends State<ParcoursPage> {
           liveRegion: true,
           child: Text(
             completed
-                ? 'Parcours terminé'
+                ? 'Programme terminé'
                 : paused
-                ? 'Ton parcours est en pause'
-                : 'Ton parcours',
+                ? 'Ton programme est en pause'
+                : 'Ton programme',
             style: AppTextStyles.titleMedium(color: context.textPrimary),
           ),
         ),
@@ -311,15 +309,15 @@ class _ParcoursPageState extends State<ParcoursPage> {
               _progress(context, current),
               if (completed) ...[
                 const JourneyNote(
-                  'Tu as parcouru toutes les étapes. Tu peux les relire, retrouver ton jardin ou choisir un autre chemin, seulement si tu en as envie.',
+                  'Programme terminé. Tu peux revoir les étapes ou en choisir un autre.',
                 ),
                 JourneyButton(
-                  label: 'Voir mon jardin',
+                  label: 'Voir les défis',
                   onPressed: () => context.go(AppRoutes.challenges),
                 ),
               ] else if (paused) ...[
                 const JourneyNote(
-                  'Ta position est conservée. Rien à rattraper. Tu peux reprendre quand tu le souhaites.',
+                  'Ta progression est conservée. Reprends quand tu veux.',
                 ),
                 if (step != null)
                   Text(
@@ -337,9 +335,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
                   step.title,
                   style: AppTextStyles.titleSmall(color: context.textPrimary),
                 ),
-                JourneyNote(
-                  '${step.durationMinutes} min environ · À ton rythme',
-                ),
+                JourneyNote('${step.durationMinutes} min environ'),
                 JourneyButton(
                   label: 'Continuer',
                   onPressed: provider.isWriting
@@ -360,7 +356,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
           runSpacing: AppDimensions.spacing8,
           children: [
             _link(
-              label: 'Changer de parcours',
+              label: 'Changer de programme',
               onPressed: provider.isWriting
                   ? null
                   : () => showJourneyPicker(context, provider),
@@ -379,7 +375,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
           ],
         ),
         const JourneyNote(
-          'Le Chat reste facultatif. Seule ta confirmation dans une étape fait avancer ce parcours. Les fleurs de ton jardin restent liées aux défis terminés.',
+          'Valide chaque étape avec le bouton « Terminer l’étape ».',
         ),
       ],
     );

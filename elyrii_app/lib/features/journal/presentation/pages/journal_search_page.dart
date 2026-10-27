@@ -162,9 +162,9 @@ class _JournalSearchPageState extends State<JournalSearchPage> {
                       liveRegion: true,
                       child: Text(
                         [
-                          '$count ${count == 1 ? 'entrée' : 'entrées'}${query.isEmpty ? '' : ' pour « $query »'}',
+                          '$count ${count == 1 ? 'note' : 'notes'}${query.isEmpty ? '' : ' pour « $query »'}',
                           if (provider.hasMore)
-                            'Parmi les ${provider.entries.length} entrées chargées.',
+                            'Parmi les ${provider.entries.length} notes chargées.',
                         ].join('\n'),
                         style: AppTextStyles.bodySmall(
                           color: context.textTertiary,
@@ -180,7 +180,7 @@ class _JournalSearchPageState extends State<JournalSearchPage> {
                         vertical: AppDimensions.spacing20,
                       ),
                       child: Text(
-                        'Aucune entrée avec ces mots.\nEssaie un autre mot ou enlève un filtre.',
+                        'Aucune note avec ces mots.\nEssaie un autre mot ou enlève un filtre.',
                         style: AppTextStyles.journalLine(
                           color: context.textSecondary,
                         ),
@@ -230,7 +230,7 @@ class _JournalSearchPageState extends State<JournalSearchPage> {
                   child: SizedBox(
                     height: AppDimensions.journalSearchField,
                     child: Semantics(
-                      label: 'Rechercher une entrée',
+                      label: 'Rechercher une note',
                       child: TextField(
                         controller: _query,
                         autofocus: true,
@@ -241,7 +241,7 @@ class _JournalSearchPageState extends State<JournalSearchPage> {
                         ),
                         cursorColor: AppColors.primaryText(dark),
                         decoration: InputDecoration(
-                          hintText: 'Un mot, une pensée…',
+                          hintText: 'Rechercher dans le journal',
                           hintStyle: AppTextStyles.bodyLarge(
                             color: context.textTertiary,
                           ),
@@ -283,7 +283,7 @@ class _JournalSearchPageState extends State<JournalSearchPage> {
     return Semantics(
       button: true,
       selected: on,
-      label: 'Filtrer les entrées ${mood.label.toLowerCase()}',
+      label: 'Filtrer les notes ${mood.label.toLowerCase()}',
       excludeSemantics: true,
       child: InkWell(
         onTap: () => setState(() => _mood = on ? null : mood),

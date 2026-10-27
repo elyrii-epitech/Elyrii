@@ -41,11 +41,11 @@ void main() {
   group('réponses et matrice d’humeur', () {
     test('le soutien passe d’abord pour Éprouvé et Vulnérable', () {
       final hard = layoutForMood(MoodType.verySad);
-      expect(hard.showsRituals, isFalse);
+      expect(hard.showsRituals, isTrue);
       expect(hard.showsRest, isTrue);
-      expect(hard.showsSocial, isFalse);
+      expect(hard.showsSocial, isTrue);
       final low = layoutForMood(MoodType.sad);
-      expect(low.showsRituals, isFalse);
+      expect(low.showsRituals, isTrue);
       expect(low.showsRest, isTrue);
       expect(low.showsSocial, isTrue);
       for (final mood in [

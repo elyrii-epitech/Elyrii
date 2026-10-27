@@ -23,6 +23,7 @@ gateway with `--dart-define=ELYRII_API_URL=https://YOUR_GATEWAY`.
 | [Development](development.md) | SDK, installation, environment, and native execution |
 | [Architecture](architecture.md) | Navigation, sessions, networking, and account-scoped storage |
 | [Features](features.md) | Supported flows and their data |
+| [UI wording](wording.md) | French vocabulary, tone, and review captures |
 | [Design system](design.md) | Theme, shared components, accessibility, and assets |
 | [Dependencies](dependencies.md) | Package responsibilities and reproducible inventory |
 | [CI/CD](ci-cd.md) | Checks, tests, builds, and artifacts |

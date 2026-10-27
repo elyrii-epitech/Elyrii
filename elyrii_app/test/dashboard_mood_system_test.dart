@@ -96,7 +96,7 @@ void main() {
     'le choix d’humeur change la réponse et reste enregistré après relecture',
     (tester) async {
       final app = await mount(tester);
-      await tap(tester, 'Vulnérable');
+      await tap(tester, 'Mal');
       await flush(tester, app);
       expect(find.bySemanticsLabel('Écrire 3 lignes'), findsOneWidget);
       expect(
@@ -119,24 +119,23 @@ void main() {
     },
   );
 
-  testWidgets(
-    'une humeur éprouvée montre le 3114 et le repos sans rituels ni social',
-    (tester) async {
-      final app = await mount(tester);
-      await tap(tester, 'Éprouvé');
-      await flush(tester, app);
-      expect(find.textContaining('3114'), findsWidgets);
-      expect(find.text('Les rituels peuvent attendre'), findsOneWidget);
-      expect(find.text('Rituels du jour'), findsNothing);
-      expect(find.text('Un pas vers les autres'), findsNothing);
-    },
-  );
+  testWidgets('a low mood keeps help and all activity choices available', (
+    tester,
+  ) async {
+    final app = await mount(tester);
+    await tap(tester, 'Très mal');
+    await flush(tester, app);
+    expect(find.textContaining('3114'), findsWidgets);
+    expect(find.text('Besoin d’une pause ?'), findsOneWidget);
+    expect(find.text('Activités du jour'), findsOneWidget);
+    expect(find.text('Garder le contact'), findsOneWidget);
+  });
 
   testWidgets('un rituel coché reste fait quand la page est remontée', (
     tester,
   ) async {
     final app = await mount(tester);
-    await tap(tester, 'Rayonnant');
+    await tap(tester, 'Très bien');
     await flush(tester, app);
     await tap(tester, 'Cocher Respirer 2 minutes');
     await flush(tester, app);
@@ -167,7 +166,7 @@ void main() {
       for (final (label, title) in [
         ('Ouvrir la série', 'Série'),
         ('Ouvrir les fleurs', 'Fleurs de la semaine'),
-        ('Ouvrir la tenue', 'Tenue d’Elyrii'),
+        ('Personnaliser Elyrii', 'Apparence d’Elyrii'),
       ]) {
         await tap(tester, label);
         expect(find.text(title), findsOneWidget);
@@ -175,10 +174,10 @@ void main() {
         await tester.pump(const Duration(seconds: 1));
       }
       await tap(tester, 'Ouvrir le calendrier');
-      expect(find.text('Jours présents'), findsOneWidget);
+      expect(find.text('Jours d’activité'), findsOneWidget);
       await tester.tap(find.byTooltip('Mois précédent'));
       await tester.pump(const Duration(seconds: 1));
-      expect(find.text('Jours présents'), findsOneWidget);
+      expect(find.text('Jours d’activité'), findsOneWidget);
       await tester.tap(find.byTooltip('Fermer'));
       await tester.pump();
     },
@@ -189,7 +188,7 @@ void main() {
     (tester) async {
       final app = await mount(tester);
       final original = app.mascot.mascot;
-      await tap(tester, 'Ouvrir la tenue');
+      await tap(tester, 'Personnaliser Elyrii');
       final viewer = tester.state(find.byType(Mascot3DViewer).first);
       await tap(tester, 'Astral');
       expect(app.mascot.mascot, original);
@@ -214,7 +213,7 @@ void main() {
             .mascot,
         original,
       );
-      await tap(tester, 'Ouvrir la tenue');
+      await tap(tester, 'Personnaliser Elyrii');
       await tap(tester, 'Astral');
       await tap(tester, 'Décor');
       await tap(tester, 'Collines');
@@ -225,7 +224,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       expect(app.mascot.mascot.themeId, 'cosmic');
       expect(app.accueilActivities.snapshot.decor, MascotDecor.hills);
-      expect(find.text('Tenue d’Elyrii'), findsNothing);
+      expect(find.text('Apparence d’Elyrii'), findsNothing);
       expect(viewer.mounted, isTrue);
     },
   );

@@ -115,10 +115,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       try {
         expect(journey.current!.completedStepCount, 0);
-        final complete = find.widgetWithText(
-          FilledButton,
-          'J’ai réalisé cette étape',
-        );
+        final complete = find.widgetWithText(FilledButton, 'Terminer l’étape');
         expect(tester.widget<FilledButton>(complete).onPressed, isNotNull);
         await Scrollable.ensureVisible(tester.element(complete));
         await tester.runAsync(() async {

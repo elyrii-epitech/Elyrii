@@ -207,7 +207,7 @@ class JourneyPathTile extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${path.steps.length} étapes · À ton rythme',
+                      '${path.steps.length} étapes',
                       style: AppTextStyles.bodySmall(
                         color: context.textSecondary,
                       ),

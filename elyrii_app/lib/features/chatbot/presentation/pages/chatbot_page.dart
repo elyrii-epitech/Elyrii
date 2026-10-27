@@ -264,7 +264,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   ),
                   const SizedBox(height: AppDimensions.spacing20),
                   Text(
-                    'Un moment pour toi.',
+                    'Discuter avec Elyrii',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.headlineSmall(
                       color: context.textPrimary,
@@ -272,7 +272,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   ),
                   const SizedBox(height: AppDimensions.spacing8),
                   Text(
-                    'Qu’as-tu en tête aujourd’hui ?',
+                    'De quoi veux-tu parler ?',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyLarge(
                       color: context.textSecondary,
@@ -283,7 +283,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
                     ConversationSuggestions(onSuggestionTap: _useSuggestion),
                     const SizedBox(height: AppDimensions.spacing24),
                     Text(
-                      'Un soutien au quotidien, pas un suivi médical.',
+                      'Elyrii est une IA et ne remplace pas un professionnel de santé.',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyMedium(
                         color: context.textTertiary,

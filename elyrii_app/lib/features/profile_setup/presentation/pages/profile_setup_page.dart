@@ -24,13 +24,9 @@ import '../widgets/profile_controls.dart';
 
 enum _Step {
   name('On fait connaissance', 'Ton prénom', Icons.waving_hand_outlined),
-  goal(
-    'Ce qui t’amène',
-    'Une envie pour commencer',
-    Icons.favorite_outline_rounded,
-  ),
-  mood('Ton premier moment', 'Ton humeur', Icons.mood_rounded),
-  look('Ton Elyrii', 'Décor et tenue', Icons.checkroom_rounded);
+  goal('Ton objectif', 'Choisis un objectif', Icons.favorite_outline_rounded),
+  mood('Ton humeur du moment', 'Ton humeur', Icons.mood_rounded),
+  look('L’apparence d’Elyrii', 'Décor et tenue', Icons.checkroom_rounded);
 
   final String title;
   final String detail;
@@ -153,7 +149,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               () => _error =
                   store.snapshot.error ??
                   mascot.error ??
-                  'Ton look n’a pas été enregistré. Réessaie.',
+                  'L’apparence n’a pas été enregistrée. Réessaie.',
             );
           }
           return;
@@ -184,7 +180,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       _Step.goal =>
         '${name.isEmpty ? 'Enchanté.' : 'Enchanté, $name.'}\nQu’est-ce qui t’amène ici ?',
       _Step.mood => 'Comment tu te sens,\nlà, maintenant ?',
-      _Step.look => 'Choisis mon décor et ma tenue,\nje les garderai pour toi.',
+      _Step.look =>
+        'Choisis l’apparence d’Elyrii.\nTu pourras la modifier plus tard.',
     };
     return PopScope(
       canPop: false,
@@ -194,7 +191,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       child: ArrivalFrame(
         key: ValueKey(_step),
         title: _step == _Step.name
-            ? 'Bienvenue chez toi'
+            ? 'Bienvenue sur Elyrii'
             : '${_step.index + 1} sur 4',
         onBack: _back,
         onInfo: () => showArrivalSteps(context),
@@ -266,7 +263,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             ArrivalFeedback(_error),
             const SizedBox(height: AppDimensions.spacing16),
             ArrivalButton(
-              label: _step == _Step.look ? 'Entrer dans Elyrii' : 'Continuer',
+              label: _step == _Step.look ? 'Commencer' : 'Continuer',
               icon: Icons.arrow_forward_rounded,
               busy: _busy,
               onPressed: _next,
@@ -280,9 +277,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             if (_step != _Step.goal)
               Text(
                 switch (_step) {
-                  _Step.name => 'Un prénom ou un petit nom, comme tu préfères.',
+                  _Step.name => 'Utilise le prénom ou le nom de ton choix.',
                   _Step.mood => 'Tu pourras me le dire chaque jour.',
-                  _Step.look => 'Tout se change ensuite dans la Tenue.',
+                  _Step.look =>
+                    'Tu pourras modifier l’apparence depuis l’Accueil.',
                   _Step.goal => '',
                 },
                 textAlign: TextAlign.center,
@@ -403,14 +401,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       ),
       const SizedBox(height: AppDimensions.spacing12),
       Text(
-        switch (_mood) {
-          MoodType.verySad => 'Tu n’as rien à réussir ici.',
-          MoodType.sad => 'Merci de me le dire. On ira doucement.',
-          MoodType.neutral => 'On peut prendre notre temps.',
-          MoodType.happy => 'Content de partager ce moment avec toi.',
-          MoodType.veryHappy => 'Cette énergie, on la garde pour la suite.',
-          null => 'Tu peux aussi garder ce moment pour toi.',
-        },
+        'Choisis une humeur ou passe cette étape.',
         textAlign: TextAlign.center,
         style: AppTextStyles.bodyMedium(color: context.textSecondary),
       ),

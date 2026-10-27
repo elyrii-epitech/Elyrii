@@ -41,7 +41,7 @@ class JournalEntryPage extends StatelessWidget {
       showJournalToast(context, 'La suppression a échoué. Réessaie.');
       return;
     }
-    showJournalToast(context, 'Entrée retirée de ton journal.');
+    showJournalToast(context, 'Note supprimée de ton journal.');
     Navigator.of(context).pop();
     // A leftover draft of a deleted entry is harmless; cleanup is best effort.
     unawaited(provider.deleteDraft(entry.id).catchError((Object _) {}));
@@ -55,7 +55,7 @@ class JournalEntryPage extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     showJournalSheet<void>(
       context,
-      title: 'Cette entrée',
+      title: 'Cette note',
       child: Builder(
         builder: (sheet) => JournalRowGroup(
           children: [
@@ -203,7 +203,7 @@ class JournalEntryPage extends StatelessWidget {
             ),
             trailing: GlassBarButton(
               icon: Symbols.more_horiz_rounded,
-              tooltip: 'Actions de l’entrée',
+              tooltip: 'Actions de la note',
               onPressed: () => _more(context, provider, shown),
             ),
           ),

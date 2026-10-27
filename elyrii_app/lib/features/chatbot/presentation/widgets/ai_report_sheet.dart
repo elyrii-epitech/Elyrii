@@ -93,13 +93,11 @@ class _AiReportSheetState extends State<AiReportSheet> {
         if (_sent)
           Semantics(
             liveRegion: true,
-            child: const Text(
-              'Signalement enregistré pour examen. En cas d’urgence, utilise les ressources d’aide.',
-            ),
+            child: const Text('Signalement envoyé à la modération.'),
           )
         else ...[
           const Text(
-            'Seule la réponse sélectionnée, son motif et les identifiants nécessaires sont transmis à l’équipe de modération. Cela ne déclenche pas une aide d’urgence.',
+            'La réponse sélectionnée et le motif seront transmis à la modération. Pour une urgence, utilise « Aide d’urgence ».',
           ),
           if (widget.message.content.length > 16000)
             const Text(

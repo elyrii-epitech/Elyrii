@@ -116,7 +116,7 @@ class _AccueilSections extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Un pas vers les autres',
+                            'Garder le contact',
                             style: AppTextStyles.titleSmall(
                               color: context.textPrimary,
                             ),
@@ -161,7 +161,7 @@ class _AccueilSections extends StatelessWidget {
                           : () => store.nextSocialIdea(day: today),
                     ),
                     Text(
-                      '${social?.completedAt.length ?? 0} pas sur 3 cette semaine',
+                      '${social?.completedAt.length ?? 0} actions sur 3 cette semaine',
                       style: AppTextStyles.bodySmall(
                         color: context.textSecondary,
                       ),
@@ -177,7 +177,7 @@ class _AccueilSections extends StatelessWidget {
           key: const ValueKey('insight'),
           index: 5,
           child: AccessibleAction(
-            label: 'Ce qui t’aide, ouvrir le bilan',
+            label: 'Humeur et journal, ouvrir le bilan',
             onPressed: () => onAction(const OpenReviews()),
             child: _Surface(
               child: Row(
@@ -194,7 +194,7 @@ class _AccueilSections extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Ce qui t’aide',
+                          'Humeur et journal',
                           style: AppTextStyles.titleSmall(
                             color: context.textPrimary,
                           ),
@@ -482,7 +482,7 @@ class _Rituals extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                'Rituels du jour',
+                'Activités du jour',
                 style: AppTextStyles.titleMedium(color: context.textPrimary),
               ),
             ),

@@ -395,13 +395,13 @@ Future<String?> chooseWellnessGoal(BuildContext context, String? current) {
   var selected = current;
   return profileSheet<String>(
     context,
-    'Ce qui compte pour toi',
+    'Ton objectif',
     StatefulBuilder(
       builder: (context, setState) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Choisis ce dont tu as besoin en ce moment.',
+            'Choisis un objectif pour commencer.',
             style: AppTextStyles.bodyMedium(color: context.textSecondary),
           ),
           const SizedBox(height: AppDimensions.spacing16),

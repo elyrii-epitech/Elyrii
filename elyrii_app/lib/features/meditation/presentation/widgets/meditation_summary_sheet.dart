@@ -25,22 +25,12 @@ class MeditationSummarySheet extends StatelessWidget {
         ? '$minutes min'
         : '$minutes min $seconds s';
     return AppSheetPanel(
-      title: "C'est fait.",
+      title: "Résumé de la séance",
       child: ListenableBuilder(
         listenable: controller,
         builder: (context, _) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              "Bravo, c'est terminé !",
-              style: AppTextStyles.titleMedium(color: context.textPrimary),
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
-            Text(
-              "Tu as pris un moment pour toi, et c'est déjà une belle victoire.",
-              style: AppTextStyles.bodyMedium(color: context.textSecondary),
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
             Container(
               padding: const EdgeInsets.all(AppDimensions.spacing16),
               decoration: BoxDecoration(
@@ -106,7 +96,7 @@ class MeditationSummarySheet extends StatelessWidget {
                 textStyle: AppTextStyles.labelLarge(),
               ),
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Terminer'),
+              child: const Text('Fermer'),
             ),
           ],
         ),

@@ -53,7 +53,7 @@ Widget _accueilOverlayPanel(
               _AccueilOverlay.calendar => 'Calendrier',
               _AccueilOverlay.streak => 'Série',
               _AccueilOverlay.flowers => 'Fleurs de la semaine',
-              _AccueilOverlay.dressing => 'Tenue d’Elyrii',
+              _AccueilOverlay.dressing => 'Apparence d’Elyrii',
             },
             child: ClipRRect(
               borderRadius: radius,
@@ -561,14 +561,14 @@ class _CalendarPanelState extends State<_CalendarPanel> {
     final detail = switch (selected.state) {
       CalendarCellState.future => 'À venir',
       CalendarCellState.uncovered => 'Données indisponibles pour ce jour',
-      CalendarCellState.absent => 'Aucune présence notée',
+      CalendarCellState.absent => 'Aucune activité enregistrée',
       CalendarCellState.presentWithMood ||
       CalendarCellState.presentWithoutMood => [
-        selected.mood?.label ?? 'Présence notée',
+        selected.mood?.label ?? 'Activité enregistrée',
         if (activities.rituals[_selected] != null)
-          '${activities.rituals[_selected]!.completedAt.length} rituels sur 3',
+          '${activities.rituals[_selected]!.completedAt.length} activités sur 3',
         if (selected.journalEntries > 0)
-          '${selected.journalEntries} ${selected.journalEntries == 1 ? 'écrit' : 'écrits'}',
+          '${selected.journalEntries} ${selected.journalEntries == 1 ? 'note' : 'notes'}',
       ].join(' · '),
     };
     return SingleChildScrollView(
@@ -679,7 +679,7 @@ class _CalendarPanelState extends State<_CalendarPanel> {
                   dashboard.coverage == null
                       ? '—'
                       : '${dashboard.currentStreak} jours',
-                  'Série en cours',
+                  'Jours consécutifs d’activité',
                 ),
               ),
               const SizedBox(width: AppDimensions.spacing8),
@@ -687,7 +687,7 @@ class _CalendarPanelState extends State<_CalendarPanel> {
                 child: _calendarStat(
                   context,
                   '${calendar.presentDays} / ${calendar.elapsedDays}',
-                  'Jours présents',
+                  'Jours d’activité',
                 ),
               ),
             ],

@@ -266,10 +266,8 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
     }
     final result = await showAppDialog<String>(
       context: context,
-      title: 'Modifications non sauvegardées',
-      child: const Text(
-        'Veux-tu sauvegarder tes modifications avant de fermer ?',
-      ),
+      title: 'Modifications non enregistrées',
+      child: const Text('Enregistrer tes modifications avant de fermer ?'),
       actions: [
         AppDialogAction(
           label: 'Annuler',
@@ -281,7 +279,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           onPressed: () => Navigator.pop(context, 'discard'),
         ),
         AppDialogAction(
-          label: 'Sauvegarder',
+          label: 'Enregistrer',
           isDefault: true,
           onPressed: () => Navigator.pop(context, 'save'),
         ),
@@ -317,7 +315,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       showJournalToast(
         context,
         _isNew
-            ? 'Ton entrée est enregistrée.'
+            ? 'Ta note est enregistrée.'
             : 'Tes changements sont enregistrés.',
       );
     }
@@ -444,7 +442,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           foregroundColor: AppColors.primaryText(dark),
           textStyle: AppTextStyles.buttonSmall(),
         ),
-        child: const Text('Terminé'),
+        child: const Text('Enregistrer'),
       ),
     ],
   );
@@ -509,7 +507,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               minHeight: AppDimensions.journalBodyMinHeight,
             ),
             child: Semantics(
-              label: 'Ton entrée',
+              label: 'Ta note',
               child: TextField(
                 controller: _contentController,
                 autofocus: _isNew,
@@ -519,7 +517,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
                 style: AppTextStyles.writingBody(color: context.textPrimary),
                 cursorColor: AppColors.primaryText(dark),
                 decoration: _bare(
-                  'Exprime ce que tu ressens…',
+                  'Écris ici…',
                   AppTextStyles.writingBody(color: hint),
                 ),
               ),
@@ -593,9 +591,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
         (_isSaving
             ? 'Enregistrement…'
             : _hasChanges && _saveFailed
-            ? 'Échec de sauvegarde — réessaie'
+            ? 'Enregistrement impossible. Réessaie.'
             : _hasChanges
-            ? 'Modifications non sauvegardées'
+            ? 'Modifications non enregistrées'
             : saved
             ? 'Enregistré automatiquement'
             : '');

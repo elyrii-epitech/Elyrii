@@ -113,13 +113,13 @@ void main() {
     ]);
 
     expect(find.text('Il y a un mois'), findsOneWidget);
-    await tester.ensureVisible(find.text('Relire ce moment'));
+    await tester.ensureVisible(find.text('Relire cette note'));
     await tester.pump();
-    await tester.tap(find.text('Relire ce moment'));
+    await tester.tap(find.text('Relire cette note'));
     await tester.pump();
 
     expect(find.text('Supprimer'), findsOneWidget);
-    expect(find.textContaining('Vulnérable ·'), findsOneWidget);
+    expect(find.textContaining('Mal ·'), findsOneWidget);
     expect(
       find.text('Ça paraît petit, mais pour moi ça compte.'),
       findsOneWidget,
@@ -138,15 +138,15 @@ void main() {
     await tester.tap(find.text('Supprimer'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.text('Supprimer l’entrée'));
+    await tester.tap(find.text('Supprimer la note'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Une place à table'), findsNothing);
-    expect(find.text('Entrée retirée de ton journal.'), findsOneWidget);
+    expect(find.text('Note supprimée de ton journal.'), findsOneWidget);
     expect(find.text('Comment s’est passée ta journée ?'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
-    expect(find.text('Entrée retirée de ton journal.'), findsNothing);
+    expect(find.text('Note supprimée de ton journal.'), findsNothing);
   });
 
   testWidgets('search narrows the loaded entries by word and mood', (
@@ -168,20 +168,20 @@ void main() {
     await tester.pump();
     await tester.enterText(find.byType(TextField), 'oral');
     await tester.pump();
-    expect(find.text('2 entrées pour « oral »'), findsOneWidget);
+    expect(find.text('2 notes pour « oral »'), findsOneWidget);
 
     await tester.tap(
       find.bySemanticsLabel(
-        'Filtrer les entrées ${MoodType.neutral.label.toLowerCase()}',
+        'Filtrer les notes ${MoodType.neutral.label.toLowerCase()}',
       ),
     );
     await tester.pump();
-    expect(find.text('1 entrée pour « oral »'), findsOneWidget);
+    expect(find.text('1 note pour « oral »'), findsOneWidget);
     expect(find.text('Le bus'), findsNothing);
 
     await tester.enterText(find.byType(TextField), 'introuvable');
     await tester.pump();
-    expect(find.textContaining('Aucune entrée avec ces mots.'), findsOneWidget);
+    expect(find.textContaining('Aucune note avec ces mots.'), findsOneWidget);
   });
 
   testWidgets('the question of the day changes and stays for that day', (
@@ -206,7 +206,7 @@ void main() {
   testWidgets('the first day offers prompts and free writing', (tester) async {
     await _mount(tester, []);
 
-    expect(find.text('Ici, personne d’autre ne lit.'), findsOneWidget);
+    expect(find.text('Ton journal commence ici'), findsOneWidget);
     await tester.tap(find.text('Écrire librement'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -216,10 +216,35 @@ void main() {
     expect(find.text('0 mots'), findsOneWidget);
   });
 
-  test('historical mood labels map to the five moods', () {
-    expect(parseJournalMood('Très triste'), MoodType.verySad);
-    expect(parseJournalMood('veryHappy'), MoodType.veryHappy);
-    expect(parseJournalMood('Paisible'), MoodType.neutral);
+  test('historical and current mood labels preserve their stored meaning', () {
+    final aliases = <MoodType, List<String>>{
+      MoodType.verySad: [
+        'verySad',
+        'Très triste',
+        'Éprouvé',
+        'eprouve',
+        'Très mal',
+      ],
+      MoodType.sad: ['sad', 'Triste', 'Vulnérable', 'vulnerable', 'Mal'],
+      MoodType.neutral: ['neutral', 'Neutre', 'Paisible', 'Bof'],
+      MoodType.happy: ['happy', 'Joyeux', 'Serein', 'Bien'],
+      MoodType.veryHappy: [
+        'veryHappy',
+        'Très joyeux',
+        'Rayonnant',
+        'Très bien',
+      ],
+    };
+    for (final entry in aliases.entries) {
+      for (final label in entry.value) {
+        expect(parseJournalMood(label), entry.key, reason: label);
+        expect(
+          parseJournalMood('  ${label.toUpperCase()}  '),
+          entry.key,
+          reason: label,
+        );
+      }
+    }
     expect(parseJournalMood('inconnue'), isNull);
   });
 
@@ -254,7 +279,7 @@ void main() {
       expect(text, contains('22 octobre 2026\nMon titre\n\nTexte enregistré'));
       expect(
         text,
-        contains('Brouillon\nQuelques mots pour moi\n\nEncore en brouillon'),
+        contains('Brouillon\n$journalFallbackTitle\n\nEncore en brouillon'),
       );
     },
   );

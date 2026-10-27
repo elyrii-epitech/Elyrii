@@ -93,7 +93,7 @@ class _EmergencyResourcesSheet extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tu n’es pas seul(e). Ces lignes sont là pour t’écouter et t’orienter.',
+            'Ces services peuvent t’écouter et t’orienter.',
             style: AppTextStyles.bodyMedium(color: ink),
           ),
           const SizedBox(height: AppDimensions.spacing24),

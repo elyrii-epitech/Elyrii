@@ -53,7 +53,7 @@ void main() {
       );
 
       expect(find.bySemanticsLabel(RegExp(r'^Fleur : ')), findsNothing);
-      expect(find.text('Aucun défi complété ce mois-ci'), findsOneWidget);
+      expect(find.text('Aucun défi terminé ce mois-ci'), findsOneWidget);
 
       final prevButton = tester.widget<IconButton>(arrow('Mois précédent'));
       expect(prevButton.onPressed, isNotNull);

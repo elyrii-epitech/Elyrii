@@ -74,14 +74,15 @@ class _LoginPageState extends State<LoginPage> {
               fit: StackFit.expand,
               children: [
                 const ArrivalScene(launch: true),
-                Positioned.fill(
-                  child: Semantics(
-                    button: true,
-                    label: 'Entrer dans Elyrii',
-                    child: InkWell(
-                      onTap: () => setState(() => _welcome = false),
-                      child: const SizedBox.expand(),
-                    ),
+                Positioned(
+                  left: AppDimensions.pageHorizontalPadding,
+                  right: AppDimensions.pageHorizontalPadding,
+                  bottom:
+                      MediaQuery.paddingOf(context).bottom +
+                      AppDimensions.spacing32,
+                  child: ArrivalButton(
+                    label: 'Commencer',
+                    onPressed: () => setState(() => _welcome = false),
                   ),
                 ),
               ],
@@ -96,8 +97,8 @@ class _LoginPageState extends State<LoginPage> {
       onBack: () => setState(() => _welcome = true),
       onInfo: () => showArrivalInfo(
         context,
-        'Un compte, ou juste un premier pas',
-        'Ton compte te permet de retrouver ton espace. Tu peux aussi découvrir Elyrii sans compte et décider plus tard.',
+        'Avec ou sans compte',
+        'Connecte-toi ou essaie la démo sans créer de compte.',
       ),
       child: AutofillGroup(
         child: Form(
@@ -106,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Ton espace t’attend',
+                'Se connecter',
                 style: AppTextStyles.titleLarge(color: context.textPrimary),
               ),
               const SizedBox(height: AppDimensions.spacing20),
@@ -153,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: AppDimensions.spacing12),
               ArrivalButton(
-                label: 'Découvrir sans compte',
+                label: 'Essayer la démo',
                 secondary: true,
                 onPressed: busy ? null : _demo,
                 icon: Icons.arrow_forward_rounded,

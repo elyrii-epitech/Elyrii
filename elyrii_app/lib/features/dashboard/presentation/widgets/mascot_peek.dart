@@ -108,7 +108,7 @@ class _MascotPeekState extends State<MascotPeek> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) => Semantics(
     label: 'Elyrii, ta mascotte',
-    hint: 'Touche pour une réaction, maintiens pour un moment de douceur',
+    hint: 'Touche pour une réaction, maintiens pour une autre animation',
     button: true,
     child: GestureDetector(
       behavior: HitTestBehavior.opaque,

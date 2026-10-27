@@ -71,7 +71,7 @@ void main() {
     final remaining = controller.remainingSeconds;
     await tester.pump(const Duration(seconds: 2));
     expect(controller.remainingSeconds, remaining);
-    expect(find.text('À ton rythme'), findsOneWidget);
+    expect(find.text('En pause'), findsOneWidget);
     await tester.tap(find.byTooltip('Reprendre'));
     await tester.pump();
     for (var i = 0; i < 12; i++) {
@@ -81,10 +81,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('12 s'), findsOneWidget);
     expect(find.text('0'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Serein'));
+    await tester.tap(find.bySemanticsLabel('Bien'));
     await tester.pump();
     expect(controller.selectedMoodIndex, MoodType.happy.index);
-    await tester.tap(find.text('Terminer'));
+    await tester.tap(find.text('Fermer'));
     await tester.pumpAndSettle();
     expect(find.text('Catalogue'), findsOneWidget);
     expect(controller.isSetup, isTrue);

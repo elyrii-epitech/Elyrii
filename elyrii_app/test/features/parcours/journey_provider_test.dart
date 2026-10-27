@@ -84,6 +84,63 @@ class _DelayedReadRepository extends JourneyRepository {
 }
 
 void main() {
+  test('editorial catalog updates preserve encrypted progress and account ownership', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final cipher = ContentCipher(_SecureStorage());
+    final repository = JourneyRepository(cipher: cipher, preferences: prefs);
+    final chosen = await repository.choose(
+      'alice',
+      repository.catalog.first,
+      expected: null,
+    );
+    final advanced = await repository.completeStep(
+      'alice',
+      chosen.current,
+      chosen.current.path.steps.first.stepId,
+    );
+    final paused = await repository.pause('alice', advanced.current);
+    final document = JourneyDocument(
+      owner: 'alice',
+      current: paused.current,
+    ).toJson();
+    final path = ((document['current'] as Map)['path'] as Map);
+    path['contentVersion'] = 1;
+    path['title'] = 'Un pas vers les autres';
+    (path['steps'] as List).first['instructions'] =
+        'Anciennes consignes éditoriales';
+    final encrypted = await cipher.seal(
+      'alice',
+      jsonEncode(document),
+      purpose: 'journey:v1',
+    );
+    await prefs.setString('journey_progress_alice', encrypted);
+
+    final restored = (await repository.load('alice'))!;
+    expect(restored.path.contentVersion, 2);
+    expect(restored.path.title, repository.catalog.first.title);
+    expect(restored.enrollmentId, paused.current.enrollmentId);
+    expect(restored.completedStepCount, 1);
+    expect(restored.status, JourneyStatus.paused);
+    expect(restored.revision, paused.current.revision);
+    expect(restored.startedAt, paused.current.startedAt);
+    expect(restored.updatedAt, paused.current.updatedAt);
+    expect(restored.completedAt, paused.current.completedAt);
+    expect(prefs.getString('journey_progress_alice'), encrypted);
+    expect(await repository.load('bob'), isNull);
+
+    // A different activity sequence must keep its frozen content intact.
+    (path['steps'] as List).first['stepId'] = 'different-activity';
+    await prefs.setString(
+      'journey_progress_alice',
+      await cipher.seal('alice', jsonEncode(document), purpose: 'journey:v1'),
+    );
+    final different = (await repository.load('alice'))!;
+    expect(different.path.contentVersion, 1);
+    expect(different.path.title, 'Un pas vers les autres');
+    expect(different.completedStepCount, 1);
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late _Preferences preferences;

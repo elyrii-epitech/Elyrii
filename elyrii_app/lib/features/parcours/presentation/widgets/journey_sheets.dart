@@ -61,7 +61,7 @@ Future<void> showJourneyPicker(
   JourneyProvider provider,
 ) => showJourneySheet<void>(
   context,
-  title: 'Changer de parcours',
+  title: 'Changer de programme',
   child: AnimatedBuilder(
     animation: provider,
     builder: (context, _) => Column(
@@ -69,7 +69,7 @@ Future<void> showJourneyPicker(
       spacing: AppDimensions.spacing12,
       children: [
         const JourneyNote(
-          'Explore sans rien changer. Ton parcours actuel reste conservé tant que tu ne confirmes pas un autre choix.',
+          'Choisis un programme. Une confirmation te sera demandée pour remplacer celui en cours.',
         ),
         JourneyFeedback(
           error: provider.error,
@@ -78,7 +78,7 @@ Future<void> showJourneyPicker(
           onRetry: () => provider.load(force: true),
         ),
         if (provider.hasLoadedData && provider.catalog.isEmpty)
-          const JourneyNote('Aucun parcours n’est disponible pour le moment.'),
+          const JourneyNote('Aucun programme n’est disponible pour le moment.'),
         for (final path in provider.catalog)
           JourneyPathTile(
             path: path,
@@ -124,7 +124,7 @@ class _JourneyDetailState extends State<_JourneyDetail> {
     final result = await widget.provider.choose(widget.path);
     if (!mounted || result == JourneyCommandResult.failed) return;
     if (result == JourneyCommandResult.changed) {
-      _announceJourney(context, 'Parcours choisi.');
+      _announceJourney(context, 'Programme choisi.');
     }
     Navigator.of(context).pop(true);
   }
@@ -154,10 +154,10 @@ class _JourneyDetailState extends State<_JourneyDetail> {
         children: [
           JourneyNote(path.description),
           JourneyNote(
-            '${journeyTopicLabel(path.topic)} · ${path.steps.length} étapes · Sans échéance',
+            '${journeyTopicLabel(path.topic)} · ${path.steps.length} étapes ',
           ),
           const JourneyNote(
-            'Chaque durée est indicative. Tu peux interrompre une étape, mettre le parcours en pause ou changer d’avis. Aucune conversation n’est obligatoire.',
+            'Les durées sont indicatives. Tu peux mettre ce programme en pause à tout moment.',
           ),
           JourneyStepList(path: path),
           JourneyFeedback(
@@ -168,7 +168,7 @@ class _JourneyDetailState extends State<_JourneyDetail> {
           ),
           if (!_samePosition)
             const JourneyNote(
-              'Ton parcours a changé. Ferme cette fiche puis consulte la position actualisée.',
+              'Le programme a changé. Ferme cette fiche et actualise ta progression.',
               live: true,
             ),
           if (!available && !provider.isLoading)
@@ -177,13 +177,13 @@ class _JourneyDetailState extends State<_JourneyDetail> {
             ),
           if (alreadyChosen)
             const JourneyNote(
-              'C’est ton parcours actuel. Ce choix ne le recommence pas et ne modifie pas sa pause.',
+              'Programme déjà sélectionné. Ta progression est conservée.',
             ),
           if (_confirming && current != null && _samePosition) ...[
             JourneyCard(
               accented: true,
               child: JourneyNote(
-                'Remplacer « ${current.path.title} » par « ${path.title} » ? La position du parcours actuel sera remplacée. Tes défis, écrits et souvenirs ne seront pas effacés.',
+                'Remplacer « ${current.path.title} » par « ${path.title} » ? Ta progression actuelle sera remplacée. Tes notes et tes défis seront conservés.',
               ),
             ),
             JourneyButton(
@@ -191,7 +191,7 @@ class _JourneyDetailState extends State<_JourneyDetail> {
               onPressed: canChoose ? _choose : null,
             ),
             JourneyButton(
-              label: 'Garder mon parcours',
+              label: 'Garder mon programme',
               primary: false,
               onPressed: provider.isWriting
                   ? null
@@ -200,8 +200,8 @@ class _JourneyDetailState extends State<_JourneyDetail> {
           ] else
             JourneyButton(
               label: alreadyChosen
-                  ? 'Parcours déjà choisi'
-                  : 'Choisir ce parcours',
+                  ? 'Programme déjà choisi'
+                  : 'Choisir ce programme',
               onPressed: !canChoose
                   ? null
                   : () {
@@ -222,14 +222,14 @@ Future<void> showJourneySteps(BuildContext context, JourneyProvider provider) {
   final enrollmentId = provider.current?.enrollmentId;
   return showJourneySheet<void>(
     context,
-    title: 'Les étapes du parcours',
+    title: 'Les étapes du programme',
     child: AnimatedBuilder(
       animation: provider,
       builder: (context, _) {
         final current = provider.current;
         if (current == null || current.enrollmentId != enrollmentId) {
           return const JourneyNote(
-            'Le parcours a changé. Reviens à la page Parcours.',
+            'Le programme a changé. Reviens à la page Programmes.',
             live: true,
           );
         }
@@ -250,7 +250,7 @@ Future<void> showJourneyStep(BuildContext context, JourneyProvider provider) {
   if (current == null || step == null) return Future.value();
   return showJourneySheet<void>(
     context,
-    title: 'L’étape du parcours',
+    title: 'L’étape du programme',
     child: _JourneyStepSheet(
       provider: provider,
       enrollmentId: current.enrollmentId,
@@ -291,7 +291,7 @@ class _JourneyStepSheetState extends State<_JourneyStepSheet> {
       _announceJourney(
         context,
         widget.provider.current?.status == JourneyStatus.completed
-            ? 'Parcours terminé. Toutes les étapes sont réalisées.'
+            ? 'Programme terminé. Toutes les étapes sont réalisées.'
             : 'Étape réalisée. Ta progression est enregistrée.',
       );
     }
@@ -353,7 +353,7 @@ class _JourneyStepSheetState extends State<_JourneyStepSheet> {
       final current = provider.current;
       if (current == null || current.enrollmentId != widget.enrollmentId) {
         return const JourneyNote(
-          'Le parcours a changé. Reviens à la page Parcours.',
+          'Le programme a changé. Reviens à la page Programmes.',
           live: true,
         );
       }
@@ -394,7 +394,7 @@ class _JourneyStepSheetState extends State<_JourneyStepSheet> {
               onPressed: canLaunch ? () => _launch(step.action) : null,
             ),
             const JourneyNote(
-              'Ouvrir ou fermer cette activité ne valide pas l’étape. Reviens ici pour confirmer ce que tu as réalisé.',
+              'Après l’activité, reviens ici pour terminer l’étape.',
             ),
           ],
           JourneyFeedback(
@@ -407,15 +407,15 @@ class _JourneyStepSheetState extends State<_JourneyStepSheet> {
             const JourneyNote('Cette étape est déjà terminée.', live: true)
           else if (current.status == JourneyStatus.paused)
             const JourneyNote(
-              'Ton parcours est en pause. Reprends-le depuis la page Parcours avant de valider.',
+              'Ton programme est en pause. Reprends-le depuis la page Programmes avant de valider.',
             ),
           if (!done)
             JourneyButton(
-              label: 'J’ai réalisé cette étape',
+              label: 'Terminer l’étape',
               onPressed: enabled ? _complete : null,
             ),
           JourneyButton(
-            label: 'Fermer sans valider',
+            label: 'Fermer',
             primary: false,
             onPressed: () => Navigator.of(context).pop(),
           ),
@@ -466,9 +466,7 @@ class _JourneyHelpState extends State<_JourneyHelp> {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     spacing: AppDimensions.spacing16,
     children: [
-      const JourneyNote(
-        'Tu n’as pas besoin de terminer une étape ni d’ouvrir le Chat pour demander de l’aide.',
-      ),
+      const JourneyNote('Tu peux contacter ces services directement.'),
       const JourneyNote(
         'En France, le 3114 est le numéro national de prévention du suicide. Il est gratuit et accessible 24 h/24, 7 j/7.',
       ),

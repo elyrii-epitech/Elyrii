@@ -53,7 +53,7 @@ void main() {
   ) async {
     await tester.pumpWidget(host(const LoginPage()));
     expect(find.byType(TextFormField), findsNothing);
-    await tester.tap(find.bySemanticsLabel('Entrer dans Elyrii'));
+    await tester.tap(find.bySemanticsLabel('Commencer'));
     await tester.pump();
     await tap(tester, 'Se connecter');
     expect(find.text('Entre une adresse email valide.'), findsOneWidget);
@@ -74,7 +74,9 @@ void main() {
       await tap(tester, 'Créer mon compte');
       expect(find.text('Utilise au moins 8 caractères.'), findsOneWidget);
       expect(
-        find.text('Accepte les conditions pour créer ton espace.'),
+        find.text(
+          'Lis les informations sur Elyrii et tes données avant de créer ton compte.',
+        ),
         findsOneWidget,
       );
       await tester.enterText(find.byType(TextFormField).at(2), 'UnSecret123');
@@ -82,6 +84,33 @@ void main() {
       expect(requests, isEmpty);
     },
   );
+
+  testWidgets('password feedback and submission require the same three rules', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host(const RegisterPage()));
+    await tester.enterText(find.byType(TextFormField).at(0), 'Camille');
+    await tester.enterText(
+      find.byType(TextFormField).at(1),
+      'camille@example.test',
+    );
+    await tester.enterText(find.byType(TextFormField).at(2), 'UnSecret!');
+    await tester.pump();
+    expect(
+      find.text('Les trois règles du mot de passe sont respectées.'),
+      findsNothing,
+    );
+    await tap(tester, 'Créer mon compte');
+    expect(find.text('Ajoute au moins un chiffre.'), findsOneWidget);
+    expect(requests, isEmpty);
+    await tester.enterText(find.byType(TextFormField).at(2), 'UnSecret12');
+    await tester.pump();
+    expect(
+      find.text('Les trois règles du mot de passe sont respectées.'),
+      findsOneWidget,
+    );
+    expect(requests, isEmpty);
+  });
 
   testWidgets(
     'reset keeps the token confirmation path and refuses incomplete tokens',

@@ -335,7 +335,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           focusedBorder: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                           border: InputBorder.none,
-                          hintText: 'Quelques mots sur toi',
+                          hintText: 'Présente-toi en quelques mots',
                         ),
                       ),
                     ],
@@ -345,7 +345,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ProfileGroup(
                   children: [
                     ProfileRow(
-                      title: 'Objectif bien-être',
+                      title: 'Ton objectif',
                       icon: Icons.favorite_rounded,
                       color: AppColors.pink(dark),
                       value: _goal == null ? null : profileOptionLabel(_goal!),

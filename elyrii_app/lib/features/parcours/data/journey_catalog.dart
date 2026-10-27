@@ -1,36 +1,33 @@
-import '../../dashboard/domain/accueil_content.dart';
 import '../domain/journey.dart';
 
 final List<JourneyPath> journeyCatalog = List.unmodifiable([
   JourneyPath(
     pathId: 'connection-small-steps',
-    contentVersion: 1,
-    title: 'Un pas vers les autres',
-    description: 'Préparer un petit geste de lien, sans obligation de contacter quelqu’un ni d’obtenir une réponse.',
+    contentVersion: 2,
+    title: 'Garder le contact',
+    description: 'Préparer un message et choisir comment reprendre contact.',
     topic: JourneyTopic.connection,
     steps: [
       const JourneyStep(
         stepId: 'connection-prepare',
         title: 'Penser à une personne',
-        instructions: 'Pense à quelqu’un qui compte pour toi. Tu peux simplement préparer quelques mots dans ta tête ou dans le Journal, sans les envoyer.',
+        instructions: 'Choisis une personne à qui tu aimerais donner des nouvelles. Note quelques idées dans le Journal si cela t’aide.',
         durationMinutes: 2,
         action: JourneyJournalAction(prompt: 'Une personne à qui je pense'),
       ),
-      JourneyStep(
+      const JourneyStep(
         stepId: 'connection-message',
         title: 'Préparer quelques mots',
-        instructions:
-            '${socialIdeas.first}\n\nTu peux préparer « $contactShareText » sans l’envoyer. La préparation suffit pour cette étape. Aucun contact ni aucune réponse ne sont nécessaires.',
+        instructions: 'Prépare un message pour une personne de ton choix. L’envoi est facultatif.',
         durationMinutes: 3,
-        action: const JourneyNoAction(),
+        action: JourneyNoAction(),
       ),
-      JourneyStep(
+      const JourneyStep(
         stepId: 'connection-gratitude',
         title: 'Remarquer un petit geste',
-        instructions:
-            '${socialIdeas[1]}\n\nSi tu préfères, note seulement ce geste pour toi. Tu n’as pas besoin de contacter cette personne pour terminer l’étape.',
+        instructions: 'Note un geste qui a compté pour toi. Contacter la personne est facultatif.',
         durationMinutes: 2,
-        action: const JourneyJournalAction(
+        action: JourneyJournalAction(
           prompt: 'Un petit geste qui a compté pour moi',
         ),
       ),
@@ -38,9 +35,9 @@ final List<JourneyPath> journeyCatalog = List.unmodifiable([
   ),
   JourneyPath(
     pathId: 'calm-at-your-pace',
-    contentVersion: 1,
-    title: 'Une pause à ton rythme',
-    description: 'Observer ton souffle puis déposer quelques pensées, sans chercher à obtenir un résultat particulier.',
+    contentVersion: 2,
+    title: 'Faire une pause',
+    description: 'Faire un exercice de respiration, puis écrire quelques mots.',
     topic: JourneyTopic.calm,
     steps: const [
       JourneyStep(
@@ -56,7 +53,7 @@ final List<JourneyPath> journeyCatalog = List.unmodifiable([
       JourneyStep(
         stepId: 'calm-free-writing',
         title: 'Écriture libre',
-        instructions: 'Laisse tes pensées couler sur papier, sans filtre ni jugement. Quelques mots suffisent et tu peux t’arrêter quand tu le souhaites.',
+        instructions: 'Écris ce qui te vient dans le Journal.',
         durationMinutes: 5,
         action: JourneyJournalAction(prompt: 'Écriture libre'),
       ),
@@ -64,17 +61,18 @@ final List<JourneyPath> journeyCatalog = List.unmodifiable([
   ),
   JourneyPath(
     pathId: 'sleep-evening-pause',
-    contentVersion: 1,
+    contentVersion: 2,
     title: 'Une pause avant la nuit',
-    description: 'Revenir sur sa journée et observer les sensations du corps, sans objectif de sommeil à atteindre.',
+    description:
+        'Revenir sur ta journée et faire un scan corporel avant de te coucher.',
     topic: JourneyTopic.sleep,
     steps: const [
       JourneyStep(
         stepId: 'sleep-gratitudes',
         title: 'Les petites choses du jour',
-        instructions: 'Note trois choses positives de ta journée, même les plus petites. Une seule suffit si c’est ce qui te vient. Tu peux aussi simplement y penser sans écrire.',
+        instructions: 'Repense à un bon moment de ta journée. Note-le dans le Journal ou garde-le en tête.',
         durationMinutes: 3,
-        action: JourneyJournalAction(prompt: 'Trois gratitudes du soir'),
+        action: JourneyJournalAction(prompt: 'Un bon moment de la journée'),
       ),
       JourneyStep(
         stepId: 'sleep-body-scan',
@@ -89,3 +87,43 @@ final List<JourneyPath> journeyCatalog = List.unmodifiable([
     ],
   ),
 ]);
+
+/// Refreshes only editorial text for a known, structurally identical v1 path.
+/// Enrollment identity, progress, timestamps, and actions remain unchanged.
+JourneyPath refreshedJourneyCopy(JourneyPath stored) {
+  if (stored.contentVersion != 1) return stored;
+  final current = journeyCatalog
+      .where((path) => path.pathId == stored.pathId && path.contentVersion == 2)
+      .firstOrNull;
+  if (current == null ||
+      current.topic != stored.topic ||
+      current.steps.length != stored.steps.length) {
+    return stored;
+  }
+  for (var i = 0; i < current.steps.length; i++) {
+    final oldStep = stored.steps[i];
+    final newStep = current.steps[i];
+    final sameAction = switch ((oldStep.action, newStep.action)) {
+      (JourneyNoAction(), JourneyNoAction()) => true,
+      (JourneyJournalAction(), JourneyJournalAction()) => true,
+      (
+        JourneyMeditationAction(
+          programId: final oldId,
+          durationMinutes: final oldDuration,
+        ),
+        JourneyMeditationAction(
+          programId: final newId,
+          durationMinutes: final newDuration,
+        ),
+      ) =>
+        oldId == newId && oldDuration == newDuration,
+      _ => false,
+    };
+    if (oldStep.stepId != newStep.stepId ||
+        oldStep.durationMinutes != newStep.durationMinutes ||
+        !sameAction) {
+      return stored;
+    }
+  }
+  return current;
+}

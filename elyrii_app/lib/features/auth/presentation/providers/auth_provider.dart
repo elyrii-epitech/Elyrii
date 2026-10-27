@@ -229,9 +229,7 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _accountId = null;
     _status = AuthStatus.unauthenticated;
-    _error = error is ApiException
-        ? error.message
-        : 'Connexion impossible. Vérifie le réseau et le stockage sécurisé.';
+    _error = error is ApiException ? error.message : 'Connexion impossible. Réessaie. Si le problème persiste, redémarre l’application.';
     _notify();
   }
 
@@ -291,7 +289,7 @@ class AuthProvider extends ChangeNotifier {
         unawaited(_repository.logout(token: token).catchError((Object _) {}));
       }
     } catch (_) {
-      _error = 'La suppression des identifiants a échoué. Réessaie.';
+      _error = 'La déconnexion n’a pas pu être terminée. Réessaie.';
       _notify();
       rethrow;
     }

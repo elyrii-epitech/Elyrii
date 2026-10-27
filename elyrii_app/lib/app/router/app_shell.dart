@@ -33,10 +33,10 @@ class AppShell extends StatelessWidget {
 
   final List<GlassNavItem> _navItems = const [
     GlassNavItem(icon: Symbols.home_rounded, label: 'Accueil', index: 0),
-    GlassNavItem(icon: Symbols.yard_rounded, label: 'Jardin', index: 1),
+    GlassNavItem(icon: Symbols.yard_rounded, label: 'Défis', index: 1),
     GlassNavItem(icon: Symbols.book_2_rounded, label: 'Journal', index: 2),
     GlassNavItem(icon: Symbols.spa_rounded, label: 'Méditer', index: 3),
-    GlassNavItem(icon: Icons.route_rounded, label: 'Parcours', index: 4),
+    GlassNavItem(icon: Icons.route_rounded, label: 'Programmes', index: 4),
   ];
 
   void _onTabSelected(int index) {

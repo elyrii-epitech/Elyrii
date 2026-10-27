@@ -227,7 +227,7 @@ class JournalProvider extends ChangeNotifier {
       if (session != _sessionVersion) return null;
       _error = e is ApiException
           ? e.message
-          : 'Impossible de sauvegarder la note. Réessaie.';
+          : 'Impossible d’enregistrer la note. Réessaie.';
       notifyListeners();
       return null;
     }

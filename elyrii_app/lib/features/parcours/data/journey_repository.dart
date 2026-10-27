@@ -53,7 +53,23 @@ class JourneyRepository {
     final encrypted = prefs.getString(_key(owner));
     if (encrypted == null) return null;
     final clear = await _cipher.open(owner, encrypted, purpose: 'journey:v1');
-    return JourneyDocument.fromJson(jsonDecode(clear), owner: owner).current;
+    final current = JourneyDocument.fromJson(
+      jsonDecode(clear),
+      owner: owner,
+    ).current;
+    if (current == null) return null;
+    final path = refreshedJourneyCopy(current.path);
+    if (identical(path, current.path)) return current;
+    return JourneyEnrollment(
+      enrollmentId: current.enrollmentId,
+      path: path,
+      status: current.status,
+      completedStepCount: current.completedStepCount,
+      revision: current.revision,
+      startedAt: current.startedAt,
+      updatedAt: current.updatedAt,
+      completedAt: current.completedAt,
+    );
   }
 
   Future<Map<String, Object?>?> exportOwner(String owner) async {
@@ -82,7 +98,7 @@ class JourneyRepository {
         .firstOrNull;
     if (chosen == null) {
       throw const JourneyCommandException(
-        'Ce parcours n’est plus disponible. Actualise la liste.',
+        'Ce programme n’est plus disponible. Actualise la liste.',
       );
     }
     final now = _now().toUtc();
@@ -106,7 +122,7 @@ class JourneyRepository {
     }
     if (current.status == JourneyStatus.completed) {
       throw const JourneyCommandException(
-        'Ce parcours est terminé. Tu peux en choisir un autre.',
+        'Ce programme est terminé. Tu peux en choisir un autre.',
       );
     }
     return _change(owner, current, status: JourneyStatus.paused);
@@ -121,7 +137,7 @@ class JourneyRepository {
     }
     if (current.status == JourneyStatus.completed) {
       throw const JourneyCommandException(
-        'Ce parcours est terminé. Tu peux en choisir un autre.',
+        'Ce programme est terminé. Tu peux en choisir un autre.',
       );
     }
     return _change(owner, current, status: JourneyStatus.active);
@@ -140,11 +156,11 @@ class JourneyRepository {
     }
     if (current.status == JourneyStatus.paused) {
       throw const JourneyCommandException(
-        'Reprends ce parcours avant de valider une étape.',
+        'Reprends ce programme avant de valider une étape.',
       );
     }
     if (current.status == JourneyStatus.completed) {
-      throw const JourneyCommandException('Ce parcours est déjà terminé.');
+      throw const JourneyCommandException('Ce programme est déjà terminé.');
     }
     if (index != current.completedStepCount) {
       throw const JourneyCommandException(

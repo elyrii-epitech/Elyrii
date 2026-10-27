@@ -90,7 +90,7 @@ void main() {
         await tester.tap(find.text('Envoyer le signalement'));
         await tester.pumpAndSettle();
         expect(
-          find.textContaining('Signalement enregistré pour examen'),
+          find.textContaining('Signalement envoyé à la modération'),
           findsOneWidget,
         );
         expect(tester.takeException(), isNull);

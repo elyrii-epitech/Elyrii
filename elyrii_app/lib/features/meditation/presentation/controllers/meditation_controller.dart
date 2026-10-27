@@ -186,7 +186,8 @@ class MeditationController extends ChangeNotifier {
         }
       } catch (e) {
         if (!_disposed && generation == _generation) {
-          _backendError = 'Séance non synchronisée avec ton compte.';
+          _backendError =
+              'La séance n’a pas pu être enregistrée dans ton compte.';
         }
       } finally {
         if (!_disposed && generation == _generation) {
@@ -264,7 +265,8 @@ class MeditationController extends ChangeNotifier {
         await _repository!.completeSession(sessionId: id, moodAfter: mood);
       } catch (_) {
         if (!_disposed && _backendSessionId == id) {
-          _backendError = 'Séance non synchronisée avec ton compte.';
+          _backendError =
+              'La séance n’a pas pu être enregistrée dans ton compte.';
           notifyListeners();
         }
       }

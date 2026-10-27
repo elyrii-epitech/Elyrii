@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/content/account_information.dart';
 import '../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
@@ -55,18 +56,18 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _logout() async {
     final logout = await profileSheet<bool>(
       context,
-      'Te déconnecter ?',
+      'Se déconnecter ?',
       Builder(
         builder: (sheet) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Tes données restent dans ton compte. Tu pourras les retrouver en te reconnectant.',
+              'Tes notes et ton historique sur cet appareil seront conservés pour ta prochaine connexion.',
               style: AppTextStyles.bodyMedium(color: sheet.textSecondary),
             ),
             const SizedBox(height: AppDimensions.spacing16),
             ProfileButton(
-              label: 'Rester ici',
+              label: 'Annuler',
               filled: false,
               onPressed: () => Navigator.pop(sheet, false),
             ),
@@ -146,7 +147,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         options: const {
                           'DARK': 'Sombre',
                           'LIGHT': 'Clair',
-                          'SYSTEM': 'Auto',
+                          'SYSTEM': 'Système',
                         },
                         selected: settings?.themeMode ?? 'SYSTEM',
                         onChanged: (value) =>
@@ -160,16 +161,15 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
         ProfileSection(
-          title: 'Rappels',
-          footer: 'Les rappels ne sont pas encore disponibles.',
+          title: 'Interactions',
           child: ProfileGroup(
             children: [
               ProfileRow(
-                title: 'Retour haptique',
+                title: 'Vibrations',
                 icon: Icons.vibration_rounded,
                 color: AppColors.pink(dark),
                 trailing: ProfileToggle(
-                  label: 'Retour haptique',
+                  label: 'Vibrations',
                   value: settings?.hapticsEnabled ?? true,
                   onChanged: (value) {
                     ElyriiHaptics.setEnabled(value);
@@ -183,21 +183,9 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         ProfileSection(
           title: 'Confidentialité',
-          footer: 'Limite les usages de tes données. Tes écrits restent personnels.',
+          footer: 'Stockage, export et suppression.',
           child: ProfileGroup(
             children: [
-              ProfileRow(
-                title: 'Confidentialité stricte',
-                icon: Icons.shield_rounded,
-                color: AppColors.violet(dark),
-                trailing: ProfileToggle(
-                  label: 'Confidentialité stricte',
-                  value: settings?.privacyMode == 'STRICT',
-                  onChanged: (value) => user.updateSettings(
-                    privacyMode: value ? 'STRICT' : 'STANDARD',
-                  ),
-                ),
-              ),
               ProfileRow(
                 title: 'Mes données',
                 icon: Icons.storage_rounded,
@@ -242,33 +230,33 @@ class _SettingsPageState extends State<SettingsPage> {
                 value: _version,
               ),
               ProfileRow(
-                title: 'Conditions',
+                title: AccountInformation.serviceTitle,
                 icon: Icons.description_rounded,
                 color: AppColors.violet(dark),
                 onTap: () => showProfileInfo(
                   context,
-                  'Conditions',
-                  'Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé. Les conditions doivent préciser les limites de l’accompagnement, les règles de sécurité et les responsabilités.',
+                  AccountInformation.serviceTitle,
+                  AccountInformation.service,
                 ),
               ),
               ProfileRow(
-                title: 'Politique de confidentialité',
+                title: AccountInformation.dataTitle,
                 icon: Icons.policy_rounded,
                 color: AppColors.violet(dark),
                 onTap: () => showProfileInfo(
                   context,
-                  'Politique de confidentialité',
-                  'La politique doit être accessible avant connexion et détailler le traitement des données de santé mentale, la durée de conservation, les droits utilisateur et les contacts de suppression.',
+                  AccountInformation.dataTitle,
+                  AccountInformation.data,
                 ),
               ),
               ProfileRow(
-                title: 'Diagnostic',
+                title: 'Diagnostic technique',
                 icon: Icons.monitor_heart_rounded,
                 color: AppColors.orange(dark),
                 onTap: () async {
                   final export = await profileSheet<bool>(
                     context,
-                    'Diagnostic',
+                    'Diagnostic technique',
                     Builder(
                       builder: (sheet) => Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,

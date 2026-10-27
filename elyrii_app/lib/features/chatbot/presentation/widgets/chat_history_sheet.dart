@@ -71,7 +71,7 @@ class ChatHistorySheet extends StatelessWidget {
                           Navigator.pop(context);
                         },
                         child: Text(
-                          'Nouvelle',
+                          'Nouvelle conversation',
                           style: AppTextStyles.titleSmall(
                             color: AppColors.readableAccent(
                               AppColors.primary,

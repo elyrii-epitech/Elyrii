@@ -5,7 +5,7 @@ String profileOptionLabel(String value) =>
       'Je prefere ne pas le dire': 'Je préfère ne pas le dire',
       'Gerer mon stress': 'Gérer mon stress',
       'Ameliorer mon sommeil': 'Améliorer mon sommeil',
-      'Cultiver ma mindfulness': 'Cultiver ma pleine conscience',
+      'Cultiver ma mindfulness': 'Être plus attentif au moment présent',
       'Developper ma confiance': 'Développer ma confiance',
     }[value] ??
     value;

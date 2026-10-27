@@ -55,7 +55,7 @@ Future<MoodType?> showJournalMoodPicker(BuildContext context) =>
 Future<String?> showJournalPromptPicker(BuildContext context) =>
     showJournalSheet<String>(
       context,
-      title: 'Une piste pour écrire',
+      title: 'Idées pour écrire',
       child: JournalRowGroup(
         children: [
           for (final prompt in journalPrompts)
@@ -72,24 +72,24 @@ Future<bool> confirmJournalDelete(BuildContext context) async {
   final dark = Theme.of(context).brightness == Brightness.dark;
   final confirmed = await showJournalSheet<bool>(
     context,
-    title: 'Supprimer cette entrée ?',
+    title: 'Supprimer cette note ?',
     child: Builder(
       builder: (sheet) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: AppDimensions.spacing12,
         children: [
           Text(
-            'Cette page sera retirée de ton journal. Tu peux encore la garder.',
+            'Cette note sera supprimée de ton journal.',
             style: AppTextStyles.bodyMedium(color: context.textSecondary),
           ),
           JournalButton(
-            label: 'Supprimer l’entrée',
+            label: 'Supprimer la note',
             background: dark ? AppColors.cardDark : AppColors.cardLight,
             foreground: AppColors.rose(dark),
             onPressed: () => Navigator.of(sheet).pop(true),
           ),
           JournalButton(
-            label: 'La garder',
+            label: 'Annuler',
             background: AppColors.tintSoft(dark),
             foreground: AppColors.primaryText(dark),
             onPressed: () => Navigator.of(sheet).pop(false),
@@ -106,7 +106,7 @@ Future<void> showJournalPrivacy(
   JournalProvider provider,
 ) => showJournalSheet<void>(
   context,
-  title: 'Un espace à toi',
+  title: 'Données du journal',
   child: _PrivacySheet(provider: provider),
 );
 
@@ -491,11 +491,11 @@ class _PrivacySheetState extends State<_PrivacySheet> {
                 spacing: AppDimensions.spacing4,
                 children: [
                   Text(
-                    'Ton journal est privé',
+                    'Stockage des notes',
                     style: AppTextStyles.titleSmall(color: context.textPrimary),
                   ),
                   Text(
-                    'Ni ton coach ni Elyrii ne lisent tes entrées sans ton accord. Tu choisis l’extrait à partager.',
+                    'Tes notes sont enregistrées dans ton compte et dans une copie protégée sur cet appareil.',
                     style: AppTextStyles.bodyMedium(
                       color: context.textSecondary,
                     ),
@@ -508,10 +508,10 @@ class _PrivacySheetState extends State<_PrivacySheet> {
         JournalRowGroup(
           children: [
             JournalRow(
-              label: 'Exporter mes écrits',
+              label: 'Exporter le journal',
               detail: _exporting
                   ? 'Préparation de ton fichier…'
-                  : 'Un fichier texte à garder pour toi',
+                  : 'Télécharger un fichier texte',
               leading: JournalSquare(
                 Symbols.download_rounded,
                 color: AppColors.journalPaper(dark),
@@ -521,7 +521,7 @@ class _PrivacySheetState extends State<_PrivacySheet> {
           ],
         ),
         Text(
-          'Tes mots t’appartiennent.',
+          'L’export contient tes notes et tes brouillons locaux.',
           textAlign: TextAlign.center,
           style: AppTextStyles.bodySmall(color: context.textTertiary),
         ),

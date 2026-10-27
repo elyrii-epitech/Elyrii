@@ -23,6 +23,7 @@ nav:
       - Features: mobile/features.md
       - Meditation: mobile/meditation.md
       - Design System: mobile/design.md
+      - UI Wording: mobile/wording.md
       - CI/CD: mobile/ci-cd.md
       - Development: mobile/development.md
       - Accessibility: mobile/accessibility.md

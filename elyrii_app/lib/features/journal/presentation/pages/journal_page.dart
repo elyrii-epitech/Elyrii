@@ -542,7 +542,7 @@ class _Memory extends StatelessWidget {
                 Symbols.arrow_forward_rounded,
                 size: AppDimensions.iconSm,
               ),
-              label: const Text('Relire ce moment'),
+              label: const Text('Relire cette note'),
               style: TextButton.styleFrom(
                 padding: EdgeInsets.zero,
                 foregroundColor: AppColors.primaryText(dark),
@@ -595,11 +595,11 @@ class _FirstDay extends StatelessWidget {
                 spacing: AppDimensions.spacing4,
                 children: [
                   Text(
-                    'Ici, personne d’autre ne lit.',
+                    'Ton journal commence ici',
                     style: AppTextStyles.titleSmall(color: context.textPrimary),
                   ),
                   Text(
-                    'Quelques mots, même en vrac.\nTu peux commencer comme tu es.',
+                    'Écris ta première note ou choisis une question pour commencer.',
                     style: AppTextStyles.bodyMedium(
                       color: context.textSecondary,
                     ),

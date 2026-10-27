@@ -61,7 +61,7 @@ class JourneyProvider extends ChangeNotifier {
     if (_state.owner == owner && _state.isDemo == isDemo) return;
     _state = _JourneySession(owner: owner, isDemo: isDemo);
     if (owner == null) {
-      _state.error = 'Connecte-toi à un compte pour conserver un parcours sur cet appareil.';
+      _state.error = 'Connecte-toi à un compte pour conserver un programme sur cet appareil.';
     } else if (_deletedOwners.contains(owner)) {
       _state.error = 'Les données de ce compte ont été supprimées.';
     }
@@ -70,7 +70,7 @@ class JourneyProvider extends ChangeNotifier {
 
   void resetSession() {
     if (_disposed) return;
-    _state = _JourneySession()..error = 'Connecte-toi à un compte pour conserver un parcours sur cet appareil.';
+    _state = _JourneySession()..error = 'Connecte-toi à un compte pour conserver un programme sur cet appareil.';
     notifyListeners();
   }
 
@@ -79,7 +79,7 @@ class JourneyProvider extends ChangeNotifier {
     final session = _state;
     if (session.owner == null || _deletedOwners.contains(session.owner)) {
       session.error = session.owner == null
-          ? 'Connecte-toi à un compte pour conserver un parcours sur cet appareil.'
+          ? 'Connecte-toi à un compte pour conserver un programme sur cet appareil.'
           : 'Les données de ce compte ont été supprimées.';
       _notify(session);
       return Future<void>.value();
@@ -149,7 +149,7 @@ class JourneyProvider extends ChangeNotifier {
         if (requested.status == JourneyStatus.paused &&
             index >= requested.completedStepCount) {
           throw const JourneyCommandException(
-            'Reprends ce parcours avant de valider une étape.',
+            'Reprends ce programme avant de valider une étape.',
           );
         }
       }
@@ -161,7 +161,7 @@ class JourneyProvider extends ChangeNotifier {
     Future<JourneyMutation> Function(String, JourneyEnrollment) command,
   ) => _enqueue((owner, current) {
     if (current == null) {
-      throw const JourneyCommandException('Choisis d’abord un parcours.');
+      throw const JourneyCommandException('Choisis d’abord un programme.');
     }
     return command(owner, current);
   });
@@ -177,7 +177,7 @@ class JourneyProvider extends ChangeNotifier {
         !session.hasLoadedData ||
         session.storageFailed) {
       if (!_disposed) {
-        session.error ??= 'Relis ta progression locale avant de réessayer.';
+        session.error ??= 'Actualise ta progression avant de réessayer.';
         _notify(session);
       }
       return Future.value(JourneyCommandResult.failed);
@@ -214,7 +214,7 @@ class JourneyProvider extends ChangeNotifier {
           session.current?.path.pathId == selectedPath.pathId &&
           session.current?.path.contentVersion == selectedPath.contentVersion;
       if (session.current?.enrollmentId != enrollmentId && !sameChoice) {
-        session.error = 'Le parcours a changé. Consulte sa nouvelle position avant de réessayer.';
+        session.error = 'Le programme a changé. Actualise ta progression avant de réessayer.';
         return JourneyCommandResult.failed;
       }
       final result = await command(session.owner!, session.current);
@@ -229,7 +229,7 @@ class JourneyProvider extends ChangeNotifier {
       return JourneyCommandResult.failed;
     } catch (_) {
       session.storageFailed = true;
-      session.error = 'Ta progression n’a pas pu être enregistrée sur cet appareil. Réessaie après l’avoir relue.';
+      session.error = 'Ta progression n’a pas pu être enregistrée sur cet appareil. Actualise-la, puis réessaie.';
       return JourneyCommandResult.failed;
     } finally {
       session.pendingWrites--;

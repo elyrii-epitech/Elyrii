@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/config/api_config.dart';
+import '../../../core/content/account_information.dart';
 import '../../../core/diagnostics/app_diagnostics.dart';
 import '../../../core/export/private_export.dart';
 import '../../../core/network/api_exception.dart';
@@ -16,7 +17,10 @@ import '../../profile_setup/presentation/widgets/profile_controls.dart';
 import '../providers/settings_provider.dart';
 
 const localDataExplanation =
-    'Les notes enregistrées sur le serveur ont une copie locale protégée. Hors connexion, les modifications restent dans un brouillon sur cet appareil : rouvre la note et utilise Enregistrer pour réessayer. Les conversations restent sur cet appareil. Supprimer ton compte efface aussi ses données locales.';
+    'Tes notes ont une copie protégée sur cet appareil. Les modifications hors connexion restent dans un brouillon local.\n\n'
+    'L’historique du chat est conservé sur cet appareil. Les messages sont aussi envoyés au serveur et à l’IA.\n\n'
+    'La suppression du compte lance aussi le nettoyage de ses données sur cet appareil.';
+
 const exportConsent =
     'Le fichier contient tes notes et conversations lisibles. Choisis où le conserver ou le partager. Une copie temporaire sur cet appareil est supprimée après 24 heures au prochain lancement.';
 
@@ -49,22 +53,15 @@ Future<void> showProfileInfo(
 }
 
 Future<void> showAccountData(BuildContext context) async {
-  final user = context.read<UserProvider>();
   final next = await profileSheet<String>(
     context,
     'Mes données',
-    ListenableBuilder(
-      listenable: user,
-      builder: (sheet, _) {
+    Builder(
+      builder: (sheet) {
         final dark = Theme.of(sheet).brightness == Brightness.dark;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Ton profil, tes écrits et tes conversations sont personnels.',
-              style: AppTextStyles.bodyMedium(color: sheet.textSecondary),
-            ),
-            const SizedBox(height: AppDimensions.spacing16),
             ProfileGroup(
               children: [
                 ProfileRow(
@@ -74,20 +71,17 @@ Future<void> showAccountData(BuildContext context) async {
                   onTap: () => Navigator.pop(sheet, 'export'),
                 ),
                 ProfileRow(
-                  title: 'Confidentialité stricte',
-                  icon: Icons.shield_rounded,
+                  title: AccountInformation.dataTitle,
+                  icon: Icons.info_outline_rounded,
                   color: AppColors.violet(dark),
-                  value: user.settings?.privacyMode == 'STRICT'
-                      ? 'Activée'
-                      : 'Désactivée',
-                  onTap: () => Navigator.pop(sheet, 'strict'),
+                  onTap: () => Navigator.pop(sheet, 'information'),
                 ),
               ],
             ),
             const SizedBox(height: AppDimensions.spacing16),
             Text(
               localDataExplanation,
-              style: AppTextStyles.profileFootnote(color: sheet.textSecondary),
+              style: AppTextStyles.bodyMedium(color: sheet.textSecondary),
             ),
           ],
         );
@@ -97,11 +91,11 @@ Future<void> showAccountData(BuildContext context) async {
   if (!context.mounted) return;
   if (next == 'export') {
     await exportAccount(context);
-  } else if (next == 'strict') {
+  } else if (next == 'information') {
     await showProfileInfo(
       context,
-      'Confidentialité stricte',
-      'Cette option limite les usages de tes données. Tes écrits restent personnels.',
+      AccountInformation.dataTitle,
+      AccountInformation.data,
     );
   }
 }
@@ -115,7 +109,7 @@ Future<void> exportAccount(BuildContext context) async {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Ton compte, tes notes et tes conversations dans un fichier JSON, à garder pour toi.',
+            'Exporte une copie de ton profil, de ton journal et de tes conversations au format JSON.',
             style: AppTextStyles.bodyMedium(color: sheet.textPrimary),
           ),
           const SizedBox(height: AppDimensions.spacing16),
@@ -125,7 +119,7 @@ Future<void> exportAccount(BuildContext context) async {
           ),
           const SizedBox(height: AppDimensions.spacing16),
           ProfileButton(
-            label: 'Préparer le fichier',
+            label: 'Exporter les données',
             onPressed: () => Navigator.pop(sheet, true),
           ),
         ],
@@ -243,7 +237,7 @@ Future<void> confirmAccountDeletion(BuildContext context) async {
                       ),
                       const SizedBox(height: AppDimensions.spacing12),
                       Text(
-                        'Supprimer ton compte ?',
+                        'Supprimer le compte ?',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.titleLarge(
                           color: dialog.textPrimary,
@@ -251,7 +245,7 @@ Future<void> confirmAccountDeletion(BuildContext context) async {
                       ),
                       const SizedBox(height: AppDimensions.spacing12),
                       Text(
-                        "Tes écrits, ton jardin et tes conversations seront effacés. Tu peux d'abord exporter tes données.",
+                        "Ton profil, ton journal, tes défis et les conversations sur cet appareil seront supprimés. Tu peux exporter une copie avant de continuer.",
                         textAlign: TextAlign.center,
                         style: AppTextStyles.bodyMedium(
                           color: dialog.textSecondary,

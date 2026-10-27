@@ -545,11 +545,11 @@ class _AccueilCapsule extends StatelessWidget {
               ),
               _separator(context),
               item(
-                'Ouvrir la tenue',
+                'Personnaliser Elyrii',
                 Symbols.checkroom_rounded,
                 AppColors.violet(dark),
                 '',
-                'Tenue',
+                'Apparence',
                 _AccueilOverlay.dressing,
               ),
             ],

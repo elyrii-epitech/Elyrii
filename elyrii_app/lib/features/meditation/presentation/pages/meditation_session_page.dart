@@ -89,7 +89,7 @@ class _MeditationSessionPageState extends State<MeditationSessionPage>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'La séance en cours sera interrompue et non comptabilisée.',
+                'La séance sera interrompue et ne sera pas enregistrée comme terminée.',
                 style: AppTextStyles.bodyMedium(
                   color: sheetContext.textSecondary,
                 ),

@@ -40,8 +40,8 @@ Future<void> showArrivalInfo(BuildContext context, String title, String copy) =>
 
 void showArrivalSteps(BuildContext context) => showArrivalInfo(
   context,
-  'À ton rythme',
-  'Un prénom, ce qui t’amène, ton humeur et ton décor. Tu peux passer les questions et changer tes réponses ensuite dans ton profil.',
+  'Configurer Elyrii',
+  'Choisis ton prénom, ton objectif, ton humeur et l’apparence d’Elyrii. Les questions sont facultatives.',
 );
 
 class ArrivalScene extends StatelessWidget {

@@ -36,7 +36,7 @@ const _extraRituals = [
   AccueilRitualInfo(
     ritual: AccueilRitual.music,
     title: 'Écouter une chanson calme',
-    pendingDetail: 'Calme · 4 min',
+    pendingDetail: 'Respiration · 4 min',
     icon: Symbols.music_note_rounded,
     color: AppColors.violet,
   ),
@@ -165,7 +165,7 @@ class _ChallengesPageState extends State<ChallengesPage>
                       child: Stack(
                         children: [
                           const SectionSkyHeader(
-                            title: 'Jardin',
+                            title: 'Défis',
                             scene: SectionSkyScene.garden,
                           ),
                           Padding(
@@ -200,7 +200,7 @@ class _ChallengesPageState extends State<ChallengesPage>
                                       ),
                                       Expanded(
                                         child: Text(
-                                          'Un jour plus doux ? Repose-toi.\nTon jardin grandit à ton rythme.',
+                                          'Chaque défi terminé fait grandir ton jardin.',
                                           style: AppTextStyles.bodySmall(
                                             color: context.textSecondary,
                                           ),
@@ -220,7 +220,7 @@ class _ChallengesPageState extends State<ChallengesPage>
               ),
               SectionSkyBar(
                 scroll: _scroll,
-                title: 'Jardin',
+                title: 'Défis',
                 trailing: const SizedBox(width: AppDimensions.controlSize),
               ),
             ],
@@ -388,7 +388,7 @@ class _ChallengesPageState extends State<ChallengesPage>
                 ? Padding(
                     padding: const EdgeInsets.all(AppDimensions.spacing16),
                     child: Text(
-                      "Aucun geste enregistré sur cet appareil aujourd'hui.",
+                      "Aucune activité enregistrée sur cet appareil aujourd’hui.",
                       style: AppTextStyles.bodyMedium(
                         color: context.textSecondary,
                       ),

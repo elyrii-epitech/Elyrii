@@ -50,8 +50,8 @@ Future<void> startDemoApp(WidgetTester tester) async {
     description: 'native bootstrap',
   );
   if (find.byType(DashboardPage).evaluate().isEmpty) {
-    await tapVisible(tester, find.bySemanticsLabel('Entrer dans Elyrii'));
-    await tapVisible(tester, find.text('Découvrir sans compte'));
+    await tapVisible(tester, find.bySemanticsLabel('Commencer'));
+    await tapVisible(tester, find.text('Essayer la démo'));
     await waitFor(
       tester,
       () => find.byType(ProfileSetupPage).evaluate().isNotEmpty,
@@ -60,7 +60,7 @@ Future<void> startDemoApp(WidgetTester tester) async {
     for (var step = 0; step < 3; step++) {
       await tapVisible(tester, find.text('Passer'));
     }
-    await tapVisible(tester, find.text('Entrer dans Elyrii'));
+    await tapVisible(tester, find.text('Commencer'));
   }
   await waitFor(
     tester,

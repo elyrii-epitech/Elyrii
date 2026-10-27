@@ -89,7 +89,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 ),
                 const SizedBox(height: AppDimensions.spacing24),
                 Text(
-                  'Oups, un petit souci...',
+                  'Impossible d’afficher cet écran',
                   style: AppTextStyles.headlineSmall(
                     color: Theme.of(context).textTheme.titleLarge?.color,
                   ),
@@ -97,7 +97,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                 ),
                 const SizedBox(height: AppDimensions.spacing16),
                 Text(
-                  'Ce n\'est rien de grave. On recommence ensemble ?',
+                  'Un problème empêche d’afficher cet écran. Reconnecte-toi pour réessayer.',
                   style: AppTextStyles.bodyMedium(
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
@@ -122,13 +122,13 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                       ),
                     ),
                   ),
-                  child: const Text('Recommencer'),
+                  child: const Text('Se reconnecter'),
                 ),
                 if (kDebugMode && details.exceptionAsString().isNotEmpty) ...[
                   const SizedBox(height: AppDimensions.spacing48),
                   ExpansionTile(
                     title: Text(
-                      'Détails techniques (Debug only)',
+                      'Détails techniques (développement)',
                       style: AppTextStyles.labelMedium(
                         color: Theme.of(context).textTheme.bodySmall?.color,
                       ),

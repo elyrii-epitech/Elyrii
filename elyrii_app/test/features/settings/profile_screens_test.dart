@@ -108,7 +108,7 @@ void main() {
       );
       await tester.tap(find.text("Exporter d'abord"));
       await tester.pumpAndSettle();
-      expect(find.text('Préparer le fichier'), findsOneWidget);
+      expect(find.text('Exporter les données'), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
       await tester.tap(find.byTooltip('Fermer'));
       await tester.pumpAndSettle();

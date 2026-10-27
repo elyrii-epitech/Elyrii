@@ -275,7 +275,7 @@ class _MeditationLibraryState extends State<MeditationLibrary> {
                                 ),
                                 const SizedBox(height: AppDimensions.spacing4),
                                 Text(
-                                  "$_duration min · pour t'endormir",
+                                  "$_duration min · avant le coucher",
                                   style: AppTextStyles.bodySmall(
                                     color: Colors.white.withValues(alpha: .8),
                                   ),

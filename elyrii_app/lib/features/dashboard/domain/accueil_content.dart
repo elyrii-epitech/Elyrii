@@ -100,15 +100,14 @@ const helpLine = 'Besoin d\'aide maintenant · 3114, gratuit, jour et nuit';
 const contactShareText = 'Je pensais à toi.';
 
 AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
-  final part = dayPartOf(now);
   switch (mood) {
     case null:
       return const AccueilAnswer(title: 'Dis-moi comment tu vas.', actions: []);
     case MoodType.verySad:
-      return AccueilAnswer(
-        title: 'Ça a l\'air lourd ${part.thisPart}.',
-        body: 'Tu n\'as rien à faire de plus. On peut en parler, ou juste respirer une minute ensemble.',
-        actions: const [
+      return const AccueilAnswer(
+        title: 'Tu veux en parler ?',
+        body: 'Tu peux discuter avec Elyrii ou essayer un exercice de respiration.',
+        actions: [
           AccueilAnswerAction(
             label: 'Parler à Elyrii',
             action: OpenChat(),
@@ -131,7 +130,7 @@ AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
         actions: [
           AccueilAnswerAction(
             label: 'Écrire 3 lignes',
-            action: WriteJournal('Trois lignes sur ce qui pèse'),
+            action: WriteJournal('Ce qui me préoccupe'),
             filled: true,
             icon: Symbols.edit_rounded,
           ),
@@ -146,8 +145,8 @@ AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
       );
     case MoodType.neutral:
       return const AccueilAnswer(
-        title: 'Profite de ce calme.',
-        body: 'Deux minutes de respiration suffisent à le prolonger.',
+        title: 'Envie de faire une pause ?',
+        body: 'Essaie un exercice de respiration de 2 min.',
         actions: [
           AccueilAnswerAction(
             label: 'Respirer 2 min',
@@ -159,12 +158,12 @@ AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
       );
     case MoodType.happy:
       return const AccueilAnswer(
-        title: 'Content de te savoir serein.',
-        body: 'Note ce qui rend ta journée douce, tu pourras le relire.',
+        title: 'Envie de noter ce qui va bien aujourd’hui ?',
+        body: 'Note ce qui t’a marqué aujourd’hui.',
         actions: [
           AccueilAnswerAction(
-            label: 'Écrire une gratitude',
-            action: WriteJournal('Ce qui a rendu ma journée douce'),
+            label: 'Noter un bon moment',
+            action: WriteJournal('Un bon moment de ma journée'),
             filled: true,
             icon: Symbols.edit_rounded,
           ),
@@ -178,7 +177,7 @@ AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
       );
     case MoodType.veryHappy:
       return const AccueilAnswer(
-        title: 'Tu rayonnes !',
+        title: 'Ça fait plaisir à lire.',
         body: 'Partage un peu de cette énergie avec quelqu’un.',
         actions: [
           AccueilAnswerAction(
@@ -188,8 +187,8 @@ AccueilAnswer answerForMood(MoodType? mood, DateTime now) {
             icon: Symbols.favorite_rounded,
           ),
           AccueilAnswerAction(
-            label: 'Garder une trace',
-            action: WriteJournal('Ce qui me fait rayonner'),
+            label: 'Écrire une note',
+            action: WriteJournal('Ce qui va bien aujourd’hui'),
             filled: false,
             icon: Symbols.edit_rounded,
           ),
@@ -215,12 +214,12 @@ class AccueilMoodLayout {
 
 AccueilMoodLayout layoutForMood(MoodType? mood) => switch (mood) {
   MoodType.verySad => const AccueilMoodLayout(
-    showsRituals: false,
+    showsRituals: true,
     showsRest: true,
-    showsSocial: false,
+    showsSocial: true,
   ),
   MoodType.sad => const AccueilMoodLayout(
-    showsRituals: false,
+    showsRituals: true,
     showsRest: true,
     showsSocial: true,
   ),
@@ -231,7 +230,7 @@ AccueilMoodLayout layoutForMood(MoodType? mood) => switch (mood) {
   ),
 };
 
-const restTitle = 'Les rituels peuvent attendre';
+const restTitle = 'Besoin d’une pause ?';
 
 class AccueilRitualInfo {
   final AccueilRitual ritual;
@@ -249,7 +248,7 @@ class AccueilRitualInfo {
   });
 }
 
-const ritualsTitle = 'Rituels du jour';
+const ritualsTitle = 'Activités du jour';
 
 const accueilRituals = [
   AccueilRitualInfo(
@@ -261,7 +260,7 @@ const accueilRituals = [
   ),
   AccueilRitualInfo(
     ritual: AccueilRitual.gratitude,
-    title: 'Écrire une gratitude',
+    title: 'Noter un bon moment',
     pendingDetail: '3 min · Journal',
     icon: Symbols.edit_rounded,
     color: AppColors.yellow,
@@ -286,7 +285,7 @@ String ritualDetail(AccueilRitualInfo info, DateTime? completedAt) {
 
 String ritualCounter(int done) => '$done sur ${accueilRituals.length}';
 
-const socialTitle = 'Un pas vers les autres';
+const socialTitle = 'Garder le contact';
 const socialWeeklyGoal = 3;
 
 const socialIdeas = [
@@ -301,7 +300,7 @@ String socialIdeaAt(int index) => socialIdeas[index % socialIdeas.length];
 
 /// The goal is three steps; four remains an accurate measurement.
 String socialCounter(int steps) =>
-    '$steps pas sur $socialWeeklyGoal cette semaine';
+    '$steps actions sur $socialWeeklyGoal cette semaine';
 
 class AccueilThread {
   final String entryId;
@@ -667,9 +666,8 @@ AccueilInsight? deriveInsight({
       values.reduce((a, b) => a + b) / values.length;
   if (mean(withJournal) - mean(without) < _insightMinimumGap) return null;
   return AccueilInsight(
-    title: 'Ce qui t\'aide',
-    sentence:
-        'Sur cette période, ton humeur est plus haute les jours où tu écris.',
+    title: 'Humeur et journal',
+    sentence: 'Sur cette période, tu as noté de meilleures humeurs les jours où tu as écrit.',
     journalMoodDays: withJournal.length,
     otherMoodDays: without.length,
   );

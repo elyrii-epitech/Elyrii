@@ -76,7 +76,7 @@ class MeditationPracticePreview extends StatelessWidget {
                     Text(
                       practice.exercise.isBreathing
                           ? practice.rhythm.replaceAll('·', ' · ')
-                          : 'À ton rythme',
+                          : 'Guidage écrit',
                       style: AppTextStyles.bodySmall(
                         color: Colors.white.withValues(alpha: .8),
                       ),

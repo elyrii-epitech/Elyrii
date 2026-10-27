@@ -30,8 +30,10 @@ class MeditationSessionView extends StatelessWidget {
     final type = controller.selectedBreathingType;
     final free = type == null || controller.isBreathingRecovery;
     final paused = controller.isPaused || controller.isFinished;
-    final phase = paused
-        ? 'À ton rythme'
+    final phase = controller.isFinished
+        ? 'Séance terminée'
+        : paused
+        ? 'En pause'
         : free
         ? 'Observe'
         : meditationPhaseLabel(type.phases, controller.currentPhaseIndex);

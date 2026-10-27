@@ -335,7 +335,7 @@ class _MeadowViewport extends StatelessWidget {
                       ),
                       const SizedBox(height: AppDimensions.spacing8),
                       Text(
-                        'Aucun défi complété ce mois-ci',
+                        'Aucun défi terminé ce mois-ci',
                         textAlign: TextAlign.center,
                         style: AppTextStyles.titleSmall(
                           color: context.textPrimary,

@@ -99,7 +99,7 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                 provider.proposals.isEmpty &&
                         provider.availableChallenges.isEmpty
                     ? 'Aucun défi à réaliser pour le moment.'
-                    : 'Aucun défi en cours. Choisis une idée qui te fait du bien.',
+                    : 'Aucun défi en cours. Choisis un défi pour commencer.',
                 style: AppTextStyles.bodySmall(color: context.textSecondary),
               ),
             for (final challenge in provider.activeChallenges)
@@ -114,7 +114,7 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                 childrenPadding: EdgeInsets.zero,
                 initiallyExpanded: provider.proposals.length <= 3,
                 title: Text(
-                  'Les idées d’Elyrii (${provider.proposals.length})',
+                  'Défis suggérés par Elyrii (${provider.proposals.length})',
                   style: AppTextStyles.titleMedium(color: context.textPrimary),
                 ),
                 children: [
@@ -144,7 +144,7 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                                 ? null
                                 : () => _perform(
                                     () => provider.acceptChallenge(proposal.id),
-                                    'Ton défi est en cours.',
+                                    'Défi ajouté.',
                                   ),
                             child: const Text('Accepter'),
                           ),
@@ -181,7 +181,7 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
                                 ? null
                                 : () => _perform(
                                     () => provider.startChallenge(challenge.id),
-                                    'Ton défi est en cours.',
+                                    'Défi ajouté.',
                                   ),
                             icon: const Icon(Symbols.add_rounded),
                             label: const Text('Commencer'),

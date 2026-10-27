@@ -90,12 +90,12 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
 
   @override
   Widget build(BuildContext context) => ArrivalFrame(
-    title: 'Retrouver mon compte',
+    title: 'Réinitialiser le mot de passe',
     scene: false,
     onBack: () => context.go(AppRoutes.login),
     onInfo: () => showArrivalInfo(
       context,
-      'Ton compte reste à toi',
+      'Réinitialiser le mot de passe',
       'Utilise le code reçu par email pour choisir un nouveau mot de passe. Il expire après 15 minutes.',
     ),
     child: AutofillGroup(
@@ -114,8 +114,8 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
             const SizedBox(height: AppDimensions.spacing24),
             Text(
               _step == _ResetStep.confirm
-                  ? 'Un nouveau départ.'
-                  : 'On retrouve ton espace.',
+                  ? 'Nouveau mot de passe'
+                  : 'Mot de passe oublié ?',
               textAlign: TextAlign.center,
               style: AppTextStyles.titleLarge(color: context.textPrimary),
             ),
@@ -123,7 +123,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
             Text(
               _step == _ResetStep.confirm
                   ? 'Colle le code reçu par email, puis choisis ton nouveau mot de passe.'
-                  : 'Entre ton email, je t’envoie un code\npour choisir un nouveau mot de passe.',
+                  : 'Entre ton email pour recevoir un code de réinitialisation.',
               textAlign: TextAlign.center,
               style: AppTextStyles.bodyMedium(color: context.textSecondary),
             ),
@@ -216,14 +216,6 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                 label: 'Retour à la connexion',
                 onPressed: () => context.go(AppRoutes.login),
               ),
-            const SizedBox(height: AppDimensions.spacing24),
-            const Icon(Icons.lock_outline_rounded, size: AppDimensions.iconSm),
-            const SizedBox(height: AppDimensions.spacing8),
-            Text(
-              'Ton compte reste à toi.\nTu ne perdras rien en changeant de mot de passe.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodySmall(color: context.textTertiary),
-            ),
           ],
         ),
       ),

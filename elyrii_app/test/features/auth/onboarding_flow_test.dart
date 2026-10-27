@@ -52,7 +52,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 400));
         expect(tester.takeException(), isNull, reason: 'Step ${step + 2}');
       }
-      final enter = find.text('Entrer dans Elyrii');
+      final enter = find.text('Commencer');
       await tester.ensureVisible(enter);
       await tester.pump();
       await tester.tap(enter);

@@ -40,30 +40,30 @@ extension MoodTypeExtension on MoodType {
   String get label {
     switch (this) {
       case MoodType.verySad:
-        return 'Éprouvé';
+        return 'Très mal';
       case MoodType.sad:
-        return 'Vulnérable';
+        return 'Mal';
       case MoodType.neutral:
-        return 'Paisible';
+        return 'Bof';
       case MoodType.happy:
-        return 'Serein';
+        return 'Bien';
       case MoodType.veryHappy:
-        return 'Rayonnant';
+        return 'Très bien';
     }
   }
 
   String get subtitle {
     switch (this) {
       case MoodType.verySad:
-        return 'Besoin de douceur et de repos';
+        return 'Tu te sens très mal.';
       case MoodType.sad:
-        return 'Une baisse d\'énergie passagère';
+        return 'Tu te sens mal.';
       case MoodType.neutral:
-        return 'Calme, présent, à ton rythme';
+        return 'Ton humeur est entre les deux.';
       case MoodType.happy:
-        return 'Une belle clarté d\'esprit';
+        return 'Tu te sens bien.';
       case MoodType.veryHappy:
-        return 'Plein d\'élan et de gratitude';
+        return 'Tu te sens très bien.';
     }
   }
 
@@ -72,13 +72,13 @@ extension MoodTypeExtension on MoodType {
       case MoodType.verySad:
         return '2 min de respiration apaisante';
       case MoodType.sad:
-        return 'Déposer mes pensées dans le journal';
+        return 'Écrire une note';
       case MoodType.neutral:
-        return 'Prendre un instant de pause';
+        return 'Faire une pause';
       case MoodType.happy:
         return 'Noter ce qui m\'a fait sourire';
       case MoodType.veryHappy:
-        return 'Ancrer ce moment dans mon journal';
+        return 'Écrire une note';
     }
   }
 

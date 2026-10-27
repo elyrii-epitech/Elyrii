@@ -87,7 +87,7 @@ class _DressingState extends State<_Dressing> {
       _error =
           store.snapshot.error ??
           mascot.error ??
-          'Le look n’a pas pu être enregistré. Réessaie.';
+          'L’apparence n’a pas pu être enregistrée. Réessaie.';
     });
   }
 
@@ -145,7 +145,7 @@ class _DressingState extends State<_Dressing> {
               horizontal: AppDimensions.spacing12,
             ),
             child: _SheetHeader(
-              'Tenue d’Elyrii',
+              'Apparence d’Elyrii',
               closeEnabled: !_saving,
               trailing: TextButton(
                 key: const ValueKey('save_mascot_look'),
@@ -349,7 +349,7 @@ class _DressingState extends State<_Dressing> {
         ),
         const SizedBox(height: AppDimensions.spacing12),
         _SmallButton(
-          label: 'Revenir au look d’origine',
+          label: 'Rétablir l’apparence d’origine',
           plain: true,
           onTap: () => _edit(MascotModel.defaultMascot()),
         ),

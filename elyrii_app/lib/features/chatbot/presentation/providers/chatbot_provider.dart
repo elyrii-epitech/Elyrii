@@ -280,9 +280,7 @@ class ChatbotProvider extends ChangeNotifier {
               frame['requestId'] is! String ||
               frame['conversationId'] is! String ||
               frame['message'] is! String) {
-            _failAll(
-              'Réponse incompatible du service. Réessaie après sa mise à jour.',
-            );
+            _failAll('Le chat est temporairement indisponible.');
             return;
           }
           final requestId = frame['requestId'] as String;

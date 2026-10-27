@@ -213,7 +213,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
                   const SizedBox(height: AppDimensions.spacing16),
                 ],
                 _ChartCard(
-                  title: 'Calme',
+                  title: 'Méditation',
                   icon: Icons.air_rounded,
                   color: AppColors.teal(dark),
                   background: AppColors.profileCalmCard(dark),
@@ -229,7 +229,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
                   Padding(
                     padding: const EdgeInsets.only(top: AppDimensions.spacing8),
                     child: Text(
-                      'Historique des séances partiel.',
+                      'Certaines séances de cette période ne sont pas incluses.',
                       style: AppTextStyles.profileFootnote(
                         color: context.textTertiary,
                       ),
@@ -242,7 +242,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
                   color: AppColors.yellow(dark),
                   background: AppColors.profileJournalCard(dark),
                   value:
-                      '${projection.journalTotal} ${projection.journalTotal == 1 ? 'écrit' : 'écrits'}',
+                      '${projection.journalTotal} ${projection.journalTotal == 1 ? 'note' : 'notes'}',
                   child: _BarChart(
                     columns: projection.columns,
                     week: _period == ReviewPeriod.week,
@@ -476,7 +476,7 @@ class _BarChart extends StatelessWidget {
             Expanded(
               child: Semantics(
                 label:
-                    '${_accessiblePeriod(columns[i])}, ${values[i] == null ? 'donnée inconnue' : '${values[i]} ${calm ? 'minutes de calme' : 'écrits'}'}',
+                    '${_accessiblePeriod(columns[i])}, ${values[i] == null ? 'donnée inconnue' : '${values[i]} ${calm ? 'minutes de méditation' : 'notes'}'}',
                 child: ExcludeSemantics(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.end,

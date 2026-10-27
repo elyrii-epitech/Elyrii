@@ -53,7 +53,7 @@ abstract final class MascotAccessories {
     MascotAccessory(
       id: 'beanie',
       name: 'Bonnet douillet',
-      description: 'Un bonnet à pompon pour les moments de douceur.',
+      description: 'Un bonnet à pompon.',
       emoji: '🧶',
       category: 'Tête',
       requiredChallenges: 3,
@@ -61,8 +61,7 @@ abstract final class MascotAccessories {
     MascotAccessory(
       id: 'flower_crown',
       name: 'Couronne de fleurs',
-      description:
-          'De petites fleurs pour une touche printanière tout en douceur.',
+      description: 'Une couronne de petites fleurs.',
       emoji: '🌸',
       category: 'Tête',
       requiredChallenges: 5,
@@ -119,8 +118,7 @@ abstract final class MascotAccessories {
     MascotAccessory(
       id: 'sleep_mask',
       name: 'Masque de repos',
-      description:
-          'Un masque tout doux pour rappeler que le repos compte aussi.',
+      description: 'Un masque de nuit pastel.',
       emoji: '💤',
       category: 'Visage',
       requiredChallenges: 18,
@@ -136,8 +134,7 @@ abstract final class MascotAccessories {
     MascotAccessory(
       id: 'cozy_scarf',
       name: 'Écharpe cocon',
-      description:
-          'Une écharpe courte aux bords arrondis, comme un petit câlin.',
+      description: 'Une écharpe courte aux bords arrondis.',
       emoji: '🧣',
       category: 'Cou',
       requiredChallenges: 22,

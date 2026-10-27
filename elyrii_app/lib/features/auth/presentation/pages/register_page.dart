@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/content/account_information.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -38,7 +39,7 @@ class _RegisterPageState extends State<RegisterPage> {
     final valid = _form.currentState!.validate();
     if (!_consent) {
       setState(
-        () => _message = 'Accepte les conditions pour créer ton espace.',
+        () => _message = 'Lis les informations sur Elyrii et tes données avant de créer ton compte.',
       );
     }
     if (!valid || !_consent) return;
@@ -65,7 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
       await showArrivalInfo(
         context,
         'Vérifie ton email',
-        'Ton compte attend sa vérification. Ouvre le message reçu par email pour l’activer, puis connecte-toi.',
+        'Ouvre l’email de confirmation pour activer ton compte, puis connecte-toi.',
       );
       if (mounted) context.go(AppRoutes.login);
     } else {
@@ -80,19 +81,16 @@ class _RegisterPageState extends State<RegisterPage> {
     final password = _password.text;
     final strength =
         (password.length >= 8 ? 1 : 0) +
-        (RegExp(r'[A-Z]').hasMatch(password) &&
-                RegExp(r'[a-z]').hasMatch(password)
-            ? 1
-            : 0) +
-        (RegExp(r'[0-9]|[^a-zA-Z]').hasMatch(password) ? 1 : 0);
+        (RegExp(r'[A-Z]').hasMatch(password) ? 1 : 0) +
+        (RegExp(r'[0-9]').hasMatch(password) ? 1 : 0);
     return ArrivalFrame(
-      title: 'Créer ton compte',
-      bubble: 'On crée ton espace ?',
+      title: 'Créer un compte',
+      bubble: 'Inscris-toi avec ton email.',
       onBack: () => context.go(AppRoutes.login),
       onInfo: () => showArrivalInfo(
         context,
-        'Un compte, ou juste un premier pas',
-        'Ton compte te permet de retrouver ton espace. Tu peux aussi découvrir Elyrii sans compte et décider plus tard.',
+        'Avec ou sans compte',
+        'Connecte-toi ou essaie la démo sans créer de compte.',
       ),
       child: AutofillGroup(
         child: Form(
@@ -174,7 +172,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: AppDimensions.spacing8),
               Text(
                 strength == 3
-                    ? 'Solide. Au moins 8 caractères, pour toi seulement.'
+                    ? 'Les trois règles du mot de passe sont respectées.'
                     : 'Au moins 8 caractères, une majuscule et un chiffre.',
                 style: AppTextStyles.bodySmall(color: context.textSecondary),
               ),
@@ -185,8 +183,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   Checkbox(
                     value: _consent,
                     shape: const CircleBorder(),
-                    semanticLabel:
-                        'Accepter les conditions et la confidentialité',
+                    semanticLabel: 'Confirmer la lecture des informations sur Elyrii et les données',
                     onChanged: busy
                         ? null
                         : (value) => setState(() => _consent = value ?? false),
@@ -196,7 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          'J’accepte les ',
+                          'J’ai lu les ',
                           style: AppTextStyles.bodySmall(
                             color: context.textSecondary,
                           ),
@@ -204,13 +201,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextButton(
                           onPressed: () => showArrivalInfo(
                             context,
-                            'Conditions',
-                            'Les conditions d’utilisation complètes ne sont pas encore publiées dans cette version. Elyrii n’est pas un service d’urgence ni un remplacement d’un professionnel de santé.',
+                            AccountInformation.serviceTitle,
+                            AccountInformation.service,
                           ),
-                          child: const Text('conditions'),
+                          child: const Text('informations sur Elyrii'),
                         ),
                         Text(
-                          'et la ',
+                          'et les ',
                           style: AppTextStyles.bodySmall(
                             color: context.textSecondary,
                           ),
@@ -218,10 +215,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         TextButton(
                           onPressed: () => showArrivalInfo(
                             context,
-                            'Politique de confidentialité',
-                            'La politique de confidentialité complète n’est pas encore publiée dans cette version. Tu peux consulter, exporter et supprimer tes données depuis les réglages.',
+                            AccountInformation.dataTitle,
+                            AccountInformation.data,
                           ),
-                          child: const Text('politique de confidentialité'),
+                          child: const Text('informations sur mes données'),
                         ),
                       ],
                     ),

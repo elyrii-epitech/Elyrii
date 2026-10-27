@@ -264,7 +264,7 @@ class _MascotWidgetState extends State<MascotWidget> {
         ),
         const SizedBox(height: AppDimensions.spacing12),
         Text(
-          'Je suis là pour t\'écouter\nsans jugement',
+          'De quoi veux-tu parler ?',
           textAlign: TextAlign.center,
           style: AppTextStyles.bodyLarge(color: context.textSecondary),
         ),

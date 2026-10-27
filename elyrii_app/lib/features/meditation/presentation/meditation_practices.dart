@@ -29,7 +29,7 @@ class MeditationPractice {
       MeditationExercises.all.firstWhere((exercise) => exercise.id == id);
   String get rhythm =>
       exercise.breathingType?.phases.map((phase) => phase.seconds).join('·') ??
-      'À ton rythme';
+      'Guidage écrit';
 
   List<int> get rhythmSeconds {
     final phases = exercise.breathingType?.phases ?? const <BreathPhase>[];
@@ -64,14 +64,14 @@ class MeditationPractice {
       'facile',
       'Découverte',
       'Souffle doux 3–3',
-      'Un souffle doux pour découvrir la respiration guidée, à ton rythme.',
+      'Suis un rythme de trois secondes à l’inspiration et à l’expiration.',
       Symbols.eco_rounded,
       AppColors.meditationGreen,
       [3, 5, 10],
     ),
     MeditationPractice(
       'carree',
-      'Focus',
+      'Respiration carrée',
       'Respiration carrée',
       'Quatre temps égaux pour ramener doucement ton attention ici.',
       Symbols.crop_square_rounded,
@@ -107,16 +107,16 @@ class MeditationPractice {
     ),
     MeditationPractice(
       'diaphragmatique',
-      'Diaphragmatique',
+      'Respiration ventrale',
       'Respirer avec le ventre',
-      'Laisse ton ventre accompagner chaque inspiration, tout doucement.',
+      'Observe le mouvement de ton ventre pendant la respiration.',
       Symbols.pulmonology_rounded,
       AppColors.meditationOrange,
       [3, 5, 10, 15],
     ),
     MeditationPractice(
       'ujjayi',
-      'Ujjayi',
+      'Respiration Ujjayi',
       'Un souffle comme une vague',
       'Laisse ton souffle retrouver un rythme doux, en gardant la gorge détendue.',
       Symbols.waves_rounded,
@@ -127,7 +127,7 @@ class MeditationPractice {
       'expirationLongue',
       'Expiration longue',
       'Souffler plus longtemps',
-      "Une expiration plus longue pour t'aider à relâcher ce qui pèse.",
+      "Suis un rythme où l’expiration dure plus longtemps que l’inspiration.",
       Symbols.air_rounded,
       AppColors.meditationTeal,
       [3, 5, 10, 15],
