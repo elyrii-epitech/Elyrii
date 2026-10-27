@@ -47,7 +47,7 @@ docker run --rm --network "container:$container" -e DB_HOST=127.0.0.1 \
     -e DB_USER=context_test -e DB_PASSWORD=test -e DB_NAME=fresh -e CONTEXT_DB_TEST=1 \
     "${evaluation_mount[@]}" -v "$PWD/modules/chat:/app/modules/chat:ro" -v "$PWD/repository:/app/repository:ro" -v "$PWD/modules/context:/app/modules/context:ro" \
     -v "$PWD/middleware:/app/middleware:ro" -v "$PWD/utils:/app/utils:ro" -v "$PWD/config:/app/config:ro" -v "$PWD/../elyrii_ai/test/fixtures:/elyrii_ai/test/fixtures:ro" "$image" \
-    bun test modules/context modules/chat/context-dispatch.test.ts repository/context.repository.test.ts repository/extraction.repository.test.ts repository/summary.repository.test.ts repository/embedding.repository.test.ts repository/retrieval.repository.test.ts repository/mood.repository.test.ts repository/context-source.repository.test.ts repository/journal-extraction.repository.test.ts repository/context-lifecycle.repository.test.ts repository/context-rollout.test.ts
+    bun test modules/context modules/chat/context-dispatch.test.ts repository/context.repository.test.ts repository/extraction.repository.test.ts repository/summary.repository.test.ts repository/embedding.repository.test.ts repository/retrieval.repository.test.ts repository/mood.repository.test.ts repository/context-source.repository.test.ts repository/journal-extraction.repository.test.ts repository/context-lifecycle.repository.test.ts repository/context-rollout.test.ts repository/journal-recall.test.ts
 psql_test fresh < scripts/test-context-schema.sql
 
 psql_test fresh -c 'CREATE DATABASE upgraded'
