@@ -10,12 +10,10 @@ export interface QueryEmbedder { readonly spec: EmbeddingModel; embed(content: s
 
 /** Internal API: userId must come from authenticated server identity, never request JSON. */
 export class ContextRetrievalService {
-    private readonly config: RetrievalConfig;
     constructor(private readonly repository = new RetrievalRepository(), private readonly provider?: QueryEmbedder,
-        config: RetrievalConfig = retrievalConfig()) {
-        this.config = retrievalConfigSchema.parse(config);
-    }
+        private readonly configured?: RetrievalConfig) {}
     async retrieve(userId: string, input: RetrievalRequest): Promise<RetrievedContext> {
+        const config = retrievalConfigSchema.parse(this.configured ?? retrievalConfig());
         z.uuid().parse(userId);
         const request = retrievalRequestSchema.parse(input);
         let ranked: RankedMemory[] = [], spec: EmbeddingModel | undefined, semanticStatus: RetrievedContext["semanticStatus"] = "ok";
@@ -26,20 +24,20 @@ export class ContextRetrievalService {
             let timer: ReturnType<typeof setTimeout> | undefined;
             try {
                 const vector = await Promise.race([provider.embed(request.query, controller.signal), new Promise<never>((_, reject) => {
-                    timer = setTimeout(() => { controller.abort(); reject(new Error("Query embedding timed out")); }, this.config.timeoutMs);
+                    timer = setTimeout(() => { controller.abort(); reject(new Error("Query embedding timed out")); }, config.timeoutMs);
                 })]);
                 if (vector.length !== spec.dimensions || vector.some(v => typeof v !== "number" || !Number.isFinite(v)) ||
                     Math.abs(Math.hypot(...vector) - 1) > 0.001) throw new Error("Invalid query vector");
-                ranked = await this.repository.search(userId, spec, vector, this.config);
+                ranked = await this.repository.search(userId, spec, vector, config);
             } finally { clearTimeout(timer); controller.abort(); }
         } catch { semanticStatus = "unavailable"; ranked = []; }
         let context: RetrievedContext;
         try {
-            context = { ...await this.repository.assemble(userId, request, spec, ranked, this.config), semanticStatus };
+            context = { ...await this.repository.assemble(userId, request, spec, ranked, config), semanticStatus };
         } catch (error) {
             if (!ranked.length) throw error;
             // A failed vector lookup must not remove directly loaded facts and continuity.
-            context = { ...await this.repository.assemble(userId, request, undefined, [], this.config), semanticStatus: "unavailable" };
+            context = { ...await this.repository.assemble(userId, request, undefined, [], config), semanticStatus: "unavailable" };
         }
         // Read after slow embedding/assembly, including on every prompt-time refresh.
         // No queued mood fallback and no dependency on semantic retrieval availability.

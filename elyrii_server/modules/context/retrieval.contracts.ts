@@ -3,6 +3,7 @@ import type { UserContextFact, UserMemory, ConversationSummary } from "../../con
 import type { chatMessagesTable } from "../../config/db/chat.table";
 
 export const retrievalConfigSchema = z.strictObject({
+    journalRecall: z.boolean().default(false),
     minSimilarity: z.number().finite().min(-1).max(1).default(0.65),
     topK: z.number().int().min(1).max(50).default(5),
     recentLimit: z.number().int().min(1).max(200).default(12),
@@ -10,6 +11,7 @@ export const retrievalConfigSchema = z.strictObject({
 });
 export type RetrievalConfig = z.infer<typeof retrievalConfigSchema>;
 export const retrievalConfig = () => retrievalConfigSchema.parse({
+    journalRecall: process.env.ENABLE_JOURNAL_RECALL === "true",
     minSimilarity: Number(process.env.CONTEXT_MIN_SIMILARITY ?? 0.65),
     topK: Number(process.env.CONTEXT_TOP_K ?? 5),
     recentLimit: Number(process.env.CONTEXT_RECENT_LIMIT ?? 12),
@@ -23,10 +25,12 @@ export const retrievalRequestSchema = z.strictObject({
 });
 export type RetrievalRequest = z.infer<typeof retrievalRequestSchema>;
 export type RankedMemory = { id: string; contentRevision: number; similarity: number; vectorUpdatedAt: string };
+export type RecallAttribution = { source?: { kind: "chat" | "journal"; id: string; revision: number; observedAt: string | null };
+    eventDate?: string | null; temporalExpression?: string | null; sourceTimezone?: string | null };
 export type RetrievedContext = {
     moodObservation?: import("./mood.contracts").MoodObservation;
-    facts: UserContextFact[];
+    facts: (UserContextFact & RecallAttribution)[];
     continuity: { summary: ConversationSummary | null; messages: (typeof chatMessagesTable.$inferSelect)[]; truncated: boolean };
-    memories: (UserMemory & { similarity: number; model: string })[];
+    memories: (UserMemory & RecallAttribution & { similarity: number; model: string })[];
     semanticStatus: "ok" | "unavailable";
 };
