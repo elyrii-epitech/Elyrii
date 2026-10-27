@@ -142,7 +142,12 @@ jobs:
         timeout-minutes: 15
         run: |
           set -o pipefail
-          flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development --verbose > build/ios-integration-test.log 2>&1 || { tail -n 100 build/ios-integration-test.log; exit 1; }
+          if ! flutter test integration_test/frontend_flows_test.dart -d "$ELYRII_SIMULATOR_ID" --no-pub --dart-define=ELYRII_ENV=development --verbose > build/ios-integration-test.log 2>&1; then
+            # Keep the original rendering error visible, not just a later timeout.
+            awk '/EXCEPTION CAUGHT|Error:|overflowed/{context=65} context>0{print; context--}' build/ios-integration-test.log
+            tail -n 100 build/ios-integration-test.log
+            exit 1
+          fi
           tail -n 30 build/ios-integration-test.log
       - name: Collect simulator diagnostics
         if: always() && steps.ios-integration.outcome != 'success' && env.ELYRII_SIMULATOR_ID != ''
@@ -150,6 +155,7 @@ jobs:
         continue-on-error: true
         run: |
           if [ -f build/ios-integration-test.log ]; then
+            awk '/EXCEPTION CAUGHT|Error:|overflowed/{context=65} context>0{print; context--}' build/ios-integration-test.log
             tail -n 120 build/ios-integration-test.log
           fi
           xcrun simctl io "$ELYRII_SIMULATOR_ID" screenshot build/ios-integration-simulator.png

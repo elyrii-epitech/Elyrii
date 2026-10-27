@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/material.dart' show FocusManager, IconButton, TextField;
+import 'package:flutter/material.dart'
+    show FocusManager, IconButton, SizedBox, TextField;
 import 'package:integration_test/integration_test.dart';
 import 'package:provider/provider.dart';
 import 'package:elyrii_app/app/app_dependencies.dart';
@@ -25,6 +26,19 @@ void main() {
     tester,
   ) async {
     await startDemoApp(tester);
+    final app = tester
+        .element(find.byType(DashboardPage))
+        .read<AppDependencies>();
+    addTearDown(() async {
+      await tester.runAsync(() async {
+        await app.chat.flushed;
+        await app.user.flushed;
+        await app.mascot.flushed;
+      });
+      // Release native platform views before the host terminates the simulator.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+    });
     expect(find.byType(DashboardPage), findsOneWidget);
     expect(find.byType(GlassNavigationBar), findsOneWidget);
     expect(tester.takeException(), isNull);
