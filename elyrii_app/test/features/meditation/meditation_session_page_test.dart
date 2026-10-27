@@ -1,4 +1,5 @@
 import 'package:elyrii_app/core/theme/app_theme.dart';
+import 'package:elyrii_app/core/theme/app_dimensions.dart';
 import 'package:elyrii_app/features/dashboard/presentation/mood_presentation.dart';
 import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
 import 'package:elyrii_app/features/meditation/domain/models/breath_phase.dart';
@@ -99,6 +100,15 @@ void main() {
         ..setDuration(2);
       addTearDown(controller.dispose);
       await openSession(tester, controller);
+      final close = find.byTooltip('Fermer la séance');
+      final pause = find.byTooltip('Mettre en pause');
+      final safe = MediaQuery.paddingOf(tester.element(close));
+      final expectedTop =
+          safe.top +
+          (AppDimensions.accueilBarHeight - AppDimensions.controlSize) / 2;
+      expect(tester.getTopLeft(close).dy, closeTo(expectedTop, 1));
+      expect(tester.getTopLeft(pause).dy, closeTo(expectedTop, 1));
+      expect(tester.getSize(close).height, AppDimensions.controlSize);
       expect(find.text('2:00 restantes · cycle 1 sur 7'), findsOneWidget);
       for (var i = 0; i < 12; i++) {
         controller.tick();

@@ -56,160 +56,186 @@ class MeditationSessionView extends StatelessWidget {
         constraints: const BoxConstraints(
           maxWidth: AppDimensions.maxContentWidth,
         ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final safe = MediaQuery.paddingOf(context);
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    AppDimensions.radius28,
-                    safe.top + AppDimensions.meditationSessionTop,
-                    AppDimensions.radius28,
-                    safe.bottom + AppDimensions.spacing48,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          children: [
+            SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.pageHorizontalPadding,
+                ),
+                child: SizedBox(
+                  height: AppDimensions.accueilBarHeight,
+                  child: Row(
                     children: [
-                      Row(
-                        children: [
-                          MeditationGlassControl(
-                            label: 'Fermer la séance',
-                            icon: Symbols.close_rounded,
-                            onPressed: onExit,
-                          ),
-                          const SizedBox(width: AppDimensions.spacing12),
-                          Expanded(
-                            child: Text(
-                              MeditationPractice.forId(exercise.id)?.title ??
-                                  exercise.title,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyles.titleSmall(
-                                color: context.textPrimary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppDimensions.spacing12),
-                          MeditationGlassControl(
-                            label: controller.isFinished
-                                ? 'Voir le résumé'
-                                : paused
-                                ? 'Reprendre'
-                                : 'Mettre en pause',
-                            icon: controller.isFinished
-                                ? Symbols.check_rounded
-                                : paused
-                                ? Symbols.play_arrow_rounded
-                                : Symbols.pause_rounded,
-                            onPressed: controller.isFinished
-                                ? onFinish
-                                : paused
-                                ? controller.resumeSession
-                                : controller.pauseSession,
-                          ),
-                        ],
+                      MeditationGlassControl(
+                        label: 'Fermer la séance',
+                        icon: Symbols.close_rounded,
+                        onPressed: onExit,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppDimensions.spacing32,
-                        ),
-                        child: Column(
-                          children: [
-                            MeditationBreathingCircle(controller: controller),
-                            const SizedBox(
-                              height: AppDimensions.meditationPhaseGap,
-                            ),
-                            Text(
-                              phase,
-                              style: AppTextStyles.headlineMedium(
-                                color: context.textPrimary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: AppDimensions.spacing8),
-                            Text(
-                              count,
-                              style: AppTextStyles.headlineSmall(
-                                color: AppColors.meditationCount(dark),
-                              ),
-                            ),
-                            if (controller.isGuidedPractice) ...[
-                              const SizedBox(height: AppDimensions.spacing20),
-                              Text(
-                                controller.currentGuidanceStep.title,
-                                style: AppTextStyles.titleSmall(
-                                  color: context.textPrimary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: AppDimensions.spacing8),
-                              Text(
-                                controller.currentGuidanceStep.instruction,
-                                key: const Key(
-                                  'meditation-guidance-instruction',
-                                ),
-                                style: AppTextStyles.bodyMedium(
-                                  color: context.textSecondary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ],
+                      const SizedBox(width: AppDimensions.spacing12),
+                      Expanded(
+                        child: Text(
+                          MeditationPractice.forId(exercise.id)?.title ??
+                              exercise.title,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.titleSmall(
+                            color: context.textPrimary,
+                          ),
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                              AppDimensions.radius4,
-                            ),
-                            child: LinearProgressIndicator(
-                              value: controller.progressRatio,
-                              minHeight: AppDimensions.meditationProgressHeight,
-                              color: AppColors.teal(dark),
-                              backgroundColor: dark
-                                  ? AppColors.cardDark
-                                  : AppColors.cardLight,
-                              semanticsLabel: 'Progression de la séance',
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.spacing12),
-                          Text(
-                            '$remaining restantes${free ? '' : ' · cycle $cycle sur $totalCycles'}',
-                            style: AppTextStyles.bodySmall(
-                              color: context.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: AppDimensions.spacing16),
-                          Center(
-                            child: TextButton(
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.primaryText(dark),
-                                textStyle: AppTextStyles.buttonSmall(),
-                                minimumSize: const Size(
-                                  0,
-                                  AppDimensions.meditationChipHeight,
-                                ),
-                              ),
-                              onPressed: onFinish,
-                              child: Text(
-                                controller.isFinished
-                                    ? 'Voir le résumé'
-                                    : 'Terminer la séance',
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: AppDimensions.spacing12),
+                      MeditationGlassControl(
+                        label: controller.isFinished
+                            ? 'Voir le résumé'
+                            : paused
+                            ? 'Reprendre'
+                            : 'Mettre en pause',
+                        icon: controller.isFinished
+                            ? Symbols.check_rounded
+                            : paused
+                            ? Symbols.play_arrow_rounded
+                            : Symbols.pause_rounded,
+                        onPressed: controller.isFinished
+                            ? onFinish
+                            : paused
+                            ? controller.resumeSession
+                            : controller.pauseSession,
                       ),
                     ],
                   ),
                 ),
               ),
-            );
-          },
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        AppDimensions.pageHorizontalPadding,
+                        0,
+                        AppDimensions.pageHorizontalPadding,
+                        MediaQuery.paddingOf(context).bottom +
+                            AppDimensions.spacing48,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppDimensions.spacing32,
+                            ),
+                            child: Column(
+                              children: [
+                                MeditationBreathingCircle(
+                                  controller: controller,
+                                ),
+                                const SizedBox(
+                                  height: AppDimensions.meditationPhaseGap,
+                                ),
+                                Text(
+                                  phase,
+                                  style: AppTextStyles.headlineMedium(
+                                    color: context.textPrimary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: AppDimensions.spacing8),
+                                Text(
+                                  count,
+                                  style: AppTextStyles.headlineSmall(
+                                    color: AppColors.meditationCount(dark),
+                                  ),
+                                ),
+                                if (controller.isGuidedPractice) ...[
+                                  const SizedBox(
+                                    height: AppDimensions.spacing20,
+                                  ),
+                                  Text(
+                                    controller.currentGuidanceStep.title,
+                                    style: AppTextStyles.titleSmall(
+                                      color: context.textPrimary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(
+                                    height: AppDimensions.spacing8,
+                                  ),
+                                  Text(
+                                    controller.currentGuidanceStep.instruction,
+                                    key: const Key(
+                                      'meditation-guidance-instruction',
+                                    ),
+                                    style: AppTextStyles.bodyMedium(
+                                      color: context.textSecondary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  AppDimensions.radius4,
+                                ),
+                                child: LinearProgressIndicator(
+                                  value: controller.progressRatio,
+                                  minHeight:
+                                      AppDimensions.meditationProgressHeight,
+                                  color: AppColors.teal(dark),
+                                  backgroundColor: dark
+                                      ? AppColors.cardDark
+                                      : AppColors.cardLight,
+                                  semanticsLabel: 'Progression de la séance',
+                                ),
+                              ),
+                              const SizedBox(height: AppDimensions.spacing12),
+                              Text(
+                                '$remaining restantes${free ? '' : ' · cycle $cycle sur $totalCycles'}',
+                                style: AppTextStyles.bodySmall(
+                                  color: context.textSecondary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: AppDimensions.spacing16),
+                              Center(
+                                child: TextButton(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.primaryText(
+                                      dark,
+                                    ),
+                                    textStyle: AppTextStyles.buttonSmall(),
+                                    minimumSize: const Size(
+                                      0,
+                                      AppDimensions.meditationChipHeight,
+                                    ),
+                                  ),
+                                  onPressed: onFinish,
+                                  child: Text(
+                                    controller.isFinished
+                                        ? 'Voir le résumé'
+                                        : 'Terminer la séance',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -234,7 +260,7 @@ class MeditationGlassControl extends StatelessWidget {
       tooltip: label,
       onPressed: onPressed,
       style: IconButton.styleFrom(
-        minimumSize: const Size.square(AppDimensions.accueilHeaderControl),
+        minimumSize: const Size.square(AppDimensions.controlSize),
         backgroundColor: dark
             ? AppColors.glassBackgroundDark
             : AppColors.glassBackgroundLight,

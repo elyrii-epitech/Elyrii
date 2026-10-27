@@ -5,13 +5,12 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../app/router/app_shell.dart';
-import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/localization/app_dates.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/glass_bar_button.dart';
-import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../../core/widgets/section_sky_header.dart';
 import '../../../dashboard/data/accueil_activities.dart';
 import '../../../dashboard/domain/civil_day.dart';
@@ -19,6 +18,7 @@ import '../../../dashboard/presentation/mood_presentation.dart';
 import '../../domain/journal_feed.dart';
 import '../providers/journal_provider.dart';
 import '../widgets/journal_entry_card.dart';
+import '../widgets/journal_editor_sheet.dart';
 import '../widgets/journal_sheets.dart';
 import 'journal_entry_page.dart';
 import 'journal_search_page.dart';
@@ -33,6 +33,13 @@ class JournalPage extends StatefulWidget {
 
 class _JournalPageState extends State<JournalPage> {
   final _scroll = ScrollController();
+  final _composer = GlobalKey();
+  final _editor = GlobalKey();
+  bool _writing = false;
+  bool _revealPending = false;
+  String? _writingOwner;
+  String? _prompt;
+  MoodType? _mood;
 
   @override
   void initState() {
@@ -59,13 +66,51 @@ class _JournalPageState extends State<JournalPage> {
   }
 
   JournalProvider get _provider => context.read<JournalProvider>();
+  bool get _isWriting => _writing && _writingOwner == _provider.owner;
 
-  void _write({String? prompt, MoodType? mood}) => showJournalEditor(
-    context,
-    provider: _provider,
-    initialPrompt: prompt,
-    initialMood: mood,
-  );
+  void _write({String? prompt, MoodType? mood}) {
+    if (_writing && _writingOwner == _provider.owner) return;
+    setState(() {
+      _writing = true;
+      _revealPending = true;
+      _writingOwner = _provider.owner;
+      _prompt = prompt;
+      _mood = mood;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _revealComposer());
+  }
+
+  void _revealComposer({bool animationFinished = false}) {
+    if (!mounted || !_isWriting || !_revealPending || !_scroll.hasClients) {
+      return;
+    }
+    final box = _composer.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final reduced = MediaQuery.disableAnimationsOf(context);
+    if (reduced || animationFinished) _revealPending = false;
+    final top =
+        MediaQuery.paddingOf(context).top +
+        AppDimensions.accueilBarHeight +
+        AppDimensions.spacing12;
+    final target = (_scroll.offset + box.localToGlobal(Offset.zero).dy - top)
+        .clamp(0.0, _scroll.position.maxScrollExtent);
+    if (reduced) {
+      _scroll.jumpTo(target);
+    } else {
+      unawaited(
+        _scroll.animateTo(
+          target,
+          duration: AppMotion.sheetEnter,
+          curve: AppMotion.accueilEase,
+        ),
+      );
+    }
+  }
+
+  void _collapse() {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _writing = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +149,11 @@ class _JournalPageState extends State<JournalPage> {
                             bottomPadding:
                                 AppShell.bottomClearanceOf(context) +
                                 AppDimensions.spacing24,
-                            child: entries.isEmpty
+                            child:
+                                entries.isEmpty &&
+                                    !_isWriting &&
+                                    (provider.isLoading ||
+                                        provider.error != null)
                                 ? _withoutEntries(provider)
                                 : _feed(provider, activities, today, dark),
                           ),
@@ -149,7 +198,7 @@ class _JournalPageState extends State<JournalPage> {
         ],
       );
     }
-    return _FirstDay(onWrite: (prompt) => _write(prompt: prompt));
+    return const SizedBox.shrink();
   }
 
   Widget _feed(
@@ -171,6 +220,19 @@ class _JournalPageState extends State<JournalPage> {
       spacing: AppDimensions.accueilSectionGap,
       children: [
         _Composer(
+          key: _composer,
+          onExpanded: () => WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _revealComposer(animationFinished: true),
+          ),
+          editor: _isWriting
+              ? JournalEditorSheet(
+                  key: _editor,
+                  provider: provider,
+                  initialPrompt: _prompt,
+                  initialMood: _mood,
+                  onClose: _collapse,
+                )
+              : null,
           question: question,
           onWrite: () => _write(prompt: question),
           onNextQuestion: activities == null
@@ -184,6 +246,8 @@ class _JournalPageState extends State<JournalPage> {
             if (mood != null && mounted) _write(prompt: question, mood: mood);
           },
         ),
+        if (provider.entries.isEmpty && !_isWriting)
+          _WritingIdeas(onWrite: (prompt) => _write(prompt: prompt)),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: AppDimensions.journalMonthGap,
@@ -242,11 +306,16 @@ class _TopBar extends StatelessWidget {
 }
 
 class _Composer extends StatelessWidget {
+  final Widget? editor;
+  final VoidCallback onExpanded;
   final String question;
   final VoidCallback onWrite;
   final VoidCallback? onNextQuestion;
   final VoidCallback onMood;
   const _Composer({
+    super.key,
+    this.editor,
+    required this.onExpanded,
     required this.question,
     required this.onWrite,
     required this.onNextQuestion,
@@ -256,110 +325,115 @@ class _Composer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.spacing16),
-      decoration: BoxDecoration(
-        color: AppColors.journalPaper(dark),
-        borderRadius: BorderRadius.circular(AppDimensions.radius20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: AppDimensions.spacing12,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: AppDimensions.spacing8,
-            children: [
-              Expanded(
-                child: Semantics(
-                  button: true,
-                  child: GestureDetector(
-                    onTap: onWrite,
-                    child: Text(
-                      question,
-                      style: AppTextStyles.journalLine(
-                        color: AppColors.journalQuestionInk(dark),
+    final content =
+        editor ??
+        InkWell(
+          onTap: onWrite,
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimensions.spacing16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: AppDimensions.spacing12,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: AppDimensions.spacing8,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        question,
+                        style: AppTextStyles.journalLine(
+                          color: AppColors.journalQuestionInk(dark),
+                        ),
                       ),
+                    ),
+                    if (onNextQuestion != null)
+                      IconButton(
+                        tooltip: 'Changer la question',
+                        onPressed: onNextQuestion,
+                        constraints: const BoxConstraints.tightFor(
+                          width: AppDimensions.controlSize,
+                          height: AppDimensions.controlSize,
+                        ),
+                        icon: Icon(
+                          Symbols.refresh_rounded,
+                          size: AppDimensions.iconSm,
+                          color: AppColors.journalQuestionInk(dark),
+                        ),
+                      ),
+                  ],
+                ),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: AppDimensions.controlSize,
+                  ),
+                  child: Text(
+                    'Écris ici…',
+                    style: AppTextStyles.bodyLarge(
+                      color: AppColors.journalPlaceholder(dark),
                     ),
                   ),
                 ),
-              ),
-              if (onNextQuestion != null)
-                IconButton(
-                  tooltip: 'Changer la question',
-                  onPressed: onNextQuestion,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(
-                    width: AppDimensions.journalRefresh,
-                    height: AppDimensions.journalRefresh,
-                  ),
-                  icon: Icon(
-                    Symbols.refresh_rounded,
-                    size: AppDimensions.iconSm,
-                    color: AppColors.journalQuestionInk(dark),
-                  ),
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppDimensions.spacing12,
+                  runSpacing: AppDimensions.spacing8,
+                  children: [
+                    IconButton(
+                      tooltip: 'Ajouter une humeur',
+                      onPressed: onMood,
+                      constraints: const BoxConstraints.tightFor(
+                        width: AppDimensions.controlSize,
+                        height: AppDimensions.controlSize,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.journalTool(dark),
+                      ),
+                      icon: Icon(
+                        Symbols.sentiment_calm_rounded,
+                        size: AppDimensions.iconSm,
+                        color: AppColors.journalToolInk(dark),
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: onWrite,
+                      icon: const Icon(
+                        Symbols.edit_rounded,
+                        size: AppDimensions.iconSm,
+                      ),
+                      label: const Text('Écrire'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, AppDimensions.controlSize),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.spacing16,
+                        ),
+                        backgroundColor: AppColors.primaryText(dark),
+                        foregroundColor: AppColors.onTint(dark),
+                        textStyle: AppTextStyles.buttonSmall(),
+                        shape: const StadiumBorder(),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
-          Semantics(
-            button: true,
-            child: InkWell(
-              onTap: onWrite,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: AppDimensions.spacing32,
-                ),
-                child: Text(
-                  'Écris ce que tu ressens…',
-                  style: AppTextStyles.bodyLarge(
-                    color: AppColors.journalPlaceholder(dark),
-                  ),
-                ),
-              ),
+              ],
             ),
           ),
-          Row(
-            children: [
-              IconButton(
-                tooltip: 'Ajouter une humeur',
-                onPressed: onMood,
-                constraints: const BoxConstraints.tightFor(
-                  width: AppDimensions.journalTool,
-                  height: AppDimensions.journalTool,
-                ),
-                padding: EdgeInsets.zero,
-                style: IconButton.styleFrom(
-                  backgroundColor: AppColors.journalTool(dark),
-                ),
-                icon: Icon(
-                  Symbols.sentiment_calm_rounded,
-                  size: AppDimensions.iconSm,
-                  color: AppColors.journalToolInk(dark),
-                ),
-              ),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: onWrite,
-                icon: const Icon(
-                  Symbols.edit_rounded,
-                  size: AppDimensions.iconSm,
-                ),
-                label: const Text('Écrire'),
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, AppDimensions.journalTool),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.spacing16,
-                  ),
-                  backgroundColor: AppColors.primaryText(dark),
-                  foregroundColor: AppColors.onTint(dark),
-                  textStyle: AppTextStyles.buttonSmall(),
-                  shape: const StadiumBorder(),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+    return Material(
+      key: const Key('journal-composer-card'),
+      color: AppColors.journalPaper(dark),
+      borderRadius: BorderRadius.circular(AppDimensions.radius20),
+      clipBehavior: Clip.antiAlias,
+      child: MediaQuery.disableAnimationsOf(context)
+          ? content
+          : AnimatedSize(
+              onEnd: onExpanded,
+              duration: AppMotion.sheetEnter,
+              curve: AppMotion.accueilEase,
+              alignment: Alignment.topCenter,
+              child: content,
+            ),
     );
   }
 }
@@ -556,78 +630,67 @@ class _Memory extends StatelessWidget {
   }
 }
 
-class _FirstDay extends StatelessWidget {
+/// First use shares the same composer as a populated journal.
+class _WritingIdeas extends StatelessWidget {
   final ValueChanged<String?> onWrite;
-  const _FirstDay({required this.onWrite});
-
-  static const _icons = [
-    Symbols.wb_twilight_rounded,
-    Symbols.psychology_rounded,
-    Symbols.favorite_rounded,
-    Symbols.edit_note_rounded,
-  ];
+  const _WritingIdeas({required this.onWrite});
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      spacing: AppDimensions.spacing16,
+      spacing: AppDimensions.spacing12,
       children: [
-        Row(
-          spacing: AppDimensions.spacing12,
-          children: [
-            Semantics(
-              image: true,
-              label: 'Elyrii',
-              child: const MascotWithAccessories(
-                config: Mascot3DConfig(
-                  interactionEnabled: false,
-                  autoRotate: false,
-                ),
-                width: AppDimensions.journalMascotWidth,
-                height: AppDimensions.journalMascotHeight,
-              ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: AppDimensions.spacing4,
-                children: [
-                  Text(
-                    'Ton journal commence ici',
-                    style: AppTextStyles.titleSmall(color: context.textPrimary),
-                  ),
-                  Text(
-                    'Écris ta première note ou choisis une question pour commencer.',
-                    style: AppTextStyles.bodyMedium(
-                      color: context.textSecondary,
+        Text(
+          'Pour commencer',
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
+        ),
+        Text(
+          'Choisis une question ou écris librement.',
+          style: AppTextStyles.bodyMedium(color: context.textSecondary),
+        ),
+        for (final prompt in journalPrompts)
+          Material(
+            color: AppColors.journalEntry(dark),
+            borderRadius: BorderRadius.circular(AppDimensions.radius14),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => onWrite(prompt),
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.spacing16),
+                child: Row(
+                  spacing: AppDimensions.spacing12,
+                  children: [
+                    Icon(
+                      Symbols.edit_note_rounded,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.journalAccent(dark),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: Text(
+                        prompt,
+                        style: AppTextStyles.bodyMedium(
+                          color: context.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Symbols.arrow_forward_rounded,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.journalAccent(dark),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-        JournalRowGroup(
-          children: [
-            for (final (index, prompt) in journalPrompts.indexed)
-              JournalRow(
-                label: prompt,
-                minHeight: AppDimensions.journalPromptRowHeight,
-                leading: JournalSquare(
-                  _icons[index],
-                  color: AppColors.journalPaper(dark),
-                ),
-                onTap: () => onWrite(prompt),
-              ),
-          ],
-        ),
-        JournalButton(
-          label: 'Écrire librement',
-          background: AppColors.primaryText(dark),
-          foreground: AppColors.onTint(dark),
+          ),
+        TextButton(
           onPressed: () => onWrite(null),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.journalAccent(dark),
+          ),
+          child: const Text('Écrire librement'),
         ),
       ],
     );

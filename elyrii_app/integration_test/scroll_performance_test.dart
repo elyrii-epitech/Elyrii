@@ -75,16 +75,10 @@ void main() {
       report['$tab scroll'] = summarize(scrolled);
     }
 
-    for (final tab in [
-      'Accueil',
-      'Défis',
-      'Journal',
-      'Méditer',
-      'Programmes',
-    ]) {
+    for (final tab in ['Accueil', 'Défis', 'Journal', 'Méditer', 'Coach']) {
       await measureTab(tab);
     }
-    for (final tab in ['Accueil', 'Méditer', 'Programmes']) {
+    for (final tab in ['Accueil', 'Méditer', 'Coach']) {
       final back = await record(() async {
         await tapVisible(
           tester,

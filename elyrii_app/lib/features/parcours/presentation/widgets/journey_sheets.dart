@@ -229,7 +229,7 @@ Future<void> showJourneySteps(BuildContext context, JourneyProvider provider) {
         final current = provider.current;
         if (current == null || current.enrollmentId != enrollmentId) {
           return const JourneyNote(
-            'Le programme a changé. Reviens à la page Programmes.',
+            'Le programme a changé. Reviens à Coach.',
             live: true,
           );
         }
@@ -353,7 +353,7 @@ class _JourneyStepSheetState extends State<_JourneyStepSheet> {
       final current = provider.current;
       if (current == null || current.enrollmentId != widget.enrollmentId) {
         return const JourneyNote(
-          'Le programme a changé. Reviens à la page Programmes.',
+          'Le programme a changé. Reviens à Coach.',
           live: true,
         );
       }
@@ -407,7 +407,7 @@ class _JourneyStepSheetState extends State<_JourneyStepSheet> {
             const JourneyNote('Cette étape est déjà terminée.', live: true)
           else if (current.status == JourneyStatus.paused)
             const JourneyNote(
-              'Ton programme est en pause. Reprends-le depuis la page Programmes avant de valider.',
+              'Ton programme est en pause. Reprends-le depuis Coach avant de valider.',
             ),
           if (!done)
             JourneyButton(

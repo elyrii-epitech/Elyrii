@@ -32,7 +32,45 @@ import 'package:elyrii_app/features/reviews/presentation/pages/reviews_page.dart
 import 'package:elyrii_app/features/settings/pages/settings_page.dart';
 import 'package:elyrii_app/features/settings/pages/account_sheets.dart';
 
+import 'package:elyrii_app/core/network/api_client.dart';
+import 'package:elyrii_app/features/journal/data/repositories/journal_repository.dart';
+import 'package:elyrii_app/features/journal/data/models/journal_entry_model.dart';
+import 'package:elyrii_app/features/journal/presentation/providers/journal_provider.dart';
+
 import '../test/support/accessibility_fixture.dart';
+
+class _ReviewJournalRepository extends JournalRepository {
+  _ReviewJournalRepository(ApiClient client) : super(client: client);
+  @override
+  Future<List<JournalEntryModel>> getEntries({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    final at = DateTime.now();
+    return [
+      JournalEntryModel(
+        id: 'review-note',
+        userId: 'demo-user',
+        title: 'Une pause dehors',
+        content: 'Je suis sorti marcher après les cours. Ça m’a permis de penser à autre chose et de profiter du soleil.',
+        mood: 'happy',
+        createdAt: at,
+        updatedAt: at,
+      ),
+    ];
+  }
+}
+
+Future<void> capture(WidgetTester tester, GlobalKey key, String name) async {
+  final boundary =
+      key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
+  await tester.runAsync(() async {
+    final rendered = await boundary.toImage(pixelRatio: 2);
+    final bytes = await rendered.toByteData(format: ui.ImageByteFormat.png);
+    rendered.dispose();
+    File('$output/$name.png').writeAsBytesSync(bytes!.buffer.asUint8List());
+  });
+}
 
 const output = String.fromEnvironment(
   'WORDING_OUTPUT',
@@ -102,6 +140,10 @@ void main() {
     ('10-challenges', const ChallengesPage(), 0),
     ('11-journal', const JournalPage(), 0),
     ('11-journal-editor', const JournalPage(), 2),
+    ('11-journal-filled', const JournalPage(), 3),
+    ('11-journal-filled-editor', const JournalPage(), 4),
+    if (const bool.fromEnvironment('WORDING_CAPTURE_MOTION'))
+      ('11-journal-motion', const JournalPage(), 5),
     ('12-journal-data', const JournalPage(), 1),
     ('13-meditation', const MeditationPage(), 0),
     ('14-programs', const ParcoursPage(), 0),
@@ -124,6 +166,13 @@ void main() {
       final semantics = tester.ensureSemantics();
       final app = (await tester.runAsync(() async {
         final app = await fixture();
+        if (page is JournalPage && (stage == 3 || stage == 4)) {
+          visualJournals.remove(app)!.dispose();
+          visualJournals[app] = JournalProvider(
+            repository: _ReviewJournalRepository(app.api),
+          );
+          await visualJournals[app]!.loadEntries();
+        }
         if (page is ParcoursPage) {
           await app.parcours.load();
           if (stage == 1) await app.parcours.choose(app.parcours.catalog.first);
@@ -134,6 +183,14 @@ void main() {
       MeditationController? controller;
       try {
         var content = page;
+        if (page is JournalPage && stage == 5) {
+          content = Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: false),
+              child: page,
+            ),
+          );
+        }
         if (name.startsWith('23-') || name.startsWith('24-')) {
           controller = MeditationController()
             ..setExercise(
@@ -182,6 +239,24 @@ void main() {
         if (page is DashboardPage && stage == 2) {
           await tapText(tester, ['Apparence', 'Tenue']);
         }
+        if (page is JournalPage && stage == 4) {
+          await tapText(tester, ['Écrire']);
+        }
+        if (page is JournalPage && stage == 5) {
+          await capture(tester, boundaryKey, 'motion-000');
+          await tester.tap(find.text('Écrire'));
+          for (var frame = 0; frame < 81; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+            if (frame % 5 == 0 || frame == 80) {
+              final elapsed = (frame + 1) * 16;
+              await capture(
+                tester,
+                boundaryKey,
+                'motion-${elapsed.toString().padLeft(4, '0')}',
+              );
+            }
+          }
+        }
         if (page is JournalPage && stage == 2) {
           await tapText(tester, ['Écrire librement']);
         }
@@ -217,18 +292,7 @@ void main() {
         }
         if (page is ParcoursPage) expect(app.parcours.isLoading, isFalse);
         expect(tester.takeException(), isNull, reason: name);
-        final boundary =
-            boundaryKey.currentContext!.findRenderObject()!
-                as RenderRepaintBoundary;
-        await tester.runAsync(() async {
-          final rendered = await boundary.toImage(pixelRatio: 2);
-          final bytes = await rendered.toByteData(
-            format: ui.ImageByteFormat.png,
-          );
-          rendered.dispose();
-          File('$output/$name.png')
-              .writeAsBytesSync(bytes!.buffer.asUint8List());
-        });
+        await capture(tester, boundaryKey, name);
       } finally {
         semantics.dispose();
         await tester.pumpWidget(const SizedBox.shrink());

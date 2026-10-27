@@ -45,7 +45,7 @@ Global providers cover theme, authentication, journal, chat, gamification,
 profile/settings, mascot, dashboard, and journeys.
 
 `AppRouter` uses `StatefulShellRoute.indexedStack` for six branches: Home,
-Challenges, Journal, Meditation, Programs, and Chat. Guards handle authentication
+Challenges, Journal, Meditation, Coach, and Chat. Guards handle authentication
 and profile completion. Tab state persists; the mascot stops animating offscreen
 and releases its viewer after 15 seconds.
 

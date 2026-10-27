@@ -30,7 +30,7 @@ InputDecoration _bare(String hint, TextStyle hintStyle) => InputDecoration(
   contentPadding: EdgeInsets.zero,
 );
 
-/// The only Journal editor: the Journal, the Accueil and the Coach open it
+/// Shared editor: Journal embeds it in its composer; Home and Coach open it
 /// with [showJournalEditor]. It autosaves, keeps an encrypted draft per
 /// account and creates each entry once.
 class JournalEditorSheet extends StatefulWidget {
@@ -41,12 +41,16 @@ class JournalEditorSheet extends StatefulWidget {
   final String? initialPrompt;
   final MoodType? initialMood;
 
+  /// Embeds the shared editor in its source card without pushing a route.
+  final VoidCallback? onClose;
+
   const JournalEditorSheet({
     super.key,
     required this.provider,
     this.entry,
     this.initialPrompt,
     this.initialMood,
+    this.onClose,
   });
 
   @override
@@ -74,6 +78,19 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   late final String? _draftOwner;
   bool get _sameAccount => widget.provider.owner == _draftOwner;
   bool get _isNew => widget.entry == null;
+  bool get _inline => widget.onClose != null;
+  Color _ink(bool dark) =>
+      _inline ? AppColors.journalQuestionInk(dark) : context.textPrimary;
+  Color _mutedInk(bool dark) =>
+      _inline ? AppColors.journalPlaceholder(dark) : context.textTertiary;
+
+  void _leave() {
+    if (widget.onClose case final close?) {
+      close();
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
 
   Future<void> _persistDraft() async {
     if (!_sameAccount) return;
@@ -297,20 +314,19 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
 
   Future<void> _close() async {
     ElyriiHaptics.light();
-    if (await _confirmClose() && mounted) Navigator.of(context).pop();
+    if (await _confirmClose() && mounted) _leave();
   }
 
   Future<void> _done() async {
     ElyriiHaptics.light();
     if (_contentController.text.trim().isEmpty) {
-      Navigator.of(context).pop();
+      _leave();
       return;
     }
     await _autoSave();
     // A save already in flight leaves the newest words for one more pass.
     if (mounted && _hasChanges && !_saveFailed) await _autoSave();
     if (!mounted || _hasChanges) return;
-    final navigator = Navigator.of(context);
     if (_createdEntryId != null || widget.entry != null) {
       showJournalToast(
         context,
@@ -319,7 +335,7 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             : 'Tes changements sont enregistrés.',
       );
     }
-    navigator.pop();
+    _leave();
   }
 
   Future<void> _pickMood() async {
@@ -342,6 +358,53 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       (widget.entry?.createdAt ?? DateTime.now()).toLocal(),
       'EEEE d MMMM',
     );
+    if (_inline) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) unawaited(_close());
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            spacing: AppDimensions.spacing16,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${date[0].toUpperCase()}${date.substring(1)}',
+                      style: AppTextStyles.editorDate(color: _ink(dark)),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Réduire la note',
+                    onPressed: _close,
+                    style: IconButton.styleFrom(
+                      foregroundColor: _ink(dark),
+                      backgroundColor: AppColors.journalTool(dark),
+                    ),
+                    icon: const Icon(Symbols.expand_less_rounded),
+                  ),
+                ],
+              ),
+              if (_isNew) _promptChip(dark),
+              _page(dark),
+              _toolbar(dark),
+              _status(dark),
+              JournalButton(
+                label: 'Enregistrer',
+                background: AppColors.journalQuestionInk(dark),
+                foreground: AppColors.journalPaper(dark),
+                onPressed: _isSaving ? null : _done,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -448,7 +511,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   );
 
   Widget _promptChip(bool dark) => Material(
-    color: AppColors.journalPrompt(dark),
+    color: _inline
+        ? AppColors.journalTool(dark)
+        : AppColors.journalPrompt(dark),
     borderRadius: BorderRadius.circular(AppDimensions.radius14),
     child: InkWell(
       onTap: _pickPrompt,
@@ -465,13 +530,13 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             Icon(
               Symbols.lightbulb_rounded,
               size: AppDimensions.iconSm,
-              color: AppColors.journalAccent(dark),
+              color: _inline ? _ink(dark) : AppColors.journalAccent(dark),
             ),
             Expanded(
               child: Text(
                 _prompt ?? journalFreePrompt,
                 style: AppTextStyles.promptChip(
-                  color: AppColors.journalAccent(dark),
+                  color: _inline ? _ink(dark) : AppColors.journalAccent(dark),
                 ),
               ),
             ),
@@ -482,57 +547,62 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
   );
 
   Widget _page(bool dark) {
-    final hint = context.textTertiary;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: AppDimensions.spacing16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Semantics(
-            label: 'Titre optionnel',
+    final hint = _mutedInk(dark);
+    final page = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          label: 'Titre optionnel',
+          child: TextField(
+            controller: _titleController,
+            textCapitalization: TextCapitalization.sentences,
+            style: AppTextStyles.titleLarge(color: _ink(dark)),
+            cursorColor: _inline ? _ink(dark) : AppColors.primaryText(dark),
+            decoration: _bare(
+              'Titre (optionnel)',
+              AppTextStyles.bodyLarge(color: hint),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimensions.spacing20),
+        ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppDimensions.journalBodyMinHeight,
+          ),
+          child: Semantics(
+            label: 'Ta note',
             child: TextField(
-              controller: _titleController,
+              controller: _contentController,
+              autofocus: _isNew,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
               textCapitalization: TextCapitalization.sentences,
-              style: AppTextStyles.titleLarge(color: context.textPrimary),
-              cursorColor: AppColors.primaryText(dark),
+              style: AppTextStyles.writingBody(color: _ink(dark)),
+              cursorColor: _inline ? _ink(dark) : AppColors.primaryText(dark),
               decoration: _bare(
-                'Titre (optionnel)',
-                AppTextStyles.bodyLarge(color: hint),
+                'Écris ici…',
+                AppTextStyles.writingBody(color: hint),
               ),
             ),
           ),
-          const SizedBox(height: AppDimensions.spacing20),
-          ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: AppDimensions.journalBodyMinHeight,
-            ),
-            child: Semantics(
-              label: 'Ta note',
-              child: TextField(
-                controller: _contentController,
-                autofocus: _isNew,
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                textCapitalization: TextCapitalization.sentences,
-                style: AppTextStyles.writingBody(color: context.textPrimary),
-                cursorColor: AppColors.primaryText(dark),
-                decoration: _bare(
-                  'Écris ici…',
-                  AppTextStyles.writingBody(color: hint),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+    return _inline
+        ? page
+        : SingleChildScrollView(
+            padding: const EdgeInsets.only(top: AppDimensions.spacing16),
+            child: page,
+          );
   }
 
   Widget _toolbar(bool dark) {
     final mood = _mood;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: dark
+        color: _inline
+            ? AppColors.journalTool(dark)
+            : dark
             ? AppColors.glassBackgroundDark
             : AppColors.glassBackgroundLight,
         borderRadius: BorderRadius.circular(AppDimensions.radius24),
@@ -546,7 +616,11 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
           horizontal: AppDimensions.spacing8,
           vertical: AppDimensions.spacing4,
         ),
-        child: Row(
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppDimensions.spacing12,
+          runSpacing: AppDimensions.spacing8,
           children: [
             ActionChip(
               onPressed: _pickMood,
@@ -564,18 +638,16 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
               side: BorderSide.none,
               shape: const StadiumBorder(),
             ),
-            const Spacer(),
             ValueListenableBuilder(
               valueListenable: _contentController,
               builder: (context, value, _) {
                 final words = journalWordCount(value.text);
                 return Text(
                   '$words ${words == 1 ? 'mot' : 'mots'}',
-                  style: AppTextStyles.labelSmall(color: context.textTertiary),
+                  style: AppTextStyles.labelSmall(color: _mutedInk(dark)),
                 );
               },
             ),
-            const SizedBox(width: AppDimensions.spacing8),
           ],
         ),
       ),
@@ -607,14 +679,19 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
             Icon(
               Symbols.check_circle_rounded,
               size: AppDimensions.spacing16,
-              color: context.textTertiary,
+              color: _mutedInk(dark),
             ),
-          Text(
-            text,
-            style: AppTextStyles.labelSmall(
-              color: _saveFailed
-                  ? AppColors.errorText(dark)
-                  : context.textTertiary,
+          Flexible(
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: AppTextStyles.labelSmall(
+                color: _inline
+                    ? _mutedInk(dark)
+                    : _saveFailed
+                    ? AppColors.errorText(dark)
+                    : context.textTertiary,
+              ),
             ),
           ),
         ],

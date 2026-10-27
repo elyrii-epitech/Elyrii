@@ -46,8 +46,7 @@ Chat exposes emergency resources independently of local distress detection.
 This heuristic does not replace professional assessment. Meditation sessions
 use written instructions and have no recorded audio track.
 
-Programs replaces Coach in navigation at `/parcours`; the French tab reads
-`Programmes`. Selecting a journey and
+Coach presents guided programs at `/parcours`. Selecting a program and
 completing a step are explicit actions. Replacing a journey requires confirmation;
 canceling preserves its position. Pausing creates no deadline or penalty.
 Progress stays local, including in the isolated demo session, and is included
@@ -69,7 +68,8 @@ Journal uses a plum color without halos or glass cards. Its title no longer
 shows a private badge; privacy information remains in each entry's menu. Search
 covers loaded entries and discloses that limit when more history pages exist.
 Text export loads history and includes local drafts. The same autosaving editor
-opens from Journal, Home, and journey steps. Dictation, photo, and keyword tools
+expands inside the plum composer on Journal, including first use. Home and
+program steps reuse the same editor in a sheet. Dictation, photo, and keyword tools
 are not offered without real services. Opening/closing the editor does not
 automatically complete a step.
 

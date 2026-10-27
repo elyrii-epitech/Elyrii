@@ -14,7 +14,7 @@ Keep practical safety information where it is relevant.
 | Mood scale | Très mal, Mal, Bof, Bien, Très bien | Keep the same five values across Home, onboarding, Journal, and session summaries. |
 | Daily actions | Activités du jour | Do not hide available actions because of a low mood. |
 | Challenge navigation | Défis | The monthly garden still represents completed challenges. |
-| Guided multi-step content | Programmes | Internal routes, types, and persistence keys still use journey/parcours identifiers. |
+| Guided multi-step section | Coach | Individual sequences remain programs; internal routes, types, and persistence keys still use journey/parcours identifiers. |
 | Journal item | Note | Use Enregistrer, Rechercher, Supprimer, Annuler, and Exporter consistently. |
 | Mascot customization | Apparence d’Elyrii | Includes colors, accessories, finishes, and scenery. |
 | Session durations in Review | Méditation | Minutes describe completed sessions, not a measured calm state. |
@@ -55,14 +55,21 @@ With the pinned SDK and locked dependencies installed, run from `elyrii_app`:
 flutter test tool/wording_review_test.dart --dart-define=WORDING_OUTPUT=build/wording-review
 ```
 
-This explicit review utility renders 27 real widget states at a logical size
+This explicit review utility renders 29 real widget states at a logical size
 of 390 × 844 and exports PNGs at twice that resolution. It uses the existing
 test adapters for native plugins and the 3D mascot poster. The screenshots cover
 arrival, registration, recovery, four onboarding steps, Home and its overlays,
-Challenges, Journal and its editor/data sheet, Meditation, Programs and a step,
+Challenges, Journal and its editor/data sheet, Meditation, Coach and a program step,
 Chat, Profile, avatars, Settings, account data, Review, a running session, and
 its summary. Each page is hosted independently, without the global navigation
-dock. They are review evidence, not device screenshots or validation of native
+dock. The Journal includes empty and populated states using the same plum composer.
+Tapping it expands the shared editor in place without pushing a route; autosave
+and account-scoped drafts keep the same persistence behavior. Optional
+`--dart-define=WORDING_CAPTURE_MOTION=true` records intermediate rendered frames
+of that expansion. Meditation close/pause controls stay in the standard safe-area
+header while the session content scrolls.
+
+They are review evidence, not device screenshots or validation of native
 plugins, screen readers, backend responses, or complete legal documents.
 
 Run the same utility against the parent revision for an equivalent before/after

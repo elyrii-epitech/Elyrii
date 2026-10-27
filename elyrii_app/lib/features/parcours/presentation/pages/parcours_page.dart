@@ -84,7 +84,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
                   child: Stack(
                     children: [
                       const SectionSkyHeader(
-                        title: 'Programmes',
+                        title: 'Coach',
                         scene: SectionSkyScene.arches,
                       ),
                       Padding(
@@ -145,7 +145,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
                 ),
                 SectionSkyBar(
                   scroll: _scroll,
-                  title: 'Programmes',
+                  title: 'Coach',
                   trailing: const SizedBox.shrink(),
                 ),
               ],

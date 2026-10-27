@@ -36,7 +36,7 @@ class AppShell extends StatelessWidget {
     GlassNavItem(icon: Symbols.yard_rounded, label: 'Défis', index: 1),
     GlassNavItem(icon: Symbols.book_2_rounded, label: 'Journal', index: 2),
     GlassNavItem(icon: Symbols.spa_rounded, label: 'Méditer', index: 3),
-    GlassNavItem(icon: Icons.route_rounded, label: 'Programmes', index: 4),
+    GlassNavItem(icon: Icons.route_rounded, label: 'Coach', index: 4),
   ];
 
   void _onTabSelected(int index) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:elyrii_app/core/network/api_client.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
 import 'package:elyrii_app/core/storage/content_cipher.dart';
@@ -12,6 +14,7 @@ import 'package:elyrii_app/features/journal/presentation/pages/journal_page.dart
 import 'package:elyrii_app/features/journal/presentation/providers/journal_provider.dart';
 import 'package:elyrii_app/features/journal/presentation/widgets/journal_editor_sheet.dart';
 import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
+import 'package:elyrii_app/core/widgets/mascot_with_accessories.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -36,6 +39,9 @@ JournalEntryModel _entry(
 
 class _Repository extends JournalRepository {
   final List<JournalEntryModel> items;
+  bool failCreation = false;
+  Completer<void>? creationGate;
+  final createdContents = <String?>[];
   _Repository(this.items)
     : super(client: ApiClient(storage: SecureStorageService()));
 
@@ -48,19 +54,55 @@ class _Repository extends JournalRepository {
   Future<List<JournalEntryModel>> getCachedEntries({String? owner}) async =>
       const [];
   @override
+  Future<JournalEntryModel> createEntry({
+    required String title,
+    String? content,
+    String? mood,
+    List<String>? tags,
+    String? clientRequestId,
+  }) async {
+    createdContents.add(content);
+    await creationGate?.future;
+    if (failCreation) throw StateError('Offline');
+    final entry = _entry(
+      'created',
+      title,
+      content ?? '',
+      DateTime.now(),
+      mood: mood,
+    );
+    items.add(entry);
+    return entry;
+  }
+
+  @override
   Future<void> deleteEntry(String id) async =>
       items.removeWhere((entry) => entry.id == id);
 }
 
+class _Routes extends NavigatorObserver {
+  int pushes = 0;
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    pushes++;
+  }
+}
+
 Future<AccueilActivities> _mount(
   WidgetTester tester,
-  List<JournalEntryModel> entries,
-) async {
+  List<JournalEntryModel> entries, {
+  _Repository? repository,
+  NavigatorObserver? observer,
+  double scale = 1,
+  bool reduced = false,
+}) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final client = ApiClient(storage: SecureStorageService());
-  final journal = JournalProvider(repository: _Repository(entries));
+  final journal = JournalProvider(
+    repository: repository ?? _Repository(entries),
+  );
   final activities = AccueilActivities(
     cipher: ContentCipher(SecureStorageService()),
   )..onUserChanged(userId: 'alice');
@@ -75,7 +117,18 @@ Future<AccueilActivities> _mount(
         ),
         ChangeNotifierProvider(create: (_) => MascotProvider(client: client)),
       ],
-      child: MaterialApp(theme: AppTheme.darkTheme, home: const JournalPage()),
+      child: MaterialApp(
+        theme: AppTheme.darkTheme,
+        navigatorObservers: [?observer],
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            textScaler: TextScaler.linear(scale),
+            disableAnimations: reduced,
+          ),
+          child: child!,
+        ),
+        home: const JournalPage(),
+      ),
     ),
   );
   await tester.pump();
@@ -203,18 +256,120 @@ void main() {
     expect(activities.snapshot.journalQuestion?.day, today);
   });
 
-  testWidgets('the first day offers prompts and free writing', (tester) async {
-    await _mount(tester, []);
-
-    expect(find.text('Ton journal commence ici'), findsOneWidget);
-    await tester.tap(find.text('Écrire librement'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-
+  testWidgets('the same purple card expands in place for the first note', (
+    tester,
+  ) async {
+    final observer = _Routes();
+    await _mount(tester, [], observer: observer);
+    final card = find.byKey(const Key('journal-composer-card'));
+    final collapsed = tester.getSize(card).height;
+    final originalCard = tester.element(card);
+    expect(find.byType(MascotWithAccessories), findsNothing);
+    expect(find.text('Pour commencer'), findsOneWidget);
+    final routes = observer.pushes;
+    await tester.tap(find.text('Écrire'));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(card).height, greaterThan(collapsed));
+    expect(tester.element(card), same(originalCard));
+    expect(observer.pushes, routes);
     expect(find.byType(JournalEditorSheet), findsOneWidget);
-    expect(find.text(journalFreePrompt), findsOneWidget);
     expect(find.text('0 mots'), findsOneWidget);
+    await tester.tap(find.byTooltip('Réduire la note'));
+    await tester.pumpAndSettle();
+    expect(find.byType(JournalEditorSheet), findsNothing);
+    expect(tester.getSize(card).height, collapsed);
+    expect(observer.pushes, routes);
   });
+
+  testWidgets(
+    'the first autosave keeps the editor and later words in the same card',
+    (tester) async {
+      final repository = _Repository([])..creationGate = Completer<void>();
+      await _mount(tester, [], repository: repository);
+      await tester.tap(find.text('Écrire'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Ma première note');
+      await tester.pump(const Duration(seconds: 2));
+      final editor = tester.state(find.byType(JournalEditorSheet));
+      repository.creationGate!.complete();
+      await tester.pump();
+      expect(tester.state(find.byType(JournalEditorSheet)), same(editor));
+      expect(find.text('Ma première note'), findsWidgets);
+      expect(repository.createdContents, ['Ma première note']);
+      await tester.ensureVisible(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+      expect(find.byType(JournalEditorSheet), findsNothing);
+      expect(find.text('Ma première note'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
+
+  testWidgets(
+    'a failed first save keeps the expanded note available for retry',
+    (tester) async {
+      final repository = _Repository([])..failCreation = true;
+      await _mount(tester, [], repository: repository);
+      await tester.tap(find.text('Écrire'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'À conserver');
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+      expect(find.byType(JournalEditorSheet), findsOneWidget);
+      expect(find.text('À conserver'), findsOneWidget);
+      expect(find.text('Enregistrement impossible. Réessaie.'), findsOneWidget);
+      repository.failCreation = false;
+      await tester.ensureVisible(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+      expect(find.byType(JournalEditorSheet), findsNothing);
+      expect(find.text('À conserver'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 3));
+    },
+  );
+
+  testWidgets(
+    'inline writing remains scrollable with large text and the keyboard',
+    (tester) async {
+      await _mount(tester, [], scale: 3);
+      tester.view.physicalSize = const Size(320, 568);
+      await tester.pumpAndSettle();
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Écrire')),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Écrire'));
+      await tester.pumpAndSettle();
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, 'Texte agrandi');
+      await tester.ensureVisible(find.text('Enregistrer'));
+      await tester.pumpAndSettle();
+      expect(find.text('Texte agrandi'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'reduced motion expands directly without a route or layout mutation',
+    (tester) async {
+      final observer = _Routes();
+      await _mount(tester, [], observer: observer, reduced: true);
+      final routes = observer.pushes;
+      await tester.tap(find.byKey(const Key('journal-composer-card')));
+      await tester.pumpAndSettle();
+      expect(find.byType(JournalEditorSheet), findsOneWidget);
+      expect(observer.pushes, routes);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byTooltip('Réduire la note'));
+      await tester.pumpAndSettle();
+      expect(find.byType(JournalEditorSheet), findsNothing);
+    },
+  );
 
   test('historical and current mood labels preserve their stored meaning', () {
     final aliases = <MoodType, List<String>>{
