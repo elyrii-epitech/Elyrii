@@ -2,7 +2,7 @@
 
 Issue #233 adds provenance and lifecycle storage for journal-derived context.
 [Journal inference/dispatch (#230)](journal-extraction.md) is separately opt-in;
-journal retrieval (#231) remains disabled. Conversation
+[Journal retrieval (#231)](journal-recall.md) is separately opt-in and defaults off. Conversation
 summaries and the existing v1 extraction wire contract remain chat-only.
 
 ## Provenance and events
@@ -58,7 +58,8 @@ journals with no derived rows yet. Cleanup preserves this exclusion. Corrections
 can remain active at the same revision after source exclusion; subsequent source
 edits invalidate their old provenance, while the correction's key barrier remains.
 Source-less/manual context keeps its existing behavior. Journal-derived records
-are explicitly filtered from retrieval until #231.
+are filtered from retrieval unless the separate journal recall flag is enabled;
+excluded sources remain withheld even when enabled (see [recall](journal-recall.md)).
 
 ## Deployment and rollback
 

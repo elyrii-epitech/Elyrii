@@ -78,7 +78,7 @@ Source edits/deletion, correction, exclusion and forgetting fence outstanding wo
 Journal proposals never replace an active fact or a suppressed key, including newer
 chat information and manual corrections. Unrelated memories are not guessed to be
 corrections. Eligible memories use the existing embedding trigger/worker and revision
-checks. Facts remain directly stored; journal recall remains gated until #231.
+checks. Facts remain directly stored; journal recall is separately gated by [the #231 recall flag](journal-recall.md).
 
 ## Rollout and backfill
 

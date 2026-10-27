@@ -13,6 +13,7 @@ This repository contains the Elyrii server with microservices architecture and a
 - [Database migrations](database.md)
 - [Journal context source foundation](journal-source-foundation.md)
 - [Journal extraction](journal-extraction.md)
+- [Journal recall](journal-recall.md)
 
 ### Generating Documentation
 

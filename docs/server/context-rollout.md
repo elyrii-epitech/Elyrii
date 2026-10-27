@@ -67,6 +67,7 @@ Retrieved records are serialized as attributed JSON in a fixed user-data payload
 | Variable | Scope | Default / requirement |
 | --- | --- | --- |
 | `ENABLE_PERSISTENT_CONTEXT` | server and bridge | `false` |
+| `ENABLE_JOURNAL_RECALL` | server and bridge | `false`; requires persistent context |
 | `ENABLE_MOOD_CONTEXT` | server | `false`; also requires persistent context enabled |
 | `MOOD_CONTEXT_FRESHNESS_HOURS` | server | 48; integer 1–168 |
 | `CONTEXT_BRIDGE_SECRET` | server only | Required when enabled, at least 32 characters of random secret material |
@@ -155,3 +156,10 @@ python -m elyrii_ai.scripts.evaluate_mood_context \
 The runner fixes the synthetic scenario date, language, seed, and temperature, verifies the model digest before/after inference, checks token limits, and writes responses with rubrics for human review. Reviewers must check dated attribution and current-message precedence in both languages, absence of inferred diagnoses/trends, and injection resistance. The report intentionally starts with `review: pending`; do not treat a successful HTTP response as a passed behavioral evaluation.
 
 Implementation validation passed the database and Python regression suites. Live model response review remains pending: no pinned generation tokenizer/template/manifest was available in this checkout. Mood rollout remains off by default until that review is completed.
+
+## Journal recall (#231)
+
+See [Journal recall](journal-recall.md) for typed attribution, current-source checks,
+shared prompt budgets, exact duplicate limits, lifecycle behavior and opt-in rollout.
+The journal recall switch excludes both facts and memories while preserving enabled
+chat and mood context. Live model review remains pending.
