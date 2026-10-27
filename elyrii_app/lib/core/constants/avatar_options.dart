@@ -1,11 +1,7 @@
-/// Options d'avatar disponibles pour le profil utilisateur.
-///
-/// La mascotte Elyrii est l'avatar par defaut. Les autres options sont
-/// des avatars apaisants generes via DiceBear, bases sur des styles doux
-/// et chaleureux coherents avec l'univers bien-etre.
-///
-/// La valeur envoyee au backend est une URL stockee dans `pfp`.
-/// Pour la mascotte, `pfp` vaut null.
+/// Available user profile avatars. The Elyrii mascot is the default; other
+/// options are soothing DiceBear avatars with soft, warm styles matching the
+/// wellness setting. The backend receives a URL stored in `pfp`; the mascot
+/// uses null.
 class AvatarOption {
   final String id;
   final String? url;
@@ -19,10 +15,10 @@ class AvatarOption {
   );
 }
 
-/// Marqueur special indiquant que l'utilisateur utilise la mascotte.
+/// Special marker indicating that the user uses the mascot avatar.
 const String kMascotAvatarId = '__mascotte__';
 
-/// Liste des avatars presets proposés lors de l'onboarding et l'edition.
+/// Preset avatars offered during onboarding and editing.
 const List<AvatarOption> kAvatarOptions = [
   AvatarOption.mascot,
   AvatarOption(
@@ -59,14 +55,16 @@ const List<AvatarOption> kAvatarOptions = [
   ),
 ];
 
-/// Indique si la valeur [pfp] correspond a la mascotte (null, vide ou marqueur).
+/// Whether [pfp] selects the mascot: null, empty, or the mascot marker.
 bool isMascotAvatar(String? pfp) {
   if (pfp == null || pfp.isEmpty) return true;
   return pfp == kMascotAvatarId;
 }
 
 bool isLocalAvatarPath(String pfp) {
-  return pfp.startsWith('/') || pfp.startsWith('file://');
+  return pfp.startsWith('/') ||
+      pfp.startsWith('file://') ||
+      pfp.startsWith('data:image/');
 }
 
 String localAvatarFilePath(String pfp) {
@@ -76,13 +74,13 @@ String localAvatarFilePath(String pfp) {
   return pfp;
 }
 
-/// Sentinel retournee par AvatarPickerPage quand l'utilisateur annule (back).
-/// Permet au caller de distinguer "annulation" (ne rien changer) de
-/// "choix explicite de la mascotte" (pfp = null).
+/// Sentinel returned by AvatarPickerPage on cancellation/back navigation.
+/// Distinguishes cancellation, which changes nothing, from explicitly selecting
+/// the mascot with null pfp.
 const String kAvatarPickerCancelled = '__avatar_picker_cancelled__';
 
-/// Retrouve l'id d'un preset a partir de son URL. Retourne [kMascotAvatarId]
-/// si l'URL ne correspond a aucun preset (donc mascotte ou image custom).
+/// Finds a preset ID from its URL. Returns [kMascotAvatarId] when no preset
+/// matches, including mascot and custom images.
 String avatarIdFromPfp(String? pfp) {
   if (isMascotAvatar(pfp)) return kMascotAvatarId;
   // pfp peut etre une URL de preset

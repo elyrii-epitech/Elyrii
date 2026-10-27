@@ -1,12 +1,13 @@
-import 'dart:io';
+import 'local_avatar_image.dart';
+
 import 'package:flutter/material.dart';
+
 import '../theme/app_colors.dart';
 import '../constants/avatar_options.dart';
+import '../theme/app_dimensions.dart';
 
-/// Widget d'avatar utilisateur reutilisable.
-///
-/// Affiche la mascotte Elyrii par defaut (si [pfp] est null, vide ou
-/// le marqueur mascotte), sinon affiche l'image (reseau ou fichier local).
+/// Reusable user avatar widget. Displays the Elyrii mascot when [pfp] is null,
+/// empty, or the mascot marker; otherwise displays a network or local image.
 class UserAvatar extends StatelessWidget {
   final String? pfp;
   final double size;
@@ -24,6 +25,7 @@ class UserAvatar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final useMascot = isMascotAvatar(pfp);
     final isLocalFile = pfp != null && isLocalAvatarPath(pfp!);
+    final decodeSize = (size * MediaQuery.devicePixelRatioOf(context)).ceil();
 
     return Container(
       width: size,
@@ -42,7 +44,7 @@ class UserAvatar extends StatelessWidget {
             : null,
       ),
       child: Padding(
-        padding: EdgeInsets.all(showBorder ? 2.0 : 0),
+        padding: EdgeInsets.all(showBorder ? AppDimensions.spacing2 : 0),
         child: Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -50,16 +52,21 @@ class UserAvatar extends StatelessWidget {
           ),
           child: ClipOval(
             child: useMascot
-                ? Image.asset('assets/mascotte.png', fit: BoxFit.cover)
-                : isLocalFile
-                ? Image.file(
-                    File(localAvatarFilePath(pfp!)),
+                ? Image.asset(
+                    'assets/splash_icon.png',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) =>
-                        Image.asset('assets/mascotte.png', fit: BoxFit.cover),
+                    cacheWidth: decodeSize,
+                    cacheHeight: decodeSize,
+                  )
+                : isLocalFile
+                ? LocalAvatarImage(
+                    path: localAvatarFilePath(pfp!),
+                    decodeSize: decodeSize,
                   )
                 : Image.network(
                     pfp!,
+                    cacheWidth: decodeSize,
+                    cacheHeight: decodeSize,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, progress) {
                       if (progress == null) return child;
@@ -78,7 +85,7 @@ class UserAvatar extends StatelessWidget {
                     },
                     errorBuilder: (context, error, stackTrace) {
                       return Image.asset(
-                        'assets/mascotte.png',
+                        'assets/splash_icon.png',
                         fit: BoxFit.cover,
                       );
                     },

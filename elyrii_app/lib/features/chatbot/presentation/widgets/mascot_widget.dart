@@ -1,59 +1,114 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../core/config/mascot_animations.dart';
+import '../providers/chatbot_provider.dart' show ChatbotProvider;
 import '../../../../core/config/mascot_themes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/config/mascot_3d_config.dart';
 import '../../../../core/widgets/mascot_with_accessories.dart';
 import '../../../mascot/presentation/providers/mascot_provider.dart';
 
-/// Widget d'affichage de la mascotte Elyrii dans le chatbot.
-///
-/// Gère la transition animée entre les modes réduit (bannière) et plein écran,
-/// avec un effet de pulsation visuelle.
 class MascotWidget extends StatefulWidget {
-  /// Indique si la mascotte doit être affichée en mode réduit.
   final bool isMinimized;
 
-  /// Hauteur de la mascotte en mode plein écran.
   final double lottieHeight;
 
-  /// Action déclenchée au clic sur la mascotte.
   final VoidCallback? onTap;
+
+  final bool isUserTyping;
+
+  final bool isCrisis;
 
   const MascotWidget({
     super.key,
     required this.isMinimized,
     this.lottieHeight = 150,
     this.onTap,
+    this.isUserTyping = false,
+    this.isCrisis = false,
   });
 
   @override
   State<MascotWidget> createState() => _MascotWidgetState();
 }
 
-class _MascotWidgetState extends State<MascotWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
+class _MascotWidgetState extends State<MascotWidget> {
+  ChatbotProvider? _chat;
+  String? _lastMessageId;
+  MascotAnimation _animation = MascotAnimations.idle;
+  int _trigger = 0;
+  bool _wasThinking = false;
+  bool _wasConnected = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final chat = context.read<ChatbotProvider>();
+    if (_chat == chat) return;
+    _chat?.removeListener(_onChatChanged);
+    _chat = chat;
+    _lastMessageId = chat.messages.lastOrNull?.id;
+    _wasThinking = chat.isTyping;
+    _wasConnected = chat.isConnected;
+    _animation = widget.isCrisis
+        ? MascotAnimations.reassure
+        : chat.isTyping
+        ? MascotAnimations.thinking
+        : widget.isUserTyping
+        ? MascotAnimations.attentive
+        : MascotAnimations.idle;
+    chat.addListener(_onChatChanged);
+  }
 
-    // Animation de pulsation lente pour donner de la vie au modèle 3D
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 4000),
-      vsync: this,
-    )..repeat(reverse: true);
+  @override
+  void didUpdateWidget(MascotWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isUserTyping != oldWidget.isUserTyping ||
+        widget.isCrisis != oldWidget.isCrisis) {
+      _onChatChanged();
+    }
+  }
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.06).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
-    );
+  void _onChatChanged() {
+    if (!mounted) return;
+    final chat = _chat!;
+    final last = chat.messages.lastOrNull;
+    final replyArrived =
+        last != null && !last.isUser && last.id != _lastMessageId;
+    final disconnected =
+        (_wasConnected || _wasThinking) && !chat.isConnected && !chat.isTyping;
+    _lastMessageId = last?.id;
+    _wasThinking = chat.isTyping;
+    _wasConnected = chat.isConnected;
+    final next = widget.isCrisis
+        ? MascotAnimations.reassure
+        : chat.isTyping
+        ? MascotAnimations.thinking
+        : disconnected
+        ? MascotAnimations.reassure
+        : widget.isUserTyping
+        ? MascotAnimations.attentive
+        : replyArrived
+        ? MascotAnimations.acknowledge
+        : _animation == MascotAnimations.thinking ||
+              _animation == MascotAnimations.attentive ||
+              _animation == MascotAnimations.reassure
+        ? MascotAnimations.idle
+        : _animation;
+    if (next != _animation || replyArrived) {
+      setState(() {
+        _animation = next;
+        _trigger++;
+      });
+    }
   }
 
   @override
   void dispose() {
-    _pulseController.dispose();
+    _chat?.removeListener(_onChatChanged);
     super.dispose();
   }
 
@@ -61,101 +116,123 @@ class _MascotWidgetState extends State<MascotWidget>
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final maxHeight = (screenHeight * 0.45).clamp(220.0, 350.0);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isBotThinking = context.select<ChatbotProvider, bool>(
+      (p) => p.isTyping,
+    );
+    final animation = _animation;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
       curve: Curves.easeInOutCubic,
       height: widget.isMinimized ? 80 : maxHeight,
-      child: AnimatedBuilder(
-        animation: _pulseAnimation,
-        builder: (context, child) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Transform.scale(
-            scale: widget.isMinimized ? 1.0 : _pulseAnimation.value,
-            child: widget.isMinimized
-                ? _buildMinimizedMascot(isDark)
-                : _buildFullMascot(maxHeight, isDark),
-          );
-        },
-      ),
+      child: widget.isMinimized
+          ? _buildDynamicIsland(isDark, animation, isBotThinking)
+          : _buildFullMascot(maxHeight, animation),
     );
   }
 
-  /// Construit la mascotte en mode réduit (bannière horizontale).
-  Widget _buildMinimizedMascot(bool isDark) {
-    const double visibleHeight = 80;
-
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary.withValues(alpha: 0.15),
-              (isDark ? AppColors.cardDark : AppColors.cardLight).withValues(
-                alpha: 0.95,
+  Widget _buildDynamicIsland(
+    bool isDark,
+    MascotAnimation animation,
+    bool isBotThinking,
+  ) {
+    return Center(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          height: 52,
+          padding: const EdgeInsets.only(
+            left: AppDimensions.spacing8,
+            right: AppDimensions.spacing12,
+          ),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.55)
+                : Colors.black.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.12),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            const SizedBox(
-              width: 100,
-              height: visibleHeight,
-              child: Center(
-                child: _ThemedMascot(
-                  key: ValueKey('mascot_3d_mini'),
-                  config: Mascot3DConfig.chatbotMinimized(),
-                  width: 80,
-                  height: 80,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 56,
+                height: 52,
+                child: Center(
+                  child: _ThemedMascot(
+                    key: const ValueKey('mascot_3d_mini'),
+                    config: const Mascot3DConfig.chatbotMinimized(),
+                    animation: animation,
+                    animationTrigger: _trigger,
+                    width: 56,
+                    height: 56,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: _buildMascotText(true, isDark)),
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Icon(
-                Icons.lock_outline_rounded,
-                size: 16,
-                color:
-                    (isDark
-                            ? AppColors.textTertiaryDark
-                            : AppColors.textTertiaryLight)
-                        .withValues(alpha: 0.6),
+              const SizedBox(width: AppDimensions.spacing8),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOut,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.25),
+                      end: Offset.zero,
+                    ).animate(anim),
+                    child: child,
+                  ),
+                ),
+                child: Text(
+                  isBotThinking ? 'Elyrii réfléchit…' : 'Elyrii t\'écoute…',
+                  key: ValueKey<bool>(isBotThinking),
+                  style: AppTextStyles.labelMedium(
+                    color: Colors.white.withValues(alpha: 0.92),
+                  ),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: AppDimensions.spacing8),
+              Icon(
+                Icons.keyboard_arrow_up_rounded,
+                size: 18,
+                color: Colors.white.withValues(alpha: 0.45),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /// Construit la mascotte en mode plein écran.
-  Widget _buildFullMascot(double maxHeight, bool isDark) {
+  /// Builds the full-screen mascot.
+  Widget _buildFullMascot(double maxHeight, MascotAnimation animation) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildMascotAvatar(widget.lottieHeight),
+        _buildMascotAvatar(widget.lottieHeight, animation),
         SizedBox(height: maxHeight * 0.04),
-        _buildMascotText(false, isDark),
+        _buildMascotText(),
       ],
     );
   }
 
-  /// Construit le viewer 3D de la mascotte pour le mode plein écran.
-  Widget _buildMascotAvatar(double size) {
+  /// Builds the full-screen mascot's 3D viewer.
+  Widget _buildMascotAvatar(double size, MascotAnimation animation) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       width: size,
@@ -165,6 +242,8 @@ class _MascotWidgetState extends State<MascotWidget>
         child: _ThemedMascot(
           key: const ValueKey('mascot_3d_full'),
           config: const Mascot3DConfig.chatbotFull(),
+          animation: animation,
+          animationTrigger: _trigger,
           width: size,
           height: size,
         ),
@@ -172,50 +251,34 @@ class _MascotWidgetState extends State<MascotWidget>
     );
   }
 
-  /// Construit les textes informatifs accompagnant la mascotte.
-  Widget _buildMascotText(bool isMinimized, bool isDark) {
+  /// Builds informational text accompanying the mascot.
+  Widget _buildMascotText() {
     return Column(
-      crossAxisAlignment: isMinimized
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          isMinimized ? 'Elyrii' : 'Discuter avec Elyrii',
-          textAlign: isMinimized ? TextAlign.left : TextAlign.center,
-          style: TextStyle(
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-            fontSize: isMinimized ? 15 : 26,
-            fontWeight: FontWeight.w600,
-            letterSpacing: isMinimized ? 0.3 : 0.5,
-          ),
+          'Discuter avec Elyrii',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.headlineSmall(color: context.textPrimary),
         ),
-        SizedBox(height: isMinimized ? 2 : 12),
+        const SizedBox(height: AppDimensions.spacing12),
         Text(
-          isMinimized
-              ? 'Je t\'écoute'
-              : 'Je suis là pour t\'écouter\nsans jugement',
-          textAlign: isMinimized ? TextAlign.left : TextAlign.center,
-          style: TextStyle(
-            color: isDark
-                ? AppColors.textSecondaryDark
-                : AppColors.textSecondaryLight,
-            fontSize: isMinimized ? 11 : 15,
-            fontWeight: FontWeight.w400,
-            height: 1.5,
-          ),
+          'De quoi veux-tu parler ?',
+          textAlign: TextAlign.center,
+          style: AppTextStyles.bodyLarge(color: context.textSecondary),
         ),
       ],
     );
   }
 }
 
-/// Wrapper qui applique automatiquement le thème courant de la mascotte
-/// **et** ses accessoires équipés, de façon cohérente avec les autres pages.
+/// Wrapper automatically applying the mascot's current theme and equipped
+/// accessories consistently with other pages.
 class _ThemedMascot extends StatelessWidget {
   final Mascot3DConfig config;
+  final MascotAnimation? animation;
+  final int animationTrigger;
   final double width;
   final double height;
 
@@ -224,6 +287,8 @@ class _ThemedMascot extends StatelessWidget {
     required this.config,
     required this.width,
     required this.height,
+    this.animation,
+    this.animationTrigger = 0,
   });
 
   @override
@@ -231,6 +296,12 @@ class _ThemedMascot extends StatelessWidget {
     // Conserve une dépendance au thème pour repeindre si l'utilisateur change
     // de personnalisation pendant la session chatbot.
     context.select<MascotProvider, MascotTheme>((p) => p.currentTheme);
-    return MascotWithAccessories(config: config, width: width, height: height);
+    return MascotWithAccessories(
+      config: config,
+      width: width,
+      height: height,
+      animation: animation,
+      animationTrigger: animationTrigger,
+    );
   }
 }

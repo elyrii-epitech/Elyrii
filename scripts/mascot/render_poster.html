@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Elyrii mascot poster generator</title>
+<style>
+html,body{margin:0;background:transparent}model-viewer{width:512px;height:512px;--poster-color:transparent}
+</style>
+<model-viewer id="mascot" src="/wardrobe.glb" loading="eager" reveal="manual" animation-name="idle" interaction-prompt="none"></model-viewer>
+<a id="download" hidden download="mascot_poster.png">Download mascot_poster.png</a>
+<script type="module">
+import '/model-viewer.min.js';
+import {applyAppearance} from '/material-script.js';
+window.posterReady = (async () => {
+  const m = document.querySelector('model-viewer');
+  if (!m.loaded) await new Promise((resolve, reject) => {
+    m.addEventListener('load', resolve, {once:true});
+    m.addEventListener('error', reject, {once:true});
+  });
+  await applyAppearance(m, {colors:{},finish:'velours'});
+  m.pause();
+  m.currentTime = 0;
+  m.jumpCameraToGoal();
+  m.dismissPoster();
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const blob = await m.toBlob({mimeType:'image/png',idealAspect:false});
+  const image = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 512;
+  const context = canvas.getContext('2d', {willReadFrequently:true});
+  context.drawImage(image, 0, 0, 512, 512);
+  image.close();
+  const pixels = context.getImageData(0, 0, 512, 512).data;
+  let opaque = 0, minX = 512, minY = 512, maxX = 0, maxY = 0;
+  for (let y = 0; y < 512; y++) for (let x = 0; x < 512; x++) {
+    if (pixels[(y*512+x)*4+3] < 32) continue;
+    opaque++;
+    minX = Math.min(minX, x); minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+  }
+  if (opaque < 10000 || opaque > 512*512*.8) throw new Error('Poster has no isolated mascot silhouette');
+  const download = document.querySelector('#download');
+  download.href = canvas.toDataURL('image/png');
+  download.hidden = false;
+  return {png:canvas.toDataURL('image/png'),bounds:{minX,minY,maxX,maxY},opaque,
+    orbit:m.getCameraOrbit(),target:m.getCameraTarget(),fieldOfView:m.getFieldOfView()};
+})();
+</script>
+</html>

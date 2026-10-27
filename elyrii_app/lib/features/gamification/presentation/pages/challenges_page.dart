@@ -1,16 +1,53 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../app/router/app_shell.dart';
+import '../../../../core/localization/app_dates.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/glass/liquid_glass_dialog.dart';
+import '../../../../core/widgets/app_sheet_route.dart';
+import '../../../../core/widgets/section_sky_header.dart';
+import '../../../dashboard/data/accueil_activities.dart';
+import '../../../dashboard/domain/accueil_content.dart';
+import '../../../dashboard/domain/civil_day.dart';
 import '../providers/gamification_provider.dart';
-import '../../../dashboard/presentation/providers/dashboard_provider.dart';
-import '../widgets/level_progress_header.dart';
-import '../widgets/daily_streak_card.dart';
-import '../widgets/quest_tile.dart';
-import '../widgets/challenge_card.dart';
-import '../widgets/ai_proposal_card.dart';
-import '../widgets/badges_grid.dart';
+import '../widgets/challenge_collection.dart';
+import '../widgets/monthly_garden.dart';
+
+const _extraRituals = [
+  AccueilRitualInfo(
+    ritual: AccueilRitual.reachOut,
+    title: 'Écrire à un proche',
+    pendingDetail: 'Lien · 2 min',
+    icon: Symbols.favorite_rounded,
+    color: AppColors.pink,
+  ),
+  AccueilRitualInfo(
+    ritual: AccueilRitual.water,
+    title: "Boire un verre d'eau",
+    pendingDetail: 'Corps · 1 min',
+    icon: Symbols.water_drop_rounded,
+    color: AppColors.teal,
+  ),
+  AccueilRitualInfo(
+    ritual: AccueilRitual.music,
+    title: 'Écouter une chanson calme',
+    pendingDetail: 'Respiration · 4 min',
+    icon: Symbols.music_note_rounded,
+    color: AppColors.violet,
+  ),
+];
+final _gardenRituals = List<AccueilRitualInfo>.unmodifiable([
+  ...accueilRituals,
+  ..._extraRituals,
+]);
+
+String _dayLabel(CivilDay day) =>
+    AppDates.format(DateTime(day.year, day.month, day.day), 'EEEE d MMMM yyyy');
 
 class ChallengesPage extends StatefulWidget {
   const ChallengesPage({super.key});
@@ -19,348 +56,401 @@ class ChallengesPage extends StatefulWidget {
   State<ChallengesPage> createState() => _ChallengesPageState();
 }
 
-class _ChallengesPageState extends State<ChallengesPage> {
-  String? _startingChallengeId;
-  String? _processingProposalId;
+class _ChallengesPageState extends State<ChallengesPage>
+    with WidgetsBindingObserver {
+  static const _collapsedCount = 3;
 
-  static const List<BadgeItem> _badges = [
-    BadgeItem(
-      id: '1',
-      title: 'Premier pas',
-      icon: Icons.directions_walk_rounded,
-      isUnlocked: true,
-    ),
-    BadgeItem(
-      id: '2',
-      title: 'Explorateur',
-      icon: Icons.explore_rounded,
-      isUnlocked: true,
-    ),
-    BadgeItem(
-      id: '3',
-      title: 'Pleine conscience',
-      icon: Icons.spa_rounded,
-      isUnlocked: false,
-    ),
-    BadgeItem(
-      id: '4',
-      title: 'Écoute active',
-      icon: Icons.hearing_rounded,
-      isUnlocked: false,
-    ),
-    BadgeItem(
-      id: '5',
-      title: 'Étoile du soir',
-      icon: Icons.nights_stay_rounded,
-      isUnlocked: false,
-    ),
-    BadgeItem(
-      id: '6',
-      title: 'Lumière du matin',
-      icon: Icons.wb_sunny_rounded,
-      isUnlocked: false,
-    ),
-  ];
+  final _scroll = ScrollController();
+  late CivilDay _today;
+  late CivilMonth _month;
+  Timer? _midnight;
+  bool _showAllCompleted = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _today = CivilDay.fromLocal(DateTime.now());
+    _month = _today.civilMonth;
+    _scheduleMidnight();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GamificationProvider>().loadAll();
+      if (mounted) unawaited(context.read<GamificationProvider>().loadAll());
     });
   }
 
-  Future<void> _handleStart(String challengeId) async {
-    setState(() => _startingChallengeId = challengeId);
-    await context.read<GamificationProvider>().startChallenge(challengeId);
-    if (mounted) setState(() => _startingChallengeId = null);
+  void _scheduleMidnight() {
+    _midnight?.cancel();
+    final now = DateTime.now();
+    _midnight = Timer(
+      DateTime(now.year, now.month, now.day + 1).difference(now),
+      _updateDay,
+    );
   }
 
-  Future<void> _handleAcceptProposal(String proposalId) async {
-    setState(() => _processingProposalId = proposalId);
-    await context.read<GamificationProvider>().acceptChallenge(proposalId);
-    if (mounted) setState(() => _processingProposalId = null);
+  void _updateDay() {
+    final next = CivilDay.fromLocal(DateTime.now());
+    if (next != _today) {
+      setState(() {
+        if (_month == _today.civilMonth) _month = next.civilMonth;
+        _today = next;
+      });
+    }
+    _scheduleMidnight();
   }
 
-  Future<void> _handleRejectProposal(String proposalId) async {
-    setState(() => _processingProposalId = proposalId);
-    await context.read<GamificationProvider>().rejectChallenge(proposalId);
-    if (mounted) setState(() => _processingProposalId = null);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _updateDay();
+    unawaited(context.read<GamificationProvider>().loadAll());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _midnight?.cancel();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() =>
+      context.read<GamificationProvider>().loadAll(force: true);
+
+  void _selectMonth(CivilMonth month) => setState(() {
+    _month = month;
+    _showAllCompleted = false;
+  });
+
+  void _openFlower(WeekFlower flower) {
+    Navigator.of(context, rootNavigator: true).push<void>(
+      AppSheetRoute<void>(
+        reduced: MediaQuery.disableAnimationsOf(context),
+        builder: (context) => AppSheetPanel(
+          title: flower.title,
+          child: Text(
+            'Terminé le ${_dayLabel(flower.day)}',
+            style: AppTextStyles.bodyMedium(color: context.textSecondary),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final provider = context.watch<GamificationProvider>();
-    final dashboardProvider = context.watch<DashboardProvider>();
-
-    final streakDays = dashboardProvider.currentStreak;
+    final snapshot = context.watch<AccueilActivities>().snapshot;
+    final garden = context.watch<GamificationProvider>();
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final bottom = AppShell.bottomClearanceOf(context);
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.scaffoldDark
-          : AppColors.scaffoldLight,
-      body: RefreshIndicator(
-        onRefresh: () => provider.loadAll(),
-        color: AppColors.primary,
-        child: provider.isLoading && provider.activeChallenges.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(
-                  parent: BouncingScrollPhysics(),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    MediaQuery.of(context).padding.top + 16,
-                    16,
-                    32,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildGardenHeader(isDark),
-                      const SizedBox(height: 20),
-                      LevelProgressHeader(
-                        level: 1 + provider.completedChallenges.length ~/ 3,
-                        currentXp: provider.completedChallenges.length * 50,
-                        maxXp: 150,
-                        title: 'Explorateur de l\'esprit',
+      backgroundColor: AppColors.sectionBody(dark),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppDimensions.maxContentWidth,
+          ),
+          child: Stack(
+            children: [
+              RefreshIndicator(
+                edgeOffset:
+                    MediaQuery.paddingOf(context).top +
+                    AppDimensions.controlSize,
+                onRefresh: _refresh,
+                child: CustomScrollView(
+                  controller: _scroll,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Stack(
+                        children: [
+                          const SectionSkyHeader(
+                            title: 'Défis',
+                            scene: SectionSkyScene.garden,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              top:
+                                  AppDimensions.sectionSkyHeight -
+                                  AppDimensions.sectionBodyOverlap,
+                            ),
+                            child: SectionSkyBody(
+                              bottomPadding: bottom + AppDimensions.spacing32,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                spacing: AppDimensions.spacing16,
+                                children: [
+                                  ChallengeCollection(provider: garden),
+                                  _recordedGestures(snapshot, dark),
+                                  const Divider(
+                                    height: AppDimensions.spacing32,
+                                  ),
+                                  _monthlyGarden(garden, snapshot, dark),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Icon(
+                                        Symbols.eco_rounded,
+                                        color: AppColors.green(dark),
+                                        size: AppDimensions.iconSm,
+                                      ),
+                                      const SizedBox(
+                                        width: AppDimensions.spacing8,
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          'Chaque défi terminé fait grandir ton jardin.',
+                                          style: AppTextStyles.bodySmall(
+                                            color: context.textSecondary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      DailyStreakCard(
-                        streakDays: streakDays,
-                        weekHistory: List.generate(7, (i) => i < streakDays),
-                      ),
-                      const SizedBox(height: 32),
-                      if (provider.proposals.isNotEmpty) ...[
-                        _sectionTitle(context, 'Propositions IA', isDark),
-                        const SizedBox(height: 12),
-                        ...provider.proposals.map(
-                          (proposal) => AiProposalCard(
-                            proposal: proposal,
-                            isProcessing: _processingProposalId == proposal.id,
-                            onAccept: () => _handleAcceptProposal(proposal.id),
-                            onReject: () => _handleRejectProposal(proposal.id),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                      if (provider.availableChallenges.isNotEmpty) ...[
-                        _sectionTitle(context, 'Défis disponibles', isDark),
-                        const SizedBox(height: 12),
-                        ...provider.availableChallenges.map(
-                          (challenge) => ChallengeAvailableCard(
-                            challenge: challenge,
-                            isStarting: _startingChallengeId == challenge.id,
-                            onStart: () => _handleStart(challenge.id),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                      _sectionTitle(context, 'En cours', isDark),
-                      const SizedBox(height: 12),
-                      if (provider.activeChallenges.isEmpty)
-                        _emptyState(
-                          context,
-                          isDark,
-                          'Aucun défi en cours\nCommence un défi ci-dessus !',
-                          Icons.flag_outlined,
-                        )
-                      else
-                        ...provider.activeChallenges.map(
-                          (uc) => QuestTile(
-                            title: uc.displayTitle,
-                            subtitle: _shortDescription(uc.displayDescription),
-                            icon: uc.displayIcon,
-                            xpReward: uc.template?.rewardPoints ?? 50,
-                            isCompleted: false,
-                            progressFraction: uc.progressFraction,
-                            progressText: uc.progressText,
-                          ),
-                        ),
-                      const SizedBox(height: 32),
-                      if (provider.completedChallenges.isNotEmpty) ...[
-                        _sectionTitle(context, 'Terminés', isDark),
-                        const SizedBox(height: 12),
-                        ...provider.completedChallenges.map(
-                          (uc) => QuestTile(
-                            title: uc.displayTitle,
-                            subtitle: _shortDescription(uc.displayDescription),
-                            icon: uc.displayIcon,
-                            xpReward: uc.template?.rewardPoints ?? 50,
-                            isCompleted: true,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                      ],
-                      _sectionTitle(context, 'Trophées & Badges', isDark),
-                      const SizedBox(height: 16),
-                      BadgesGrid(
-                        badges: _badges,
-                        onBadgeTap: (badge) =>
-                            _showBadgeDetails(context, badge),
-                      ),
-                      const SizedBox(height: 80),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+              SectionSkyBar(
+                scroll: _scroll,
+                title: 'Défis',
+                trailing: const SizedBox(width: AppDimensions.controlSize),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  String _shortDescription(String description) {
-    const maxLength = 40;
-    if (description.characters.length <= maxLength) return description;
-    return '${description.characters.take(maxLength)}…';
-  }
-
-  Widget _buildGardenHeader(bool isDark) {
-    final titleColor = isDark
-        ? AppColors.textPrimaryDark
-        : AppColors.textPrimaryLight;
-    final bodyColor = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-
+  Widget _monthlyGarden(
+    GamificationProvider garden,
+    AccueilActivitySnapshot snapshot,
+    bool dark,
+  ) {
+    if (!garden.hasLoadedData) {
+      return garden.error != null
+          ? Text(
+              'Tes fleurs apparaîtront dès que ton jardin sera synchronisé.',
+              style: AppTextStyles.bodyMedium(color: context.textSecondary),
+            )
+          : const Center(child: CircularProgressIndicator());
+    }
+    final completed = garden.completedChallenges;
+    final end = _month.lastDay.isAfter(_today) ? _today : _month.lastDay;
+    final flowers = buildGardenFlowers(
+      completedChallenges: completed,
+      activities: snapshot,
+      start: _month.firstDay,
+      end: end,
+    );
+    final undated = {
+      for (final challenge in completed)
+        if (challenge.completedAt == null) challenge.id,
+    }.length;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppDimensions.spacing16,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.accent.withValues(alpha: isDark ? 0.15 : 0.18),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: AppColors.accent.withValues(alpha: isDark ? 0.28 : 0.34),
-            ),
+        MonthlyGarden(
+          month: _month,
+          today: _today,
+          flowers: flowers,
+          onMonth: _selectMonth,
+          onFlower: _openFlower,
+        ),
+        _completedList(flowers, dark),
+        if (undated > 0)
+          Text(
+            undated == 1
+                ? "1 défi terminé n'a pas de date et ne peut pas être placé dans un mois."
+                : "$undated défis terminés n'ont pas de date et ne peuvent pas être placés dans un mois.",
+            style: AppTextStyles.bodySmall(color: context.textSecondary),
           ),
-          child: Text(
-            'Atelier de présence',
-            style: AppTextStyles.labelSmall(
-              color: isDark ? AppColors.accentDark : AppColors.successDark,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Text(
-          'Ton jardin intérieur',
-          style: AppTextStyles.headlineSmall(
-            color: titleColor,
-            fontWeight: FontWeight.w800,
-          ).copyWith(height: 1.08),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Cultive tes rituels, tes progrès doux et tes défis personnels.',
-          style: AppTextStyles.bodySmall(
-            color: bodyColor,
-          ).copyWith(height: 1.45),
-        ),
       ],
     );
   }
 
-  Widget _sectionTitle(BuildContext context, String title, bool isDark) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-      ),
-    );
-  }
-
-  Widget _emptyState(
-    BuildContext context,
-    bool isDark,
-    String message,
-    IconData icon,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Center(
-        child: Column(
+  Widget _completedList(List<WeekFlower> flowers, bool dark) {
+    if (flowers.isEmpty) {
+      return Material(
+        color: AppColors.gardenGroup(dark),
+        borderRadius: BorderRadius.circular(AppDimensions.radius16),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimensions.spacing16),
+          child: Text(
+            'Aucun défi terminé pendant ce mois.',
+            style: AppTextStyles.bodySmall(color: context.textSecondary),
+          ),
+        ),
+      );
+    }
+    final recent = flowers.reversed;
+    final visible = _showAllCompleted ? recent : recent.take(_collapsedCount);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: AppDimensions.spacing8,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppDimensions.spacing8,
           children: [
-            Icon(
-              icon,
-              size: 40,
-              color: isDark
-                  ? AppColors.textTertiaryDark
-                  : AppColors.textTertiaryLight,
-            ),
-            const SizedBox(height: 12),
             Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.textTertiaryDark
-                    : AppColors.textTertiaryLight,
-              ),
+              'Défis terminés',
+              style: AppTextStyles.titleSmall(color: context.textPrimary),
             ),
+            if (recent.length > _collapsedCount)
+              Semantics(
+                expanded: _showAllCompleted,
+                child: TextButton(
+                  onPressed: () =>
+                      setState(() => _showAllCompleted = !_showAllCompleted),
+                  child: Text(
+                    _showAllCompleted
+                        ? 'Réduire'
+                        : 'Voir tout (${recent.length})',
+                  ),
+                ),
+              ),
           ],
         ),
-      ),
+        for (final flower in visible)
+          Material(
+            color: AppColors.gardenGroup(dark),
+            borderRadius: BorderRadius.circular(AppDimensions.radius12),
+            child: ListTile(
+              dense: true,
+              leading: Icon(
+                Symbols.check_circle_rounded,
+                color: AppColors.green(dark),
+                size: AppDimensions.iconSm,
+              ),
+              title: Text(
+                flower.title,
+                style: AppTextStyles.titleSmall(color: context.textPrimary),
+              ),
+              subtitle: Text(
+                AppDates.format(
+                  DateTime(flower.day.year, flower.day.month, flower.day.day),
+                  'd MMMM yyyy',
+                ),
+                style: AppTextStyles.bodySmall(color: context.textSecondary),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
-  void _showBadgeDetails(BuildContext context, BadgeItem badge) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showLiquidGlassDialog(
-      context: context,
-      title: badge.title,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: badge.isUnlocked
-                  ? AppColors.primary.withValues(alpha: 0.15)
-                  : (isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.black.withValues(alpha: 0.03)),
-            ),
-            child: Icon(
-              badge.isUnlocked ? badge.icon : Icons.hourglass_empty_rounded,
-              size: 28,
-              color: badge.isUnlocked
-                  ? AppColors.primary
-                  : AppColors.textTertiaryLight,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            badge.isUnlocked
-                ? 'Tu as développé cette belle compétence.\nElle fait maintenant partie de toi.'
-                : 'Cette qualité grandit en toi,\npetit à petit, à ton rythme.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              height: 1.5,
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        LiquidGlassDialogAction(
-          label: 'Merci',
-          isDefault: true,
-          onPressed: () => Navigator.pop(context),
+  Widget _recordedGestures(AccueilActivitySnapshot snapshot, bool dark) {
+    final done =
+        snapshot.rituals[_today]?.completedAt ??
+        const <AccueilRitual, DateTime>{};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          "Aujourd'hui",
+          style: AppTextStyles.titleMedium(color: context.textPrimary),
         ),
+        const SizedBox(height: AppDimensions.spacing12),
+        if (snapshot.isLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (snapshot.error != null)
+          Column(
+            children: [
+              Text(
+                snapshot.error!,
+                style: AppTextStyles.bodyMedium(
+                  color: AppColors.errorText(dark),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.read<AccueilActivities>().reload(),
+                child: const Text('Réessayer'),
+              ),
+            ],
+          )
+        else
+          Material(
+            color: AppColors.gardenGroup(dark),
+            borderRadius: BorderRadius.circular(AppDimensions.radius20),
+            clipBehavior: Clip.antiAlias,
+            child: done.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.all(AppDimensions.spacing16),
+                    child: Text(
+                      "Aucune activité enregistrée sur cet appareil aujourd’hui.",
+                      style: AppTextStyles.bodyMedium(
+                        color: context.textSecondary,
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      for (final entry in done.entries)
+                        _RitualRow(
+                          info: _gardenRituals.firstWhere(
+                            (info) => info.ritual == entry.key,
+                          ),
+                          completedAt: entry.value,
+                          trailing: Icon(
+                            Symbols.check_rounded,
+                            color: AppColors.green(dark),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
       ],
+    );
+  }
+}
+
+class _RitualRow extends StatelessWidget {
+  final AccueilRitualInfo info;
+  final DateTime completedAt;
+  final Widget trailing;
+  const _RitualRow({
+    required this.info,
+    required this.completedAt,
+    required this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final color = info.color(dark);
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(AppDimensions.spacing4),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(AppDimensions.radius8),
+        ),
+        child: Icon(
+          info.icon,
+          color: AppColors.onTint(true),
+          size: AppDimensions.iconSm,
+        ),
+      ),
+      title: Text(
+        info.title,
+        style: AppTextStyles.titleSmall(color: context.textPrimary),
+      ),
+      subtitle: Text(
+        ritualDetail(info, completedAt),
+        style: AppTextStyles.bodySmall(color: context.textSecondary),
+      ),
+      trailing: trailing,
     );
   }
 }

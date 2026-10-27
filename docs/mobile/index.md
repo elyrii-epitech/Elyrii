@@ -1,90 +1,53 @@
-# Elyrii Mobile Documentation
+# Elyrii mobile app
 
-Technical documentation for the Flutter app located in `elyrii_app`.
+The Flutter frontend lives in `elyrii_app`. The supported release targets are
+**iOS and Android**. Flutter **3.47.4** is pinned in `.fvmrc`; Dart **3.13.3**
+and the dependencies are defined in `pubspec.yaml` and its lockfile.
 
-## Overview
-
-Elyrii mobile is a Flutter well-being companion app with:
-- authentication through the backend gateway;
-- mood and stats dashboard;
-- personal journal;
-- WebSocket chatbot with emergency resources;
-- garden/challenge-based gamification;
-- local coach;
-- breathing exercises;
-- customizable 3D mascot;
-- Liquid Glass design system.
-
-## Quick Information
-
-- **App version:** `1.0.0+1`
-- **Minimum Flutter:** `>= 3.38.4`
-- **Dart:** `>= 3.10.3 < 4.0.0`
-- **CI Flutter:** `3.38.4` stable
-- **Android:** `compileSdk 36`, `targetSdk 36`
-- **iOS:** deployment target `15.0`
-- **Default backend:** gateway port `3000`
-- **Backend override:** `--dart-define=BASE_URL=...`
-
-## Documentation Pages
-
-### [Architecture](architecture.md)
-
-Code structure, providers, navigation, backend flows, storage, and security.
-
-### [Features](features.md)
-
-Current features, with separation between backend-backed behavior, local data,
-and placeholders.
-
-### [Design System](design.md)
-
-Theme, colors, typography, Liquid Glass, 3D mascot, animations, and responsive
-layout.
-
-### [Dependencies](dependencies.md)
-
-Dependency list aligned with `pubspec.yaml`, versions, and usage rationale.
-
-### [Development](development.md)
-
-Installation, running the app, `BASE_URL` configuration, tests, builds, and best
-practices.
-
-### [CI/CD](ci-cd.md)
-
-Flutter GitHub Actions workflows, artifacts, and equivalent local commands.
-
-## Quick Start
+## Getting started
 
 ```bash
 cd elyrii_app
-flutter pub get
-flutter run
+flutter pub get --enforce-lockfile
+flutter run -d DEVICE_ID
 ```
 
-With a specific backend:
+In development, the gateway uses port 3001 (`10.0.2.2` on the Android emulator,
+`localhost` on the iOS simulator). For a physical phone, provide a reachable
+gateway with `--dart-define=ELYRII_API_URL=https://YOUR_GATEWAY`.
+
+## Documentation
+
+| Guide | Contents |
+| --- | --- |
+| [Development](development.md) | SDK, installation, environment, and native execution |
+| [Architecture](architecture.md) | Navigation, sessions, networking, and account-scoped storage |
+| [Features](features.md) | Supported flows and their data |
+| [UI wording](wording.md) | French vocabulary, tone, and review captures |
+| [Design system](design.md) | Theme, shared components, accessibility, and assets |
+| [Dependencies](dependencies.md) | Package responsibilities and reproducible inventory |
+| [CI/CD](ci-cd.md) | Checks, tests, builds, and artifacts |
+| [Release](release.md) | Migration, service configuration, and native validation |
+| [Accessibility](accessibility.md) | Automated tests and TalkBack/VoiceOver protocol |
+| [Meditation](meditation.md) | Catalog, durations, guidance, and API contract |
+| [Customization](mascot-accessories.md) | Wardrobe, progression, and asset rebuilding |
+| [Mascot motion](velours-motion.md) | Clips, transitions, and generation |
+
+## Local verification
+
+From the repository root, with the pinned SDK on `PATH`:
 
 ```bash
-flutter run --dart-define=BASE_URL=http://localhost:3000
+bash scripts/flutter_ci_check.sh
 ```
 
-Local verification:
+Native tests are described in the development guide.
 
-```bash
-cd elyrii_app
-dart format --set-exit-if-changed .
-flutter analyze
-flutter test
-```
+## Entry points
 
-## Important Files
-
-- `elyrii_app/lib/main.dart`
-- `elyrii_app/lib/core/config/app_config.dart`
-- `elyrii_app/lib/core/config/api_config.dart`
-- `elyrii_app/lib/core/network/api_client.dart`
-- `elyrii_app/lib/routes/home_navigation.dart`
-- `elyrii_app/pubspec.yaml`
-- `.github/workflows/flutter-build.yml`
-- `.github/workflows/flutter-check-and-docs.yml`
+- `elyrii_app/lib/main.dart`: application initialization.
+- `elyrii_app/lib/app/app_dependencies.dart`: services and session scope.
+- `elyrii_app/lib/app/router/app_router.dart`: routes and navigation.
+- `elyrii_app/lib/core/config/api_config.dart`: gateway configuration.
+- `elyrii_app/lib/core/network/api_client.dart`: shared REST transport.
+- `.github/workflows/flutter-check-and-docs.yml`: validation and API documentation.

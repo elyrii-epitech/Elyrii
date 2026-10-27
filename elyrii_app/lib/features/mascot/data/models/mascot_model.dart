@@ -1,61 +1,66 @@
 import 'package:flutter/foundation.dart';
 
-/// Modèle de données représentant l'état et la configuration de la mascotte.
-///
-/// Immutable pour s'aligner sur les architectures propres et permettre une
-/// gestion d'état prédictible.
+import 'mascot_appearance.dart';
+
+/// Immutable data model representing mascot state and configuration, supporting
+/// clean architecture and predictable state management.
 @immutable
 class MascotModel {
-  /// Chemin vers le modèle 3D de base (.glb)
+  /// Path to the base 3D model (.glb).
   final String baseModelPath;
 
-  /// Liste des identifiants de détails visuels sélectionnés.
+  /// IDs of selected visual details.
   final List<String> equippedCosmetics;
 
-  /// État actuel de l'animation (ex: 'idle', 'wave', 'jump')
+  /// Current animation state, such as 'idle', 'wave', or 'jump'.
   final String animationState;
 
-  /// Identifiant du thème visuel appliqué (ex: 'nature', 'halloween').
-  /// Voir [MascotThemes] pour le catalogue complet.
+  /// Applied visual theme ID, such as 'nature' or 'halloween'. See
+  /// [MascotThemes] for the full catalog.
   final String themeId;
 
-  const MascotModel({
+  final MascotAppearance appearance;
+
+  MascotModel({
     required this.baseModelPath,
-    this.equippedCosmetics = const [],
+    List<String> equippedCosmetics = const [],
     this.animationState = 'idle',
     this.themeId = 'nature',
-  });
+    this.appearance = MascotAppearance.defaults,
+  }) : equippedCosmetics = List.unmodifiable(equippedCosmetics);
 
-  /// Crée un modèle par défaut de la mascotte.
+  /// Creates the default mascot model.
   factory MascotModel.defaultMascot() {
-    return const MascotModel(
-      baseModelPath: 'assets/base_basic_shaded_v3.glb',
-      equippedCosmetics: [],
+    return MascotModel(
+      baseModelPath: 'assets/optimized/mascot.glb',
+      equippedCosmetics: const [],
       animationState: 'idle',
       themeId: 'nature',
     );
   }
 
-  /// Crée une copie de ce modèle avec des attributs modifiés.
+  /// Creates a copy with updated attributes.
   MascotModel copyWith({
     String? baseModelPath,
     List<String>? equippedCosmetics,
     String? animationState,
     String? themeId,
+    MascotAppearance? appearance,
   }) {
     return MascotModel(
       baseModelPath: baseModelPath ?? this.baseModelPath,
       equippedCosmetics: equippedCosmetics ?? this.equippedCosmetics,
       animationState: animationState ?? this.animationState,
       themeId: themeId ?? this.themeId,
+      appearance: appearance ?? this.appearance,
     );
   }
 
-  /// Désérialise depuis une map JSON.
+  /// Deserializes from a JSON map.
   factory MascotModel.fromJson(Map<String, dynamic> json) {
     return MascotModel(
       baseModelPath:
-          json['baseModelPath'] as String? ?? 'assets/base_basic_shaded_v3.glb',
+          json['baseModelPath'] as String? ?? 'assets/optimized/mascot.glb',
       equippedCosmetics:
           (json['equippedCosmetics'] as List<dynamic>?)
               ?.map((e) => e as String)
@@ -63,16 +68,20 @@ class MascotModel {
           const [],
       animationState: json['animationState'] as String? ?? 'idle',
       themeId: json['themeId'] as String? ?? 'nature',
+      appearance: MascotAppearance.fromJson(
+        Map<String, dynamic>.from(json['customization'] as Map? ?? const {}),
+      ),
     );
   }
 
-  /// Sérialise en map JSON.
+  /// Serializes to a JSON map.
   Map<String, dynamic> toJson() {
     return {
       'baseModelPath': baseModelPath,
       'equippedCosmetics': equippedCosmetics,
       'animationState': animationState,
       'themeId': themeId,
+      'customization': appearance.toJson(),
     };
   }
 
@@ -84,7 +93,8 @@ class MascotModel {
           baseModelPath == other.baseModelPath &&
           listEquals(equippedCosmetics, other.equippedCosmetics) &&
           animationState == other.animationState &&
-          themeId == other.themeId;
+          themeId == other.themeId &&
+          appearance == other.appearance;
 
   @override
   int get hashCode => Object.hash(
@@ -92,6 +102,7 @@ class MascotModel {
     Object.hashAll(equippedCosmetics),
     animationState,
     themeId,
+    appearance,
   );
 
   @override

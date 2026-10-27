@@ -1,391 +1,108 @@
-# Elyrii Mobile Features
-
-This page describes the features currently present in `elyrii_app/lib/features`.
-It separates backend-backed behavior, local behavior, and code that is still
-preparatory.
-
-## Authentication
-
-**Location:** `lib/features/auth/`
-
-### Screens
+# Mobile features
+
+Modules live in `elyrii_app/lib/features`. Private local data is account-scoped;
+demo mode uses an isolated session. UI labels remain French; this guide uses
+English descriptions.
+
+## Backend readiness
+
+The frontend PR does not implement the server contracts required for real
+accounts. The following remain blocking dependencies: correlated chat replies
+[#265](https://github.com/elyrii-epitech/Elyrii/issues/265), password recovery
+[#266](https://github.com/elyrii-epitech/Elyrii/issues/266), account export
+[#267](https://github.com/elyrii-epitech/Elyrii/issues/267), AI response reports
+[#268](https://github.com/elyrii-epitech/Elyrii/issues/268), and meditation catalog
+and duration support [#264](https://github.com/elyrii-epitech/Elyrii/issues/264).
+Journal pagination also requires a compatible server. Demo flows and local
+fixtures do not establish that these contracts work on `dev`.
+
+| Module | Flow | Data |
+| --- | --- | --- |
+| Authentication | Login, registration, password recovery, demo, logout | Authentication API; credentials in Keychain/Keystore |
+| Profile | Personal profile, identity, single goal, and avatar selection | User API; image copies in account-scoped private cache |
+| Dashboard and review | Mood, weekly/monthly/quarterly review, shortcuts | Server journal history; local moods; completed sessions for meditation minutes |
+| Journal | Daily feed, writing/editing, mood per entry, reading, deletion, local search, text export | API and SQLite with 100-entry pages; encrypted account-scoped drafts; selected daily question stored locally |
+| Chat | Conversations, correlated replies, retry, copy, report | Bearer WebSocket; encrypted SQLite history, 50-item pages |
+| Challenges | Challenges to complete, today's actions, monthly gardens, completed challenges | API challenges grouped by completion date; local actions shown read-only |
+| Programs | Explicit selection, ordered steps, pause/resume, secondary access to existing challenges | Local editorial catalog; encrypted account-scoped progress on this device, without a new API or cross-device sync |
+| Meditation | 12 domain practices, 1–1,439 minute durations, pause/resume, summary | Monotonic controller; API session synchronization requires #264 |
+| Mascot | Colors, finishes, 15 accessories across four zones, explicit save | Shared GLB scene; account-scoped preferences and progression |
+| Settings | Dark/light/system appearance, haptics, privacy, export, diagnostics, account deletion | Preferences, installed version, API, user-initiated native sharing |
+
+The arrival flow introduces Elyrii in the Arches scene, then offers login,
+registration, and account-free discovery. Discovery asks four short questions
+before opening Home. First name and the single goal use the existing profile.
+The first mood uses the same save operation as Home. The scene is stored
+locally per account after saving the outfit. Avatar selection remains in Profile.
+
+Registration requires acknowledgment of the available service/data information,
+consistent password rules, and the email verification message. This acknowledgment
+is not acceptance of unpublished legal documents. Password recovery requires a real server-issued code and
+a new password of 12–128 characters. Google and Apple buttons are hidden because
+the client does not implement those login methods. Legal links explain that
+the full texts are not published yet; publication is required before production.
+
+Chat exposes emergency resources independently of local distress detection.
+This heuristic does not replace professional assessment. Meditation sessions
+use written instructions and have no recorded audio track.
+
+Coach presents guided programs at `/parcours`. Selecting a program and
+completing a step are explicit actions. Replacing a journey requires confirmation;
+canceling preserves its position. Pausing creates no deadline or penalty.
+Progress stays local, including in the isolated demo session, and is included
+in data export and account purging. Active challenges, proposals to accept or
+reject, and available ideas appear first in Challenges and remain accessible from
+the challenge list in Programs. Catalogs expand without hiding the monthly
+garden. Only completed challenges produce flowers; journey steps do not.
+
+Challenges (`Défis`) shows challenges to complete, today's actions, then the monthly garden.
+Arrows browse past months without entering the future. Each completed challenge
+produces one flower according to its local completion date, without duplicates.
+Challenges without dates remain identified without being assigned to an arbitrary
+month. Dense gardens scroll horizontally. Tapping a flower opens its title and
+date; the completed challenge list expands below the landscape. Synchronization
+grows new flowers without moving existing ones. Today's local actions do not
+create flowers or complete challenges.
+
+Journal uses a plum color without halos or glass cards. Its title no longer
+shows a private badge; privacy information remains in each entry's menu. Search
+covers loaded entries and discloses that limit when more history pages exist.
+Text export loads history and includes local drafts. The same autosaving editor
+expands inside the plum composer on Journal, including first use. Home and
+program steps reuse the same editor in a sheet. Dictation, photo, and keyword tools
+are not offered without real services. Opening/closing the editor does not
+automatically complete a step.
+
+The Home avatar opens Profile with a slide from the left; reduced motion uses
+a fade. Profile reuses the selected mascot scene behind the avatar, first name,
+and arrival date. Top controls in Home, Profile, and Review share 48-point
+bubbles aligned below the system area. The rounded body groups profile,
+settings, review, and data, in that order. Statistics and outfits remain
+accessible from the Home capsule. Avatar selection saves immediately.
+The profile form retains its explicit save button and single wellness goal,
+chosen from six account values. Clearing name, age, gender, or goal does not
+clear it on the server under the current contract.
+
+Review displays only moods known on this device. Months and quarters are
+grouped into seven periods. Meditation minutes come from completed sessions, without
+converting session counts into durations. If the 100-session limit truncates
+the period, Review marks the minutes as partial and leaves earlier periods
+unknown. Points, percentages, and challenge rates are absent. The helpful
+activities card stays hidden without a sufficient association in the data.
+
+The data section explains local copies and offers export with explicit consent.
+Deletion requires the password and retains account-scoped local purging.
+The same factual service/data information is available before signup and in
+Settings. It explicitly identifies the unpublished terms and privacy policy.
+The former strict-privacy switch is hidden because no distinct enforcement
+behavior is defined; the stored/API preference is retained for compatibility.
+
+French is the only declared UI language. Push notifications are not offered. Automatic access-token renewal and email activation changes remain
+out of scope; a 401 for the current session closes it locally.
 
-- `LoginPage`
-- `RegisterPage`
+See [architecture](architecture.md) for session/persistence contracts,
+[meditation](meditation.md) and [customization](mascot-accessories.md) for their
+specifications, and [release](release.md) for remote-service requirements.
 
-### Features
-
-- Email/password login through `POST /auth/login`.
-- Account creation through `POST /auth/register`.
-- Client-side validation:
-  - email through `email_validator`;
-  - login password: at least 6 characters;
-  - registration password: at least 8 characters, one uppercase letter, and one
-    digit;
-  - password confirmation;
-  - terms acceptance.
-- JWT decoding to extract `userId` and `email`.
-- `access_token` and `user_id` storage through `SecureStorageService`.
-- Current profile fetch through `GET /user/me`.
-- Logout through `POST /auth/logout`, then local auth data cleanup.
-- Backend `emailVerificationRequired` handling.
-- Debug-only "Passer (Dev)" button visible in `kDebugMode`.
-
-### Notes
-
-The "Continue with Google" and "Continue with Apple" buttons are present in the
-UI, but they are not wired to an OAuth provider yet.
-
-## Dashboard
-
-**Location:** `lib/features/dashboard/`
-
-### Screen
-
-- `DashboardPage`
-
-### Features
-
-- Greeting based on current time.
-- Daily mood selection:
-  - `verySad`
-  - `sad`
-  - `neutral`
-  - `happy`
-  - `veryHappy`
-- Mood logging through `POST /user/mood`.
-- Latest mood fetch through `GET /user/mood/latest`.
-- User stats fetch through `GET /user/stats`:
-  - streak;
-  - active challenge count;
-  - journal entry count.
-- Local quote of the day.
-- Local daily goal:
-  - journal;
-  - meditation;
-  - breathing;
-  - gratitude.
-- Mood-aware mascot messages.
-- Visual shortcuts to primary actions.
-- Settings button from the dashboard.
-
-## Journal
-
-**Location:** `lib/features/journal/`
-
-### Screen
-
-- `JournalPage`
-
-### Features
-
-- Entry loading through `GET /journal`.
-- Creation through `POST /journal`.
-- Update through `PUT /journal/:id`.
-- Soft delete through `DELETE /journal/:id`.
-- Model fields:
-  - `id`
-  - `userId`
-  - `title`
-  - `content`
-  - `mood`
-  - `createdAt`
-  - `updatedAt`
-- Local newest/oldest sorting.
-- Liquid Glass bottom sheet for creating or editing an entry.
-- Empty state with writing prompts.
-- Animated list, with animation limited to the first items to reduce jank.
-
-### Notes
-
-The repository supports `startDate` and `endDate` filters, but the current UI
-does not expose them yet.
-
-## Chatbot
-
-**Location:** `lib/features/chatbot/`
-
-### Screen
-
-- `ChatbotPage`
-
-### Features
-
-- WebSocket connection to `ApiConfig.chatWsUrl(userId)`.
-- URL built from the gateway base URL:
-  `ws://.../chat/ws?userId=<userId>`.
-- User messages sent over WebSocket.
-- AI responses received and appended to local in-memory history.
-- Typing indicator while waiting for a response.
-- Reverse auto-scroll in the message list.
-- Conversation suggestions when history is empty.
-- Manual local history clearing.
-- 3D mascot in full-screen mode before focus, then minimized mode when the text
-  field is focused.
-- "Urgence" button with emergency resources.
-- Local French crisis keyword detection:
-  - suicide;
-  - suicidaire;
-  - mourir;
-  - finir ma vie;
-  - ne plus en pouvoir;
-  - automutilation;
-  - me faire du mal;
-  - mettre fin;
-  - sauter;
-  - avaler.
-- Help banners and dialogs showing:
-  - Fil Sante Jeunes: `0 800 235 236`;
-  - SOS Amitie: `09 72 39 40 50`;
-  - suicide prevention: `3114`;
-  - life-threatening emergency: `15` or `112`.
-
-### Notes
-
-Chat history is not persisted on mobile. `mock_responses.dart` still exists, but
-the provider now uses the real WebSocket.
-
-## Gamification / Jardin
-
-**Location:** `lib/features/gamification/`
-
-### Screen
-
-- `ChallengesPage`
-
-### Backend Features
-
-- Parallel loading of:
-  - available challenges: `GET /challenge/available`;
-  - active challenges: `GET /challenge/active`;
-  - completed challenges: `GET /challenge/completed`;
-  - AI proposals: `GET /challenge/proposals`.
-- Start a system challenge through `POST /challenge/available/:id/start`.
-- Accept an AI proposal through `POST /challenge/proposals/:id/accept`.
-- Reject an AI proposal through `POST /challenge/proposals/:id/reject`.
-- Progress computed from the backend `progress` field.
-- Status support for `ACTIVE`, `COMPLETED`, and `PENDING`.
-
-### UI Features
-
-- "Atelier de presence" / "Ton jardin interieur" header.
-- Local level derived from completed challenge count.
-- Local XP derived from completed challenge count.
-- Streak read from `DashboardProvider`.
-- Local badges:
-  - Premier pas;
-  - Explorateur;
-  - Pleine conscience;
-  - Ecoute active;
-  - Etoile du soir;
-  - Lumiere du matin.
-- Pull-to-refresh.
-- Liquid Glass dialog when tapping a badge.
-
-### Notes
-
-There is no leaderboard or reward shop in the current mobile code.
-
-## Coach
-
-**Location:** `lib/features/coach/`
-
-### Screen
-
-- `CoachPage`
-
-### Features
-
-- Advice of the day computed locally from the day of year.
-- Local recommended activities.
-- Local activity catalog by category:
-  - meditation;
-  - breathing;
-  - journaling;
-  - gratitude;
-  - movement;
-  - self-compassion.
-- Animated Liquid Glass cards.
-- Haptic feedback on cards.
-
-### Notes
-
-The coach does not call the backend yet. `CoachRepository` is a local data
-source.
-
-## Meditation / Breathing
-
-**Location:** `lib/features/meditation/`
-
-### Screen
-
-- `MeditationPage`
-
-### Features
-
-- Page focused on breathing exercises.
-- Available durations:
-  - 5 minutes;
-  - 10 minutes;
-  - 15 minutes.
-- Available exercises:
-  - 4-7-8 breathing: inhale 4s, hold 7s, exhale 8s;
-  - box breathing: inhale 4s, hold 4s, exhale 4s, hold 4s.
-- Per-second timer.
-- Session states:
-  - setup;
-  - running;
-  - paused;
-  - finished.
-- Animated breathing circle.
-- Pause, resume, and stop.
-- Post-session mood choice.
-- Lottie animation `assets/animations/breath.json`.
-
-### Notes
-
-`data/models/meditation_session_model.dart` and
-`data/repositories/meditation_repository.dart` are still placeholders. Sessions
-are not persisted yet.
-
-## 3D Mascot
-
-**Location:** `lib/features/mascot/` and `lib/core/widgets/mascot_3d_viewer.dart`
-
-### Screen
-
-- `MascotCustomizationPage`
-
-### Features
-
-- 3D viewer based on `flutter_3d_controller`.
-- PNG fallback `assets/mascotte.png` on error or widget tests.
-- Embedded `idle` animation in the GLB.
-- Context-specific configuration:
-  - auth page;
-  - full chatbot;
-  - minimized chatbot.
-- Theme customization with `ColorFilter.matrix`.
-- Available themes:
-  - Nature;
-  - Halloween;
-  - Panda;
-  - Noel;
-  - Cosmic;
-  - Ocean.
-- Theme persistence in `SharedPreferences`.
-- Current accessory:
-  - `custom1.glb`, displayed as a graduation hat.
-- Reset to `nature` theme and no accessory.
-
-### Main Assets
-
-- `assets/base_basic_shaded_v3.glb`
-- `assets/custom1.glb`
-- `assets/mascotte.png`
-- `assets/mascotte_eyes_closed.png`
-- `assets/animations/breath.json`
-- `assets/animations/Coucou.json`
-
-## Settings
-
-**Location:** `lib/features/settings/`
-
-### Screen
-
-- `SettingsPage`
-
-### UI Features
-
-- Appearance section:
-  - dark mode switch;
-  - persistence through `ThemeProvider`.
-- Notifications section:
-  - push notifications switch local to the page;
-  - haptic feedback switch local to the page.
-- Account section:
-  - information dialogs for profile, privacy, data, and storage.
-- About section:
-  - version `1.0.0 (Build 1)`;
-  - terms of use;
-  - privacy policy.
-- Logout with confirmation dialog.
-- Route to login with `pushNamedAndRemoveUntil`.
-
-### Data Features
-
-- `UserProvider` and `UserRepository` can load and update `/user/me`.
-- The profile editing form is not exposed in the UI yet.
-
-## Global Navigation
-
-The main navigation contains:
-- Home;
-- Jardin;
-- Journal;
-- Meditation;
-- Coach;
-- Chatbot through a separate bubble button.
-
-Declarative routes:
-
-```dart
-class AppRoutes {
-  static const String home = '/';
-  static const String dashboard = '/dashboard';
-  static const String challenges = '/challenges';
-  static const String journal = '/journal';
-  static const String coach = '/coach';
-  static const String meditation = '/meditation';
-  static const String chatbot = '/chatbot';
-  static const String mascotCustomization = '/mascot-customization';
-  static const String settings = '/settings';
-  static const String login = '/login';
-  static const String register = '/register';
-}
-```
-
-## Cross-Cutting Systems
-
-### Error Boundary
-
-`GlobalErrorBoundary` replaces Flutter's error screen with a cleaner recovery
-screen and adds a button to return home. Technical details are intended for
-debugging.
-
-### Liquid Glass
-
-Liquid Glass components cover:
-- cards;
-- buttons;
-- icon buttons;
-- list tiles;
-- switches;
-- sliders;
-- segmented controls;
-- dialogs;
-- sheets;
-- action sheets;
-- text fields;
-- toasts;
-- app bars.
-
-### Glass Performance
-
-`GlassPerformanceService` exposes:
-- `reduceEffects`;
-- `adaptiveBlurOnScroll`;
-- `showSpecularHighlight`;
-- `showTransitionAnimations`;
-- `showAdaptiveGradient`;
-- `getEffectiveBlurSigma`;
-- `getScrollAdaptedBlurSigma`.
-
-### Responsive
-
-`Responsive` defines these breakpoints:
-- compact: `< 360`;
-- phone: `< 600`;
-- foldable: `< 840`;
-- tablet: `< 1200`;
-- desktop: `>= 1200`.
+See [UI wording](wording.md) for the vocabulary, tone, compatibility rules, and
+reproducible page-by-page review captures.
