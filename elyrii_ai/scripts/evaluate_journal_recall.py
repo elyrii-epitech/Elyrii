@@ -13,16 +13,30 @@ from pathlib import Path
 import httpx
 from elyrii_ai.chat_context import NativePromptBudget, safe_sections, bounded_json, verify_generation_model
 from elyrii_ai.prompt.system_prompt import get_system_prompt
+from elyrii_ai.lora_runtime import load_bundle
+from elyrii_ai.lora_evaluation import verify_loaded_adapter, generate
 
 async def evaluate(args):
     budget = NativePromptBudget.load(args.tokenizer_dir, args.model)
     fixtures = json.loads((Path(__file__).parents[1] / 'test/fixtures/journal_recall_v1.json').read_text())
+    adapter = None
+    if args.backend == 'llama':
+        if not args.adapter_bundle:
+            raise ValueError('--backend llama requires --adapter-bundle')
+        adapter = load_bundle(args.adapter_bundle, args.allow_zero_adapter)
+    elif args.adapter_bundle or args.allow_zero_adapter:
+        raise ValueError('Adapter options require --backend llama')
+    async def verify(client):
+        if adapter:
+            await verify_loaded_adapter(client, args.adapter_bundle, adapter, budget)
+        else:
+            await verify_generation_model(client, budget)
     results = []
     previous = os.environ.get('ENABLE_JOURNAL_RECALL')
     os.environ['ENABLE_JOURNAL_RECALL'] = 'true'
     try:
-        async with httpx.AsyncClient(base_url=args.url, timeout=120) as client:
-            await verify_generation_model(client, budget)
+        async with httpx.AsyncClient(base_url=args.url, timeout=args.timeout) as client:
+            await verify(client)
             for case in fixtures:
                 now = datetime.fromisoformat(case['now'].replace('Z','+00:00'))
                 response = case['response']
@@ -31,23 +45,32 @@ async def evaluate(args):
                 body, counts = budget.compose(get_system_prompt(1) + '\nRespond in ' + case['language'] + '.', response['query'], sections, now)
                 body['options'].update({'temperature':0, 'seed':231})
                 started = time.monotonic()
-                output = await bounded_json(client, 'POST', '/api/generate', body, limit=200000)
+                if adapter:
+                    await verify(client)
+                output = (await generate(client, body, budget) if adapter else
+                          await bounded_json(client, 'POST', '/api/generate', body, limit=200000))
                 if output.get('done') is not True or not isinstance(output.get('response'),str): raise ValueError('Invalid generation')
                 if output.get('prompt_eval_count',counts['inputTokens']) + budget.response_tokens > budget.window: raise ValueError('Provider budget mismatch')
                 results.append({'case':case['id'],'response':output['response'],'rubric':case['rubric'],'review':'pending',
                     'counts':counts,'generationMs':(time.monotonic()-started)*1000,'providerInputTokens':output.get('prompt_eval_count'),
                     'providerOutputTokens':output.get('eval_count')})
-            await verify_generation_model(client, budget)
+            await verify(client)
     finally:
         if previous is None: os.environ.pop('ENABLE_JOURNAL_RECALL',None)
         else: os.environ['ENABLE_JOURNAL_RECALL'] = previous
+    if adapter and load_bundle(args.adapter_bundle, args.allow_zero_adapter) != adapter:
+        raise ValueError('Adapter bundle changed during evaluation')
     durations = sorted(r['generationMs'] for r in results)
     Path(args.output).write_text(json.dumps({'kind':'live generation with synthetic preselected journal context; review required',
-        'model':budget.model,'digest':budget.digest,'generationP50Ms':statistics.median(durations),
+        'model':budget.model,'digest':budget.digest,'backend':args.backend,'adapter':adapter,'generationP50Ms':statistics.median(durations),
         'generationP95Ms':durations[math.ceil(.95*len(durations))-1],'cases':results},ensure_ascii=False,indent=2)+'\n')
 
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--backend', choices=['ollama', 'llama'], default='ollama')
+    parser.add_argument('--adapter-bundle')
+    parser.add_argument('--allow-zero-adapter', action='store_true')
+    parser.add_argument('--timeout', type=float, default=600)
     parser.add_argument('--tokenizer-dir',required=True)
     parser.add_argument('--model',required=True)
     parser.add_argument('--url',default='http://localhost:11434')
