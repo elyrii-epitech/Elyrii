@@ -118,14 +118,20 @@ class AssistantOnlyDataCollator:
     train_on_inputs: bool = False
 
     def __post_init__(self) -> None:
-        self.response_template_ids = [
-            self.tokenizer.encode(marker, add_special_tokens=False)
-            for marker in ("[/INST]", " [/INST]", "[/INST] ", " [/INST] ")
-        ]
-        self.instruction_template_ids = [
-            self.tokenizer.encode(marker, add_special_tokens=False)
-            for marker in ("[INST]", " [INST]", "[INST] ", " [INST] ")
-        ]
+        # Encoding a standalone marker with SentencePiece can prepend whitespace
+        # tokens that are absent inside a conversation. Use the registered IDs.
+        self.response_template_ids = [self._marker_ids("[/INST]")]
+        self.instruction_template_ids = [self._marker_ids("[INST]")]
+
+    def _marker_ids(self, marker: str) -> List[int]:
+        token_id = self.tokenizer.convert_tokens_to_ids(marker)
+        if token_id is None or token_id == self.tokenizer.unk_token_id:
+            raise ValueError(f"Tokenizer does not define the Mistral marker {marker!r}.")
+        # Some saved LlamaTokenizer configurations omit these control tokens
+        # from all_special_ids even though they have dedicated vocabulary IDs.
+        if self.tokenizer.convert_ids_to_tokens(token_id) != marker:
+            raise ValueError(f"Mistral marker {marker!r} must have a dedicated vocabulary token.")
+        return [token_id]
 
     def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
         batch = self.tokenizer.pad(
@@ -139,14 +145,16 @@ class AssistantOnlyDataCollator:
 
         if self.train_on_inputs:
             labels[batch["attention_mask"] == 0] = self.label_pad_token_id
+            self._validate_labels(labels)
             batch["labels"] = labels
             return batch
 
         labels.fill_(self.label_pad_token_id)
 
         for row_idx, attention_mask in enumerate(batch["attention_mask"]):
-            seq_len = int(attention_mask.sum().item())
-            ids = input_ids[row_idx, :seq_len].tolist()
+            positions = attention_mask.nonzero(as_tuple=True)[0]
+            ids = input_ids[row_idx, positions].tolist()
+            seq_len = len(ids)
             search_from = 0
 
             while True:
@@ -163,14 +171,27 @@ class AssistantOnlyDataCollator:
                 response_end = next_instruction if next_instruction != -1 else seq_len
 
                 if response_start < response_end:
-                    labels[row_idx, response_start:response_end] = input_ids[
-                        row_idx, response_start:response_end
+                    response_positions = positions[response_start:response_end]
+                    labels[row_idx, response_positions] = input_ids[
+                        row_idx, response_positions
                     ]
 
                 search_from = response_end
 
+        self._validate_labels(labels)
         batch["labels"] = labels
         return batch
+
+    def _validate_labels(self, labels: torch.Tensor) -> None:
+        # Causal LM loss shifts labels by one; position zero is never a target.
+        invalid = (labels[:, 1:] != self.label_pad_token_id).sum(dim=1) == 0
+        if invalid.any():
+            rows = invalid.nonzero(as_tuple=True)[0].tolist()
+            raise ValueError(
+                f"Examples at batch rows {rows} have no supervised tokens after "
+                "causal shifting. Check assistant responses, truncation, and tokenizer "
+                "markers; training on these examples would produce invalid loss."
+            )
 
 
 def parse_args() -> argparse.Namespace:

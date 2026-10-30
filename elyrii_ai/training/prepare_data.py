@@ -25,8 +25,6 @@ import logging
 import json
 from typing import Dict, Any, List
 
-from pip._internal.resolution import legacy
-
 from datasets import load_dataset, concatenate_datasets
 from transformers import AutoTokenizer, LlamaTokenizer
 from elyrii_ai.prompt.system_prompt import get_system_prompt
@@ -220,6 +218,7 @@ def tokenize_function(
         truncation=True,
         max_length=MAX_LENGTH,
         padding=False,  # Dynamic padding in DataCollator is more efficient
+        add_special_tokens=False,  # The chat template already supplies BOS/EOS.
     )
 
 
