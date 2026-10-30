@@ -150,6 +150,8 @@ services:
     networks:
       - elyrii_net
 
+  # Legacy adapter import: requires an Ollama version with ADAPTER support.
+  # For current local evaluation use elyrii_ai/docs/lora-loading.md.
   ollama-init:
     image: ollama/ollama:latest
     container_name: elyrii-ollama-init
