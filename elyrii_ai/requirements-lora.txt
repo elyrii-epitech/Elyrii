@@ -1,0 +1,9 @@
+# Optional local conversion/evaluation tools; install CPU torch separately if desired.
+-r requirements-bridge.txt
+numpy>=1.26,<3
+safetensors>=0.4,<1
+gguf>=0.17,<1
+transformers==4.57.6
+sentencepiece>=0.2,<1
+protobuf>=5,<8
+torch>=2.6,<3
