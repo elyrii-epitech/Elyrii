@@ -53,3 +53,5 @@ CHANGELOG.md
 **/CLAUDE.md
 
 **/key.properties
+# Local LoRA tooling environment
+.venv-lora/
