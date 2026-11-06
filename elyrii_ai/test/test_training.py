@@ -23,7 +23,7 @@ from transformers import (
 )
 
 from elyrii_ai.training.prepare_data import tokenize_function
-from elyrii_ai.training.train import AssistantOnlyDataCollator, LORA_TARGET_PRESETS
+from elyrii_ai.training.train import AssistantOnlyDataCollator, LORA_TARGET_PRESETS, filter_supervised_examples
 
 
 class TrainingTests(unittest.TestCase):
@@ -103,6 +103,17 @@ class TrainingTests(unittest.TestCase):
     def test_missing_marker_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "no supervised tokens"):
             self.collator([{"input_ids": [1, 42, 2], "attention_mask": [1, 1, 1]}])
+
+    def test_preflight_with_saved_tokenized_rows(self):
+        prompt = self.feature([{"role": "user", "content": "Hello"}])
+        answer = self.conversation()
+        dataset = Dataset.from_list([prompt, answer])
+        filtered = filter_supervised_examples(dataset, self.collator, "train")
+        self.assertEqual(list(filtered), [answer])
+        with self.assertRaisesRegex(ValueError, "No usable examples in val"):
+            filter_supervised_examples(dataset.select([0]), self.collator, "val")
+        full_loss = AssistantOnlyDataCollator(self.tokenizer, train_on_inputs=True)
+        self.assertIs(filter_supervised_examples(dataset, full_loss, "train"), dataset)
 
     def test_cpu_lora_training_updates_and_save(self):
         set_seed(42)

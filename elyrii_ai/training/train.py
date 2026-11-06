@@ -103,6 +103,10 @@ def _find_first_subsequence(
     return best_idx, best_len
 
 
+class NoSupervisedTokensError(ValueError):
+    """The example has no target for causal language modeling."""
+
+
 @dataclass
 class AssistantOnlyDataCollator:
     """Pads examples and masks loss to assistant completions only.
@@ -187,11 +191,34 @@ class AssistantOnlyDataCollator:
         invalid = (labels[:, 1:] != self.label_pad_token_id).sum(dim=1) == 0
         if invalid.any():
             rows = invalid.nonzero(as_tuple=True)[0].tolist()
-            raise ValueError(
+            raise NoSupervisedTokensError(
                 f"Examples at batch rows {rows} have no supervised tokens after "
                 "causal shifting. Check assistant responses, truncation, and tokenizer "
                 "markers; training on these examples would produce invalid loss."
             )
+
+
+def filter_supervised_examples(dataset, collator, split):
+    """Check each saved row with the training mask before loading the model."""
+    keep = []
+    rejected_sample = []
+    for index, example in enumerate(dataset):
+        try:
+            collator([example])
+        except NoSupervisedTokensError:
+            if len(rejected_sample) < 10:
+                rejected_sample.append(index)
+        else:
+            keep.append(index)
+
+    if rejected_sample:
+        logger.warning(
+            "%s: skipping %d/%d rows with no supervised tokens. First row indices: %s",
+            split, len(dataset) - len(keep), len(dataset), rejected_sample,
+        )
+    if not keep:
+        raise ValueError(f"No usable examples in {split}. Check the data and tokenizer markers.")
+    return dataset if len(keep) == len(dataset) else dataset.select(keep, keep_in_memory=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -301,6 +328,22 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    try:
+        train_ds = load_from_disk(os.path.join(args.data_dir, "train"))
+        val_ds = load_from_disk(os.path.join(args.data_dir, "val"))
+    except FileNotFoundError as e:
+        logger.error(f"Error loading datasets: {e}")
+        logger.error("   Make sure you ran 'prepare_data.py' first.")
+        exit(1)
+
+    collator = AssistantOnlyDataCollator(
+        tokenizer=tokenizer,
+        train_on_inputs=args.train_on_inputs,
+    )
+
+    train_ds = filter_supervised_examples(train_ds, collator, "train")
+    val_ds = filter_supervised_examples(val_ds, collator, "val")
+
     # QLoRA configuration using 4-bit quantization
     compute_dtype = preferred_compute_dtype()
     use_bf16 = compute_dtype == torch.bfloat16
@@ -351,19 +394,6 @@ def main():
     )
     model = get_peft_model(model, lora_cfg)
     model.print_trainable_parameters()
-
-    try:
-        train_ds = load_from_disk(os.path.join(args.data_dir, "train"))
-        val_ds = load_from_disk(os.path.join(args.data_dir, "val"))
-    except FileNotFoundError as e:
-        logger.error(f"Error loading datasets: {e}")
-        logger.error("   Make sure you ran 'prepare_data.py' first.")
-        exit(1)
-
-    collator = AssistantOnlyDataCollator(
-        tokenizer=tokenizer,
-        train_on_inputs=args.train_on_inputs,
-    )
 
     training_args = TrainingArguments(
         output_dir=args.output_dir,
