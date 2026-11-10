@@ -17,6 +17,8 @@ import '../core/widgets/mascot_poster.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/data/models/user_model.dart';
 import '../features/chatbot/data/repositories/chat_history_service.dart';
+import '../features/chatbot/data/repositories/connected_chat_history.dart';
+import '../core/config/api_config.dart';
 import '../features/chatbot/presentation/providers/chatbot_provider.dart';
 import '../features/journal/data/repositories/journal_repository.dart';
 import '../features/journal/data/repositories/journal_store.dart';
@@ -62,7 +64,7 @@ class AppDependencies {
     cipher = ContentCipher(storage);
     accueilActivities = AccueilActivities(cipher: cipher);
     journalStore = JournalStore(cipher: cipher);
-    history = ChatHistoryService(cipher: cipher);
+    history = ConnectedChatHistory(client: api, cipher: cipher);
     auth = AuthProvider(client: api, storage: storage);
     api.onRefresh = auth.refreshAccessToken;
     user = UserProvider(client: api);
@@ -74,6 +76,9 @@ class AppDependencies {
       storage: storage,
       history: history,
       initialOwner: 'local-guest',
+      authorizeConnection: () async {
+        await api.get(ApiConfig.userMeUrl);
+      },
     );
     dashboard = DashboardProvider(
       apiClient: api,

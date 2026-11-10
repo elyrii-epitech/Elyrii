@@ -22,6 +22,7 @@ class ChatbotProvider extends ChangeNotifier {
     ChatHistoryService? history,
     String? initialOwner,
     ChatConnector? connector,
+    this.authorizeConnection,
     this._replyTimeout = const Duration(seconds: 60),
   }) : _history = history ?? ChatHistoryService(),
        _ownsHistory = history == null,
@@ -34,6 +35,7 @@ class ChatbotProvider extends ChangeNotifier {
   final ChatHistoryService _history;
   final bool _ownsHistory;
   final ChatConnector _connector;
+  final Future<void> Function()? authorizeConnection;
   final Duration _replyTimeout;
   Future<bool> _lastMessageWrite = Future.value(true);
   final List<ChatMessage> _messages = [];
@@ -245,6 +247,7 @@ class ChatbotProvider extends ChangeNotifier {
     if (_isConnected || _disposed) return;
     final generation = _generation;
     try {
+      await authorizeConnection?.call();
       final token = await _storage.getAccessToken();
       if (_disposed ||
           generation != _generation ||
@@ -304,10 +307,25 @@ class ChatbotProvider extends ChangeNotifier {
               pending.session,
               MessageDelivery.delivered,
             );
+            final id = frame['messageId'];
+            final timestamp = DateTime.tryParse(
+              frame['createdAt']?.toString() ?? '',
+            );
             _appendMessage(
-              ChatMessage.ai(frame['message'] as String),
+              id is String && timestamp != null
+                  ? ChatMessage(
+                      id: id,
+                      content: frame['message'] as String,
+                      isUser: false,
+                      timestamp: timestamp,
+                    )
+                  : ChatMessage.ai(frame['message'] as String),
               pending.session,
             );
+            if (id is String && timestamp != null) {
+              final owner = _owner!;
+              _queue(() => _history.markRemote(owner, pending.session.id));
+            }
           }
           _notify();
         },
@@ -465,6 +483,7 @@ class ChatbotProvider extends ChangeNotifier {
         jsonEncode({
           'message': message.content,
           'requestId': requestId,
+          'messageId': message.id,
           'conversationId': session.id,
         }),
       );
@@ -477,6 +496,9 @@ class ChatbotProvider extends ChangeNotifier {
     final current =
         _sessions.where((s) => s.id == origin.id).firstOrNull ?? origin;
     final active = _activeSession == null || _activeSession!.id == origin.id;
+    if (active && _messages.any((existing) => existing.id == message.id)) {
+      return current;
+    }
     if (active) _messages.add(message);
     final session = current.copyWith(
       title: message.isUser && current.title == 'Nouvelle conversation'
@@ -527,6 +549,35 @@ class ChatbotProvider extends ChangeNotifier {
     _messages.clear();
     _hasMoreMessages = false;
     _notify();
+  }
+
+  Future<void> refreshHistory() async {
+    await ready;
+    final generation = _generation;
+    final selection = _selection;
+    if (_disposed || _pendingReplies.isNotEmpty) return;
+    try {
+      await _writes;
+      final sessions = await _history.sessions(_owner!);
+      if (_disposed ||
+          generation != _generation ||
+          selection != _selection ||
+          _pendingReplies.isNotEmpty) {
+        return;
+      }
+      _sessions
+        ..clear()
+        ..addAll(sessions);
+      _sessionCursor = sessions.lastOrNull;
+      _hasMoreSessions = sessions.length == ChatHistoryService.pageSize;
+      _error = null;
+      _notify();
+    } catch (_) {
+      if (generation == _generation) {
+        _error = 'Impossible de charger les conversations.';
+        _notify();
+      }
+    }
   }
 
   Future<void> deleteSession(String sessionId) async {

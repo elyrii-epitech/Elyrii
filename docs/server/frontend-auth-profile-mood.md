@@ -83,6 +83,7 @@ Release builds still require explicit HTTPS `ELYRII_API_URL`.
 This auth milestone does not finish chat/Kafka integration,
 challenge/meditation contracts, reports/export, or cross-device Parcours progress.
 Journal pagination and persistence are covered by the subsequent journal milestone.
+Chat and Kafka contracts are covered by the subsequent [chat milestone](frontend-chat.md).
 It neither deploys a backend nor publishes a mobile build.
 
 ## Verification on 10 November 2026

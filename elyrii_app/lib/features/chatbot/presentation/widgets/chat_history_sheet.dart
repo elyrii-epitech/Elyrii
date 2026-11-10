@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/localization/app_dates.dart';
@@ -16,6 +18,7 @@ class ChatHistorySheet extends StatelessWidget {
   const ChatHistorySheet({super.key});
 
   static Future<void> show(BuildContext context) {
+    unawaited(context.read<ChatbotProvider>().refreshHistory());
     return Navigator.of(context, rootNavigator: true).push<void>(
       AppSheetRoute<void>(
         reduced: MediaQuery.disableAnimationsOf(context),
@@ -302,7 +305,7 @@ class ChatHistorySheet extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Supprimer ?'),
         content: const Text(
-          'Cette conversation sera définitivement effacée de cet appareil.',
+          'Cette conversation sera définitivement effacée de ton compte et de cet appareil.',
         ),
         actions: [
           TextButton(

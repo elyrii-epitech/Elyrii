@@ -1,174 +1,100 @@
 import { Hono } from "hono";
-import { describeRoute } from "hono-openapi";
 import { upgradeWebSocket } from "hono/bun";
-import { clientSockets } from "../../main";
+import { z } from "zod";
+import { randomUUID } from "node:crypto";
 import { sendMessageToTopic } from "./producer.service";
 import { resolveWsIdentity } from "../../utils/ws-auth.utils";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import ChatRepository from "../../repository/chat.repository";
+import { ContextLifecycleRepository } from "../../repository/context-lifecycle.repository";
 import type { HonoEnv } from "../../utils/hono.types";
 import { bounded, prepareContext } from "./context-dispatch";
-import { randomUUID } from "node:crypto";
-// NOTE: unused while the blocking AI wait is disabled (delivery is fully
-// asynchronous via consumer.service.ts). Kept for easy re-enable.
-// import { aiResponseTracker } from "./response-tracker.utils";
+import { chatDelivery } from "./chat-delivery";
 
+const router = new Hono<HonoEnv>();
+const repository = new ChatRepository();
+const conversation = z.string().min(1).max(200);
+const pageSchema = z.object({limit: z.coerce.number().int().min(1).max(50).default(50),
+    beforeDate: z.iso.datetime().optional(), beforeId: conversation.optional()})
+    .refine(p => Boolean(p.beforeDate) === Boolean(p.beforeId));
+const inputSchema = z.object({message: z.string().trim().min(1).max(16000),
+    conversationId: conversation, requestId: z.uuid(), messageId: z.uuid().optional()});
 
-const chatRouter = new Hono<HonoEnv>();
-const chatRepository = new ChatRepository();
-
-// Only enable userId query auth when explicitly requested for local development.
-const allowInsecureWsUserIdFallback =
-    Bun.env.ALLOW_INSECURE_WS_USER_ID === "true"
-        ? true
-        : false;
-
-console.log(`[Chat] Insecure WS userId fallback enabled: ${allowInsecureWsUserIdFallback}`);
-
-chatRouter.get("/health", describeRoute({
-    summary: "Health check endpoint for chat",
-    description: "Health check endpoint for chat",
-    tags: ["Chat"],
-    responses: {
-        200: {
-            description: "Chat service is healthy",
-        },
-    },
-}), (ctx) => {
-    return ctx.json({message: "Chat service is healthy"});
-})
-
-chatRouter.use("/history", authMiddleware);
-
-chatRouter.get("/history", describeRoute({
-    summary: "Get chat history",
-    description: "Retrieve persisted chat history for the authenticated user.",
-    tags: ["Chat"],
-    responses: {
-        200: {
-            description: "Chat history returned",
-        },
-    },
-}), async (ctx) => {
-    const userId = ctx.get("user").userId;
-    const limitRaw = ctx.req.query("limit");
-    const conversationId = ctx.req.query("conversationId") || undefined;
-    const limit = Math.min(Math.max(Number(limitRaw || 50), 1), 200);
-    const history = await chatRepository.getHistory(userId, limit, conversationId);
-    return ctx.json(history, 200);
+router.get("/health", c => c.json({message: "Chat service is healthy"}));
+router.use("/history", authMiddleware);
+router.use("/conversations", authMiddleware);
+router.use("/conversations/*", authMiddleware);
+router.onError((error, c) => {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return c.json({error: "Invalid chat request"}, 400);
+    console.error("[Chat] History operation failed");
+    return c.json({error: "Chat unavailable"}, 500);
 });
-
-chatRouter.get("/ws", describeRoute({
-    summary: "WebSocket endpoint for chat",
-    description: "WebSocket endpoint for chat",
-    tags: ["Chat"],
-    responses: {
-        200: {
-            description: "WebSocket connection established",
-        },
-        400: {
-            description: "Invalid request",
-        },
-    },
-}), upgradeWebSocket(async (ctx) => {
-    try {
-        const parsedUrl = new URL(ctx.req.url, "http://localhost");
-        const defaultConversationId = parsedUrl.searchParams.get("conversationId") || "default";
-        
-        const identity = await resolveWsIdentity(
-            ctx.req.url,
-            ctx.req.header("Authorization") ?? ctx.req.header("authorization"),
-            allowInsecureWsUserIdFallback,
-        );
-
-        if (!identity) {
-            console.warn("[Chat] Unauthorized WebSocket connection attempt");
-            return {
-                onOpen: (_event, ws) => {
-                    console.log("[Chat] Closing unauthorized connection");
-                    ws.close(1008, "Unauthorized");
-                },
-            };
-        }
-
-        const userId = identity.userId;
-
-        return {
-            onOpen: async (event, ws) => {
-                console.log(`[Chat] Client connected: ${userId} (auth: ${identity.source})`);
-                clientSockets.set(userId, ws);
-            },
-            onClose: (event, ws) => {
-                console.log(`[Chat] Client disconnected: ${userId}`);
-                clientSockets.delete(userId);
-            },
-            onMessage: async (event, ws) => {
-                console.log("[Chat] Message received");
-                const rawMessage = event.data.toString();
-                let message = rawMessage;
-                let conversationId = defaultConversationId;
-
-                try {
-                    const parsed = JSON.parse(rawMessage) as { message?: string; conversationId?: string };
-                    if (typeof parsed.message === "string" && parsed.message.trim().length > 0) {
-                        message = parsed.message.trim();
-                    }
-                    if (typeof parsed.conversationId === "string" && parsed.conversationId.trim().length > 0) {
-                        conversationId = parsed.conversationId.trim();
-                    }
-                } catch {
-                    console.log("[Chat] Parsing failed, using message as plain text");
-                }
-
-                const requestId = randomUUID();
-                let sourceMessageId: string | undefined;
-                try {
-                    console.log(`[Chat] Persisting message for ${userId}...`);
-                    const persisted = await chatRepository.createMessage({
-                        userId,
-                        conversationId,
-                        role: "user",
-                        message,
-                    }, requestId);
-                    sourceMessageId = persisted.id;
-                } catch (error) {
-                    console.error("[Chat] Failed to persist user chat message");
-                }
-
-                try {
-                    console.log(`[Chat] Getting history and sending to Kafka for ${userId}...`);
-                    const context = await prepareContext(userId, conversationId, sourceMessageId, message);
-                    let history: Array<{ role: string; message: string }> = [];
-                    try { history = await bounded(chatRepository.getRecentMessagesForContext(userId, conversationId, 12, sourceMessageId), 1000); }
-                    catch { console.warn("[Chat] History unavailable; sending current input only"); }
-                    await sendMessageToTopic(userId, message, { conversationId, history, requestId, sourceMessageId, context });
-
-                    console.log(`[Chat] Message dispatched to Kafka (request ${requestId}). Response will arrive asynchronously via the AI consumer.`);
-
-                    // NOTE: The blocking request/response bridge is disabled.
-                    // The AI response is delivered asynchronously by consumer.service.ts,
-                    // which persists it and pushes it to the user's socket whenever it
-                    // arrives on the `elyrii.ai.responses` topic (no timeout).
-                    //
-                    // console.log(`[Chat] Waiting for AI response for request ${requestId}...`);
-                    // const aiResponse = await aiResponseTracker.waitForResponse(requestId);
-                    // console.log(`[Chat] Received AI response for ${requestId}. Proceeding with post-AI logic...`);
-                    //
-                    // // Post-AI logic can go here
-                } catch (error) {
-                    console.error("[Chat] Message dispatch failed");
-                    ws.send("Une erreur est survenue lors de l'envoi du message.");
-                }
-            },
-        }
-    } catch (error) {
-        console.error("[Chat] Fatal error during WebSocket upgrade:", error);
-        return {
-            onOpen: (_event, ws) => {
-                ws.close(1011, "Internal Server Error during upgrade");
+router.get("/conversations", async c => {
+    const page = pageSchema.parse(c.req.query());
+    c.header("Cache-Control", "no-store");
+    return c.json(await repository.getConversations(c.get("user").userId, page.limit,
+        page.beforeDate && page.beforeId ? {updatedAt: new Date(page.beforeDate), id: page.beforeId} : undefined));
+});
+router.delete("/conversations/:id", async c => {
+    await new ContextLifecycleRepository().deleteMessages(c.get("user").userId, {conversationId: conversation.parse(c.req.param("id"))});
+    return c.body(null, 204);
+});
+router.get("/history", async c => {
+    const query = z.object({limit: z.coerce.number().int().min(1).max(200).default(50),
+        conversationId: conversation.optional(), beforeId: z.uuid().optional()}).parse(c.req.query());
+    if (query.beforeId && !query.conversationId) return c.json({error: "Conversation required"}, 400);
+    c.header("Cache-Control", "no-store");
+    return c.json(await repository.getHistory(c.get("user").userId, query.limit, query.conversationId, query.beforeId));
+});
+router.get("/ws", upgradeWebSocket(async c => {
+    const authorization = c.req.header("Authorization");
+    const allowInsecure = Bun.env.NODE_ENV !== "production" && Bun.env.ALLOW_INSECURE_WS_USER_ID === "true";
+    const identity = await resolveWsIdentity(c.req.url, authorization, allowInsecure);
+    if (!identity) return {onOpen: (_, ws) => ws.close(1008, "Unauthorized")};
+    const userId = identity.userId;
+    return {
+        onClose: (_, ws) => chatDelivery.cancelSocket(ws),
+        onMessage: async (event, ws) => {
+            let input: z.infer<typeof inputSchema>;
+            try {
+                if (event.data.toString().length > 100000) throw new Error("Oversized frame");
+                input = inputSchema.parse(JSON.parse(event.data.toString()));
+            } catch {
+                ws.close(1003, "Invalid chat message");
+                return;
             }
-        };
-    }
-}))
-
-export default chatRouter;
+            if (!await resolveWsIdentity(c.req.url, authorization, allowInsecure)) {
+                chatDelivery.cancelSocket(ws);
+                ws.close(1008, "Unauthorized");
+                return;
+            }
+            const key = randomUUID();
+            let registered = false;
+            try {
+                const persisted = await repository.createMessage({id: input.messageId ?? input.requestId,
+                    userId, conversationId: input.conversationId, role: "user", message: input.message}, key);
+                const completed = await repository.getReply(userId, persisted.id);
+                if (completed) {
+                    ws.send(JSON.stringify({type: "reply", requestId: input.requestId, conversationId: input.conversationId,
+                        message: completed.message, messageId: completed.id, createdAt: completed.createdAt.toISOString()}));
+                    return;
+                }
+                chatDelivery.register(key, {userId, conversationId: input.conversationId, sourceMessageId: persisted.id,
+                    requestId: input.requestId, socket: ws});
+                registered = true;
+                const context = await prepareContext(userId, input.conversationId, persisted.id, input.message);
+                let history: Array<{role: string; message: string}> = [];
+                try { history = await bounded(repository.getRecentMessagesForContext(userId, input.conversationId, 12, persisted.id), 1000); }
+                catch { console.warn("[Chat] History unavailable; using current input only"); }
+                await sendMessageToTopic(userId, input.message, {conversationId: input.conversationId,
+                    history, requestId: key, sourceMessageId: persisted.id, context});
+            } catch {
+                // Persistence and capacity failures occur before registration.
+                if (!chatDelivery.finish(key, userId, input.conversationId, "error", "L’envoi a échoué. Tu peux réessayer.") &&
+                    !registered && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({type: "error", requestId: input.requestId,
+                    conversationId: input.conversationId, message: "L’envoi a échoué. Tu peux réessayer."}));
+            }
+        },
+    };
+}));
+export default router;

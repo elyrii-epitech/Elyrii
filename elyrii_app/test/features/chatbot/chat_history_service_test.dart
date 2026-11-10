@@ -30,8 +30,8 @@ void main() {
     await history.append('a', updated, ChatMessage.user('Second'));
     final stored = (await history.sessions('a')).single;
     expect(stored.title, 'Renamed');
-    expect(stored.createdAt, session.createdAt);
-    expect(stored.updatedAt, DateTime(2027));
+    expect(stored.createdAt.isAtSameMomentAs(session.createdAt), isTrue);
+    expect(stored.updatedAt.isAtSameMomentAs(DateTime(2027)), isTrue);
     expect(stored.messageCount, 2);
     expect((await history.messages('a', session.id)).map((m) => m.content), [
       'First',
