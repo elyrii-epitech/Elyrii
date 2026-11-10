@@ -1,8 +1,14 @@
 import { and, eq, gt } from "drizzle-orm";
 import { db } from "../config/db.config";
 import { revokedAccessTokensTable, tokenTable } from "../config/db/tokens.table";
+import { userTable } from "../config/db/user.table";
 
 class TokenRepository {
+    public async userExists(userId: string): Promise<boolean> {
+        const [user] = await db.select({ id: userTable.id }).from(userTable)
+            .where(eq(userTable.id, userId)).limit(1);
+        return Boolean(user);
+    }
     public async createToken(token: string, userId: string, device: string): Promise<void> {
         try {
             const hashedToken = await Bun.password.hash(token);
@@ -54,16 +60,16 @@ class TokenRepository {
         }
     };
 
-    public async updateToken(token: string, userId: string, device: string, sessionId: string): Promise<string> {
+    public async updateToken(token: string, userId: string, device: string, sessionId: string, previousHash: string): Promise<string | undefined> {
         const hashedToken = await Bun.password.hash(token);
         const updatedToken = await db.update(tokenTable).set({
             hash_token: hashedToken,
             userId: userId,
             device: device,
-        }).where(eq(tokenTable.id, sessionId)).returning();
+        }).where(and(eq(tokenTable.id, sessionId), eq(tokenTable.hash_token, previousHash))).returning();
         
         if (!updatedToken || !updatedToken[0]) {
-            throw new Error("Token not found");
+            return undefined;
         }
         const { id } = updatedToken[0]
         return id;

@@ -101,8 +101,18 @@ class AuthRepository {
         await db.delete(emailVerificationTokensTable).where(eq(emailVerificationTokensTable.userId, userId));
     }
 
+    public async discardEmailVerificationToken(userId: string, rawToken: string): Promise<void> {
+        const tokenId = rawToken.split('.')[0]!;
+        await db.delete(emailVerificationTokensTable).where(and(
+            eq(emailVerificationTokensTable.userId, userId),
+            eq(emailVerificationTokensTable.id, tokenId),
+        ));
+    }
+
     public async consumeEmailVerificationToken(rawToken: string): Promise<User | undefined> {
-        const [tokenId, secret] = rawToken.split(".");
+        const parts = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.([0-9a-f]{64})$/i.exec(rawToken);
+        const tokenId = parts?.[1];
+        const secret = parts?.[2];
         if (!tokenId || !secret) {
             return undefined;
         }
@@ -124,15 +134,19 @@ class AuthRepository {
             return undefined;
         }
 
-        await db.transaction(async (tx) => {
+        const consumed = await db.transaction(async (tx) => {
+            const [removed] = await tx.delete(emailVerificationTokensTable)
+                .where(and(eq(emailVerificationTokensTable.id, verification.id), gt(emailVerificationTokensTable.expiresAt, new Date())))
+                .returning({ userId: emailVerificationTokensTable.userId });
+            if (!removed) return false;
             await tx.update(userTable)
                 .set({ emailVerified: true })
                 .where(eq(userTable.id, verification.userId));
             await tx.delete(emailVerificationTokensTable)
                 .where(eq(emailVerificationTokensTable.userId, verification.userId));
+            return true;
         });
-
-        return this.getUserById(verification.userId);
+        return consumed ? this.getUserById(verification.userId) : undefined;
     }
 }
 

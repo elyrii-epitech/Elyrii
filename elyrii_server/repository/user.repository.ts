@@ -384,11 +384,14 @@ class UserRepository {
         const [created] = await db
             .insert(userSettingsTable)
             .values({ userId })
+            .onConflictDoNothing({ target: userSettingsTable.userId })
             .returning();
-        if (!created) {
-            throw new Error("Failed to create user settings");
-        }
-        return created;
+        if (created) return created;
+        // Profile, settings and dashboard can all hydrate during first launch.
+        const [concurrent] = await db.select().from(userSettingsTable)
+            .where(eq(userSettingsTable.userId, userId)).limit(1);
+        if (!concurrent) throw new Error("Failed to create user settings");
+        return concurrent;
     }
 
     async updateUserSettings(

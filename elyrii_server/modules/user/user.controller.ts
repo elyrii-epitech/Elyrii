@@ -152,7 +152,9 @@ class UserController {
     });
 
     readonly logMood = this.factory.createHandlers(
-        sValidator("json", z.object({ moodType: z.string() })),
+        sValidator("json", z.object({
+            moodType: z.enum(["verySad", "sad", "neutral", "happy", "veryHappy"]),
+        })),
         async (ctx) => {
             const { userId } = ctx.get("user");
             const { moodType } = ctx.req.valid("json");
