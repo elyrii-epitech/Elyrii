@@ -9,22 +9,80 @@ class GamificationRepository {
 
   GamificationRepository({required this._client});
 
+  Future<List<T>> _pages<T>(
+    String url,
+    T Function(Map<String, dynamic>) decode, {
+    bool owned = false,
+  }) async {
+    final generation = _client.sessionGeneration;
+    final owner = await _client.currentUserId;
+    final result = <T>[];
+    final ids = <String>{};
+    final cursors = <String>{};
+    Map<String, String>? cursor;
+    while (true) {
+      _client.ensureSession(generation);
+      final response = await _client.get(
+        url,
+        queryParams: {'pageSize': '100', ...?cursor},
+      );
+      _client.ensureSession(generation);
+      final page = response is List
+          ? response
+          : decodeResponse(response, (json) {
+              final items = json['items'] as List;
+              if (items.length > 100) {
+                throw const FormatException('Invalid challenge page');
+              }
+              return items;
+            });
+      final decoded = decodeListResponse(page, (json) {
+        final id = json['id'] as String;
+        if (id.isEmpty || (owned && owner != null && json['userId'] != owner)) {
+          throw const FormatException('Challenge identity mismatch');
+        }
+        return decode(json);
+      });
+      for (var i = 0; i < page.length; i++) {
+        if (ids.add((page[i] as Map)['id'] as String)) result.add(decoded[i]);
+      }
+      if (response is List || response['nextCursor'] == null) break;
+      cursor = decodeResponse(response['nextCursor'], (json) {
+        final date = json['createdAt'] as String;
+        DateTime.parse(date);
+        final id = json['id'] as String;
+        if (page.isEmpty ||
+            id != (page.last as Map)['id'] ||
+            !cursors.add('$date/$id')) {
+          throw const FormatException('Invalid challenge cursor');
+        }
+        return {'cursorDate': date, 'cursorId': id};
+      });
+    }
+    return List.unmodifiable(result);
+  }
+
   /// Fetch active challenges for the authenticated user
   Future<List<UserChallenge>> getActiveChallenges() async {
-    final response = await _client.get(ApiConfig.activeChallengesUrl);
-    return decodeListResponse(response, UserChallenge.fromJson);
+    return _pages(
+      ApiConfig.activeChallengesUrl,
+      UserChallenge.fromJson,
+      owned: true,
+    );
   }
 
   /// Fetch completed challenges for the authenticated user
   Future<List<UserChallenge>> getCompletedChallenges() async {
-    final response = await _client.get(ApiConfig.completedChallengesUrl);
-    return decodeListResponse(response, UserChallenge.fromJson);
+    return _pages(
+      ApiConfig.completedChallengesUrl,
+      UserChallenge.fromJson,
+      owned: true,
+    );
   }
 
   /// Fetch pending challenge proposals
   Future<List<UserChallenge>> getProposals() async {
-    final response = await _client.get(ApiConfig.proposalsUrl);
-    return decodeListResponse(response, UserChallenge.fromJson);
+    return _pages(ApiConfig.proposalsUrl, UserChallenge.fromJson, owned: true);
   }
 
   /// Accept a proposed challenge
@@ -45,8 +103,7 @@ class GamificationRepository {
 
   /// Fetch SYSTEM challenges not yet started by the user
   Future<List<ChallengeTemplate>> getAvailableChallenges() async {
-    final response = await _client.get(ApiConfig.availableChallengesUrl);
-    return decodeListResponse(response, ChallengeTemplate.fromJson);
+    return _pages(ApiConfig.availableChallengesUrl, ChallengeTemplate.fromJson);
   }
 
   /// Start a SYSTEM challenge (assigns it as ACTIVE)

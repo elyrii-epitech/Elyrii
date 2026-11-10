@@ -28,13 +28,28 @@ void main() {
   Future<AppDependencies> mount(
     WidgetTester tester, {
     double textScale = 1,
+    bool animations = false,
   }) async {
     tester.view.physicalSize = const Size(390, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final app = (await tester.runAsync(fixture))!;
     await tester.pumpWidget(
-      host(app, const DashboardPage(), GlobalKey(), true, textScale),
+      host(
+        app,
+        animations
+            ? Builder(
+                builder: (context) => MediaQuery(
+                  data: MediaQuery.of(context)
+                      .copyWith(disableAnimations: false),
+                  child: const DashboardPage(),
+                ),
+              )
+            : const DashboardPage(),
+        GlobalKey(),
+        true,
+        textScale,
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
@@ -118,6 +133,21 @@ void main() {
       );
     },
   );
+
+  testWidgets('mood restoration can repeat during the answer fade', (
+    tester,
+  ) async {
+    final app = await mount(tester, animations: true);
+    for (var i = 0; i < 3; i++) {
+      await tester.runAsync(() => app.dashboard.selectMood(MoodType.happy));
+      await tester.pump(const Duration(milliseconds: 10));
+      app.dashboard.resetSession();
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.takeException(), isNull);
+    await flush(tester, app);
+  });
 
   testWidgets('a low mood keeps help and all activity choices available', (
     tester,

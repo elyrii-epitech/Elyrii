@@ -46,12 +46,22 @@ for attempt in {1..50}; do
     sleep 0.2
 done
 if [[ "$ready" != true ]]; then echo "Local API failed to start." >&2; exit 1; fi
-bun --no-env-file test --timeout 30000 modules/user/auth-profile-mood.integration.test.ts modules/auth/auth-database.integration.test.ts modules/journal/journal-connected.integration.test.ts
+if [[ "${MOBILE_TEST_SCOPE:-}" == challenges ]]; then
+    export CHALLENGES_INTEGRATION=1
+    bun --no-env-file test --timeout 30000 modules/quest/challenges-connected.integration.test.ts
+    flutter_connected_tests=(test/frontend/challenges_connected_test.dart)
+    ios_connected_test=integration_test/challenges_connected_test.dart
+else
+    bun --no-env-file test --timeout 30000 modules/user/auth-profile-mood.integration.test.ts modules/auth/auth-database.integration.test.ts modules/journal/journal-connected.integration.test.ts
+    flutter_connected_tests=(test/frontend/auth_profile_mood_connected_test.dart test/frontend/journal_connected_test.dart)
+    ios_connected_test=integration_test/auth_profile_mood_test.dart
+fi
 if [[ "${RUN_FLUTTER_CONNECTED_TEST:-1}" == 1 ]]; then
-    (cd ../elyrii_app && flutter test --no-pub test/frontend/auth_profile_mood_connected_test.dart test/frontend/journal_connected_test.dart \
+    (cd ../elyrii_app && flutter test --no-pub "${flutter_connected_tests[@]}" \
         --dart-define=MOBILE_API_INTEGRATION=true --dart-define=MOBILE_TEST_API_URL="$MOBILE_TEST_API_URL")
 fi
 if [[ -n "${IOS_SIMULATOR_UDID:-}" ]]; then
-    (cd ../elyrii_app && flutter test --no-pub "${IOS_CONNECTED_TEST:-integration_test/auth_profile_mood_test.dart}" \
-        -d "$IOS_SIMULATOR_UDID" --dart-define=ELYRII_ENV=development --dart-define=ELYRII_API_URL="$MOBILE_TEST_API_URL")
+    (cd ../elyrii_app && flutter test --no-pub "${IOS_CONNECTED_TEST:-$ios_connected_test}" \
+        -d "$IOS_SIMULATOR_UDID" --dart-define=ELYRII_ENV=development --dart-define=ELYRII_API_URL="$MOBILE_TEST_API_URL" \
+        --dart-define=HOLD_CHALLENGES_QA_FRAME="${HOLD_CHALLENGES_QA_FRAME:-false}")
 fi

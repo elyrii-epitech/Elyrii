@@ -13,6 +13,7 @@ typedef JournalEntry = JournalEntryModel;
 /// Provider managing journal state.
 class JournalProvider extends ChangeNotifier {
   final JournalRepository _repository;
+  final VoidCallback? onEntrySaved;
   final bool _ownsRepository;
 
   List<JournalEntryModel> _entries = [];
@@ -24,13 +25,16 @@ class JournalProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  JournalProvider({JournalRepository? repository, ApiClient? client})
-    : assert(
-        repository != null || client != null,
-        'repository or client must be provided',
-      ),
-      _repository = repository ?? JournalRepository(client: client!),
-      _ownsRepository = repository == null;
+  JournalProvider({
+    JournalRepository? repository,
+    ApiClient? client,
+    this.onEntrySaved,
+  }) : assert(
+         repository != null || client != null,
+         'repository or client must be provided',
+       ),
+       _repository = repository ?? JournalRepository(client: client!),
+       _ownsRepository = repository == null;
 
   /// Load entries from the backend
   final Map<(DateTime?, DateTime?), Future<void>> _loads = {};
@@ -222,6 +226,7 @@ class JournalProvider extends ChangeNotifier {
       _error = null;
       _updateSortedEntries();
       notifyListeners();
+      onEntrySaved?.call();
       return entry;
     } catch (e) {
       if (session != _sessionVersion) return null;
@@ -257,6 +262,7 @@ class JournalProvider extends ChangeNotifier {
         _updateSortedEntries();
       }
       notifyListeners();
+      onEntrySaved?.call();
       return true;
     } catch (e) {
       if (session != _sessionVersion) return false;
@@ -279,6 +285,7 @@ class JournalProvider extends ChangeNotifier {
       _entries.removeWhere((e) => e.id == id);
       _updateSortedEntries();
       notifyListeners();
+      onEntrySaved?.call();
       return true;
     } catch (e) {
       if (session != _sessionVersion) return false;

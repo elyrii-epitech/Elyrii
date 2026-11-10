@@ -170,7 +170,8 @@ class JournalController {
             });
             // Déclencher la vérification des défis en arrière-plan (non bloquant)
             if (wasCreated) {
-                this.questLogic.checkAndUpdateProgress(userID, 'journal_created').catch(() => {});
+                await this.questLogic.checkAndUpdateProgress(userID, 'journal_created')
+                    .catch(() => console.warn("[Quest] Journal progress reconciliation deferred"));
                 this.userRepository.touchActivity(userID).catch(() => {});
             }
             return ctx.json({ message: "Entry created successfully", body: entry }, 201);
@@ -215,6 +216,8 @@ class JournalController {
                 body,
                 body.tags,
             );
+            await this.questLogic.checkAndUpdateProgress(userID, 'journal_created')
+                .catch(() => console.warn("[Quest] Journal progress reconciliation deferred"));
             return ctx.json({ message: "Entry updated successfully", body: entry }, 200);
         } catch (error) {
             if (error instanceof Error && error.message === "Journal entry not found") {
@@ -248,6 +251,8 @@ class JournalController {
         }
         try {
             await this.journalRepository.softDeleteEntryForUser(entryId, userID);
+            await this.questLogic.checkAndUpdateProgress(userID, 'journal_created')
+                .catch(() => console.warn("[Quest] Journal progress reconciliation deferred"));
             return ctx.json({ message: "Entry soft-deleted successfully" }, 200);
         } catch (error) {
             if (error instanceof Error && error.message === "Failed to soft delete journal entry") {

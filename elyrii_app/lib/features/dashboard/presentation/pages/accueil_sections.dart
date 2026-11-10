@@ -368,6 +368,10 @@ class _AnswerCard extends StatelessWidget {
         duration: _motion(context, AppMotion.answerTextFade),
         switchInCurve: AppMotion.accueilEase,
         switchOutCurve: AppMotion.accueilEase,
+        // Let AnimatedSwitcher assign each outgoing transition its own key
+        // when a restored or rolled-back mood repeats during the same fade.
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
         child: Column(
           key: ValueKey(mood),
           crossAxisAlignment: CrossAxisAlignment.stretch,

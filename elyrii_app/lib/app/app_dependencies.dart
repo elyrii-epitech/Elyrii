@@ -70,6 +70,7 @@ class AppDependencies {
     user = UserProvider(client: api);
     journal = JournalProvider(
       repository: JournalRepository(client: api, store: journalStore),
+      onEntrySaved: _challengeActivitySaved,
     );
     parcours = JourneyProvider(repository: JourneyRepository(cipher: cipher));
     chat = ChatbotProvider(
@@ -83,6 +84,7 @@ class AppDependencies {
     dashboard = DashboardProvider(
       apiClient: api,
       activities: accueilActivities,
+      onMoodSaved: _challengeActivitySaved,
       isDemoSession: () => auth.isDemoSession,
     );
     gamification = GamificationProvider(
@@ -132,6 +134,10 @@ class AppDependencies {
         (Object error) => AppDiagnostics.record(event, error),
       ),
     );
+  }
+
+  void _challengeActivitySaved() {
+    _track(gamification.refreshAfterActivity(), 'challenge_activity_refresh');
   }
 
   void _authChanged() {

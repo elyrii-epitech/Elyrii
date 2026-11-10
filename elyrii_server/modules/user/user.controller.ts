@@ -161,8 +161,9 @@ class UserController {
 
             try {
                 const log = await this.userRepository.logMood(userId, moodType);
-                // Déclencher la vérification des défis en arrière-plan (non bloquant)
-                this.questLogic.checkAndUpdateProgress(userId, 'mood_logged').catch(() => {});
+                // Preserve a committed mood even if deferred progress needs a read-side retry.
+                await this.questLogic.checkAndUpdateProgress(userId, 'mood_logged')
+                    .catch(() => console.warn("[Quest] Mood progress reconciliation deferred"));
                 return ctx.json(log, 201);
             } catch (error) {
                 console.error("logMood error:", error);
