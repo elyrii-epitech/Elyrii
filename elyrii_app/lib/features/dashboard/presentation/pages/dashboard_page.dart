@@ -98,11 +98,15 @@ class _DashboardPageState extends State<DashboardPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _updateClock();
+    if (state == AppLifecycleState.resumed) {
+      _updateClock();
+      unawaited(context.read<AccueilActivities>().reload());
+    }
   }
 
   Future<void> _refresh() async {
     await Future.wait([
+      context.read<AccueilActivities>().reload(),
       context.read<DashboardProvider>().loadDashboardData(),
       context.read<JournalProvider>().loadEntries(),
       context.read<GamificationProvider>().loadAll(force: true),

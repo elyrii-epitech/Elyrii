@@ -9,6 +9,7 @@ import {meditationSessionsTable} from "../config/db/meditation.table";
 import {coachSessionsTable, coachJourneysTable} from "../config/db/coach.table";
 import {notificationsTable} from "../config/db/notification.table";
 import {pointsLedgerTable} from "../config/db/reward.table";
+import {homeActivitiesTable} from "../config/db/home.table";
 
 /** User-facing account data from one consistent read-only snapshot. */
 class UserExportRepository {
@@ -25,7 +26,7 @@ class UserExportRepository {
             }).from(userTable).where(eq(userTable.id, userId));
             if (!profile) return null;
             const ownEntry = and(eq(journalEntriesTable.userId, userId), isNull(journalEntriesTable.deletedAt));
-            const [settings, moods, entries, tags, entryTags, media, messages, challenges, meditations, coaching, journeys, notifications, points] = await Promise.all([
+            const [settings, moods, entries, tags, entryTags, media, messages, challenges, meditations, coaching, journeys, notifications, points, home] = await Promise.all([
                 tx.select().from(userSettingsTable).where(eq(userSettingsTable.userId, userId)),
                 tx.select().from(moodLogsTable).where(eq(moodLogsTable.userId, userId)).orderBy(asc(moodLogsTable.createdAt), asc(moodLogsTable.id)),
                 tx.select().from(journalEntriesTable).where(ownEntry).orderBy(asc(journalEntriesTable.createdAt), asc(journalEntriesTable.id)),
@@ -47,10 +48,11 @@ class UserExportRepository {
                 tx.select().from(coachJourneysTable).where(eq(coachJourneysTable.userId, userId)),
                 tx.select().from(notificationsTable).where(eq(notificationsTable.userId, userId)),
                 tx.select().from(pointsLedgerTable).where(eq(pointsLedgerTable.userId, userId)),
+                tx.select().from(homeActivitiesTable).where(eq(homeActivitiesTable.userId, userId)),
             ]);
             return {schemaVersion: 1, exportedAt: new Date().toISOString(), profile, settings: settings[0] ?? null,
                 moods, journal: {entries, tags, entryTags, media}, messages, challenges,
-                meditationSessions: meditations, coachSessions: coaching, coachJourneys: journeys, notifications, points};
+                meditationSessions: meditations, coachSessions: coaching, coachJourneys: journeys, notifications, points, home: home[0] ?? null};
         }, {isolationLevel: "repeatable read", accessMode: "read only"});
     }
 }

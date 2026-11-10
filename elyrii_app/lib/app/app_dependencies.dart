@@ -62,7 +62,7 @@ class AppDependencies {
     required this.theme,
   }) {
     cipher = ContentCipher(storage);
-    accueilActivities = AccueilActivities(cipher: cipher);
+    accueilActivities = AccueilActivities(cipher: cipher, client: api);
     journalStore = JournalStore(cipher: cipher);
     history = ConnectedChatHistory(client: api, cipher: cipher);
     auth = AuthProvider(client: api, storage: storage);
@@ -246,7 +246,12 @@ class AppDependencies {
         if (auth.sessionRevision == revision) auth.clearLocalSession(),
         () async {
           try {
-            await Future.wait([chat.flushed, user.flushed, mascot.flushed]);
+            await Future.wait([
+              chat.flushed,
+              user.flushed,
+              mascot.flushed,
+              accueilActivities.flushed,
+            ]);
           } finally {
             await _purgeOwner(owner);
           }

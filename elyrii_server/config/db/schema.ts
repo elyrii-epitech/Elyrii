@@ -3,6 +3,7 @@ export * from "./tokens.table";
 export * from "./journal.table";
 export * from "./quest.table";
 export * from "./settings.table";
+export * from "./home.table";
 export * from "./meditation.table";
 export * from "./coach.table";
 export * from "./chat.table";

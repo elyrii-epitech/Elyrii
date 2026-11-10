@@ -51,7 +51,8 @@ class _AccueilSections extends StatelessWidget {
           'Données hors ligne du ${DateFormat('d MMMM à HH:mm', 'fr_FR').format(dashboard.cachedAt!.toLocal())}.',
           style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
-      if (activities.error != null) _InlineError(message: activities.error!),
+      if (activities.error != null)
+        _InlineError(message: activities.error!, retry: store.reload),
       if (layout.showsRest)
         _Surface(
           child: Row(

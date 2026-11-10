@@ -19,6 +19,7 @@
     "test:meditation": "MOBILE_TEST_SCOPE=meditation bash scripts/test-auth-profile-mood.sh",
     "test:coach": "MOBILE_TEST_SCOPE=coach bash scripts/test-auth-profile-mood.sh",
     "test:settings": "MOBILE_TEST_SCOPE=settings bash scripts/test-auth-profile-mood.sh",
+    "test:home": "MOBILE_TEST_SCOPE=home bash scripts/test-auth-profile-mood.sh",
     "docs:build": "cd scripts && ./generate-docs.sh build",
     "docs:serve": "cd scripts && ./generate-docs.sh serve"
   },

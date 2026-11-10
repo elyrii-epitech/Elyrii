@@ -29,7 +29,7 @@ if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null ||
     exit 1
 fi
 "$postgres_bin/initdb" -D "$runtime/data" --username="$DB_USER" --auth=trust --encoding=UTF8 --locale=C >/dev/null
-"$postgres_bin/pg_ctl" -D "$runtime/data" -l "$runtime/postgres.log" -o "-h 127.0.0.1 -p $DB_PORT" -w start >/dev/null
+"$postgres_bin/pg_ctl" -D "$runtime/data" -l "$runtime/postgres.log" -o "-h 127.0.0.1 -p $DB_PORT -c timezone=UTC" -w start >/dev/null
 "$postgres_bin/createdb" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" "$DB_NAME"
 # Mobile fixture: real baseline tables plus the existing user context
 # generation column. The pgvector/AI migration suite is a separate check.
@@ -38,6 +38,7 @@ fi
 "$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f migrations/0006_native_auth_recovery.sql
 "$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f migrations/0007_journal_mobile_contracts.sql
 "$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f migrations/0009_coach_journeys.sql
+"$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f migrations/0010_home_activities.sql
 bun --no-env-file run index.ts >"$runtime/api.log" 2>&1 &
 api_pid=$!
 ready=false
@@ -47,7 +48,12 @@ for attempt in {1..50}; do
     sleep 0.2
 done
 if [[ "$ready" != true ]]; then echo "Local API failed to start." >&2; exit 1; fi
-if [[ "${MOBILE_TEST_SCOPE:-}" == settings ]]; then
+if [[ "${MOBILE_TEST_SCOPE:-}" == home ]]; then
+    export HOME_INTEGRATION=1
+    bun --no-env-file test --timeout 30000 modules/user/home-connected.integration.test.ts
+    flutter_connected_tests=(test/frontend/home_connected_test.dart)
+    ios_connected_test=integration_test/home_connected_test.dart
+elif [[ "${MOBILE_TEST_SCOPE:-}" == settings ]]; then
     export SETTINGS_INTEGRATION=1
     bun --no-env-file test --timeout 30000 modules/user/settings-connected.integration.test.ts
     flutter_connected_tests=(test/frontend/settings_connected_test.dart)
@@ -82,5 +88,6 @@ if [[ -n "${IOS_SIMULATOR_UDID:-}" ]]; then
         --dart-define=HOLD_CHALLENGES_QA_FRAME="${HOLD_CHALLENGES_QA_FRAME:-false}" \
         --dart-define=HOLD_MEDITATION_QA_FRAME="${HOLD_MEDITATION_QA_FRAME:-false}" \
         --dart-define=HOLD_COACH_QA_FRAME="${HOLD_COACH_QA_FRAME:-false}" \
-        --dart-define=HOLD_SETTINGS_QA_FRAME="${HOLD_SETTINGS_QA_FRAME:-false}")
+        --dart-define=HOLD_SETTINGS_QA_FRAME="${HOLD_SETTINGS_QA_FRAME:-false}" \
+        --dart-define=HOLD_HOME_QA_FRAME="${HOLD_HOME_QA_FRAME:-false}")
 fi

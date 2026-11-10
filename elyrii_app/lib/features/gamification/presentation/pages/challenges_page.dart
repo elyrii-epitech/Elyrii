@@ -388,7 +388,7 @@ class _ChallengesPageState extends State<ChallengesPage>
                 ? Padding(
                     padding: const EdgeInsets.all(AppDimensions.spacing16),
                     child: Text(
-                      "Aucune activité enregistrée sur cet appareil aujourd’hui.",
+                      "Aucune activité enregistrée aujourd’hui.",
                       style: AppTextStyles.bodyMedium(
                         color: context.textSecondary,
                       ),

@@ -88,6 +88,7 @@ Challenge progression and the garden are covered by the [challenges milestone](f
 Practice registration, completion and history are covered by the [meditation milestone](frontend-meditation.md).
 Guided programs and account-synced progress are covered by the [Coach milestone](frontend-coach.md).
 Preferences, account export and settings actions are covered by the [settings milestone](frontend-settings.md).
+Account-synced Home activities and scene preferences are covered by the [Home milestone](frontend-home.md).
 It neither deploys a backend nor publishes a mobile build.
 
 ## Verification on 10 November 2026

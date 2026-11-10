@@ -33,6 +33,7 @@ It reads a consistent PostgreSQL snapshot without pagination truncation and
 returns `{schemaVersion: 1, exportedAt, profile, settings, moods, journal,
 messages, challenges, meditationSessions, coachSessions, coachJourneys,
 notifications, points}`. All records are scoped to the authenticated account.
+The subsequent Home milestone adds the account's `home` document to this export.
 
 Journal contains active entries, owned tags, their relations, and attachment
 metadata/URLs. Deleted entries are omitted. Coach includes archived enrollments
@@ -46,6 +47,8 @@ and current journey, and writes the existing temporary JSON export. Drafts stay
 local; they are not uploaded to prepare the export. Account/session identity is
 checked before the share handoff. The existing next-launch cleanup removes
 temporary exports older than 24 hours.
+Home integration additionally includes local Home data and its encrypted-data
+migration backup in the readable export after the same consent.
 
 The information sheets now describe the server-backed chat and Coach storage
 accurately. Logout and password-confirmed account deletion use their existing

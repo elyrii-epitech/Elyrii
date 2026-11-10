@@ -3,8 +3,12 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/storage/content_cipher.dart';
+import '../../../../core/config/api_config.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/diagnostics/app_diagnostics.dart';
 import '../domain/civil_day.dart';
 import '../presentation/mood_presentation.dart';
 
@@ -14,9 +18,7 @@ enum AccueilRitual { breathe, gratitude, walk, reachOut, water, music }
 /// Typed follow-up response; the first confirmed answer is retained.
 enum ThreadReply { ratherGood, notGreat }
 
-/// Home scene background. It lives in this store rather than the mascot look
-/// because the server replaces that look on every load and removes unknown
-/// keys.
+/// Home scene background, synchronized independently of the mascot look.
 enum MascotDecor { arches, hills, waves, clearing }
 
 /// Scene unlock rules shared by the dressing room and store.
@@ -77,7 +79,7 @@ class JournalQuestionPick {
   const JournalQuestionPick({required this.day, required this.index});
 }
 
-/// Frozen snapshot of local Home facts. Missing reads stay `isLoading` or carry
+/// Frozen snapshot of Home facts. Missing reads stay `isLoading` or carry
 /// an error rather than substituting zero.
 class AccueilActivitySnapshot {
   final Map<CivilDay, RitualDay> rituals;
@@ -164,10 +166,10 @@ class _Facts {
       );
 }
 
-/// Sole owner of local Home facts: checked rituals, social steps, follow-up
-/// answers, device-recorded moods, scene, and the day's selected Journal
-/// question. The account-scoped document is encrypted with
-/// `accueil-activities:v1` and never synchronized to the server. Days older
+/// Account Home facts, with confirmed remote changes cached under
+/// `accueil-activities:v1`. Demo/guest facts and the separate daily mood mirror
+/// stay local. Existing device data initializes an empty server account once.
+/// Days older
 /// than 370 days are pruned and become unknown rather than zero. Writes use one
 /// queue; failures restore the confirmed snapshot and surface the error.
 class AccueilActivities extends ChangeNotifier {
@@ -179,10 +181,12 @@ class AccueilActivities extends ChangeNotifier {
   final ContentCipher cipher;
   final SharedPreferences? preferences;
   final DateTime Function() now;
+  final ApiClient? client;
 
   AccueilActivities({
     required this.cipher,
     this.preferences,
+    this.client,
     DateTime Function()? now,
   }) : now = now ?? DateTime.now;
 
@@ -191,11 +195,19 @@ class AccueilActivities extends ChangeNotifier {
   bool _disposed = false;
   AccueilActivitySnapshot _snapshot = AccueilActivitySnapshot(isLoading: true);
   Future<void> _writes = Future.value();
+  Future<void>? _loading;
+  final Set<Future<void>> _loads = {};
+  String? _remoteOwner;
+  bool _remoteReady = false;
+  bool _serverConfirmed = false;
 
   AccueilActivitySnapshot get snapshot => _snapshot;
 
   /// All accepted writes finish, even after an account change or deletion.
-  Future<void> get flushed => _writes;
+  Future<void> get flushed async {
+    await Future.wait(_loads.toList());
+    await _writes;
+  }
 
   void _notify() {
     if (!_disposed) notifyListeners();
@@ -212,17 +224,32 @@ class AccueilActivities extends ChangeNotifier {
   void onUserChanged({String? userId, bool isDemo = false}) {
     _revision++;
     _scope = isDemo ? 'demo' : userId ?? 'guest';
+    _remoteOwner = client != null && !isDemo ? userId : null;
+    _remoteReady = false;
+    _serverConfirmed = false;
     _snapshot = AccueilActivitySnapshot(isLoading: true);
     _notify();
-    unawaited(_load(_revision));
+    _startLoad();
   }
 
   Future<void> reload() async {
     if (_snapshot.isWriting) return;
+    if (_loading != null) return _loading;
+    _remoteReady = false;
     _revision++;
     _snapshot = AccueilActivitySnapshot(isLoading: true);
     _notify();
-    await _load(_revision);
+    await _startLoad();
+  }
+
+  Future<void> _startLoad() {
+    late final Future<void> task;
+    task = _load(_revision).whenComplete(() {
+      _loads.remove(task);
+      if (identical(_loading, task)) _loading = null;
+    });
+    _loads.add(task);
+    return _loading = task;
   }
 
   Future<SharedPreferences> get _prefs async =>
@@ -231,44 +258,142 @@ class AccueilActivities extends ChangeNotifier {
   String get _key => 'accueil_activities_$_scope';
 
   Future<void> _load(int revision) async {
+    final scope = _scope, key = _key, owner = _remoteOwner;
+    final generation = client?.sessionGeneration;
+    _Facts? cached;
     try {
       final prefs = await _prefs;
-      final raw = prefs.getString(_key);
-      if (raw == null) {
-        _publishIfCurrent(revision, _Facts().snapshot());
-        return;
+      if (_disposed || revision != _revision) return;
+      final raw = prefs.getString(key);
+      Map<String, dynamic>? document;
+      if (raw != null) {
+        final clear = await cipher.open(scope, raw, purpose: _purpose);
+        document = jsonDecode(clear) as Map<String, dynamic>;
+        if (document['version'] != _documentVersion ||
+            document['owner'] != scope) {
+          throw const FormatException(
+            'Accueil activities account/version mismatch',
+          );
+        }
       }
-      final clear = await cipher.open(_scope, raw, purpose: _purpose);
-      final document = jsonDecode(clear) as Map<String, dynamic>;
-      if (document['version'] != _documentVersion) {
-        throw const FormatException('Unsupported accueil activities version');
-      }
-      if (document['owner'] != _scope) {
-        throw const FormatException('Accueil activities account mismatch');
-      }
-      final facts = _Facts()
-        ..rituals.addAll(_parseRituals(document['ritualDays']))
-        ..socialWeeks.addAll(_parseSocialWeeks(document['socialWeeks']))
-        ..threadAnswers.addAll(_parseThreadAnswers(document['threadAnswers']))
-        ..moodDays.addAll(_parseMoodDays(document['moodDays']))
-        ..decor = parseDecor(document['decor'])
-        ..journalQuestion = _parseJournalQuestion(document['journalQuestion']);
-      final added = document['addedRituals'];
-      if (added is List) {
-        facts.addedRituals.addAll(
-          AccueilRitual.values.where((ritual) => added.contains(ritual.name)),
-        );
+      if (_disposed || revision != _revision) return;
+      var facts = cached = document == null ? _Facts() : _parseFacts(document);
+      _serverConfirmed = document?['serverConfirmed'] == true;
+      if (owner != null) {
+        await _ensureOwner(owner, generation!, revision);
+        var remote = await client!.get(ApiConfig.userHomeUrl);
+        await _ensureOwner(owner, generation, revision);
+        if (document != null && document['serverConfirmed'] != true) {
+          final backup = 'accueil_activities_legacy_$owner';
+          if (!prefs.containsKey(backup) &&
+              !await prefs.setString(backup, raw!)) {
+            throw StateError('Legacy Home backup refused');
+          }
+          await _ensureOwner(owner, generation, revision);
+          client!.ensureSession(generation);
+          remote = await client!.post(
+            '${ApiConfig.userHomeUrl}/import',
+            body: {'owner': owner, 'activities': _remoteFacts(facts, owner)},
+          );
+        } else if ((remote as Map)['revision'] == 0) {
+          remote = await client!.post(
+            '${ApiConfig.userHomeUrl}/import',
+            body: {'owner': owner, 'activities': _remoteFacts(_Facts(), owner)},
+          );
+        }
+        await _ensureOwner(owner, generation, revision);
+        facts = _readRemote(remote, owner, facts);
+        try {
+          await _cache(facts, scope, key, remote: true, revision: revision);
+        } catch (error) {
+          AppDiagnostics.record('home_cache_write_failed', error);
+        }
+        if (_disposed || revision != _revision) return;
+        _remoteReady = true;
+        _serverConfirmed = true;
       }
       _publishIfCurrent(revision, facts.snapshot());
-    } catch (_) {
-      // Des données corrompues ne deviennent jamais un document vide :
-      // l'erreur est visible et le reste de l'Accueil reste utilisable.
+    } catch (error) {
       if (!_disposed && revision == _revision) {
-        _snapshot = AccueilActivitySnapshot(
-          error: 'Tes activités locales n’ont pas pu être lues.',
+        _remoteReady = false;
+        _snapshot = (cached ?? _Facts()).snapshot(
+          error: owner == null
+              ? 'Tes activités locales n’ont pas pu être lues.'
+              : 'Tes activités n’ont pas pu être synchronisées. Actualise avec une connexion pour réessayer.',
         );
         _notify();
       }
+    }
+  }
+
+  _Facts _parseFacts(Map<String, dynamic> document) {
+    final facts = _Facts()
+      ..rituals.addAll(_parseRituals(document['ritualDays']))
+      ..socialWeeks.addAll(_parseSocialWeeks(document['socialWeeks']))
+      ..threadAnswers.addAll(_parseThreadAnswers(document['threadAnswers']))
+      ..moodDays.addAll(_parseMoodDays(document['moodDays']))
+      ..decor = parseDecor(document['decor'])
+      ..journalQuestion = _parseJournalQuestion(document['journalQuestion']);
+    final added = document['addedRituals'];
+    if (added is List) {
+      facts.addedRituals.addAll(
+        AccueilRitual.values.where((ritual) => added.contains(ritual.name)),
+      );
+    }
+    return facts;
+  }
+
+  Future<void> _ensureOwner(String owner, int generation, int revision) async {
+    client!.ensureSession(generation);
+    if (_disposed ||
+        revision != _revision ||
+        await client!.currentUserId != owner) {
+      throw StateError('Home account changed');
+    }
+    client!.ensureSession(generation);
+    if (_disposed || revision != _revision) {
+      throw StateError('Home account changed');
+    }
+  }
+
+  _Facts _readRemote(dynamic value, String owner, _Facts local) {
+    if (value is! Map ||
+        value['schemaVersion'] != 1 ||
+        value['owner'] != owner ||
+        value['activities'] is! Map) {
+      throw const FormatException('Invalid Home response');
+    }
+    final facts = _parseFacts(
+      Map<String, dynamic>.from(value['activities'] as Map),
+    );
+    facts.moodDays.addAll(local.moodDays);
+    return facts;
+  }
+
+  Map<String, dynamic> _remoteFacts(_Facts facts, String owner) =>
+      _document(facts, owner)..removeWhere(
+        (key, _) => const ['version', 'owner', 'moodDays'].contains(key),
+      );
+
+  Future<void> _cache(
+    _Facts facts,
+    String scope,
+    String key, {
+    required bool remote,
+    int? revision,
+  }) async {
+    final encrypted = await cipher.seal(
+      scope,
+      jsonEncode({
+        ..._document(facts, scope),
+        if (remote) 'serverConfirmed': true,
+      }),
+      purpose: _purpose,
+    );
+    final prefs = await _prefs;
+    if (revision != null && (_disposed || revision != _revision)) return;
+    if (!await prefs.setString(key, encrypted)) {
+      throw StateError('Home cache refused');
     }
   }
 
@@ -390,7 +515,15 @@ class AccueilActivities extends ChangeNotifier {
       completedAt.remove(ritual);
     }
     facts.rituals[day] = RitualDay(day: day, completedAt: completedAt);
-    return _commit(facts);
+    return _commit(
+      facts,
+      command: {
+        'kind': 'ritual',
+        'day': day.isoDate,
+        'ritual': ritual.name,
+        'done': done,
+      },
+    );
   }
 
   Future<bool> addRitual(AccueilRitual ritual) {
@@ -399,7 +532,10 @@ class AccueilActivities extends ChangeNotifier {
     }
     if (_snapshot.addedRituals.contains(ritual)) return Future.value(true);
     final facts = _Facts.of(_snapshot)..addedRituals.add(ritual);
-    return _commit(facts);
+    return _commit(
+      facts,
+      command: {'kind': 'addRitual', 'ritual': ritual.name},
+    );
   }
 
   /// Answers a follow-up, retaining the entry's first confirmed answer.
@@ -415,7 +551,10 @@ class AccueilActivities extends ChangeNotifier {
       reply: reply,
       answeredAt: now().toUtc(),
     );
-    return _commit(facts);
+    return _commit(
+      facts,
+      command: {'kind': 'thread', 'entryId': entryId, 'reply': reply.name},
+    );
   }
 
   /// At most one social step per date; another click that day keeps the first
@@ -434,7 +573,10 @@ class AccueilActivities extends ChangeNotifier {
       ideaIndex: week.ideaIndex,
       completedAt: completedAt,
     );
-    return _commit(facts);
+    return _commit(
+      facts,
+      command: {'kind': 'socialComplete', 'day': day.isoDate},
+    );
   }
 
   /// Advances to the week's next social idea without changing the counter.
@@ -449,11 +591,18 @@ class AccueilActivities extends ChangeNotifier {
       ideaIndex: week.ideaIndex + 1,
       completedAt: week.completedAt,
     );
-    return _commit(facts);
+    return _commit(facts, command: {'kind': 'socialIdea', 'day': day.isoDate});
   }
 
   /// Records the day's confirmed mood; the last mood that day wins.
-  Future<bool> recordMood({required CivilDay day, required MoodType mood}) {
+  Future<bool> recordMood({
+    required CivilDay day,
+    required MoodType mood,
+  }) async {
+    final revision = _revision;
+    await _loading;
+    await _writes;
+    if (_disposed || revision != _revision) return false;
     final facts = _Facts.of(_snapshot);
     if (facts.moodDays[day] == mood) return Future.value(true);
     facts.moodDays[day] = mood;
@@ -469,7 +618,7 @@ class AccueilActivities extends ChangeNotifier {
     final facts = _Facts.of(_snapshot);
     if (facts.decor == decor) return Future.value(true);
     facts.decor = decor;
-    return _commit(facts);
+    return _commit(facts, command: {'kind': 'decor', 'decor': decor.name});
   }
 
   /// Shows the next Journal question for [day], among [count] questions.
@@ -477,12 +626,16 @@ class AccueilActivities extends ChangeNotifier {
     required CivilDay day,
     required int count,
   }) {
+    if (count <= 0) return Future.value(false);
     final facts = _Facts.of(_snapshot);
     facts.journalQuestion = JournalQuestionPick(
       day: day,
       index: (_snapshot.journalQuestionIndex(day, count) + 1) % count,
     );
-    return _commit(facts);
+    return _commit(
+      facts,
+      command: {'kind': 'question', 'day': day.isoDate, 'count': count},
+    );
   }
 
   /// Monday of [day]'s ISO week, used as the social-step key.
@@ -497,10 +650,10 @@ class AccueilActivities extends ChangeNotifier {
     }
   }
 
-  Map<String, dynamic> _document(_Facts facts) {
+  Map<String, dynamic> _document(_Facts facts, String owner) {
     return {
       'version': _documentVersion,
-      'owner': _scope,
+      'owner': owner,
       'ritualDays': {
         for (final entry in facts.rituals.entries)
           entry.key.isoDate: {
@@ -531,8 +684,12 @@ class AccueilActivities extends ChangeNotifier {
       },
       'decor': facts.decor.name,
       'addedRituals': facts.addedRituals.map((ritual) => ritual.name).toList(),
-      if (facts.journalQuestion case final pick?)
-        'journalQuestion': {'day': pick.day.isoDate, 'index': pick.index},
+      'journalQuestion': facts.journalQuestion == null
+          ? null
+          : {
+              'day': facts.journalQuestion!.day.isoDate,
+              'index': facts.journalQuestion!.index,
+            },
     };
   }
 
@@ -545,24 +702,45 @@ class AccueilActivities extends ChangeNotifier {
     _capThreadAnswers(facts.threadAnswers);
   }
 
-  Future<bool> _commit(_Facts facts) async {
+  Future<bool> _commit(_Facts facts, {Map<String, dynamic>? command}) async {
     if (_disposed) return false;
+    final owner = _remoteOwner;
+    if (owner != null &&
+        command != null &&
+        (!_remoteReady || _snapshot.isWriting)) {
+      return false;
+    }
     final revision = _revision;
+    final generation = client?.sessionGeneration;
     final scope = _scope;
     final key = _key;
     _prune(facts);
     final confirmed = _Facts.of(_snapshot);
     _snapshot = facts.snapshot(isWriting: true);
     _notify();
+    var committed = facts;
     final write = _writes.then((_) async {
-      final encrypted = await cipher.seal(
-        scope,
-        jsonEncode(_document(facts)),
-        purpose: _purpose,
-      );
-      final prefs = await _prefs;
-      if (!await prefs.setString(key, encrypted)) {
-        throw StateError('Accueil activities write refused');
+      if (owner != null && command != null) {
+        await _ensureOwner(owner, generation!, revision);
+        client!.ensureSession(generation);
+        final remote = await client!.post(
+          '${ApiConfig.userHomeUrl}/commands',
+          body: {'requestId': const Uuid().v4(), 'command': command},
+        );
+        await _ensureOwner(owner, generation, revision);
+        committed = _readRemote(remote, owner, facts);
+      }
+      try {
+        await _cache(
+          committed,
+          scope,
+          key,
+          remote: owner != null && _serverConfirmed,
+          revision: owner == null ? null : revision,
+        );
+      } catch (error) {
+        if (owner == null || command == null) rethrow;
+        AppDiagnostics.record('home_cache_write_failed', error);
       }
     });
     _writes = write.then<void>((_) {}, onError: (Object _, StackTrace _) {});
@@ -572,15 +750,18 @@ class AccueilActivities extends ChangeNotifier {
       // Le document confirmé survit à l'échec ; l'erreur est visible et la
       // commande peut être rejouée.
       if (!_disposed && revision == _revision) {
+        if (owner != null && command != null) _remoteReady = false;
         _snapshot = confirmed.snapshot(
-          error: 'Ton changement n’a pas été enregistré. Réessaie.',
+          error: owner == null
+              ? 'Ton changement n’a pas été enregistré. Réessaie.'
+              : 'L’enregistrement n’a pas pu être confirmé. Actualise pour vérifier puis réessaie.',
         );
         _notify();
       }
       return false;
     }
     if (!_disposed && revision == _revision) {
-      _snapshot = facts.snapshot();
+      _snapshot = committed.snapshot();
       _notify();
     }
     return revision == _revision;
@@ -588,8 +769,31 @@ class AccueilActivities extends ChangeNotifier {
 
   /// Removes a deleted account's document after pending writes finish.
   Future<void> deleteOwner(String userId) async {
-    await _writes;
+    await flushed;
     final prefs = await _prefs;
     await prefs.remove('accueil_activities_$userId');
+    await prefs.remove('accueil_activities_legacy_$userId');
+  }
+
+  Future<Map<String, dynamic>> exportOwner(String owner) async {
+    await flushed;
+    final prefs = await _prefs;
+    final result = <String, dynamic>{};
+    for (final base in const [
+      'accueil_activities',
+      'accueil_activities_legacy',
+    ]) {
+      final raw = prefs.getString('${base}_$owner');
+      if (raw != null) {
+        final parsed = jsonDecode(
+          await cipher.open(owner, raw, purpose: _purpose),
+        ) as Map<String, dynamic>;
+        if (parsed['owner'] != owner) {
+          throw const FormatException('Home export account mismatch');
+        }
+        result[base] = parsed;
+      }
+    }
+    return result;
   }
 }

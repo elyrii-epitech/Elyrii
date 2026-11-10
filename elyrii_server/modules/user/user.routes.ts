@@ -1,11 +1,13 @@
 import { Hono } from "hono";
 import UserController from "./user.controller";
+import HomeController from "./home.controller";
 import { authMiddleware } from "../../middleware/auth.middleware";
 import type { HonoEnv } from "../../utils/hono.types";
 
 class UserRoutes {
     private readonly router = new Hono<HonoEnv>();
     private readonly userController = new UserController();
+    private readonly home = new HomeController();
 
     constructor() {
         this.initRoutes();
@@ -21,6 +23,9 @@ class UserRoutes {
         this.router.get("/settings", ...this.userController.getSettings);
         this.router.put("/settings", ...this.userController.updateSettings);
         this.router.get("/export", ...this.userController.exportAccount);
+        this.router.get("/home", ...this.home.get);
+        this.router.post("/home/import", ...this.home.importLocal);
+        this.router.post("/home/commands", ...this.home.command);
         this.router.get("/mascot", ...this.userController.getMascot);
         this.router.put("/mascot", ...this.userController.updateMascot);
         this.router.put("/account/password", ...this.userController.changePassword);
