@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 import '../../data/repositories/meditation_repository.dart';
@@ -28,10 +29,9 @@ class MeditationController extends ChangeNotifier {
   String? _backendSessionId;
   String? _backendError;
   int? _selectedMoodIndex;
-  String? _selectedMoodKey;
-  int _generation = 0;
   bool _disposed = false;
   Future<void> _completion = Future.value();
+  int _pendingSaves = 0;
   _SessionRegistration? _registration;
 
   Timer? _timer;
@@ -78,6 +78,8 @@ class MeditationController extends ChangeNotifier {
   int get completedCycles => _completedCycles;
   String? get backendSessionId => _backendSessionId;
   String? get backendError => _backendError;
+  bool get isSyncing => _pendingSaves > 0;
+  Future<void> get synchronized => _completion;
   int? get selectedMoodIndex => _selectedMoodIndex;
 
   bool get isRunning => _sessionState == MeditationSessionState.running;
@@ -148,8 +150,10 @@ class MeditationController extends ChangeNotifier {
   Future<void> startSession() async {
     final exercise = _selectedExercise;
     if (exercise == null || !isSetup) return;
-    final generation = ++_generation;
-    final registration = _SessionRegistration();
+    final registration = _SessionRegistration(
+      exercise.id,
+      _selectedDurationMinutes,
+    );
     _registration = registration;
 
     _sessionState = MeditationSessionState.running;
@@ -158,7 +162,6 @@ class MeditationController extends ChangeNotifier {
     _completedCycles = 0;
     _phaseSecondsRemaining = exercise.breathingType?.phases[0].seconds ?? 0;
     _selectedMoodIndex = null;
-    _selectedMoodKey = null;
     _backendError = null;
     _backendSessionId = null;
 
@@ -166,35 +169,7 @@ class MeditationController extends ChangeNotifier {
     _startTimer();
     notifyListeners();
 
-    if (_repository != null) {
-      try {
-        final session = await _repository.startSession(
-          type: exercise.id,
-          durationMinutes: _selectedDurationMinutes,
-        );
-        if (_disposed || generation != _generation) {
-          if (registration.finished) {
-            await _completeSession(session.id, registration.mood);
-          } else {
-            await _repository.cancelSession(session.id);
-          }
-          return;
-        }
-        _backendSessionId = session.id;
-        if (isFinished) {
-          unawaited(_completeSession(session.id, _selectedMoodKey));
-        }
-      } catch (e) {
-        if (!_disposed && generation == _generation) {
-          _backendError =
-              'La séance n’a pas pu être enregistrée dans ton compte.';
-        }
-      } finally {
-        if (!_disposed && generation == _generation) {
-          notifyListeners();
-        }
-      }
-    }
+    await _persist(registration);
   }
 
   void pauseSession() {
@@ -219,54 +194,94 @@ class MeditationController extends ChangeNotifier {
   Future<void> stopSession({bool finished = false}) async {
     _timer?.cancel();
     _clock.stop();
-    final previousSessionId = _backendSessionId;
+    final registration = _registration;
 
     if (finished) {
       _registration?.finished = true;
       _sessionState = MeditationSessionState.finished;
       ElyriiHaptics.success();
     } else {
-      _generation++;
+      if (registration != null) registration.canceled = true;
       _sessionState = MeditationSessionState.setup;
       _remainingSeconds = _selectedDurationMinutes * 60;
       _backendSessionId = null;
       ElyriiHaptics.warning();
-
-      if (_repository != null && previousSessionId != null) {
-        unawaited(
-          _repository
-              .cancelSession(previousSessionId)
-              .then((_) => null, onError: (_) => null),
-        );
-      }
     }
     notifyListeners();
-    if (finished && previousSessionId != null) {
-      await _completeSession(previousSessionId, _selectedMoodKey);
+    if (registration != null) {
+      final saving = _persist(registration);
+      // Network registration never blocks the local finish/exit interaction.
+      if (registration.backendId != null) await saving;
     }
   }
 
   Future<void> selectMood(int moodIndex, String backendKey) async {
+    if (!isFinished || _disposed) return;
     _selectedMoodIndex = moodIndex;
-    _selectedMoodKey = backendKey;
     _registration?.mood = backendKey;
     ElyriiHaptics.selection();
     notifyListeners();
 
-    if (_repository != null && _backendSessionId != null) {
-      await _completeSession(_backendSessionId!, backendKey);
+    final registration = _registration;
+    if (registration != null) {
+      final saving = _persist(registration);
+      if (registration.backendId != null) await saving;
     }
   }
 
-  Future<void> _completeSession(String id, String? mood) {
-    // Keep the optional mood update after the automatic completion request.
+  Future<void> retrySync() async {
+    final registration = _registration;
+    if (_disposed || registration == null || isSyncing) return;
+    await _persist(registration);
+  }
+
+  Future<void> _persist(_SessionRegistration registration) {
+    if (_repository == null) return Future.value();
+    _pendingSaves++;
+    if (!_disposed &&
+        identical(_registration, registration) &&
+        !registration.canceled) {
+      notifyListeners();
+    }
+    // Serialize acknowledgements, optional mood changes and retries. A captured
+    // registration keeps its outcome even after closing its summary.
     _completion = _completion.then((_) async {
       try {
-        await _repository!.completeSession(sessionId: id, moodAfter: mood);
+        registration.backendId ??= (await _repository.startSession(
+          type: registration.type,
+          durationMinutes: registration.minutes,
+          clientSessionId: registration.clientId,
+        )).id;
+        if (registration.finished &&
+            (!registration.completed ||
+                registration.savedMood != registration.mood)) {
+          final mood = registration.mood;
+          await _repository.completeSession(
+            sessionId: registration.backendId!,
+            moodAfter: mood,
+          );
+          registration.completed = true;
+          registration.savedMood = mood;
+        } else if (registration.canceled && !registration.canceledSaved) {
+          await _repository.cancelSession(registration.backendId!);
+          registration.canceledSaved = true;
+        }
+        if (!_disposed && identical(_registration, registration)) {
+          _backendError = null;
+          if (!registration.canceled) {
+            _backendSessionId = registration.backendId;
+          }
+        }
       } catch (_) {
-        if (!_disposed && _backendSessionId == id) {
+        if (!_disposed && identical(_registration, registration)) {
           _backendError =
               'La séance n’a pas pu être enregistrée dans ton compte.';
+        }
+      } finally {
+        _pendingSaves--;
+        if (!_disposed &&
+            identical(_registration, registration) &&
+            !registration.canceled) {
           notifyListeners();
         }
       }
@@ -276,7 +291,11 @@ class MeditationController extends ChangeNotifier {
 
   void resetToSetup() {
     _timer?.cancel();
-    _generation++;
+    final previous = _registration;
+    if (previous != null && !previous.finished && !previous.canceled) {
+      previous.canceled = true;
+      unawaited(_persist(previous));
+    }
     _sessionState = MeditationSessionState.setup;
     _remainingSeconds = _selectedDurationMinutes * 60;
     _currentPhaseIndex = 0;
@@ -284,7 +303,6 @@ class MeditationController extends ChangeNotifier {
     _completedCycles = 0;
     _backendSessionId = null;
     _selectedMoodIndex = null;
-    _selectedMoodKey = null;
     _selectedExercise = null;
     _registration = null;
     notifyListeners();
@@ -350,16 +368,14 @@ class MeditationController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
-    _generation++;
     _timer?.cancel();
     _clock.stop();
-    final id = _backendSessionId;
-    if (!isFinished && id != null && _repository != null) {
-      unawaited(
-        _repository
-            .cancelSession(id)
-            .then<void>((_) {}, onError: (Object _) {}),
-      );
+    final registration = _registration;
+    if (registration != null &&
+        !registration.finished &&
+        !registration.canceled) {
+      registration.canceled = true;
+      unawaited(_persist(registration));
     }
     super.dispose();
   }
@@ -367,6 +383,15 @@ class MeditationController extends ChangeNotifier {
 
 /// Keeps a finished session's outcome even after leaving its summary page.
 class _SessionRegistration {
+  final clientId = const Uuid().v4();
+  final String type;
+  final int minutes;
+  String? backendId;
   bool finished = false;
+  bool canceled = false;
+  bool completed = false;
+  bool canceledSaved = false;
   String? mood;
+  String? savedMood;
+  _SessionRegistration(this.type, this.minutes);
 }

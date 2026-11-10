@@ -85,6 +85,7 @@ challenge/meditation contracts, reports/export, or cross-device Parcours progres
 Journal pagination and persistence are covered by the subsequent journal milestone.
 Chat and Kafka contracts are covered by the subsequent [chat milestone](frontend-chat.md).
 Challenge progression and the garden are covered by the [challenges milestone](frontend-challenges.md).
+Practice registration, completion and history are covered by the [meditation milestone](frontend-meditation.md).
 It neither deploys a backend nor publishes a mobile build.
 
 ## Verification on 10 November 2026

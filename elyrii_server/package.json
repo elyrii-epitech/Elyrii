@@ -16,6 +16,7 @@
     "test:journal": "bash scripts/test-auth-profile-mood.sh",
     "test:chat": "bash scripts/test-chat.sh",
     "test:challenges": "MOBILE_TEST_SCOPE=challenges bash scripts/test-auth-profile-mood.sh",
+    "test:meditation": "MOBILE_TEST_SCOPE=meditation bash scripts/test-auth-profile-mood.sh",
     "docs:build": "cd scripts && ./generate-docs.sh build",
     "docs:serve": "cd scripts && ./generate-docs.sh serve"
   },

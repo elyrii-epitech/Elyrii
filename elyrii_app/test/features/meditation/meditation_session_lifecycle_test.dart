@@ -29,6 +29,7 @@ class SessionRepository extends MeditationRepository {
     required String type,
     required int durationMinutes,
     String? moodBefore,
+    String? clientSessionId,
   }) {
     requestedType = type;
     requestedMinutes = durationMinutes;
@@ -71,6 +72,7 @@ void main() {
     'identifiant et durée libres envoyés, fin enregistrée avant le ressenti',
     () async {
       final starting = controller.startSession();
+      await Future<void>.delayed(Duration.zero);
       expect(repository.requestedType, 'body-scan');
       expect(repository.requestedMinutes, 7);
       repository.pending.complete(repository.session);

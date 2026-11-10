@@ -84,6 +84,10 @@ class MeditationSummarySheet extends StatelessWidget {
                   color: AppColors.errorText(dark),
                 ),
               ),
+              TextButton(
+                onPressed: controller.isSyncing ? null : controller.retrySync,
+                child: const Text('Réessayer'),
+              ),
             ],
             const SizedBox(height: AppDimensions.spacing20),
             FilledButton(

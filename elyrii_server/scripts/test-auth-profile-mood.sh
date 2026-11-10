@@ -46,7 +46,12 @@ for attempt in {1..50}; do
     sleep 0.2
 done
 if [[ "$ready" != true ]]; then echo "Local API failed to start." >&2; exit 1; fi
-if [[ "${MOBILE_TEST_SCOPE:-}" == challenges ]]; then
+if [[ "${MOBILE_TEST_SCOPE:-}" == meditation ]]; then
+    export MEDITATION_INTEGRATION=1
+    bun --no-env-file test --timeout 30000 modules/meditation/meditation-connected.integration.test.ts
+    flutter_connected_tests=(test/frontend/meditation_connected_test.dart)
+    ios_connected_test=integration_test/meditation_connected_test.dart
+elif [[ "${MOBILE_TEST_SCOPE:-}" == challenges ]]; then
     export CHALLENGES_INTEGRATION=1
     bun --no-env-file test --timeout 30000 modules/quest/challenges-connected.integration.test.ts
     flutter_connected_tests=(test/frontend/challenges_connected_test.dart)
@@ -63,5 +68,6 @@ fi
 if [[ -n "${IOS_SIMULATOR_UDID:-}" ]]; then
     (cd ../elyrii_app && flutter test --no-pub "${IOS_CONNECTED_TEST:-$ios_connected_test}" \
         -d "$IOS_SIMULATOR_UDID" --dart-define=ELYRII_ENV=development --dart-define=ELYRII_API_URL="$MOBILE_TEST_API_URL" \
-        --dart-define=HOLD_CHALLENGES_QA_FRAME="${HOLD_CHALLENGES_QA_FRAME:-false}")
+        --dart-define=HOLD_CHALLENGES_QA_FRAME="${HOLD_CHALLENGES_QA_FRAME:-false}" \
+        --dart-define=HOLD_MEDITATION_QA_FRAME="${HOLD_MEDITATION_QA_FRAME:-false}")
 fi
