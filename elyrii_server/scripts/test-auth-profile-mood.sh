@@ -47,7 +47,12 @@ for attempt in {1..50}; do
     sleep 0.2
 done
 if [[ "$ready" != true ]]; then echo "Local API failed to start." >&2; exit 1; fi
-if [[ "${MOBILE_TEST_SCOPE:-}" == coach ]]; then
+if [[ "${MOBILE_TEST_SCOPE:-}" == settings ]]; then
+    export SETTINGS_INTEGRATION=1
+    bun --no-env-file test --timeout 30000 modules/user/settings-connected.integration.test.ts
+    flutter_connected_tests=(test/frontend/settings_connected_test.dart)
+    ios_connected_test=integration_test/settings_connected_test.dart
+elif [[ "${MOBILE_TEST_SCOPE:-}" == coach ]]; then
     export COACH_INTEGRATION=1
     bun --no-env-file test --timeout 30000 modules/coach/coach-connected.integration.test.ts
     flutter_connected_tests=(test/frontend/coach_connected_test.dart)
@@ -76,5 +81,6 @@ if [[ -n "${IOS_SIMULATOR_UDID:-}" ]]; then
         -d "$IOS_SIMULATOR_UDID" --dart-define=ELYRII_ENV=development --dart-define=ELYRII_API_URL="$MOBILE_TEST_API_URL" \
         --dart-define=HOLD_CHALLENGES_QA_FRAME="${HOLD_CHALLENGES_QA_FRAME:-false}" \
         --dart-define=HOLD_MEDITATION_QA_FRAME="${HOLD_MEDITATION_QA_FRAME:-false}" \
-        --dart-define=HOLD_COACH_QA_FRAME="${HOLD_COACH_QA_FRAME:-false}")
+        --dart-define=HOLD_COACH_QA_FRAME="${HOLD_COACH_QA_FRAME:-false}" \
+        --dart-define=HOLD_SETTINGS_QA_FRAME="${HOLD_SETTINGS_QA_FRAME:-false}")
 fi

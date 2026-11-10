@@ -8,6 +8,7 @@ import type { HonoEnv } from "../../utils/hono.types";
 import QuestLogic from "../quest/quest.logic";
 import AuthRepository from "../../repository/auth.repository";
 import QuestRepository from "../../repository/quest.repository";
+import UserExportRepository from "../../repository/user-export.repository";
 
 const updateSettingsValidation = z.object({
     themeMode: z.enum(["LIGHT", "DARK", "SYSTEM"]).optional(),
@@ -228,11 +229,12 @@ class UserController {
 
     readonly getSettings = this.factory.createHandlers(async (ctx) => {
         const { userId } = ctx.get("user");
+        ctx.header("Cache-Control", "no-store");
         try {
             const settings = await this.userRepository.getOrCreateUserSettings(userId);
             return ctx.json(settings, 200);
         } catch (error) {
-            console.error("getSettings error:", error);
+            console.error("[Settings] Read failed");
             return ctx.json({ error: "Failed to retrieve user settings" }, 500);
         }
     });
@@ -240,6 +242,7 @@ class UserController {
     readonly updateSettings = this.factory.createHandlers(
         sValidator("json", updateSettingsValidation),
         async (ctx) => {
+            ctx.header("Cache-Control", "no-store");
             const { userId } = ctx.get("user");
             const body = ctx.req.valid("json");
 
@@ -251,11 +254,22 @@ class UserController {
                 const updated = await this.userRepository.updateUserSettings(userId, body);
                 return ctx.json(updated, 200);
             } catch (error) {
-                console.error("updateSettings error:", error);
+                console.error("[Settings] Update failed");
                 return ctx.json({ error: "Failed to update user settings" }, 500);
             }
         }
     );
+
+    readonly exportAccount = this.factory.createHandlers(async ctx => {
+        ctx.header("Cache-Control", "no-store");
+        try {
+            const data = await new UserExportRepository().exportAccount(ctx.get("user").userId);
+            return data ? ctx.json(data) : ctx.json({error: "Account not found"}, 404);
+        } catch (_) {
+            console.error("[Settings] Account export failed");
+            return ctx.json({error: "Account export temporarily unavailable"}, 500);
+        }
+    });
 
     readonly getMascot = this.factory.createHandlers(async (ctx) => {
         const { userId } = ctx.get("user");

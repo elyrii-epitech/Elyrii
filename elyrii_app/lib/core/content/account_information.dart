@@ -11,7 +11,7 @@ abstract final class AccountInformation {
   static const data =
       'Ton profil et tes notes sont envoyés au serveur. Une copie protégée du journal est conservée sur cet appareil. '
       'Les messages envoyés à Elyrii sont transmis au serveur et à l’IA pour préparer une réponse. '
-      'L’historique affiché et la progression des programmes sont conservés sur cet appareil. '
+      'Les réglages, l’historique du chat, les séances et la progression des programmes sont enregistrés dans ton compte. Le chat et les programmes ont aussi une copie protégée sur cet appareil. '
       'Les réglages donnent accès à l’export et à la suppression du compte. '
       'La politique de confidentialité complète de cette version n’est pas encore publiée.';
 }

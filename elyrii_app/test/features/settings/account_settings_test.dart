@@ -49,6 +49,35 @@ class _Repository extends UserRepository {
 
 void main() {
   test(
+    'a settings reload waits for queued saves before starting its read',
+    () async {
+      final repository = _Repository();
+      final provider = UserProvider(repository: repository);
+      addTearDown(provider.dispose);
+      provider.onUserChanged(userId: 'alice');
+      final initial = provider.loadSettings();
+      await Future<void>.delayed(Duration.zero);
+      repository.reads.single.complete(settings('alice', 'LIGHT'));
+      await initial;
+      final save = provider.updateSettings(themeMode: 'DARK');
+      await Future<void>.delayed(Duration.zero);
+      final reload = provider.loadSettings();
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        repository.reads,
+        hasLength(1),
+        reason: 'A read started before the save commits could restore stale settings.',
+      );
+      repository.writes.single.complete(settings('alice', 'DARK'));
+      expect(await save, isTrue);
+      await Future<void>.delayed(Duration.zero);
+      repository.reads.last.complete(settings('alice', 'DARK'));
+      await reload;
+      expect(provider.settings!.themeMode, 'DARK');
+    },
+  );
+
+  test(
     'late profile/settings responses cannot hydrate the next account',
     () async {
       final repository = _Repository();

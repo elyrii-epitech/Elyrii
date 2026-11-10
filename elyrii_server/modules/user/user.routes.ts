@@ -20,6 +20,7 @@ class UserRoutes {
         this.router.get("/dashboard", ...this.userController.getDashboard);
         this.router.get("/settings", ...this.userController.getSettings);
         this.router.put("/settings", ...this.userController.updateSettings);
+        this.router.get("/export", ...this.userController.exportAccount);
         this.router.get("/mascot", ...this.userController.getMascot);
         this.router.put("/mascot", ...this.userController.updateMascot);
         this.router.put("/account/password", ...this.userController.changePassword);

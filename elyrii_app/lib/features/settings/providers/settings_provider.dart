@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/diagnostics/app_diagnostics.dart';
 import '../data/settings_repository.dart';
 import '../models/app_settings.dart';
 import '../models/user_profile.dart';
@@ -28,7 +29,11 @@ class UserProvider extends ChangeNotifier {
   final Map<int, _SettingsPatch> _pending = {};
   Future<void> _writes = Future.value();
   Future<void> _localWrites = Future.value();
-  Future<void> get flushed => _localWrites;
+  Future<void> get flushed async {
+    await _writes;
+    await _localWrites;
+  }
+
   bool _deleting = false;
   Future<void> _persistSettings(AppSettings value, String? owner, int session) {
     final task = _localWrites.then((_) async {
@@ -49,8 +54,10 @@ class UserProvider extends ChangeNotifier {
       );
       if (!saved) throw StateError('Preference write refused');
     });
-    _localWrites = task.catchError((Object _) {});
-    return task;
+    _localWrites = task.catchError((Object error) {
+      AppDiagnostics.record('settings_cache_write_failed', error);
+    });
+    return _localWrites;
   }
 
   Future<void>? _profileLoad;
@@ -140,6 +147,10 @@ class UserProvider extends ChangeNotifier {
     late final Future<void> request;
     request =
         _load(() async {
+          // Read after already queued mutations commit. Capturing only the
+          // patch counter cannot fence an older GET behind a completed PUT.
+          await _writes;
+          if (!_current(session) || version != _nextPatch) return;
           if (owner != null) {
             final prefs = await SharedPreferences.getInstance();
             final raw = prefs.getString('account_settings_$owner');
@@ -167,6 +178,7 @@ class UserProvider extends ChangeNotifier {
             throw const FormatException('Settings account mismatch');
           }
           _confirmedSettings = settings;
+          _error = null;
           _recompute();
           await _persistSettings(settings, owner, session);
         }).whenComplete(() {
@@ -190,7 +202,7 @@ class UserProvider extends ChangeNotifier {
     String? privacyMode,
     String? language,
   }) {
-    if (_deleting) return Future.value(false);
+    if (_deleting || _disposed) return Future.value(false);
     final session = _session;
     final owner = _owner;
     final id = ++_nextPatch;

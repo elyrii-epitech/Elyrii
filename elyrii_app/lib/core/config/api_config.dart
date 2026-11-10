@@ -61,6 +61,7 @@ class ApiConfig {
   static String get userMascotUrl => '$_baseUrl/user/mascot';
   static String get userAvatarUrl => '$_baseUrl/user/avatar';
   static String get userAccountUrl => '$_baseUrl/user/account';
+  static String get userExportUrl => '$_baseUrl/user/export';
   static String get logMoodUrl => '$_baseUrl/user/mood';
 
   static String get meditationSessionsUrl => '$_baseUrl/meditation/sessions';
