@@ -64,6 +64,13 @@
       "when": 1794326400000,
       "tag": "0008_chat_mobile_contracts",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794330000000,
+      "tag": "0009_coach_journeys",
+      "breakpoints": true
     }
   ]
 }

@@ -35,6 +35,16 @@ class JourneyRepository {
   }) : _now = now ?? DateTime.now;
 
   List<JourneyPath> get catalog => journeyCatalog;
+  List<JourneyPath> catalogFor(String? owner) => catalog;
+  bool get isRemote => false;
+  bool canWriteFor(String owner) => true;
+  String? loadWarning(String owner) => null;
+
+  /// Cache an acknowledged server snapshot using the existing encrypted format.
+  Future<void> cacheConfirmedProgress(
+    String owner,
+    JourneyEnrollment current,
+  ) => _persist(owner, current);
 
   Future<SharedPreferences> get _prefs async =>
       _preferences ?? await SharedPreferences.getInstance();

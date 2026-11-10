@@ -70,4 +70,7 @@ class ApiConfig {
       '$_baseUrl/meditation/sessions/$id/complete';
   static String cancelMeditationSessionUrl(String id) =>
       '$_baseUrl/meditation/sessions/$id/cancel';
+
+  static String get coachCatalogUrl => '$_baseUrl/coach/catalog';
+  static String get coachJourneyUrl => '$_baseUrl/coach/journey';
 }

@@ -24,7 +24,7 @@ import '../features/journal/data/repositories/journal_repository.dart';
 import '../features/journal/data/repositories/journal_store.dart';
 import '../features/journal/presentation/providers/journal_provider.dart';
 import '../features/settings/providers/settings_provider.dart';
-import '../features/parcours/data/journey_repository.dart';
+import '../features/parcours/data/connected_journey_repository.dart';
 import '../features/parcours/presentation/providers/journey_provider.dart';
 import '../features/dashboard/data/accueil_activities.dart';
 import '../features/dashboard/presentation/providers/dashboard_provider.dart';
@@ -72,7 +72,9 @@ class AppDependencies {
       repository: JournalRepository(client: api, store: journalStore),
       onEntrySaved: _challengeActivitySaved,
     );
-    parcours = JourneyProvider(repository: JourneyRepository(cipher: cipher));
+    parcours = JourneyProvider(
+      repository: ConnectedJourneyRepository(client: api, cipher: cipher),
+    );
     chat = ChatbotProvider(
       storage: storage,
       history: history,

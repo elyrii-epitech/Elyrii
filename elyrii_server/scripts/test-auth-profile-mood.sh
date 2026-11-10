@@ -37,6 +37,7 @@ fi
 "$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -c 'ALTER TABLE users ADD COLUMN context_generation integer DEFAULT 0 NOT NULL'
 "$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f migrations/0006_native_auth_recovery.sql
 "$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f migrations/0007_journal_mobile_contracts.sql
+"$postgres_bin/psql" -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -q -f migrations/0009_coach_journeys.sql
 bun --no-env-file run index.ts >"$runtime/api.log" 2>&1 &
 api_pid=$!
 ready=false
@@ -46,7 +47,12 @@ for attempt in {1..50}; do
     sleep 0.2
 done
 if [[ "$ready" != true ]]; then echo "Local API failed to start." >&2; exit 1; fi
-if [[ "${MOBILE_TEST_SCOPE:-}" == meditation ]]; then
+if [[ "${MOBILE_TEST_SCOPE:-}" == coach ]]; then
+    export COACH_INTEGRATION=1
+    bun --no-env-file test --timeout 30000 modules/coach/coach-connected.integration.test.ts
+    flutter_connected_tests=(test/frontend/coach_connected_test.dart)
+    ios_connected_test=integration_test/coach_connected_test.dart
+elif [[ "${MOBILE_TEST_SCOPE:-}" == meditation ]]; then
     export MEDITATION_INTEGRATION=1
     bun --no-env-file test --timeout 30000 modules/meditation/meditation-connected.integration.test.ts
     flutter_connected_tests=(test/frontend/meditation_connected_test.dart)
@@ -69,5 +75,6 @@ if [[ -n "${IOS_SIMULATOR_UDID:-}" ]]; then
     (cd ../elyrii_app && flutter test --no-pub "${IOS_CONNECTED_TEST:-$ios_connected_test}" \
         -d "$IOS_SIMULATOR_UDID" --dart-define=ELYRII_ENV=development --dart-define=ELYRII_API_URL="$MOBILE_TEST_API_URL" \
         --dart-define=HOLD_CHALLENGES_QA_FRAME="${HOLD_CHALLENGES_QA_FRAME:-false}" \
-        --dart-define=HOLD_MEDITATION_QA_FRAME="${HOLD_MEDITATION_QA_FRAME:-false}")
+        --dart-define=HOLD_MEDITATION_QA_FRAME="${HOLD_MEDITATION_QA_FRAME:-false}" \
+        --dart-define=HOLD_COACH_QA_FRAME="${HOLD_COACH_QA_FRAME:-false}")
 fi

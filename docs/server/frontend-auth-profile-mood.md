@@ -86,6 +86,7 @@ Journal pagination and persistence are covered by the subsequent journal milesto
 Chat and Kafka contracts are covered by the subsequent [chat milestone](frontend-chat.md).
 Challenge progression and the garden are covered by the [challenges milestone](frontend-challenges.md).
 Practice registration, completion and history are covered by the [meditation milestone](frontend-meditation.md).
+Guided programs and account-synced progress are covered by the [Coach milestone](frontend-coach.md).
 It neither deploys a backend nor publishes a mobile build.
 
 ## Verification on 10 November 2026

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/network/api_exception.dart';
+
 import '../../data/journey_repository.dart';
 import '../../domain/journey.dart';
 
@@ -30,12 +32,20 @@ class JourneyProvider extends ChangeNotifier {
   JourneyProvider({required this._repository});
 
   List<JourneyPath> get catalog =>
-      _state.hasLoadedData ? _repository.catalog : const [];
+      _state.hasLoadedData ? _repository.catalogFor(_state.owner) : const [];
   JourneyEnrollment? get current => _state.current;
   bool get isLoading => _state.isLoading;
   bool get isWriting => _state.pendingWrites != 0;
   bool get hasLoadedData => _state.hasLoadedData;
   bool get isDemo => _state.isDemo;
+  bool get isRemote => _repository.isRemote && !isDemo;
+  String get persistenceNote => !isRemote
+      ? 'Ta progression est enregistrée sur cet appareil.'
+      : _state.storageFailed
+      ? 'Ta progression locale est conservée. Actualise pour la synchroniser avec ton compte.'
+      : hasLoadedData
+      ? 'Ta progression est enregistrée dans ton compte.'
+      : 'Ta progression sera enregistrée dans ton compte.';
   String? get error => _state.error;
   bool get canWrite =>
       !_disposed &&
@@ -109,12 +119,16 @@ class JourneyProvider extends ChangeNotifier {
         if (!_owns(session) || version != session.dataVersion) return;
         session.current = current;
         session.hasLoadedData = true;
-        session.storageFailed = false;
-        session.error = null;
-      } catch (_) {
+        session.storageFailed = !_repository.canWriteFor(session.owner!);
+        session.error = _repository.loadWarning(session.owner!);
+      } catch (error) {
         if (!_owns(session) || version != session.dataVersion) return;
         session.storageFailed = true;
-        session.error = 'Ta progression locale n’a pas pu être lue. Réessaie sans effacer tes données.';
+        session.error = error is ApiException
+            ? error.message
+            : isRemote
+            ? 'Ta progression n’a pas pu être chargée depuis ton compte. Réessaie sans effacer tes données.'
+            : 'Ta progression locale n’a pas pu être lue. Réessaie sans effacer tes données.';
       }
     } finally {
       session.load = null;
@@ -227,9 +241,15 @@ class JourneyProvider extends ChangeNotifier {
     } on JourneyCommandException catch (error) {
       session.error = error.message;
       return JourneyCommandResult.failed;
+    } on ApiException catch (error) {
+      session.storageFailed = true;
+      session.error = error.message;
+      return JourneyCommandResult.failed;
     } catch (_) {
       session.storageFailed = true;
-      session.error = 'Ta progression n’a pas pu être enregistrée sur cet appareil. Actualise-la, puis réessaie.';
+      session.error = isRemote
+          ? 'Ta progression n’a pas pu être enregistrée dans ton compte. Actualise-la, puis réessaie.'
+          : 'Ta progression n’a pas pu être enregistrée sur cet appareil. Actualise-la, puis réessaie.';
       return JourneyCommandResult.failed;
     } finally {
       session.pendingWrites--;
