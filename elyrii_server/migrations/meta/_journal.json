@@ -50,6 +50,13 @@
       "when": 1794319200000,
       "tag": "0006_native_auth_recovery",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794322800000,
+      "tag": "0007_journal_mobile_contracts",
+      "breakpoints": true
     }
   ]
 }

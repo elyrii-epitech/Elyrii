@@ -50,9 +50,9 @@ Set `MOBILE_TEST_API_PORT` / `MOBILE_TEST_DB_PORT` if the default test ports
 the actual new iOS login/onboarding and restart test. It must be a dedicated,
 already-booted test simulator; this test clears its Elyrii test credentials.
 
-The fixture uses the committed baseline schema, the existing user context
-generation column, and the new recovery migration. It is deliberately scoped
-to auth/profile/mood and does not validate the pgvector/AI migration chain.
+The shared fixture now also runs the [journal integration](frontend-journal.md).
+It uses the baseline schema, the existing user context generation column, and
+the recovery and journal migrations. It does not validate the pgvector/AI migration chain.
 Run the existing `scripts/test-context-db.sh` suite separately for that chain.
 Do not point these fixture tests at a shared development or production database.
 
@@ -80,8 +80,9 @@ Apply the normal ordered migrations with `bun run db:migrate` on an appropriate
 staging database; do not substitute the test fixture for deployment migrations.
 Release builds still require explicit HTTPS `ELYRII_API_URL`.
 
-This milestone does not finish chat/Kafka integration, journal pagination,
+This auth milestone does not finish chat/Kafka integration,
 challenge/meditation contracts, reports/export, or cross-device Parcours progress.
+Journal pagination and persistence are covered by the subsequent journal milestone.
 It neither deploys a backend nor publishes a mobile build.
 
 ## Verification on 10 November 2026

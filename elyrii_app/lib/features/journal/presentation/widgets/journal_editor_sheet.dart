@@ -242,7 +242,9 @@ class _JournalEditorSheetState extends State<JournalEditorSheet> {
       // A retried creation may return the earlier acknowledged snapshot.
       // Subsequent edits must be patched before reporting the draft as saved.
       if (created != null &&
-          (created.content != content || created.title != title)) {
+          (created.content != content ||
+              created.title != title ||
+              created.mood != mood)) {
         _revision++;
       }
       if (created != null && mounted) {
