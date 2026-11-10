@@ -6,6 +6,12 @@ configuration and native checks before distribution.
 
 ## Backend readiness
 
+The auth/profile/mood integration branch now implements native token renewal,
+email activation and password recovery, with its own additive recovery migration.
+See [the integration guide](../server/frontend-auth-profile-mood.md) for the exact
+scope, mail configuration and local verification. The remaining contracts below
+still need separate integration and target-environment validation.
+
 The frontend PR does not deliver the server changes below. Password recovery
 [#266](https://github.com/elyrii-epitech/Elyrii/issues/266), account export
 [#267](https://github.com/elyrii-epitech/Elyrii/issues/267), response reports

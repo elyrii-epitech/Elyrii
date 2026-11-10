@@ -15,7 +15,7 @@ class _Storage extends SecureStorageService {
 class _Repository extends AuthRepository {
   _Repository() : super(client: ApiClient(storage: _Storage()));
   @override
-  Future<void> logout({String? token}) async =>
+  Future<void> logout({String? token, String? refreshToken}) async =>
       throw const SocketException('Offline');
 }
 

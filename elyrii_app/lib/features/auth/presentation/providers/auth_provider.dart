@@ -23,6 +23,7 @@ class AuthProvider extends ChangeNotifier {
   int _sessionRevision = 0;
   bool _disposed = false;
   Future<void> _credentialsTail = Future.value();
+  Future<String?>? _refreshing;
 
   AuthProvider({
     AuthRepository? repository,
@@ -55,16 +56,18 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> restoreLocalSession() async {
     final revision = ++_sessionRevision;
+    _refreshing = null;
     try {
       final credentials = await Future.wait([
         _storage.getAccessToken(),
         _storage.getUserId(),
+        _storage.getRefreshToken(),
       ]);
       final token = credentials[0];
       final owner = credentials[1];
       if (!_current(revision)) return;
       if (token == null ||
-          _isJwtExpired(token) ||
+          (_isJwtExpired(token) && credentials[2] == null) ||
           owner == null ||
           owner.isEmpty) {
         await clearLocalSession();
@@ -176,6 +179,7 @@ class AuthProvider extends ChangeNotifier {
 
   int _beginAuthentication() {
     final revision = ++_sessionRevision;
+    _refreshing = null;
     _user = null;
     _accountId = null;
     _status = AuthStatus.loading;
@@ -209,6 +213,10 @@ class AuthProvider extends ChangeNotifier {
       if (!_current(revision)) return false;
       await _storage.saveAccessToken(result.token);
       if (!_current(revision)) return false;
+      if (result.refreshToken != null) {
+        await _storage.saveRefreshToken(result.refreshToken!);
+      }
+      if (!_current(revision)) return false;
       await _storage.saveUserId(result.user!.id);
       if (!_current(revision)) return false;
       // Authentication can replace the login route immediately. Finish every
@@ -222,6 +230,46 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.authenticated;
     _notify();
     return true;
+  }
+
+  /// Share a refresh across concurrent requests and guard every credential write
+  /// against logout or a new account session.
+  Future<String?> refreshAccessToken() {
+    if (_refreshing != null) return _refreshing!;
+    late final Future<String?> pending;
+    pending = _refreshAccessToken().whenComplete(() {
+      if (identical(_refreshing, pending)) _refreshing = null;
+    });
+    return _refreshing = pending;
+  }
+
+  Future<String?> _refreshAccessToken() async {
+    if (!isAuthenticated || isDemoSession) return null;
+    final revision = _sessionRevision;
+    final owner = _accountId;
+    final refreshToken = await _storage.getRefreshToken();
+    if (!_current(revision) || refreshToken == null) return null;
+    try {
+      final result = await _repository.refresh(refreshToken);
+      if (!_current(revision)) return null;
+      if (result.user?.id != owner ||
+          result.token.isEmpty ||
+          result.refreshToken == null) {
+        throw const FormatException('Invalid refreshed session');
+      }
+      return await _credentials(() async {
+        if (!_current(revision)) return null;
+        await _storage.saveAccessToken(result.token);
+        if (!_current(revision)) return null;
+        await _storage.saveRefreshToken(result.refreshToken!);
+        return _current(revision) ? result.token : null;
+      });
+    } on ApiException catch (error) {
+      if (error.statusCode == 401 && _current(revision)) {
+        await clearLocalSession();
+      }
+      rethrow;
+    }
   }
 
   void _fail(int revision, Object error) {
@@ -273,10 +321,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     final demo = isDemoSession;
     _sessionRevision++;
+    _refreshing = null;
     final removal = _credentials(() async {
       final token = demo ? null : await _storage.getAccessToken();
+      final refreshToken = demo ? null : await _storage.getRefreshToken();
       await _storage.clearAuthData();
-      return token;
+      return (token: token, refreshToken: refreshToken);
     });
     _user = null;
     _accountId = null;
@@ -284,9 +334,16 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     _notify();
     try {
-      final token = await removal;
+      final credentials = await removal;
       if (!demo) {
-        unawaited(_repository.logout(token: token).catchError((Object _) {}));
+        unawaited(
+          _repository
+              .logout(
+                token: credentials.token,
+                refreshToken: credentials.refreshToken,
+              )
+              .catchError((Object _) {}),
+        );
       }
     } catch (_) {
       _error = 'La déconnexion n’a pas pu être terminée. Réessaie.';
@@ -297,6 +354,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> clearLocalSession() async {
     final revision = ++_sessionRevision;
+    _refreshing = null;
     final removal = _credentials(() => _storage.clearAuthData());
     _user = null;
     _accountId = null;

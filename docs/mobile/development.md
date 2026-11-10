@@ -14,7 +14,7 @@ flutter run -d DEVICE_ID
 ```
 
 In debug mode, the default environment is `development`, with the gateway on
-port **3001**. The Android emulator uses `10.0.2.2`; the iOS simulator uses
+port **3000**. The Android emulator uses `10.0.2.2`; the iOS simulator uses
 `localhost`. On a physical phone, use a reachable HTTPS gateway:
 
 ```bash
@@ -26,6 +26,12 @@ argument is still accepted. Staging/production require an explicit HTTPS URL
 without embedded credentials or a loopback address. A release build without an
 environment argument selects production; it does not silently target the local
 development gateway.
+
+On the frontend/backend integration branch, native sessions retain the rotating
+refresh token in secure storage. Concurrent authenticated requests share one
+refresh; a request rejected with 401 is replayed at most once. See
+[auth, profile and mood integration](../server/frontend-auth-profile-mood.md)
+for the local connected test and backend/mail prerequisites.
 
 Android/iOS allow HTTP only for local renderer and development exceptions.
 The Android application ID is `com.elyrii.elyrii_app`; release signing requires

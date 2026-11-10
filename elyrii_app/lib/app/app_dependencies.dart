@@ -64,6 +64,7 @@ class AppDependencies {
     journalStore = JournalStore(cipher: cipher);
     history = ChatHistoryService(cipher: cipher);
     auth = AuthProvider(client: api, storage: storage);
+    api.onRefresh = auth.refreshAccessToken;
     user = UserProvider(client: api);
     journal = JournalProvider(
       repository: JournalRepository(client: api, store: journalStore),
@@ -314,6 +315,7 @@ class AppDependencies {
     auth.removeListener(_authChanged);
     user.removeListener(_preferencesChanged);
     api.onUnauthorized = null;
+    api.onRefresh = null;
     chat.dispose();
     journal.dispose();
     parcours.dispose();
