@@ -78,7 +78,7 @@ void main() {
       await tapVisible(tester, find.text('Continuer'));
       await waitFor(
         tester,
-      () => find.text('Ton objectif').evaluate().isNotEmpty,
+        () => find.text('Ton objectif').evaluate().isNotEmpty,
         description: 'goal step',
       );
       await tapVisible(tester, find.text('Gérer mon stress'));
