@@ -1,54 +1,35 @@
-import { clientSockets } from "../../main";
 import { kafkaService } from "./chat.service";
 import ChatRepository from "../../repository/chat.repository";
-// NOTE: unused while the blocking AI wait in chat.controller.ts is disabled.
-// Kept for easy re-enable of the request/response bridge.
-// import { aiResponseTracker } from "./response-tracker.utils";
+import { chatDelivery } from "./chat-delivery";
+import { z } from "zod";
 
-const chatRepository = new ChatRepository();
+const repository = new ChatRepository();
+const resultSchema = z.object({
+    userId: z.uuid(), conversationId: z.string().min(1).max(200).default("default"),
+    requestId: z.uuid(), response: z.string().min(1).max(100000),
+    sourceMessageId: z.uuid(), sourceHash: z.string().regex(/^[a-f0-9]{64}$/),
+});
 
-/**
- * Subscribes to AI responses from Kafka and forwards them to connected clients.
- * 
- * @remarks
- * Listens to the `elyrii.ai.responses` topic.
- * When a message is received, it parses the JSON content to find the `userId` and `response`.
- * If the user is connected via WebSocket (found in `clientSockets`), the AI response is sent to them.
- */
+/** Validate source ownership/currentness and commit before acknowledging delivery. */
+export async function deliverAiResponse(raw: unknown) {
+    const parsed = resultSchema.safeParse(raw);
+    if (!parsed.success) return;
+    const data = parsed.data;
+    const saved = await repository.createCurrentResponse({
+        userId: data.userId, conversationId: data.conversationId,
+        role: "ai", message: data.response,
+    }, data.sourceMessageId, data.sourceHash);
+    chatDelivery.finish(data.requestId, data.userId, data.conversationId,
+        saved ? "reply" : "error", saved?.message ?? "Ce message n’est plus disponible.",
+        saved?.id, saved?.createdAt, data.sourceMessageId);
+}
 export async function handleAiResponse() {
-    await kafkaService.consumer.subscribe({ topic: "elyrii.ai.responses" });
-
-    await kafkaService.consumer.run({
-        eachMessage: async ({ message }) => {
-            if (!message.value) return;
-            const data: { userId: string, response: string, conversationId?: string, requestId?: string, sourceMessageId?: string, sourceHash?: string } = JSON.parse(message.value.toString());
-            const { userId, response /*, requestId*/ } = data;
-            const conversationId = data.conversationId ?? "default";
-
-            // Resolve pending promise if anyone is waiting for this requestId.
-            // NOTE: disabled — chat.controller.ts no longer blocks on waitForResponse.
-            // if (requestId) {
-            //     aiResponseTracker.resolveResponse(requestId, response);
-            // }
-
-            try {
-                const record = { userId, conversationId, role: "ai", message: response };
-                if (data.sourceMessageId && data.sourceHash) {
-                    if (!await chatRepository.createCurrentResponse(record, data.sourceMessageId, data.sourceHash)) return;
-                } else {
-                    if (process.env.ENABLE_PERSISTENT_CONTEXT === "true") return;
-                    await chatRepository.createMessage(record);
-                }
-            } catch (error) {
-                console.error("Failed to persist AI chat message");
-                return;
-            }
-            const ws = clientSockets.get(userId);
-
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(response);
-            }
-        }
-    });
-
+    await kafkaService.consumer.subscribe({topic: "elyrii.ai.responses"});
+    await kafkaService.consumer.run({eachMessage: async ({message}) => {
+        if (!message.value || message.value.length > 500000) return;
+        let data: unknown;
+        try { data = JSON.parse(message.value.toString()); } catch { return; }
+        // Let database failures propagate so Kafka can replay an uncommitted result.
+        await deliverAiResponse(data);
+    }});
 }

@@ -1,0 +1,88 @@
+name: Frontend production artifact validation
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: HTTPS API origin used by the production build
+        type: string
+        required: true
+permissions:
+  contents: read
+jobs:
+  android-release:
+    runs-on: ubuntu-latest
+    environment: frontend-release-validation
+    defaults:
+      run:
+        working-directory: elyrii_app
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/setup-flutter
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Validate production origin and prepare release signing
+        env:
+          ELYRII_RELEASE_API: ${{ inputs.api_url }}
+          ELYRII_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ELYRII_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ELYRII_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ELYRII_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          from urllib.parse import urlparse
+          url = urlparse(os.environ['ELYRII_RELEASE_API'])
+          if url.scheme != 'https' or not url.hostname or url.username or url.password or url.query or url.fragment:
+              raise SystemExit('An HTTPS API origin is required')
+          for key in ['ELYRII_KEYSTORE', 'ELYRII_STORE_PASSWORD', 'ELYRII_KEY_PASSWORD', 'ELYRII_KEY_ALIAS']:
+              if not os.environ.get(key):
+                  raise SystemExit('Missing release signing configuration: ' + key)
+          Path('android/release-validation.jks').write_bytes(base64.b64decode(os.environ['ELYRII_KEYSTORE'], validate=True))
+          def prop(value):
+              return value.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace(' ', '\\ ')
+          values = {'storeFile': '../release-validation.jks', 'storePassword': os.environ['ELYRII_STORE_PASSWORD'],
+                    'keyPassword': os.environ['ELYRII_KEY_PASSWORD'], 'keyAlias': os.environ['ELYRII_KEY_ALIAS']}
+          Path('android/key.properties').write_text(''.join(k + '=' + prop(v) + '\n' for k, v in values.items()))
+          PY
+      - name: Build signed production artifacts
+        env:
+          ELYRII_RELEASE_API: ${{ inputs.api_url }}
+        run: |
+          flutter build appbundle --release --no-pub --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+          flutter build apk --release --no-pub --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+      - name: Validate 16 KiB ELF and APK ZIP alignment
+        run: |
+          python3 tool/check_android_elf_alignment.py build/app/outputs/bundle/release/app-release.aab
+          python3 tool/check_android_elf_alignment.py build/app/outputs/flutter-apk/app-release.apk
+          ELYRII_ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)
+          "$ELYRII_ZIPALIGN" -c -P 16 -v 4 build/app/outputs/flutter-apk/app-release.apk
+      - name: Remove signing files
+        if: always()
+        run: rm -f android/key.properties android/release-validation.jks
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: android-production-validation
+          path: |
+            elyrii_app/build/app/outputs/bundle/release/app-release.aab
+            elyrii_app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
+  ios-production-technical:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: elyrii_app
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/setup-flutter
+      - name: Build production code without distribution signing
+        env:
+          ELYRII_RELEASE_API: ${{ inputs.api_url }}
+        run: flutter build ios --release --no-codesign --no-pub --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ios-production-technical-unsigned
+          path: elyrii_app/build/ios/iphoneos
+          retention-days: 7

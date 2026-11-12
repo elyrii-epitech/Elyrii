@@ -1,8 +1,10 @@
-import { pgTable, uuid, text, timestamp, index } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, uuid, text, timestamp, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const journalEntriesTable = pgTable("journal_entries", {
     id: uuid("id").primaryKey().defaultRandom().notNull(),
     userId: uuid("user_id").notNull(),
+    clientRequestId: uuid("client_request_id"),
     title: text("title").notNull(),
     content: text("content"),
     mood: text("mood"),
@@ -11,6 +13,8 @@ export const journalEntriesTable = pgTable("journal_entries", {
     deletedAt: timestamp("deleted_at"),
 }, (table) => [
   index("journal_entries_user_id_idx").on(table.userId),
+  index("journal_entries_page_idx").on(table.userId, sql`date_trunc('milliseconds', ${table.createdAt})`, table.id),
+  uniqueIndex("journal_entries_user_request_idx").on(table.userId, table.clientRequestId),
 ]);
 
 export const journalTagsTable = pgTable("journal_tags", {

@@ -1,8 +1,14 @@
+import 'package:provider/provider.dart';
+
+import '../../features/auth/presentation/providers/auth_provider.dart';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter/foundation.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/app_dimensions.dart';
 import '../../routes/app_routes.dart';
 
 class GlobalErrorBoundary extends StatefulWidget {
@@ -15,20 +21,54 @@ class GlobalErrorBoundary extends StatefulWidget {
 }
 
 class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
-  ErrorWidgetBuilder? _defaultErrorBuilder;
+  // Keyed account changes can mount a new boundary before disposing the old
+  // one. A shared dispatcher keeps the global hook owned by active scopes.
+  static final List<_GlobalErrorBoundaryState> _active = [];
+  static ErrorWidgetBuilder? _defaultErrorBuilder;
+  static Widget _dispatcher(FlutterErrorDetails details) {
+    final boundary = _active.lastOrNull;
+    return boundary?._buildErrorWidget(details) ??
+        ErrorWidget(details.exception);
+  }
+
+  void _register() {
+    if (_active.contains(this)) return;
+    final first = _active.isEmpty;
+    if (first) _defaultErrorBuilder = ErrorWidget.builder;
+    _active.add(this);
+    if (first) ErrorWidget.builder = _dispatcher;
+  }
+
+  void _unregister() {
+    if (!_active.remove(this) || _active.isNotEmpty) return;
+    final original = _defaultErrorBuilder;
+    if (ErrorWidget.builder == _dispatcher && original != null) {
+      ErrorWidget.builder = original;
+    }
+    _defaultErrorBuilder = null;
+  }
 
   @override
   void initState() {
     super.initState();
-    _defaultErrorBuilder = ErrorWidget.builder;
-    ErrorWidget.builder = _buildErrorWidget;
+    _register();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _register();
+  }
+
+  @override
+  void deactivate() {
+    _unregister();
+    super.deactivate();
   }
 
   @override
   void dispose() {
-    if (_defaultErrorBuilder != null) {
-      ErrorWidget.builder = _defaultErrorBuilder!;
-    }
+    _unregister();
     super.dispose();
   }
 
@@ -38,7 +78,7 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
       child: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(AppDimensions.spacing24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -47,69 +87,67 @@ class _GlobalErrorBoundaryState extends State<GlobalErrorBoundary> {
                   color: AppColors.primary.withValues(alpha: 0.6),
                   size: 64,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppDimensions.spacing24),
                 Text(
-                  'Oups, un petit souci...',
+                  'Impossible d’afficher cet écran',
                   style: AppTextStyles.headlineSmall(
                     color: Theme.of(context).textTheme.titleLarge?.color,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppDimensions.spacing16),
                 Text(
-                  'Ce n\'est rien de grave. On recommence ensemble ?',
+                  'Un problème empêche d’afficher cet écran. Reconnecte-toi pour réessayer.',
                   style: AppTextStyles.bodyMedium(
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppDimensions.spacing32),
                 ElevatedButton(
-                  onPressed: () {
-                    if (context.mounted) {
-                      Navigator.of(context).pushNamedAndRemoveUntil(
-                        AppRoutes.login,
-                        (route) => false,
-                      );
-                    }
+                  onPressed: () async {
+                    await context.read<AuthProvider>().clearLocalSession();
+                    if (mounted) context.go(AppRoutes.login);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
+                      horizontal: AppDimensions.spacing32,
+                      vertical: AppDimensions.spacing16,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radius16,
+                      ),
                     ),
                   ),
-                  child: const Text('Recommencer'),
+                  child: const Text('Se reconnecter'),
                 ),
                 if (kDebugMode && details.exceptionAsString().isNotEmpty) ...[
-                  const SizedBox(height: 48),
+                  const SizedBox(height: AppDimensions.spacing48),
                   ExpansionTile(
                     title: Text(
-                      'Détails techniques (Debug only)',
+                      'Détails techniques (développement)',
                       style: AppTextStyles.labelMedium(
                         color: Theme.of(context).textTheme.bodySmall?.color,
                       ),
                     ),
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppDimensions.spacing16),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radius12,
+                          ),
                           border: Border.all(
                             color: Theme.of(context).dividerColor,
                           ),
                         ),
                         child: Text(
                           details.exceptionAsString(),
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
+                          style: AppTextStyles.code(
                             color: Theme.of(context).textTheme.bodySmall?.color,
                           ),
                         ),

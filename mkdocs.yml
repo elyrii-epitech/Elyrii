@@ -21,9 +21,15 @@ nav:
       - Architecture: mobile/architecture.md
       - Dependencies: mobile/dependencies.md
       - Features: mobile/features.md
+      - Meditation: mobile/meditation.md
       - Design System: mobile/design.md
+      - UI Wording: mobile/wording.md
       - CI/CD: mobile/ci-cd.md
       - Development: mobile/development.md
+      - Accessibility: mobile/accessibility.md
+      - Release: mobile/release.md
+      - Mascot Accessories: mobile/mascot-accessories.md
+      - Mascot Motion: mobile/velours-motion.md
       - Generated Docs: mobile/api/index.md
   - Server:
       - Overview: server/index.md

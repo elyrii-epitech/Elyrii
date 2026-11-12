@@ -1,191 +1,161 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../data/entities/chat_message.dart';
+
+abstract final class ChatBubbleStyles {
+  static const BorderRadius userRadius = BorderRadius.only(
+    topLeft: Radius.circular(AppDimensions.radius20),
+    topRight: Radius.circular(AppDimensions.radius20),
+    bottomLeft: Radius.circular(AppDimensions.radius20),
+    bottomRight: Radius.circular(AppDimensions.radius20),
+  );
+
+  static BoxDecoration assistant(bool isDark) => BoxDecoration(
+    color: isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.045),
+    borderRadius: BorderRadius.circular(AppDimensions.radius16),
+  );
+}
 
 class ChatMessageBubble extends StatelessWidget {
   final String message;
   final bool isUser;
   final DateTime timestamp;
+  final MessageDelivery delivery;
+  final VoidCallback? onRetry;
+  final VoidCallback? onReport;
 
   const ChatMessageBubble({
     super.key,
     required this.message,
     required this.isUser,
     required this.timestamp,
+    this.delivery = MessageDelivery.delivered,
+    this.onRetry,
+    this.onReport,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        mainAxisAlignment: isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isUser) _buildAvatar(isDark),
-          if (!isUser) const SizedBox(width: 10),
-          Flexible(
-            child: isUser
-                ? _buildUserBubble(context, isDark)
-                : _buildBotBubble(context, isDark),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 780),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spacing20,
+            vertical: AppDimensions.spacing8,
           ),
-          if (isUser) const SizedBox(width: 10),
-          if (isUser) _buildAvatar(isDark),
-        ],
+          child: isUser
+              ? _buildUserMessage(context, isDark)
+              : _buildAssistantMessage(context, isDark),
+        ),
       ),
     );
   }
 
-  /// Bot message with glassmorphic blur effect
-  Widget _buildBotBubble(BuildContext context, bool isDark) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.75,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isDark
-                  ? [
-                      Colors.white.withValues(alpha: 0.08),
-                      Colors.white.withValues(alpha: 0.04),
-                    ]
-                  : [
-                      Colors.white.withValues(alpha: 0.7),
-                      Colors.white.withValues(alpha: 0.5),
-                    ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+  Widget _buildUserMessage(BuildContext context, bool isDark) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: (MediaQuery.sizeOf(context).width * 0.78).clamp(220, 560),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.spacing16,
+          vertical: AppDimensions.spacing12,
+        ),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF302C3B) : const Color(0xFFEDEAF5),
+          borderRadius: ChatBubbleStyles.userRadius,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: AppTextStyles.bodyLarge(color: context.textPrimary),
             ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.12)
-                  : Colors.white.withValues(alpha: 0.5),
-              width: 0.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+            if (delivery != MessageDelivery.delivered) ...[
+              const SizedBox(height: AppDimensions.spacing8),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  delivery == MessageDelivery.pending
+                      ? 'En attente de réponse…'
+                      : 'Réponse non reçue',
+                  style: AppTextStyles.bodySmall(
+                    color: delivery == MessageDelivery.failed
+                        ? Theme.of(context).colorScheme.error
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
+              if (delivery == MessageDelivery.failed)
+                TextButton(onPressed: onRetry, child: const Text('Réessayer')),
             ],
-          ),
-          child: _buildMessageContent(isDark, isUser: false),
+          ],
         ),
       ),
     );
   }
 
-  /// User message with gradient (no blur needed)
-  Widget _buildUserBubble(BuildContext context, bool isDark) {
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.75,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, Color(0xFF7B5FE0)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: _buildMessageContent(isDark, isUser: true),
-    );
-  }
-
-  Widget _buildMessageContent(bool isDark, {required bool isUser}) {
-    return Column(
+  Widget _buildAssistantMessage(BuildContext context, bool isDark) {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          message,
-          style: TextStyle(
-            color: isUser
-                ? Colors.white
-                : (isDark
-                      ? AppColors.textPrimaryDark
-                      : AppColors.textPrimaryLight),
-            fontSize: 15,
-            height: 1.4,
-            fontWeight: FontWeight.w400,
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: isDark ? 0.18 : 0.10),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: const ImageIcon(
+            AssetImage('assets/brand/navbar_app_icon.png'),
+            size: 20,
+            color: AppColors.primary,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          _formatTime(timestamp),
-          style: TextStyle(
-            color: isUser
-                ? Colors.white.withValues(alpha: 0.7)
-                : (isDark
-                      ? AppColors.textTertiaryDark
-                      : AppColors.textTertiaryLight),
-            fontSize: 11,
+        const SizedBox(width: AppDimensions.spacing12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(
+              top: AppDimensions.spacing2,
+              right: AppDimensions.spacing12,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Elyrii · IA',
+                  style: AppTextStyles.overline(color: context.textSecondary),
+                ),
+                const SizedBox(height: AppDimensions.spacing4),
+                Semantics(
+                  label: 'Réponse de l’assistant IA',
+                  child: SelectableText(
+                    message,
+                    style: AppTextStyles.bodyLarge(color: context.textPrimary),
+                  ),
+                ),
+                if (onReport != null)
+                  TextButton.icon(
+                    onPressed: onReport,
+                    icon: const Icon(Icons.flag_outlined),
+                    label: const Text('Signaler cette réponse'),
+                  ),
+              ],
+            ),
           ),
         ),
       ],
     );
-  }
-
-  Widget _buildAvatar(bool isDark) {
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        gradient: isUser
-            ? null
-            : LinearGradient(
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.3),
-                  AppColors.primary.withValues(alpha: 0.15),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-        color: isUser
-            ? (isDark ? AppColors.surfaceDark : AppColors.surfaceLight)
-            : null,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isUser
-              ? Colors.transparent
-              : AppColors.primary.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Icon(
-        isUser ? Icons.person_rounded : Icons.smart_toy_rounded,
-        color: isUser
-            ? (isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight)
-            : AppColors.primary,
-        size: 18,
-      ),
-    );
-  }
-
-  String _formatTime(DateTime time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
   }
 }

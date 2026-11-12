@@ -1,8 +1,8 @@
-import { desc, eq, and, isNull, sql } from "drizzle-orm";
+import { desc, eq, and, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../config/db.config";
 import { moodLogsTable, userTable } from "../config/db/user.table";
-import { journalEntriesTable } from "../config/db/journal.table";
-import { userChallengesTable } from "../config/db/quest.table";
+import { journalEntriesTable, journalTagsTable, journalEntryTagsTable, journalMediaTable } from "../config/db/journal.table";
+import { challengesTable, userChallengesTable } from "../config/db/quest.table";
 import type { UpdateProfileType } from "../utils/zod.valid";
 import {
     userSettingsTable,
@@ -384,11 +384,14 @@ class UserRepository {
         const [created] = await db
             .insert(userSettingsTable)
             .values({ userId })
+            .onConflictDoNothing({ target: userSettingsTable.userId })
             .returning();
-        if (!created) {
-            throw new Error("Failed to create user settings");
-        }
-        return created;
+        if (created) return created;
+        // Profile, settings and dashboard can all hydrate during first launch.
+        const [concurrent] = await db.select().from(userSettingsTable)
+            .where(eq(userSettingsTable.userId, userId)).limit(1);
+        if (!concurrent) throw new Error("Failed to create user settings");
+        return concurrent;
     }
 
     async updateUserSettings(
@@ -410,12 +413,28 @@ class UserRepository {
     }
 
     async deleteUserAccount(userId: string): Promise<boolean> {
-        const [deleted] = await db
-            .delete(userTable)
-            .where(eq(userTable.id, userId))
-            .returning({ id: userTable.id });
-
-        return Boolean(deleted);
+        return db.transaction(async tx => {
+            const [owner] = await tx.select({id: userTable.id}).from(userTable).where(eq(userTable.id, userId)).for("update");
+            if (!owner) return false;
+            const privateTemplates = await tx.select({id: challengesTable.id}).from(challengesTable)
+                .innerJoin(userChallengesTable, eq(userChallengesTable.challengeId, challengesTable.id))
+                .where(and(eq(userChallengesTable.userId, userId), eq(challengesTable.source, "AI")));
+            const entries = tx.select({id: journalEntriesTable.id}).from(journalEntriesTable)
+                .where(eq(journalEntriesTable.userId, userId));
+            await tx.delete(journalMediaTable).where(inArray(journalMediaTable.entryId, entries));
+            await tx.delete(journalEntryTagsTable).where(inArray(journalEntryTagsTable.entryId, entries));
+            const tags = tx.select({id: journalTagsTable.id}).from(journalTagsTable)
+                .where(eq(journalTagsTable.userId, userId));
+            await tx.delete(journalEntryTagsTable).where(inArray(journalEntryTagsTable.tagId, tags));
+            await tx.delete(journalEntriesTable).where(eq(journalEntriesTable.userId, userId));
+            await tx.delete(journalTagsTable).where(eq(journalTagsTable.userId, userId));
+            await tx.delete(userChallengesTable).where(eq(userChallengesTable.userId, userId));
+            if (privateTemplates.length) await tx.delete(challengesTable).where(and(
+                eq(challengesTable.source, "AI"), inArray(challengesTable.id, privateTemplates.map(row => row.id)),
+                sql`NOT EXISTS (SELECT 1 FROM user_challenges remaining WHERE remaining.challenge_id = "challenges"."id")`));
+            const [deleted] = await tx.delete(userTable).where(eq(userTable.id, userId)).returning({id: userTable.id});
+            return Boolean(deleted);
+        });
     }
 }
 

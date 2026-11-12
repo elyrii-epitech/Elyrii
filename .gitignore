@@ -26,6 +26,9 @@ htmlcov/
 
 instance/
 models/
+# Flutter source models must be included alongside their consumers.
+!elyrii_app/lib/features/meditation/domain/models/
+!elyrii_app/lib/features/mascot/data/models/
 .env
 .env.local
 
@@ -53,3 +56,24 @@ CHANGELOG.md
 **/CLAUDE.md
 
 **/key.properties
+
+# Design, Scratch & Local artifacts
+art/
+output/
+tmp/
+*.pdf
+
+# Local AI context and planning notes
+/AGENTS.md
+/GEMINI.md
+/PRODUCT.md
+/BETA_ROADMAP_ISSUES.md
+/conductor/
+
+# Generated mascot review images (runtime portraits live in app assets).
+/scripts/mascot/previews/
+
+/.audit/
+/export-elyrii-redesign/
+/export-elyrii-redesign.zip
+
