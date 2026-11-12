@@ -18,7 +18,7 @@ import '../providers/settings_provider.dart';
 
 const localDataExplanation =
     'Tes notes ont une copie protégée sur cet appareil. Les modifications hors connexion restent dans un brouillon local.\n\n'
-    'L’historique du chat est conservé sur cet appareil. Les messages sont aussi envoyés au serveur et à l’IA.\n\n'
+    'Les réglages, l’historique du chat, les séances et la progression Coach sont enregistrés dans ton compte. Le chat et Coach ont aussi une copie protégée sur cet appareil. Les messages sont transmis à l’IA pour préparer une réponse.\n\n'
     'La suppression du compte lance aussi le nettoyage de ses données sur cet appareil.';
 
 const exportConsent =
@@ -109,7 +109,7 @@ Future<void> exportAccount(BuildContext context) async {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Exporte une copie de ton profil, de ton journal et de tes conversations au format JSON.',
+            'Exporte une copie de ton profil, de tes réglages, de ton journal, de tes conversations et de tes activités au format JSON.',
             style: AppTextStyles.bodyMedium(color: sheet.textPrimary),
           ),
           const SizedBox(height: AppDimensions.spacing16),
@@ -133,10 +133,13 @@ Future<void> exportAccount(BuildContext context) async {
   if (owner == null) return;
   try {
     await services.chat.flushed;
-    final remote = await services.api.get('${ApiConfig.baseUrl}/user/export');
+    await services.user.flushed;
+    await services.accueilActivities.flushed;
+    final remote = await services.api.get(ApiConfig.userExportUrl);
     final local = await services.history.exportOwner(owner);
     final drafts = await services.journalStore.exportDrafts(owner);
     final journey = await services.parcours.exportOwner(owner);
+    final home = await services.accueilActivities.exportOwner(owner);
     if (!context.mounted ||
         services.auth.accountId != owner ||
         revision != services.auth.sessionRevision) {
@@ -149,6 +152,7 @@ Future<void> exportAccount(BuildContext context) async {
         'localConversations': local,
         'localDrafts': drafts,
         'localJourney': journey,
+        'localHome': home,
       },
       title: 'Mes données Elyrii',
       isCurrentOwner: () =>

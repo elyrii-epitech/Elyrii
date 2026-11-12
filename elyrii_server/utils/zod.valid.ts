@@ -2,7 +2,7 @@ import z from "zod";
 
 export const registerValidation = z.object({
     email: z.email(),
-    password: z.string().min(6),
+    password: z.string().min(8).max(128).regex(/[A-Z]/).regex(/[0-9]/),
     lastName: z.string().min(1),
     firstName: z.string().min(1),
     age: z.number().min(0).max(150).optional(),

@@ -18,6 +18,7 @@ export async function resolveWsIdentity(
     requestUrl: string,
     authorizationHeader?: string,
     allowInsecureUserIdFallback = process.env.NODE_ENV !== "production",
+    validateSession?: (payload: TokenPayload) => Promise<boolean>,
 ): Promise<WsIdentity | null> {
     const tokenRepository = new TokenRepository();
     const parsedUrl = new URL(requestUrl, "http://localhost");
@@ -25,15 +26,14 @@ export async function resolveWsIdentity(
     if (token) {
         const payload = await JwtUtils.verifyAccessToken(token);
         if (payload?.userId) {
-            if (payload.jti) {
-                try {
-                    const revoked = await tokenRepository.isAccessTokenRevoked(payload.jti);
-                    if (revoked) {
-                        return null;
-                    }
-                } catch (error) {
-                    // Non-blocking fallback for startup/test contexts when DB is unavailable.
-                }
+            try {
+                const valid = validateSession
+                    ? await validateSession(payload)
+                    : await tokenRepository.userExists(payload.userId) &&
+                      (!payload.jti || !await tokenRepository.isAccessTokenRevoked(payload.jti));
+                if (!valid) return null;
+            } catch {
+                return null;
             }
             return { userId: payload.userId, payload, source: "token" };
         }

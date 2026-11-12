@@ -6,15 +6,20 @@ English descriptions.
 
 ## Backend readiness
 
-The frontend PR does not implement the server contracts required for real
-accounts. The following remain blocking dependencies: correlated chat replies
-[#265](https://github.com/elyrii-epitech/Elyrii/issues/265), password recovery
-[#266](https://github.com/elyrii-epitech/Elyrii/issues/266), account export
+The cleanup frontend PR did not implement the server contracts required for
+real accounts. The integration branch now connects auth, profile and mood;
+see [its scope and checks](../server/frontend-auth-profile-mood.md). The following
+remain separate integration dependencies: correlated chat replies
+[#265](https://github.com/elyrii-epitech/Elyrii/issues/265), account export
 [#267](https://github.com/elyrii-epitech/Elyrii/issues/267), AI response reports
 [#268](https://github.com/elyrii-epitech/Elyrii/issues/268), and meditation catalog
 and duration support [#264](https://github.com/elyrii-epitech/Elyrii/issues/264).
 Journal pagination also requires a compatible server. Demo flows and local
 fixtures do not establish that these contracts work on `dev`.
+
+Password recovery [#266](https://github.com/elyrii-epitech/Elyrii/issues/266) is
+implemented and tested locally in this integration milestone; delivery still
+requires the configured mail provider on the target backend.
 
 | Module | Flow | Data |
 | --- | --- | --- |
@@ -97,8 +102,10 @@ Settings. It explicitly identifies the unpublished terms and privacy policy.
 The former strict-privacy switch is hidden because no distinct enforcement
 behavior is defined; the stored/API preference is retained for compatibility.
 
-French is the only declared UI language. Push notifications are not offered. Automatic access-token renewal and email activation changes remain
-out of scope; a 401 for the current session closes it locally.
+French is the only declared UI language. Push notifications are not offered.
+The integration branch supports automatic native access-token renewal and email
+activation. An invalid refresh closes the current session locally; network
+failures preserve local data without claiming a successful server mutation.
 
 See [architecture](architecture.md) for session/persistence contracts,
 [meditation](meditation.md) and [customization](mascot-accessories.md) for their

@@ -14,7 +14,7 @@ class AppConfig {
   );
   static const _gatewayPort = int.fromEnvironment(
     'ELYRII_API_PORT',
-    defaultValue: 3001,
+    defaultValue: 3000,
   );
   static const _gatewayUrl = String.fromEnvironment('ELYRII_API_URL');
   static AppEnvironment get environment => AppEnvironment.values.firstWhere(

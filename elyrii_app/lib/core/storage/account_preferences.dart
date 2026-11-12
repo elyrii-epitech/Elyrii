@@ -19,6 +19,7 @@ abstract final class AccountPreferences {
         'elyrii_mascot_schema_version',
         'elyrii_seen_cosmetic_unlocks',
         'accueil_activities',
+        'accueil_activities_legacy',
       ])
         '${base}_$owner',
       // Previous dashboard caches did not include their owner in the envelope.

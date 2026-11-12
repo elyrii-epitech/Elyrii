@@ -9,7 +9,9 @@ import {
     type JournalTag,
     type NewJournalEntry,
 } from "../config/db/journal.table";
-import { eq, and, gte, lte, isNull } from "drizzle-orm";
+import { eq, and, gte, lte, isNull, lt, gt, or, asc, desc, sql } from "drizzle-orm";
+
+export class DeletedJournalRequestError extends Error {}
 
 class JournalRepository {
     private normalizeTagName(name: string): string {
@@ -35,6 +37,30 @@ class JournalRepository {
 
         const entries = await db.select().from(journalEntriesTable).where(and(...conditions));
         return entries || [];
+    }
+
+    async getPage(userId: string, limit: number, order: 'asc' | 'desc', cursor?: {createdAt: Date, id: string}, startDate?: Date, endDate?: Date) {
+        const base = [eq(journalEntriesTable.userId, userId), isNull(journalEntriesTable.deletedAt)];
+        if (startDate) base.push(gte(journalEntriesTable.createdAt, startDate));
+        if (endDate) base.push(lte(journalEntriesTable.createdAt, endDate));
+        const conditions = [...base];
+        const createdMilliseconds = sql<Date>`date_trunc('milliseconds', ${journalEntriesTable.createdAt})`;
+        const compare = order === 'asc' ? gt : lt;
+        const sort = order === 'asc' ? asc : desc;
+        if (cursor) {
+            // SQL expressions lack the timestamp column's Date encoder. Bind
+            // UTC text explicitly so node-postgres cannot serialize local time
+            // into this timestamp-without-time-zone comparison.
+            const cursorDate = sql`${cursor.createdAt.toISOString()}::timestamp`;
+            conditions.push(or(compare(createdMilliseconds, cursorDate), and(eq(createdMilliseconds, cursorDate), compare(journalEntriesTable.id, cursor.id)))!);
+        }
+        return db.transaction(async tx => {
+            const rows = await tx.select().from(journalEntriesTable).where(and(...conditions)).orderBy(sort(createdMilliseconds), sort(journalEntriesTable.id)).limit(limit + 1);
+            const [{count} = {count: 0}] = await tx.select({count: sql<number>`count(*)::int`}).from(journalEntriesTable).where(and(...base));
+            const entries = rows.slice(0, limit);
+            const last = entries.at(-1);
+            return {entries, totalCount: count, nextCursor: rows.length > limit && last?.createdAt ? {createdAt: last.createdAt.toISOString(), id: last.id} : null};
+        }, {isolationLevel: 'repeatable read', accessMode: 'read only'});
     }
 
     public async getEntryById(_id: string): Promise<JournalEntry | null> {
@@ -80,7 +106,7 @@ class JournalRepository {
         return { ...entry, id: entry.id, createdAt: entry.createdAt ?? new Date() } as JournalEntry;
     }
 
-    public async createEntryWithRelations(data: NewJournalEntry & { tags?: string[] | null }): Promise<JournalEntry> {
+    public async createEntryWithRelations(data: NewJournalEntry & { tags?: string[] | null }): Promise<JournalEntry & {wasCreated: boolean}> {
         if (!data.userId || !data.title) {
             throw new Error('User ID and title are required');
         }
@@ -91,8 +117,17 @@ class JournalRepository {
                 title: data.title,
                 content: data.content,
                 mood: data.mood,
-            }).returning();
+                clientRequestId: data.clientRequestId,
+            }).onConflictDoNothing({ target: [journalEntriesTable.userId, journalEntriesTable.clientRequestId] }).returning();
             if (!result || result.length === 0) {
+                if (data.clientRequestId) {
+                    const [existing] = await tx.select().from(journalEntriesTable).where(and(
+                        eq(journalEntriesTable.userId, data.userId),
+                        eq(journalEntriesTable.clientRequestId, data.clientRequestId),
+                    )).limit(1);
+                    if (existing && !existing.deletedAt) return {entry: existing, wasCreated: false};
+                    if (existing?.deletedAt) throw new DeletedJournalRequestError('The original note was deleted');
+                }
                 tx.rollback();
                 throw new Error('Failed to create journal entry');
             }
@@ -106,10 +141,10 @@ class JournalRepository {
                 await this.setEntryTagsForUser(createdEntry.id, data.userId, data.tags, tx);
             }
 
-            return createdEntry;
+            return {entry: createdEntry, wasCreated: true};
         });
 
-        return { ...entry, id: entry.id, createdAt: entry.createdAt ?? new Date() } as JournalEntry;
+        return { ...entry.entry, createdAt: entry.entry.createdAt ?? new Date(), wasCreated: entry.wasCreated };
     }
 
     async updateEntry(_id: string, data: Partial<JournalEntry>): Promise<JournalEntry> {
@@ -119,7 +154,6 @@ class JournalRepository {
                 .limit(1);
 
             if (!existing) {
-                tx.rollback();
                 throw new Error('Journal entry not found');
             }
 
@@ -164,7 +198,6 @@ class JournalRepository {
                 .limit(1);
 
             if (!existing) {
-                tx.rollback();
                 throw new Error('Journal entry not found');
             }
 
@@ -218,7 +251,6 @@ class JournalRepository {
                 .limit(1);
 
             if (!existing) {
-                tx.rollback();
                 throw new Error('Journal entry not found');
             }
 
@@ -471,7 +503,6 @@ class JournalRepository {
                 .returning();
             
             if (!updated) {
-                tx.rollback();
                 throw new Error('Failed to soft delete journal entry');
             }
             return true;
@@ -491,7 +522,6 @@ class JournalRepository {
                 .returning();
 
             if (!updated) {
-                tx.rollback();
                 throw new Error('Failed to soft delete journal entry');
             }
             return true;

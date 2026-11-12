@@ -1,384 +1,117 @@
-import { createFactory } from "hono/factory";
+import {createFactory} from "hono/factory";
+import type {Context} from "hono";
+import {z} from "zod";
+import {describeRoute} from "hono-openapi";
 import QuestRepository from "../../repository/quest.repository";
-import type { HonoEnv } from "../../utils/hono.types";
-import { z } from "zod";
-import { sValidator } from "@hono/standard-validator";
-import { describeRoute } from "hono-openapi";
+import type {HonoEnv} from "../../utils/hono.types";
 import QuestLogic from "./quest.logic";
+import {challengePageSchema, proposalSchema, QuestRequestError} from "./quest.contracts";
 
-/**
- * Controller that defines HTTP handlers for gamified challenges (quests).
- * 
- * @remarks
- * This controller handles:
- * - Retrieving active, completed, and pending challenges
- * - Accepting or rejecting AI-proposed challenges
- * - Creating new challenge proposals (internal use, typically by AI)
- */
+type Ctx = Context<HonoEnv>;
+const statusSchema = z.enum(["PENDING", "ACTIVE", "COMPLETED", "REJECTED", "SKIPPED", "EXPIRED"]);
+const legacySchema = z.object({limit: z.coerce.number().int().min(1).max(200).default(100),
+    sort: z.enum(["newest", "oldest", "points_desc", "completed_desc"]).default("newest")});
 class QuestController {
     private readonly factory = createFactory<HonoEnv>();
-    private readonly questRepository: QuestRepository = new QuestRepository();
-    private readonly questLogic: QuestLogic = new QuestLogic();
+    private readonly repository = new QuestRepository();
+    private readonly logic = new QuestLogic();
 
-    private sortUserChallenges<T extends { createdAt: Date | null; completedAt: Date | null; challenge: { rewardPoints: number } }>(
-        rows: T[],
-        sort?: string,
-    ): T[] {
-        const normalized = (sort || "newest").toLowerCase();
-        const sorted = [...rows];
-        if (normalized === "oldest") {
-            sorted.sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
-            return sorted;
-        }
-        if (normalized === "points_desc") {
-            sorted.sort((a, b) => (b.challenge.rewardPoints ?? 0) - (a.challenge.rewardPoints ?? 0));
-            return sorted;
-        }
-        if (normalized === "completed_desc") {
-            sorted.sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0));
-            return sorted;
-        }
-        sorted.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
-        return sorted;
+    private document(summary: string, description: string, created = false) {
+        return describeRoute({summary, description, tags: ["Quest"], responses: {
+            200: {description: "Challenge result (including idempotent command retries)"},
+            ...(created ? {201: {description: "Challenge assignment or proposal created"}} : {}),
+            400: {description: "Invalid request"},
+            404: {description: "Challenge or account not found"},
+            409: {description: "Conflicting challenge transition"},
+            422: {description: "Unsupported challenge definition"},
+            500: {description: "Challenges temporarily unavailable"},
+        }});
     }
 
-    /**
-     * Handler for retrieving active challenges for the user.
-     * 
-     * @param ctx - Hono Context
-     * @returns JSON array of active challenges
-     */
-    public readonly getActiveChallenges = this.factory.createHandlers(
-        describeRoute({
-            summary: "Get Active Challenges",
-            description: "Retrieve all active challenges for the authenticated user.",
-            tags: ["Quest"],
-            responses: {
-                200: { description: "List of active challenges" }
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const sort = ctx.req.query("sort");
-            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
-            const challenges = await this.questRepository.getUserChallenges(userId, 'ACTIVE');
-            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
+    private async safely(ctx: Ctx, action: () => Promise<Response>): Promise<Response> {
+        try { return await action(); }
+        catch (error) {
+            if (error instanceof z.ZodError || error instanceof SyntaxError) return ctx.json({error: "Invalid challenge request"}, 400);
+            if (error instanceof QuestRequestError) return ctx.json({error: error.message}, error.status);
+            console.error("[Quest] Request failed");
+            return ctx.json({error: "Challenges temporarily unavailable"}, 500);
         }
-    );
-
-    /**
-     * Handler for retrieving completed challenges for the user.
-     * 
-     * @param ctx - Hono Context
-     * @returns JSON array of completed challenges
-     */
-    public readonly getCompletedChallenges = this.factory.createHandlers(
-        describeRoute({
-            summary: "Get Completed Challenges",
-            description: "Retrieve all completed challenges for the authenticated user.",
-            tags: ["Quest"],
-            responses: {
-                200: { description: "List of completed challenges" }
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const sort = ctx.req.query("sort");
-            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
-            const challenges = await this.questRepository.getUserChallenges(userId, 'COMPLETED');
-            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
+    }
+    private page(ctx: Ctx) {
+        const input = challengePageSchema.parse(ctx.req.query());
+        return {limit: input.pageSize, cursor: input.cursorDate && input.cursorId ?
+            {date: new Date(input.cursorDate), id: input.cursorId} : undefined};
+    }
+    private async readUser(ctx: Ctx, status?: string) {
+        const userId = ctx.get("user").userId;
+        ctx.header("Cache-Control", "no-store");
+        // Repair deferred work before the first page; later pages only continue.
+        if (!ctx.req.query("cursorId") && (!status || status === "ACTIVE" || status === "COMPLETED")) {
+            await this.logic.checkAndUpdateProgress(userId);
         }
-    );
-
-    /**
-     * Handler for retrieving pending challenge proposals for the user.
-     * 
-     * @remarks
-     * Pending challenges are usually proposals generated by the AI that the user hasn't accepted yet.
-     * 
-     * @param ctx - Hono Context
-     * @returns JSON array of pending challenges
-     */
-    public readonly getPendingChallenges = this.factory.createHandlers(
-        describeRoute({
-            summary: "Get Pending Proposals",
-            description: "Retrieve all pending challenge proposals for the authenticated user.",
-            tags: ["Quest"],
-            responses: {
-                200: { description: "List of pending challenge proposals" }
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const sort = ctx.req.query("sort");
-            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
-            const challenges = await this.questRepository.getUserChallenges(userId, 'PENDING');
-            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit));
+        if (ctx.req.query("pageSize") != null) {
+            const page = this.page(ctx);
+            return ctx.json(await this.repository.getUserChallengePage(userId, status, page.limit, page.cursor));
         }
-    );
-
-    public readonly listChallenges = this.factory.createHandlers(
-        describeRoute({
-            summary: "List Challenges",
-            description: "List user challenges with optional status filter and sorting.",
-            tags: ["Quest"],
-            responses: {
-                200: { description: "List of challenges" },
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const status = ctx.req.query("status");
-            const sort = ctx.req.query("sort");
-            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
-            const allowedStatus = new Set(["PENDING", "ACTIVE", "COMPLETED", "REJECTED", "SKIPPED", "EXPIRED"]);
-            const normalizedStatus = status?.toUpperCase();
-            const finalStatus = normalizedStatus && allowedStatus.has(normalizedStatus) ? normalizedStatus : undefined;
-            const challenges = await this.questRepository.getUserChallenges(userId, finalStatus);
-            return ctx.json(this.sortUserChallenges(challenges, sort).slice(0, limit), 200);
+        const {limit, sort} = legacySchema.parse(ctx.req.query());
+        const rows = await this.repository.getUserChallenges(userId, status);
+        rows.sort((a, b) => sort === "points_desc" ? b.challenge.rewardPoints - a.challenge.rewardPoints :
+            sort === "completed_desc" ? +(b.completedAt ?? 0) - +(a.completedAt ?? 0) :
+            sort === "oldest" ? +(a.createdAt ?? 0) - +(b.createdAt ?? 0) : +(b.createdAt ?? 0) - +(a.createdAt ?? 0));
+        return ctx.json(rows.slice(0, limit));
+    }
+    readonly getActiveChallenges = this.factory.createHandlers(
+        this.document("Get Active Challenges", "Retrieve active challenges; pageSize enables cursor pagination."),
+        ctx => this.safely(ctx, () => this.readUser(ctx, "ACTIVE")));
+    readonly getCompletedChallenges = this.factory.createHandlers(
+        this.document("Get Completed Challenges", "Retrieve completed challenges; pageSize enables cursor pagination."),
+        ctx => this.safely(ctx, () => this.readUser(ctx, "COMPLETED")));
+    readonly getPendingChallenges = this.factory.createHandlers(
+        this.document("Get Pending Proposals", "Retrieve pending proposals; pageSize enables cursor pagination."),
+        ctx => this.safely(ctx, () => this.readUser(ctx, "PENDING")));
+    readonly listChallenges = this.factory.createHandlers(
+        this.document("List Challenges", "List owned challenges with an optional status filter or cursor pagination."),
+        ctx => this.safely(ctx, () =>
+        this.readUser(ctx, ctx.req.query("status") ? statusSchema.parse(ctx.req.query("status")!.toUpperCase()) : undefined)));
+    readonly getAvailableChallenges = this.factory.createHandlers(
+        this.document("Get Available Challenges", "Retrieve SYSTEM challenges not yet active or completed."),
+        ctx => this.safely(ctx, async () => {
+        const userId = ctx.get("user").userId;
+        ctx.header("Cache-Control", "no-store");
+        if (ctx.req.query("pageSize") != null) {
+            const page = this.page(ctx);
+            return ctx.json(await this.repository.getAvailablePage(userId, page.limit, page.cursor));
         }
-    );
-
-    /**
-     * Handler for accepting a challenge proposal.
-     * 
-     * @remarks
-     * Transitions a challenge from 'PENDING' to 'ACTIVE'.
-     * 
-     * @param ctx - Hono Context
-     * @param ctx.req.param.challengeId - ID of the challenge to accept
-     * @returns JSON object of the updated challenge
-     */
-    public readonly acceptChallenge = this.factory.createHandlers(
-        describeRoute({
-            summary: "Accept Challenge",
-            description: "Accept a pending challenge proposal, making it active.",
-            tags: ["Quest"],
-            responses: {
-                200: { description: "Challenge accepted successfully" },
-                400: { description: "Challenge ID is required" },
-                500: { description: "Failed to accept challenge" }
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const challengeId = ctx.req.param("challengeId");
-            if (!challengeId) {
-                return ctx.json({ error: "Challenge ID is required" }, 400);
-            }
-
-            const userChallenge = await this.questRepository.getUserChallengeByIdForUser(challengeId, userId);
-            if (!userChallenge) {
-                return ctx.json({ error: "Challenge not found" }, 404);
-            }
-            if (userChallenge.status !== 'PENDING') {
-                return ctx.json({ error: "Challenge is not pending" }, 409);
-            }
-            try {
-                const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'ACTIVE');
-                return ctx.json(updated);
-            } catch (e) {
-                return ctx.json({ error: "Failed to accept challenge" }, 500);
-            }
-        }
-    );
-
-    /**
-     * Handler for rejecting a challenge proposal.
-     * 
-     * @remarks
-     * Transitions a challenge from 'PENDING' to 'REJECTED'.
-     * 
-     * @param ctx - Hono Context
-     * @param ctx.req.param.challengeId - ID of the challenge to reject
-     * @returns JSON object of the updated challenge
-     */
-    public readonly rejectChallenge = this.factory.createHandlers(
-        describeRoute({
-            summary: "Reject Challenge",
-            description: "Reject a pending challenge proposal.",
-            tags: ["Quest"],
-            responses: {
-                200: { description: "Challenge rejected successfully" },
-                400: { description: "Challenge ID is required" },
-                500: { description: "Failed to reject challenge" }
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const challengeId = ctx.req.param("challengeId");
-            if (!challengeId) {
-                return ctx.json({ error: "Challenge ID is required" }, 400);
-            }
-
-            const userChallenge = await this.questRepository.getUserChallengeByIdForUser(challengeId, userId);
-            if (!userChallenge) {
-                return ctx.json({ error: "Challenge not found" }, 404);
-            }
-            if (userChallenge.status !== 'PENDING') {
-                return ctx.json({ error: "Challenge is not pending" }, 409);
-            }
-            try {
-                const updated = await this.questRepository.updateUserChallengeStatusForUser(challengeId, userId, 'REJECTED');
-                return ctx.json(updated);
-            } catch (e) {
-                return ctx.json({ error: "Failed to reject challenge" }, 500);
-            }
-        }
-    );
-
-    /**
-     * Handler for retrieving SYSTEM challenges not yet started by the user.
-     */
-    public readonly getAvailableChallenges = this.factory.createHandlers(
-        describeRoute({
-            summary: "Get Available Challenges",
-            description: "Retrieve SYSTEM challenges the user hasn't started or completed yet.",
-            tags: ["Quest"],
-            responses: {
-                200: { description: "List of available challenges" }
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const sort = (ctx.req.query("sort") || "newest").toLowerCase();
-            const limit = Math.min(Math.max(Number(ctx.req.query("limit") || 100), 1), 200);
-            const challenges = await this.questRepository.getAvailableChallenges(userId);
-            const sorted = [...challenges];
-            if (sort === "oldest") {
-                sorted.sort((a, b) => (a.createdAt?.getTime() ?? 0) - (b.createdAt?.getTime() ?? 0));
-            } else if (sort === "points_desc") {
-                sorted.sort((a, b) => (b.rewardPoints ?? 0) - (a.rewardPoints ?? 0));
-            } else {
-                sorted.sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
-            }
-            return ctx.json(sorted.slice(0, limit));
-        }
-    );
-
-    /**
-     * Handler for starting a SYSTEM challenge.
-     * Assigns the challenge to the user with status ACTIVE.
-     */
-    public readonly startChallenge = this.factory.createHandlers(
-        describeRoute({
-            summary: "Start Challenge",
-            description: "Start a SYSTEM challenge by assigning it to the user with ACTIVE status.",
-            tags: ["Quest"],
-            responses: {
-                201: { description: "Challenge started successfully" },
-                400: { description: "Challenge ID is required" },
-                404: { description: "Challenge not found" },
-                409: { description: "Challenge already active or completed" },
-                500: { description: "Failed to start challenge" }
-            }
-        }),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const challengeId = ctx.req.param("challengeId");
-            if (!challengeId) {
-                return ctx.json({ error: "Challenge ID is required" }, 400);
-            }
-
-            // Vérifier que le défi existe
-            const template = await this.questRepository.getChallengeTemplateById(challengeId);
-            if (!template) {
-                return ctx.json({ error: "Challenge not found" }, 404);
-            }
-
-            try {
-                // Initialiser la progression à zéro pour chaque condition
-                const conditions = template.conditions as { target: number }[];
-                const initialProgress: Record<string, { current: number; target: number; completed: boolean; updatedAt: string }> = {};
-                conditions.forEach((cond, i) => {
-                    initialProgress[`condition_${i}`] = {
-                        current: 0,
-                        target: cond.target,
-                        completed: false,
-                        updatedAt: new Date().toISOString(),
-                    };
-                });
-
-                const existingAssignment = await this.questRepository.getUserChallengeAssignment(userId, challengeId);
-                if (existingAssignment && (existingAssignment.status === 'ACTIVE' || existingAssignment.status === 'COMPLETED')) {
-                    return ctx.json({ error: "Challenge already active or completed" }, 409);
-                }
-
-                if (existingAssignment) {
-                    const updated = await this.questRepository.updateUserChallengeStatusForUser(
-                        existingAssignment.id,
-                        userId,
-                        'ACTIVE',
-                        initialProgress,
-                    );
-                    return ctx.json({ challenge: template, userChallenge: updated }, 200);
-                }
-
-                const userChallenge = await this.questRepository.assignChallengeToUser({
-                    userId,
-                    challengeId,
-                    status: 'ACTIVE',
-                    progress: initialProgress,
-                });
-
-                return ctx.json({ challenge: template, userChallenge }, 201);
-            } catch (e) {
-                return ctx.json({ error: "Failed to start challenge" }, 500);
-            }
-        }
-    );
-
-    /**
-     * Handler for creating a new challenge proposal.
-     * 
-     * @remarks
-     * This endpoint is typically called by internal systems or AI agents to propose a new challenge to a user.
-     * It creates a challenge template and assigns it to the user with 'PENDING' status.
-     * 
-     * @param ctx - Hono Context containing the JSON body
-     * @param ctx.req.valid.json - Validated body: { title, description?, conditions, aggregator, constraints }
-     * @returns JSON object containing the created template and user challenge assignment
-     */
-    public readonly createProposal = this.factory.createHandlers(
-        describeRoute({
-            summary: "Create Challenge Proposal",
-            description: "Create a new challenge proposal for a user (Internal/AI).",
-            tags: ["Quest"],
-            responses: {
-                201: { description: "Proposal created successfully" },
-                400: { description: "Invalid request body" }
-            }
-        }),
-        sValidator("json", z.object({
-            title: z.string(),
-            description: z.string().optional(),
-            conditions: z.any(),
-            aggregator: z.enum(['ALL', 'ANY']).default('ALL'),
-            constraints: z.any()
-        })),
-        async (ctx) => {
-            const userId = ctx.get("user").userId;
-            const body = ctx.req.valid("json");
-            
-            const template = await this.questRepository.createChallengeTemplate({
-                title: body.title,
-                description: body.description,
-                source: 'AI',
-                conditions: body.conditions,
-                aggregator: body.aggregator,
-                constraints: body.constraints
-            });
-
-            const userChallenge = await this.questRepository.assignChallengeToUser({
-                userId,
-                challengeId: template.id,
-                status: 'PENDING',
-                progress: {}
-            });
-
-            return ctx.json({ template, userChallenge }, 201);
-        }
-    );
+        const {limit, sort} = legacySchema.parse(ctx.req.query());
+        const rows = await this.repository.getAvailableChallenges(userId);
+        rows.sort((a, b) => sort === "points_desc" ? b.rewardPoints - a.rewardPoints :
+            sort === "oldest" ? +(a.createdAt ?? 0) - +(b.createdAt ?? 0) : +(b.createdAt ?? 0) - +(a.createdAt ?? 0));
+        return ctx.json(rows.slice(0, limit));
+    }));
+    readonly startChallenge = this.factory.createHandlers(
+        this.document("Start Challenge", "Start a SYSTEM challenge or return the existing assignment on retry.", true),
+        ctx => this.safely(ctx, async () => {
+        const userId = ctx.get("user").userId;
+        const {assignment, created} = await this.repository.startSystemChallenge(userId, z.uuid().parse(ctx.req.param("challengeId")));
+        await this.logic.checkAndUpdateProgress(userId);
+        const joined = await this.repository.getJoinedAssignment(userId, assignment.id);
+        return ctx.json({challenge: joined.challenge, userChallenge: joined}, created ? 201 : 200);
+    }));
+    private async transition(ctx: Ctx, status: "ACTIVE" | "REJECTED") {
+        const userId = ctx.get("user").userId;
+        const assignment = await this.repository.transitionProposal(userId, z.uuid().parse(ctx.req.param("challengeId")), status);
+        if (status === "ACTIVE") await this.logic.checkAndUpdateProgress(userId);
+        return ctx.json(await this.repository.getJoinedAssignment(userId, assignment.id));
+    }
+    readonly acceptChallenge = this.factory.createHandlers(
+        this.document("Accept Challenge", "Accept an owned pending proposal and reconcile its activity progress."),
+        ctx => this.safely(ctx, () => this.transition(ctx, "ACTIVE")));
+    readonly rejectChallenge = this.factory.createHandlers(
+        this.document("Reject Challenge", "Reject an owned pending proposal; matching retries are idempotent."),
+        ctx => this.safely(ctx, () => this.transition(ctx, "REJECTED")));
+    readonly createProposal = this.factory.createHandlers(
+        this.document("Create Challenge Proposal", "Create a validated proposal and pending assignment for the authenticated user.", true),
+        ctx => this.safely(ctx, async () =>
+        ctx.json(await this.repository.createProposal(ctx.get("user").userId, proposalSchema.parse(await ctx.req.json())), 201)));
 }
-
 export default QuestController;

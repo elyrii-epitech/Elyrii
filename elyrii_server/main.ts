@@ -8,7 +8,6 @@ import QuestRoutes from "./modules/quest/quest.routes";
 import CoachRoutes from "./modules/coach/coach.routes";
 import MeditationRoutes from "./modules/meditation/meditation.routes";
 import NotificationRoutes from "./modules/notification/notification.routes";
-import type { WSContext } from "hono/ws";
 import chatRouter from "./modules/chat/chat.controller";
 import { initKafka } from "./config/kafka.config";
 import { handleAiResponse } from "./modules/chat/consumer.service";
@@ -23,7 +22,6 @@ import { createContextRefreshRouter } from "./modules/chat/context-refresh.route
 import { createContextRouter } from "./modules/context/lifecycle.routes";
 import { startContextCleanup } from "./modules/context/cleanup.service";
 
-export const clientSockets = new Map<string, WSContext>();
 const AVATAR_UPLOAD_DIR = Bun.env.AVATAR_UPLOAD_DIR ?? "./uploads/avatars";
 
 const app = new Hono()

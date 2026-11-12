@@ -150,10 +150,11 @@ suite("Context lifecycle and authenticated API", () => {
         expect((await repo.list(owner, "memories", {})).items).toHaveLength(1);
         await repo.deleteMessages(owner, { conversationId: "lifecycle" });
         expect((await repo.list(owner, "memories", {})).items).toHaveLength(0);
-        await source(); await memory();
+        await expect(source()).rejects.toThrow("Conversation deleted");
+        await source("after-deletion"); await memory();
         await database.insert(schema.extractionKeys).values({ userId: owner, key: "fact:test", targetId: row.id, sequence: 1n, suppressed: true });
         await database.delete(schema.userTable).where(eq(schema.userTable.id, owner));
-        for (const table of [schema.chatMessagesTable, schema.userMemoriesTable, schema.userContextFactsTable, schema.summaryTasks, schema.extractionJobs, schema.extractionKeys, schema.embeddingJobs])
+        for (const table of [schema.chatMessagesTable, schema.deletedChatConversations, schema.userMemoriesTable, schema.userContextFactsTable, schema.summaryTasks, schema.extractionJobs, schema.extractionKeys, schema.embeddingJobs])
             expect(await database.select().from(table).where(eq(table.userId, owner))).toHaveLength(0);
     });
 });

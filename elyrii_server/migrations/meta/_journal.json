@@ -43,6 +43,41 @@
       "when": 1792617581884,
       "tag": "0005_brainy_mystique",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794319200000,
+      "tag": "0006_native_auth_recovery",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794322800000,
+      "tag": "0007_journal_mobile_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794326400000,
+      "tag": "0008_chat_mobile_contracts",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794330000000,
+      "tag": "0009_coach_journeys",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794333600000,
+      "tag": "0010_home_activities",
+      "breakpoints": true
     }
   ]
 }
