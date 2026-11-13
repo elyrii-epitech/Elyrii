@@ -123,8 +123,9 @@ Widget host(
   Widget page,
   GlobalKey key,
   bool dark,
-  double scale,
-) => MultiProvider(
+  double scale, {
+  GamificationProvider? gamification,
+}) => MultiProvider(
   providers: [
     Provider<AppDependencies>.value(value: app),
     Provider<ApiClient>.value(value: app.api),
@@ -140,7 +141,9 @@ Widget host(
     ChangeNotifierProvider<AccueilActivities>.value(
       value: app.accueilActivities,
     ),
-    ChangeNotifierProvider<GamificationProvider>.value(value: app.gamification),
+    ChangeNotifierProvider<GamificationProvider>.value(
+      value: gamification ?? app.gamification,
+    ),
     ChangeNotifierProvider<MascotProvider>.value(value: app.mascot),
   ],
   child: RepaintBoundary(

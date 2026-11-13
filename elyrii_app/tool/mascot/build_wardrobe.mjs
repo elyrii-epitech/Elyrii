@@ -105,16 +105,20 @@ for (const slot of slots) {
 }
 for (const outfit of outfits.filter(outfit => outfit.length)) {
   const variant = extension.createVariant(outfit.join('+'));
-  for (const id of outfit) {
-    for (const {primitive, material} of attachedPrimitives.get(id)) {
+  // The bundled model-viewer keeps the previous material when a primitive has
+  // no mapping for the next variant. Explicitly hide every absent piece so
+  // replacing a hat or removing one item does not accumulate old accessories.
+  for (const [id, primitives] of attachedPrimitives) {
+    for (const {primitive, material} of primitives) {
+      const target = outfit.includes(id) ? material : hidden;
       let mappings = primitive.getExtension('KHR_materials_variants');
       if (!mappings) {
         mappings = extension.createMappingList();
         primitive.setExtension('KHR_materials_variants', mappings);
       }
-      let mapping = mappings.listMappings().find(mapping => mapping.getMaterial() === material);
+      let mapping = mappings.listMappings().find(mapping => mapping.getMaterial() === target);
       if (!mapping) {
-        mapping = extension.createMapping().setMaterial(material);
+        mapping = extension.createMapping().setMaterial(target);
         mappings.addMapping(mapping);
       }
       mapping.addVariant(variant);
