@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:elyrii_app/core/network/api_client.dart';
+import 'package:elyrii_app/core/network/api_exception.dart';
 import 'package:elyrii_app/core/services/secure_storage_service.dart';
 import 'package:elyrii_app/features/journal/data/models/journal_entry_model.dart';
 import 'package:elyrii_app/features/journal/data/repositories/journal_repository.dart';
@@ -21,7 +22,14 @@ JournalEntryModel _note(String id) => JournalEntryModel(
   id: id,
   userId: 'paging-owner',
   title: id,
-  createdAt: DateTime.utc(2026, 10, 10),
+  createdAt: DateTime.utc(2026, 10, 10, switch (id) {
+    'one' => 4,
+    'two' => 3,
+    'three' => 2,
+    'four' => 1,
+    'acknowledged-new' => 5,
+    _ => 0,
+  }),
   updatedAt: DateTime.utc(2026, 10, 10),
 );
 http.Response _page(List<String> ids, {String? cursor}) => http.Response(
@@ -30,12 +38,46 @@ http.Response _page(List<String> ids, {String? cursor}) => http.Response(
     'totalCount': 4,
     'nextCursor': cursor == null
         ? null
-        : {'id': cursor, 'createdAt': '2026-10-10T00:00:00.000Z'},
+        : {
+            'id': cursor,
+            'createdAt': _note(cursor).createdAt.toIso8601String(),
+          },
   }),
   200,
 );
 
 void main() {
+  test('invalid page metadata cannot erase a confirmed offline copy', () async {
+    final api = ApiClient(
+      storage: _Storage(),
+      client: MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'entries': [],
+            'totalCount': 1,
+            'nextCursor': {'id': 'missing', 'createdAt': 'invalid'},
+          }),
+          200,
+        ),
+      ),
+    );
+    addTearDown(api.dispose);
+    final repository = JournalRepository(client: api);
+    addTearDown(repository.store.close);
+    await repository.store.upsert('paging-owner', _note('one'));
+    await expectLater(
+      repository.getEntries(),
+      throwsA(
+        isA<ApiException>().having(
+          (error) => error.kind,
+          'kind',
+          ApiFailureKind.protocol,
+        ),
+      ),
+    );
+    expect((await repository.store.read('paging-owner')).single.id, 'one');
+  });
+
   test('the client follows the server cursor and preserves it when a concurrent mutation invalidates a page', () async {
     final delayed = Completer<http.Response>();
     final received = Completer<void>();

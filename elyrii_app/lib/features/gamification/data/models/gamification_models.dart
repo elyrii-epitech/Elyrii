@@ -151,12 +151,14 @@ class UserChallenge {
 
   /// Overall progress fraction between 0.0 and 1.0.
   double get progressFraction {
+    if (isCompleted) return 1.0;
     final p = progress;
     if (p == null || p is! Map) return 0.0;
     final map = p as Map<String, dynamic>;
     if (map.isEmpty) return 0.0;
 
     double sum = 0;
+    double best = 0;
     int count = 0;
     for (final val in map.values) {
       if (val is Map) {
@@ -164,11 +166,17 @@ class UserChallenge {
             .toDouble();
         final target = (val['target'] is num ? val['target'] as num : 1)
             .toDouble();
-        sum += target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+        final fraction = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
+        sum += fraction;
+        if (fraction > best) best = fraction;
         count++;
       }
     }
-    return count > 0 ? (sum / count).clamp(0.0, 1.0) : 0.0;
+    return template?.aggregator == 'ANY'
+        ? best
+        : count > 0
+        ? (sum / count).clamp(0.0, 1.0)
+        : 0.0;
   }
 
   /// Readable progress text, such as "3 / 7" for one condition.

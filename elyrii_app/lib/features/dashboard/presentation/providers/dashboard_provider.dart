@@ -15,6 +15,7 @@ export '../mood_presentation.dart';
 
 class DashboardProvider extends ChangeNotifier {
   final DashboardRepository _repository;
+  final VoidCallback? onMoodSaved;
   AccueilActivities? _activities;
   final bool Function()? _isDemoSession;
   int _sessionRevision = 0;
@@ -70,6 +71,7 @@ class DashboardProvider extends ChangeNotifier {
     DashboardRepository? repository,
     ApiClient? apiClient,
     AccueilActivities? activities,
+    this.onMoodSaved,
     this._isDemoSession,
     DateTime Function()? now,
   }) : assert(
@@ -132,6 +134,7 @@ class DashboardProvider extends ChangeNotifier {
       _isSavingMood = false;
       _notify();
       _recordMoodLocally(mood);
+      onMoodSaved?.call();
       // A refresh failure does not undo an already acknowledged mutation.
       await loadDashboardData();
       return true;

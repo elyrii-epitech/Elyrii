@@ -211,7 +211,7 @@ class ProfileSection extends StatelessWidget {
 class ProfileSegments<T> extends StatelessWidget {
   final Map<T, String> options;
   final T selected;
-  final ValueChanged<T> onChanged;
+  final ValueChanged<T>? onChanged;
   const ProfileSegments({
     super.key,
     required this.options,
@@ -235,7 +235,9 @@ class ProfileSegments<T> extends StatelessWidget {
                 label: entry.value,
                 selected: selected == entry.key,
                 excludeChildSemantics: true,
-                onPressed: () => onChanged(entry.key),
+                onPressed: onChanged == null
+                    ? null
+                    : () => onChanged!(entry.key),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(
                     minHeight: AppDimensions.controlSize,
@@ -280,7 +282,7 @@ class ProfileSegments<T> extends StatelessWidget {
 class ProfileToggle extends StatelessWidget {
   final String label;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
   const ProfileToggle({
     super.key,
     required this.label,
@@ -297,10 +299,11 @@ class ProfileToggle extends StatelessWidget {
       excludeSemantics: true,
       label: label,
       toggled: value,
-      onTap: () => onChanged(!value),
+      enabled: onChanged != null,
+      onTap: onChanged == null ? null : () => onChanged!(!value),
       child: AccessibleAction(
         label: label,
-        onPressed: () => onChanged(!value),
+        onPressed: onChanged == null ? null : () => onChanged!(!value),
         child: SizedBox(
           width: AppDimensions.profileToggleWidth,
           height: AppDimensions.controlSize,

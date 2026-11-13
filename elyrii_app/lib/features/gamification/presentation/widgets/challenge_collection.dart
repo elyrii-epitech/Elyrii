@@ -54,145 +54,153 @@ class _ChallengeCollectionState extends State<ChallengeCollection> {
       final dark = Theme.of(context).brightness == Brightness.dark;
       final commandsDisabled =
           _busy || provider.isLoading || provider.error != null;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: AppDimensions.spacing16,
-        children: [
-          Text(
-            'Défis à réaliser',
-            style: AppTextStyles.titleLarge(color: context.textPrimary),
-          ),
-          if (_feedback != null && provider.error == null)
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                _feedback!,
-                style: AppTextStyles.bodySmall(color: context.textPrimary),
-              ),
+      return Material(
+        type: MaterialType.transparency,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: AppDimensions.spacing16,
+          children: [
+            Text(
+              'Défis à réaliser',
+              style: AppTextStyles.titleLarge(color: context.textPrimary),
             ),
-          if (provider.isLoading)
-            const Center(child: CircularProgressIndicator()),
-          if (provider.error != null) ...[
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                provider.error!,
-                style: AppTextStyles.bodyMedium(
-                  color: AppColors.errorText(dark),
+            if (_feedback != null && provider.error == null)
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _feedback!,
+                  style: AppTextStyles.bodySmall(color: context.textPrimary),
                 ),
               ),
-            ),
-            TextButton(
-              onPressed: _busy ? null : () => provider.loadAll(force: true),
-              child: const Text('Réessayer'),
-            ),
-          ],
-          if (provider.hasLoadedData) ...[
-            if (provider.activeChallenges.isNotEmpty)
-              Text(
-                'En cours',
-                style: AppTextStyles.titleMedium(color: context.textPrimary),
+            if (provider.isLoading)
+              const Center(child: CircularProgressIndicator()),
+            if (provider.error != null) ...[
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  provider.error!,
+                  style: AppTextStyles.bodyMedium(
+                    color: AppColors.errorText(dark),
+                  ),
+                ),
               ),
-            if (provider.activeChallenges.isEmpty)
-              Text(
-                provider.proposals.isEmpty &&
-                        provider.availableChallenges.isEmpty
-                    ? 'Aucun défi à réaliser pour le moment.'
-                    : 'Aucun défi en cours. Choisis un défi pour commencer.',
-                style: AppTextStyles.bodySmall(color: context.textSecondary),
+              TextButton(
+                onPressed: _busy ? null : () => provider.loadAll(force: true),
+                child: const Text('Réessayer'),
               ),
-            for (final challenge in provider.activeChallenges)
-              _ChallengeIdea(
-                title: challenge.displayTitle,
-                description: challenge.displayDescription,
-                progress: challenge,
-              ),
-            if (provider.proposals.isNotEmpty)
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                childrenPadding: EdgeInsets.zero,
-                initiallyExpanded: provider.proposals.length <= 3,
-                title: Text(
-                  'Défis suggérés par Elyrii (${provider.proposals.length})',
+            ],
+            if (provider.hasLoadedData) ...[
+              if (provider.activeChallenges.isNotEmpty)
+                Text(
+                  'En cours',
                   style: AppTextStyles.titleMedium(color: context.textPrimary),
                 ),
-                children: [
-                  for (final proposal in provider.proposals)
-                    _ChallengeIdea(
-                      title: proposal.displayTitle,
-                      description: proposal.displayDescription,
-                      action: Wrap(
-                        alignment: WrapAlignment.end,
-                        spacing: AppDimensions.spacing8,
-                        children: [
-                          TextButton(
-                            onPressed: commandsDisabled
-                                ? null
-                                : () => _perform(
-                                    () => provider.rejectChallenge(proposal.id),
-                                    'La proposition a été retirée.',
-                                  ),
-                            child: const Text('Refuser'),
-                          ),
-                          FilledButton.tonal(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.primaryText(dark),
-                              foregroundColor: AppColors.onTint(dark),
-                            ),
-                            onPressed: commandsDisabled
-                                ? null
-                                : () => _perform(
-                                    () => provider.acceptChallenge(proposal.id),
-                                    'Défi ajouté.',
-                                  ),
-                            child: const Text('Accepter'),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            if (provider.availableChallenges.isNotEmpty)
-              Theme(
-                data: Theme.of(context)
-                    .copyWith(dividerColor: Colors.transparent),
-                child: ExpansionTile(
+              if (provider.activeChallenges.isEmpty)
+                Text(
+                  provider.proposals.isEmpty &&
+                          provider.availableChallenges.isEmpty
+                      ? 'Aucun défi à réaliser pour le moment.'
+                      : 'Aucun défi en cours. Choisis un défi pour commencer.',
+                  style: AppTextStyles.bodySmall(color: context.textSecondary),
+                ),
+              for (final challenge in provider.activeChallenges)
+                _ChallengeIdea(
+                  title: challenge.displayTitle,
+                  description: challenge.displayDescription,
+                  progress: challenge,
+                ),
+              if (provider.proposals.isNotEmpty)
+                ExpansionTile(
                   tilePadding: EdgeInsets.zero,
                   childrenPadding: EdgeInsets.zero,
-                  initiallyExpanded: false,
+                  initiallyExpanded: provider.proposals.length <= 3,
                   title: Text(
-                    'Idées de défis (${provider.availableChallenges.length})',
+                    'Défis suggérés par Elyrii (${provider.proposals.length})',
                     style: AppTextStyles.titleMedium(
                       color: context.textPrimary,
                     ),
                   ),
                   children: [
-                    for (final challenge in provider.availableChallenges)
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          bottom: AppDimensions.spacing8,
-                        ),
-                        child: _ChallengeIdea(
-                          title: challenge.title,
-                          description: challenge.description ?? '',
-                          action: TextButton.icon(
-                            onPressed: commandsDisabled
-                                ? null
-                                : () => _perform(
-                                    () => provider.startChallenge(challenge.id),
-                                    'Défi ajouté.',
-                                  ),
-                            icon: const Icon(Symbols.add_rounded),
-                            label: const Text('Commencer'),
-                          ),
+                    for (final proposal in provider.proposals)
+                      _ChallengeIdea(
+                        title: proposal.displayTitle,
+                        description: proposal.displayDescription,
+                        action: Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: AppDimensions.spacing8,
+                          children: [
+                            TextButton(
+                              onPressed: commandsDisabled
+                                  ? null
+                                  : () => _perform(
+                                      () =>
+                                          provider.rejectChallenge(proposal.id),
+                                      'La proposition a été retirée.',
+                                    ),
+                              child: const Text('Refuser'),
+                            ),
+                            FilledButton.tonal(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.primaryText(dark),
+                                foregroundColor: AppColors.onTint(dark),
+                              ),
+                              onPressed: commandsDisabled
+                                  ? null
+                                  : () => _perform(
+                                      () =>
+                                          provider.acceptChallenge(proposal.id),
+                                      'Défi ajouté.',
+                                    ),
+                              child: const Text('Accepter'),
+                            ),
+                          ],
                         ),
                       ),
                   ],
                 ),
-              ),
+              if (provider.availableChallenges.isNotEmpty)
+                Theme(
+                  data: Theme.of(context)
+                      .copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    initiallyExpanded: false,
+                    title: Text(
+                      'Idées de défis (${provider.availableChallenges.length})',
+                      style: AppTextStyles.titleMedium(
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    children: [
+                      for (final challenge in provider.availableChallenges)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: AppDimensions.spacing8,
+                          ),
+                          child: _ChallengeIdea(
+                            title: challenge.title,
+                            description: challenge.description ?? '',
+                            action: TextButton.icon(
+                              onPressed: commandsDisabled
+                                  ? null
+                                  : () => _perform(
+                                      () =>
+                                          provider.startChallenge(challenge.id),
+                                      'Défi ajouté.',
+                                    ),
+                              icon: const Icon(Symbols.add_rounded),
+                              label: const Text('Commencer'),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
           ],
-        ],
+        ),
       );
     },
   );

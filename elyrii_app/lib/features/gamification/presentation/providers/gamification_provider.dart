@@ -131,6 +131,15 @@ class GamificationProvider extends ChangeNotifier {
     if (!_disposed) await loadAll(force: true);
   }
 
+  /// Run after a confirmed mood/journal write, even inside the normal cache TTL.
+  Future<void> refreshAfterActivity() async {
+    final session = _sessionRevision;
+    _loadedAt = null;
+    await _loadFuture;
+    if (_disposed || session != _sessionRevision) return;
+    await loadAll(force: true);
+  }
+
   Future<void> _loadAll() async {
     if (_isDemo) {
       applyDevProgress();
@@ -152,9 +161,16 @@ class GamificationProvider extends ChangeNotifier {
       _availableChallenges = List.unmodifiable(
         results[0] as List<ChallengeTemplate>,
       );
-      _activeChallenges = List.unmodifiable(results[1] as List<UserChallenge>);
       _completedChallenges = List.unmodifiable(
         results[2] as List<UserChallenge>,
+      );
+      final completedIds = _completedChallenges
+          .map((challenge) => challenge.id)
+          .toSet();
+      _activeChallenges = List.unmodifiable(
+        (results[1] as List<UserChallenge>).where(
+          (challenge) => !completedIds.contains(challenge.id),
+        ),
       );
       _proposals = List.unmodifiable(
         (results[3] as List<UserChallenge>).where(
@@ -186,7 +202,7 @@ class GamificationProvider extends ChangeNotifier {
       await _repository.startChallenge(challengeId);
       if (session != _sessionRevision) return false;
       await _reloadAfterCommand();
-      return true;
+      return session == _sessionRevision && !_disposed;
     } catch (e) {
       if (session != _sessionRevision) return false;
       _error = e is ApiException
@@ -209,7 +225,7 @@ class GamificationProvider extends ChangeNotifier {
       await _repository.acceptChallenge(challengeId);
       if (session != _sessionRevision) return false;
       await _reloadAfterCommand();
-      return true;
+      return session == _sessionRevision && !_disposed;
     } catch (e) {
       if (session != _sessionRevision) return false;
       _error = e is ApiException

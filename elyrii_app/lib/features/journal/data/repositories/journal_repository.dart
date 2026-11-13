@@ -80,6 +80,12 @@ class JournalRepository {
   }) async {
     final context = _client.sessionGeneration;
     final version = _pageVersion;
+    final after = more && _cursor != null
+        ? (
+            createdAt: DateTime.parse(_cursor!['createdAt'] as String),
+            id: _cursor!['id'] as String,
+          )
+        : null;
     final owner = await currentOwner;
     if (owner != null) await store.hasSnapshot(owner);
     final revision = owner == null ? 0 : store.revision(owner);
@@ -110,10 +116,46 @@ class JournalRepository {
         paged ? response['entries'] : response,
         JournalEntryModel.fromJson,
       );
-      if (owner != null && startDate == null && endDate == null) {
+      final metadata = paged
+          ? decodeResponse(response, (json) {
+              final count = json['totalCount'] as int;
+              final raw = json['nextCursor'];
+              Map<String, dynamic>? cursor;
+              if (count < entries.length ||
+                  entries.length > pageSize ||
+                  (owner != null &&
+                      entries.any((entry) => entry.userId != owner))) {
+                throw const FormatException('Invalid journal page size');
+              }
+              if (raw != null) {
+                cursor = Map<String, dynamic>.from(raw as Map);
+                final date = DateTime.parse(cursor['createdAt'] as String);
+                final id = cursor['id'] as String;
+                if (entries.isEmpty ||
+                    id != entries.last.id ||
+                    date.millisecondsSinceEpoch !=
+                        entries.last.createdAt.millisecondsSinceEpoch) {
+                  throw const FormatException('Invalid journal cursor');
+                }
+              }
+              return (count: count, cursor: cursor);
+            })
+          : null;
+      if (owner != null &&
+          version == _pageVersion &&
+          context == _client.sessionGeneration &&
+          startDate == null &&
+          endDate == null) {
         await _cacheCommitted(
           () => paged
-              ? store.mergePage(owner, entries, expectedRevision: revision)
+              ? store.mergePage(
+                  owner,
+                  entries,
+                  expectedRevision: revision,
+                  newestFirst: newestFirst,
+                  hasMore: metadata!.cursor != null,
+                  after: after,
+                )
               : store.replace(owner, entries, expectedRevision: revision),
         );
       }
@@ -122,10 +164,8 @@ class JournalRepository {
           (owner == null || store.revision(owner) == revision)) {
         _offline = false;
         isPaginated = paged;
-        _cursor = paged && response['nextCursor'] is Map
-            ? Map<String, dynamic>.from(response['nextCursor'] as Map)
-            : null;
-        totalCount = paged ? response['totalCount'] as int? : entries.length;
+        _cursor = metadata?.cursor;
+        totalCount = metadata?.count ?? entries.length;
         _offset += entries.length;
       }
       if (owner != null && store.revision(owner) != revision) {

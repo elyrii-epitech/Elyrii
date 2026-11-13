@@ -3,7 +3,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const String _defaultBaseUrl = 'http://localhost:3001';
+  static const String _defaultBaseUrl = 'http://localhost:3000';
 
   static String _baseUrl = _defaultBaseUrl;
   static String get baseUrl => _baseUrl;
@@ -61,6 +61,8 @@ class ApiConfig {
   static String get userMascotUrl => '$_baseUrl/user/mascot';
   static String get userAvatarUrl => '$_baseUrl/user/avatar';
   static String get userAccountUrl => '$_baseUrl/user/account';
+  static String get userExportUrl => '$_baseUrl/user/export';
+  static String get userHomeUrl => '$_baseUrl/user/home';
   static String get logMoodUrl => '$_baseUrl/user/mood';
 
   static String get meditationSessionsUrl => '$_baseUrl/meditation/sessions';
@@ -70,4 +72,7 @@ class ApiConfig {
       '$_baseUrl/meditation/sessions/$id/complete';
   static String cancelMeditationSessionUrl(String id) =>
       '$_baseUrl/meditation/sessions/$id/cancel';
+
+  static String get coachCatalogUrl => '$_baseUrl/coach/catalog';
+  static String get coachJourneyUrl => '$_baseUrl/coach/journey';
 }

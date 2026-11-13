@@ -150,8 +150,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           'SYSTEM': 'Système',
                         },
                         selected: settings?.themeMode ?? 'SYSTEM',
-                        onChanged: (value) =>
-                            user.updateSettings(themeMode: value),
+                        onChanged: settings == null
+                            ? null
+                            : (value) => user.updateSettings(themeMode: value),
                       ),
                     ],
                   ),
@@ -171,11 +172,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 trailing: ProfileToggle(
                   label: 'Vibrations',
                   value: settings?.hapticsEnabled ?? true,
-                  onChanged: (value) {
-                    ElyriiHaptics.setEnabled(value);
-                    user.updateSettings(hapticsEnabled: value);
-                    if (value) ElyriiHaptics.medium();
-                  },
+                  onChanged: settings == null
+                      ? null
+                      : (value) {
+                          ElyriiHaptics.setEnabled(value);
+                          user.updateSettings(hapticsEnabled: value);
+                          if (value) ElyriiHaptics.medium();
+                        },
                 ),
               ),
             ],

@@ -67,6 +67,11 @@ abstract final class AppRouter {
         if (isAuthRoute) {
           return setupDone ? AppRoutes.home : AppRoutes.profileSetup;
         }
+        // The account's setup flag can finish loading after auth redirects.
+        // A restored, completed account must not stay stranded in onboarding.
+        if (setupDone && location == AppRoutes.profileSetup) {
+          return AppRoutes.home;
+        }
 
         if (!setupDone &&
             location != AppRoutes.profileSetup &&

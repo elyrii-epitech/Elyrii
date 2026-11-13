@@ -12,7 +12,8 @@ import 'demo_api.dart';
 import 'transport_failure.dart';
 
 /// One transport boundary for errors, full-response deadlines, cancellation
-/// and shared concurrent GETs. Mutations are never retried automatically.
+/// and shared concurrent GETs. A request rejected by authentication can be
+/// replayed once after refreshing; transport failures never retry mutations.
 class ApiClient {
   final http.Client _client;
   DemoApi _demoApi = DemoApi();
@@ -23,6 +24,25 @@ class ApiClient {
   int _generation = 0;
   bool _disposed = false;
   void Function(String? owner)? onUnauthorized;
+  Future<String?> Function()? onRefresh;
+
+  static bool tokenNeedsRefresh(String token) {
+    try {
+      final parts = token.split('.');
+      final payload = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
+      ) as Map;
+      final expiry = payload['exp'];
+      return expiry is! num ||
+          expiry * 1000 <=
+              DateTime.now()
+                  .add(const Duration(seconds: 30))
+                  .millisecondsSinceEpoch;
+    } catch (_) {
+      return true;
+    }
+  }
+
   Future<String?> get currentUserId => _storage.getUserId();
   SecureStorageService get storage => _storage;
   int get sessionGeneration => _generation;
@@ -69,8 +89,17 @@ class ApiClient {
     return _reads[key] = request;
   }
 
-  Future<dynamic> postWithToken(String url, String token) =>
-      _request('POST', Uri.parse(url), auth: false, bearerToken: token);
+  Future<dynamic> postWithToken(
+    String url,
+    String token, {
+    Map<String, dynamic>? body,
+  }) => _request(
+    'POST',
+    Uri.parse(url),
+    body: body,
+    auth: false,
+    bearerToken: token,
+  );
   Future<dynamic> post(
     String url, {
     Map<String, dynamic>? body,
@@ -133,6 +162,7 @@ class ApiClient {
     XFile? file,
     String? fieldName,
     String? bearerToken,
+    bool allowRefresh = true,
   }) async {
     if (_disposed) {
       throw const ApiException(
@@ -166,7 +196,13 @@ class ApiClient {
           _storage.getAccessToken(),
         ]);
         owner = credentials[0];
-        final token = credentials[1];
+        var token = credentials[1];
+        if (token != null &&
+            allowRefresh &&
+            tokenNeedsRefresh(token) &&
+            onRefresh != null) {
+          token = await onRefresh!() ?? token;
+        }
         if (token?.isNotEmpty ?? false) {
           headers['Authorization'] = 'Bearer $token';
         }
@@ -242,7 +278,24 @@ class ApiClient {
           kind: ApiFailureKind.cancelled,
         );
       }
-      if (response.statusCode == 401 && auth) onUnauthorized?.call(owner);
+      if (response.statusCode == 401 && auth) {
+        if (allowRefresh && onRefresh != null) {
+          final refreshed = await onRefresh!();
+          ensureSession(generation);
+          if (refreshed != null) {
+            return await _performRequest(
+              method,
+              uri,
+              body: body,
+              auth: auth,
+              file: file,
+              fieldName: fieldName,
+              allowRefresh: false,
+            );
+          }
+        }
+        onUnauthorized?.call(owner);
+      }
       return _handleResponse(response);
     } on http.RequestAbortedException {
       throw ApiException(

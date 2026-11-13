@@ -17,12 +17,14 @@ import '../core/widgets/mascot_poster.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/data/models/user_model.dart';
 import '../features/chatbot/data/repositories/chat_history_service.dart';
+import '../features/chatbot/data/repositories/connected_chat_history.dart';
+import '../core/config/api_config.dart';
 import '../features/chatbot/presentation/providers/chatbot_provider.dart';
 import '../features/journal/data/repositories/journal_repository.dart';
 import '../features/journal/data/repositories/journal_store.dart';
 import '../features/journal/presentation/providers/journal_provider.dart';
 import '../features/settings/providers/settings_provider.dart';
-import '../features/parcours/data/journey_repository.dart';
+import '../features/parcours/data/connected_journey_repository.dart';
 import '../features/parcours/presentation/providers/journey_provider.dart';
 import '../features/dashboard/data/accueil_activities.dart';
 import '../features/dashboard/presentation/providers/dashboard_provider.dart';
@@ -60,23 +62,31 @@ class AppDependencies {
     required this.theme,
   }) {
     cipher = ContentCipher(storage);
-    accueilActivities = AccueilActivities(cipher: cipher);
+    accueilActivities = AccueilActivities(cipher: cipher, client: api);
     journalStore = JournalStore(cipher: cipher);
-    history = ChatHistoryService(cipher: cipher);
+    history = ConnectedChatHistory(client: api, cipher: cipher);
     auth = AuthProvider(client: api, storage: storage);
+    api.onRefresh = auth.refreshAccessToken;
     user = UserProvider(client: api);
     journal = JournalProvider(
       repository: JournalRepository(client: api, store: journalStore),
+      onEntrySaved: _challengeActivitySaved,
     );
-    parcours = JourneyProvider(repository: JourneyRepository(cipher: cipher));
+    parcours = JourneyProvider(
+      repository: ConnectedJourneyRepository(client: api, cipher: cipher),
+    );
     chat = ChatbotProvider(
       storage: storage,
       history: history,
       initialOwner: 'local-guest',
+      authorizeConnection: () async {
+        await api.get(ApiConfig.userMeUrl);
+      },
     );
     dashboard = DashboardProvider(
       apiClient: api,
       activities: accueilActivities,
+      onMoodSaved: _challengeActivitySaved,
       isDemoSession: () => auth.isDemoSession,
     );
     gamification = GamificationProvider(
@@ -126,6 +136,10 @@ class AppDependencies {
         (Object error) => AppDiagnostics.record(event, error),
       ),
     );
+  }
+
+  void _challengeActivitySaved() {
+    _track(gamification.refreshAfterActivity(), 'challenge_activity_refresh');
   }
 
   void _authChanged() {
@@ -232,7 +246,12 @@ class AppDependencies {
         if (auth.sessionRevision == revision) auth.clearLocalSession(),
         () async {
           try {
-            await Future.wait([chat.flushed, user.flushed, mascot.flushed]);
+            await Future.wait([
+              chat.flushed,
+              user.flushed,
+              mascot.flushed,
+              accueilActivities.flushed,
+            ]);
           } finally {
             await _purgeOwner(owner);
           }
@@ -314,6 +333,7 @@ class AppDependencies {
     auth.removeListener(_authChanged);
     user.removeListener(_preferencesChanged);
     api.onUnauthorized = null;
+    api.onRefresh = null;
     chat.dispose();
     journal.dispose();
     parcours.dispose();

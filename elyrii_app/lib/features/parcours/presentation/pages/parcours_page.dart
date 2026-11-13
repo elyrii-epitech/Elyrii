@@ -110,9 +110,7 @@ class _ParcoursPageState extends State<ParcoursPage> {
                                   writing: provider.isWriting,
                                   onRetry: () => provider.load(force: true),
                                 ),
-                                const JourneyNote(
-                                  'Ta progression est enregistrée sur cet appareil.',
-                                ),
+                                JourneyNote(provider.persistenceNote),
                                 if (!provider.hasLoadedData) ...[
                                   if (provider.isLoading)
                                     const JourneyNote(

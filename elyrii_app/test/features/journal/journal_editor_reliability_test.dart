@@ -12,6 +12,7 @@ import 'package:elyrii_app/features/journal/data/models/journal_entry_model.dart
 import 'package:elyrii_app/features/journal/data/repositories/journal_repository.dart';
 import 'package:elyrii_app/features/journal/presentation/providers/journal_provider.dart';
 import 'package:elyrii_app/features/journal/presentation/widgets/journal_editor_sheet.dart';
+import 'package:elyrii_app/features/mascot/presentation/providers/mascot_provider.dart';
 
 final _entry = JournalEntryModel(
   id: 'note',
@@ -43,7 +44,22 @@ class _Repository extends JournalRepository {
   }
 }
 
-Future<void> _mount(WidgetTester tester, _Repository repository) async {
+class _ReplayRepository extends _Repository {
+  @override
+  Future<JournalEntryModel> createEntry({
+    required String title,
+    String? content,
+    String? mood,
+    List<String>? tags,
+    String? clientRequestId,
+  }) async => _entry.copyWith(title: title, content: content, mood: 'sad');
+}
+
+Future<void> _mount(
+  WidgetTester tester,
+  _Repository repository, {
+  bool creating = false,
+}) async {
   final provider = JournalProvider(repository: repository);
   final dashboard = DashboardProvider(
     apiClient: ApiClient(storage: SecureStorageService()),
@@ -51,12 +67,23 @@ Future<void> _mount(WidgetTester tester, _Repository repository) async {
   addTearDown(provider.dispose);
   addTearDown(dashboard.dispose);
   await tester.pumpWidget(
-    ChangeNotifierProvider.value(
-      value: dashboard,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: dashboard),
+        ChangeNotifierProvider(
+          create: (_) => MascotProvider(
+            client: ApiClient(storage: SecureStorageService()),
+          ),
+        ),
+      ],
       child: MaterialApp(
         theme: AppTheme.lightTheme,
         home: Scaffold(
-          body: JournalEditorSheet(provider: provider, entry: _entry),
+          body: JournalEditorSheet(
+            provider: provider,
+            entry: creating ? null : _entry,
+            initialMood: MoodType.neutral,
+          ),
         ),
       ),
     ),
@@ -65,6 +92,23 @@ Future<void> _mount(WidgetTester tester, _Repository repository) async {
 }
 
 void main() {
+  testWidgets(
+    'a retried create patches the latest mood before claiming a save',
+    (tester) async {
+      final repository = _ReplayRepository();
+      await _mount(tester, repository, creating: true);
+      await tester.enterText(find.byType(TextField).last, 'Texte inchangé');
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+      expect(find.text('Enregistré automatiquement'), findsNothing);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump();
+      expect(repository.saved, ['Texte inchangé']);
+      expect(repository.moods, ['neutral']);
+      expect(find.text('Enregistré automatiquement'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets(
     'failed autosave retains the draft and does not claim it is saved',
     (tester) async {

@@ -51,7 +51,8 @@ class _AccueilSections extends StatelessWidget {
           'Données hors ligne du ${DateFormat('d MMMM à HH:mm', 'fr_FR').format(dashboard.cachedAt!.toLocal())}.',
           style: AppTextStyles.bodySmall(color: context.textSecondary),
         ),
-      if (activities.error != null) _InlineError(message: activities.error!),
+      if (activities.error != null)
+        _InlineError(message: activities.error!, retry: store.reload),
       if (layout.showsRest)
         _Surface(
           child: Row(
@@ -368,6 +369,10 @@ class _AnswerCard extends StatelessWidget {
         duration: _motion(context, AppMotion.answerTextFade),
         switchInCurve: AppMotion.accueilEase,
         switchOutCurve: AppMotion.accueilEase,
+        // Let AnimatedSwitcher assign each outgoing transition its own key
+        // when a restored or rolled-back mood repeats during the same fade.
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
         child: Column(
           key: ValueKey(mood),
           crossAxisAlignment: CrossAxisAlignment.stretch,

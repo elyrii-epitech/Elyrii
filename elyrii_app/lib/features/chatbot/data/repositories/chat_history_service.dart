@@ -133,7 +133,7 @@ class ChatHistoryService {
     return _factory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 3,
+        version: 4,
         singleInstance: false,
         onConfigure: (db) async {
           await db.execute('PRAGMA foreign_keys = ON');
@@ -142,6 +142,17 @@ class ChatHistoryService {
           await db.rawQuery('PRAGMA secure_delete = ON');
         },
         onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 4) {
+            await db.execute(
+              'ALTER TABLE sessions ADD COLUMN remote INTEGER NOT NULL DEFAULT 0',
+            );
+            await db.execute(
+              'ALTER TABLE messages ADD COLUMN remote INTEGER NOT NULL DEFAULT 0',
+            );
+            await db.execute(
+              'CREATE INDEX message_remote_page ON messages(owner, sessionId, timestamp, id)',
+            );
+          }
           if (oldVersion < 2) {
             await db.execute(
               "ALTER TABLE messages ADD COLUMN delivery TEXT NOT NULL DEFAULT 'delivered'",
@@ -154,19 +165,24 @@ class ChatHistoryService {
           }
         },
         onCreate: (db, version) async {
-          await db.execute('''CREATE TABLE sessions (
+          await db.execute(
+            '''CREATE TABLE sessions (
           owner TEXT NOT NULL, id TEXT NOT NULL, title TEXT NOT NULL,
           createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL,
-          messageCount INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner, id))''');
+          messageCount INTEGER NOT NULL DEFAULT 0, remote INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(owner, id))''',
+          );
           await db.execute('''CREATE TABLE messages (
           seq INTEGER PRIMARY KEY AUTOINCREMENT, owner TEXT NOT NULL,
           sessionId TEXT NOT NULL, id TEXT NOT NULL, content TEXT NOT NULL,
           isUser INTEGER NOT NULL, timestamp TEXT NOT NULL,
-          delivery TEXT NOT NULL DEFAULT 'delivered',
+          delivery TEXT NOT NULL DEFAULT 'delivered', remote INTEGER NOT NULL DEFAULT 0,
           UNIQUE(owner, id), FOREIGN KEY(owner, sessionId)
           REFERENCES sessions(owner, id) ON DELETE CASCADE)''');
           await db.execute(
             'CREATE INDEX message_page ON messages(owner, sessionId, seq)',
+          );
+          await db.execute(
+            'CREATE INDEX message_remote_page ON messages(owner, sessionId, timestamp, id)',
           );
           await db.execute(
             'CREATE INDEX session_page ON sessions(owner, updatedAt DESC, id)',
@@ -193,8 +209,8 @@ class ChatHistoryService {
       whereArgs: [
         owner,
         if (before != null) ...[
-          before.updatedAt.toIso8601String(),
-          before.updatedAt.toIso8601String(),
+          before.updatedAt.toUtc().toIso8601String(),
+          before.updatedAt.toUtc().toIso8601String(),
           before.id,
         ],
       ],
@@ -222,15 +238,28 @@ class ChatHistoryService {
   }) async {
     if (_removed.contains(owner)) return const [];
     await _migrateOwner(owner);
+    final remote =
+        (await (await _db).query(
+          'sessions',
+          columns: ['remote'],
+          where: 'owner = ? AND id = ?',
+          whereArgs: [owner, sessionId],
+          limit: 1,
+        )).firstOrNull?['remote'] ==
+        1;
     final rows = await (await _db).rawQuery(
       '''SELECT * FROM messages
       WHERE owner = ? AND sessionId = ?
-      ${beforeId == null ? '' : 'AND seq < (SELECT seq FROM messages WHERE owner = ? AND id = ?)'}
-      ORDER BY seq DESC LIMIT ?''',
+      ${beforeId == null
+          ? ''
+          : remote
+          ? 'AND (timestamp, id) < (SELECT timestamp, id FROM messages WHERE owner = ? AND sessionId = ? AND id = ?)'
+          : 'AND seq < (SELECT seq FROM messages WHERE owner = ? AND sessionId = ? AND id = ?)'}
+      ORDER BY ${remote ? 'timestamp DESC, id DESC' : 'seq DESC'} LIMIT ?''',
       [
         owner,
         sessionId,
-        if (beforeId != null) ...[owner, beforeId],
+        if (beforeId != null) ...[owner, sessionId, beforeId],
         pageSize,
       ],
     );
@@ -271,7 +300,7 @@ class ChatHistoryService {
           message.id,
           encrypted,
           message.isUser ? 1 : 0,
-          message.timestamp.toIso8601String(),
+          message.timestamp.toUtc().toIso8601String(),
           message.delivery.name,
         ],
       );
@@ -318,15 +347,15 @@ class ChatHistoryService {
         owner,
         session.id,
         title,
-        session.createdAt.toIso8601String(),
-        session.updatedAt.toIso8601String(),
+        session.createdAt.toUtc().toIso8601String(),
+        session.updatedAt.toUtc().toIso8601String(),
       ],
     );
     // Both statements run inside the caller's transaction. Avoid UPSERT
     // (SQLite 3.24+) and REPLACE (which would cascade-delete the messages).
     await db.rawUpdate(
       'UPDATE sessions SET title = ?, updatedAt = ? WHERE owner = ? AND id = ?',
-      [title, session.updatedAt.toIso8601String(), owner, session.id],
+      [title, session.updatedAt.toUtc().toIso8601String(), owner, session.id],
     );
   }
 
@@ -336,6 +365,138 @@ class ChatHistoryService {
       where: 'owner = ? AND id = ?',
       whereArgs: [owner, sessionId],
     );
+  }
+
+  Future<void> markRemote(String owner, String sessionId) async {
+    _ensureOwner(owner);
+    await (await _db).transaction((tx) async {
+      _ensureOwner(owner);
+      await tx.update(
+        'sessions',
+        {'remote': 1},
+        where: 'owner = ? AND id = ?',
+        whereArgs: [owner, sessionId],
+      );
+      await tx.update(
+        'messages',
+        {'remote': 1},
+        where: "owner = ? AND sessionId = ? AND delivery = 'delivered'",
+        whereArgs: [owner, sessionId],
+      );
+    });
+  }
+
+  /// Reconcile only the server's complete metadata page, retaining unvisited
+  /// history and local-only failed conversations. Never uploads legacy text.
+  Future<void> cacheRemoteSessions(
+    String owner,
+    List<ChatSession> page, {
+    ChatSession? before,
+  }) async {
+    _ensureOwner(owner);
+    await (await _db).transaction((tx) async {
+      _ensureOwner(owner);
+      final conditions = <String>['owner = ?', 'remote = 1'];
+      final args = <Object?>[owner];
+      if (before != null) {
+        conditions.add('(updatedAt < ? OR (updatedAt = ? AND id > ?))');
+        args.addAll([
+          before.updatedAt.toUtc().toIso8601String(),
+          before.updatedAt.toUtc().toIso8601String(),
+          before.id,
+        ]);
+      }
+      if (page.length == pageSize) {
+        final last = page.last;
+        conditions.add('(updatedAt > ? OR (updatedAt = ? AND id <= ?))');
+        args.addAll([
+          last.updatedAt.toUtc().toIso8601String(),
+          last.updatedAt.toUtc().toIso8601String(),
+          last.id,
+        ]);
+      }
+      if (page.isNotEmpty) {
+        conditions.add(
+          'id NOT IN (${List.filled(page.length, '?').join(',')})',
+        );
+        args.addAll(page.map((s) => s.id));
+      }
+      await tx.delete(
+        'sessions',
+        where: conditions.join(' AND '),
+        whereArgs: args,
+      );
+      for (final session in page) {
+        await _upsert(tx, owner, session);
+        await tx.rawUpdate(
+          'UPDATE sessions SET remote = 1, messageCount = MAX(?, (SELECT count(*) FROM messages WHERE owner = ? AND sessionId = ?)) WHERE owner = ? AND id = ?',
+          [session.messageCount, owner, session.id, owner, session.id],
+        );
+      }
+    });
+  }
+
+  Future<void> cacheRemoteMessages(
+    String owner,
+    String sessionId,
+    List<ChatMessage> page, {
+    bool older = false,
+  }) async {
+    _ensureOwner(owner);
+    final encrypted = [
+      for (final message in page)
+        await cipher.seal(
+          owner,
+          message.content,
+          purpose: 'chat-message:${message.id}',
+        ),
+    ];
+    await (await _db).transaction((tx) async {
+      _ensureOwner(owner);
+      if (!older) {
+        // Remove stale acknowledged rows only in the range this page covers.
+        await tx.delete(
+          'messages',
+          where:
+              'owner = ? AND sessionId = ? AND (delivery = ? OR remote = 1)${page.length < pageSize ? '' : ' AND timestamp >= ?'}',
+          whereArgs: [
+            owner,
+            sessionId,
+            'delivered',
+            if (page.length == pageSize)
+              page.first.timestamp.toUtc().toIso8601String(),
+          ],
+        );
+      }
+      final batch = tx.batch();
+      for (var i = 0; i < page.length; i++) {
+        final message = page[i];
+        batch.rawInsert(
+          'INSERT OR IGNORE INTO messages(owner,sessionId,id,content,isUser,timestamp,delivery) VALUES(?,?,?,?,?,?,?)',
+          [
+            owner,
+            sessionId,
+            message.id,
+            encrypted[i],
+            message.isUser ? 1 : 0,
+            message.timestamp.toUtc().toIso8601String(),
+            message.delivery.name,
+          ],
+        );
+        batch.rawUpdate(
+          'UPDATE messages SET content = ?, timestamp = ?, delivery = ?, remote = 1 WHERE owner = ? AND sessionId = ? AND id = ?',
+          [
+            encrypted[i],
+            message.timestamp.toUtc().toIso8601String(),
+            message.delivery.name,
+            owner,
+            sessionId,
+            message.id,
+          ],
+        );
+      }
+      await batch.commit(noResult: true);
+    });
   }
 
   Future<void> clearMessages(String owner, ChatSession session) async {
@@ -383,7 +544,7 @@ class ChatHistoryService {
                 purpose: 'chat-message:${message.id}',
               ),
               message.isUser ? 1 : 0,
-              message.timestamp.toIso8601String(),
+              message.timestamp.toUtc().toIso8601String(),
               message.delivery.name,
             ],
           );

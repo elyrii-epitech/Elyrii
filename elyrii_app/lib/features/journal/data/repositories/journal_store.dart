@@ -230,6 +230,9 @@ class JournalStore {
     String owner,
     List<JournalEntryModel> entries, {
     required int expectedRevision,
+    bool? newestFirst,
+    bool? hasMore,
+    ({DateTime createdAt, String id})? after,
   }) => _write((db) async {
     _ensureOwner(owner);
     if (revision(owner) != expectedRevision) return;
@@ -240,6 +243,44 @@ class JournalStore {
       // One platform/FFI batch per page rather than 101 awaited calls, while
       // retaining the same atomic transaction and revision checks.
       final batch = tx.batch();
+      if (newestFirst != null && hasMore != null) {
+        // Reconcile only the range this server page proves complete. Keep
+        // unknown older pages, but remove remotely deleted rows in this range.
+        // Prefix comparison uses the same millisecond precision as API cursors.
+        final conditions = <String>['owner = ?'];
+        final arguments = <Object?>[owner];
+        const date = 'substr(createdAt, 1, 23)';
+        String stamp(DateTime value) =>
+            value.toUtc().toIso8601String().substring(0, 23);
+        if (after != null) {
+          final comparison = newestFirst ? '<' : '>';
+          conditions.add(
+            '($date $comparison ? OR ($date = ? AND id $comparison ?))',
+          );
+          arguments.addAll([
+            stamp(after.createdAt),
+            stamp(after.createdAt),
+            after.id,
+          ]);
+        }
+        if (hasMore && entries.isNotEmpty) {
+          final last = entries.last;
+          final comparison = newestFirst ? '>' : '<';
+          conditions.add(
+            '($date $comparison ? OR ($date = ? AND id $comparison= ?))',
+          );
+          arguments.addAll([
+            stamp(last.createdAt),
+            stamp(last.createdAt),
+            last.id,
+          ]);
+        }
+        batch.delete(
+          'entries',
+          where: conditions.join(' AND '),
+          whereArgs: arguments,
+        );
+      }
       for (final row in rows) {
         batch.insert(
           'entries',

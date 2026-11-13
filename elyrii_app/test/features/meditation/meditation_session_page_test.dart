@@ -1,3 +1,9 @@
+import 'dart:async';
+
+import 'package:elyrii_app/core/network/api_client.dart';
+import 'package:elyrii_app/core/services/secure_storage_service.dart';
+import 'package:elyrii_app/features/meditation/data/models/meditation_session_model.dart';
+import 'package:elyrii_app/features/meditation/data/repositories/meditation_repository.dart';
 import 'package:elyrii_app/core/theme/app_theme.dart';
 import 'package:elyrii_app/core/theme/app_dimensions.dart';
 import 'package:elyrii_app/features/dashboard/presentation/mood_presentation.dart';
@@ -13,10 +19,34 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class PendingCancelRepository extends MeditationRepository {
+  PendingCancelRepository()
+    : super(client: ApiClient(storage: SecureStorageService()));
+  final cancellation = Completer<MeditationSessionModel>();
+  final session = MeditationSessionModel(
+    id: 'session',
+    type: 'coherence',
+    durationMinutes: 5,
+    status: 'STARTED',
+    createdAt: DateTime(2026),
+  );
+  @override
+  Future<MeditationSessionModel> startSession({
+    required String type,
+    required int durationMinutes,
+    String? moodBefore,
+    String? clientSessionId,
+  }) async => session;
+  @override
+  Future<MeditationSessionModel> cancelSession(String sessionId) =>
+      cancellation.future;
+}
+
 Future<void> openSession(
   WidgetTester tester,
-  MeditationController controller,
-) async {
+  MeditationController controller, {
+  bool nested = false,
+}) async {
   SharedPreferences.setMockInitialValues({});
   FlutterSecureStorage.setMockInitialValues({});
   tester.view.physicalSize = const Size(390, 844);
@@ -24,6 +54,10 @@ Future<void> openSession(
   addTearDown(tester.view.reset);
   final router = GoRouter(
     routes: [
+      GoRoute(
+        path: '/launcher',
+        builder: (_, _) => const Scaffold(body: Text('Parcours')),
+      ),
       GoRoute(
         path: '/',
         builder: (_, _) => const Scaffold(body: Text('Catalogue')),
@@ -44,6 +78,10 @@ Future<void> openSession(
       ),
     ),
   );
+  if (nested) {
+    router.push('/launcher');
+    await tester.pumpAndSettle();
+  }
   await controller.startSession();
   router.push('/session');
   await tester.pump();
@@ -51,6 +89,26 @@ Future<void> openSession(
 }
 
 void main() {
+  testWidgets('an interrupted save returns to its launcher exactly once', (
+    tester,
+  ) async {
+    final repository = PendingCancelRepository();
+    final controller = MeditationController(repository: repository)
+      ..setBreathingType(BreathingType.coherence);
+    addTearDown(controller.dispose);
+    await openSession(tester, controller, nested: true);
+    await tester.tap(find.byTooltip('Fermer la séance'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Interrompre'));
+    await tester.pumpAndSettle();
+    expect(find.text('Parcours'), findsOneWidget);
+    repository.cancellation.complete(repository.session);
+    await controller.synchronized;
+    await tester.pumpAndSettle();
+    expect(find.text('Parcours'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('guidage écrit conservé, pause, bilan réel et retour', (
     tester,
   ) async {
