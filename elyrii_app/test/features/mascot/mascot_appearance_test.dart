@@ -126,6 +126,172 @@ void main() {
     provider.dispose();
   });
 
+  for (final failsWithException in [false, true]) {
+    test(
+      'a failed studio finalization restores a removed locked reward (exception: $failsWithException)',
+      () async {
+        final client = _Client()
+          ..remote = {
+            'appearance': 'nature',
+            'equippedCosmetics': ['beret', 'cheek_sparkle'],
+          };
+        final provider = MascotProvider(client: client, userId: 'user');
+        addTearDown(provider.dispose);
+        await provider.loadMascot();
+        final original = provider.mascot;
+        final started = Completer<void>();
+        final decision = Completer<bool>();
+        final saving = provider.saveCustomization(
+          original.copyWith(equippedCosmetics: ['cheek_sparkle']),
+          completedChallenges: 0,
+          finalize: () {
+            started.complete();
+            return decision.future;
+          },
+        );
+        await started.future;
+        final retrying = provider.retrySync();
+        await Future<void>.delayed(Duration.zero);
+        expect(client.updates, isEmpty);
+        if (failsWithException) {
+          decision.completeError(StateError('decor unavailable'));
+        } else {
+          decision.complete(false);
+        }
+        expect(await saving, isFalse);
+        await retrying;
+        await provider.flushed;
+        expect(provider.mascot, original);
+        expect(client.updates, isNotEmpty);
+        expect(
+          client.updates.every(
+            (body) => (body['equippedCosmetics'] as List).contains('beret'),
+          ),
+          isTrue,
+        );
+        final restored = MascotProvider(userId: 'user');
+        addTearDown(restored.dispose);
+        await restored.loadMascot();
+        expect(restored.mascot, original);
+        // Restoration does not authorize selecting another locked reward.
+        expect(
+          await provider.saveCustomization(
+            original.copyWith(equippedCosmetics: ['mini_backpack']),
+            completedChallenges: 0,
+          ),
+          isFalse,
+        );
+      },
+    );
+  }
+
+  test('a studio look is uploaded only after finalization succeeds', () async {
+    final client = _Client()
+      ..remote = {
+        'appearance': 'nature',
+        'equippedCosmetics': ['beret'],
+      };
+    final provider = MascotProvider(client: client, userId: 'user');
+    addTearDown(provider.dispose);
+    await provider.loadMascot();
+    final draft = provider.mascot.copyWith(equippedCosmetics: []);
+    final started = Completer<void>();
+    final decision = Completer<bool>();
+    final saving = provider.saveCustomization(
+      draft,
+      completedChallenges: 0,
+      finalize: () {
+        started.complete();
+        return decision.future;
+      },
+    );
+    await started.future;
+    expect(client.updates, isEmpty);
+    decision.complete(true);
+    expect(await saving, isTrue);
+    await provider.flushed;
+    expect(provider.mascot, draft);
+    expect(client.updates.single['equippedCosmetics'], isEmpty);
+    final restored = MascotProvider(userId: 'user');
+    addTearDown(restored.dispose);
+    await restored.loadMascot();
+    expect(restored.mascot, draft);
+  });
+
+  test('a late failed finalization does not replace a newer look', () async {
+    final provider = MascotProvider(userId: 'user');
+    addTearDown(provider.dispose);
+    await provider.loadMascot();
+    await provider.flushed;
+    final started = Completer<void>();
+    final decision = Completer<bool>();
+    final saving = provider.saveCustomization(
+      provider.mascot.copyWith(themeId: 'zen'),
+      completedChallenges: 0,
+      finalize: () {
+        started.complete();
+        return decision.future;
+      },
+    );
+    await started.future;
+    final latest = provider.mascot.copyWith(themeId: 'sakura');
+    expect(
+      await provider.saveCustomization(latest, completedChallenges: 0),
+      isFalse,
+      reason: 'A second studio transaction cannot capture an unconfirmed look',
+    );
+    provider.setTheme('sakura');
+    decision.complete(false);
+    expect(await saving, isFalse);
+    await provider.flushed;
+    expect(provider.mascot, latest);
+    final restored = MascotProvider(userId: 'user');
+    addTearDown(restored.dispose);
+    await restored.loadMascot();
+    expect(restored.mascot, latest);
+  });
+
+  test(
+    'an old studio finalization cannot delay or restore into a new account',
+    () async {
+      final client = _Client()
+        ..remote = {
+          'appearance': 'nature',
+          'equippedCosmetics': ['beret'],
+        };
+      final provider = MascotProvider(client: client, userId: 'alice');
+      addTearDown(provider.dispose);
+      await provider.loadMascot();
+      final started = Completer<void>();
+      final decision = Completer<bool>();
+      final saving = provider.saveCustomization(
+        provider.mascot.copyWith(equippedCosmetics: []),
+        completedChallenges: 0,
+        finalize: () {
+          started.complete();
+          return decision.future;
+        },
+      );
+      await started.future;
+      client.remote = {'appearance': 'sakura'};
+      await provider.onUserChanged(userId: 'bob');
+      final bob = provider.mascot.copyWith(themeId: 'zen');
+      await provider.saveCustomization(bob, completedChallenges: 0);
+      await provider.flushed;
+      expect(client.updates.single['appearance'], 'zen');
+      decision.complete(false);
+      expect(await saving, isFalse);
+      await provider.flushed;
+      expect(provider.storageScope, 'bob');
+      expect(provider.mascot, bob);
+      final restored = MascotProvider(userId: 'bob');
+      addTearDown(restored.dispose);
+      await restored.loadMascot();
+      expect(restored.mascot, bob);
+      expect(client.updates, hasLength(1));
+    },
+  );
+
   test(
     'un look hors ligne survit à un ancien état serveur puis se synchronise',
     () async {
