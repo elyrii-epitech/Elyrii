@@ -115,7 +115,7 @@ class PromptTests(unittest.TestCase):
             with open(output, "w") as file: json.dump({"kind": "pinned-tokenizer prompt evaluation" if os.getenv("CHAT_EVAL_TOKENIZER_DIR") else "mock-tokenizer regression, not live-model evaluation", "measurements": measurements}, file, indent=2)
 
 class BridgeTests(unittest.IsolatedAsyncioTestCase):
-    async def exercise(self, enabled, refresh_status=200, fresh=None, window=4096, message="CURRENT_UNIQUE", envelope=True):
+    async def exercise(self, enabled, refresh_status=200, fresh=None, window=4096, message="CURRENT_UNIQUE", envelope=True, queued_sections=None):
         bridge = object.__new__(AiBridge)
         bridge.context_enabled = enabled; bridge.budget = budget(window); bridge.system_prompt = "Trusted instructions"
         bridge.producer = AsyncMock(); calls = []
@@ -129,7 +129,7 @@ class BridgeTests(unittest.IsolatedAsyncioTestCase):
             bridge.client = client; bridge.context_client = context_client
             data = {"userId": "owner", "conversationId": "a", "sourceMessageId": "current", "message": message,
                     "history": [{"role": "user", "message": "STALE_HISTORY"}]}
-            if envelope: data["context"] = {"version": 1, "ticket": "ticket", "sections": {"secret": "STALE_CONTEXT"}}
+            if envelope: data["context"] = {"version": 1, "ticket": "ticket", "sections": queued_sections if queued_sections is not None else {"secret": "STALE_CONTEXT"}}
             await bridge.process_message(data, "request")
         return calls, bridge.producer.send_and_wait.call_args.args[1]["response"]
 

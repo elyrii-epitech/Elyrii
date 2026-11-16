@@ -20,6 +20,9 @@ services:
       - NODE_ENV=development
       - ENABLE_SUMMARIES=${ENABLE_SUMMARIES:-false}
       - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - ENABLE_JOURNAL_RECALL=${ENABLE_JOURNAL_RECALL:-false}
+      - ENABLE_MOOD_CONTEXT=${ENABLE_MOOD_CONTEXT:-false}
+      - MOOD_CONTEXT_FRESHNESS_HOURS=${MOOD_CONTEXT_FRESHNESS_HOURS:-48}
       - CONTEXT_BRIDGE_SECRET=${CONTEXT_BRIDGE_SECRET:-}
       - CHAT_RETRIEVAL_TIMEOUT_MS=${CHAT_RETRIEVAL_TIMEOUT_MS:-4000}
       - ENABLE_CONTEXT_CLEANUP=${ENABLE_CONTEXT_CLEANUP:-true}
@@ -147,6 +150,8 @@ services:
     networks:
       - elyrii_net
 
+  # Legacy adapter import: requires an Ollama version with ADAPTER support.
+  # For current local evaluation use elyrii_ai/docs/lora-loading.md.
   ollama-init:
     image: ollama/ollama:latest
     container_name: elyrii-ollama-init
@@ -221,6 +226,7 @@ services:
       - AI_BASE_URL=http://ollama:11434
       - AI_MODEL=${OLLAMA_MODEL_NAME:-elyrii-lora}
       - ENABLE_PERSISTENT_CONTEXT=${ENABLE_PERSISTENT_CONTEXT:-false}
+      - ENABLE_JOURNAL_RECALL=${ENABLE_JOURNAL_RECALL:-false}
       - CHAT_TOKENIZER_DIR=/generation-tokenizer
       - CONTEXT_SERVER_URL=http://server:${PORT:-3000}
     volumes:

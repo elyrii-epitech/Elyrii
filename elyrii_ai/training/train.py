@@ -103,6 +103,10 @@ def _find_first_subsequence(
     return best_idx, best_len
 
 
+class NoSupervisedTokensError(ValueError):
+    """The example has no target for causal language modeling."""
+
+
 @dataclass
 class AssistantOnlyDataCollator:
     """Pads examples and masks loss to assistant completions only.
@@ -118,14 +122,20 @@ class AssistantOnlyDataCollator:
     train_on_inputs: bool = False
 
     def __post_init__(self) -> None:
-        self.response_template_ids = [
-            self.tokenizer.encode(marker, add_special_tokens=False)
-            for marker in ("[/INST]", " [/INST]", "[/INST] ", " [/INST] ")
-        ]
-        self.instruction_template_ids = [
-            self.tokenizer.encode(marker, add_special_tokens=False)
-            for marker in ("[INST]", " [INST]", "[INST] ", " [INST] ")
-        ]
+        # Encoding a standalone marker with SentencePiece can prepend whitespace
+        # tokens that are absent inside a conversation. Use the registered IDs.
+        self.response_template_ids = [self._marker_ids("[/INST]")]
+        self.instruction_template_ids = [self._marker_ids("[INST]")]
+
+    def _marker_ids(self, marker: str) -> List[int]:
+        token_id = self.tokenizer.convert_tokens_to_ids(marker)
+        if token_id is None or token_id == self.tokenizer.unk_token_id:
+            raise ValueError(f"Tokenizer does not define the Mistral marker {marker!r}.")
+        # Some saved LlamaTokenizer configurations omit these control tokens
+        # from all_special_ids even though they have dedicated vocabulary IDs.
+        if self.tokenizer.convert_ids_to_tokens(token_id) != marker:
+            raise ValueError(f"Mistral marker {marker!r} must have a dedicated vocabulary token.")
+        return [token_id]
 
     def __call__(self, features: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
         batch = self.tokenizer.pad(
@@ -139,14 +149,16 @@ class AssistantOnlyDataCollator:
 
         if self.train_on_inputs:
             labels[batch["attention_mask"] == 0] = self.label_pad_token_id
+            self._validate_labels(labels)
             batch["labels"] = labels
             return batch
 
         labels.fill_(self.label_pad_token_id)
 
         for row_idx, attention_mask in enumerate(batch["attention_mask"]):
-            seq_len = int(attention_mask.sum().item())
-            ids = input_ids[row_idx, :seq_len].tolist()
+            positions = attention_mask.nonzero(as_tuple=True)[0]
+            ids = input_ids[row_idx, positions].tolist()
+            seq_len = len(ids)
             search_from = 0
 
             while True:
@@ -163,14 +175,50 @@ class AssistantOnlyDataCollator:
                 response_end = next_instruction if next_instruction != -1 else seq_len
 
                 if response_start < response_end:
-                    labels[row_idx, response_start:response_end] = input_ids[
-                        row_idx, response_start:response_end
+                    response_positions = positions[response_start:response_end]
+                    labels[row_idx, response_positions] = input_ids[
+                        row_idx, response_positions
                     ]
 
                 search_from = response_end
 
+        self._validate_labels(labels)
         batch["labels"] = labels
         return batch
+
+    def _validate_labels(self, labels: torch.Tensor) -> None:
+        # Causal LM loss shifts labels by one; position zero is never a target.
+        invalid = (labels[:, 1:] != self.label_pad_token_id).sum(dim=1) == 0
+        if invalid.any():
+            rows = invalid.nonzero(as_tuple=True)[0].tolist()
+            raise NoSupervisedTokensError(
+                f"Examples at batch rows {rows} have no supervised tokens after "
+                "causal shifting. Check assistant responses, truncation, and tokenizer "
+                "markers; training on these examples would produce invalid loss."
+            )
+
+
+def filter_supervised_examples(dataset, collator, split):
+    """Check each saved row with the training mask before loading the model."""
+    keep = []
+    rejected_sample = []
+    for index, example in enumerate(dataset):
+        try:
+            collator([example])
+        except NoSupervisedTokensError:
+            if len(rejected_sample) < 10:
+                rejected_sample.append(index)
+        else:
+            keep.append(index)
+
+    if rejected_sample:
+        logger.warning(
+            "%s: skipping %d/%d rows with no supervised tokens. First row indices: %s",
+            split, len(dataset) - len(keep), len(dataset), rejected_sample,
+        )
+    if not keep:
+        raise ValueError(f"No usable examples in {split}. Check the data and tokenizer markers.")
+    return dataset if len(keep) == len(dataset) else dataset.select(keep, keep_in_memory=True)
 
 
 def parse_args() -> argparse.Namespace:
@@ -280,6 +328,22 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    try:
+        train_ds = load_from_disk(os.path.join(args.data_dir, "train"))
+        val_ds = load_from_disk(os.path.join(args.data_dir, "val"))
+    except FileNotFoundError as e:
+        logger.error(f"Error loading datasets: {e}")
+        logger.error("   Make sure you ran 'prepare_data.py' first.")
+        exit(1)
+
+    collator = AssistantOnlyDataCollator(
+        tokenizer=tokenizer,
+        train_on_inputs=args.train_on_inputs,
+    )
+
+    train_ds = filter_supervised_examples(train_ds, collator, "train")
+    val_ds = filter_supervised_examples(val_ds, collator, "val")
+
     # QLoRA configuration using 4-bit quantization
     compute_dtype = preferred_compute_dtype()
     use_bf16 = compute_dtype == torch.bfloat16
@@ -331,22 +395,11 @@ def main():
     model = get_peft_model(model, lora_cfg)
     model.print_trainable_parameters()
 
-    try:
-        train_ds = load_from_disk(os.path.join(args.data_dir, "train"))
-        val_ds = load_from_disk(os.path.join(args.data_dir, "val"))
-    except FileNotFoundError as e:
-        logger.error(f"Error loading datasets: {e}")
-        logger.error("   Make sure you ran 'prepare_data.py' first.")
-        exit(1)
-
-    collator = AssistantOnlyDataCollator(
-        tokenizer=tokenizer,
-        train_on_inputs=args.train_on_inputs,
-    )
-
     training_args = TrainingArguments(
         output_dir=args.output_dir,
         per_device_train_batch_size=args.batch,
+        # Validation pads every example to the longest sequence in its batch.
+        per_device_eval_batch_size=1,
         gradient_accumulation_steps=args.grad_acc,
         learning_rate=args.lr,
         num_train_epochs=args.epochs,

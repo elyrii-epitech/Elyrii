@@ -35,7 +35,7 @@ export class ExtractionRepository {
             const [source] = await tx.select().from(messages).where(and(eq(messages.id, job.sourceMessageId),
                 eq(messages.userId, job.userId), eq(messages.conversationId, job.conversationId), eq(messages.role, "user"), contextSourceEligible(this.policy.now())));
             const [owner] = await tx.select().from(users).where(eq(users.id, job.userId));
-            if (!source || !owner || owner.contextGeneration !== job.generation) {
+            if (!source || source.contextRevision !== job.sourceRevision || !owner || owner.contextGeneration !== job.generation) {
                 await tx.update(jobs).set({ status: "discarded", completedAt: now }).where(eq(jobs.id, job.id));
                 return null;
             }
@@ -95,7 +95,7 @@ export class ExtractionRepository {
             };
             const [source] = await tx.select().from(messages).where(and(eq(messages.id, job.sourceMessageId),
                 eq(messages.userId, owner.id), eq(messages.conversationId, job.conversationId), eq(messages.role, "user"), contextSourceEligible(this.policy.now()))).for("key share");
-            if (!source || owner.contextGeneration !== job.generation) {
+            if (!source || source.contextRevision !== job.sourceRevision || owner.contextGeneration !== job.generation) {
                 await finish("discarded"); return "discarded";
             }
             if (result.status === "failure") {
@@ -124,6 +124,8 @@ export class ExtractionRepository {
                 let targetId: string;
                 if (c.kind === "memory") {
                     // Exact content dedup only. Distinct life events must not be merged heuristically.
+                    const times = this.policy.sourceMemoryTimes({ ...c, eventAt: c.eventAt ? new Date(c.eventAt) : null }, now, source.createdAt);
+                    if (!times) continue;
                     const existing = await tx.select().from(memories).where(and(eq(memories.userId, owner.id),
                         eq(memories.content, c.content), eq(memories.retention, c.retention), eq(memories.status, "active")));
                     const same = existing.find(m => (m.eventAt?.toISOString() ?? null) === (c.eventAt ? new Date(c.eventAt).toISOString() : null));
@@ -131,12 +133,13 @@ export class ExtractionRepository {
                     else {
                         const [row] = await tx.insert(memories).values({ userId: owner.id, content: c.content,
                             origin: c.origin, retention: c.retention, sourceMessageId: source.id,
-                            ...this.policy.memoryTimes({ ...c, eventAt: c.eventAt ? new Date(c.eventAt) : null }, now),
+                            ...times,
                             createdAt: now, updatedAt: now }).returning();
                         targetId = row!.id;
                     }
                 } else {
                     const [current] = await tx.select().from(facts).where(and(eq(facts.userId, owner.id), eq(facts.key, c.key), eq(facts.status, "active")));
+                    if (current?.sourceKind === "journal") continue;
                     // Respect explicit repository corrections made after this job's source.
                     if (current && current.id !== watermark?.targetId && current.updatedAt > job.createdAt) continue;
                     if (current && current.kind === c.kind && canonical(current.value) === canonical(c.value)) targetId = current.id;

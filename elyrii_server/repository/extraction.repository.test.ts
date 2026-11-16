@@ -167,7 +167,7 @@ suite("Asynchronous extraction (PostgreSQL)", () => {
         await source(); const job = await claim();
         await repo.complete(result(job, [memory(job, "short_term")]));
         const [row] = await database.select().from(schema.userMemoriesTable);
-        expect(+row!.expiresAt! - +now).toBe(48 * 60 * 60 * 1000);
+        expect(+row!.expiresAt! - +new Date(job.input.source.messageAt)).toBe(48 * 60 * 60 * 1000);
         await source(); const empty = await claim();
         expect(await repo.complete(result(empty, []))).toBe("completed");
     });

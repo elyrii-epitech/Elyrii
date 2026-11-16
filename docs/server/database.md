@@ -178,6 +178,10 @@ restoring the backup; automatic destructive down-migrations are not provided.
 
 ## Development and verification
 
+Migration 0007 adds journal source provenance, revision fencing and a transactional
+outbox. See [Journal context source foundation](journal-source-foundation.md) for
+deployment preflight, compatibility, lifecycle behavior and rollback guidance.
+
 With Bun installed, server commands can also run directly using the `DB_*`
 environment variables:
 

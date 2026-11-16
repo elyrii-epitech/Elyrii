@@ -1,0 +1,119 @@
+{
+  "kind": "synthetic PostgreSQL retrieval and mock-tokenizer regression; not model quality",
+  "retrievalP50Ms": 2.8020745000000034,
+  "retrievalP95Ms": 3.27379099999996,
+  "measurements": [
+    {
+      "case": "relevant-distinct-and-deduplicated",
+      "inputTokens": 847,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 3,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 3.27379099999996,
+      "compositionMs": 2.3700699998698838
+    },
+    {
+      "case": "unrelated-en",
+      "inputTokens": 501,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 0,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 2.3066780000000335,
+      "compositionMs": 1.5947140000207582
+    },
+    {
+      "case": "unrelated-fr",
+      "inputTokens": 502,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 0,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 2.285987999999975,
+      "compositionMs": 1.3728070000524895
+    },
+    {
+      "case": "relevant-fr",
+      "inputTokens": 847,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 3,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 3.0912850000000844,
+      "compositionMs": 2.5167249998503394
+    },
+    {
+      "case": "recall-disabled-after-dispatch",
+      "inputTokens": 504,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 1,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 2.397650999999996,
+      "compositionMs": 1.413117999845781
+    },
+    {
+      "case": "provider-fallback",
+      "inputTokens": 506,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 0,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 1.6547859999999446,
+      "compositionMs": 1.3599960000192368
+    },
+    {
+      "case": "edited-after-dispatch",
+      "inputTokens": 600,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 1,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 2.7041410000000496,
+      "compositionMs": 1.6178739999759273
+    },
+    {
+      "case": "deleted-preference",
+      "inputTokens": 504,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 1,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 2.900007999999957,
+      "compositionMs": 1.3769060001322941
+    },
+    {
+      "case": "forgotten-retains-journal",
+      "inputTokens": 504,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 1,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 3.246970000000033,
+      "compositionMs": 1.3422150000224065
+    },
+    {
+      "case": "excluded-correction",
+      "inputTokens": 504,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 1,
+      "selectedMoodObservations": 1,
+      "retrievalMs": 2.9361299999999346,
+      "compositionMs": 1.341275000186215
+    }
+  ],
+  "runDate": "2026-10-27",
+  "liveEvaluation": "Completed separately on 2026-10-29; see journal-recall-live-evaluation.json. This file retains the synthetic regression measurements."
+}

@@ -1,10 +1,11 @@
 import { sql } from "drizzle-orm";
-import { boolean, foreignKey, index, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, foreignKey, index, integer, pgTable, text, timestamp, unique, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { userTable } from "./user.table";
 
 export const chatMessagesTable = pgTable("chat_messages", {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
+    contextRevision: integer("context_revision").notNull().default(1),
     contextSuppressed: boolean("context_suppressed").notNull().default(false),
     replyToId: uuid("reply_to_id"),
     conversationId: text("conversation_id").notNull().default("default"),

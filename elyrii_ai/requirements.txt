@@ -19,3 +19,4 @@ sphinx-autodoc-typehints>=1.25.0
 
 # Dependencies for CI
 aiokafka
+tzdata>=2024.1

@@ -151,3 +151,9 @@ source/user deletion, forgetting and embedding invalidation. Server contract tes
 reuse all #222 fixtures. Worker tests mock inference and publishing, including
 publish failure and valid empty results. These do not claim real-model extraction
 accuracy; the model-backed evaluation procedure remains in the AI extraction docs.
+
+## Journal sources
+
+Journal extraction uses a separate versioned adapter and opt-in worker. See
+[Journal extraction](journal-extraction.md) for evidence policy, limits, rollout,
+backfill and evaluation. The chat v1 contract remains unchanged.
