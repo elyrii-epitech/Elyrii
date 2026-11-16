@@ -12,7 +12,6 @@ class _Dressing extends StatefulWidget {
 
 class _DressingState extends State<_Dressing> {
   late MascotModel _draft;
-  late MascotModel _original;
   late MascotDecor _decor;
   late int _session;
   bool _initialized = false;
@@ -28,7 +27,7 @@ class _DressingState extends State<_Dressing> {
     if (_initialized) return;
     _initialized = true;
     final mascot = context.read<MascotProvider>();
-    _draft = _original = mascot.mascot;
+    _draft = mascot.mascot;
     _session = mascot.sessionRevision;
     _decor = context.read<AccueilActivities>().snapshot.decor;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -64,23 +63,19 @@ class _DressingState extends State<_Dressing> {
       _draft,
       completedChallenges: count,
       expectedSessionRevision: _session,
+      finalize: () async {
+        if (mascot.sessionRevision != _session) return false;
+        return store.setDecor(_decor, completedChallenges: count);
+      },
     );
     if (!mounted) return;
-    if (saved && await store.setDecor(_decor, completedChallenges: count)) {
+    if (saved) {
       widget.onBusy(false);
       _saving = false;
       ElyriiHaptics.success();
       if (mounted) Navigator.of(context).pop();
       return;
     }
-    if (saved && mascot.sessionRevision == _session) {
-      await mascot.saveCustomization(
-        _original,
-        completedChallenges: count,
-        expectedSessionRevision: _session,
-      );
-    }
-    if (!mounted) return;
     widget.onBusy(false);
     setState(() {
       _saving = false;
@@ -91,8 +86,14 @@ class _DressingState extends State<_Dressing> {
     });
   }
 
+  // A restored reward can always be taken off. Its unlock threshold still
+  // applies when selecting it again after removal.
+  bool _isAccessoryLocked(MascotAccessory accessory, int count) =>
+      !accessory.isUnlocked(count) &&
+      !_draft.equippedCosmetics.contains(accessory.id);
+
   void _chooseAccessory(MascotAccessory accessory, int count) {
-    if (!accessory.isUnlocked(count)) {
+    if (_isAccessoryLocked(accessory, count)) {
       showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
@@ -443,7 +444,7 @@ class _DressingState extends State<_Dressing> {
                       selected: _draft.equippedCosmetics.contains(item.id),
                       child: AccessibleAction(
                         label:
-                            '${item.name}${known && !item.isUnlocked(count) ? ', ${item.requiredChallenges} défis' : ''}',
+                            '${item.name}${known && _isAccessoryLocked(item, count) ? ', ${item.requiredChallenges} défis' : ''}',
                         onPressed: known
                             ? () => _chooseAccessory(item, count)
                             : null,
@@ -474,7 +475,9 @@ class _DressingState extends State<_Dressing> {
                                   fit: StackFit.expand,
                                   children: [
                                     Opacity(
-                                      opacity: known && item.isUnlocked(count)
+                                      opacity:
+                                          known &&
+                                              !_isAccessoryLocked(item, count)
                                           ? 1
                                           : .35,
                                       child: Transform.scale(
@@ -487,7 +490,8 @@ class _DressingState extends State<_Dressing> {
                                         ),
                                       ),
                                     ),
-                                    if (known && !item.isUnlocked(count))
+                                    if (known &&
+                                        _isAccessoryLocked(item, count))
                                       const Center(
                                         child: Icon(
                                           Symbols.lock_rounded,
@@ -515,12 +519,12 @@ class _DressingState extends State<_Dressing> {
                             Text(
                               !known
                                   ? '…'
-                                  : item.isUnlocked(count)
+                                  : !_isAccessoryLocked(item, count)
                                   ? item.name
                                   : '${item.requiredChallenges} défis',
                               textAlign: TextAlign.center,
                               style: AppTextStyles.moodLabelSelected(
-                                color: known && item.isUnlocked(count)
+                                color: known && !_isAccessoryLocked(item, count)
                                     ? context.textPrimary
                                     : context.textTertiary,
                               ),

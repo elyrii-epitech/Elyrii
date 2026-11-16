@@ -6,10 +6,13 @@ import 'package:elyrii_app/features/dashboard/data/accueil_activities.dart';
 import 'package:elyrii_app/features/dashboard/domain/civil_day.dart';
 import 'package:elyrii_app/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:elyrii_app/features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:elyrii_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/accessibility_fixture.dart';
 
@@ -29,11 +32,18 @@ void main() {
     WidgetTester tester, {
     double textScale = 1,
     bool animations = false,
+    bool emptyChallenges = false,
   }) async {
     tester.view.physicalSize = const Size(390, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final app = (await tester.runAsync(fixture))!;
+    GamificationProvider? gamification;
+    if (emptyChallenges) {
+      gamification = GamificationProvider(client: app.api);
+      await tester.runAsync(gamification.loadAll);
+      addTearDown(gamification.dispose);
+    }
     await tester.pumpWidget(
       host(
         app,
@@ -49,6 +59,7 @@ void main() {
         GlobalKey(),
         true,
         textScale,
+        gamification: gamification,
       ),
     );
     await tester.pump();
@@ -256,6 +267,58 @@ void main() {
       expect(app.accueilActivities.snapshot.decor, MascotDecor.hills);
       expect(find.text('Apparence d’Elyrii'), findsNothing);
       expect(viewer.mounted, isTrue);
+    },
+  );
+
+  testWidgets(
+    'a restored locked accessory can be removed and saved without unlocking it',
+    (tester) async {
+      final app = await mount(tester, emptyChallenges: true);
+      final garden = Provider.of<GamificationProvider>(
+        tester.element(find.byType(DashboardPage)),
+        listen: false,
+      );
+      expect(garden.hasLoadedData, isTrue);
+      expect(garden.completedChallenges, isEmpty);
+      await tester.runAsync(() async {
+        final preferences = await SharedPreferences.getInstance();
+        await preferences.setStringList(
+          'elyrii_mascot_customization_${app.mascot.storageScope}',
+          ['beret', 'cheek_sparkle'],
+        );
+        await app.mascot.loadMascot();
+      });
+      await tester.pump();
+      expect(app.mascot.mascot.equippedCosmetics, ['beret', 'cheek_sparkle']);
+      await tap(tester, 'Personnaliser Elyrii');
+      await tap(tester, 'Accessoires');
+      await tap(tester, 'Béret sauge');
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(
+        tester
+            .widget<MascotWithAccessories>(
+              find.byType(MascotWithAccessories).first,
+            )
+            .mascot!
+            .equippedCosmetics,
+        ['cheek_sparkle'],
+      );
+
+      // Removing a restored reward does not grant permission to re-equip it.
+      await tap(tester, 'Béret sauge, 2 défis');
+      expect(find.text('Encore 2 défis pour le débloquer.'), findsOneWidget);
+      await tester.tap(find.text('D’accord'));
+      await tester.pumpAndSettle();
+      await tester.runAsync(
+        () => tester.tap(find.byKey(const ValueKey('save_mascot_look'))),
+      );
+      await flush(tester, app);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('Apparence d’Elyrii'), findsNothing);
+      expect(app.mascot.mascot.equippedCosmetics, ['cheek_sparkle']);
+      await tester.runAsync(app.mascot.loadMascot);
+      expect(app.mascot.mascot.equippedCosmetics, ['cheek_sparkle']);
+      expect(tester.takeException(), isNull);
     },
   );
 

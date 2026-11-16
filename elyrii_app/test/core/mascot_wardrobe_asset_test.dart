@@ -68,9 +68,6 @@ void main() {
         expect(parentName, isIn(['CTRL_head', 'CTRL_chest']));
         final parent = nodes.firstWhere((node) => node['name'] == parentName);
         expect(parent['children'], contains(attachmentIndex));
-        final variantIndex = variants.indexWhere(
-          (variant) => variant['name'] == accessory.id,
-        );
         var triangles = 0;
         void checkNode(int index) {
           final node = nodes[index];
@@ -85,15 +82,32 @@ void main() {
               final mappings =
                   primitive['extensions']['KHR_materials_variants']['mappings']
                       as List;
-              expect(mappings, hasLength(1));
-              expect(mappings.single['variants'], contains(variantIndex));
-              for (final index in mappings.single['variants'] as List) {
+              expect(mappings, hasLength(2));
+              final visibleMaterial = mappings.singleWhere(
+                (mapping) => mapping['material'] != primitive['material'],
+              )['material'];
+              final materialByVariant = <int, int>{};
+              for (final mapping in mappings) {
+                for (final index in mapping['variants'] as List) {
+                  expect(index, inInclusiveRange(0, variants.length - 1));
+                  expect(materialByVariant.containsKey(index), isFalse);
+                  materialByVariant[index as int] = mapping['material'] as int;
+                }
+              }
+              // The bundled renderer retains the previous material when an
+              // outfit has no mapping. Cover every outfit, including those
+              // that must remove a previously selected piece.
+              expect(materialByVariant, hasLength(variants.length));
+              for (var index = 0; index < variants.length; index++) {
+                final equipped = (variants[index]['name'] as String)
+                    .split('+')
+                    .contains(accessory.id);
                 expect(
-                  (variants[index]['name'] as String).split('+'),
-                  contains(accessory.id),
+                  materialByVariant[index],
+                  equipped ? visibleMaterial : primitive['material'],
+                  reason: '${accessory.id} in ${variants[index]['name']}',
                 );
               }
-              expect(mappings.single['material'], isNot(primitive['material']));
             }
           }
           for (final child in node['children'] as List? ?? []) {

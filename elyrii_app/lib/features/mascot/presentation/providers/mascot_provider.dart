@@ -41,6 +41,7 @@ class MascotProvider extends ChangeNotifier {
   MascotModel _mascot = MascotModel.defaultMascot();
   Future<void> _syncTail = Future<void>.value();
   Future<void> _persistTail = Future<void>.value();
+  Future<void>? _customizationFinalization;
   bool _disposed = false;
   int _syncRevision = 0;
   bool _pendingSync = false;
@@ -137,6 +138,7 @@ class MascotProvider extends ChangeNotifier {
     _sessionRevision++;
     _syncRevision++;
     _loadFuture = null;
+    _customizationFinalization = null;
     _mascot = MascotModel.defaultMascot();
     _pendingSync = false;
     _isLoading = false;
@@ -213,13 +215,18 @@ class MascotProvider extends ChangeNotifier {
 
   /// Commit a studio draft only after checking newly equipped rewards.
   /// Local persistence succeeds independently of an unavailable server.
+  /// A failed [finalize] restores the captured look, including restored rewards
+  /// that cannot currently be selected again.
   Future<bool> saveCustomization(
     MascotModel draft, {
     required int completedChallenges,
     int? expectedSessionRevision,
+    Future<bool> Function()? finalize,
   }) async {
-    if (expectedSessionRevision != null &&
-        expectedSessionRevision != _sessionRevision) {
+    if (_disposed ||
+        _customizationFinalization != null ||
+        (expectedSessionRevision != null &&
+            expectedSessionRevision != _sessionRevision)) {
       return false;
     }
     final session = _sessionRevision;
@@ -235,22 +242,64 @@ class MascotProvider extends ChangeNotifier {
       }
     }
     final previous = _mascot;
-    _mascot = draft.copyWith(
+    final applied = draft.copyWith(
       themeId: _validThemeId(draft.themeId),
       equippedCosmetics: selection,
       appearance: MascotAppearance.fromJson(draft.appearance.toJson()),
     );
-    _error = null;
-    _notify();
-    final saved = await _saveMascot(markForSync: true);
-    if (session != _sessionRevision) return false;
-    if (!saved) {
-      _mascot = previous;
-      _notify();
-      return false;
+    final finalization = finalize == null ? null : Completer<void>();
+    if (finalization != null) {
+      _customizationFinalization = finalization.future;
     }
-    unawaited(_syncToBackend());
-    return true;
+    _syncRevision++;
+    _isSyncing = false;
+    _mascot = applied;
+    bool current() =>
+        !_disposed &&
+        session == _sessionRevision &&
+        identical(_mascot, applied);
+    var synchronize = false;
+    try {
+      _error = null;
+      _notify();
+      final saved = await _saveMascot(markForSync: true);
+      if (!current()) return false;
+      if (!saved) {
+        _mascot = previous;
+        _notify();
+        return false;
+      }
+      var finalized = true;
+      if (finalize != null) {
+        try {
+          finalized = await finalize();
+        } catch (_) {
+          finalized = false;
+        }
+      }
+      if (!current()) return false;
+      if (!finalized) {
+        // This snapshot was already authorized before this save. Restoring it
+        // must not pass through the checks for newly equipped rewards.
+        _mascot = previous;
+        _error = 'L’apparence n’a pas pu être enregistrée. Réessaie.';
+        _notify();
+        synchronize = await _saveMascot(markForSync: true);
+        return false;
+      }
+      synchronize = true;
+      return true;
+    } finally {
+      if (finalization != null) {
+        if (identical(_customizationFinalization, finalization.future)) {
+          _customizationFinalization = null;
+        }
+        finalization.complete();
+      }
+      if (synchronize && !_disposed && session == _sessionRevision) {
+        unawaited(_syncToBackend());
+      }
+    }
   }
 
   Future<void> retrySync() => _syncToBackend();
@@ -359,9 +408,13 @@ class MascotProvider extends ChangeNotifier {
   }
 
   Future<void> _syncToBackend() async {
-    if (!_canSync) return;
-    final snapshot = _mascot;
     final session = _sessionRevision;
+    // An explicit retry or a queued sync must never upload an unfinalized look.
+    while (_customizationFinalization != null) {
+      await _customizationFinalization;
+    }
+    if (_disposed || session != _sessionRevision || !_canSync) return;
+    final snapshot = _mascot;
     final scope = storageScope;
     final revision = ++_syncRevision;
     _isSyncing = true;
