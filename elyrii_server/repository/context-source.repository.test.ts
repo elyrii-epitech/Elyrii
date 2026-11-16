@@ -160,7 +160,7 @@ suite("Journal source foundation (PostgreSQL)", () => {
         expect(+active!.expiresAt! - +now).toBe(30 * 60000);
         now = new Date(+now + 3600000);
         expect(await lifecycle.cleanup()).toBe(1);
-        expect((await journal.getEntryByIdForUser(recent.id, owner))!.contextSuppressed).toBe(true);
+        expect((await journal.getEntryByIdForUser(recent.id, owner))!.contextSuppressed).toBe(false);
     });
 
     test("forget-all fences even empty sources; chat v1 results are fenced by revision", async () => {

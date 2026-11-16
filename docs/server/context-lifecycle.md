@@ -40,6 +40,8 @@ The existing account-deletion flow deletes the owner row; foreign-key cascades r
 
 ## Expiry and cleanup
 
+Apply `0009_journal_memory_expiry.sql` with `bun run db:migrate` before deploying the cleanup fix. Journal memory expiry removes only the expired record and its embeddings; other eligible memories and preferences from the same journal remain available for recall. Explicit forgetting still suppresses the whole journal source, including when the selected memory has already expired. Previously suppressed journals remain suppressed.
+
 Eligibility uses half-open intervals: `validFrom <= now < validUntil`, and `now < expiresAt`. Expired memories disappear from memory reads, vector retrieval and inspection immediately. Their source messages are also excluded from context tails and extraction; summaries for conversations containing expired sources are withheld until cleanup invalidates/rebuilds them. Normal chat history remains readable.
 
 `startContextCleanup` runs an immediate bounded pass, then schedules the next pass after the previous one completes. It physically deletes memories whose expiry or validity has ended, protecting their retained sources and cascading their embedding cache/jobs. Each pass examines at most the configured number of memory candidates and rechecks eligibility under the owner lock. A failed pass is retried on the next interval; overlapping server instances and repeated passes are idempotent. Source suppression can touch multiple messages in the affected conversation. Facts with ended validity remain historical records but are excluded from reads; the cleanup worker physically purges memories.

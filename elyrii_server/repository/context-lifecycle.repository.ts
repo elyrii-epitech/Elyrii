@@ -113,7 +113,12 @@ export class ContextLifecycleRepository {
             const [row] = await tx.select().from(memories).where(and(eq(memories.id, candidate.id), eq(memories.userId, owner.id),
                 or(lte(memories.expiresAt, this.clock()), lte(memories.validUntil, this.clock()))));
             if (!row) return;
-            await this.suppress(tx, owner.id, row.id, row.sourceMessageId, undefined, row.sourceKind === "journal" ? row.sourceId : null);
+            // Expiry retires this memory, not every durable assertion from its journal.
+            // Scope the trigger exception to this row and transaction; explicit forgetting
+            // must still suppress the source, even when its target has already expired.
+            if (row.sourceKind === "journal")
+                await tx.execute(sql`SELECT set_config('elyrii.expiring_journal_memory_id', ${row.id}, true)`);
+            await this.suppress(tx, owner.id, row.id, row.sourceMessageId);
             await tx.delete(memories).where(and(eq(memories.id, row.id), eq(memories.userId, owner.id)));
             removed++;
         });

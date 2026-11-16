@@ -14,6 +14,9 @@ import { SummaryRepository } from "./summary.repository";
 import { summaryConfig, summaryConfigSchema } from "../modules/context/summary.contracts";
 import { createContextRouter } from "../modules/context/lifecycle.routes";
 import ChatRepository from "./chat.repository";
+import JournalRepository from "./journal.repository";
+import { RetrievalRepository } from "./retrieval.repository";
+import { retrievalConfigSchema } from "../modules/context/retrieval.contracts";
 import type { EmbeddingModel } from "../modules/context/embedding.contracts";
 const suite = process.env.CONTEXT_DB_TEST === "1" ? describe : describe.skip;
 suite("Context lifecycle and authenticated API", () => {
@@ -106,6 +109,49 @@ suite("Context lifecycle and authenticated API", () => {
         expect(await repo.cleanup(1)).toBe(0);
         expect(await database.select().from(schema.memoryEmbeddingsTable).where(eq(schema.memoryEmbeddingsTable.memoryId, row.id))).toHaveLength(0);
         expect(await database.select().from(schema.userMemoriesTable).where(eq(schema.userMemoriesTable.id, row.id))).toHaveLength(0);
+    });
+    for (const boundary of ["expiresAt", "validUntil"] as const) test(`journal ${boundary} cleanup preserves durable recall and explicit forgetting`, async () => {
+        const journal = new JournalRepository(database);
+        const src = await journal.createEntry({ userId: owner, title: "Mixed context", content: "A temporary mood, a graduation and a preference" });
+        const provenance = { sourceKind: "journal" as const, sourceId: src.id, sourceRevision: 1 };
+        const expiresAt = new Date(+now + 5000);
+        const expired = await memory(null, { ...provenance, retention: boundary === "expiresAt" ? "short_term" : "long_term", [boundary]: expiresAt });
+        const durable = await memory(null, { ...provenance, content: "Graduated in Paris" });
+        const [preference] = await database.insert(schema.userContextFactsTable).values({ userId: owner, ...provenance,
+            key: "reply_length", kind: "preference", value: "short", origin: "explicit" }).returning();
+        await new EmbeddingRepository(spec, database, () => now).register();
+        const vector = [1, ...Array(767).fill(0)];
+        for (const row of [expired, durable]) await database.insert(schema.memoryEmbeddingsTable).values({
+            memoryId: row.id, model: spec.id, dimensions: 768, embedding: vector, contentRevision: 1 });
+        now = expiresAt;
+        expect((await Promise.all([repo.cleanup(1), repo.cleanup(1)])).reduce((a, b) => a + b)).toBe(1);
+        expect(await repo.cleanup(1)).toBe(0);
+        expect(await database.select().from(schema.userMemoriesTable).where(eq(schema.userMemoriesTable.id, expired.id))).toHaveLength(0);
+        expect(await database.select().from(schema.memoryEmbeddingsTable).where(eq(schema.memoryEmbeddingsTable.memoryId, expired.id))).toHaveLength(0);
+        expect((await journal.getEntryByIdForUser(src.id, owner))!.contextSuppressed).toBe(false);
+        const retrieval = new RetrievalRepository(database, () => now);
+        const config = retrievalConfigSchema.parse({ journalRecall: true });
+        const ranks = await retrieval.search(owner, spec, vector, config);
+        expect(ranks.map(row => row.id)).toEqual([durable.id]);
+        const recalled = await retrieval.assemble(owner, { conversationId: "current", query: "graduation" }, spec, ranks, config);
+        expect(recalled.memories.map(row => row.id)).toEqual([durable.id]);
+        expect(recalled.facts.map(row => row.id)).toEqual([preference!.id]);
+        // A later ordinary SQL deletion must still run the source suppression trigger.
+        await database.delete(schema.userMemoriesTable).where(eq(schema.userMemoriesTable.id, durable.id));
+        expect((await journal.getEntryByIdForUser(src.id, owner))!.contextSuppressed).toBe(true);
+        expect((await retrieval.assemble(owner, { conversationId: "current", query: "preference" }, spec, [], config)).facts).toHaveLength(0);
+    });
+    test("explicitly forgetting an expired journal memory still suppresses the whole source", async () => {
+        const journal = new JournalRepository(database);
+        const src = await journal.createEntry({ userId: owner, title: "Forget", content: "Temporary and durable context" });
+        const provenance = { sourceKind: "journal" as const, sourceId: src.id, sourceRevision: 1 };
+        const expiresAt = new Date(+now + 5000);
+        const expired = await memory(null, { ...provenance, retention: "short_term", expiresAt });
+        await memory(null, provenance);
+        now = expiresAt;
+        await repo.forget(owner, "memories", expired.id);
+        expect((await journal.getEntryByIdForUser(src.id, owner))!.contextSuppressed).toBe(true);
+        expect((await repo.list(owner, "memories", {})).items).toHaveLength(0);
     });
     test("non-boundary source deletion fences summary jobs; forget-all excludes retained history from rebuild", async () => {
         const a = await source(), b = await source(), c = await source();

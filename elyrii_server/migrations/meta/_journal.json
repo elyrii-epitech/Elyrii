@@ -64,6 +64,13 @@
       "when": 1792702918223,
       "tag": "0008_journal_extraction",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794787200000,
+      "tag": "0009_journal_memory_expiry",
+      "breakpoints": true
     }
   ]
 }
