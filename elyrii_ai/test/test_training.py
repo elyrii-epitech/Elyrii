@@ -11,21 +11,36 @@ import math
 import os
 import tempfile
 import unittest
+from importlib.util import find_spec
 from pathlib import Path
 
-import torch
-from datasets import Dataset
-from peft import LoraConfig, get_peft_model, get_peft_model_state_dict
-from safetensors.torch import load_file
-from transformers import (
-    AutoTokenizer, MistralConfig, MistralForCausalLM,
-    Trainer, TrainerCallback, TrainingArguments, set_seed,
+# The default AI CI environment installs requirements.txt, not the optional
+# training stack. Check availability before imports without hiding broken
+# installations or errors in the production training modules.
+TRAINING_DEPENDENCIES = (
+    "torch", "datasets", "peft", "safetensors", "transformers",
+    "accelerate", "numpy", "dotenv", "sentencepiece",
 )
+missing_dependencies = [name for name in TRAINING_DEPENDENCIES if find_spec(name) is None]
+if not missing_dependencies:
+    import torch
+    from datasets import Dataset
+    from peft import LoraConfig, get_peft_model, get_peft_model_state_dict
+    from safetensors.torch import load_file
+    from transformers import (
+        AutoTokenizer, MistralConfig, MistralForCausalLM,
+        Trainer, TrainerCallback, TrainingArguments, set_seed,
+    )
 
-from elyrii_ai.training.prepare_data import tokenize_function
-from elyrii_ai.training.train import AssistantOnlyDataCollator, LORA_TARGET_PRESETS, filter_supervised_examples
+    from elyrii_ai.training.prepare_data import tokenize_function
+    from elyrii_ai.training.train import AssistantOnlyDataCollator, LORA_TARGET_PRESETS, filter_supervised_examples
 
 
+@unittest.skipIf(
+    missing_dependencies,
+    "Optional training dependencies missing: " + ", ".join(missing_dependencies)
+    + "; install elyrii_ai/training/requirements.txt to run training tests",
+)
 class TrainingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
