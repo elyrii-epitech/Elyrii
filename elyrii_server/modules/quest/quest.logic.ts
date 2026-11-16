@@ -12,16 +12,13 @@ import type {
     ConditionProgress,
     TriggerEvent,
 } from "./quest.types";
-import RewardRepository from "../../repository/reward.repository";
 import QuestRepository from "../../repository/quest.repository";
-import NotificationRepository from "../../repository/notification.repository";
 import UserRepository from "../../repository/user.repository";
 import { sendQuestEvent } from "./producer.service";
+import { conditionsSchema } from "./quest.contracts";
 
 class QuestLogic {
-    private readonly rewardRepository = new RewardRepository();
     private readonly questRepository = new QuestRepository();
-    private readonly notificationRepository = new NotificationRepository();
     private readonly userRepository = new UserRepository();
 
     /**
@@ -30,7 +27,7 @@ class QuestLogic {
      */
     async checkAndUpdateProgress(
         userId: string,
-        event: TriggerEvent,
+        event?: TriggerEvent,
     ): Promise<void> {
         const activeChallenges = await db
             .select({
@@ -50,7 +47,12 @@ class QuestLogic {
             );
 
         for (const { userChallenge, challenge } of activeChallenges) {
-            const conditions = challenge.conditions as ChallengeCondition[];
+            const parsed = conditionsSchema.safeParse(challenge.conditions);
+            if (!parsed.success) {
+                console.warn("[Quest] Skipping an invalid challenge definition");
+                continue;
+            }
+            const conditions = parsed.data;
             const currentProgress =
                 (userChallenge.progress as ChallengeProgress) ?? {};
             const newProgress: ChallengeProgress = { ...currentProgress };
@@ -58,7 +60,7 @@ class QuestLogic {
 
             for (let i = 0; i < conditions.length; i++) {
                 const condition = conditions[i];
-                if (!condition || !this.isRelevantToEvent(condition, event))
+                if (!condition || (event && !this.isRelevantToEvent(condition, event)))
                     continue;
 
                 const current = await this.evaluateCondition(userId, condition);
@@ -92,66 +94,13 @@ class QuestLogic {
                     ? results.every(Boolean)
                     : results.some(Boolean);
 
-            const newStatus = isComplete ? "COMPLETED" : "ACTIVE";
-            const updateData: Record<string, unknown> = {
-                progress: newProgress,
-                status: newStatus,
-            };
-            if (isComplete) {
-                updateData.completedAt = new Date();
-                // Update user streak when a challenge is completed
-                this.userRepository.updateUserStreak(userId).catch((err) => {
-                    console.error(
-                        `Failed to update streak for user ${userId}:`,
-                        err,
-                    );
-                });
-            }
-
-            const [updatedUserChallenge] = await db
-                .update(userChallengesTable)
-                .set(updateData)
-                .where(eq(userChallengesTable.id, userChallenge.id))
-                .returning();
-
-            if (
-                isComplete &&
-                updatedUserChallenge &&
-                !updatedUserChallenge.rewardGrantedAt
-            ) {
-                const granted =
-                    await this.rewardRepository.grantChallengeCompletionPoints(
-                        userId,
-                        userChallenge.id,
-                        challenge.rewardPoints ?? 50,
-                        {
-                            challengeId: challenge.id,
-                            challengeTitle: challenge.title,
-                        },
-                    );
-
-                if (granted) {
-                    await this.questRepository.markRewardGranted(
-                        userChallenge.id,
-                    );
-                    await this.notificationRepository.createNotification({
-                        userId,
-                        type: "challenge_completed",
-                        title: "Défi complété",
-                        body: `Bravo ! Tu as complété "${challenge.title}" et gagné ${challenge.rewardPoints ?? 50} points.`,
-                        metadata: JSON.stringify({
-                            challengeId: challenge.id,
-                            userChallengeId: userChallenge.id,
-                            rewardPoints: challenge.rewardPoints ?? 50,
-                        }),
-                    });
-                    sendQuestEvent("challenge_completed", {
-                        userId,
-                        challengeId: challenge.id,
-                        userChallengeId: userChallenge.id,
-                        rewardPoints: challenge.rewardPoints ?? 50,
-                    }).catch(() => {});
-                }
+            const granted = await this.questRepository.applyProgress(userChallenge, challenge, newProgress, isComplete);
+            if (granted) {
+                this.userRepository.updateUserStreak(userId).catch(() => console.warn("[Quest] Streak refresh deferred"));
+                sendQuestEvent("challenge_completed", {
+                    userId, challengeId: challenge.id, userChallengeId: userChallenge.id,
+                    rewardPoints: challenge.rewardPoints,
+                }).catch(() => {});
             }
         }
     }

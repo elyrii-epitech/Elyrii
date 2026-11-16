@@ -1,3 +1,5 @@
+import '../../domain/civil_day.dart';
+
 class MoodTrendPoint {
   final String day;
   final int count;
@@ -27,7 +29,7 @@ class MoodDistributionItem {
 }
 
 class ActivityTimelinePoint {
-  final String day;
+  final CivilDay day;
   final int moodLogs;
   final int journalEntries;
 
@@ -39,7 +41,7 @@ class ActivityTimelinePoint {
 
   factory ActivityTimelinePoint.fromJson(Map<String, dynamic> json) {
     return ActivityTimelinePoint(
-      day: json['day'] as String? ?? '',
+      day: CivilDay.parse(json['day'] as String? ?? ''),
       moodLogs: _readInt(json['moodLogs']),
       journalEntries: _readInt(json['journalEntries']),
     );
@@ -61,7 +63,7 @@ class DashboardStats {
   final List<MoodDistributionItem> moodDistribution;
   final List<ActivityTimelinePoint> activityTimeline;
 
-  const DashboardStats({
+  DashboardStats({
     required this.rangeDays,
     required this.streak,
     required this.moodLogsCount,
@@ -72,13 +74,15 @@ class DashboardStats {
     required this.meditationSessionsCount,
     required this.coachSessionsCount,
     this.latestMood,
-    required this.moodTrend7Days,
-    required this.moodDistribution,
-    required this.activityTimeline,
-  });
+    required List<MoodTrendPoint> moodTrend7Days,
+    required List<MoodDistributionItem> moodDistribution,
+    required List<ActivityTimelinePoint> activityTimeline,
+  }) : moodTrend7Days = List.unmodifiable(moodTrend7Days),
+       moodDistribution = List.unmodifiable(moodDistribution),
+       activityTimeline = List.unmodifiable(activityTimeline);
 
   factory DashboardStats.empty() {
-    return const DashboardStats(
+    return DashboardStats(
       rangeDays: 7,
       streak: 0,
       moodLogsCount: 0,
@@ -141,27 +145,20 @@ class DashboardStats {
 
 class DashboardData {
   final String? latestMood;
+  final DateTime? cachedAt;
   final DashboardStats stats;
-  final List<dynamic> activeChallenges;
-  final List<dynamic> pendingChallenges;
 
-  const DashboardData({
-    required this.latestMood,
-    required this.stats,
-    required this.activeChallenges,
-    required this.pendingChallenges,
-  });
+  DashboardData({this.cachedAt, required this.latestMood, required this.stats});
 
-  factory DashboardData.fromJson(Map<String, dynamic> json) {
-    final challenges = json['challenges'] as Map? ?? const {};
+  factory DashboardData.fromJson(
+    Map<String, dynamic> json, {
+    DateTime? cachedAt,
+  }) {
     return DashboardData(
+      cachedAt: cachedAt,
       latestMood: json['latestMood'] as String?,
       stats: DashboardStats.fromJson(
         json['stats'] as Map<String, dynamic>? ?? json,
-      ),
-      activeChallenges: List<dynamic>.from(challenges['active'] as List? ?? []),
-      pendingChallenges: List<dynamic>.from(
-        challenges['pending'] as List? ?? [],
       ),
     );
   }

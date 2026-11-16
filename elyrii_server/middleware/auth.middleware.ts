@@ -26,6 +26,10 @@ export const authMiddleware = createMiddleware(async (ctx, next) => {
         return ctx.json({ error: "Invalid or expired token" }, 401);
     }
 
+    if (!await tokenRepository.userExists(decodedToken.userId)) {
+        return ctx.json({ error: "Account no longer exists" }, 401);
+    }
+
     if (decodedToken.jti) {
         const isRevoked = await tokenRepository.isAccessTokenRevoked(decodedToken.jti);
         if (isRevoked) {

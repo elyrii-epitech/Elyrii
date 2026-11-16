@@ -9,23 +9,32 @@ import TokenRepository from '../../repository/token.repository';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { verifyAppleOAuth, verifyGoogleOAuth } from '../../utils/oauth.utils';
+import { WebhookVerificationMailer, type VerificationMailer } from './email-verification.service';
 
 class AuthController {
     private readonly factory = createFactory();
     private readonly authRepository = new AuthRepository();
     private readonly tokenRepository = new TokenRepository();
     
-    constructor() { }
+    constructor(private readonly verificationMailer: VerificationMailer = new WebhookVerificationMailer()) { }
 
     private get requireEmailVerification() {
         return Bun.env.REQUIRE_EMAIL_VERIFICATION === "true" || Bun.env.NODE_ENV === "production";
     }
 
-    private get includeVerificationTokenInResponse() {
-        return Bun.env.NODE_ENV !== "production";
+    private async sendVerification(user: {id: string; email: string}) {
+        await this.authRepository.clearEmailVerificationTokens(user.id);
+        const token = await this.authRepository.createEmailVerificationToken(user.id);
+        try { await this.verificationMailer.send(user.email, token); }
+        catch {
+            // A failed delivery must not invalidate a newer concurrent resend.
+            await this.authRepository.discardEmailVerificationToken(user.id, token);
+            throw new Error("Verification delivery unavailable");
+        }
     }
 
     private async issueSession(ctx: any, payload: TokenPayload) {
+        ctx.header("Cache-Control", "no-store");
         const [token, refreshToken] = await Promise.all([
             JwtUtils.generateAccessToken(payload),
             JwtUtils.generateRefreshToken(payload),
@@ -63,8 +72,16 @@ class AuthController {
         async (ctx) => {
             try {
                 const { email, password, lastName, firstName, age } = ctx.req.valid("json");
+                if (this.requireEmailVerification && !this.verificationMailer.available()) {
+                    return ctx.json({message: "L’activation par email est temporairement indisponible. Réessaie plus tard."}, 503);
+                }
                 const existUser = await this.authRepository.findUserByEmail(email);
                 if (existUser) {
+                    // A delivery failure must not strand an unverified signup.
+                    if (this.requireEmailVerification && !existUser.emailVerified && await Bun.password.verify(password, existUser.password)) {
+                        await this.sendVerification(existUser);
+                        return ctx.json({message: "Email verification required. Check your email to activate your account.", emailVerificationRequired: true}, 201);
+                    }
                     return ctx.json({ message: 'user already exists' }, 400);
                 }
 
@@ -81,12 +98,10 @@ class AuthController {
                 }
 
                 if (this.requireEmailVerification) {
-                    await this.authRepository.clearEmailVerificationTokens(newUser.id);
-                    const verificationToken = await this.authRepository.createEmailVerificationToken(newUser.id);
+                    await this.sendVerification(newUser);
                     return ctx.json({
-                        message: "User registered successfully. Please login to activate your account.",
+                        message: "Email verification required. Check your email to activate your account.",
                         emailVerificationRequired: true,
-                        ...(this.includeVerificationTokenInResponse ? { verificationToken } : {}),
                     }, 201);
                 }
 
@@ -94,11 +109,11 @@ class AuthController {
                     userId: newUser.id,
                     email: newUser.email
                 };
-                const { token } = await this.issueSession(ctx, tokenPayload);
-                return ctx.json({ message: 'User registered successfully', token: token }, 201);
+                const { token, refreshToken } = await this.issueSession(ctx, tokenPayload);
+                return ctx.json({ message: 'User registered successfully', token, refreshToken }, 201);
             } catch (error) {
-                console.error("Registration error details:", error);
-                return ctx.json({ message: 'registration failed', error: String(error) }, 500);
+                console.error("[auth] Registration or verification delivery unavailable");
+                return ctx.json({ message: 'Inscription indisponible. Réessaie avec les mêmes identifiants.' }, 503);
             }
     })
     
@@ -136,8 +151,8 @@ class AuthController {
                 userId: isUser.id,
                 email: isUser.email
             }
-            const { token } = await this.issueSession(ctx, tokenPayload);
-            return ctx.json({ message: 'Login successful', token });
+            const { token, refreshToken } = await this.issueSession(ctx, tokenPayload);
+            return ctx.json({ message: 'Login successful', token, refreshToken });
         } catch (error) {
             console.error("Login error:", error);
             return ctx.json({ message: 'login failed' }, 500);
@@ -201,8 +216,8 @@ class AuthController {
                 }
 
                 const tokenPayload: TokenPayload = { userId: user.id, email: user.email };
-                const { token } = await this.issueSession(ctx, tokenPayload);
-                return ctx.json({ message: "OAuth login successful", token }, 200);
+                const { token, refreshToken } = await this.issueSession(ctx, tokenPayload);
+                return ctx.json({ message: "OAuth login successful", token, refreshToken }, 200);
             } catch (error) {
                 console.error("Google OAuth error:", error);
                 return ctx.json({ error: "Google OAuth failed" }, 500);
@@ -266,8 +281,8 @@ class AuthController {
                 }
 
                 const tokenPayload: TokenPayload = { userId: user.id, email: user.email };
-                const { token } = await this.issueSession(ctx, tokenPayload);
-                return ctx.json({ message: "OAuth login successful", token }, 200);
+                const { token, refreshToken } = await this.issueSession(ctx, tokenPayload);
+                return ctx.json({ message: "OAuth login successful", token, refreshToken }, 200);
             } catch (error) {
                 console.error("Apple OAuth error:", error);
                 return ctx.json({ error: "Apple OAuth failed" }, 500);
@@ -283,7 +298,8 @@ class AuthController {
             200: { description: "Logout successful" },
         }
     }), async (ctx) => {
-        const refreshToken = getCookie(ctx, "refresh_token");
+        const body = await ctx.req.json().catch(() => ({}));
+        const refreshToken = typeof body?.refreshToken === "string" ? body.refreshToken : getCookie(ctx, "refresh_token");
         if (refreshToken) {
             try {
                 const refreshPayload = await JwtUtils.verifyRefreshToken(refreshToken);
@@ -316,7 +332,9 @@ class AuthController {
     })
     
     private readonly refreshHandler = async (ctx: any) => {
-        const oldRefreshToken = getCookie(ctx, "refresh_token");
+        ctx.header("Cache-Control", "no-store");
+        const body = ctx.req.method === "POST" ? await ctx.req.json().catch(() => ({})) : {};
+        const oldRefreshToken = typeof body?.refreshToken === "string" ? body.refreshToken : getCookie(ctx, "refresh_token");
         if (!oldRefreshToken) {
             return ctx.json({ error: "Refresh token not found" }, 401);
         }
@@ -336,7 +354,8 @@ class AuthController {
             refreshToken,
             payload.userId,
             ctx.req.header("User-Agent") || "Unknown",
-            session.id
+            session.id,
+            session.hash_token,
         );
         
         if (!newSessionId) {
@@ -357,7 +376,7 @@ class AuthController {
         };
 
         const token = await JwtUtils.generateAccessToken(tokenPayload);
-        return ctx.json({ message: "Refresh token successful", token });
+        return ctx.json({ message: "Refresh token successful", token, refreshToken });
     };
 
     public readonly refreshToken = this.factory.createHandlers(describeRoute({
@@ -373,7 +392,7 @@ class AuthController {
     public readonly refreshTokenPost = this.factory.createHandlers(
         describeRoute({
             summary: "Refresh Access Token (POST)",
-            description: "Issue a new access token using a valid refresh token cookie.",
+            description: "Issue a new access token using a valid refresh token in JSON or a cookie.",
             tags: ["Auth"],
             responses: {
                 200: { description: "Token refreshed successfully" },
@@ -402,10 +421,11 @@ class AuthController {
             }
 
             const tokenPayload: TokenPayload = { userId: user.id, email: user.email };
-            const { token: accessToken } = await this.issueSession(ctx, tokenPayload);
+            const { token: accessToken, refreshToken } = await this.issueSession(ctx, tokenPayload);
             return ctx.json({
                 message: "Email verified successfully",
                 token: accessToken,
+                refreshToken,
             }, 200);
         }
     );
@@ -422,17 +442,15 @@ class AuthController {
         zValidator("json", z.object({ email: z.string().email() })),
         async (ctx) => {
             const { email } = ctx.req.valid("json");
+            if (!this.verificationMailer.available()) return ctx.json({message: "L’activation par email est temporairement indisponible."}, 503);
             const user = await this.authRepository.findUserByEmail(email);
             if (!user || user.emailVerified) {
                 return ctx.json({ message: "If the account exists, a verification email has been sent." }, 200);
             }
 
-            await this.authRepository.clearEmailVerificationTokens(user.id);
-            const verificationToken = await this.authRepository.createEmailVerificationToken(user.id);
-            return ctx.json({
-                message: "Verification token regenerated.",
-                ...(this.includeVerificationTokenInResponse ? { verificationToken } : {}),
-            }, 200);
+            try { await this.sendVerification(user); }
+            catch { return ctx.json({message: "La livraison est temporairement indisponible."}, 503); }
+            return ctx.json({message: "If the account exists, a verification email has been sent."}, 200);
         }
     );
     

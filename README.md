@@ -67,7 +67,7 @@ Each service is a separate Hono micro‑service containerized with Docker.
 
 | Layer | Technology                                         | Reason |
 |---|----------------------------------------------------|---|
-| Frontend | Flutter 2.10+, Dart                                | Single codebase for iOS & Android, expressive UI |
+| Frontend | Flutter 3.47.4, Dart 3.13.3                       | Single codebase for iOS & Android, expressive UI |
 | Backend | TypeScript 5, Hono (tiny HTTP framework)           | Minimal overhead, fast cold starts, easy routing |
 | Auth | JWT, bcrypt, optional OAuth2 (Google/Apple)        | Industry‑standard token‑based security |
 | Database | PostgreSQL 15 + Drizzle ORM                        | Strong relational schema, type safety |
@@ -85,7 +85,7 @@ Each service is a separate Hono micro‑service containerized with Docker.
 
 - **TypeScript 5**
 - **Docker & docker‑compose** (for local services)
-- **Flutter SDK ≥ 3.13** (stable channel)
+- **Flutter SDK 3.47.4 / Dart 3.13.3** (pinned in `elyrii_app/.fvmrc`)
 - **Python 3.10+** (only if you want to run the model locally)
 - **Git**
 
@@ -117,7 +117,7 @@ cd ../elyrii_app
 - Install dependencies
 
 ```bash
-flutter pub get
+flutter pub get --enforce-lockfile
 ```
 
 - Run the app
@@ -127,6 +127,9 @@ flutter run
 ```
 
 Choose an emulator/device (iOS simulator, Android Studio, or physical device).
+See the [mobile development guide](docs/mobile/development.md) for backend
+configuration and the [mobile documentation](docs/mobile/index.md) for the
+supported features, architecture, tests and release procedures.
 
 ## Running the Application
 

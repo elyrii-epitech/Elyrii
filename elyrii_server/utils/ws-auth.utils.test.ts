@@ -25,10 +25,16 @@ describe("resolveWsIdentity", () => {
             email: "user1@example.com",
         });
 
-        const identity = await resolveWsIdentity("/chat/ws", `Bearer ${token}`, false);
+        const identity = await resolveWsIdentity("/chat/ws", `Bearer ${token}`, false, async () => true);
         expect(identity).not.toBeNull();
         expect(identity?.userId).toBe("user-1");
         expect(identity?.source).toBe("token");
+    });
+
+    test("deleted/revoked accounts and unavailable session storage cannot open a socket", async () => {
+        const token = await JwtUtils.generateAccessToken({userId: "removed-user", email: "fixture@example.test"});
+        expect(await resolveWsIdentity("/chat/ws", `Bearer ${token}`, false, async () => false)).toBeNull();
+        expect(await resolveWsIdentity("/chat/ws", `Bearer ${token}`, false, async () => { throw new Error("DB offline"); })).toBeNull();
     });
 
     test("rejects identity from query token", async () => {

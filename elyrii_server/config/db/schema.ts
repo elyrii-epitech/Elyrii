@@ -17,3 +17,6 @@ export * from "./embedding.table";
 export * from "./context-source.table";
 
 export * from "./journal-extraction.table";
+
+export * from "./home.table";
+export * from "./password-reset.table";

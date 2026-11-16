@@ -1,25 +1,34 @@
-import 'dart:io';
+import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/media/avatar_files.dart';
+import '../../../../core/diagnostics/app_diagnostics.dart';
+import '../../../../core/services/secure_storage_service.dart';
+
+import 'package:provider/provider.dart';
+
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart' show CupertinoActivityIndicator;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import '../../../../core/widgets/accessible_action.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/avatar_options.dart';
+import '../../../../core/widgets/pushed_page.dart';
+import '../widgets/profile_controls.dart';
+import '../../../../core/design_system/haptics/elyrii_haptics.dart';
 
-/// Page de selection d'avatar proposee au tap sur l'avatar.
-///
-/// Deux options :
-/// 1. Choisir un avatar preset (mascotte ou avatars Doux DiceBear)
-/// 2. Importer une image personnelle depuis la galerie, puis la recadrer
-///
-/// La selection est retournee via [Navigator.pop] sous forme de [String?]:
-/// - null => mascotte par defaut
-/// - URL DiceBear => avatar preset
-/// - chemin local => image importee, uploadee au moment de la sauvegarde
+/// Avatar selection page opened by tapping the avatar. Choose a mascot/Doux
+/// DiceBear preset, or import and crop a personal gallery image. Returns the
+/// selection through [Navigator.pop] as a nullable String: null for the default
+/// mascot, a DiceBear URL for a preset, or a local image path uploaded on save.
 class AvatarPickerPage extends StatefulWidget {
-  /// Avatar actuel (pour pre-selectionner)
+  /// Current avatar, used for preselection.
   final String? currentPfp;
 
   const AvatarPickerPage({super.key, this.currentPfp});
@@ -33,11 +42,17 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   String? _customImagePath;
   String? _customAvatarUrl;
   bool _isProcessing = false;
+  String? _owner;
 
   @override
   void initState() {
     super.initState();
     _selectedId = avatarIdFromPfp(widget.currentPfp);
+    unawaited(
+      _restorePhoto().catchError(
+        (Object e) => AppDiagnostics.record('avatar_restore_failed', e),
+      ),
+    );
     // Si l'utilisateur avait une image custom, la conserver pour l'apercu
     if (_selectedId == '__custom__' && widget.currentPfp != null) {
       if (isLocalAvatarPath(widget.currentPfp!)) {
@@ -45,6 +60,21 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
       } else {
         _customAvatarUrl = widget.currentPfp;
       }
+    }
+  }
+
+  Future<void> _restorePhoto() async {
+    final storage = context.read<SecureStorageService>();
+    _owner = await storage.getUserId();
+    if (_owner == null) return;
+    await AvatarFiles.recover(_owner!);
+    final path = await AvatarFiles.pending(_owner!);
+    if (mounted && path != null) {
+      setState(() {
+        _customImagePath = path;
+        _customAvatarUrl = null;
+        _selectedId = '__custom__';
+      });
     }
   }
 
@@ -62,6 +92,10 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   Future<void> _pickAndCropImage() async {
     setState(() => _isProcessing = true);
     try {
+      final owner =
+          _owner ?? await context.read<SecureStorageService>().getUserId();
+      if (owner == null) return;
+      await AvatarFiles.begin(owner);
       final picker = ImagePicker();
       final picked = await picker.pickImage(
         source: ImageSource.gallery,
@@ -69,13 +103,14 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
         maxHeight: 1024,
         imageQuality: 85,
       );
+      if (!mounted) return;
       if (picked == null) {
         setState(() => _isProcessing = false);
         return;
       }
 
       // Recadrage carre
-      final cropped = await ImageCropper().cropImage(
+      final cropped = (await ImageCropper().cropImage(
         sourcePath: picked.path,
         aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
         compressFormat: ImageCompressFormat.jpg,
@@ -94,12 +129,21 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
             aspectRatioPresets: [CropAspectRatioPreset.square],
           ),
         ],
-      );
+      ))?.path;
 
+      if (!mounted) return;
       if (cropped != null) {
-        HapticFeedback.lightImpact();
+        if (await context.read<SecureStorageService>().getUserId() != owner) {
+          return;
+        }
+        final ownedPath = await AvatarFiles.adopt(cropped, owner);
+        if (!mounted) {
+          await AvatarFiles.release(ownedPath);
+          return;
+        }
+        ElyriiHaptics.light();
         setState(() {
-          _customImagePath = cropped.path;
+          _customImagePath = ownedPath;
           _customAvatarUrl = null;
           // Deselectionner les presets
           _selectedId = '__custom__';
@@ -107,14 +151,21 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Impossible de charger l\'image'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        showDialog<void>(
+          context: context,
+          barrierDismissible: true,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Image indisponible'),
+            content: const Text(
+              'Impossible de charger l\'image sélectionnée. '
+              'Essaie avec une autre photo.',
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }
@@ -124,329 +175,134 @@ class _AvatarPickerPageState extends State<AvatarPickerPage> {
   }
 
   void _confirm() {
-    HapticFeedback.lightImpact();
+    ElyriiHaptics.light();
     Navigator.pop(context, _resultValue);
   }
 
   void _cancel() {
+    final path = _customImagePath;
+    if (path != null && path != widget.currentPfp) {
+      unawaited(AvatarFiles.release(path));
+    }
     Navigator.pop(context, kAvatarPickerCancelled);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final topPadding = MediaQuery.of(context).padding.top;
-
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        _cancel();
+        if (!didPop) _cancel();
       },
-      child: Scaffold(
-        backgroundColor: isDark
-            ? AppColors.scaffoldDark
-            : AppColors.scaffoldLight,
-        body: Stack(
-          children: [
-            CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: topPadding + 70)),
-
-                // Aperçu
-                SliverToBoxAdapter(child: _buildPreview(isDark)),
-
-                // Import depuis galerie
-                SliverToBoxAdapter(child: _buildImportCard(isDark)),
-
-                // Presets
-                SliverToBoxAdapter(child: _buildPresetsHeader(isDark)),
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 1,
-                        ),
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final option = kAvatarOptions[index];
-                      final isSelected =
-                          _customImagePath == null &&
-                          _customAvatarUrl == null &&
-                          _selectedId == option.id;
-                      return _PresetAvatarTile(
-                        option: option,
-                        isSelected: isSelected,
-                        isDark: isDark,
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _customImagePath = null;
-                            _customAvatarUrl = null;
-                            _selectedId = option.id;
-                          });
-                        },
-                      );
-                    }, childCount: kAvatarOptions.length),
-                  ),
-                ),
-
-                // Bouton confirmer
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 100),
-                    child: LiquidGlassButton(
-                      label: 'Choisir cet avatar',
-                      icon: Icons.check_rounded,
-                      isExpanded: true,
-                      onPressed: _confirm,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // Top bar
-            Positioned(
-              top: topPadding + 12,
-              left: 16,
-              right: 16,
-              child: Row(
-                children: [
-                  _BackButton(isDark: isDark, onTap: _cancel),
-                  Expanded(
-                    child: Text(
-                      'Mon avatar',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(width: 44),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPreview(bool isDark) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 8, bottom: 24),
-        child: Column(
-          children: [
-            Container(
-              width: 120,
-              height: 120,
+      child: PushedPage(
+        title: 'Mon avatar',
+        onBack: _cancel,
+        children: [
+          Center(
+            child: Container(
+              width: AppDimensions.profileAvatarPreview,
+              height: AppDimensions.profileAvatarPreview,
+              padding: const EdgeInsets.all(AppDimensions.spacing12),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary.withValues(alpha: 0.3),
-                    AppColors.secondary.withValues(alpha: 0.3),
-                  ],
-                ),
+                color: AppColors.profileAvatar(dark),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isDark
-                        ? AppColors.surfaceDark
-                        : AppColors.surfaceLight,
-                  ),
-                  child: ClipOval(
-                    child: _customImagePath != null
-                        ? Image.file(File(_customImagePath!), fit: BoxFit.cover)
-                        : _customAvatarUrl != null
-                        ? Image.network(
-                            _customAvatarUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Image.asset(
-                              'assets/mascotte.png',
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : (_resultValue == null
-                              ? Image.asset(
-                                  'assets/mascotte.png',
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.network(
-                                  _resultValue!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => Image.asset(
-                                    'assets/mascotte.png',
-                                    fit: BoxFit.cover,
-                                  ),
-                                )),
-                  ),
-                ),
+              child: UserAvatar(
+                pfp: _resultValue,
+                size:
+                    AppDimensions.profileAvatarPreview -
+                    AppDimensions.spacing24,
+                showBorder: false,
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImportCard(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-      child: LiquidGlassCard(
-        padding: EdgeInsets.zero,
-        child: LiquidGlassListTile(
-          title: _isProcessing ? 'Chargement...' : 'Importer une photo',
-          subtitle: 'Choisis une image depuis ta galerie',
-          leadingIcon: Icons.photo_library_rounded,
-          trailing: _isProcessing
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : null,
-          onTap: _isProcessing ? null : _pickAndCropImage,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPresetsHeader(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 4),
-      child: Text(
-        'Avatars Elyrii'.toUpperCase(),
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.5)
-              : Colors.black.withValues(alpha: 0.4),
-        ),
-      ),
-    );
-  }
-}
-
-// ==================== Preset Avatar Tile ====================
-
-class _PresetAvatarTile extends StatelessWidget {
-  final AvatarOption option;
-  final bool isSelected;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _PresetAvatarTile({
-    required this.option,
-    required this.isSelected,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedScale(
-        scale: isSelected ? 1.08 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isSelected ? AppColors.primary : Colors.transparent,
-              width: 3,
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+          ),
+          const SizedBox(height: AppDimensions.spacing24),
+          ProfileGroup(
+            children: [
+              ProfileRow(
+                title: 'Importer une photo',
+                icon: Icons.add_a_photo_rounded,
+                color: AppColors.pink(dark),
+                trailing: _isProcessing
+                    ? const CupertinoActivityIndicator()
+                    : null,
+                onTap: _isProcessing ? null : _pickAndCropImage,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimensions.spacing24),
+          Text(
+            'Un avatar qui te ressemble',
+            style: AppTextStyles.bodySmall(color: context.textTertiary),
+          ),
+          const SizedBox(height: AppDimensions.spacing16),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 4,
+            mainAxisSpacing: AppDimensions.spacing16,
+            crossAxisSpacing: AppDimensions.spacing12,
+            children: [
+              for (final option in kAvatarOptions)
+                Center(
+                  child: AccessibleAction(
+                    label: option.isMascot ? 'Elyrii' : 'Avatar ${option.id}',
+                    selected:
+                        _customImagePath == null &&
+                        _customAvatarUrl == null &&
+                        _selectedId == option.id,
+                    onPressed: _isProcessing
+                        ? null
+                        : () {
+                            ElyriiHaptics.selection();
+                            setState(() {
+                              _customImagePath = null;
+                              _customAvatarUrl = null;
+                              _selectedId = option.id;
+                            });
+                          },
+                    child: Container(
+                      width: AppDimensions.profileAvatarTile,
+                      height: AppDimensions.profileAvatarTile,
+                      padding: const EdgeInsets.all(AppDimensions.spacing8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.profileAvatar(dark),
+                        border: Border.all(
+                          width: AppDimensions.borderWidthMedium,
+                          color:
+                              _customImagePath == null &&
+                                  _customAvatarUrl == null &&
+                                  _selectedId == option.id
+                              ? AppColors.primaryText(dark)
+                              : Colors.transparent,
+                        ),
+                      ),
+                      child: UserAvatar(
+                        pfp: option.url,
+                        size:
+                            AppDimensions.profileAvatarTile -
+                            AppDimensions.spacing16,
+                        showBorder: false,
+                      ),
                     ),
-                  ]
-                : null,
+                  ),
+                ),
+            ],
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-            ),
-            child: ClipOval(
-              child: option.isMascot
-                  ? Image.asset('assets/mascotte.png', fit: BoxFit.cover)
-                  : Image.network(
-                      option.url!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
-                          Image.asset('assets/mascotte.png', fit: BoxFit.cover),
-                    ),
-            ),
+          const SizedBox(height: AppDimensions.spacing24),
+          ProfileButton(
+            label: 'Choisir cet avatar',
+            onPressed: _isProcessing ? null : _confirm,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ==================== Back Button ====================
-
-class _BackButton extends StatefulWidget {
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _BackButton({required this.isDark, required this.onTap});
-
-  @override
-  State<_BackButton> createState() => _BackButtonState();
-}
-
-class _BackButtonState extends State<_BackButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.9 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: widget.isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(22),
+          const SizedBox(height: AppDimensions.spacing12),
+          Text(
+            'Tu peux en changer quand tu veux.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.bodySmall(color: context.textTertiary),
           ),
-          child: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            size: 18,
-            color: widget.isDark ? Colors.white : Colors.black,
-          ),
-        ),
+        ],
       ),
     );
   }

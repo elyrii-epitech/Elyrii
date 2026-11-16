@@ -1,3 +1,4 @@
+import { deletedChatConversations } from "../config/db/chat.table";
 import { and, asc, eq, gt, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../config/db.config";
@@ -96,6 +97,8 @@ export class ContextLifecycleRepository {
         else z.string().min(1).max(200).parse(input.conversationId);
         await this.database.transaction(async tx => {
             await this.owner(tx, userId);
+            if ("conversationId" in input) await tx.insert(deletedChatConversations)
+                .values({userId, conversationId: input.conversationId}).onConflictDoNothing();
             await tx.delete(messages).where(and(eq(messages.userId, userId), "messageId" in input ?
                 eq(messages.id, input.messageId) : eq(messages.conversationId, input.conversationId)));
         });
