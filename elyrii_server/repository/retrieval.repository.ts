@@ -50,7 +50,7 @@ export class RetrievalRepository {
                          THEN 1 - (e.embedding <=> ${JSON.stringify(vector)}::vector) ELSE NULL END AS similarity
                 FROM user_memories m JOIN memory_embeddings e ON e.memory_id = m.id
                 JOIN embedding_models model ON model.id = e.model
-                WHERE m.user_id = ${userId}::uuid AND m.status = 'active' AND ${journalRecallEligible({ userId: sql`m.user_id`, sourceKind: sql`m.source_kind`, sourceId: sql`m.source_id`, sourceRevision: sql`m.source_revision` }, config.journalRecall, now)}
+                WHERE m.user_id = ${userId}::uuid AND m.status = 'active' AND ${journalRecallEligible({ id: sql`m.id`, userId: sql`m.user_id`, sourceKind: sql`m.source_kind`, sourceId: sql`m.source_id`, sourceRevision: sql`m.source_revision`, origin: sql`m.origin`, evidence: sql`m.evidence` }, config.journalRecall, now)}
                     AND (m.source_kind IS NULL OR EXISTS (SELECT 1 FROM context_source_versions v
                         WHERE v.user_id = m.user_id AND v.kind = m.source_kind AND v.source_id = m.source_id AND v.revision = m.source_revision AND v.active))
                     AND m.valid_from <= ${now} AND (m.valid_until IS NULL OR m.valid_until > ${now})

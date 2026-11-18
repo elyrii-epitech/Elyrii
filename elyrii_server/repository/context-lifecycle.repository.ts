@@ -60,6 +60,9 @@ export class ContextLifecycleRepository {
             if (row.status !== "active" || (row.validUntil && row.validUntil <= now) || ("expiresAt" in row && row.expiresAt && row.expiresAt <= now))
                 throw new ContextConflictError("Context is no longer active");
             await this.suppress(tx, userId, row.id, row.sourceMessageId, "key" in row ? row.key : undefined, row.sourceKind === "journal" ? row.sourceId : null);
+            // Record user intent independently of the original extraction evidence.
+            await tx.insert(keys).values({ userId, key: `correction:${row.id}`, targetId: row.id, sequence: 0n, suppressed: true })
+                .onConflictDoNothing();
             if (kind === "facts") {
                 const [updated] = await tx.update(facts).set({ value: (input as z.infer<typeof correctFactSchema>).value,
                     origin: "explicit", evidence: null, updatedAt: now }).where(and(eq(facts.id, targetId), eq(facts.userId, userId))).returning();

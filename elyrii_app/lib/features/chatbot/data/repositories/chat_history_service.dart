@@ -367,7 +367,11 @@ class ChatHistoryService {
     );
   }
 
-  Future<void> markRemote(String owner, String sessionId) async {
+  Future<void> markRemote(
+    String owner,
+    String sessionId, {
+    required List<String> messageIds,
+  }) async {
     _ensureOwner(owner);
     await (await _db).transaction((tx) async {
       _ensureOwner(owner);
@@ -377,12 +381,16 @@ class ChatHistoryService {
         where: 'owner = ? AND id = ?',
         whereArgs: [owner, sessionId],
       );
-      await tx.update(
-        'messages',
-        {'remote': 1},
-        where: "owner = ? AND sessionId = ? AND delivery = 'delivered'",
-        whereArgs: [owner, sessionId],
-      );
+      // A reply acknowledges only this exchange, never imported history.
+      if (messageIds.isNotEmpty) {
+        await tx.update(
+          'messages',
+          {'remote': 1},
+          where:
+              'owner = ? AND sessionId = ? AND id IN (${List.filled(messageIds.length, '?').join(',')})',
+          whereArgs: [owner, sessionId, ...messageIds],
+        );
+      }
     });
   }
 
@@ -458,11 +466,10 @@ class ChatHistoryService {
         await tx.delete(
           'messages',
           where:
-              'owner = ? AND sessionId = ? AND (delivery = ? OR remote = 1)${page.length < pageSize ? '' : ' AND timestamp >= ?'}',
+              'owner = ? AND sessionId = ? AND remote = 1${page.length < pageSize ? '' : ' AND timestamp >= ?'}',
           whereArgs: [
             owner,
             sessionId,
-            'delivered',
             if (page.length == pageSize)
               page.first.timestamp.toUtc().toIso8601String(),
           ],

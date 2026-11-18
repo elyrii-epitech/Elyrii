@@ -324,7 +324,13 @@ class ChatbotProvider extends ChangeNotifier {
             );
             if (id is String && timestamp != null) {
               final owner = _owner!;
-              _queue(() => _history.markRemote(owner, pending.session.id));
+              _queue(
+                () => _history.markRemote(
+                  owner,
+                  pending.session.id,
+                  messageIds: [pending.message.id, id],
+                ),
+              );
             }
           }
           _notify();

@@ -134,6 +134,39 @@ void main() {
     expect((await history.sessions('a')).single.messageCount, 1);
   });
 
+  test(
+    'remote reconciliation preserves imported messages after a reply',
+    () async {
+      final legacy = ChatMessage.user('legacy');
+      final session = ChatSession.create().copyWith(messages: [legacy]);
+      SharedPreferences.setMockInitialValues({
+        'chat_history_v1': jsonEncode([session.toJson()]),
+      });
+      await history.importLegacy('a');
+      await history.cacheRemoteMessages('a', session.id, []);
+      expect((await history.messages('a', session.id)).single.id, legacy.id);
+
+      final sent = ChatMessage.user('new question');
+      final reply = ChatMessage.ai('server reply');
+      await history.append('a', session, sent);
+      await history.append('a', session, reply);
+      await history.markRemote(
+        'a',
+        session.id,
+        messageIds: [sent.id, reply.id],
+      );
+      await history.cacheRemoteMessages('a', session.id, [sent, reply]);
+      expect(
+        (await history.messages('a', session.id)).map((m) => m.id),
+        containsAll([legacy.id, sent.id, reply.id]),
+      );
+
+      // A subsequent server deletion removes acknowledged rows only.
+      await history.cacheRemoteMessages('a', session.id, []);
+      expect((await history.messages('a', session.id)).single.id, legacy.id);
+    },
+  );
+
   test('corrupt legacy data is not deleted or partially imported', () async {
     SharedPreferences.setMockInitialValues({'chat_history_v1': 'not json'});
     await expectLater(history.importLegacy('a'), throwsFormatException);

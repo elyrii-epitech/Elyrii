@@ -124,10 +124,28 @@ check("journal save → extraction/backfill → embedding → refreshed recall a
         await lifecycle.forget(owner, "memories", target!.id);
         expect((await journal.getEntryByIdForUser(forgetSource.id, owner))!.content).toBe("FORGOTTEN_EVENT");
         await record("forgotten-retains-journal", ["CHAT_PREFERENCE"], ["FORGOTTEN_EVENT", "SHORT_JOURNAL_REPLIES", "BEREAVEMENT_2019"]);
-        const correctedSource = await ingest(["CORRECTION_EVENT"]); await embedAll();
-        const [corrected] = await database.select().from(schema.userMemoriesTable).where(eq(schema.userMemoriesTable.sourceId, correctedSource.id));
+        const correctedSource = await ingest(["CORRECTION_EVENT", "UNCORRECTED_SIBLING"]); await embedAll();
+        const [corrected] = await database.select().from(schema.userMemoriesTable).where(and(eq(schema.userMemoriesTable.sourceId, correctedSource.id), eq(schema.userMemoriesTable.content, "CORRECTION_EVENT")));
+        const [correctedFact] = await database.insert(schema.userContextFactsTable).values({
+            userId: owner, kind: "preference", key: "corrected_preference", value: "ORIGINAL_PREFERENCE",
+            origin: "inferred", sourceKind: "journal", sourceId: correctedSource.id, sourceRevision: 1,
+        }).returning();
         await lifecycle.correct(owner, "memories", corrected!.id, { content: "USER_CORRECTION" }); await embedAll();
-        await record("excluded-correction", ["CHAT_PREFERENCE"], ["CORRECTION_EVENT", "USER_CORRECTION"]);
+        context = await record("recalled-correction", ["CHAT_PREFERENCE", "USER_CORRECTION"], ["CORRECTION_EVENT"]);
+        expect(context.memories.some((m: any) => m.content === "USER_CORRECTION")).toBe(true);
+        expect(context.memories.some((m: any) => ["CORRECTION_EVENT", "UNCORRECTED_SIBLING"].includes(m.content))).toBe(false);
+        await lifecycle.correct(owner, "facts", correctedFact!.id, { value: "USER_PREFERENCE" });
+        context = await record("recalled-fact-correction", ["USER_PREFERENCE"], ["ORIGINAL_PREFERENCE"]);
+        expect(context.facts.some((f: any) => f.value === "USER_PREFERENCE")).toBe(true);
+        process.env.ENABLE_JOURNAL_RECALL = "false";
+        context = await record("corrections-recall-disabled", ["CHAT_PREFERENCE"], ["USER_CORRECTION", "USER_PREFERENCE"]);
+        expect(context.memories.some((m: any) => m.content === "USER_CORRECTION")).toBe(false);
+        expect(context.facts.some((f: any) => f.value === "USER_PREFERENCE")).toBe(false);
+        process.env.ENABLE_JOURNAL_RECALL = "true";
+        await journal.softDeleteEntryForUser(correctedSource.id, owner);
+        context = await record("deleted-correction-source", ["CHAT_PREFERENCE"], ["USER_CORRECTION", "USER_PREFERENCE"]);
+        expect(context.memories.some((m: any) => m.content === "USER_CORRECTION")).toBe(false);
+        expect(context.facts.some((f: any) => f.value === "USER_PREFERENCE")).toBe(false);
         expect((await extraction.enqueuePage({ userId: owner, backfill: true })).scanned).toBe(0);
         if (process.env.CONTEXT_EVAL_DIR) await Bun.write(`${process.env.CONTEXT_EVAL_DIR}/journal-lifecycle.json`, JSON.stringify({ cases }, null, 2));
     } finally {
