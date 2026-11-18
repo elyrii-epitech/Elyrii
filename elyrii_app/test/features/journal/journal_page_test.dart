@@ -182,9 +182,11 @@ void main() {
   testWidgets('deleting from the reading page removes the entry', (
     tester,
   ) async {
-    await _mount(tester, [
+    final repository = _Repository([
       _entry('table', 'Une place à table', 'Lina m’a gardé une place.', now),
     ]);
+    await _mount(tester, repository.items, repository: repository);
+    expect(find.text('Pour commencer'), findsNothing);
 
     await tester.tap(find.text('Une place à table'));
     await tester.pump();
@@ -196,8 +198,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.text('Une place à table'), findsNothing);
+    expect(repository.items, isEmpty);
     expect(find.text('Note supprimée de ton journal.'), findsOneWidget);
-    expect(find.text('Comment s’est passée ta journée ?'), findsOneWidget);
+    // The daily composer question can also appear among the writing prompts.
+    expect(find.text('Pour commencer'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
     expect(find.text('Note supprimée de ton journal.'), findsNothing);
   });
