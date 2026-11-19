@@ -31,12 +31,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Download sub-doc artifacts produced by their own workflows.
       - name: Download Mobile docs artifact
         if: always()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dartdoc-html
           path: _artifacts/mobile
@@ -60,7 +60,7 @@ jobs:
 
       - name: Download Server docs artifact
         if: always()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: server-docs-html
           path: _artifacts/server
@@ -86,7 +86,7 @@ jobs:
 
       - name: Download AI docs artifact
         if: always()
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ai-docs-html
           path: _artifacts/ai
@@ -111,7 +111,7 @@ jobs:
           fi
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -124,7 +124,7 @@ jobs:
         run: mkdocs build --strict
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
@@ -138,4 +138,4 @@ jobs:
     steps:
       - id: deployment
         name: Deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
