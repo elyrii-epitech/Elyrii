@@ -10,3 +10,13 @@ export * from "./oauth.table";
 export * from "./reward.table";
 export * from "./email-verification.table";
 export * from "./notification.table";
+export * from "./context.table";
+export * from "./extraction.table";
+export * from "./summary.table";
+export * from "./embedding.table";
+export * from "./context-source.table";
+
+export * from "./journal-extraction.table";
+
+export * from "./home.table";
+export * from "./password-reset.table";

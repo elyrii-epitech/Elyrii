@@ -6,11 +6,19 @@ import type { HonoEnv } from "../../utils/hono.types";
 import MeditationRepository from "../../repository/meditation.repository";
 import { getMeditationProgramById, MEDITATION_PROGRAMS } from "./meditation.catalog";
 import UserRepository from "../../repository/user.repository";
+import type {Context} from "hono";
+import {completeMeditationSchema, MeditationRequestError, startMeditationSchema} from "./meditation.contracts";
 
 class MeditationController {
     private readonly factory = createFactory<HonoEnv>();
     private readonly meditationRepository = new MeditationRepository();
     private readonly userRepository = new UserRepository();
+
+    private failure(ctx: Context<HonoEnv>, error: unknown) {
+        if (error instanceof MeditationRequestError) return ctx.json({error: error.message}, error.status);
+        console.error("[Meditation] Request failed");
+        return ctx.json({error: "Meditation temporarily unavailable"}, 500);
+    }
 
     public readonly getSessions = this.factory.createHandlers(
         describeRoute({
@@ -19,12 +27,13 @@ class MeditationController {
             tags: ["Meditation"],
             responses: { 200: { description: "List of sessions" } },
         }),
+        sValidator("query", z.object({limit: z.coerce.number().int().min(1).max(100).default(50)})),
         async (ctx) => {
             const userId = ctx.get("user").userId;
-            const limitRaw = ctx.req.query("limit");
-            const limit = Math.min(Math.max(Number(limitRaw || 50), 1), 100);
-            const sessions = await this.meditationRepository.listSessions(userId, limit);
-            return ctx.json(sessions, 200);
+            ctx.header("Cache-Control", "no-store");
+            try {
+                return ctx.json(await this.meditationRepository.listSessions(userId, ctx.req.valid("query").limit), 200);
+            } catch (error) { return this.failure(ctx, error); }
         }
     );
 
@@ -48,13 +57,10 @@ class MeditationController {
             responses: {
                 201: { description: "Session started" },
                 400: { description: "Invalid payload" },
+                409: { description: "Session identifier already used" },
             },
         }),
-        sValidator("json", z.object({
-            type: z.string().min(1),
-            durationMinutes: z.number().int().positive().max(180),
-            moodBefore: z.string().optional(),
-        })),
+        sValidator("json", startMeditationSchema),
         async (ctx) => {
             const userId = ctx.get("user").userId;
             const body = ctx.req.valid("json");
@@ -63,17 +69,20 @@ class MeditationController {
             if (!program) {
                 return ctx.json({ error: "Unknown meditation program type" }, 400);
             }
-            if (body.durationMinutes !== program.durationMinutes) {
+            if (program.minDurationMinutes == null && body.durationMinutes !== program.durationMinutes) {
                 return ctx.json({ error: "Duration does not match selected meditation program" }, 400);
             }
 
-            const session = await this.meditationRepository.startSession({
-                userId,
-                type: body.type,
-                durationMinutes: body.durationMinutes,
-                moodBefore: body.moodBefore,
-            });
-            return ctx.json(session, 201);
+            try {
+                const session = await this.meditationRepository.startSession({
+                    id: body.clientSessionId,
+                    userId,
+                    type: body.type,
+                    durationMinutes: body.durationMinutes,
+                    moodBefore: body.moodBefore,
+                });
+                return ctx.json(session, 201);
+            } catch (error) { return this.failure(ctx, error); }
         }
     );
 
@@ -85,14 +94,11 @@ class MeditationController {
             responses: {
                 200: { description: "Session completed" },
                 404: { description: "Session not found" },
+                409: { description: "Session was canceled" },
             },
         }),
-        sValidator("json", z.object({
-            notes: z.string().max(5000).optional(),
-            moodBefore: z.string().optional(),
-            moodAfter: z.string().optional(),
-            endedAt: z.string().datetime().optional(),
-        })),
+        sValidator("param", z.object({sessionId: z.uuid()})),
+        sValidator("json", completeMeditationSchema),
         async (ctx) => {
             const userId = ctx.get("user").userId;
             const sessionId = ctx.req.param("sessionId");
@@ -108,10 +114,10 @@ class MeditationController {
                     moodAfter: body.moodAfter,
                     endedAt: body.endedAt ? new Date(body.endedAt) : undefined,
                 });
-                this.userRepository.touchActivity(userId).catch(() => {});
+                await this.userRepository.touchActivity(userId).catch(() => console.warn("[Meditation] Activity refresh deferred"));
                 return ctx.json(updated, 200);
             } catch (error) {
-                return ctx.json({ error: "Meditation session not found" }, 404);
+                return this.failure(ctx, error);
             }
         }
     );
@@ -124,8 +130,10 @@ class MeditationController {
             responses: {
                 200: { description: "Session canceled" },
                 404: { description: "Session not found" },
+                409: { description: "Session was completed" },
             },
         }),
+        sValidator("param", z.object({sessionId: z.uuid()})),
         async (ctx) => {
             const userId = ctx.get("user").userId;
             const sessionId = ctx.req.param("sessionId");
@@ -137,7 +145,7 @@ class MeditationController {
                 const updated = await this.meditationRepository.cancelSession(sessionId, userId);
                 return ctx.json(updated, 200);
             } catch (error) {
-                return ctx.json({ error: "Meditation session not found" }, 404);
+                return this.failure(ctx, error);
             }
         }
     );

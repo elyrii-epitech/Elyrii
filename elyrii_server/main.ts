@@ -1,3 +1,4 @@
+import { startJournalExtractionService } from "./modules/context/journal-extraction.service";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
@@ -8,15 +9,20 @@ import QuestRoutes from "./modules/quest/quest.routes";
 import CoachRoutes from "./modules/coach/coach.routes";
 import MeditationRoutes from "./modules/meditation/meditation.routes";
 import NotificationRoutes from "./modules/notification/notification.routes";
-import type { WSContext } from "hono/ws";
 import chatRouter from "./modules/chat/chat.controller";
 import { initKafka } from "./config/kafka.config";
 import { handleAiResponse } from "./modules/chat/consumer.service";
 import { initQuestConsumers } from "./modules/quest/consumer.service";
 import { openAPIRouteHandler } from "hono-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
+import { startExtractionService } from "./modules/context/extraction.service";
+import { startSummaryService } from "./modules/context/summary.service";
+import { startEmbeddingService } from "./modules/context/embedding.service";
 
-export const clientSockets = new Map<string, WSContext>();
+import { createContextRefreshRouter } from "./modules/chat/context-refresh.routes";
+import { createContextRouter } from "./modules/context/lifecycle.routes";
+import { startContextCleanup } from "./modules/context/cleanup.service";
+
 const AVATAR_UPLOAD_DIR = Bun.env.AVATAR_UPLOAD_DIR ?? "./uploads/avatars";
 
 const app = new Hono()
@@ -65,6 +71,9 @@ app.route("/auth", authRouter.Router);
 app.route("/journal", journalRouter.getRouter);
 app.route("/user", userRouter.getRouter);
 app.route("/chat", chatRouter);
+app.route("/context", createContextRouter());
+app.route("/internal/chat-context", createContextRefreshRouter());
+if (Bun.env.ENABLE_CONTEXT_CLEANUP === "true") startContextCleanup();
 app.route("/challenge", questRouter.getRouter);
 app.route("/coach", coachRouter.getRouter);
 app.route("/meditation", meditationRouter.getRouter);
@@ -99,6 +108,14 @@ console.log(`[Main] Kafka consumers enabled: ${shouldEnableKafkaConsumers}`);
 
 // Initialize Kafka and consumers only when explicitly enabled.
 if (shouldEnableKafkaConsumers) {
+    startExtractionService();
+    startJournalExtractionService();
+    if (Bun.env.ENABLE_EMBEDDINGS === "true") {
+        startEmbeddingService().catch(() => console.error("[Embeddings] Registration failed; check database and model digest configuration"));
+    }
+    if (Bun.env.ENABLE_SUMMARIES === "true") {
+        try { startSummaryService(); } catch { console.error("[Summary] Invalid configuration; summary processing disabled"); }
+    }
     initKafka()
         .then(() => {
             console.log("[Kafka] initialized");

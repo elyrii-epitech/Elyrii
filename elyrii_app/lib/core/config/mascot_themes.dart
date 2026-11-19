@@ -1,32 +1,28 @@
 import 'package:flutter/material.dart';
 
-/// Représente un thème visuel appliqué à la mascotte 3D via une ColorMatrix.
-///
-/// Chaque thème défini une [ColorFilterMatrix] qui recolore le rendu 3D
-/// à la volée (aucun nouveau GLB requis). Les thèmes saisonniers
-/// permettent de donner du caractère à Elyrii selon les moments de l'année.
+/// Visual palette for the 3D mascot. [MascotThemes.colorsFor] supplies scene
+/// material colors.
 @immutable
 class MascotTheme {
-  /// Identifiant unique stocké en SharedPreferences.
+  /// Unique ID stored in SharedPreferences.
   final String id;
 
-  /// Nom affiché dans l'UI.
+  /// Name displayed in the UI.
   final String name;
 
-  /// Courte description affichée sous le nom.
+  /// Short description displayed below the name.
   final String description;
 
-  /// Icône Material représentative du thème.
+  /// Material icon representing the theme.
   final IconData icon;
 
-  /// Couleur d'accent utilisée dans l'UI (halo, sélection, etc.).
+  /// UI accent color for halos, selection, and related effects.
   final Color accentColor;
 
-  /// Matrice 5x4 (List de 20 doubles) appliquée via [ColorFilter.matrix].
-  /// Voir : https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/hue-rotate
-  final List<double> colorMatrix;
+  /// Authored fur, ear/blush and eye colors, adapted from Lucas Debize's Esprits.
+  final List<Color> paletteColors;
 
-  /// Emoji utilisé comme aperçu rapide dans l'UI.
+  /// Emoji used as a quick UI preview.
   final String emoji;
 
   const MascotTheme({
@@ -35,7 +31,7 @@ class MascotTheme {
     required this.description,
     required this.icon,
     required this.accentColor,
-    required this.colorMatrix,
+    required this.paletteColors,
     required this.emoji,
   });
 
@@ -50,132 +46,151 @@ class MascotTheme {
   int get hashCode => id.hashCode;
 }
 
-/// Catalogue des thèmes disponibles pour la mascotte Elyrii.
-///
-/// Le thème "nature" correspond au rendu par défaut (pas de filtre).
-/// Les autres thèmes appliquent une transformation colorimétrique
-/// au modèle 3D existant, sans nécessiter de nouveaux assets.
+/// Available Elyrii mascot themes. The "nature" theme preserves original
+/// textures; other palettes recolor the same model's materials without
+/// replacing the scene.
 class MascotThemes {
   MascotThemes._();
 
-  /// Thème par défaut : lavande / menthe, rendu naturel.
+  /// Original peach-cream palette with pink ears.
   static const MascotTheme nature = MascotTheme(
     id: 'nature',
-    name: 'Nature',
-    description: 'Lavande et menthe, la présence douce d\'Elyrii',
+    name: 'Elyrii Originel',
+    description: 'Crème pêche et regard myrtille, sa présence chaleureuse.',
     icon: Icons.spa_rounded,
     accentColor: Color(0xFF7E6AD8),
-    colorMatrix: _identity,
+    paletteColors: [Color(0xFFEBCFAE), Color(0xFFFE9186), Color(0xFF543349)],
     emoji: '🌿',
   );
 
-  /// Thème Halloween : tons orange / violet, ambiance sorcière.
+  /// Copper palette, retaining the legacy Halloween ID.
   static const MascotTheme halloween = MascotTheme(
     id: 'halloween',
-    name: 'Halloween',
-    description: 'Orange citrouille et violet nuit',
+    name: 'Automne Cuivré',
+    description: 'La chaleur cuivrée des feuilles d’érable.',
     icon: Icons.pets_rounded,
     accentColor: Color(0xFFE67E22),
-    // Décalage de teinte vers l'orange (~-30°) + saturation accrue
-    colorMatrix: [
-      1.25, -0.15, 0.05, 0.0, -0.05, //
-      -0.10, 0.85, 0.0, 0.0, -0.05, //
-      -0.20, -0.10, 0.70, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
+    paletteColors: [Color(0xFFE67E22), Color(0xFFC48668), Color(0xFF23150E)],
     emoji: '🎃',
   );
 
-  /// Thème Panda : noir et blanc désaturé, mignon et contrasté.
+  /// Panda theme: desaturated black and white, with a soft, contrasting
+  /// appearance.
   static const MascotTheme panda = MascotTheme(
     id: 'panda',
-    name: 'Panda',
+    name: 'Panda Mystique',
     description: 'Noir et blanc, doux et contrasté',
     icon: Icons.icecream_rounded,
     accentColor: Color(0xFF555555),
-    // Désaturation presque totale + léger contraste
-    colorMatrix: [
-      0.30, 0.60, 0.10, 0.0, 0.0, //
-      0.30, 0.60, 0.10, 0.0, 0.0, //
-      0.30, 0.60, 0.10, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
+    paletteColors: [Color(0xFFF5F5F7), Color(0xFF263238), Color(0xFF121212)],
     emoji: '🐼',
   );
 
-  /// Thème Noël : rouge et vert, chaleureux et festif.
+  /// Christmas theme: warm, festive red and green.
   static const MascotTheme noel = MascotTheme(
     id: 'noel',
     name: 'Noël',
     description: 'Rouge sapin et vert houx',
     icon: Icons.park_rounded,
     accentColor: Color(0xFFC0392B),
-    // Décalage vers le rouge/vert saturé
-    colorMatrix: [
-      1.10, 0.05, -0.15, 0.0, -0.05, //
-      -0.20, 1.00, 0.10, 0.0, 0.0, //
-      -0.10, 0.10, 0.85, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
+    paletteColors: [Color(0xFFC87982), Color(0xFFFE9186), Color(0xFF352B3B)],
     emoji: '🎄',
   );
 
-  /// Thème Cosmic : bleu et violet néon, galactique.
+  /// Lucas's Astral palette, retaining the legacy Cosmic ID.
   static const MascotTheme cosmic = MascotTheme(
     id: 'cosmic',
-    name: 'Cosmic',
-    description: 'Bleu néon et violet galactique',
+    name: 'Astral',
+    description: 'Bleu nuit velouté et touches de champagne.',
     icon: Icons.auto_awesome_rounded,
     accentColor: Color(0xFF5B8DEE),
-    // Décalage de teinte vers le bleu/violet + saturation
-    colorMatrix: [
-      0.50, 0.20, 0.40, 0.0, 0.0, //
-      0.10, 0.60, 0.30, 0.0, 0.0, //
-      0.30, 0.10, 1.10, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
+    paletteColors: [Color(0xFF2D3561), Color(0xFFF2CE94), Color(0xFF151833)],
     emoji: '🌌',
   );
 
-  /// Thème Ocean : cyan et turquoise, frais et apaisant.
+  /// Ocean theme: fresh, soothing cyan and turquoise.
   static const MascotTheme ocean = MascotTheme(
     id: 'ocean',
     name: 'Océan',
     description: 'Cyan turquoise et corail',
     icon: Icons.water_drop_rounded,
     accentColor: Color(0xFF26C6DA),
-    // Décalage vers le cyan
-    colorMatrix: [
-      0.55, 0.25, 0.30, 0.0, 0.0, //
-      0.15, 0.85, 0.20, 0.0, 0.0, //
-      0.20, 0.25, 0.90, 0.0, 0.0, //
-      0.0, 0.0, 0.0, 1.0, 0.0, //
-    ],
+    paletteColors: [Color(0xFF78BEBB), Color(0xFFFE9186), Color(0xFF243C43)],
     emoji: '🌊',
   );
 
-  /// Tous les thèmes disponibles, dans l'ordre d'affichage.
+  static const MascotTheme zen = MascotTheme(
+    id: 'zen',
+    name: 'Esprit Zen',
+    description: 'Sauge douce et calme intérieur des jardins de thé.',
+    icon: Icons.self_improvement_rounded,
+    accentColor: Color(0xFF5D9B6E),
+    paletteColors: [Color(0xFF8AA882), Color(0xFFC8E6C9), Color(0xFF152418)],
+    emoji: '🍵',
+  );
+
+  static const MascotTheme sakura = MascotTheme(
+    id: 'sakura',
+    name: 'Sakura Céleste',
+    description: 'Rose poudré et douceur des cerisiers en fleurs.',
+    icon: Icons.filter_vintage_rounded,
+    accentColor: Color(0xFFEC407A),
+    paletteColors: [Color(0xFFF48FB1), Color(0xFFF8BBD0), Color(0xFF2E1042)],
+    emoji: '🌸',
+  );
+
+  /// Lucas's Spirits and the studio's legacy palettes.
   static const List<MascotTheme> all = [
     nature,
+    cosmic,
+    zen,
+    sakura,
     halloween,
     panda,
     noel,
-    cosmic,
     ocean,
   ];
 
-  /// Récupère un thème par son identifiant.
-  /// Retourne [nature] par défaut si l'id n'existe pas.
+  /// Finds a theme by ID.
+  static Map<String, String> colorsFor(String id) => switch (id) {
+    'halloween' => {
+      'body': '#E67E22',
+      'details': '#FFF8E1',
+      'ears': '#C48668',
+      'eyes': '#23150E',
+    },
+    'panda' => {
+      'body': '#F5F5F7',
+      'details': '#FFFFFF',
+      'ears': '#263238',
+      'eyes': '#121212',
+    },
+    'noel' => {'body': '#C87982', 'details': '#EFE9DC', 'eyes': '#352B3B'},
+    'cosmic' => {
+      'body': '#2D3561',
+      'details': '#C5CAE9',
+      'ears': '#F2CE94',
+      'eyes': '#151833',
+    },
+    'zen' => {
+      'body': '#8AA882',
+      'details': '#F1F8E9',
+      'ears': '#C8E6C9',
+      'eyes': '#152418',
+    },
+    'sakura' => {
+      'body': '#F48FB1',
+      'details': '#FFF5F8',
+      'ears': '#F8BBD0',
+      'eyes': '#2E1042',
+    },
+    'ocean' => {'body': '#78BEBB', 'details': '#E2F2EE', 'eyes': '#243C43'},
+    _ => const {},
+  };
+
+  /// Finds a theme by ID, defaulting to [nature] when it does not exist.
   static MascotTheme getById(String? id) {
     if (id == null) return nature;
     return all.firstWhere((t) => t.id == id, orElse: () => nature);
   }
-
-  /// Matrice identité (pas de transformation).
-  static const List<double> _identity = [
-    1, 0, 0, 0, 0, //
-    0, 1, 0, 0, 0, //
-    0, 0, 1, 0, 0, //
-    0, 0, 0, 1, 0, //
-  ];
 }

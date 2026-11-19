@@ -1,0 +1,360 @@
+{
+  "kind": "live_model_synthetic_journal_extraction",
+  "model": "mistral:7b-instruct",
+  "digest": "6577803aa9a036369e481d648a2baebb381ebc6e897f2bb9a766a2aa7bfbc1cf",
+  "evaluatedAt": "2026-10-22T21:16:28.463489+00:00",
+  "cases": [
+    {
+      "id": "en_preference",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"preference\",\n        \"value\": \"short answers\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"I prefer short answers.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"stable_preference\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 3544,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Preference emitted as kind=fact; category/kind mismatch is rejected."
+      }
+    },
+    {
+      "id": "en_sadness",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"stable_fact\",\n        \"value\": \"The author experienced sadness on October 20, 2026.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"I felt sad yesterday.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": \"October 20, 2026\"\n    }\n  ]\n}",
+      "latencyMs": 1245,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Temporary sadness emitted as a fact; temporal phrase replaced with an unsupported date. Rejected."
+      }
+    },
+    {
+      "id": "en_minor",
+      "status": "validated",
+      "classificationError": true,
+      "temporalError": true,
+      "evidenceQuotesExact": true,
+      "output": {
+        "promptVersion": "journal-v1",
+        "candidates": [
+          {
+            "candidate": {
+              "kind": "fact",
+              "key": "exam_tomorrow",
+              "value": "The author has an exam tomorrow.",
+              "origin": "explicit"
+            },
+            "field": "body",
+            "evidence": "I have an exam tomorrow.",
+            "certainty": "certain",
+            "subject": "author",
+            "assertion": "affirmed",
+            "category": "stable_fact",
+            "temporalExpression": null
+          }
+        ]
+      },
+      "latencyMs": 1104,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Upcoming exam accepted as a stable fact and its temporal expression omitted. Policy failure."
+      }
+    },
+    {
+      "id": "en_graduation",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"graduation_date\",\n        \"value\": \"2026-10-20\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"I graduated yesterday.\",\n      \"certainty\": \"certain\",\"subject\": \"author\",\"assertion\": \"affirmed\",\"category\": \"durable_life_event\",\"temporalExpression\": \"yesterday\"\n    }\n  ]\n}",
+      "latencyMs": 1067,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Durable life event emitted as kind=fact rather than memory. Rejected; some outputs also replace the quoted date phrase."
+      }
+    },
+    {
+      "id": "en_bereavement",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"stable_fact\",\n        \"value\": \"The author's mother died on October 20, 2026.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"My mother died yesterday.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": \"October 20, 2026\"\n    }\n  ]\n}",
+      "latencyMs": 1177,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Durable loss emitted as a fact with an unsupported temporal expression. Rejected."
+      }
+    },
+    {
+      "id": "en_quotation",
+      "status": "validated",
+      "classificationError": true,
+      "temporalError": false,
+      "evidenceQuotesExact": true,
+      "output": {
+        "promptVersion": "journal-v1",
+        "candidates": [
+          {
+            "candidate": {
+              "kind": "fact",
+              "key": "friend_preference",
+              "value": "\"I prefer short answers.\"",
+              "origin": "explicit"
+            },
+            "field": "body",
+            "evidence": "My friend said: \"I prefer short answers.\"",
+            "certainty": "certain",
+            "subject": "author",
+            "assertion": "affirmed",
+            "category": "stable_fact",
+            "temporalExpression": null
+          }
+        ]
+      },
+      "latencyMs": 1064,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Third-party reported speech mislabeled as an affirmative author assertion. English output passes syntactic validation; French evidence quote is not exact and is rejected."
+      }
+    },
+    {
+      "id": "en_third_party",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"brother_graduation\",\n        \"value\": \"My brother graduated\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"My brother graduated\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 1032,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Brother’s event mislabeled as an author assertion. Category/kind mismatch rejects it."
+      }
+    },
+    {
+      "id": "en_negation",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"preference\",\n        \"value\": \"The author does not like coffee.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"I do not like coffee.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"stable_preference\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 1073,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Content retains negative polarity, but model labels it affirmed and emits a fact. Violates the conservative omission policy; no positive-coffee claim was generated."
+      }
+    },
+    {
+      "id": "en_uncertainty",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"potential_move\",\n        \"value\": \"Maybe I will move to Paris.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Maybe I will move to Paris.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"stable_preference\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 1077,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Tentative plan mislabeled certain/affirmed. Category/kind mismatch rejects it."
+      }
+    },
+    {
+      "id": "en_empty",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"stable_fact\",\n        \"value\": \"The author did not report anything on October 20, 2026.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Nothing to report.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": \"2026-10-20\"\n    }\n  ]\n}",
+      "latencyMs": 1262,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Irrelevant entry produces a fabricated contextual assertion instead of empty output. Category/kind mismatch rejects it."
+      }
+    },
+    {
+      "id": "fr_preference",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"preference\",\n        \"value\": \"Je préfère les réponses courtes.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Je préfère les réponses courtes.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"stable_preference\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 1116,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Preference emitted as kind=fact; category/kind mismatch is rejected."
+      }
+    },
+    {
+      "id": "fr_sadness",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"stable_fact\",\n        \"value\": \"The author felt sad on October 20, 2026.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Je me sentais triste hier.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": \"October 20, 2026\"\n    }\n  ]\n}",
+      "latencyMs": 1237,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Temporary sadness emitted as a fact; temporal phrase replaced with an unsupported date. Rejected."
+      }
+    },
+    {
+      "id": "fr_minor",
+      "status": "validated",
+      "classificationError": true,
+      "temporalError": true,
+      "evidenceQuotesExact": true,
+      "output": {
+        "promptVersion": "journal-v1",
+        "candidates": [
+          {
+            "candidate": {
+              "kind": "fact",
+              "key": "exam_tomorrow",
+              "value": "The author has an exam tomorrow.",
+              "origin": "explicit"
+            },
+            "field": "body",
+            "evidence": "J’ai un examen demain.",
+            "certainty": "certain",
+            "subject": "author",
+            "assertion": "affirmed",
+            "category": "stable_fact",
+            "temporalExpression": null
+          }
+        ]
+      },
+      "latencyMs": 1106,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Upcoming exam accepted as a stable fact and its temporal expression omitted. Policy failure."
+      }
+    },
+    {
+      "id": "fr_graduation",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"graduation_date\",\n        \"value\": \"2026-10-20\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"J’ai obtenu mon diplôme hier.\",\n      \"certainty\": \"certain\",\"subject\": \"author\",\"assertion\": \"affirmed\",\"category\": \"durable_life_event\",\"temporalExpression\": \"2026-10-20\"\n    }\n  ]\n}",
+      "latencyMs": 1214,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Durable life event emitted as kind=fact rather than memory. Rejected; some outputs also replace the quoted date phrase."
+      }
+    },
+    {
+      "id": "fr_bereavement",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"stable_fact\",\n        \"value\": \"The author's mother passed away on October 20, 2026.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Ma mère est décédée hier.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": \"October 20, 2026\"\n    }\n  ]\n}",
+      "latencyMs": 1234,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Durable loss emitted as a fact with an unsupported temporal expression. Rejected."
+      }
+    },
+    {
+      "id": "fr_quotation",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"stable_fact\",\n        \"value\": \"The author's friend prefers short responses.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"\\\"Je préfère les réponses courtes.\\\"\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"stable_fact\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 1160,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Third-party reported speech mislabeled as an affirmative author assertion. English output passes syntactic validation; French evidence quote is not exact and is rejected."
+      }
+    },
+    {
+      "id": "fr_third_party",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"brother_graduated\",\n        \"value\": \"The author's brother graduated.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Mon frère a obtenu son diplôme hier.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 1225,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Brother’s event mislabeled as an author assertion. Category/kind mismatch rejects it."
+      }
+    },
+    {
+      "id": "fr_negation",
+      "status": "validated",
+      "classificationError": true,
+      "temporalError": false,
+      "evidenceQuotesExact": true,
+      "output": {
+        "promptVersion": "journal-v1",
+        "candidates": [
+          {
+            "candidate": {
+              "kind": "fact",
+              "key": "stable_fact",
+              "value": "The author does not like coffee.",
+              "origin": "explicit"
+            },
+            "field": "body",
+            "evidence": "Je n’aime pas le café.",
+            "certainty": "certain",
+            "subject": "author",
+            "assertion": "affirmed",
+            "category": "stable_fact",
+            "temporalExpression": null
+          }
+        ]
+      },
+      "latencyMs": 1138,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Content retains negative polarity, but model labels it affirmed and emits a fact. Violates the conservative omission policy; no positive-coffee claim was generated."
+      }
+    },
+    {
+      "id": "fr_uncertainty",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"potential_move\",\n        \"value\": \"The author mentions the possibility of moving to Paris.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Peut-être que je déménagerai à Paris.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"stable_preference\",\n      \"temporalExpression\": null\n    }\n  ]\n}",
+      "latencyMs": 1118,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Tentative plan mislabeled certain/affirmed. Category/kind mismatch rejects it."
+      }
+    },
+    {
+      "id": "fr_empty",
+      "status": "extraction_failed",
+      "error": "invalid_output",
+      "rawSyntheticOutput": "{\n  \"promptVersion\": \"journal-v1\",\n  \"candidates\": [\n    {\n      \"candidate\": {\n        \"kind\": \"fact\",\n        \"key\": \"stable_fact\",\n        \"value\": \"The author did not report any notable events on October 20, 2026.\",\n        \"origin\": \"explicit\"\n      },\n      \"field\": \"body\",\n      \"evidence\": \"Rien à signaler.\",\n      \"certainty\": \"certain\",\n      \"subject\": \"author\",\n      \"assertion\": \"affirmed\",\n      \"category\": \"durable_life_event\",\n      \"temporalExpression\": \"2026-10-20\"\n    }\n  ]\n}",
+      "latencyMs": 1242,
+      "semanticEvidenceReview": {
+        "reviewer": "Codex",
+        "status": "reviewed_fail",
+        "note": "Irrelevant entry produces a fabricated contextual assertion instead of empty output. Category/kind mismatch rejects it."
+      }
+    }
+  ],
+  "configuration": {
+    "contextTokens": 32768,
+    "evaluationTimeoutSeconds": 60,
+    "generationTokens": 4096
+  },
+  "metrics": {
+    "total": 20,
+    "validated": 4,
+    "failures": 16,
+    "validatedEvidenceQuoteCount": 4,
+    "exactEvidenceRateAmongValidated": 1.0,
+    "classificationErrors": 4,
+    "temporalErrors": 2,
+    "medianLatencyMs": 1149.0,
+    "exceededWorkerDefault20s": 0,
+    "maxLatencyMs": 3544
+  },
+  "limitations": "Exact quotation is not semantic entailment. Review every output against its synthetic fixture for author attribution, polarity, uncertainty and unsupported claims. These metrics are separate from mocked tests.",
+  "review": {
+    "status": "failed_rollout_gate",
+    "correctEndToEndCases": 0,
+    "reviewedCases": 20,
+    "rawProposalQuoteMatches": 19,
+    "rawProposalCount": 20,
+    "rawClassificationOrKindErrorCases": 20,
+    "rawTemporalMismatchCases": 9,
+    "conclusion": "Keep journal extraction disabled. Structural validation catches most failures but cannot enforce semantic author attribution or classification when the model supplies internally consistent false labels."
+  }
+}

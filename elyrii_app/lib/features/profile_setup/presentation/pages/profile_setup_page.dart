@@ -1,729 +1,570 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/mascot_themes.dart';
+import '../../../../core/constants/profile_option_labels.dart';
+import '../../../../core/services/secure_storage_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/liquid_glass_kit.dart';
-import '../../../../core/widgets/user_avatar.dart';
-import '../../../../core/constants/avatar_options.dart';
-import '../../../../core/services/glass_performance_service.dart';
-import '../../../../core/services/secure_storage_service.dart';
+import '../../../../core/widgets/accueil_scene.dart';
 import '../../../../routes/app_routes.dart';
-import '../../../auth/presentation/widgets/glass_auth_text_field.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/widgets/arrival_widgets.dart';
+import '../../../dashboard/data/accueil_activities.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
+import '../../../mascot/data/models/mascot_appearance.dart';
+import '../../../mascot/data/models/mascot_model.dart';
+import '../../../mascot/presentation/providers/mascot_provider.dart';
 import '../../../settings/providers/settings_provider.dart';
+import '../widgets/profile_controls.dart';
 
-/// Page d'onboarding proposee juste apres la creation de compte.
-///
-/// Trois etapes : avatar (cliquable -> picker), identite + preferences,
-/// puis ecran de bienvenue. Tout est skippable ; la mascotte est l'avatar
-/// par defaut. Le prenom est demande a l'inscription donc pre-rempli.
+enum _Step {
+  name('On fait connaissance', 'Ton prénom', Icons.waving_hand_outlined),
+  goal('Ton objectif', 'Choisis un objectif', Icons.favorite_outline_rounded),
+  mood('Ton humeur du moment', 'Ton humeur', Icons.mood_rounded),
+  look('L’apparence d’Elyrii', 'Décor et tenue', Icons.checkroom_rounded);
+
+  final String title;
+  final String detail;
+  final IconData icon;
+  const _Step(this.title, this.detail, this.icon);
+}
+
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
-
   @override
   State<ProfileSetupPage> createState() => _ProfileSetupPageState();
 }
 
 class _ProfileSetupPageState extends State<ProfileSetupPage> {
-  int _currentStep = 0;
-  bool _isSaving = false;
-
-  // Avatar
-  String? _selectedPfp;
-
-  // Identite
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _ageController = TextEditingController();
-  final _bioController = TextEditingController();
-
-  // Preferences
-  String? _selectedWellnessGoal;
+  _Step _step = _Step.name;
+  final _name = TextEditingController();
+  String? _goal;
+  MoodType? _mood;
+  late MascotModel _draft;
+  late MascotModel _original;
+  late int _session;
+  MascotDecor _decor = MascotDecor.arches;
+  bool _busy = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _prefillFromProfile();
-  }
-
-  void _prefillFromProfile() {
-    final profile = context.read<UserProvider>().profile;
-    if (profile != null) {
-      _firstNameController.text = profile.firstName ?? '';
-      _lastNameController.text = profile.lastName ?? '';
-      _ageController.text = profile.age != null ? profile.age.toString() : '';
-      _bioController.text = profile.bio ?? '';
-      _selectedPfp = profile.pfp;
-      _selectedWellnessGoal = profile.wellnessGoal;
-    }
+    final user = context.read<UserProvider>().profile;
+    _name.text = user?.firstName ?? '';
+    _goal = user?.wellnessGoal;
+    final mascot = context.read<MascotProvider>();
+    _draft = _original = mascot.mascot;
+    _session = mascot.sessionRevision;
+    _decor = context.read<AccueilActivities>().snapshot.decor;
   }
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _ageController.dispose();
-    _bioController.dispose();
+    _name.dispose();
     super.dispose();
   }
 
-  Future<void> _openAvatarPicker() async {
-    final result = await Navigator.pushNamed(
-      context,
-      AppRoutes.avatarPicker,
-      arguments: _selectedPfp,
-    );
-    // Ignorer si l'utilisateur a annule (back)
-    if (result != kAvatarPickerCancelled) {
-      setState(() => _selectedPfp = result as String?);
-    }
-  }
-
-  Future<void> _finish() async {
-    setState(() => _isSaving = true);
-
-    final userProvider = context.read<UserProvider>();
-    final storage = context.read<SecureStorageService>();
-    final previousPfp = userProvider.profile?.pfp;
-    final clearPfp = _selectedPfp == null && previousPfp != null;
-
-    final success = await userProvider.updateProfile(
-      firstName: _firstNameController.text.trim().isNotEmpty
-          ? _firstNameController.text.trim()
-          : null,
-      lastName: _lastNameController.text.trim().isNotEmpty
-          ? _lastNameController.text.trim()
-          : null,
-      age: int.tryParse(_ageController.text.trim()),
-      pfp: _selectedPfp,
-      clearPfp: clearPfp,
-      bio: _bioController.text.trim(),
-      wellnessGoal: _selectedWellnessGoal,
-    );
-
-    if (!mounted) return;
-    setState(() => _isSaving = false);
-
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(userProvider.error ?? 'Une erreur est survenue'),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-      return;
-    }
-
-    final navigator = Navigator.of(context);
-    await storage.setProfileSetupCompleted();
-
-    navigator.pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
-  }
-
-  void _nextStep() {
-    HapticFeedback.lightImpact();
-    if (_currentStep < 2) {
-      setState(() => _currentStep++);
+  Future<void> _back() async {
+    if (_busy) return;
+    if (_step.index > 0) {
+      setState(() {
+        _step = _Step.values[_step.index - 1];
+        _error = null;
+      });
     } else {
-      _finish();
+      await context.read<AuthProvider>().logout();
+      if (mounted) context.go(AppRoutes.login);
     }
   }
 
-  void _skipStep() {
-    HapticFeedback.lightImpact();
-    _nextStep();
-  }
-
-  void _previousStep() {
-    if (_currentStep == 0 || _isSaving) return;
-    HapticFeedback.lightImpact();
-    setState(() => _currentStep--);
+  Future<void> _next({bool skip = false}) async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final user = context.read<UserProvider>();
+    final dashboard = context.read<DashboardProvider>();
+    try {
+      if (!skip && (_step == _Step.name || _step == _Step.goal)) {
+        final name = _name.text.trim();
+        if ((_step == _Step.name && name.isNotEmpty) ||
+            (_step == _Step.goal && _goal != null)) {
+          final saved = await user.updateProfile(
+            firstName: _step == _Step.name ? name : null,
+            wellnessGoal: _step == _Step.goal ? _goal : null,
+          );
+          if (!saved) {
+            if (mounted) {
+              setState(
+                () => _error =
+                    user.error ??
+                    'Ton profil n’a pas été enregistré. Réessaie.',
+              );
+            }
+            return;
+          }
+        }
+      }
+      if (!skip && _step == _Step.mood && _mood != null) {
+        if (dashboard.selectedMood != _mood &&
+            !await dashboard.selectMood(_mood!)) {
+          if (mounted) {
+            setState(
+              () => _error =
+                  dashboard.error ??
+                  'Ton humeur n’a pas été enregistrée. Réessaie.',
+            );
+          }
+          return;
+        }
+      }
+      if (!mounted) return;
+      if (_step == _Step.look) {
+        final mascot = context.read<MascotProvider>();
+        final store = context.read<AccueilActivities>();
+        final storage = context.read<SecureStorageService>();
+        final saved = await mascot.saveCustomization(
+          _draft,
+          completedChallenges: 0,
+          expectedSessionRevision: _session,
+        );
+        if (!mounted) return;
+        if (!saved || !await store.setDecor(_decor, completedChallenges: 0)) {
+          if (saved) {
+            await mascot.saveCustomization(
+              _original,
+              completedChallenges: 0,
+              expectedSessionRevision: _session,
+            );
+          }
+          if (mounted) {
+            setState(
+              () => _error =
+                  store.snapshot.error ??
+                  mascot.error ??
+                  'L’apparence n’a pas été enregistrée. Réessaie.',
+            );
+          }
+          return;
+        }
+        await storage.setProfileSetupCompleted();
+        if (!mounted) return;
+        context.read<ValueNotifier<bool>>().value = true;
+        context.go(AppRoutes.home);
+      } else {
+        setState(() => _step = _Step.values[_step.index + 1]);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'L’enregistrement n’a pas abouti. Réessaie.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final accent = dark ? AppColors.primaryDark : AppColors.primary;
+    final name = _name.text.trim();
+    final question = switch (_step) {
+      _Step.name => 'Salut, moi c’est Elyrii.\nComment je peux t’appeler ?',
+      _Step.goal =>
+        '${name.isEmpty ? 'Enchanté.' : 'Enchanté, $name.'}\nQu’est-ce qui t’amène ici ?',
+      _Step.mood => 'Comment tu te sens,\nlà, maintenant ?',
+      _Step.look =>
+        'Choisis l’apparence d’Elyrii.\nTu pourras la modifier plus tard.',
+    };
     return PopScope(
-      canPop: _currentStep == 0 && !_isSaving,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop || _currentStep == 0 || _isSaving) return;
-        _previousStep();
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _back();
       },
-      child: Scaffold(
-        backgroundColor: isDark
-            ? AppColors.scaffoldDark
-            : AppColors.scaffoldLight,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildProgressHeader(isDark),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0.05, 0),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _buildStepContent(isDark),
-                ),
-              ),
-              _buildFooter(isDark),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ==================== Progress ====================
-
-  Widget _buildProgressHeader(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: SizedBox(
-        height: 44,
-        child: Stack(
-          alignment: Alignment.center,
+      child: ArrivalFrame(
+        key: ValueKey(_step),
+        title: _step == _Step.name
+            ? 'Bienvenue sur Elyrii'
+            : '${_step.index + 1} sur 4',
+        onBack: _back,
+        onInfo: () => showArrivalSteps(context),
+        mascot: _draft,
+        decor: _decor,
+        scrollThreshold: _step == _Step.goal
+            ? AppDimensions.arrivalGoalThreshold
+            : AppDimensions.arrivalStepThreshold,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (_currentStep > 0)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: LiquidGlassIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  size: 40,
-                  onPressed: _isSaving ? null : _previousStep,
-                  color: isDark
-                      ? Colors.white
-                      : AppColors.textPrimaryLight.withValues(alpha: 0.82),
-                ),
+            Center(
+              child: TextButton.icon(
+                onPressed: () => showArrivalSteps(context),
+                icon: Icon(_step.icon, size: AppDimensions.iconSm),
+                label: Text(_step.title),
               ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (index) {
-                final isActive = index <= _currentStep;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: isActive ? 28 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    color: isActive
-                        ? AppColors.primary
-                        : (isDark
-                              ? Colors.white.withValues(alpha: 0.15)
-                              : Colors.black.withValues(alpha: 0.1)),
-                  ),
-                );
-              }),
             ),
+            const SizedBox(height: AppDimensions.spacing12),
+            LinearProgressIndicator(
+              value: (_step.index + 1) / _Step.values.length,
+              minHeight: AppDimensions.arrivalProgressHeight,
+              color: accent,
+              backgroundColor: AppColors.track(dark),
+              borderRadius: BorderRadius.circular(AppDimensions.radius4),
+            ),
+            const SizedBox(height: AppDimensions.spacing8),
+            Text(
+              '${_step.index + 1} sur 4 · ${_step.detail}',
+              style: AppTextStyles.labelSmall(color: context.textTertiary),
+            ),
+            const SizedBox(height: AppDimensions.spacing16),
+            ProfileCard(
+              padding: const EdgeInsets.all(AppDimensions.spacing12),
+              child: Row(
+                children: [
+                  Image.asset(
+                    'assets/splash_icon.png',
+                    width: AppDimensions.journalTool,
+                    height: AppDimensions.journalTool,
+                  ),
+                  const SizedBox(width: AppDimensions.spacing12),
+                  Expanded(
+                    child: Text(
+                      question,
+                      style: AppTextStyles.bodyLarge(
+                        color: context.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimensions.spacing16),
+            switch (_step) {
+              _Step.name => ArrivalField(
+                controller: _name,
+                label: 'Prénom',
+                icon: Icons.person_outline_rounded,
+                autofillHints: const [AutofillHints.givenName],
+                textInputAction: TextInputAction.done,
+                enabled: !_busy,
+                onSubmitted: (_) => _next(),
+              ),
+              _Step.goal => _goals(dark),
+              _Step.mood => _moods(dark),
+              _Step.look => _look(dark),
+            },
+            ArrivalFeedback(_error),
+            const SizedBox(height: AppDimensions.spacing16),
+            ArrivalButton(
+              label: _step == _Step.look ? 'Commencer' : 'Continuer',
+              icon: Icons.arrow_forward_rounded,
+              busy: _busy,
+              onPressed: _next,
+            ),
+            if (_step != _Step.look)
+              TextButton(
+                onPressed: _busy ? null : () => _next(skip: true),
+                child: const Text('Passer'),
+              ),
+            const SizedBox(height: AppDimensions.spacing12),
+            if (_step != _Step.goal)
+              Text(
+                switch (_step) {
+                  _Step.name => 'Utilise le prénom ou le nom de ton choix.',
+                  _Step.mood => 'Tu pourras me le dire chaque jour.',
+                  _Step.look =>
+                    'Tu pourras modifier l’apparence depuis l’Accueil.',
+                  _Step.goal => '',
+                },
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodySmall(color: context.textTertiary),
+              ),
           ],
         ),
       ),
     );
   }
 
-  // ==================== Steps ====================
+  Widget _goals(bool dark) => ProfileCard(
+    padding: EdgeInsets.zero,
+    child: RadioGroup<String>(
+      groupValue: _goal,
+      onChanged: (value) => setState(() => _goal = value),
+      child: Column(
+        children: [
+          for (final (index, goal) in wellnessGoals.indexed) ...[
+            if (index > 0)
+              const Divider(
+                height: AppDimensions.borderWidthThin,
+                indent: AppDimensions.spacing48,
+              ),
+            RadioListTile<String>(
+              value: goal,
+              enabled: !_busy,
+              title: Text(
+                profileOptionLabel(goal),
+                style: AppTextStyles.bodyMedium(color: context.textPrimary),
+              ),
+              secondary: Icon(
+                const [
+                  Icons.air_rounded,
+                  Icons.bedtime_rounded,
+                  Icons.spa_rounded,
+                  Icons.self_improvement_rounded,
+                  Icons.favorite_rounded,
+                  Icons.explore_rounded,
+                ][index],
+                color: [
+                  AppColors.teal(dark),
+                  AppColors.violet(dark),
+                  AppColors.green(dark),
+                  AppColors.orange(dark),
+                  AppColors.pink(dark),
+                  AppColors.yellow(dark),
+                ][index],
+              ),
+              controlAffinity: ListTileControlAffinity.trailing,
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
 
-  Widget _buildStepContent(bool isDark) {
-    switch (_currentStep) {
-      case 0:
-        return _buildAvatarStep(isDark);
-      case 1:
-        return _buildIdentityStep(isDark);
-      case 2:
-        return _buildWelcomeStep(isDark);
-      default:
-        return const SizedBox.shrink();
-    }
-  }
-
-  // ---- Step 0 : Avatar ----
-
-  Widget _buildAvatarStep(bool isDark) {
-    return Center(
-      child: SingleChildScrollView(
-        key: const ValueKey(0),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLg,
-          vertical: AppDimensions.paddingMd,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Avatar cliquable
-            GestureDetector(
-                  onTap: _openAvatarPicker,
-                  child: Stack(
-                    children: [
-                      UserAvatar(pfp: _selectedPfp, size: 120),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primary,
-                            border: Border.all(
-                              color: isDark
-                                  ? AppColors.surfaceDark
-                                  : Colors.white,
-                              width: 2.5,
+  Widget _moods(bool dark) => Column(
+    children: [
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final mood in MoodType.values)
+            Expanded(
+              child: Semantics(
+                selected: _mood == mood,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppDimensions.radius14),
+                  onTap: _busy ? null : () => setState(() => _mood = mood),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.spacing8,
+                    ),
+                    child: Column(
+                      children: [
+                        AnimatedScale(
+                          scale: _mood == mood
+                              ? AppDimensions.accueilMoodFaceSelectedScale
+                              : 1,
+                          duration: MediaQuery.disableAnimationsOf(context)
+                              ? Duration.zero
+                              : AppMotion.moodFaceTap,
+                          curve: AppMotion.accueilEase,
+                          child: Container(
+                            width: AppDimensions.accueilMoodFace,
+                            height: AppDimensions.accueilMoodFace,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: mood
+                                  .colorFor(Theme.of(context).brightness)
+                                  .withValues(alpha: _mood == mood ? 1 : .18),
+                            ),
+                            child: Icon(
+                              mood.icon,
+                              size: AppDimensions.meditationIcon,
+                              color: _mood == mood
+                                  ? AppColors.onTint(dark)
+                                  : mood.colorFor(Theme.of(context).brightness),
                             ),
                           ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 18,
-                            color: Colors.white,
+                        ),
+                        const SizedBox(height: AppDimensions.spacing8),
+                        Text(
+                          mood.label,
+                          style: AppTextStyles.labelSmall(
+                            color: _mood == mood
+                                ? context.textPrimary
+                                : context.textTertiary,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      const SizedBox(height: AppDimensions.spacing12),
+      Text(
+        'Choisis une humeur ou passe cette étape.',
+        textAlign: TextAlign.center,
+        style: AppTextStyles.bodyMedium(color: context.textSecondary),
+      ),
+      if (_mood == MoodType.verySad)
+        TextButton(
+          onPressed: () async {
+            if (!await launchUrl(Uri(scheme: 'tel', path: '3114')) && mounted) {
+              setState(
+                () => _error = 'Appelle le 3114, gratuitement, à tout moment.',
+              );
+            }
+          },
+          child: Text(
+            'Besoin d’aide maintenant ? 3114',
+            style: AppTextStyles.bodyMedium(color: AppColors.helpInk(dark)),
+          ),
+        ),
+    ],
+  );
+
+  Widget _look(bool dark) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        'Le décor',
+        style: AppTextStyles.titleSmall(color: context.textPrimary),
+      ),
+      const SizedBox(height: AppDimensions.spacing8),
+      Row(
+        children: [
+          for (final (index, decor) in const [
+            MascotDecor.arches,
+            MascotDecor.hills,
+            MascotDecor.waves,
+          ].indexed)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimensions.spacing4),
+                child: Semantics(
+                  selected: _decor == decor,
+                  child: InkWell(
+                    onTap: _busy ? null : () => setState(() => _decor = decor),
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: dark ? AppColors.cardDark : AppColors.cardLight,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radius14,
+                        ),
+                        border: Border.all(
+                          width: AppDimensions.borderWidthMedium,
+                          color: _decor == decor
+                              ? (dark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primary)
+                              : Colors.transparent,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: AppDimensions.arrivalDecorHeight,
+                            width: double.infinity,
+                            child: CustomPaint(
+                              painter: AccueilScenePainter(
+                                decor: decor,
+                                dark: dark,
+                                thumbnail: true,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(
+                              AppDimensions.spacing8,
+                            ),
+                            child: Text(
+                              const ['Arches', 'Collines', 'Vagues'][index],
+                              style: AppTextStyles.labelSmall(
+                                color: context.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+      const SizedBox(height: AppDimensions.spacing16),
+      Text(
+        'Ses couleurs',
+        style: AppTextStyles.titleSmall(color: context.textPrimary),
+      ),
+      const SizedBox(height: AppDimensions.spacing12),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final theme in const [
+            MascotThemes.nature,
+            MascotThemes.cosmic,
+            MascotThemes.zen,
+            MascotThemes.sakura,
+          ])
+            Expanded(
+              child: Semantics(
+                selected: _draft.themeId == theme.id,
+                child: InkWell(
+                  onTap: _busy
+                      ? null
+                      : () => setState(
+                          () => _draft = _draft.copyWith(
+                            themeId: theme.id,
+                            appearance: MascotAppearance.defaults,
+                          ),
+                        ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: AppDimensions.arrivalPalette,
+                        height: AppDimensions.arrivalPalette,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            width: AppDimensions.borderWidthMedium,
+                            color: _draft.themeId == theme.id
+                                ? (dark
+                                      ? AppColors.primaryDark
+                                      : AppColors.primary)
+                                : Colors.transparent,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: Row(
+                            children: [
+                              for (final color in theme.paletteColors)
+                                Expanded(
+                                  child: ColoredBox(
+                                    color: color,
+                                    child: const SizedBox.expand(),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppDimensions.spacing8),
+                      Text(
+                        theme.name,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.labelSmall(
+                          color: context.textSecondary,
                         ),
                       ),
                     ],
                   ),
-                )
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1)),
-            const SizedBox(height: AppDimensions.spacingLg),
-            Text(
-              'Choisis ton avatar',
-              style: AppTextStyles.headlineSmall(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ).copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppDimensions.spacingSm),
-            Text(
-              'Une presence douce pour t\'accompagner. '
-              'Tu pourras le changer quand tu veux, '
-              'ou importer ta propre photo.',
-              style: AppTextStyles.bodyMedium(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppDimensions.spacingLg),
-            LiquidGlassButton(
-              label: 'Personnaliser mon avatar',
-              icon: Icons.palette_rounded,
-              style: LiquidGlassButtonStyle.tinted,
-              isExpanded: true,
-              onPressed: _openAvatarPicker,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---- Step 1 : Identite + preferences ----
-
-  Widget _buildIdentityStep(bool isDark) {
-    return SingleChildScrollView(
-      key: const ValueKey(1),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLg,
-        vertical: AppDimensions.paddingMd,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Icon(
-            Icons.spa_rounded,
-            size: 48,
-            color: AppColors.primary,
-          ).animate().fadeIn(duration: 400.ms),
-          const SizedBox(height: AppDimensions.spacingMd),
-          Text(
-            'Dis-m\'en un peu plus',
-            style: AppTextStyles.headlineSmall(
-              color: isDark
-                  ? AppColors.textPrimaryDark
-                  : AppColors.textPrimaryLight,
-            ).copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppDimensions.spacingSm),
-          Text(
-            'Tout est optionnel. Ces infos aident a personnaliser '
-            'ton accompagnement.',
-            style: AppTextStyles.bodyMedium(
-              color: isDark
-                  ? AppColors.textSecondaryDark
-                  : AppColors.textSecondaryLight,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppDimensions.spacingXl),
-
-          _buildLabel('Prenom', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
-          GlassAuthTextField(
-            controller: _firstNameController,
-            hint: 'Ton prenom',
-            prefixIcon: Icons.person_outline,
-            keyboardType: TextInputType.name,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppDimensions.spacingMd),
-
-          _buildLabel('Nom', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
-          GlassAuthTextField(
-            controller: _lastNameController,
-            hint: 'Optionnel',
-            prefixIcon: Icons.badge_outlined,
-            keyboardType: TextInputType.name,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppDimensions.spacingMd),
-
-          _buildLabel('Age', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
-          GlassAuthTextField(
-            controller: _ageController,
-            hint: 'Optionnel',
-            prefixIcon: Icons.cake_outlined,
-            keyboardType: TextInputType.number,
-            textInputAction: TextInputAction.next,
-          ),
-          const SizedBox(height: AppDimensions.spacingMd),
-
-          _buildLabel('Ton objectif bien-etre', isDark),
-          const SizedBox(height: AppDimensions.spacingXs),
-          _GoalSelector(
-            value: _selectedWellnessGoal,
-            isDark: isDark,
-            onChanged: (v) => setState(() => _selectedWellnessGoal = v),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---- Step 2 : Bienvenue ----
-
-  Widget _buildWelcomeStep(bool isDark) {
-    return Center(
-      key: const ValueKey(2),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingLg,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            UserAvatar(pfp: _selectedPfp, size: 120)
-                .animate()
-                .fadeIn(duration: 500.ms)
-                .scale(
-                  begin: const Offset(0.7, 0.7),
-                  end: const Offset(1, 1),
-                  curve: Curves.easeOutBack,
                 ),
-            const SizedBox(height: AppDimensions.spacingXl),
-            Text(
-              'Ton espace est pret',
-              style: AppTextStyles.headlineMedium(
-                color: isDark
-                    ? AppColors.textPrimaryDark
-                    : AppColors.textPrimaryLight,
-              ).copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
-            const SizedBox(height: AppDimensions.spacingMd),
-            Text(
-              'Bienvenue dans ton cocon Elyrii. Prends ton temps, '
-              'explore a ton rythme et n\'oublie pas : chaque petit pas '
-              'compte vers ton bien-etre.',
-              style: AppTextStyles.bodyMedium(
-                color: isDark
-                    ? AppColors.textSecondaryDark
-                    : AppColors.textSecondaryLight,
-              ).copyWith(height: 1.6),
-              textAlign: TextAlign.center,
-            ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ==================== Helpers ====================
-
-  Widget _buildLabel(String text, bool isDark) {
-    return Text(
-      text,
-      style: AppTextStyles.bodyMedium(
-        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-      ).copyWith(fontWeight: FontWeight.w600),
-    );
-  }
-
-  Widget _buildFooter(bool isDark) {
-    final isLastStep = _currentStep == 2;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      child: Column(
-        children: [
-          _ProfileSetupGlassButton(
-            label: isLastStep ? 'Commencer mon parcours' : 'Continuer',
-            icon: isLastStep ? Icons.favorite_rounded : null,
-            isLoading: _isSaving,
-            isExpanded: true,
-            isPrimary: true,
-            onPressed: _isSaving ? null : _nextStep,
-          ),
-          if (!isLastStep) ...[
-            const SizedBox(height: AppDimensions.spacingSm),
-            _ProfileSetupGlassButton(
-              label: 'Passer pour l\'instant',
-              onPressed: _isSaving ? null : _skipStep,
-              isExpanded: true,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfileSetupGlassButton extends StatefulWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final bool isExpanded;
-  final bool isLoading;
-  final bool isPrimary;
-
-  const _ProfileSetupGlassButton({
-    required this.label,
-    this.onPressed,
-    this.icon,
-    this.isExpanded = false,
-    this.isLoading = false,
-    this.isPrimary = false,
-  });
-
-  @override
-  State<_ProfileSetupGlassButton> createState() =>
-      _ProfileSetupGlassButtonState();
-}
-
-class _ProfileSetupGlassButtonState extends State<_ProfileSetupGlassButton> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isDisabled = widget.onPressed == null || widget.isLoading;
-    final blurSigma = GlassPerformanceService().getEffectiveBlurSigma(
-      AppDimensions.blurSigmaLiquidGlass,
-    );
-    final radius = BorderRadius.circular(AppDimensions.radiusLiquidGlassButton);
-    const primary = AppColors.primary;
-    final textColor = widget.isPrimary
-        ? (isDark ? Colors.white : primary.withValues(alpha: 0.92))
-        : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight);
-
-    final button = Container(
-      width: widget.isExpanded ? double.infinity : null,
-      constraints: const BoxConstraints(minHeight: 52),
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: widget.isPrimary
-              ? [
-                  primary.withValues(alpha: isDark ? 0.30 : 0.18),
-                  Colors.white.withValues(alpha: isDark ? 0.08 : 0.58),
-                  primary.withValues(alpha: isDark ? 0.18 : 0.10),
-                ]
-              : [
-                  Colors.white.withValues(alpha: isDark ? 0.10 : 0.50),
-                  Colors.white.withValues(alpha: isDark ? 0.05 : 0.26),
-                ],
-        ),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.42),
-          width: 0.6,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: Colors.white.withValues(alpha: isDark ? 0.04 : 0.35),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Center(child: _buildContent(textColor)),
-    );
-
-    return Semantics(
-      button: true,
-      enabled: !isDisabled,
-      label: widget.label,
-      child: GestureDetector(
-        onTapDown: isDisabled ? null : (_) => setState(() => _isPressed = true),
-        onTapUp: isDisabled ? null : (_) => setState(() => _isPressed = false),
-        onTapCancel: isDisabled
-            ? null
-            : () => setState(() => _isPressed = false),
-        onTap: isDisabled ? null : widget.onPressed,
-        child: AnimatedScale(
-          scale: _isPressed ? 0.98 : 1,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOutCubic,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 150),
-            opacity: isDisabled ? 0.55 : (_isPressed ? 0.78 : 1),
-            child: RepaintBoundary(
-              child: ClipRRect(
-                borderRadius: radius,
-                child: blurSigma > 0
-                    ? BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: blurSigma,
-                          sigmaY: blurSigma,
-                        ),
-                        child: button,
-                      )
-                    : button,
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent(Color textColor) {
-    if (widget.isLoading) {
-      return SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation(textColor),
-        ),
-      );
-    }
-
-    return Row(
-      mainAxisSize: widget.isExpanded ? MainAxisSize.max : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (widget.icon != null) ...[
-          Icon(widget.icon, size: 20, color: textColor),
-          const SizedBox(width: 8),
         ],
-        Text(
-          widget.label,
-          style: AppTextStyles.bodyLarge(
-            color: textColor,
-          ).copyWith(fontWeight: FontWeight.w700),
-        ),
-      ],
-    );
-  }
-}
-
-// ==================== Goal Selector (chips) ====================
-
-class _GoalSelector extends StatelessWidget {
-  final String? value;
-  final bool isDark;
-  final ValueChanged<String?> onChanged;
-
-  const _GoalSelector({
-    required this.value,
-    required this.isDark,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _wellnessGoals.map((goal) {
-        final isSelected = value == goal;
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onChanged(isSelected ? null : goal);
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.primary
-                  : (isDark
-                        ? Colors.white.withValues(alpha: 0.06)
-                        : Colors.black.withValues(alpha: 0.04)),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-              border: Border.all(
-                color: isSelected
-                    ? AppColors.primary
-                    : (isDark
-                          ? Colors.white.withValues(alpha: 0.1)
-                          : Colors.black.withValues(alpha: 0.08)),
-              ),
-            ),
-            child: Text(
-              goal,
-              style: AppTextStyles.bodyMedium(
-                color: isSelected
-                    ? Colors.white
-                    : (isDark
-                          ? AppColors.textPrimaryDark
-                          : AppColors.textPrimaryLight),
-              ).copyWith(fontWeight: FontWeight.w500),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  static const List<String> _wellnessGoals = [
-    'Gerer mon stress',
-    'Ameliorer mon sommeil',
-    'Cultiver ma mindfulness',
-    'Developper ma confiance',
-    'Prendre soin de moi',
-    'Retrouver du calme',
-  ];
+      ),
+    ],
+  );
 }

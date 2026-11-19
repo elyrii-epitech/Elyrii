@@ -1,0 +1,590 @@
+[
+  {
+    "id": "en_preference",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "I prefer short answers.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "preference",
+            "key": "reply_length",
+            "value": "short",
+            "origin": "explicit"
+          },
+          "field": "body",
+          "evidence": "I prefer short answers.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "stable_preference",
+          "temporalExpression": null
+        }
+      ]
+    },
+    "expectedCategory": "stable_preference",
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "en_sadness",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "I felt sad yesterday.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "I felt sad yesterday.",
+            "origin": "explicit",
+            "retention": "short_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "I felt sad yesterday.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "temporary_emotion",
+          "temporalExpression": "yesterday"
+        }
+      ]
+    },
+    "expectedCategory": "temporary_emotion",
+    "expectedTemporalExpression": "yesterday"
+  },
+  {
+    "id": "en_minor",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "I have an exam tomorrow.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "I have an exam tomorrow.",
+            "origin": "explicit",
+            "retention": "short_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "I have an exam tomorrow.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "minor_event",
+          "temporalExpression": "tomorrow"
+        }
+      ]
+    },
+    "expectedCategory": "minor_event",
+    "expectedTemporalExpression": "tomorrow"
+  },
+  {
+    "id": "en_graduation",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "I graduated yesterday.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "I graduated yesterday.",
+            "origin": "explicit",
+            "retention": "long_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "I graduated yesterday.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "durable_life_event",
+          "temporalExpression": "yesterday"
+        }
+      ]
+    },
+    "expectedCategory": "durable_life_event",
+    "expectedTemporalExpression": "yesterday"
+  },
+  {
+    "id": "en_bereavement",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "My mother died yesterday.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "My mother died yesterday.",
+            "origin": "explicit",
+            "retention": "long_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "My mother died yesterday.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "durable_life_event",
+          "temporalExpression": "yesterday"
+        }
+      ]
+    },
+    "expectedCategory": "durable_life_event",
+    "expectedTemporalExpression": "yesterday"
+  },
+  {
+    "id": "en_quotation",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "My friend said: \"I prefer short answers.\"",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "en_third_party",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "My brother graduated yesterday.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "en_negation",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "I do not like coffee.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "en_uncertainty",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Maybe I will move to Paris.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "en_empty",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Nothing to report.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "fr_preference",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Je préfère les réponses courtes.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "preference",
+            "key": "reply_length",
+            "value": "short",
+            "origin": "explicit"
+          },
+          "field": "body",
+          "evidence": "Je préfère les réponses courtes.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "stable_preference",
+          "temporalExpression": null
+        }
+      ]
+    },
+    "expectedCategory": "stable_preference",
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "fr_sadness",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Je me sentais triste hier.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "Je me sentais triste hier.",
+            "origin": "explicit",
+            "retention": "short_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "Je me sentais triste hier.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "temporary_emotion",
+          "temporalExpression": "hier"
+        }
+      ]
+    },
+    "expectedCategory": "temporary_emotion",
+    "expectedTemporalExpression": "hier"
+  },
+  {
+    "id": "fr_minor",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "J’ai un examen demain.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "J’ai un examen demain.",
+            "origin": "explicit",
+            "retention": "short_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "J’ai un examen demain.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "minor_event",
+          "temporalExpression": "demain"
+        }
+      ]
+    },
+    "expectedCategory": "minor_event",
+    "expectedTemporalExpression": "demain"
+  },
+  {
+    "id": "fr_graduation",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "J’ai obtenu mon diplôme hier.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "J’ai obtenu mon diplôme hier.",
+            "origin": "explicit",
+            "retention": "long_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "J’ai obtenu mon diplôme hier.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "durable_life_event",
+          "temporalExpression": "hier"
+        }
+      ]
+    },
+    "expectedCategory": "durable_life_event",
+    "expectedTemporalExpression": "hier"
+  },
+  {
+    "id": "fr_bereavement",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Ma mère est décédée hier.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": [
+        {
+          "candidate": {
+            "kind": "memory",
+            "content": "Ma mère est décédée hier.",
+            "origin": "explicit",
+            "retention": "long_term",
+            "eventAt": null
+          },
+          "field": "body",
+          "evidence": "Ma mère est décédée hier.",
+          "certainty": "certain",
+          "subject": "author",
+          "assertion": "affirmed",
+          "category": "durable_life_event",
+          "temporalExpression": "hier"
+        }
+      ]
+    },
+    "expectedCategory": "durable_life_event",
+    "expectedTemporalExpression": "hier"
+  },
+  {
+    "id": "fr_quotation",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Mon ami a dit : « Je préfère les réponses courtes. »",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "fr_third_party",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Mon frère a obtenu son diplôme hier.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "fr_negation",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Je n’aime pas le café.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "fr_uncertainty",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Peut-être que je déménagerai à Paris.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  },
+  {
+    "id": "fr_empty",
+    "input": {
+      "source": {
+        "kind": "journal",
+        "id": "11111111-1111-4111-8111-111111111111",
+        "revision": 1,
+        "title": "Journal",
+        "body": "Rien à signaler.",
+        "mood": null,
+        "createdAt": "2026-10-20T23:30:00Z"
+      },
+      "timezone": "Europe/Paris"
+    },
+    "output": {
+      "promptVersion": "journal-v1",
+      "candidates": []
+    },
+    "expectedCategory": null,
+    "expectedTemporalExpression": null
+  }
+]

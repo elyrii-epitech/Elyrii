@@ -10,6 +10,12 @@ This repository contains the Elyrii server with microservices architecture and a
 
 ## Documentation
 
+- [Database migrations](database.md)
+- [Journal context source foundation](journal-source-foundation.md)
+- [Journal extraction](journal-extraction.md)
+- [Journal recall](journal-recall.md)
+- [Local LoRA adapter loading](../../elyrii_ai/docs/lora-loading.md)
+
 ### Generating Documentation
 
 To generate the complete documentation for all services:

@@ -1,0 +1,55 @@
+{
+  "kind": "mock-tokenizer regression, not live-model evaluation",
+  "measurements": [
+    {
+      "case": "older-recall-and-expiry",
+      "inputTokens": 346,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 1,
+      "retrievalMs": 7.354,
+      "compositionMs": 0.872
+    },
+    {
+      "case": "unrelated-no-recall",
+      "inputTokens": 254,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 0,
+      "retrievalMs": 3.618,
+      "compositionMs": 0.511
+    },
+    {
+      "case": "correction-before-reembedding",
+      "inputTokens": 254,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 0,
+      "retrievalMs": 2.127,
+      "compositionMs": 0.469
+    },
+    {
+      "case": "corrected-recall",
+      "inputTokens": 312,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 1,
+      "retrievalMs": 2.387,
+      "compositionMs": 0.6
+    },
+    {
+      "case": "forgotten",
+      "inputTokens": 254,
+      "reservedTokens": 64,
+      "windowTokens": 4096,
+      "droppedRecords": 0,
+      "selectedMemories": 0,
+      "retrievalMs": 1.769,
+      "compositionMs": 0.456
+    }
+  ]
+}

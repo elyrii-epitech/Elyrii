@@ -1,5 +1,5 @@
 import { createFactory } from "hono/factory";
-import JournalRepository from "../../repository/journal.repository";
+import JournalRepository, { DeletedJournalRequestError } from "../../repository/journal.repository";
 import { sValidator } from "@hono/standard-validator";
 import { createEntriySchema, updateEntrySchema } from "../../utils/journal.zod";
 import type { HonoEnv } from "../../utils/hono.types";
@@ -73,6 +73,17 @@ class JournalController {
             }
         }
 
+        if (startDate && endDate && startDate > endDate) {
+            return ctx.json({ error: "startDate must precede endDate" }, 400);
+        }
+        const limitParam = ctx.req.query('limit');
+        if (limitParam != null) {
+            const paging = z.object({limit: z.coerce.number().int().min(1).max(100), order: z.enum(['asc', 'desc']).default('desc'), cursorDate: z.iso.datetime().optional(), cursorId: z.uuid().optional()}).safeParse(ctx.req.query());
+            if (!paging.success || Boolean(paging.data.cursorDate) !== Boolean(paging.data.cursorId)) return ctx.json({error: 'Invalid pagination'}, 400);
+            const input = paging.data;
+            const cursor = input.cursorDate && input.cursorId ? {createdAt: new Date(input.cursorDate), id: input.cursorId} : undefined;
+            return ctx.json(await this.journalRepository.getPage(userID, input.limit, input.order, cursor, startDate, endDate));
+        }
         const entries = await this.journalRepository.getEntries(userID, startDate, endDate);
         return ctx.json(entries); 
     });
@@ -139,6 +150,7 @@ class JournalController {
         responses: {
             201: { description: "Entry created successfully" },
             400: { description: "Invalid request body" },
+            409: { description: "The original note for this request was deleted" },
             500: { description: "Failed to create entry" }
         }
     }), sValidator("json", createEntriySchema), async (ctx) => {
@@ -151,16 +163,22 @@ class JournalController {
         try {
             body["userId"] = userID;
             if (!body.userId) return ctx.json({ error: "User ID is required" }, 400);
-            const entry = await this.journalRepository.createEntryWithRelations({
+            const {wasCreated, ...entry} = await this.journalRepository.createEntryWithRelations({
                 ...body,
                 userId: userID as string,
                 tags: body.tags ?? [],
             });
             // Déclencher la vérification des défis en arrière-plan (non bloquant)
-            this.questLogic.checkAndUpdateProgress(userID, 'journal_created').catch(() => {});
-            this.userRepository.touchActivity(userID).catch(() => {});
+            if (wasCreated) {
+                await this.questLogic.checkAndUpdateProgress(userID, 'journal_created')
+                    .catch(() => console.warn("[Quest] Journal progress reconciliation deferred"));
+                this.userRepository.touchActivity(userID).catch(() => {});
+            }
             return ctx.json({ message: "Entry created successfully", body: entry }, 201);
         } catch (error) {
+            if (error instanceof DeletedJournalRequestError) {
+                return ctx.json({ error: "Cette note a été supprimée. Crée une nouvelle note." }, 409);
+            }
             return ctx.json({ error: "Failed to create entry" }, 500);
         }
     });
@@ -198,6 +216,8 @@ class JournalController {
                 body,
                 body.tags,
             );
+            await this.questLogic.checkAndUpdateProgress(userID, 'journal_created')
+                .catch(() => console.warn("[Quest] Journal progress reconciliation deferred"));
             return ctx.json({ message: "Entry updated successfully", body: entry }, 200);
         } catch (error) {
             if (error instanceof Error && error.message === "Journal entry not found") {
@@ -231,6 +251,8 @@ class JournalController {
         }
         try {
             await this.journalRepository.softDeleteEntryForUser(entryId, userID);
+            await this.questLogic.checkAndUpdateProgress(userID, 'journal_created')
+                .catch(() => console.warn("[Quest] Journal progress reconciliation deferred"));
             return ctx.json({ message: "Entry soft-deleted successfully" }, 200);
         } catch (error) {
             if (error instanceof Error && error.message === "Failed to soft delete journal entry") {

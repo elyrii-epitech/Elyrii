@@ -42,10 +42,10 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   /// Set a specific theme mode
-  void setThemeMode(ThemeMode mode) {
+  void setThemeMode(ThemeMode mode, {bool persist = true}) {
     if (_themeMode != mode) {
       _themeMode = mode;
-      _saveThemeMode();
+      if (persist) _saveThemeMode();
       notifyListeners();
     }
   }

@@ -1,356 +1,165 @@
-# Elyrii Mobile Application Architecture
+# Elyrii client architecture
 
-## Overview
+Code snapshot: October 6, 2026. The Flutter client is organized by feature,
+with Provider for state/injection, GoRouter for navigation, and a shared HTTP
+client connecting to the gateway.
 
-The Elyrii mobile app is a feature-first Flutter application. Shared code lives
-in `core/`, while screens, providers, models, and repositories are grouped under
-`features/`.
-
-The app uses `provider` for dependency injection and state management, a
-centralized HTTP client for the backend gateway, and a Liquid Glass UI system
-that adapts its visual effects to device capability.
-
-## Current Structure
+## Organization
 
 ```text
 elyrii_app/lib/
-+-- main.dart
-+-- core/
-|   +-- config/       # API URLs, constants, 3D mascot config
-|   +-- network/      # ApiClient, ApiException
-|   +-- services/     # storage, theme, glass performance, 3D mascot
-|   +-- theme/        # colors, dimensions, text styles, ThemeData
-|   +-- utils/        # responsive helpers
-|   +-- widgets/      # global widgets and Liquid Glass components
-+-- features/
-|   +-- auth/
-|   +-- chatbot/
-|   +-- coach/
-|   +-- dashboard/
-|   +-- gamification/
-|   +-- journal/
-|   +-- mascot/
-|   +-- meditation/
-|   +-- settings/
-+-- routes/
-    +-- app_routes.dart
-    +-- home_navigation.dart
-    +-- route_generator.dart
+  app/
+    app_dependencies.dart  # service composition and lifetime
+    launch/                # short introduction and startup
+    router/                # GoRouter, guards, persistent shell, transitions
+  core/
+    config/                # URLs and mascot configuration
+    network/               # ApiClient, ApiException
+    services/              # secure storage, theme, animation
+    storage/               # platform SQLite and content encryption
+    diagnostics/           # bounded events without private content
+    theme/                 # visual design
+    glass/ and widgets/    # shared components, surfaces, 3D rendering
+  features/
+    auth/ chatbot/ parcours/ dashboard/ gamification/
+    journal/ mascot/ meditation/ settings/ …
 ```
 
-## Layers
+Pages consume providers. Repositories handle REST exchanges and local storage;
+`ApiClient` adds the Bearer token and enforces a timeout. Chat uses an
+authenticated WebSocket to the gateway.
 
-### Presentation
+## Startup and navigation
 
-The presentation layer contains Flutter pages, widgets, and providers.
+1. `main.dart` installs error handlers and immediately displays the bootstrap UI.
+2. Configuration, locales, and plugins initialize with recoverable errors,
+   deadlines, and a retry button.
+3. `AppDependencies` owns services and providers. It first resumes incomplete
+   account purges, then restores the secure session without waiting for the network.
+4. Each session change invalidates the HTTP client and all account state, then
+   hydrates the profile, preferences, and gamification.
+5. Pages load data through deduplicated requests. The router is recreated on
+   account changes and disposed of with its owner.
 
-Examples:
-- `features/auth/presentation/pages/login_page.dart`
-- `features/journal/presentation/widgets/journal_editor_sheet.dart`
-- `features/gamification/presentation/providers/gamification_provider.dart`
-- `core/widgets/glass/liquid_glass_*.dart`
+Global providers cover theme, authentication, journal, chat, gamification,
+profile/settings, mascot, dashboard, and journeys.
 
-### Data
+`AppRouter` uses `StatefulShellRoute.indexedStack` for six branches: Home,
+Challenges, Journal, Meditation, Coach, and Chat. Guards handle authentication
+and profile completion. Tab state persists; the mascot stops animating offscreen
+and releases its viewer after 15 seconds.
 
-The data layer contains models and repositories that either talk to the backend
-or provide local data.
+## Network configuration
 
-Examples:
-- `AuthRepository` calls `/auth/login`, `/auth/register`, and `/auth/logout`.
-- `JournalRepository` handles CRUD for `/journal`.
-- `GamificationRepository` handles `/challenge/*`.
-- `UserRepository` handles `/user/me`.
-- `CoachRepository` still provides local advice and activities.
-
-Some files are still placeholders (`TempPage`) in `dashboard`, `meditation`, or
-`mascot`; the real behavior currently lives in pages and providers.
-
-### Core
-
-The `core/` layer contains:
-- runtime and API configuration;
-- HTTP client with Bearer token support;
-- secure storage;
-- theme and design tokens;
-- Liquid Glass components;
-- 3D mascot viewer;
-- global error boundary;
-- responsive helpers.
-
-## Initialization
-
-`main.dart` initializes services before `runApp`:
-
-```dart
-AppConfig.initialize();
-
-final secureStorage = SecureStorageService();
-final apiClient = ApiClient(storage: secureStorage);
-final themeProvider = ThemeProvider();
-final performanceService = GlassPerformanceService();
-
-await Future.wait([themeProvider.init(), performanceService.init()]);
-```
-
-Current global providers:
-- `ThemeProvider`
-- `GlassPerformanceService`
-- `AuthProvider`
-- `JournalProvider`
-- `ChatbotProvider`
-- `GamificationProvider`
-- `UserProvider`
-- `MascotProvider`
-- `DashboardProvider`
-
-`CoachProvider` is created locally inside `CoachPage`.
-
-## Backend Configuration
-
-All endpoint URLs go through `ApiConfig` and the backend gateway.
-
-The base URL is configured by `AppConfig.initialize()`:
-
-```dart
-static void initialize({String? gatewayUrl}) {
-  final dartDefine = const String.fromEnvironment('BASE_URL');
-  ApiConfig.setBaseUrl(
-    gatewayUrl ?? (dartDefine.isNotEmpty ? dartDefine : _defaultGatewayUrl),
-  );
-}
-```
-
-Default resolution:
-- Web: `http://localhost:3000`
-- Android emulator: `http://10.0.2.2:3000`
-- iOS, macOS, Linux, Windows: `http://localhost:3000`
-
-Runtime override:
+Resolution order: explicit argument, `ELYRII_API_URL`, legacy `BASE_URL`, then
+a local address in development only. Other environments require an explicit
+HTTPS URL. The default local port is **3001**, overridable with `ELYRII_API_PORT`.
+The Android emulator uses `10.0.2.2`; iOS uses `localhost`. Supply the appropriate
+URL explicitly:
 
 ```bash
-flutter run --dart-define=BASE_URL=http://192.168.1.20:3000
+flutter run --dart-define=ELYRII_API_URL=http://127.0.0.1:3001
 ```
 
-## Consumed Endpoints
+All REST services go through the gateway. Chat opens `/chat/ws`. Service health
+diagnostics run only in debug mode, on request:
 
-```text
-Auth
-  POST /auth/login
-  POST /auth/register
-  POST /auth/logout
-  POST /auth/refresh
-
-User
-  GET /user/me
-  PUT /user/me
-  GET /user/stats
-  POST /user/mood
-  GET /user/mood/latest
-
-Journal
-  GET /journal
-  POST /journal
-  GET /journal/:id
-  PUT /journal/:id
-  DELETE /journal/:id
-
-Challenge
-  GET /challenge/available
-  POST /challenge/available/:id/start
-  GET /challenge/active
-  GET /challenge/completed
-  GET /challenge/proposals
-  POST /challenge/proposals/:id/accept
-  POST /challenge/proposals/:id/reject
-
-Chat
-  WS /chat/ws?userId=:userId
+```bash
+flutter run --dart-define=CHECK_BACKEND_HEALTH=true
 ```
 
-`ApiClient.checkHealth()` also checks gateway, auth, journal, user, chat, and
-quest health endpoints at startup without blocking the app.
+## Data and persistence
 
-## Navigation
+- **Authentication**: tokens and account ID in `SecureStorageService`. Logout
+  clears the local session even if the remote call fails.
+- **Chat**: `ChatHistoryService` uses SQLite with owner-indexed conversation and
+  message tables. Writes are incremental and transactional; summary/message
+  pages contain 50 items. Encryption migration is marked per account to avoid
+  rereading the entire history at every startup. Provider getters no longer
+  allocate a complete copy on every access. Each reply stays attached to its
+  original conversation, even when the user switches conversations.
+- **Chat migration**: the legacy global JSON does not identify its owner. The
+  user must explicitly confirm recovery of the old history. The JSON remains
+  available if import fails and is deleted only after the transaction succeeds.
+- **Journal**: REST CRUD requests pages of 100 notes with filters, sorting, and
+  stable cursors; entries and drafts use account-scoped encrypted SQLite. Legacy
+  cache reads are filtered by `userId`. A 401/403 remains an error and cannot
+  become a cached success. Logout also invalidates in-flight journal requests
+  and clears memory state. Server pagination support remains a release dependency.
+- **Journal editor**: only one save is in flight; a revision entered during the
+  request still needs saving. A failed request does not produce a saved status.
+- **Preferences**: theme and customization use SharedPreferences.
+- **Journeys**: the editorial catalog lives in
+  `features/parcours/data/journey_catalog.dart`. `JourneyProvider` retains one
+  active, paused, or completed program. `JourneyRepository` stores a
+  SharedPreferences document encrypted by `ContentCipher`, with its owner,
+  version, and step snapshot. Progress is confirmed only after a successful
+  local write; an error preserves the last confirmed state and requests a reload.
+  Account changes invalidate late publications. Demo mode uses its own document.
+  Purging waits for writes, then removes the owner's document. No server endpoint
+  or schema is added. Progress is not synchronized across devices, and atomicity
+  across browser tabs is not guaranteed. Built-in content version 1 can receive
+  version 2 editorial text only when path ID, topic, ordered step IDs, durations,
+  and action types/meditation targets match. Enrollment identity, progress,
+  revision, and timestamps remain unchanged; unknown structures keep their
+  stored snapshot. The next successful mutation persists the refreshed copy.
 
-Navigation is centralized in `RouteGenerator`.
+Chat titles/messages and journal entries/drafts are encrypted with AES-GCM
+using an account key in secure storage, authenticated against the owner and
+resource. Plaintext caches are migrated. Account deletion attempts every purge
+and destroys its key; a marker retains failed steps for retry. Logout keeps
+protected local data for a later login. Cross-device synchronization of local
+chat history remains outside the contract.
 
-Current routes:
-- `/` -> `HomeNavigation`
-- `/dashboard`
-- `/challenges`
-- `/journal`
-- `/coach`
-- `/meditation`
-- `/chatbot`
-- `/mascot-customization`
-- `/settings`
-- `/login`
-- `/register`
+### Chat contract
 
-The initial route depends on `AuthProvider.isAuthenticated`:
-- authenticated user: `AppRoutes.home`;
-- otherwise: `AppRoutes.login`.
+The native WebSocket uses the Bearer header and sends
+`{message, requestId, conversationId}`. Each send/retry attempt gets a new
+`requestId`, while the stored message ID stays stable. A response
+`{type, message, requestId, conversationId}` is accepted only when both IDs
+match a pending attempt. Duplicate and late responses are ignored; failures
+and timeouts allow explicit retry. Switching conversations preserves the draft
+and blocks sending while loading.
 
-`HomeNavigation` lazy-loads the main pages:
-- Home / Dashboard
-- Jardin / Challenges
-- Journal
-- Meditation
-- Coach
-- Chatbot through a separate bubble button
+The compatible backend must ship before the client: an uncorrelated response
+cannot identify its conversation. This dependency is tracked in
+[#265](https://github.com/elyrii-epitech/Elyrii/issues/265). In SQLite, metadata
+uses `INSERT OR IGNORE` followed by `UPDATE` within a transaction. Do not use
+`REPLACE`: deleting the parent conversation would cascade-delete its messages.
 
-The mascot customization button is a global overlay in the top-left corner of
-the main navigation.
+## Rendering and performance
 
-## Data Flows
+The dashboard uses focused selectors instead of subscribing the whole page to
+four providers. Journal and history sheets build cards on demand with slivers.
+Avatars are decoded at their physical display size.
 
-### Authentication
+The mascot and its headwear form a single 3D scene; original sources remain
+in the repository. Optimized variants are reproducible through
+`elyrii_app/tool/mascot/`.
 
-```text
-Login/Register page
-  -> AuthProvider
-  -> AuthRepository
-  -> ApiClient
-  -> Gateway /auth/*
-  -> SecureStorageService.saveAccessToken()
-  -> SecureStorageService.saveUserId()
-  -> route /
-```
+Scene rebuilding is described in the [accessories guide](mascot-accessories.md).
 
-On startup, `AuthProvider.checkAuthStatus()` checks whether an access token
-exists. If it does, the app considers the session authenticated and attempts to
-fetch the profile through `/user/me`.
+## Limits of the guarantees
 
-Note: `/auth/refresh` is configured, but automatic token refresh is not wired
-into `ApiClient` yet.
+- No automatic refresh tokens; a 401 from the current session closes that
+  session locally, without affecting an account signed in afterward.
+- Widget tests and simulators do not measure physical-device FPS, power use,
+  or GPU memory.
+- Local fixtures do not certify real AI chat, Android hardware, or remote services.
+- Only iOS and Android are release targets. Native builds, device plugins, and
+  hardware profiling require their corresponding environments.
 
-### Journal
-
-```text
-JournalPage
-  -> JournalProvider
-  -> JournalRepository
-  -> ApiClient
-  -> /journal
-```
-
-The provider keeps the list in memory, sorts it locally by newest/oldest, and
-updates it after create, update, or delete operations.
-
-### Chatbot
-
-```text
-ChatbotPage
-  -> ChatbotProvider.connect()
-  -> SecureStorageService.getUserId()
-  -> WebSocket.connect(ApiConfig.chatWsUrl(userId))
-  -> local in-memory messages
-```
-
-Chat history is local to the current app session. The provider exposes
-connection state, typing state, and minimized mascot mode.
-
-### Gamification
-
-```text
-ChallengesPage
-  -> GamificationProvider.loadAll()
-  -> Future.wait([
-       available,
-       active,
-       completed,
-       proposals
-     ])
-```
-
-AI proposals can be accepted or rejected. System challenges can be started and
-then tracked in the "En cours" section.
-
-### Dashboard
-
-```text
-DashboardPage
-  -> DashboardProvider.loadDashboardData()
-  -> GET /user/mood/latest
-  -> GET /user/stats
-```
-
-Selecting a mood calls `POST /user/mood`, then reloads user stats.
-
-## Error Handling
-
-The network client throws `ApiException` for non-2xx HTTP responses:
-
-```dart
-class ApiException implements Exception {
-  final int statusCode;
-  final String message;
-  final dynamic body;
-}
-```
-
-Unhandled UI errors are wrapped by `GlobalErrorBoundary`, installed through
-`MaterialApp.builder`. Providers generally expose an `error` field and reset
-`isLoading` to `false` on failure.
-
-## Storage
-
-`SecureStorageService` stores:
-- `access_token`
-- `refresh_token`
-- `user_id`
-
-It uses `flutter_secure_storage` with Keychain on iOS/macOS and secure Android
-storage. If macOS Keychain returns `-34018`, it falls back to
-`SharedPreferences`, mainly for development and tests.
-
-`SharedPreferences` is also used for:
-- theme mode;
-- reduced glass effects;
-- adaptive blur on scroll;
-- mascot theme and cosmetics.
-
-## Performance
-
-Implemented optimizations:
-- main pages are lazy-loaded in `HomeNavigation`;
-- `GlassPerformanceService` is a singleton with low-end device heuristics;
-- blur and transitions can be reduced when visual effects are disabled;
-- `RepaintBoundary` is used around the 3D viewer;
-- PNG fallback for the 3D mascot on error or widget tests;
-- journal list animations are limited to the first items;
-- `RefreshIndicator` and parallel loading for gamification/dashboard.
-
-## Security
-
-Already covered:
-- access token in secure storage;
-- centralized `Authorization: Bearer <token>` header;
-- client-side email and password validation;
-- emergency resources and crisis banners in the chatbot;
-- local auth data is cleared on logout even if the backend logout call fails.
-
-Needs improvement:
-- automatic refresh token handling;
-- global session expiration handling on HTTP 401;
-- privacy policies connected to settings screens;
-- no sensitive logs in production builds;
-- TLS outside local development.
-
-## Tests
-
-Current tests:
-- `test/widget_test.dart`: boots the app with main providers;
-- `test/core/services/secure_storage_service_test.dart`: tokens, user id,
-  cleanup, and storage availability;
-- `test/features/gamification/presentation/pages/challenges_page_test.dart`:
-  renders the Jardin page without embedded mascot customization.
-
-Commands:
+## Verification
 
 ```bash
 cd elyrii_app
-flutter test
-flutter analyze
-dart format --set-exit-if-changed .
+flutter analyze --no-pub
+flutter test --no-pub
+flutter build ios --simulator --debug --no-pub
 ```
+
+CI uses Flutter 3.47.4. Its iOS artifact is explicitly a **simulator** application,
+not a signed archive or TestFlight distribution.
+
+Pre-distribution checks are listed in the [release guide](release.md) and
+[accessibility protocol](accessibility.md).

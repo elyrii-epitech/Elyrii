@@ -21,12 +21,25 @@ nav:
       - Architecture: mobile/architecture.md
       - Dependencies: mobile/dependencies.md
       - Features: mobile/features.md
+      - Meditation: mobile/meditation.md
       - Design System: mobile/design.md
+      - UI Wording: mobile/wording.md
       - CI/CD: mobile/ci-cd.md
       - Development: mobile/development.md
+      - Accessibility: mobile/accessibility.md
+      - Release: mobile/release.md
+      - Mascot Accessories: mobile/mascot-accessories.md
+      - Mascot Motion: mobile/velours-motion.md
       - Generated Docs: mobile/api/index.md
   - Server:
       - Overview: server/index.md
+      - Database: server/database.md
+      - Context Extraction: server/context-extraction.md
+      - Rolling Summaries: server/rolling-summaries.md
+      - Memory Embeddings: server/memory-embeddings.md
+      - Context Retrieval: server/context-retrieval.md
+      - Context Lifecycle: server/context-lifecycle.md
+      - Context Rollout: server/context-rollout.md
       - Generated Docs: server/api/index.md
   - AI:
       - Overview: ai/index.md
