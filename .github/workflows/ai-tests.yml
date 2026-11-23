@@ -15,6 +15,18 @@ on:
       - '.github/workflows/ai-tests.yml'
 
 jobs:
+  benchmark:
+    name: Validate bilingual benchmark (CPU only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r elyrii_ai/training/benchmark/requirements.txt
+      - run: python -m elyrii_ai.training.benchmark.validate
+      - run: python -m unittest elyrii_ai.test.test_evaluation_suite -v
+
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
