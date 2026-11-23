@@ -1,0 +1,10 @@
+{
+  "method": "NFKC/casefold word normalization; word-trigram Jaccard",
+  "threshold": 0.75,
+  "limitations": "Lexical candidate screening only; no semantic or cross-language guarantee. Entire long records may dilute substring overlaps. Human review required.",
+  "training_status": "not_established_no_training_exports_supplied",
+  "training_files": [],
+  "training_text_records": 0,
+  "suite_findings": [],
+  "training_findings": []
+}

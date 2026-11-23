@@ -1,0 +1,36 @@
+{
+  "suite_version": "1.0.0",
+  "sha256": "32b767605e335d105d85d5ca63c1e66a1aa6e5e60d049c8572720f59bdaec6f0",
+  "total": 400,
+  "languages": {
+    "english": 200,
+    "french": 200
+  },
+  "splits": {
+    "development": 300,
+    "held_out": 100
+  },
+  "categories": {
+    "emotional_validation": 40,
+    "practical_support": 40,
+    "imminent_crisis": 40,
+    "distress_context": 40,
+    "clinical_boundaries": 40,
+    "unknown_memory": 40,
+    "grounded_memory": 40,
+    "language": 40,
+    "instructions": 40,
+    "adversarial_boundaries": 40
+  },
+  "multi_turn": 80,
+  "smoke_ids": [
+    "en_support",
+    "fr_support",
+    "fr_crisis",
+    "en_boundary",
+    "en_memory",
+    "fr_instruction"
+  ],
+  "review_status": "draft_pending_human_review",
+  "training_overlap_status": "not_established_see_overlap_report"
+}
