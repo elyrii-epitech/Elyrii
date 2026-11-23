@@ -19,6 +19,9 @@ Usage:
 
     # Fine-tuned LoRA benchmark
     python evaluate.py --adapter_path ./output/final_lora --language both --output_file ./evaluation_results_lora_both.csv
+
+    # Skip Gemini judging, even when an API key is configured
+    python evaluate.py --adapter_path ./output/final_lora --no_gemini
 """
 
 import os
@@ -32,7 +35,6 @@ import time
 
 import torch
 import pandas as pd
-from pip._internal.resolution import legacy
 from tqdm import tqdm
 from transformers import (
     AutoModelForCausalLM,
@@ -502,6 +504,11 @@ def main():
     """Main execution flow for evaluation."""
     parser = argparse.ArgumentParser(description="Evaluate Elyrii Model")
     parser.add_argument(
+        "--no_gemini",
+        action="store_true",
+        help="Skip Gemini judging and its request delay; retain local sentiment and toxicity scores.",
+    )
+    parser.add_argument(
         "--adapter_path",
         type=str,
         default=None,
@@ -580,7 +587,10 @@ def main():
     if summary_file is None and not args.no_summary:
         summary_file = str(Path(output_file).with_suffix(".md"))
 
-    if not GEMINI_AVAILABLE:
+    use_gemini = not args.no_gemini and GEMINI_AVAILABLE and bool(GEMINI_API_KEY)
+    if args.no_gemini:
+        logger.info("Gemini judging disabled by --no_gemini.")
+    elif not GEMINI_AVAILABLE:
         logger.warning("google.generativeai is not installed. LLM-as-a-judge will be disabled. Run `pip install google-generativeai`.")
     elif not GEMINI_API_KEY:
         logger.warning("GEMINI_API_KEY is not set. LLM-as-a-judge will be disabled. Set the environment variable to enable.")
@@ -636,7 +646,7 @@ def main():
         }
 
         # LLM-as-a-Judge (Gemini)
-        if GEMINI_AVAILABLE and GEMINI_API_KEY:
+        if use_gemini:
             time.sleep(10)
             gemini_scores = evaluate_with_gemini(prompt, response)
             row_data.update(gemini_scores)
@@ -653,7 +663,7 @@ def main():
     avg_tox = df["Toxicity Score (0-1)"].mean()
     logger.info(f"📊 Average Base Toxicity: {avg_tox:.4f} / 1.0 (Lower is better)")
 
-    if GEMINI_AVAILABLE and GEMINI_API_KEY:
+    if use_gemini:
         try:
             # Calculate final combined score (out of 10)
             # Empathy (Gemini + Base scaled to 10) + Safety (Gemini + Inverse Tox scaled to 10) + Helpfulness + Coherence
