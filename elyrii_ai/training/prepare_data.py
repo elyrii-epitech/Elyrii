@@ -20,12 +20,20 @@ Usage:
 
 import os
 import argparse
-import functools
 import logging
 import json
 from typing import Dict, Any, List
 
-from datasets import load_dataset, concatenate_datasets
+from datasets import Dataset
+from pathlib import Path
+import hashlib
+import subprocess
+import importlib.metadata
+from tqdm import tqdm
+from elyrii_ai.training.preprocessing import (
+    InvalidExample, format_emobench, filter_english, prepare_source,
+    validate_training_messages, grouped_split_indices,
+)
 from transformers import AutoTokenizer, LlamaTokenizer
 from elyrii_ai.prompt.system_prompt import get_system_prompt
 from dotenv import load_dotenv
@@ -59,8 +67,10 @@ def format_empathetic_dialogues(
         # Reconstruct the conversation from the list of strings
         # Assume user starts
         for i, turn in enumerate(example["conversation"]):
+            if not isinstance(turn, str) or not turn.strip():
+                raise InvalidExample("invalid_conversation_turn")
             role = "user" if i % 2 == 0 else "assistant"
-            messages.append({"role": role, "content": str(turn)})
+            messages.append({"role": role, "content": turn})
     else:
         # Fallback to older format or generic columns
         prompt = example.get("prompt", "")
@@ -79,34 +89,6 @@ def format_empathetic_dialogues(
         ]
 
     return {"messages": messages}
-
-
-def format_emobench(
-    example: Dict[str, Any],
-) -> Dict[str, List[Dict[str, str]]]:
-    """
-    Converts EmoBench row to ChatML-style messages.
-    """
-    # Create a descriptive prompt from the scenario and choices
-    scenario = example.get("scenario", "")
-    choices = example.get("choices", [])
-    
-    choices_str = "\n".join([f"- {c}" for c in choices])
-    
-    user_content = (
-        f"Scenario: {scenario}\n\n"
-        f"What is the best course of action among the following choices?\n"
-        f"{choices_str}"
-    )
-    
-    assistant_content = example.get("label", "")
-    
-    return {
-        "messages": [
-            {"role": "user", "content": user_content},
-            {"role": "assistant", "content": assistant_content},
-        ]
-    }
 
 
 def format_esconv(
@@ -129,17 +111,25 @@ def format_esconv(
         try:
             dialog = json.loads(dialog_data)
         except json.JSONDecodeError:
-            logger.warning("Failed to parse 'dialog' string in ESConv, skipping.")
-            dialog = []
+            raise InvalidExample("invalid_dialog_json")
     elif isinstance(dialog_data, list):
         dialog = dialog_data
+
+    if not isinstance(dialog, list):
+        raise InvalidExample("invalid_dialog_type")
         
     for i, turn in enumerate(dialog):
+        if not isinstance(turn, dict):
+            raise InvalidExample("invalid_dialog_turn")
         # 'usr' is the seeker, 'sys' is the supporter
         speaker = turn.get("speaker", "")
+        if speaker not in {"usr", "sys"}:
+            raise InvalidExample("unknown_speaker")
         role = "user" if speaker == "usr" else "assistant"
         
         content = turn.get("text", "")
+        if not isinstance(content, str) or not content.strip():
+            raise InvalidExample("blank_dialog_turn")
         
         # Prepend context to the very first user message
         if i == 0 and role == "user":
@@ -147,18 +137,6 @@ def format_esconv(
             content = f"{content}\n\n(Context: {context})"
             
         messages.append({"role": role, "content": content})
-        
-    # If the parsing failed or dialog was empty, create a dummy fallback to avoid errors downstream
-    if not messages:
-        messages = [
-            {"role": "user", "content": "Hello."},
-            {"role": "assistant", "content": "Hi, how can I help you?"},
-        ]
-        
-    # Mistral's apply_chat_template strictly requires conversation to start with 'user'
-    if messages and messages[0]["role"] == "assistant":
-        # Insert a dummy user message to satisfy the template constraint
-        messages.insert(0, {"role": "user", "content": "Hi."})
         
     return {"messages": messages}
 
@@ -191,6 +169,7 @@ def apply_chat_template(
         Dictionary with 'text' key containing the formatted string.
     """
     messages = example["messages"]
+    validate_training_messages(messages)
 
     # Inject System Prompt into the first user message
     # Mistral Instruct v0.2 works best when system instructions are part of the first [INST] block.
@@ -222,13 +201,6 @@ def tokenize_function(
     )
 
 
-def filter_english(example: Dict[str, Any]) -> bool:
-    """Filters datasets to keep only English examples (for EmoBench)."""
-    if "language" in example:
-        return example["language"] == "en"
-    return True  # If no language column, assume it's valid
-
-
 def main():
     """Main execution flow for data preparation."""
     parser = argparse.ArgumentParser(description="Prepare dataset for Elyrii training")
@@ -250,122 +222,86 @@ def main():
         default="./datasets",
         help="Base directory containing the raw local datasets",
     )
+    parser.add_argument("--local_files_only", action="store_true", help="Use cached/local tokenizer files only")
     args = parser.parse_args()
-
-    logger.info(f"🏗️  Loading tokenizer: {args.model_path}")
-    try:
-        tokenizer = LlamaTokenizer.from_pretrained(args.model_path, use_fast=False, legacy=False)
-    except OSError as e:
-        logger.error(
-            f"Failed to load tokenizer for {args.model_path}. Check your path, HF_TOKEN, or internet connection."
-        )
-        raise e
-
-    # Fix for Mistral tokenizers lacking a default pad_token
+    output = Path(args.output_dir)
+    if output.exists():
+        raise FileExistsError(f"Use a new output directory; refusing to overwrite {output}")
+    import pyarrow.parquet as pq
+    source_specs = [
+        ("empathetic_dialogues", "Jithendra-k_EmpatheticDialogues/train-00000-of-00001.parquet", format_empathetic_dialogues),
+        ("emobench_ea", "SahandSab_EmoBench/EA.jsonl", None),
+        ("emobench_eu", "SahandSab_EmoBench/EU.jsonl", None),
+        ("esconv", "giliit_esconv/train-00000-of-00001.parquet", format_esconv),
+    ]
+    examples, reports = [], []
+    for source, relative, formatter in source_specs:
+        path = Path(args.data_base_dir) / relative
+        if not path.is_file():
+            raise FileNotFoundError(f"Required source missing: {path}")
+        rows = pq.read_table(path).to_pylist() if path.suffix == '.parquet' else [
+            json.loads(line) for line in path.read_text().splitlines() if line.strip()
+        ]
+        accepted, report = prepare_source(rows, source=source, formatter=formatter)
+        report.update(path=relative, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
+        reports.append(report)
+        examples.extend(accepted)
+        logger.info("%s: %s accepted rows, %s rejected, %s excluded, %s examples",
+                    source, report['accepted_rows'], report['rejected_rows'],
+                    report['excluded_rows'], report['accepted_examples'])
+    if not examples:
+        raise ValueError("No usable training examples")
+    tokenizer = LlamaTokenizer.from_pretrained(
+        args.model_path, use_fast=False, legacy=False,
+        local_files_only=args.local_files_only, token=HF_TOKEN,
+    )
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    datasets_to_merge = []
-
-    # 1. Load EmpatheticDialogues (Local Parquet)
-    logger.info("📚 Loading local 'empathetic_dialogues'...")
-    ed_path = os.path.join(args.data_base_dir, "Jithendra-k_EmpatheticDialogues", "train-00000-of-00001.parquet")
-    if os.path.exists(ed_path):
-        try:
-            ds_en = load_dataset("parquet", data_files=ed_path, split="train")
-            ds_en = ds_en.map(
-                format_empathetic_dialogues, remove_columns=ds_en.column_names
-            )
-            datasets_to_merge.append(ds_en)
-        except Exception as e:
-            logger.warning(f"⚠️  Could not load empathetic_dialogues: {e}")
-    else:
-        logger.warning(f"⚠️  Local empathetic_dialogues not found at {ed_path}")
-
-    # 2. Load EmoBench (Local JSONL) - Load files individually to avoid schema conflicts
-    logger.info("📚 Loading local 'EmoBench'...")
-    eb_paths = [
-        os.path.join(args.data_base_dir, "SahandSab_EmoBench", "EA.jsonl"),
-        os.path.join(args.data_base_dir, "SahandSab_EmoBench", "EU.jsonl")
-    ]
-    
-    for path in eb_paths:
-        if os.path.exists(path):
-            try:
-                ds_eb = load_dataset("json", data_files=[path], split="train")
-                
-                # Filter non-English
-                initial_count = len(ds_eb)
-                ds_eb = ds_eb.filter(filter_english)
-                logger.info(f"Filtered {os.path.basename(path)} from {initial_count} to {len(ds_eb)} rows (English only).")
-
-                # The format function might fail if columns are different, so we wrap this too
-                try:
-                    ds_eb = ds_eb.map(format_emobench, remove_columns=ds_eb.column_names)
-                    datasets_to_merge.append(ds_eb)
-                except Exception as e:
-                    logger.warning(f"⚠️  Could not format EmoBench file {path}: {e}")
-
-            except Exception as e:
-                logger.warning(f"⚠️  Could not load or process EmoBench file {path}: {e}")
-        else:
-            logger.warning(f"⚠️  Local EmoBench file not found at {path}")
-        
-    # 3. Load ESConv (Local Parquet)
-    logger.info("📚 Loading local 'ESConv'...")
-    esconv_path = os.path.join(args.data_base_dir, "giliit_esconv", "train-00000-of-00001.parquet")
-    if os.path.exists(esconv_path):
-        try:
-            ds_esconv = load_dataset("parquet", data_files=esconv_path, split="train")
-            ds_esconv = ds_esconv.map(format_esconv, remove_columns=ds_esconv.column_names)
-            datasets_to_merge.append(ds_esconv)
-        except Exception as e:
-            logger.warning(f"⚠️  Could not load ESConv: {e}")
-    else:
-        logger.warning(f"⚠️  Local ESConv not found at {esconv_path}")
-
-    if not datasets_to_merge:
-        logger.error("❌ No datasets loaded. Exiting.")
-        return
-
-    # Merge Datasets
-    full_dataset = concatenate_datasets(datasets_to_merge)
-    logger.info(f"📊 Total examples: {len(full_dataset)}")
-
-    # Apply Chat Template
-    logger.info("📝 Applying chat template...")
-    full_dataset = full_dataset.map(
-        functools.partial(apply_chat_template, tokenizer=tokenizer),
-        desc="Formatting chat template",
+    # Validate and render before tokenization. Every accepted example is checked
+    # again at the template boundary, including non-EmoBench sources.
+    texts = [apply_chat_template(example, tokenizer)['text']
+             for example in tqdm(examples, desc="Rendering validated conversations")]
+    data = Dataset.from_dict({'text': texts})
+    data = data.map(
+        lambda batch: tokenize_function(batch, tokenizer), batched=True,
+        remove_columns=['text'], desc="Tokenizing", load_from_cache_file=False,
+        keep_in_memory=True,
     )
-
-    # Tokenize
-    logger.info("🔢 Tokenizing...")
-    cols_to_remove = [
-        c
-        for c in full_dataset.column_names
-        if c not in ["input_ids", "attention_mask", "labels"]
-    ]
-
-    tokenized_dataset = full_dataset.map(
-        functools.partial(tokenize_function, tokenizer=tokenizer),
-        batched=True,
-        remove_columns=cols_to_remove,
-        desc="Tokenizing",
-    )
-
-    # Split and Save
-    logger.info("✂️  Splitting Train (90%) / Val (10%)...")
-    split_dataset = tokenized_dataset.train_test_split(test_size=0.1, seed=42)
-
-    train_path = os.path.join(args.output_dir, "train")
-    val_path = os.path.join(args.output_dir, "val")
-
-    logger.info(f"💾 Saving to {args.output_dir}...")
-    split_dataset["train"].save_to_disk(train_path)
-    split_dataset["test"].save_to_disk(val_path)
-
-    logger.info("✅ Done! Ready for training.")
+    indices = grouped_split_indices(examples)
+    provenance = []
+    for split, selected in indices.items():
+        for index in selected:
+            provenance.append(dict({k: examples[index][k] for k in
+                                    ('example_id','group_id','source','source_row','task')}, split=split))
+    project = Path(__file__).resolve().parents[2]
+    def git(*arguments):
+        return subprocess.check_output(['git', *arguments], cwd=project, text=True).strip()
+    code_files = [Path(__file__), Path(__file__).with_name('preprocessing.py')]
+    manifest = {
+        'preprocessing_version': 2, 'status': 'complete',
+        'git_revision': git('rev-parse','HEAD'), 'git_dirty': bool(git('status','--porcelain')),
+        'code_sha256': {str(p.relative_to(project)): hashlib.sha256(p.read_bytes()).hexdigest() for p in code_files},
+        'sources': reports, 'tokenizer_source': args.model_path,
+        'tokenizer_sha256': hashlib.sha256(json.dumps(tokenizer.get_vocab(), sort_keys=True).encode()).hexdigest(),
+        'chat_template_sha256': hashlib.sha256(tokenizer.get_chat_template().encode()).hexdigest(),
+        'system_prompt_sha256': hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest(),
+        'max_length': MAX_LENGTH, 'truncation': True,
+        'split': {'method':'seeded_source_group', 'seed':42, 'validation_group_fraction':0.1,
+                  'train_examples':len(indices['train']), 'val_examples':len(indices['val'])},
+        'accepted_examples': len(examples), 'empty_assistant_targets': 0,
+        'packages': {name: importlib.metadata.version(name) for name in
+                     ('datasets','transformers','sentencepiece','pyarrow')},
+    }
+    output.mkdir(parents=True, exist_ok=False)
+    for split, selected in indices.items():
+        data.select(selected).save_to_disk(str(output / split))
+    with (output/'example_provenance.jsonl').open('w') as handle:
+        for row in provenance:
+            handle.write(json.dumps(row)+'\n')
+    (output/'preprocessing_manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
+    logger.info("Saved %s train and %s validation examples to %s",
+                len(indices['train']), len(indices['val']), output)
 
 
 if __name__ == "__main__":
