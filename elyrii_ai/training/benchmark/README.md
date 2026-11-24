@@ -2,7 +2,7 @@
 
 Issue #281 supplies **400 synthetic authored cases**, not model-generated template variations: 200 distinct scenarios each have an English and French version. There are 20 cases per language in each of ten categories, 80 cases with fixed multi-turn history, and the original six smoke prompts with their original IDs and wording.
 
-**Status: human review recorded.** All 400 cases and 18 original calibration responses are attributed to `mordorak`. Source review records and the manifest were synchronized on 2026-11-25. All 15 non-null suggested responses were explicitly approved as `good` by `mordorak` on 2026-11-25, separately from the original-response ratings. The training corpus is now available in `datasets/`; overlap auditing remains pending, so this suite is not release-certified.
+**Status: human review recorded.** All 400 cases and 18 original calibration responses are attributed to `mordorak`. Source review records and the manifest were synchronized on 2026-11-25. All 15 non-null suggested responses were explicitly approved as `good` by `mordorak` on 2026-11-25, separately from the original-response ratings. The local corpus snapshot in `datasets/` was lexically audited on 2026-11-25; see `training_overlap_report.json` and `training_overlap_summary.md`. This does not certify semantic independence or identify the exact data used for `final_lora`.
 
 ## Contents and ownership
 
@@ -86,10 +86,17 @@ python -m elyrii_ai.training.benchmark.overlap --training /path/to/training-expo
 
 Repeat `--training` for multiple files. Supported exports are JSON record lists or JSONL with `text`, `prompt`, or role/content `messages`; tokenized Arrow/Parquet data must be decoded/exported with the actual training tokenizer first. Malformed/unsupported records raise errors instead of yielding a misleading clean scan. The report records file hashes and counts, avoids reproducing training text, and distinguishes no corpus supplied from a completed scan.
 
-Normalization uses Unicode NFKC, case folding and word extraction; near candidates use word-trigram Jaccard at 0.75 by default. Both final user prompts and full fixed conversations are compared. This is lexical candidate screening, not semantic deduplication: it can miss paraphrases, translations, and overlaps embedded in long records. Review candidates manually and audit scenario-family assignments; zero findings does not prove independence. The checked-in suite-only report found no exact/near candidates at this threshold. No local training corpus was found in the repository or available workspace training directories on 2026-11-23, so actual training overlap remains unestablished.
+Normalization uses Unicode NFKC, case folding and word extraction; near candidates use word-trigram Jaccard at 0.75 by default. Both final user prompts and full fixed conversations are compared. This is lexical candidate screening, not semantic deduplication: it can miss paraphrases, translations, and overlaps embedded in long records. Review candidates manually and audit scenario-family assignments; zero findings does not prove independence. The checked-in suite-only report found no exact/near candidates at this threshold. No local training corpus was found in the repository or available workspace training directories on 2026-11-23, so the original suite-only report did not establish training overlap. The subsequently supplied corpus was audited on 2026-11-25 using the broader raw/formatted scanner described below.
 
-## Remaining acceptance work
+## Local corpus audit completed
 
-- Overlap audit against the actual training corpus in `datasets/`, exporting supported text records as needed.
+Run with the existing training environment (PyArrow and the preprocessing dependencies installed):
 
-Do not treat this suite as a release gate or mark all #281 acceptance items complete until the remaining checks are completed. Model quality measurements, paired generation, scoring, and CI GPU runs remain #282–#286.
+```bash
+python -m elyrii_ai.training.benchmark.audit_corpus --corpus datasets
+python -m unittest elyrii_ai.test.test_corpus_overlap -v
+```
+
+`training_overlap_report.json` records all four source hashes, suite/calibration/formatter/scanner hashes, counts, methods, and individual findings. The scanner reads raw Parquet/JSONL fields and reproduces current formatter outputs and language filtering. It scans every benchmark message, full fixed conversations, original calibration answers, and approved suggestions. It adds normalized contiguous containment and target-trigram coverage checks for targets of at least eight words, avoiding dilution of embedded target text in longer source records. Short exact matches are separately flagged.
+
+See `training_overlap_summary.md` for findings and the EmoBench EU preprocessing issue. This completes lexical screening of the supplied local corpus snapshot; semantic/cross-language duplication and exact checkpoint provenance remain limitations, not claims of a clean bill of health. Model quality measurements, paired generation, scoring, and CI GPU runs remain #282–#286.

@@ -122,7 +122,7 @@ def main():
         'multi_turn':sum(len(c['messages'])>1 for c in cases),
         'smoke_ids':[c['id'] for c in cases if 'smoke' in c['tags']],
         'review_status':'human_reviewed' if all(c['review']['status']=='human_reviewed' for c in cases) else 'draft_pending_human_review',
-        'training_overlap_status':'not_established_see_overlap_report',
+        'training_overlap_status':'see_training_overlap_report_for_scope_and_provenance',
     }
     write_json(ROOT/'manifest.json',manifest)
     print(json.dumps(manifest,indent=2))
