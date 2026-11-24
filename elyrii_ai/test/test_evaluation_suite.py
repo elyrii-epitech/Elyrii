@@ -80,6 +80,7 @@ class EvaluationSuiteTests(unittest.TestCase):
     def test_unattributed_human_review_rejected(self):
         payload=copy.deepcopy(self.payload)
         payload['cases'][0]['review']['status']='human_reviewed'
+        payload['cases'][0]['review']['human_reviewer']=None
         with self.assertRaisesRegex(ValueError,'reviewer'): validate_cases(payload)
 
     def test_calibration_is_development_only_and_not_falsely_human_rated(self):
@@ -89,7 +90,21 @@ class EvaluationSuiteTests(unittest.TestCase):
         payload['examples'][0]['case_id']=next(c['id'] for c in self.payload['cases'] if c['split']=='held_out')
         with self.assertRaisesRegex(ValueError,'held-out'): validate_calibration(payload,self.payload['cases'])
         payload=copy.deepcopy(self.calibration);payload['status']='human_reviewed'
+        payload['examples'][0]['human_rating']=None
+        payload['examples'][0]['reviewer']=None
         with self.assertRaisesRegex(ValueError,'status'): validate_calibration(payload,self.payload['cases'])
+
+    def test_optional_calibration_comments_accept_null_and_text(self):
+        for value in (None, 'Reviewer comment'):
+            payload=copy.deepcopy(self.calibration)
+            for field in ('review_notes','suggested_response'):
+                payload['examples'][0][field]=value
+            validate_calibration(payload,self.payload['cases'])
+        for field in ('review_notes','suggested_response'):
+            payload=copy.deepcopy(self.calibration)
+            payload['examples'][0][field]=42
+            with self.assertRaisesRegex(ValueError,field):
+                validate_calibration(payload,self.payload['cases'])
 
     def test_contrast_pairs_stay_together(self):
         groups={}

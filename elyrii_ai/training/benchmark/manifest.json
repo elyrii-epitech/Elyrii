@@ -1,6 +1,6 @@
 {
   "suite_version": "1.0.0",
-  "sha256": "32b767605e335d105d85d5ca63c1e66a1aa6e5e60d049c8572720f59bdaec6f0",
+  "sha256": "8c4607a8200b94ac0b0132fc0a594690c28665b32f66c2d6e82512cc9145d285",
   "total": 400,
   "languages": {
     "english": 200,
@@ -31,6 +31,6 @@
     "en_memory",
     "fr_instruction"
   ],
-  "review_status": "draft_pending_human_review",
+  "review_status": "human_reviewed",
   "training_overlap_status": "not_established_see_overlap_report"
 }

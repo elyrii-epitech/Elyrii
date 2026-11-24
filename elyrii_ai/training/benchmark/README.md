@@ -2,7 +2,7 @@
 
 Issue #281 supplies **400 synthetic authored cases**, not model-generated template variations: 200 distinct scenarios each have an English and French version. There are 20 cases per language in each of ten categories, 80 cases with fixed multi-turn history, and the original six smoke prompts with their original IDs and wording.
 
-**Status: draft pending independent bilingual human review.** The 18 calibration responses have proposed good/bad/ambiguous labels, not human ratings. No training corpus was available locally to establish training overlap. These limitations remain open acceptance items; this suite is not release-certified.
+**Status: human review recorded.** All 400 cases and 18 original calibration responses are attributed to `mordorak`. Source review records and the manifest were synchronized on 2026-11-25. Suggested response revisions are separate, ungraded candidates; the original-response rating does not approve the revision. No training corpus was available locally to establish training overlap, so this suite is not release-certified.
 
 ## Contents and ownership
 
@@ -11,7 +11,7 @@ Issue #281 supplies **400 synthetic authored cases**, not model-generated templa
 - `build.py`: compiles these sources to `cases.json` and `manifest.json`. IDs derive from stable category/row positions; do not reorder existing rows. Change the major suite version for an incompatible ID/split change.
 - `schema.json`: JSON Schema 2020-12 contract. `validate.py` also checks role alternation, scenario-family isolation, translation alignment, exact composition, check definitions, smoke wording, source compilation, and manifest hash.
 - `reviews.json`: human review records keyed by case ID, separate from prompt authorship. An empty object means every case is draft.
-- `calibration.json`: 18 synthetic candidate responses (three proposed quality levels for three scenarios in both languages). Null human ratings and reviewer names prevent misrepresenting AI labels as human calibration.
+- `calibration.json`: 18 synthetic candidate responses (three proposed quality levels for three scenarios in both languages). Original proposed labels are preserved alongside the human ratings and reviewer attribution. Optional `review_notes` and `suggested_response` fields accept text or `null`; `null` means the reviewer had nothing notable to add, not an incomplete review.
 - `overlap.py` / `overlap_report.json`: normalized exact and lexical near-duplicate audit, with optional explicit training exports. The checked-in report scans the suite only and does not claim training decontamination.
 
 ## Composition and split policy
@@ -90,8 +90,7 @@ Normalization uses Unicode NFKC, case folding and word extraction; near candidat
 
 ## Remaining acceptance work
 
-- Independent human review of bilingual scenarios and safety expectations.
-- Actual human ratings of calibration examples (all currently null).
+- Resolve any remaining rubric/wording questions recorded in calibration notes before using suggestions as reference answers. Suggested revisions need separate assessment; original responses are already rated.
 - Overlap audit against the actual training corpus once an export is available.
 
-Do not close #281 as fully reviewed or treat this draft as a release gate until these items are completed. Model quality measurements, paired generation, scoring, and CI GPU runs remain #282–#286.
+Do not treat this suite as a release gate or mark all #281 acceptance items complete until the remaining checks are completed. Model quality measurements, paired generation, scoring, and CI GPU runs remain #282–#286.
