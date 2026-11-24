@@ -1,0 +1,97 @@
+# Signed Android release APK.
+#
+# Runs on every push/merge to main that touches the app, and manually via
+# workflow_dispatch. Required setup once per repository:
+#   1. Create a GitHub environment named "android-release" (restrict it to the
+#      main branch if desired).
+#   2. Add the environment secrets ANDROID_KEYSTORE_BASE64, ANDROID_STORE_PASSWORD,
+#      ANDROID_KEY_PASSWORD and ANDROID_KEY_ALIAS (same values as the
+#      frontend-release-validation environment).
+#   3. Set the environment variable ELYRII_PRODUCTION_API_URL to the HTTPS API
+#      origin baked into production builds (the workflow_dispatch "api_url"
+#      input overrides it for manual runs).
+name: Android Release APK
+on:
+  push:
+    branches: [main]
+    paths: ['elyrii_app/**', '.github/actions/setup-flutter/**', '.github/workflows/android-release-build.yml']
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: HTTPS API origin used by the production build (defaults to the ELYRII_PRODUCTION_API_URL variable)
+        type: string
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  release-apk:
+    name: Signed release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: android-release
+    defaults:
+      run:
+        working-directory: elyrii_app
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/setup-flutter
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Validate production origin and prepare release signing
+        env:
+          ELYRII_RELEASE_API: ${{ inputs.api_url || vars.ELYRII_PRODUCTION_API_URL }}
+          ELYRII_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ELYRII_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ELYRII_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ELYRII_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          from urllib.parse import urlparse
+          api = os.environ.get('ELYRII_RELEASE_API', '')
+          if not api:
+              raise SystemExit('No API origin: pass the api_url input or set the ELYRII_PRODUCTION_API_URL variable on the android-release environment')
+          url = urlparse(api)
+          if url.scheme != 'https' or not url.hostname or url.username or url.password or url.query or url.fragment:
+              raise SystemExit('An HTTPS API origin is required')
+          for key in ['ELYRII_KEYSTORE', 'ELYRII_STORE_PASSWORD', 'ELYRII_KEY_PASSWORD', 'ELYRII_KEY_ALIAS']:
+              if not os.environ.get(key):
+                  raise SystemExit('Missing release signing configuration: ' + key)
+          Path('android/release.jks').write_bytes(base64.b64decode(os.environ['ELYRII_KEYSTORE'], validate=True))
+          def prop(value):
+              return value.replace('\\', '\\\\').replace('\n', '\\n').replace('\r', '\\r').replace(' ', '\\ ')
+          values = {'storeFile': '../release.jks', 'storePassword': os.environ['ELYRII_STORE_PASSWORD'],
+                    'keyPassword': os.environ['ELYRII_KEY_PASSWORD'], 'keyAlias': os.environ['ELYRII_KEY_ALIAS']}
+          Path('android/key.properties').write_text(''.join(k + '=' + prop(v) + '\n' for k, v in values.items()))
+          PY
+      - name: Build signed release APK
+        env:
+          ELYRII_RELEASE_API: ${{ inputs.api_url || vars.ELYRII_PRODUCTION_API_URL }}
+        run: flutter build apk --release --no-pub --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+      - name: Validate 16 KiB ELF pages and APK ZIP alignment
+        run: |
+          python3 tool/check_android_elf_alignment.py build/app/outputs/flutter-apk/app-release.apk
+          ELYRII_ZIPALIGN=$(find "$ANDROID_HOME/build-tools" -name zipalign -type f | sort -V | tail -n 1)
+          "$ELYRII_ZIPALIGN" -c -P 16 -v 4 build/app/outputs/flutter-apk/app-release.apk
+      - name: Resolve app version for the artifact name
+        id: version
+        run: |
+          version=$(python3 -c 'import re; print(re.search(r"^version:\s*(\S+)", open("pubspec.yaml").read(), re.MULTILINE).group(1))')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "App version: $version"
+          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/elyrii-app-${version}-release.apk"
+      - name: Remove signing files
+        if: always()
+        run: rm -f android/key.properties android/release.jks
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: android-release-apk
+          path: elyrii_app/build/app/outputs/flutter-apk/elyrii-app-${{ steps.version.outputs.version }}-release.apk
+          if-no-files-found: error
+          retention-days: 90
