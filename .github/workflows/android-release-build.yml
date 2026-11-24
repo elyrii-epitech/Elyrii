@@ -73,7 +73,12 @@ jobs:
       - name: Build signed release APK
         env:
           ELYRII_RELEASE_API: ${{ inputs.api_url || vars.ELYRII_PRODUCTION_API_URL }}
-        run: flutter build apk --release --no-pub --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+        # No --no-pub here: with --no-pub the tool skips regenerating
+        # GeneratedPluginRegistrant.java in release mode, so dev-only plugins
+        # (integration_test) stay in the registrant but are missing from the
+        # release compile classpath -> "package ...integration_test does not
+        # exist" (fails since integration_test is a dev dependency).
+        run: flutter build apk --release --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
       - name: Validate 16 KiB ELF pages and APK ZIP alignment
         run: |
           python3 tool/check_android_elf_alignment.py build/app/outputs/flutter-apk/app-release.apk

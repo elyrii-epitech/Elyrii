@@ -50,9 +50,12 @@ jobs:
       - name: Build signed production artifacts
         env:
           ELYRII_RELEASE_API: ${{ inputs.api_url }}
+        # No --no-pub: it skips the release-mode regeneration of
+        # GeneratedPluginRegistrant.java, so dev-only plugins
+        # (integration_test) reach the release javac classpath check and fail.
         run: |
-          flutter build appbundle --release --no-pub --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
-          flutter build apk --release --no-pub --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+          flutter build appbundle --release --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+          flutter build apk --release --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
       - name: Validate 16 KiB ELF and APK ZIP alignment
         run: |
           python3 tool/check_android_elf_alignment.py build/app/outputs/bundle/release/app-release.aab
