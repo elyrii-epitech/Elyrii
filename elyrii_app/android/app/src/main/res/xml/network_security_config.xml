@@ -3,7 +3,7 @@
     <base-config cleartextTrafficPermitted="false" />
     <!-- flutter_3d_controller serves bundled models on IPv4 loopback. -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain>127.0.0.1</domain>
-        <domain>localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
     </domain-config>
 </network-security-config>
