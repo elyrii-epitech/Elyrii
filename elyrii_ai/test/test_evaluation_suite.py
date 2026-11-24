@@ -99,12 +99,27 @@ class EvaluationSuiteTests(unittest.TestCase):
             payload=copy.deepcopy(self.calibration)
             for field in ('review_notes','suggested_response'):
                 payload['examples'][0][field]=value
+            payload['examples'][0]['suggested_response_rating']=None
+            payload['examples'][0]['suggested_response_reviewed_by']=None
             validate_calibration(payload,self.payload['cases'])
         for field in ('review_notes','suggested_response'):
             payload=copy.deepcopy(self.calibration)
             payload['examples'][0][field]=42
             with self.assertRaisesRegex(ValueError,field):
                 validate_calibration(payload,self.payload['cases'])
+
+    def test_suggested_response_review_is_separate_and_requires_text_and_reviewer(self):
+        payload=copy.deepcopy(self.calibration)
+        example=payload['examples'][0]
+        example['human_rating']='bad'
+        example['suggested_response_rating']='good'
+        example['suggested_response_reviewed_by']='mordorak'
+        validate_calibration(payload,self.payload['cases'])
+        for field,value in (('suggested_response',None),('suggested_response',' '),('suggested_response_reviewed_by',None)):
+            invalid=copy.deepcopy(payload)
+            invalid['examples'][0][field]=value
+            with self.assertRaises(ValueError):
+                validate_calibration(invalid,self.payload['cases'])
 
     def test_contrast_pairs_stay_together(self):
         groups={}

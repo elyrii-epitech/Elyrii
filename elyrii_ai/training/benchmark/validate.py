@@ -88,6 +88,13 @@ def validate_calibration(payload,cases):
             require(isinstance(example['reviewer'],str) and bool(example['reviewer'].strip()),'Empty reviewer attribution')
         for field in ('review_notes','suggested_response'):
             require(example.get(field) is None or isinstance(example[field],str),f'{field} must be text or null')
+        suggestion_rating=example.get('suggested_response_rating')
+        suggestion_reviewer=example.get('suggested_response_reviewed_by')
+        require(suggestion_rating in {None,'good','bad','ambiguous'},'Invalid suggested_response_rating')
+        require((suggestion_rating is None)==(suggestion_reviewer is None),'Suggested response rating requires reviewer attribution')
+        if suggestion_rating is not None:
+            require(bool(example.get('suggested_response') and example['suggested_response'].strip()),'Rated suggested_response must contain text')
+            require(isinstance(suggestion_reviewer,str) and bool(suggestion_reviewer.strip()),'Empty suggested response reviewer attribution')
         coverage[case['language']].add(example['proposed_rating'])
     require(coverage=={'english':{'good','bad','ambiguous'},'french':{'good','bad','ambiguous'}},'Incomplete calibration coverage')
     require((payload['status']=='human_reviewed') == all(e['human_rating'] is not None for e in payload['examples']),'Calibration review status disagrees with recorded ratings')
