@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TODO(https-restore): DELETE this release-only overlay once the gateway is
+     behind a TLS reverse proxy and the workflow builds with
+     ELYRII_ENV=production again. It replaces
+     src/main/res/xml/network_security_config.xml for release builds and:
+     1. Fixes lintVitalRelease ("Missing includeSubdomains attribute"), a
+        pre-existing issue that blocks every release build.
+     2. Temporarily permits cleartext (plain HTTP) to the gateway
+        91.134.205.73 because the release build is built with
+        ELYRII_ENV=development and a plain-HTTP API origin
+        (http://91.134.205.73:3000).
+     Removing this file restores the stricter main configuration. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <!-- flutter_3d_controller serves bundled models on IPv4 loopback. -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <!-- TODO(https-restore): temporary plain-HTTP gateway, remove me. -->
+        <domain includeSubdomains="false">91.134.205.73</domain>
+    </domain-config>
+</network-security-config>
