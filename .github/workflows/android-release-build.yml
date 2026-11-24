@@ -7,9 +7,11 @@
 #   2. Add the environment secrets ANDROID_KEYSTORE_BASE64, ANDROID_STORE_PASSWORD,
 #      ANDROID_KEY_PASSWORD and ANDROID_KEY_ALIAS (same values as the
 #      frontend-release-validation environment).
-#   3. Set the environment variable ELYRII_PRODUCTION_API_URL to the HTTPS API
-#      origin baked into production builds (the workflow_dispatch "api_url"
-#      input overrides it for manual runs).
+#   3. Set the environment variable ELYRII_PRODUCTION_API_URL to the API
+#      origin baked into the builds (HTTPS expected once the gateway has
+#      TLS). Temporarily the build uses ELYRII_ENV=development and accepts a
+#      plain-HTTP origin — see the TODO(https-restore) markers.
+#      The workflow_dispatch "api_url" input overrides it for manual runs.
 name: Android Release APK
 on:
   push:
@@ -18,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       api_url:
-        description: HTTPS API origin used by the production build (defaults to the ELYRII_PRODUCTION_API_URL variable)
+        description: API origin used by the production build (HTTPS expected; plain HTTP temporarily accepted until the gateway has TLS. Defaults to the ELYRII_PRODUCTION_API_URL variable)
         type: string
         required: false
 permissions:
@@ -58,8 +60,13 @@ jobs:
           if not api:
               raise SystemExit('No API origin: pass the api_url input or set the ELYRII_PRODUCTION_API_URL variable on the android-release environment')
           url = urlparse(api)
-          if url.scheme != 'https' or not url.hostname or url.username or url.password or url.query or url.fragment:
-              raise SystemExit('An HTTPS API origin is required')
+          # TODO(https-restore): reject scheme 'http' again once the gateway is
+          # behind a TLS reverse proxy. Temporarily tolerated for
+          # http://91.134.205.73:3000.
+          if url.scheme not in ('http', 'https') or not url.hostname or url.username or url.password or url.query or url.fragment:
+              raise SystemExit('An http(s) API origin is required')
+          if url.scheme == 'http':
+              print('WARNING: plain-HTTP API origin accepted temporarily; traffic to {} is unencrypted.'.format(url.hostname))
           for key in ['ELYRII_KEYSTORE', 'ELYRII_STORE_PASSWORD', 'ELYRII_KEY_PASSWORD', 'ELYRII_KEY_ALIAS']:
               if not os.environ.get(key):
                   raise SystemExit('Missing release signing configuration: ' + key)
@@ -78,7 +85,10 @@ jobs:
         # (integration_test) stay in the registrant but are missing from the
         # release compile classpath -> "package ...integration_test does not
         # exist" (fails since integration_test is a dev dependency).
-        run: flutter build apk --release --dart-define=ELYRII_ENV=production --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
+        # TODO(https-restore): ELYRII_ENV=production once the gateway has TLS.
+        # Temporarily built with the development environment so the app
+        # accepts the plain-HTTP gateway.
+        run: flutter build apk --release --dart-define=ELYRII_ENV=development --dart-define="ELYRII_API_URL=$ELYRII_RELEASE_API"
       - name: Validate 16 KiB ELF pages and APK ZIP alignment
         run: |
           python3 tool/check_android_elf_alignment.py build/app/outputs/flutter-apk/app-release.apk
